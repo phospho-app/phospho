@@ -1,0 +1,9 @@
+LICENSE
+README.md
+pyproject.toml
+src/phospho/__init__.py
+src/phospho/hello.py
+src/phospho.egg-info/PKG-INFO
+src/phospho.egg-info/SOURCES.txt
+src/phospho.egg-info/dependency_links.txt
+src/phospho.egg-info/top_level.txt
