@@ -3,6 +3,14 @@
 import pytest
 from phospho import Message  # Replace `your_script_name` with the actual filename
 
+@pytest.fixture
+def message_instance():
+    prompt = "Enter your message:"
+    payload = {"text": "Hello, world!"}
+    metadata = {"timestamp": "2023-07-26 12:34:56", "user_id": "12345"}
+
+    return Message(prompt=prompt, payload=payload, metadata=metadata)
+
 def test_message_constructor():
     prompt = "Enter your message:"
     payload = {"text": "Hello, world!"}

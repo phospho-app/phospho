@@ -9,7 +9,7 @@ class Agent:
                 cpu=1,
                 memory="16Gi",
                 python_version="python3.8",
-                python_packages="", # e.g. reuirements.txt or a list of packages names to be installed
+                python_packages="", # e.g. reuirements.txt or a list of packages names
                 version=None, # optional version number of the agent
                 params = {}
             ):
