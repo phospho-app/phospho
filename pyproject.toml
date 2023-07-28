@@ -1,20 +1,18 @@
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "phospho"
-version = "0.0.1"
-authors = [
-  { name="Pierre-Louis Biojout", email="dev@phospho.app" },
-]
-description = "The Hello World of phospho"
+version = "0.0.2"
+description = ""
+authors = ["Pierre-LouisBJT <78322686+Pierre-LouisBJT@users.noreply.github.com>"]
 readme = "README.md"
-requires-python = ">=3.7"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
 
-[project.urls]
+[tool.poetry.dependencies]
+python = "^3.8"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.0"
+requests-mock = "^1.11.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
