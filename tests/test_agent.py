@@ -70,10 +70,21 @@ def test_agent_context(agent_instance):
     # Define message
     message = Message(content="World!", payload={}, metadata={})
 
-    agent_instance.context['session_id'].set("12345")
+    new_session_id = "12345"
+    agent_instance.update_session_id(new_session_id)
 
     @agent_instance.ask()
     def question(message):
         response = f"Hello {message.content}, your session id is {agent_instance.context['session_id'].get()}"
         return response
-    assert agent_instance.handle_ask_request(message) == "Hello World!, your session id is 12345"
+    assert agent_instance.handle_ask_request(message) == f"Hello World!, your session id is {new_session_id}"
+
+def test_agent_session_set_id(agent_instance):
+    # Define message
+    message = Message(content="World!", payload={}, metadata={})
+
+    new_session_id = "12345"
+    agent_instance.update_session_id(new_session_id)
+
+    assert agent_instance.session.return_session_id() == new_session_id
+    

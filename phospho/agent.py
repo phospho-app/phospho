@@ -2,30 +2,14 @@
 Put some text here
 """
 import contextvars
+from typing import Union
 
 class Agent:
-    # Constructor method (optional)
-    def __init__(self, 
-                name,
-                version=None, # optional version number of the agent
-                params = {}
-            ):
-
-        # Attributes
-        self.name = name
-        self.version = version
-        self.params = params
-
-        # Attribute for context variables
-        context = {}
-        # Attribute for session variable
-        context["session_id"] = contextvars.ContextVar("session_id", default=None)
-        self.context = context
-
-        # Attributes for the routes handling
-        self.routes = {}
+    # Init method at the end of the class
 
     # Methods
+
+    # ROUTES
 
     # Info route
     # Returns a dictionary with the agent's info
@@ -43,7 +27,7 @@ class Agent:
             response["routes"].append(route)
         
         return response
-        
+            
     # Ask route
     def ask(self, **ask_options):
         def decorator(callback):
@@ -69,3 +53,48 @@ class Agent:
             
         else:
             raise ValueError(f"Ask route not found.")
+    
+    # SESSION 
+    # TODO: put it in a separate file
+    class Session:
+        def __init__(self, session_id: Union[str, None]):
+            self.session_id = session_id
+
+        def update_session_id(self, session_id):
+            self.session_id = session_id
+
+        # DEV
+        def return_session_id(self):
+            return self.session_id
+    
+    # Update the session id in the agent's subclass
+    def update_session_id(self, session_id):
+        # update the agent context attribute
+        self.context["session_id"].set(session_id)
+
+        # update the agent session sub-object
+        self.session.update_session_id(self.context["session_id"].get())
+    
+    # Class level initialization
+    def __init__(self, 
+                name,
+                version=None, # optional version number of the agent
+                params = {}
+            ):
+
+        # Attributes
+        self.name = name
+        self.version = version
+        self.params = params
+
+        # Attribute for context variables
+        context = {}
+        # Attribute for session variable
+        context["session_id"] = contextvars.ContextVar("session_id", default=None)
+        self.context = context
+
+        # Attributes for the routes handling
+        self.routes = {}
+
+        # Attributes for the session handling
+        self.session = self.Session(self.context["session_id"]) # has to be updated all the time
