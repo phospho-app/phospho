@@ -1,37 +1,35 @@
 """
 Put some text here
 """
+import contextvars
 
 class Agent:
     # Constructor method (optional)
     def __init__(self, 
                 name,
-                cpu=1,
-                memory="16Gi",
-                python_version="python3.8",
-                python_packages="", # e.g. reuirements.txt or a list of packages names
                 version=None, # optional version number of the agent
                 params = {}
             ):
 
         # Attributes
         self.name = name
-        self.cpu = cpu
-        self.memory = memory
-        self.python_version = python_version
-        self.python_packages = python_packages
         self.version = version
         self.params = params
 
+        # Attribute for context variables
+        context = {}
+        # Attribute for session variable
+        context["session_id"] = contextvars.ContextVar("session_id", default=None)
+        self.context = context
+
         # Attributes for the routes handling
-        self.ask_routes = {}
-        # self.chat_routes = {}
-        # self.custom_routes = {}
+        self.routes = {}
 
     # Methods
 
     # Info route
     # Returns a dictionary with the agent's info
+    # This method should not send sensitive information
     def get_info(self):
         response = {}
 
@@ -40,22 +38,34 @@ class Agent:
         response["params"] = self.params
 
         response["routes"] = []
-        for route in self.ask_routes:
+        # Add the ask routes defined by the user
+        for route in self.routes:
             response["routes"].append(route)
         
         return response
         
     # Ask route
-    def ask(self):
-        id = "default"
+    def ask(self, **ask_options):
         def decorator(callback):
-            self.ask_routes[id] = callback
+            self.routes["ask"] = (callback, ask_options)
             return callback
         return decorator
     
-    def handle_ask_request(self, id, *args, **kwargs):
-        if id in self.ask_routes:
-            callback = self.ask_routes[id]
-            return callback(*args, **kwargs)
+    def handle_ask_request(self, *args, **kwargs): # TODO : have a rigid input format -> Message object
+        if "ask" in self.routes: # Check if the route exists
+            callback, ask_options = self.routes["ask"]
+
+            # Check if the 'stream' parameter is set
+            if "stream" in ask_options:
+                stream_value = ask_options["stream"]
+                if stream_value:
+                    # TODO: implement the stream logic
+                    return callback(*args, **kwargs)
+                else:
+                    return callback(*args, **kwargs)
+            else:
+                stream_value = False  # Set a default value if 'stream' is not provided
+                return callback(*args, **kwargs)
+            
         else:
-            raise ValueError(f"Ask route '{id}' not found.")
+            raise ValueError(f"Ask route not found.")
