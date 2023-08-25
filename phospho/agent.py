@@ -36,6 +36,7 @@ class Agent:
         return decorator
     
     def handle_ask_request(self, *args, **kwargs): # TODO : have a rigid input format -> Message object
+        # TODO: Validate the input format
         if "ask" in self.routes: # Check if the route exists
             callback, ask_options = self.routes["ask"]
 
@@ -53,6 +54,38 @@ class Agent:
             
         else:
             raise ValueError(f"Ask route not found.")
+        
+    # Chat route
+    def chat(self, **ask_options):
+        def decorator(callback):
+            self.routes["chat"] = (callback, ask_options)
+            return callback
+        return decorator
+    
+    def handle_chat_request(self, *args, **kwargs): # TODO : have a rigid input format -> Message object
+
+        # TODO: Validate the input format
+        # TODO: handle Websockets and Streaming
+
+        if "chat" in self.routes: # Check if the route exists
+            callback, ask_options = self.routes["chat"]
+
+            # Check if the 'stream' parameter is set -> not in use know, but for reference on how to add options
+            if "verbose" in ask_options:
+                verbose_value = ask_options["verbose"]
+                if verbose_value:
+                    # TODO: implement the stream logic
+                    print("Verbose = True")
+                    return callback(*args, **kwargs)
+                else:
+                    return callback(*args, **kwargs)
+            else:
+                verbose_value = False  # Set a default value if 'stream' is not provided
+                return callback(*args, **kwargs)
+            
+        else:
+            raise ValueError(f"Chat route not found.")
+
     
     # SESSION 
     # TODO: put it in a separate file
