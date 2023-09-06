@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "phospho"
-version = "0.0.2"
+version = "0.0.3"
 description = "Deploy, Test, Scale LLM agents in one click"
 authors = ["Pierre-Louis Biojout <dev@phospho.app>"]
 readme = "README.md"

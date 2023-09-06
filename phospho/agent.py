@@ -41,6 +41,7 @@ class Agent:
             callback, ask_options = self.routes["ask"]
 
             # Check if the 'stream' parameter is set
+            # TODO : webhook implementation here
             if "stream" in ask_options:
                 stream_value = ask_options["stream"]
                 if stream_value:
@@ -110,7 +111,7 @@ class Agent:
     
     # Class level initialization
     def __init__(self, 
-                name,
+                name="",
                 version=None, # optional version number of the agent
                 params = {}
             ):
