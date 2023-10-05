@@ -108,6 +108,10 @@ class Agent:
 
         # update the agent session sub-object
         self.session.update_session_id(self.context["session_id"].get())
+
+    # Get the session id from the agent's subclass
+    def get_session_id(self):
+        return self.session.return_session_id()
     
     # Class level initialization
     def __init__(self, 
