@@ -1,8 +1,10 @@
 from phospho.collection import Collection
 
-class Step:
+from typing import Optional
 
-    def __init__(self, client, step_id: str, _content: dict=None):
+
+class Step:
+    def __init__(self, client, step_id: str, _content: Optional[dict] = None):
         self._client = client
         self._step_id = step_id
         self._content = _content
@@ -23,7 +25,7 @@ class Step:
             self._content = response.json()
 
         return self._content
-    
+
     def refresh(self):
         """
         Refresh the content of the step from the server
@@ -31,14 +33,16 @@ class Step:
         """
         response = self._client._get(f"/steps/{self._step_id}/")
         self._content = response.json()
-    
-    def update(self, 
-               status: str=None,
-               is_last: bool=None,
-               output: str=None,
-               additional_output: dict=None,
-               metadata: dict=None, data: dict=None):
-        
+
+    def update(
+        self,
+        status: Optional[str] = None,
+        is_last: Optional[bool] = None,
+        output: Optional[str] = None,
+        additional_output: Optional[dict] = None,
+        metadata: Optional[dict] = None,
+        data: Optional[dict] = None,
+    ):
         # Create a dictionary comprehension to filter out non-None arguments
         update_data = {
             "status": status,
@@ -46,24 +50,28 @@ class Step:
             "output": output,
             "additional_output": additional_output,
             "metadata": metadata,
-            "data": data
+            "data": data,
         }
 
         # Use a dictionary comprehension to exclude keys with None values
-        payload = {key: value for key, value in update_data.items() if value is not None}
+        payload = {
+            key: value for key, value in update_data.items() if value is not None
+        }
 
         print(payload)
 
         if not payload:
             raise ValueError("You must provide at least one argument to update a step")
 
-        response = self._client._post(f"/steps/{self._step_id}/update/", payload=payload)
+        response = self._client._post(
+            f"/steps/{self._step_id}/update/", payload=payload
+        )
 
         return Step(self._client, response.json()["step_id"])
-    
-class StepCollection(Collection):
 
-    #Get a Step
+
+class StepCollection(Collection):
+    # Get a Step
     def get(self, step_id: str):
         # TODO: add filters, limits and pagination
 
@@ -75,9 +83,16 @@ class StepCollection(Collection):
 
     # Create a session
     # TODO : return a session object, like what replicates does for predictions
-    def create(self, task_id: str, input: str, name: str, status: str, is_last: bool, 
-               additional_input: dict=None, data: dict=None):
-
+    def create(
+        self,
+        task_id: str,
+        input: str,
+        name: str,
+        status: str,
+        is_last: bool,
+        additional_input: Optional[dict] = None,
+        data: Optional[dict] = None,
+    ):
         payload = {
             "task_id": task_id,
             "input": input,
@@ -91,6 +106,7 @@ class StepCollection(Collection):
         response = self._client._post(f"/steps/", payload=payload)
 
         return Step(self._client, response.json()["step_id"])
+
 
 # Get all tasks (filters can be applied)
 

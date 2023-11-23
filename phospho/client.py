@@ -17,9 +17,11 @@ from phospho.sessions import SessionCollection
 from phospho.tasks import TaskCollection
 from phospho.steps import StepCollection
 
-class Client:
 
-    def __init__(self, api_key: Optional[str] = None, project_id: Optional[str] = None) -> None:
+class Client:
+    def __init__(
+        self, api_key: Optional[str] = None, project_id: Optional[str] = None
+    ) -> None:
         self.api_key = api_key
         self.project_id = project_id
         self.base_url = config.BASE_URL
@@ -36,7 +38,7 @@ class Client:
 You can find your API key on https://phospho.app"""
             )
         return token
-    
+
     def _project_id(self) -> str:
         project_id = self.project_id
         # Evaluate lazily in case environment variable is set with dotenv, or something
@@ -48,7 +50,7 @@ You can find your API key on https://phospho.app"""
                 """
             )
         return project_id
-    
+
     def _headers(self) -> Dict[str, str]:
         # TODO : "User-Agent": f"replicate-python/{__version__}",
 
@@ -57,37 +59,39 @@ You can find your API key on https://phospho.app"""
             "content-type": "application/json",
             "accept": "application/json",
         }
-    
-    def _get(self, path: str, params: Optional[Dict[str, str]] = None) -> requests.Response:
+
+    def _get(
+        self, path: str, params: Optional[Dict[str, str]] = None
+    ) -> requests.Response:
         url = f"{self.base_url}{path}"
         response = requests.get(url, headers=self._headers(), params=params)
 
         if response.status_code >= 200 and response.status_code < 300:
             return response
-        
+
         else:
             raise ValueError(f"Error getting {url}: {response.json()}")
-    
-    def _post(self, path: str, payload: Optional[Dict[str, str]] = None) -> requests.Response:
+
+    def _post(
+        self, path: str, payload: Optional[Dict[str, str]] = None
+    ) -> requests.Response:
         url = f"{self.base_url}{path}"
         response = requests.post(url, headers=self._headers(), json=payload)
 
         if response.status_code >= 200 and response.status_code < 300:
             return response
-        
+
         else:
             raise ValueError(f"Error posting to {url}: {response.json()}")
-    
+
     @property
     def sessions(self):
         return SessionCollection(client=self)
-    
+
     @property
     def tasks(self):
         return TaskCollection(client=self)
-    
+
     @property
     def steps(self):
         return StepCollection(client=self)
-    
-    

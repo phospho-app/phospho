@@ -6,9 +6,11 @@ from phospho.collection import Collection
 
 from phospho.tasks import Task
 
+from typing import Optional
+
+
 class Session:
-    
-    def __init__(self, client, session_id: str, _content: dict=None):
+    def __init__(self, client, session_id: str, _content: Optional[dict] = None):
         self._client = client
         self._session_id = session_id
         self._content = _content
@@ -16,7 +18,7 @@ class Session:
     @property
     def id(self):
         return self._session_id
-    
+
     @property
     def content(self):
         """
@@ -28,7 +30,7 @@ class Session:
             self._content = response.json()
 
         return self._content
-    
+
     def refresh(self):
         """
         Refresh the content of the session from the server
@@ -37,39 +39,42 @@ class Session:
         response = self._client._get(f"/sessions/{self._session_id}/")
         self._content = response.json()
 
-    
-    def update(self, metadata: dict=None, data: dict=None):
-
+    def update(self, metadata: Optional[dict] = None, data: Optional[dict] = None):
         if metadata is None and data is None:
-            raise ValueError("You must provide either metadata or data to update a session")
-        
+            raise ValueError(
+                "You must provide either metadata or data to update a session"
+            )
+
         payload = {
             "metadata": metadata or {},
             "data": data or {},
         }
 
-        response = self._client._post(f"/sessions/{self._session_id}/update/", payload=payload)
+        response = self._client._post(
+            f"/sessions/{self._session_id}/update/", payload=payload
+        )
 
         return Session(self._client, response.json()["session_id"])
-    
+
     def list_tasks(self):
         """
         Use a Generator? -> would enable streaming
         TODO : add filters, limits and pagination
         """
         response = self._client._get(f"/sessions/{self._session_id}/tasks/")
-        
+
         tasks_list = []
 
         for task_content in response.json()["tasks"]:
-            tasks_list.append(Task(self._client, task_content["task_id"], _content=task_content))
+            tasks_list.append(
+                Task(self._client, task_content["task_id"], _content=task_content)
+            )
 
         return tasks_list
-    
+
 
 class SessionCollection(Collection):
-
-    #Get a session
+    # Get a session
     def get(self, session_id: str):
         # TODO: add filters, limits and pagination
 
@@ -79,22 +84,24 @@ class SessionCollection(Collection):
 
     # Get all sessions (filters can be applied) -> projects
     def list(self):
-
         print("project id :", self._client._project_id())
 
-        response = self._client._get(f"/projects/{self._client._project_id()}/sessions/")
+        response = self._client._get(
+            f"/projects/{self._client._project_id()}/sessions/"
+        )
 
         sessions_list = []
 
         for session_content in response.json()["sessions"]:
-            sessions_list.append(Session(self._client, session_content["id"], _content=session_content))
+            sessions_list.append(
+                Session(self._client, session_content["id"], _content=session_content)
+            )
 
         return sessions_list
 
     # Create a session
     # TODO : return a session object, like what replicates does for predictions
-    def create(self, data: dict=None):
-
+    def create(self, data: Optional[dict] = None):
         payload = {
             "project_id": self._client._project_id(),
             "data": data or {},
@@ -107,5 +114,3 @@ class SessionCollection(Collection):
 
         else:
             raise ValueError(f"Error creating session: {response.json()}")
-
-    
