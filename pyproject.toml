@@ -11,6 +11,7 @@ keywords = ['LLM', 'Agents', 'gen ai', 'phospho', 'observability']
 [tool.poetry.dependencies]
 python = "^3.8"
 requests = "^2.31.0"
+pydantic = "^2.5.2"
 
 
 [tool.poetry.group.test.dependencies]
