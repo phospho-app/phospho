@@ -3,9 +3,10 @@ from .message import Message
 from .client import Client
 from .consumer import Consumer
 from .log_queue import LogQueue
-from .utils import generate_timestamp, generate_uuid
+from .utils import generate_timestamp, generate_uuid, filter_nonjsonable_keys
 
 import pydantic
+import logging
 
 from typing import Dict, Any, Optional, Union
 
@@ -16,8 +17,10 @@ consumer = None
 current_session_id = None
 current_task_id = None
 
+logger = logging.getLogger("phospho")
 
-def init(verbose: bool = True, tick: float = 0.1) -> None:
+
+def init(verbose: bool = True, tick: float = 0.5) -> None:
     global client
     global log_queue
     global consumer
@@ -43,7 +46,7 @@ def log(
     session_id: Optional[str] = None,
     task_id: Optional[str] = None,
     step_id: Optional[str] = None,
-    **kwargs,
+    **kwargs: Dict[str, Any],
 ) -> Dict[str, object]:
     """Main logging endpoint
 
@@ -85,6 +88,20 @@ def log(
     else:
         output_to_log = None
 
+    # Every other kwargs will be directly stored in the logs, if it's json serializable
+    if kwargs:
+        original_keys = set(kwargs.keys())
+        # Filter the keys to only keep the ones that json serializable
+        kwargs_to_log = filter_nonjsonable_keys(kwargs)
+        new_keys = set(kwargs_to_log.keys())
+        dropped_keys = original_keys - new_keys
+        if dropped_keys:
+            logger.warning(
+                f"Logging skipped for the keys that aren't json serializable (no .toJSON() method): {', '.join(dropped_keys)}"
+            )
+    else:
+        kwargs_to_log = {}
+
     # The log event looks like this:
     log_event: Dict[str, object] = {
         "client_timestamp": generate_timestamp(),
@@ -96,6 +113,7 @@ def log(
         "input_type_name": type(input).__name__,
         "output": output_to_log,
         "output_type_name": type(output).__name__,
+        **kwargs_to_log,
     }
 
     # Append event to log_queue
