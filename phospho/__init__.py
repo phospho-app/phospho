@@ -58,26 +58,29 @@ def log(
         (log_queue is not None) and (client is not None)
     ), "phospho.log() was called but the global variable log_queue was not found. Make sure that phospho.init() was called."
 
-    # Default session and task id
+    # Session: if nothing specified, reuse existing id. Otherwise, update current id
     if not session_id:
-        # Reuse the existing id
         session_id = current_session_id
     else:
-        # Update the current id
         current_session_id = session_id
-
+    # Task: if nothing specified, reuse existing id. Otherwise, update current id
     if not task_id:
-        # Reuse the existing id
         task_id = current_task_id
     else:
-        # Update the current id
         current_task_id = task_id
+    # Step: if nothing specified, create new id.
+    if not step_id:
+        step_id = generate_uuid()
 
     # Process the input and output to convert them dict
     if isinstance(input, pydantic.BaseModel):
-        input = input.model_dump()
+        input_to_log = input.model_dump()
+    else:
+        input_to_log = input
     if isinstance(output, pydantic.BaseModel):
-        output = output.model_dump()
+        output_to_log = output.model_dump()
+    else:
+        output_to_log = output
 
     # The log event looks like this:
     log_event: Dict[str, object] = {
@@ -86,8 +89,10 @@ def log(
         "session_id": session_id,
         "task_id": task_id,
         "step_id": step_id,
-        "input": input,
-        "output": output,
+        "input": input_to_log,
+        "input_type_name": type(input).__name__,
+        "output": output_to_log,
+        "output_type_name": type(output).__name__,
     }
 
     # Append event to log_queue
