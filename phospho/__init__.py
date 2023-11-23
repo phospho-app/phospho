@@ -9,7 +9,6 @@ import pydantic
 
 from typing import Dict, Any, Optional, Union
 
-print(globals())
 
 client = None
 log_queue = None

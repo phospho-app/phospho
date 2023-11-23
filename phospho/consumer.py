@@ -44,7 +44,9 @@ class Consumer(Thread):
                 logger.debug(f"Sending {len(batch)} logs to {self.client.base_url}")
 
             try:
-                self.client._post("log", {"batch": batch})
+                self.client._post(
+                    f"/log/{self.client._project_id()}", {"batched_events": batch}
+                )
             except Exception as e:
                 if self.verbose:
                     logger.warning(f"Error sending events: {e}")
