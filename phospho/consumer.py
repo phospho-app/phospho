@@ -41,15 +41,17 @@ class Consumer(Thread):
 
         if len(batch) > 0:
             if self.verbose:
-                logger.debug(f"Sending {len(batch)} logs to {self.client.base_url}")
+                logger.debug(
+                    f"Sending {len(batch)} log events to {self.client.base_url}"
+                )
 
             try:
                 self.client._post(
-                    f"/log/{self.client._project_id()}", {"batched_events": batch}
+                    f"/log/{self.client._project_id()}", {"batched_log_events": batch}
                 )
             except Exception as e:
                 if self.verbose:
-                    logger.warning(f"Error sending events: {e}")
+                    logger.warning(f"Error sending log events: {e}")
 
                 # Put all the events back into the log queue, so they are logged next tick
                 self.log_queue.extend(batch)
