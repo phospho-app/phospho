@@ -19,6 +19,8 @@ from phospho.steps import StepCollection
 
 
 class Client:
+    """This is a class to standardize calls to the phospho backend"""
+
     def __init__(
         self, api_key: Optional[str] = None, project_id: Optional[str] = None
     ) -> None:
@@ -33,9 +35,8 @@ class Client:
             token = os.environ.get("PHOSPHO_API_KEY")
         if not token:
             raise ValueError(
-                """No API key provided. You need to set the PHOSPHO_API_KEY environment variable or create a client with `phospho.Client(api_key=...)`.
-
-You can find your API key on https://phospho.app"""
+                "No API key provided. You need to set the PHOSPHO_API_KEY environment variable or create"
+                + " a client with `phospho.Client(api_key=...)`.\n\nFind your API key on https://phospho.app"
             )
         return token
 
@@ -46,8 +47,8 @@ You can find your API key on https://phospho.app"""
             project_id = os.environ.get("PHOSPHO_PROJECT_ID")
         if not project_id:
             raise ValueError(
-                """No project id provided. You need to set the PHOSPHO_PROJECT_ID environment variable or create a client with `phospho.Client(project_id=...)`.
-                """
+                "No project id provided. You need to set the PHOSPHO_PROJECT_ID environment"
+                + " variable or create a client with `phospho.Client(project_id=...)`."
             )
         return project_id
 

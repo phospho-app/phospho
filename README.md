@@ -1,42 +1,50 @@
 # phospho Python Client
 
-This is a Python client for phospho.
+Phospho is a platform to help you monitor. 
 
-For more information, see the docs at [docs.phospho.app](https://docs.phospho.app/).
+Read the docs at [docs.phospho.app](https://docs.phospho.app/).
 
-Please note the project is still under development.
+> This project is still under active development!
 
-## Requirements
+## Installation of the phospho client
 
-- Python 3.8 or higher
-
-## Installation
+You need Python `>=3.8`
 
 ```bash
 pip install --upgrade phospho
 ```
 
-## Getting started
+## Quickstart
 
-Grab your API key from your phospho dashboard and set it as an environment variable:
+Create a phospho account and go to the [phospho dashboard](phospho.app). Create an API key and create a project. Set them as environment variables:
+
 
 ```bash
+export PHOSPHO_PROJECT_ID="project-id"
 export PHOSPHO_API_KEY="your-api-key"
 ```
 
-Setup the project ID you want to work with (you can create a new project and get its ID from your dashboard):
-
-```bash
-export PHOSPHO_PROJECT_ID="your-project-id"
-```
-
-Create a new client instance:
+In your LLM app, log interactions with your agent using `phospho.log()`. Monitor and visualize your agent on the [phospho dashboard](phospho.app). 
 
 ```python
-from phospho import Client
+import phospho
+import openai
 
-client = Client()
+phospho.init()
+openai_client = openai.OpenAI()
+
+# This is your agent code
+query = {
+    "messages": [{"role": "user", "content": "Say this is a test"}], 
+    "model": "gpt-3.5-turbo", 
+}
+response = openai_client.chat.completions.create(**query)
+
+# This is how you log it to phospho
+phospho.log(input=query, output=response)
 ```
+
+Read the docs at [docs.phospho.app](https://docs.phospho.app/) to go further. 
 
 ## Manage the sessions of your project
 
