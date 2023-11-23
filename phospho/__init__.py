@@ -39,7 +39,7 @@ def init(verbose: bool = True, tick: float = 0.1) -> None:
 
 def log(
     input: Union[Dict[str, Any], pydantic.BaseModel],
-    output: Union[Dict[str, Any], pydantic.BaseModel],
+    output: Optional[Union[Dict[str, Any], pydantic.BaseModel]] = None,
     session_id: Optional[str] = None,
     task_id: Optional[str] = None,
     step_id: Optional[str] = None,
@@ -69,7 +69,7 @@ def log(
     else:
         current_task_id = task_id
     # Step: if nothing specified, create new id.
-    if not step_id:
+    if step_id is None:
         step_id = generate_uuid()
 
     # Process the input and output to convert them dict
@@ -77,10 +77,13 @@ def log(
         input_to_log = input.model_dump()
     else:
         input_to_log = input
-    if isinstance(output, pydantic.BaseModel):
-        output_to_log = output.model_dump()
+    if output is not None:
+        if isinstance(output, pydantic.BaseModel):
+            output_to_log = output.model_dump()
+        else:
+            output_to_log = output
     else:
-        output_to_log = output
+        output_to_log = None
 
     # The log event looks like this:
     log_event: Dict[str, object] = {
