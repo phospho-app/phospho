@@ -5,7 +5,9 @@ from .consumer import Consumer
 from .log_queue import LogQueue
 from .utils import generate_timestamp, generate_uuid
 
-from typing import Dict, Any, Optional
+import pydantic
+
+from typing import Dict, Any, Optional, Union
 
 print(globals())
 
@@ -36,8 +38,8 @@ def init():
 
 
 def log(
-    input: Dict[str, Any],
-    output: Dict[str, Any],
+    input: Union[Dict[str, Any], pydantic.BaseModel],
+    output: Union[Dict[str, Any], pydantic.BaseModel],
     session_id: Optional[str] = None,
     task_id: Optional[str] = None,
     step_id: Optional[str] = None,
@@ -48,15 +50,21 @@ def log(
     global current_session_id
     global current_task_id
 
-    if "log_queue" not in globals():
-        raise RuntimeError(
-            "phospho.log() was called but the global variable log_queue was not found. Make sure that phospho.init() was called."
-        )
+    assert (
+        log_queue is not None
+    ), "phospho.log() was called but the global variable log_queue was not found. Make sure that phospho.init() was called."
 
+    # Default session and task id
     if not session_id:
         session_id = current_session_id
-    if not current_task_id:
-        session_id = current_session_id
+    if not task_id:
+        task_id = current_task_id
+
+    # Process the input and output to dict
+    if isinstance(input, pydantic.BaseModel):
+        input = input.model_dump()
+    if isinstance(output, pydantic.BaseModel):
+        output = output.model_dump()
 
     event = {
         "client_timestamp": generate_timestamp(),
@@ -69,4 +77,5 @@ def log(
 
     # Append event to log_queue
     log_queue.append(event)
+
     return event

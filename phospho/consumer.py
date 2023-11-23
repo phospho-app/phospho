@@ -18,8 +18,8 @@ class Consumer(Thread):
         log_queue: LogQueue,
         client: Client,
         verbose: bool = True,
-        tick: float = 0.5,  # How often to try to send logs
-    ):
+        tick: float = 0.1,  # How often to try to send logs
+    ) -> None:
         self.running = True
         self.log_queue = log_queue
         self.client = client
@@ -29,14 +29,14 @@ class Consumer(Thread):
         Thread.__init__(self, daemon=True)
         atexit.register(self.stop)
 
-    def run(self):
+    def run(self) -> None:
         while self.running:
             self.send_batch()
             time.sleep(self.tick)
 
         self.send_batch()
 
-    def send_batch(self):
+    def send_batch(self) -> None:
         batch = self.log_queue.get_batch()
 
         if len(batch) > 0:
@@ -47,11 +47,10 @@ class Consumer(Thread):
                 self.client._post("log", {"batch": batch})
             except Exception as e:
                 if self.verbose:
-                    logger.warning(
-                        f"Error sending events: {e}. Retrying in {self.tick}s"
-                    )
+                    logger.warning(f"Error sending events: {e}")
 
-                self.log_queue.append(batch)
+                # Put all the events back into the log queue, so they are logged next tick
+                self.log_queue.extend(batch)
 
     def stop(self):
         self.running = False

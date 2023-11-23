@@ -74,7 +74,7 @@ class Client:
             raise ValueError(f"Error getting {url}: {response.json()}")
 
     def _post(
-        self, path: str, payload: Optional[Dict[str, str]] = None
+        self, path: str, payload: Optional[Dict[str, object]] = None
     ) -> requests.Response:
         url = f"{self.base_url}{path}"
         response = requests.post(url, headers=self._headers(), json=payload)
