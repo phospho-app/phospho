@@ -1,17 +1,23 @@
 [tool.poetry]
 name = "phospho"
-version = "0.0.5"
-description = "Deploy, Test, Scale LLM agents in one click"
+version = "0.1.1"
+description = "The AgenOps plateform"
 authors = ["Pierre-Louis Biojout <dev@phospho.app>"]
 readme = "README.md"
+homepage = "https://phospho.app"
+documentation = "https://docs.phospho.app"
+keywords = ['LLM', 'Agents', 'gen ai', 'phospho', 'observability']
 
 [tool.poetry.dependencies]
 python = "^3.8"
+requests = "^2.31.0"
+pydantic = "^2.5.2"
 
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.0"
 requests-mock = "^1.11.0"
+openai = "^1.3.5"
 
 [build-system]
 requires = ["poetry-core"]
