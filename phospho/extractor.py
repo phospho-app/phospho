@@ -2,6 +2,8 @@ import pydantic
 
 from typing import Union, Dict, Any, Tuple, Optional, Callable
 
+from .utils import convert_to_jsonable_dict
+
 RawDataType = Union[Dict[str, Any], pydantic.BaseModel]
 
 
@@ -70,6 +72,7 @@ def get_input_output(
     raw_output: Optional[RawDataType],
     input_to_str_function: Optional[Callable[[Any], str]],
     output_to_str_function: Optional[Callable[[Any], str]],
+    verbose: bool = True,
 ) -> Tuple[
     str,  # input_to_log
     Optional[str],  # output_to_log
@@ -108,26 +111,34 @@ def get_input_output(
     if isinstance(input, str):
         input_to_log = input
     else:
-        raw_input_to_log = convert_to_dict(input)
+        raw_input_to_log = convert_to_jsonable_dict(
+            convert_to_dict(input), verbose=verbose
+        )
         # Extract input str representation from input
         input_to_log = input_to_str_function(input)
 
     # If raw input is specified, override
     if raw_input is not None:
-        raw_input_to_log = convert_to_dict(raw_input)
+        raw_input_to_log = convert_to_jsonable_dict(
+            convert_to_dict(raw_input), verbose=verbose
+        )
 
     if output is not None:
         # Extract a string representation from output
         if isinstance(output, str):
             output_to_log = output
         else:
-            raw_output_to_log = convert_to_dict(output)
+            raw_output_to_log = convert_to_jsonable_dict(
+                convert_to_dict(output), verbose=verbose
+            )
             output_to_log = output_to_str_function(output)
     else:
         output_to_log = None
 
     # If raw output is specified, override
     if raw_output is not None:
-        raw_output_to_log = convert_to_dict(raw_output)
+        raw_output_to_log = convert_to_jsonable_dict(
+            convert_to_dict(raw_output), verbose=verbose
+        )
 
     return input_to_log, output_to_log, raw_input_to_log, raw_output_to_log

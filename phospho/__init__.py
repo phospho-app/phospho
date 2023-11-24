@@ -3,7 +3,7 @@ from .message import Message
 from .client import Client
 from .consumer import Consumer
 from .log_queue import LogQueue
-from .utils import generate_timestamp, generate_uuid, filter_nonjsonable_keys
+from .utils import generate_timestamp, generate_uuid, convert_to_jsonable_dict
 from .extractor import get_input_output, RawDataType
 
 import logging
@@ -16,6 +16,7 @@ log_queue = None
 consumer = None
 current_session_id = None
 current_task_id = None
+verbose = True
 
 logger = logging.getLogger("phospho")
 
@@ -60,6 +61,7 @@ def log(
     global log_queue
     global current_session_id
     global current_task_id
+    global verbose
 
     assert (
         (log_queue is not None) and (client is not None)
@@ -87,19 +89,12 @@ def log(
         raw_output=raw_output,
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
+        verbose=verbose,
     )
 
     # Every other kwargs will be directly stored in the logs, if it's json serializable
     if kwargs:
-        original_keys = set(kwargs.keys())
-        # Filter the keys to only keep the ones that json serializable
-        kwargs_to_log = filter_nonjsonable_keys(kwargs)
-        new_keys = set(kwargs_to_log.keys())
-        dropped_keys = original_keys - new_keys
-        if dropped_keys:
-            logger.warning(
-                f"Logging skipped for the keys that aren't json serializable (no .toJSON() method): {', '.join(dropped_keys)}"
-            )
+        kwargs_to_log = convert_to_jsonable_dict(kwargs, verbose=verbose)
     else:
         kwargs_to_log = {}
 
@@ -112,11 +107,11 @@ def log(
         "task_id": task_id,
         "step_id": step_id,
         # input
-        "input": input_to_log,
+        "input": str(input_to_log),
         "raw_input": raw_input_to_log,
         "raw_input_type_name": type(input).__name__,
         # output
-        "output": output_to_log,
+        "output": str(output_to_log),
         "raw_output": raw_output_to_log,
         "raw_output_type_name": type(output).__name__,
         # other
