@@ -4,11 +4,11 @@ from .client import Client
 from .consumer import Consumer
 from .log_queue import LogQueue
 from .utils import generate_timestamp, generate_uuid, filter_nonjsonable_keys
+from .extractor import get_input_output, RawDataType
 
-import pydantic
 import logging
 
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, Callable
 
 
 client = None
@@ -41,16 +41,20 @@ def init(verbose: bool = True, tick: float = 0.5) -> None:
 
 
 def log(
-    input: Union[Dict[str, Any], pydantic.BaseModel],
-    output: Optional[Union[Dict[str, Any], pydantic.BaseModel]] = None,
+    input: Union[RawDataType, str],
+    output: Optional[Union[RawDataType, str]] = None,
     session_id: Optional[str] = None,
     task_id: Optional[str] = None,
     step_id: Optional[str] = None,
+    raw_input: Optional[RawDataType] = None,
+    raw_output: Optional[RawDataType] = None,
+    input_to_str_function: Optional[Callable[[Any], str]] = None,
+    output_to_str_function: Optional[Callable[[Any], str]] = None,
     **kwargs: Dict[str, Any],
 ) -> Dict[str, object]:
     """Main logging endpoint
 
-    Returns: What have been logged
+    Returns: What has been logged
     """
     global client
     global log_queue
@@ -75,18 +79,15 @@ def log(
     if step_id is None:
         step_id = generate_uuid()
 
-    # Process the input and output to convert them dict
-    if isinstance(input, pydantic.BaseModel):
-        input_to_log = input.model_dump()
-    else:
-        input_to_log = input
-    if output is not None:
-        if isinstance(output, pydantic.BaseModel):
-            output_to_log = output.model_dump()
-        else:
-            output_to_log = output
-    else:
-        output_to_log = None
+    # Process the input and output to convert them to dict
+    input_to_log, output_to_log, raw_input_to_log, raw_output_to_log = get_input_output(
+        input=input,
+        output=output,
+        raw_input=raw_input,
+        raw_output=raw_output,
+        input_to_str_function=input_to_str_function,
+        output_to_str_function=output_to_str_function,
+    )
 
     # Every other kwargs will be directly stored in the logs, if it's json serializable
     if kwargs:
@@ -104,15 +105,21 @@ def log(
 
     # The log event looks like this:
     log_event: Dict[str, object] = {
-        "client_timestamp": generate_timestamp(),
+        "client_created_at": generate_timestamp(),
+        # metadata
         "project_id": client._project_id(),
         "session_id": session_id,
         "task_id": task_id,
         "step_id": step_id,
+        # input
         "input": input_to_log,
-        "input_type_name": type(input).__name__,
+        "raw_input": raw_input_to_log,
+        "raw_input_type_name": type(input).__name__,
+        # output
         "output": output_to_log,
-        "output_type_name": type(output).__name__,
+        "raw_output": raw_output_to_log,
+        "raw_output_type_name": type(output).__name__,
+        # other
         **kwargs_to_log,
     }
 
