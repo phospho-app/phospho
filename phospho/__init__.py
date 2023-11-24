@@ -15,7 +15,6 @@ client = None
 log_queue = None
 consumer = None
 current_session_id = None
-current_task_id = None
 verbose = True
 
 logger = logging.getLogger("phospho")
@@ -26,7 +25,6 @@ def init(verbose: bool = True, tick: float = 0.5) -> None:
     global log_queue
     global consumer
     global current_session_id
-    global current_task_id
 
     client = Client()
     log_queue = LogQueue()
@@ -37,8 +35,6 @@ def init(verbose: bool = True, tick: float = 0.5) -> None:
     # Initialize session and task id
     if current_session_id is None:
         current_session_id = generate_uuid()
-    if current_task_id is None:
-        current_task_id = generate_uuid()
 
 
 def log(
@@ -59,7 +55,6 @@ def log(
     global client
     global log_queue
     global current_session_id
-    global current_task_id
     global verbose
 
     assert (
