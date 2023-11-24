@@ -4,6 +4,7 @@ Put some text here
 import contextvars
 from typing import Union
 
+
 class Agent:
     # Init method at the end of the class
 
@@ -25,19 +26,22 @@ class Agent:
         # Add the ask routes defined by the user
         for route in self.routes:
             response["routes"].append(route)
-        
+
         return response
-            
+
     # Ask route
     def ask(self, **ask_options):
         def decorator(callback):
             self.routes["ask"] = (callback, ask_options)
             return callback
+
         return decorator
-    
-    def handle_ask_request(self, *args, **kwargs): # TODO : have a rigid input format -> Message object
+
+    def handle_ask_request(
+        self, *args, **kwargs
+    ):  # TODO : have a rigid input format -> Message object
         # TODO: Validate the input format
-        if "ask" in self.routes: # Check if the route exists
+        if "ask" in self.routes:  # Check if the route exists
             callback, ask_options = self.routes["ask"]
 
             # Check if the 'stream' parameter is set
@@ -52,23 +56,25 @@ class Agent:
             else:
                 stream_value = False  # Set a default value if 'stream' is not provided
                 return callback(*args, **kwargs)
-            
+
         else:
             raise ValueError(f"Ask route not found.")
-        
+
     # Chat route
     def chat(self, **ask_options):
         def decorator(callback):
             self.routes["chat"] = (callback, ask_options)
             return callback
-        return decorator
-    
-    def handle_chat_request(self, *args, **kwargs): # TODO : have a rigid input format -> Message object
 
+        return decorator
+
+    def handle_chat_request(
+        self, *args, **kwargs
+    ):  # TODO : have a rigid input format -> Message object
         # TODO: Validate the input format
         # TODO: handle Websockets and Streaming
 
-        if "chat" in self.routes: # Check if the route exists
+        if "chat" in self.routes:  # Check if the route exists
             callback, ask_options = self.routes["chat"]
 
             # Check if the 'stream' parameter is set -> not in use know, but for reference on how to add options
@@ -83,12 +89,11 @@ class Agent:
             else:
                 verbose_value = False  # Set a default value if 'stream' is not provided
                 return callback(*args, **kwargs)
-            
+
         else:
             raise ValueError(f"Chat route not found.")
 
-    
-    # SESSION 
+    # SESSION
     # TODO: put it in a separate file
     class Session:
         def __init__(self, session_id: Union[str, None]):
@@ -100,7 +105,7 @@ class Agent:
         # DEV
         def return_session_id(self):
             return self.session_id
-    
+
     # Update the session id in the agent's subclass
     def update_session_id(self, session_id):
         # update the agent context attribute
@@ -108,14 +113,18 @@ class Agent:
 
         # update the agent session sub-object
         self.session.update_session_id(self.context["session_id"].get())
-    
-    # Class level initialization
-    def __init__(self, 
-                name="",
-                version=None, # optional version number of the agent
-                params = {}
-            ):
 
+    # Get the session id from the agent's subclass
+    def get_session_id(self):
+        return self.session.return_session_id()
+
+    # Class level initialization
+    def __init__(
+        self,
+        name="",
+        version=None,  # optional version number of the agent
+        params={},
+    ):
         # Attributes
         self.name = name
         self.version = version
@@ -131,4 +140,6 @@ class Agent:
         self.routes = {}
 
         # Attributes for the session handling
-        self.session = self.Session(self.context["session_id"]) # has to be updated all the time
+        self.session = self.Session(
+            self.context["session_id"]
+        )  # has to be updated all the time

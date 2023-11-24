@@ -6,3 +6,6 @@ __pycache__/
 .vscode/*
 !.vscode/extensions.json
 .DS_Store
+
+# Environment
+.env
