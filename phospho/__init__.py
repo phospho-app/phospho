@@ -46,7 +46,6 @@ def log(
     output: Optional[Union[RawDataType, str]] = None,
     session_id: Optional[str] = None,
     task_id: Optional[str] = None,
-    step_id: Optional[str] = None,
     raw_input: Optional[RawDataType] = None,
     raw_output: Optional[RawDataType] = None,
     input_to_str_function: Optional[Callable[[Any], str]] = None,
@@ -72,14 +71,9 @@ def log(
         session_id = current_session_id
     else:
         current_session_id = session_id
-    # Task: if nothing specified, reuse existing id. Otherwise, update current id
-    if not task_id:
-        task_id = current_task_id
-    else:
-        current_task_id = task_id
-    # Step: if nothing specified, create new id.
-    if step_id is None:
-        step_id = generate_uuid()
+    # Task: if nothing specified, create new id.
+    if task_id is None:
+        task_id = generate_uuid()
 
     # Process the input and output to convert them to dict
     input_to_log, output_to_log, raw_input_to_log, raw_output_to_log = get_input_output(
@@ -105,7 +99,6 @@ def log(
         "project_id": client._project_id(),
         "session_id": session_id,
         "task_id": task_id,
-        "step_id": step_id,
         # input
         "input": str(input_to_log),
         "raw_input": raw_input_to_log,

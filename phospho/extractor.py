@@ -74,10 +74,10 @@ def get_input_output(
     output_to_str_function: Optional[Callable[[Any], str]],
     verbose: bool = True,
 ) -> Tuple[
-    str,  # input_to_log
-    Optional[str],  # output_to_log
-    Optional[Dict[str, object]],  # raw_input_to_log
-    Optional[Dict[str, object]],  # raw_output_to_log
+    str,
+    Optional[str],
+    Optional[Union[Dict[str, object], str]],
+    Optional[Union[Dict[str, object], str]],
 ]:
     """
     Convert any supported data type to standard, loggable inputs and outputs.
@@ -107,15 +107,20 @@ def get_input_output(
     if output_to_str_function is None:
         output_to_str_function = detect_str_from_output
 
+    # To avoid mypy errors
+    raw_input_to_log: Optional[Union[Dict[str, object], str]] = None
+    raw_output_to_log: Optional[Union[Dict[str, object], str]] = None
+
     # Extract a string representation from input
     if isinstance(input, str):
         input_to_log = input
+        raw_input_to_log = input
     else:
+        # Extract input str representation from input
+        input_to_log = input_to_str_function(input)
         raw_input_to_log = convert_to_jsonable_dict(
             convert_to_dict(input), verbose=verbose
         )
-        # Extract input str representation from input
-        input_to_log = input_to_str_function(input)
 
     # If raw input is specified, override
     if raw_input is not None:
@@ -127,11 +132,12 @@ def get_input_output(
         # Extract a string representation from output
         if isinstance(output, str):
             output_to_log = output
+            raw_output_to_log = output
         else:
+            output_to_log = output_to_str_function(output)
             raw_output_to_log = convert_to_jsonable_dict(
                 convert_to_dict(output), verbose=verbose
             )
-            output_to_log = output_to_str_function(output)
     else:
         output_to_log = None
 
