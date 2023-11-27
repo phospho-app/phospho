@@ -2,13 +2,14 @@ from .agent import Agent
 from .message import Message
 from .client import Client
 from .consumer import Consumer
-from .log_queue import LogQueue
+from .log_queue import LogQueue, Event
 from .utils import generate_timestamp, generate_uuid, convert_to_jsonable_dict
 from .extractor import get_input_output, RawDataType
+from .config import BASE_URL
 
 import logging
 
-from typing import Dict, Any, Optional, Union, Callable
+from typing import Dict, Any, Optional, Union, Callable, Tuple
 
 
 client = None
@@ -51,6 +52,10 @@ def log(
     raw_output: Optional[RawDataType] = None,
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
+    output_to_task_id_and_to_log_function: Optional[
+        Callable[[Any], Tuple[Optional[str], bool]]
+    ] = None,
+    concatenate_raw_outputs_if_task_id_exists: bool = True,
     **kwargs: Dict[str, Any],
 ) -> Dict[str, object]:
     """Main logging endpoint
@@ -71,20 +76,33 @@ def log(
         session_id = current_session_id
     else:
         current_session_id = session_id
-    # Task: if nothing specified, create new id.
-    if task_id is None:
-        task_id = generate_uuid()
 
     # Process the input and output to convert them to dict
-    input_to_log, output_to_log, raw_input_to_log, raw_output_to_log = get_input_output(
+    (
+        input_to_log,
+        output_to_log,
+        raw_input_to_log,
+        raw_output_to_log,
+        task_id_from_output,
+        to_log,
+    ) = get_input_output(
         input=input,
         output=output,
         raw_input=raw_input,
         raw_output=raw_output,
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
+        output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
         verbose=verbose,
     )
+
+    # Task: use the task_id parameter, the task_id infered from inputs, or generate one
+    if task_id is None:
+        if task_id_from_output is None:
+            # if nothing specified, create new id.
+            task_id = generate_uuid()
+        else:
+            task_id = task_id_from_output
 
     # Every other kwargs will be directly stored in the logs, if it's json serializable
     if kwargs:
@@ -93,7 +111,7 @@ def log(
         kwargs_to_log = {}
 
     # The log event looks like this:
-    log_event: Dict[str, object] = {
+    log_content: Dict[str, object] = {
         "client_created_at": generate_timestamp(),
         # metadata
         "project_id": client._project_id(),
@@ -104,14 +122,52 @@ def log(
         "raw_input": raw_input_to_log,
         "raw_input_type_name": type(input).__name__,
         # output
-        "output": str(output_to_log),
+        "output": output_to_log,
         "raw_output": raw_output_to_log,
         "raw_output_type_name": type(output).__name__,
         # other
         **kwargs_to_log,
     }
 
-    # Append event to log_queue
-    log_queue.append(log_event)
+    if task_id in log_queue.events.keys():
+        # If the task_id already exists in log_queue, update the existing event content
+        existing_log_content = log_queue.events[task_id].content
+        fused_log_content = {
+            # Replace creation timestamp by the original one
+            # Keep a trace of the latest timestamp. This will help computing streaming time
+            "client_created_at": existing_log_content["client_created_at"],
+            "last_update": log_content["client_created_at"],
+            # Concatenate the log event output strings
+            "output": str(existing_log_content["output"]) + str(log_content["output"])
+            if (
+                existing_log_content["output"] is not None
+                and log_content["output"] is not None
+            )
+            else log_content["output"],
+            "raw_output": [
+                existing_log_content["raw_output"],
+                log_content["raw_output"],
+            ]
+            if not isinstance(existing_log_content["raw_output"], list)
+            else existing_log_content["raw_output"] + [log_content["raw_output"]],
+        }
+        # TODO : Turn this bool into
+        if concatenate_raw_outputs_if_task_id_exists:
+            log_content.pop("raw_output")
+        existing_log_content.update(log_content)
+        existing_log_content.update(fused_log_content)
+        # Concatenate the raw_outputs to keep all the intermediate results to openai
+        if concatenate_raw_outputs_if_task_id_exists:
+            if isinstance(existing_log_content["raw_output"], list):
+                existing_log_content["raw_output"].append(raw_output_to_log)
+            else:
+                existing_log_content["raw_output"] = [
+                    existing_log_content["raw_output"],
+                    raw_output_to_log,
+                ]
+        logger.info("UPDATED DICT:" + str(log_queue.events[task_id].content))
+    else:
+        # Append event to log_queue
+        log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
 
-    return log_event
+    return log_content
