@@ -41,7 +41,7 @@ class Consumer(Thread):
 
         if len(batch) > 0:
             if self.verbose:
-                logger.debug(
+                logger.info(
                     f"Sending {len(batch)} log events to {self.client.base_url}"
                 )
 

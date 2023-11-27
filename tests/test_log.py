@@ -128,9 +128,27 @@ def test_openai_stream():
         ),
     ]
     expected_outputs = ["Hello", "Hello you", "Hello you!", "Hello you!"]
+    assert len(stream_response) == len(expected_outputs)
     # Verify that the extractor matches the output
-    for response, expected_output in zip(stream_response, expected_outputs):
+    for i, response, expected_output in zip(
+        range(len(expected_outputs)), stream_response, expected_outputs
+    ):
         log_content = phospho.log(input=query, output=response)
         assert (
             log_content["output"] == expected_output
         ), f"Expected output from extractor '{expected_output}' but instead got: {log_content['output']}"
+        if i + 1 < len(expected_outputs):
+            assert (
+                phospho.log_queue.events[
+                    "chatcmpl-8PWAOdCT73H5XUum52ny3NHnw2ZQx"
+                ].to_log
+                == False
+            ), f"First (i={i}) log events should be set as to_log=False"
+        else:
+            # Last call, we want the output to be marked as "to log"
+            assert (
+                phospho.log_queue.events[
+                    "chatcmpl-8PWAOdCT73H5XUum52ny3NHnw2ZQx"
+                ].to_log
+                == True
+            ), f"Last (i={i}) log event should be set as to_log=True"

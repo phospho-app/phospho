@@ -170,6 +170,8 @@ def log(
                     raw_output_to_log,
                 ]
         log_content = existing_log_content
+        # Update the to_log status of event
+        log_queue.events[task_id].to_log = to_log
     else:
         # Append event to log_queue
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
