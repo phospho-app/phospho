@@ -1,4 +1,5 @@
 import pytest
+import time
 
 import phospho
 from openai.types.chat import ChatCompletion, ChatCompletionMessage, ChatCompletionChunk
@@ -8,7 +9,7 @@ from openai.types.completion_usage import CompletionUsage
 def test_openai_sync():
     from openai.types.chat.chat_completion import Choice
 
-    phospho.init(api_key="test", project_id="test")
+    phospho.init(api_key="test", project_id="test", tick=0.05)
 
     query = {
         "messages": [{"role": "user", "content": "Say hi !"}],
@@ -47,12 +48,14 @@ def test_openai_sync():
     assert (
         new_session_id == old_session_id
     ), "session_id should be preserved between 2 continuous calls"
+    time.sleep(0.1)
+    # TODO : Validate that the connection was successful
 
 
 def test_openai_stream():
     from openai.types.chat.chat_completion_chunk import ChoiceDelta, Choice
 
-    phospho.init(api_key="test", project_id="test")
+    phospho.init(api_key="test", project_id="test", tick=0.05)
 
     query = {
         "messages": [{"role": "user", "content": "Say hi !"}],
@@ -152,3 +155,5 @@ def test_openai_stream():
                 ].to_log
                 == True
             ), f"Last (i={i}) log event should be set as to_log=True"
+    time.sleep(0.1)
+    # TODO : Validate that the connection was successful
