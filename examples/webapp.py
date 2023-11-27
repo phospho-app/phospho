@@ -1,7 +1,9 @@
 """
-Streamlit webapp with an OpenAI chatbot
+# Streamlit webapp with an OpenAI chatbot
 
-# Running
+This is a demo webapp that showcase a simple assistant agent whose response are logged to phospho.
+
+## Setup
 
 1. Create a secrets file examples/.streamlit/secrets.toml with your OpenAI API key
 ```
@@ -71,19 +73,18 @@ if prompt := st.chat_input("What is up?"):
         ] = client.chat.completions.create(**full_prompt)
         # If we iterate on streaming_response, we get a token by token response
         for response in streaming_response:
-            # We add the return additional token to full_response (displayed by streamlit)
-            # full_str_response += response.choices[0].delta.content or ""
-            print(response)
-
-            # TODO
             # We can log each individual response in phospho
-            # phospho takes care of aggregating the tokens
             logged_content = phospho.log(input=full_prompt, output=response)
-            full_str_response = logged_content["output"]
-            # Display this in streamlit
+            # We ask streamlit to display the 'output' or the logged content
+            # phospho takes care of logging, extracting and aggregating all the chunked outputs
+            # The displayed output is equivalent to:
+            # full_str_response += response.choices[0].delta.content or ""
+            full_str_response = logged_content["output"] or ""
+
             message_placeholder.markdown(full_str_response + "▌")
 
-        # Logging only the text of the output to phospho
+        # If you don't want to log every streaming chunk, you can also
+        # just logging the output text to phospho
         # phospho.log(input=full_prompt, output=full_str_response)
         message_placeholder.markdown(full_str_response)
 
