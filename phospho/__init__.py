@@ -18,7 +18,7 @@ consumer = None
 current_session_id = None
 verbose = True
 
-logger = logging.getLogger("phospho")
+logger = logging.getLogger(__name__)
 
 
 def init(
@@ -129,8 +129,12 @@ def log(
         **kwargs_to_log,
     }
 
+    logger.debug(f"Existing task_id: {list(log_queue.events.keys())}")
+    logger.debug(f"Current task_id: {task_id}")
+
     if task_id in log_queue.events.keys():
         # If the task_id already exists in log_queue, update the existing event content
+        # Update the dict inplace
         existing_log_content = log_queue.events[task_id].content
         fused_log_content = {
             # Replace creation timestamp by the original one
@@ -151,7 +155,7 @@ def log(
             if not isinstance(existing_log_content["raw_output"], list)
             else existing_log_content["raw_output"] + [log_content["raw_output"]],
         }
-        # TODO : Turn this bool into
+        # TODO : Turn this bool into a parametrizable list
         if concatenate_raw_outputs_if_task_id_exists:
             log_content.pop("raw_output")
         existing_log_content.update(log_content)
@@ -165,9 +169,11 @@ def log(
                     existing_log_content["raw_output"],
                     raw_output_to_log,
                 ]
-        logger.info("UPDATED DICT:" + str(log_queue.events[task_id].content))
+        log_content = existing_log_content
     else:
         # Append event to log_queue
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
+
+    logger.debug("Updated dict:" + str(log_queue.events[task_id].content))
 
     return log_content
