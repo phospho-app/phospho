@@ -80,10 +80,10 @@ def detect_str_from_output(output: RawDataType) -> str:
 
     # OpenAI outputs
     if isinstance(output, pydantic.BaseModel):
-        if output_class_name in ["ChatCompletionMessage", "ChatCompletionChunk"]:
+        if output_class_name in ["ChatCompletion", "ChatCompletionChunk"]:
             choices = getattr(output, "choices", None)
             if isinstance(choices, list) and len(choices) > 0:
-                if output_class_name == "ChatCompletionMessage":
+                if output_class_name == "ChatCompletion":
                     # output = ChatCompletionMessage.choices[0].message.content
                     message = getattr(choices[0], "message", None)
                     role = getattr(message, "role", None)
