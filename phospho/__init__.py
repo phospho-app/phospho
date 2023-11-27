@@ -177,5 +177,6 @@ def log(
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
 
     logger.debug("Updated dict:" + str(log_queue.events[task_id].content))
+    logger.debug("To log" + str(log_queue.events[task_id].to_log))
 
     return log_content
