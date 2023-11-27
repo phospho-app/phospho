@@ -48,17 +48,24 @@ def detect_str_from_input(input: RawDataType) -> str:
 def detect_task_id_and_to_log_from_output(
     output: RawDataType
 ) -> Tuple[Optional[str], bool]:
+    output_class_name = output.__class__.__name__
+    output_module = output.__class__.__module__
+    logger.debug(
+        f"Detecting task_id from output class_name:{output_class_name} ; module:{output_module}"
+    )
+
     # OpenAI Stream API
     # task_id = ChatCompletionMessage.id
     # finish_reason = ChatCompletionMessage.choices[0].finish_reason
     if isinstance(output, pydantic.BaseModel) and (
-        str(type(output)).endswith("ChatCompletionChunk")
+        output_class_name == "ChatCompletionChunk"
     ):
         task_id = getattr(output, "id", None)
         choices = getattr(output, "choices", None)
         if isinstance(choices, list) and len(choices) > 0:
             # finish_reason is a str if completion has finished
             finish_reason = getattr(choices[0], "finish_reason", None)
+
         return task_id, (finish_reason is not None)
     # Unimplemented
     return None, True
@@ -68,14 +75,12 @@ def detect_str_from_output(output: RawDataType) -> str:
     output_class_name = output.__class__.__name__
     output_module = output.__class__.__module__
     logger.debug(
-        f"Parsing output class_name:{output_class_name} ; module:{output_module}"
+        f"Detecting str from output class_name:{output_class_name} ; module:{output_module}"
     )
 
     # OpenAI outputs
     if isinstance(output, pydantic.BaseModel):
-        if (output_class_name == "ChatCompletionMessage") or (
-            output_class_name == "ChatCompletionChunk"
-        ):
+        if output_class_name in ["ChatCompletionMessage", "ChatCompletionChunk"]:
             choices = getattr(output, "choices", None)
             if isinstance(choices, list) and len(choices) > 0:
                 if output_class_name == "ChatCompletionMessage":
@@ -136,7 +141,10 @@ def get_input_output(
         of the input, raw_input if specified, or None if input is a str.
     raw_output_to_log (Optional[Dict[str, object]]): A dict representation
         of the output, raw_output if specified, or None if output is a str.
-    task_id (Optional[str]):
+    task_id_from_output (Optional[str]): Task id detected from the output. Useful from
+        keeping track of streaming outputs.
+    to_log (bool): Whether to log the event directly, or wait until a later event.
+        Useful for streaming.
     """
 
     # Default functions to extract string from input and output
@@ -151,7 +159,7 @@ def get_input_output(
     raw_input_to_log: Optional[Union[Dict[str, object], str]] = None
     raw_output_to_log: Optional[Union[Dict[str, object], str]] = None
 
-    task_id_from_input = None
+    task_id_from_output = None
     to_log = True
 
     # Extract a string representation from input
