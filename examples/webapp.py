@@ -17,16 +17,22 @@ streamlit run webapp.py
 """
 
 import streamlit as st
+import phospho
 from openai import OpenAI
+
 
 st.title("ChatGPT-like clone")
 
-# Set OpenAI API key from Streamlit secrets
+# Initialize phospho
+phospho.init(
+    api_key=st.secrets["PHOSPHO_API_KEY"], project_id=st.secrets["PHOSPHO_PROJECT_ID"]
+)
+# Initialize the LLM provider
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
 
 if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-3.5-turbo"
-
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -51,6 +57,8 @@ if prompt := st.chat_input("What is up?"):
             stream=True,
         ):
             full_response += response.choices[0].delta.content or ""
+            phospho.log(input=prompt, output=full_response)
             message_placeholder.markdown(full_response + "▌")
         message_placeholder.markdown(full_response)
+
     st.session_state.messages.append({"role": "assistant", "content": full_response})
