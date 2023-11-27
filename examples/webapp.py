@@ -77,7 +77,7 @@ if prompt := st.chat_input("What is up?"):
         for response in streaming_response:
             # We can log each individual response in phospho
             logged_content = phospho.log(input=full_prompt, output=response)
-            # We ask streamlit to display the 'output' or the logged content
+            # We ask streamlit to display the output of the logged_content.
             # phospho takes care of logging, extracting and aggregating all the chunked outputs
             # The displayed output is equivalent to:
             # full_str_response += response.choices[0].delta.content or ""

@@ -26,6 +26,9 @@ def convert_to_dict(x: Any) -> Dict[str, object]:
 
 
 def detect_str_from_input(input: RawDataType) -> str:
+    """
+    This function extracts from an arbitrary input the string representation, aka the prompt.
+    """
     # OpenAI inputs: Look for messages list
     if (
         isinstance(input, dict)
@@ -34,11 +37,8 @@ def detect_str_from_input(input: RawDataType) -> str:
         and (len(input["messages"]) > 0)
         and ("content" in input["messages"][-1])
     ):
-        role = input["messages"][-1].get("role", None)
         content = input["messages"][-1].get("content", None)
-        if role is not None and content is not None:
-            return f"{role}: {content}"
-        elif content is not None:
+        if content is not None:
             return str(content)
 
     # Unimplemented. Translate everything to str
@@ -48,6 +48,13 @@ def detect_str_from_input(input: RawDataType) -> str:
 def detect_task_id_and_to_log_from_output(
     output: RawDataType
 ) -> Tuple[Optional[str], bool]:
+    """
+    This function extracts from an arbitrary output an eventual task_id and to_log bool.
+    task_id is used to grouped multiple outputs together.
+    to_log is used to delay the call to the phospho API. Only logs marked as to_log will
+    be recorded to phospho.
+    This is useful to fully receive a streamed response before logging it to phospho.
+    """
     output_class_name = output.__class__.__name__
     output_module = output.__class__.__module__
     logger.debug(
@@ -72,6 +79,11 @@ def detect_task_id_and_to_log_from_output(
 
 
 def detect_str_from_output(output: RawDataType) -> str:
+    """
+    This function extracts from an arbitrary output its string representation.
+    For example, from an OpenAI's ChatCompletion, extract the message displayed to the
+    end user.
+    """
     output_class_name = output.__class__.__name__
     output_module = output.__class__.__module__
     logger.debug(
@@ -86,11 +98,8 @@ def detect_str_from_output(output: RawDataType) -> str:
                 if output_class_name == "ChatCompletion":
                     # output = ChatCompletionMessage.choices[0].message.content
                     message = getattr(choices[0], "message", None)
-                    role = getattr(message, "role", None)
                     content = getattr(message, "content", None)
-                    if role is not None and content is not None:
-                        return f"{role}: {content}"
-                    elif content is not None:
+                    if content is not None:
                         return str(content)
                 elif output_class_name == "ChatCompletionChunk":
                     # new_token = ChatCompletionMessage.choices[0].delta.content

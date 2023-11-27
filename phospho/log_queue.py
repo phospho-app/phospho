@@ -17,6 +17,7 @@ class LogQueue:
 
     def __init__(self) -> None:
         self.lock = threading.Lock()
+        # The queue itself is a dictionary. Each event has a unique id.
         self.events: Dict[str, Event] = {}
 
     def append(self, event: Event) -> None:
@@ -28,6 +29,8 @@ class LogQueue:
             self.events.update(events_queue)
 
     def add_batch(self, events_content_list: List[Dict[str, object]]) -> None:
+        """This is used to add back events to the log queue, eg when they
+        couldn't be sent."""
         with self.lock:
             # Create new event with id task_id
             def get_event_id(event: object) -> str:
@@ -37,7 +40,7 @@ class LogQueue:
 
             new_events: Dict[str, Event] = {
                 get_event_id(event_content): Event(
-                    to_log=True,
+                    to_log=True,  # We will send them in the next batch
                     id=get_event_id(event_content),
                     content=event_content,
                 )
@@ -48,9 +51,9 @@ class LogQueue:
     def get_batch(self) -> List[Dict[str, object]]:
         if self.lock.acquire(False):  # non-blocking
             try:
-                # Separate only events to log
+                # The batch is only made of events marked as to_log
                 events_to_log = filter(lambda e: e.to_log, self.events.values())
-                # Only keep events _not_ to log
+                # Events not marked as to_log will stay in queue
                 self.events = dict(
                     filter(lambda pair: not pair[1].to_log, self.events.items())
                 )

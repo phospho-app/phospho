@@ -11,7 +11,7 @@ logger = logging.getLogger("phospho")
 
 
 class Consumer(Thread):
-    """This sends periodically the accumulated logs to the backend."""
+    """Every tick, the consumer tries to send the accumulated logs to the backend."""
 
     def __init__(
         self,
