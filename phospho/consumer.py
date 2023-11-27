@@ -18,7 +18,7 @@ class Consumer(Thread):
         log_queue: LogQueue,
         client: Client,
         verbose: bool = True,
-        tick: float = 0.1,  # How often to try to send logs
+        tick: float = 0.5,  # How often to try to send logs
     ) -> None:
         self.running = True
         self.log_queue = log_queue
@@ -54,7 +54,7 @@ class Consumer(Thread):
                     logger.warning(f"Error sending log events: {e}")
 
                 # Put all the events back into the log queue, so they are logged next tick
-                self.log_queue.extend(batch)
+                self.log_queue.add_batch(batch)
 
     def stop(self):
         self.running = False
