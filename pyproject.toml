@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "phospho"
-version = "0.1.1"
+version = "0.2.0"
 description = "The AgenOps plateform"
 authors = ["Pierre-Louis Biojout <dev@phospho.app>"]
 readme = "README.md"
