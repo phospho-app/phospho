@@ -11,14 +11,14 @@ logger = logging.getLogger("phospho")
 
 
 class Consumer(Thread):
-    """This sends periodically the accumulated logs to the backend."""
+    """Every tick, the consumer tries to send the accumulated logs to the backend."""
 
     def __init__(
         self,
         log_queue: LogQueue,
         client: Client,
         verbose: bool = True,
-        tick: float = 0.1,  # How often to try to send logs
+        tick: float = 0.5,  # How often to try to send logs
     ) -> None:
         self.running = True
         self.log_queue = log_queue
@@ -38,10 +38,11 @@ class Consumer(Thread):
 
     def send_batch(self) -> None:
         batch = self.log_queue.get_batch()
+        logger.debug(f"Batch: {batch}")
 
         if len(batch) > 0:
             if self.verbose:
-                logger.debug(
+                logger.info(
                     f"Sending {len(batch)} log events to {self.client.base_url}"
                 )
 
@@ -54,7 +55,7 @@ class Consumer(Thread):
                     logger.warning(f"Error sending log events: {e}")
 
                 # Put all the events back into the log queue, so they are logged next tick
-                self.log_queue.extend(batch)
+                self.log_queue.add_batch(batch)
 
     def stop(self):
         self.running = False
