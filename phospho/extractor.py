@@ -34,7 +34,7 @@ def detect_str_from_input(input: RawDataType) -> str:
         role = input["messages"][-1].get("role", None)
         content = input["messages"][-1].get("content", None)
         if role is not None and content is not None:
-            return f"{role}: {content}"
+            return str(content) # Should we really add the role?
         elif content is not None:
             return str(content)
 
