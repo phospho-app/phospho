@@ -22,11 +22,17 @@ class Client:
     """This is a class to standardize calls to the phospho backend"""
 
     def __init__(
-        self, api_key: Optional[str] = None, project_id: Optional[str] = None
+        self,
+        api_key: Optional[str] = None,
+        project_id: Optional[str] = None,
+        base_url: Optional[str] = None,
     ) -> None:
         self.api_key = api_key
         self.project_id = project_id
-        self.base_url = config.BASE_URL
+        if not base_url:
+            self.base_url = config.BASE_URL
+        else:
+            self.base_url = base_url
 
     def _api_key(self) -> str:
         token = self.api_key
@@ -86,13 +92,13 @@ class Client:
             raise ValueError(f"Error posting to {url}: {response.json()}")
 
     @property
-    def sessions(self):
+    def sessions(self) -> SessionCollection:
         return SessionCollection(client=self)
 
     @property
-    def tasks(self):
+    def tasks(self) -> TaskCollection:
         return TaskCollection(client=self)
 
     @property
-    def steps(self):
+    def steps(self) -> StepCollection:
         return StepCollection(client=self)
