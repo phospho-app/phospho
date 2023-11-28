@@ -28,6 +28,18 @@ def init(
     verbose: bool = True,
     tick: float = 0.5,
 ) -> None:
+    """
+    Initialize the phospho logging module.
+
+    This sets up a log_queue, stored in memory, and a consumer. Calls to `phospho.log()`
+    push logs content to the log_queue. Every tick, the consumer tries to push the content
+    of the log_queue to the phospho backend.
+
+    api_key: Phospho API key
+    project_id: Phospho project id
+    verbose: whether to display logs
+    tick: how frequently the consumer tries to push logs to the backend (in seconds)
+    """
     global client
     global log_queue
     global consumer
@@ -44,6 +56,26 @@ def init(
         current_session_id = generate_uuid()
 
 
+def new_session() -> str:
+    """
+    Sessions are used to group tasks and logs together.
+
+    Use `phospho.new_session()` when you start a new conversation. All the following
+    calls to phospho.log() will be linked to this `session_id`.
+
+    Alternatively, store `session_id` yourself, and pass the `session_id` parameter to
+    override `phospho.log` default behaviour:
+    ```
+    phospho.log("stuff", session_id="custom_session_id")
+    ```
+
+    Returns the new session_id.
+    """
+    global current_session_id
+    current_session_id = generate_uuid()
+    return current_session_id
+
+
 def log(
     input: Union[RawDataType, str],
     output: Optional[Union[RawDataType, str]] = None,
@@ -57,11 +89,32 @@ def log(
         Callable[[Any], Tuple[Optional[str], bool]]
     ] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
+    to_log: bool = True,
     **kwargs: Dict[str, Any],
 ) -> Dict[str, object]:
-    """Main logging endpoint
+    """Phospho's main all-purpose logging endpoint. Usage:
+    ```
+    phospho.log(input="input", output="output")
+    ```
 
-    Returns: What has been logged
+    By default, phospho will try to interpret a string representation from `input` and `output`.
+    For example, OpenAI API calls. Arguments passed as `input` and `output` are then stored
+    in `raw_input` and `raw_output`, unless those are specified.
+
+    You can customize this behaviour using `input_to_str_function` and `output_to_str_function`.
+
+    `session_id` is used to group logs together. For example, a single conversation.
+
+    By default, every log is assigned to a unique `task_id` and is immediately pushed to backend.
+    However, if you pass multiple logs with the same `task_id` and `to_log=False`, they will
+    stay in queue until they receive the same `task_id` with `to_log=False`. They will then
+    be combined and pushed to backend.
+    You can automate this behaviour using `output_to_task_id_and_to_log_function`. This is used
+    to handle streaming.
+
+    Every other `**kwargs` will be added to the log content and stored.
+
+    Returns: Dict[str, object] The content of what has been logged.
     """
     global client
     global log_queue
@@ -85,7 +138,7 @@ def log(
         raw_input_to_log,
         raw_output_to_log,
         task_id_from_output,
-        to_log,
+        extracted_to_log,
     ) = get_input_output(
         input=input,
         output=output,
@@ -96,6 +149,10 @@ def log(
         output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
         verbose=verbose,
     )
+
+    # Override to_log parameter
+    if extracted_to_log is not None:
+        to_log = extracted_to_log
 
     # Task: use the task_id parameter, the task_id infered from inputs, or generate one
     if task_id is None:
@@ -181,3 +238,6 @@ def log(
     logger.debug("To log" + str(log_queue.events[task_id].to_log))
 
     return log_content
+
+
+log

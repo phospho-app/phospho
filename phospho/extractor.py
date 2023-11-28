@@ -169,7 +169,7 @@ def get_input_output(
     raw_output_to_log: Optional[Union[Dict[str, object], str]] = None
 
     task_id_from_output = None
-    to_log = True
+    to_log = None
 
     # Extract a string representation from input
     if isinstance(input, str):
