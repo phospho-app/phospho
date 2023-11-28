@@ -6,6 +6,7 @@ from .log_queue import LogQueue, Event
 from .utils import generate_timestamp, generate_uuid, convert_to_jsonable_dict
 from .extractor import get_input_output, RawDataType
 from .config import BASE_URL
+from ._version import __version__
 
 import logging
 
