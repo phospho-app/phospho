@@ -9,7 +9,7 @@ from openai.types.completion_usage import CompletionUsage
 def test_openai_sync():
     from openai.types.chat.chat_completion import Choice
 
-    phospho.init(api_key="test", project_id="test", tick=0.05)
+    phospho.init(tick=0.05)
 
     query = {
         "messages": [{"role": "user", "content": "Say hi !"}],
@@ -55,7 +55,7 @@ def test_openai_sync():
 def test_openai_stream():
     from openai.types.chat.chat_completion_chunk import ChoiceDelta, Choice
 
-    phospho.init(api_key="test", project_id="test", tick=0.05)
+    phospho.init(tick=0.05)
 
     query = {
         "messages": [{"role": "user", "content": "Say hi !"}],
