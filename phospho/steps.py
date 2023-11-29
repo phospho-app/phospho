@@ -20,7 +20,7 @@ class Step:
         """
         if self._content is None:
             # Query the server
-            response = self._client._get(f"/steps/{self._step_id}/")
+            response = self._client._get(f"/steps/{self._step_id}")
             # Cache the data in the object
             self._content = response.json()
 
@@ -31,7 +31,7 @@ class Step:
         Refresh the content of the step from the server
         Done inplace
         """
-        response = self._client._get(f"/steps/{self._step_id}/")
+        response = self._client._get(f"/steps/{self._step_id}")
         self._content = response.json()
 
     def update(
@@ -63,9 +63,7 @@ class Step:
         if not payload:
             raise ValueError("You must provide at least one argument to update a step")
 
-        response = self._client._post(
-            f"/steps/{self._step_id}/update/", payload=payload
-        )
+        response = self._client._post(f"/steps/{self._step_id}/update", payload=payload)
 
         return Step(self._client, response.json()["step_id"])
 
@@ -75,7 +73,7 @@ class StepCollection(Collection):
     def get(self, step_id: str):
         # TODO: add filters, limits and pagination
 
-        response = self._client._get(f"/steps/{step_id}/")
+        response = self._client._get(f"/steps/{step_id}")
 
         return Step(self._client, response.json()["id"], _content=response.json())
 
@@ -103,7 +101,7 @@ class StepCollection(Collection):
             "data": data or {},
         }
 
-        response = self._client._post(f"/steps/", payload=payload)
+        response = self._client._post(f"/steps", payload=payload)
 
         return Step(self._client, response.json()["step_id"])
 
