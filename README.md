@@ -1,6 +1,6 @@
 # phospho Python Client
 
-Phospho is a platform to help you monitor. 
+Phospho is a platform to help you monitor LLM apps.
 
 Read the docs at [docs.phospho.app](https://docs.phospho.app/).
 
@@ -46,7 +46,7 @@ phospho.log(input=query, output=response)
 
 Read the docs at [docs.phospho.app](https://docs.phospho.app/) to go further. 
 
-## Manage the sessions of your project
+## Access the sessions of your project
 
 Create a new session:
 ```python
@@ -82,7 +82,7 @@ tasks = session.list_tasks()
 
 ```
 
-## Manage the tasks of your session
+## Access the tasks of your session
 
 Create a new task:
 ```python
@@ -120,11 +120,6 @@ task.content
 
 # Refresh the task content
 task.refresh()
-
-# Update the task content
-# New keys will be added, existing keys will be updated
-task.update(data={"your-key": "your value"})
-
 ```
 
 
