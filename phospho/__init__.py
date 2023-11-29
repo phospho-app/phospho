@@ -240,4 +240,140 @@ def log(
     return log_content
 
 
-log
+def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
+    """
+    This wrapper helps you log a function call to phospho by returning a wrapped version
+    of the function.
+
+    The wrapped function calls `phospho.log` and sets `input` to be the function's arguments,
+    and the `output` to be the returned value.
+
+    Additional arguments to `phospho.wrap` will also be logged. Example:
+
+    ```python
+    response = phospho.wrap(
+        # Wrap the call to this function
+        openai_client.chat.completions.create,
+        # Specify more metadata to be logged
+        metadata={"more": "details"},
+    )(
+        # Call your function as usual
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": "Hello!"}]
+    )
+    # Just as before, response is a `openai.types.chat.chat_completion.ChatCompletion` object.
+    # You can display the generated message this way:
+    print(response.choices[0].message.content)
+    ```
+
+    Console output:
+    ```text
+    Hello! How can I assist you today?
+    ```
+
+    ## Streaming
+
+    If the parameter `stream=True` is passed to the wrapped function, then the wrapped function returns
+    a generator that iterates over the function output, and logs every individual output. Example:
+
+    ```
+    response = phospho.wrap(
+        openai_client.chat.completions.create
+    )(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": "Hello!"}],
+        # Pass the stream=True parameter, as usual with openai
+        stream=True,
+    )
+    full_text_response = ""
+    for r in response:
+        # Every `r` is a `openai.types.chat.chat_completion_chunk.ChatCompletionChunk` object
+        full_text_response += partial_response r.choices[0].delta.content
+
+    print(full_text_response)
+    ```
+
+    Console output:
+    ```text
+    Hello! How can I assist you today?
+    ```
+
+    Passing `stream=False` or `stream=None` disable the behaviour.
+
+    ## Non-keyword arguments
+
+    Passing a non-keyword argument will log it in phospho with a integer id. Example:
+
+    `phospho.log(some_function)("some_value", "another_value")`
+
+    Will be logged as `{"0": "some_value", "1": "another_value"}`
+
+    Use keyword arguments to
+
+    ## Return
+
+    Returns: the wrapped function with additional logging.
+    """
+
+    def streamed_function_wrapper(wrap_args, wrap_kwargs, output):
+        # This function is used so that the wrapped_function can
+        # return a generator that also logs.
+        task_id = generate_uuid()
+        for single_output in output:
+            if single_output is not None:
+                log(
+                    input={
+                        **{i: arg for i, arg in enumerate(wrap_args)},
+                        **wrap_kwargs,
+                    },
+                    output=single_output,
+                    # Group the generated outputs with a unique task_id
+                    task_id=task_id,
+                    # By default, individual streamed calls are not immediately logged
+                    to_log=False,
+                    **kwargs,
+                )
+            else:
+                log(
+                    input={
+                        **{i: arg for i, arg in enumerate(wrap_args)},
+                        **wrap_kwargs,
+                    },
+                    output=None,
+                    # Group the generated outputs with a unique task_id
+                    task_id=task_id,
+                    # We interpret a None output as "log now"
+                    to_log=True,
+                    **kwargs,
+                )
+            yield single_output
+
+    def wrapped_function(stream: Optional[bool] = None, *wrap_args, **wrap_kwargs):
+        if stream is not None:
+            output = function(*wrap_args, stream=stream, **wrap_kwargs)  # type: ignore
+        else:
+            output = function(*wrap_args, **wrap_kwargs)
+
+        # Call phospho.log
+        if not stream:
+            # Default behaviour (not streaming)
+            #
+            log(
+                # Input is all the args and kwargs passed to the funciton
+                input={
+                    **{str(i): arg for i, arg in enumerate(wrap_args)},
+                    **wrap_kwargs,
+                },
+                # Output is what the function returns
+                output=output,
+                **kwargs,
+            )
+            return output
+        else:
+            # Streaming behaviour
+            # Return a generator that log every individual streamed output
+            return streamed_function_wrapper(
+                wrap_args=wrap_args, wrap_kwargs=wrap_kwargs, output=output
+            )
+
+    return wrapped_function
