@@ -26,7 +26,7 @@ class Session:
         """
         if self._content is None:
             # Query the server
-            response = self._client._get(f"/sessions/{self._session_id}/")
+            response = self._client._get(f"/sessions/{self._session_id}")
             self._content = response.json()
 
         return self._content
@@ -36,32 +36,32 @@ class Session:
         Refresh the content of the session from the server
         Done inplace
         """
-        response = self._client._get(f"/sessions/{self._session_id}/")
+        response = self._client._get(f"/sessions/{self._session_id}")
         self._content = response.json()
 
-    def update(self, metadata: Optional[dict] = None, data: Optional[dict] = None):
-        if metadata is None and data is None:
-            raise ValueError(
-                "You must provide either metadata or data to update a session"
-            )
+    # def update(self, metadata: Optional[dict] = None, data: Optional[dict] = None):
+    #     if metadata is None and data is None:
+    #         raise ValueError(
+    #             "You must provide either metadata or data to update a session"
+    #         )
 
-        payload = {
-            "metadata": metadata or {},
-            "data": data or {},
-        }
+    #     payload = {
+    #         "metadata": metadata or {},
+    #         "data": data or {},
+    #     }
 
-        response = self._client._post(
-            f"/sessions/{self._session_id}/update/", payload=payload
-        )
+    #     response = self._client._post(
+    #         f"/sessions/{self._session_id}/update", payload=payload
+    #     )
 
-        return Session(self._client, response.json()["session_id"])
+    #     return Session(self._client, response.json()["session_id"])
 
     def list_tasks(self):
         """
         Use a Generator? -> would enable streaming
         TODO : add filters, limits and pagination
         """
-        response = self._client._get(f"/sessions/{self._session_id}/tasks/")
+        response = self._client._get(f"/sessions/{self._session_id}/tasks")
 
         tasks_list = []
 
@@ -78,7 +78,7 @@ class SessionCollection(Collection):
     def get(self, session_id: str):
         # TODO: add filters, limits and pagination
 
-        response = self._client._get(f"/sessions/{session_id}/")
+        response = self._client._get(f"/sessions/{session_id}")
 
         return Session(self._client, response.json()["id"], _content=response.json())
 
@@ -86,9 +86,7 @@ class SessionCollection(Collection):
     def list(self):
         print("project id :", self._client._project_id())
 
-        response = self._client._get(
-            f"/projects/{self._client._project_id()}/sessions/"
-        )
+        response = self._client._get(f"/projects/{self._client._project_id()}/sessions")
 
         sessions_list = []
 
@@ -107,10 +105,11 @@ class SessionCollection(Collection):
             "data": data or {},
         }
 
-        response = self._client._post(f"/sessions/", payload=payload)
+        response = self._client._post(f"/sessions", payload=payload)
 
         if response.status_code == 200:
-            return Session(self._client, response.json()["session_id"])
+            print(response.json())
+            return Session(self._client, response.json()["id"])
 
         else:
             raise ValueError(f"Error creating session: {response.json()}")
