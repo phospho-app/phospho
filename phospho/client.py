@@ -99,6 +99,6 @@ class Client:
     def tasks(self) -> TaskCollection:
         return TaskCollection(client=self)
 
-    @property
-    def steps(self) -> StepCollection:
-        return StepCollection(client=self)
+    # @property
+    # def steps(self) -> StepCollection:
+    #     return StepCollection(client=self)
