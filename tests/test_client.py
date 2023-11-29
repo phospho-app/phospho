@@ -10,7 +10,7 @@ from phospho.steps import Step
 @pytest.fixture
 def client_instance():
     # env variables define the api key and project id
-    return Client(project_id="test", api_key="test")
+    return Client()
 
 
 def test_client_sessions(client_instance):
