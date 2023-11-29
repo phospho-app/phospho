@@ -10,7 +10,7 @@ from ._version import __version__
 
 import logging
 
-from typing import Dict, Any, Optional, Union, Callable, Tuple
+from typing import Dict, Any, Optional, Union, Callable, Tuple, Iterable
 
 
 client = None
@@ -315,10 +315,11 @@ def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
     Returns: the wrapped function with additional logging.
     """
 
-    def streamed_function_wrapper(wrap_args, wrap_kwargs, output):
+    def streamed_function_wrapper(
+        wrap_args: Iterable[Any], wrap_kwargs: Dict[str, Any], output: Any, task_id: str
+    ):
         # This function is used so that the wrapped_function can
         # return a generator that also logs.
-        task_id = generate_uuid()
         for single_output in output:
             if single_output is not None:
                 log(
@@ -350,7 +351,7 @@ def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
 
     def wrapped_function(stream: Optional[bool] = None, *wrap_args, **wrap_kwargs):
         if stream is not None:
-            output = function(*wrap_args, stream=stream, **wrap_kwargs)  # type: ignore
+            output = function(*wrap_args, **wrap_kwargs, stream=stream)  # type: ignore
         else:
             output = function(*wrap_args, **wrap_kwargs)
 
@@ -372,8 +373,12 @@ def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
         else:
             # Streaming behaviour
             # Return a generator that log every individual streamed output
+            task_id = generate_uuid()  # Mark these with the same task_id
             return streamed_function_wrapper(
-                wrap_args=wrap_args, wrap_kwargs=wrap_kwargs, output=output
+                wrap_args=wrap_args,
+                wrap_kwargs=wrap_kwargs,
+                output=output,
+                task_id=task_id,
             )
 
     return wrapped_function

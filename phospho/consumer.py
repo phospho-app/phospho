@@ -7,7 +7,7 @@ from threading import Thread
 
 import logging
 
-logger = logging.getLogger("phospho")
+logger = logging.getLogger(__name__)
 
 
 class Consumer(Thread):
@@ -41,10 +41,7 @@ class Consumer(Thread):
         logger.debug(f"Batch: {batch}")
 
         if len(batch) > 0:
-            if self.verbose:
-                logger.info(
-                    f"Sending {len(batch)} log events to {self.client.base_url}"
-                )
+            logger.debug(f"Sending {len(batch)} log events to {self.client.base_url}")
 
             try:
                 self.client._post(
