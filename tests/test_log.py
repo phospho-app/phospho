@@ -1,7 +1,10 @@
 import pytest
 import time
-
+import builtins
+import asyncio
 import phospho
+
+
 from openai.types.chat import ChatCompletion, ChatCompletionMessage, ChatCompletionChunk
 from openai.types.completion_usage import CompletionUsage
 
@@ -234,3 +237,52 @@ def test_stream():
             assert raw_output == groundtruth_r.model_dump()
 
     # TODO : Validate that the connection was successful
+
+    # Streaming, async
+
+    def aiter(iterable, /, *, wrap_sync=False):
+        try:
+            return builtins.aiter(iterable)
+        except TypeError:
+            if not wrap_sync:
+                raise
+        it = builtins.iter(iterable)
+
+        class _ait:
+            def __init__(self, it):
+                self._it = it
+
+            async def __aiter__(self):
+                for i in self._it:
+                    yield i
+
+        return builtins.aiter(_ait(it))
+
+    async def fake_async_openai_call_stream(model, messages, stream: bool = True):
+        async for stream_response in aiter(MOCK_OPENAI_STREAM_RESPONSE):
+            yield stream_response
+
+    class FakeAsyncStream:
+        def __init__(self, model, messages, stream: bool = True):
+            self._iterator = fake_async_openai_call_stream(model, messages, stream)
+
+        async def __aiter__(self):
+            return self._iterator
+
+        async def __anext__(self):
+            return self._iterator.__next__()
+
+    response = FakeAsyncStream(**query)
+    log = phospho.log(input=query, output=response, stream=True)
+
+    async def test_async_stream():
+        # Streamed content should be the same
+        async for r in response:
+            assert r == groundtruth_r
+            raw_output = phospho.log_queue.events[log["task_id"]].content["raw_output"]
+            if isinstance(raw_output, list):
+                assert raw_output[-1] == groundtruth_r.model_dump()
+            else:
+                assert raw_output == groundtruth_r.model_dump()
+
+    asyncio.run(test_stream)
