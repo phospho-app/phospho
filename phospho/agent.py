@@ -1,6 +1,3 @@
-"""
-Put some text here
-"""
 import contextvars
 from typing import Union
 

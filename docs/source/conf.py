@@ -12,14 +12,16 @@
 #
 # import os
 # import sys
-# sys.path.insert(0, os.path.abspath('.'))
 
+# sys.path.insert(0, os.path.abspath("../.."))  # Source code dir relative to this file
+from phospho import __version__
 
 # -- Project information -----------------------------------------------------
 
 project = "phospho"
 copyright = "2023, phospho"
 author = "phospho"
+version = __version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -28,12 +30,27 @@ author = "phospho"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "myst_parser",
+    "autodoc2",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "sphinx_copybutton",
-    "myst_parser",
 ]
+autodoc2_packages = [
+    "../../phospho",
+]
+autodoc2_docstring_parser_regexes = [
+    (r"autodoc2\.sphinx\.docstring\._example", "myst"),
+]
+autodoc2_render_plugin = "myst"
+
+# Put ignored modules for autodoc here:
+autodoc2_skip_module_regexes = [
+    r"phospho\.(agent|steps|_version|message)",
+]
+
+myst_enable_extensions = ["fieldlist", "deflist"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -67,3 +84,5 @@ html_favicon = "assets/favicon.ico"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
