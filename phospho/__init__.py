@@ -37,7 +37,6 @@ logger = logging.getLogger(__name__)
 def init(
     api_key: Optional[str] = None,
     project_id: Optional[str] = None,
-    verbose: bool = True,
     tick: float = 0.5,
 ) -> None:
     """
@@ -59,7 +58,7 @@ def init(
 
     client = Client(api_key=api_key, project_id=project_id)
     log_queue = LogQueue()
-    consumer = Consumer(log_queue=log_queue, client=client, verbose=verbose, tick=tick)
+    consumer = Consumer(log_queue=log_queue, client=client, tick=tick)
     # Start the consumer on a separate thread (this will periodically send logs to backend)
     consumer.start()
 
