@@ -36,12 +36,14 @@ while True:
     prompt = input("\n>")
     messages.append({"role": "user", "content": prompt})
 
-    # phospho.wrap logs inputs and outputs. It supports streaming
-    response = phospho.wrap(openai_client.chat.completions.create)(
-        messages=messages,
-        model="gpt-3.5-turbo",
-        stream=True,
-    )
+    query = {
+        "messages": messages,
+        "model": "gpt-3.5-turbo",
+        "stream": True,
+    }
+    response = openai_client.chat.completions.create(**query)
+
+    phospho.log(input=query, output=response, stream=True)
 
     print("\nAssistant: ", end="")
     for r in response:
