@@ -31,7 +31,7 @@ consumer = None
 current_session_id = None
 verbose = True
 
-log_queue = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def init(
@@ -177,8 +177,8 @@ def log_single_event(
         **kwargs_to_log,
     }
 
-    log_queue.debug(f"Existing task_id: {list(log_queue.events.keys())}")
-    log_queue.debug(f"Current task_id: {task_id}")
+    logger.debug(f"Existing task_id: {list(log_queue.events.keys())}")
+    logger.debug(f"Current task_id: {task_id}")
 
     if task_id in log_queue.events.keys():
         # If the task_id already exists in log_queue, update the existing event content
@@ -224,8 +224,8 @@ def log_single_event(
         # Append event to log_queue
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
 
-    log_queue.debug("Updated dict:" + str(log_queue.events[task_id].content))
-    log_queue.debug("To log" + str(log_queue.events[task_id].to_log))
+    logger.debug("Updated dict:" + str(log_queue.events[task_id].content))
+    logger.debug("To log" + str(log_queue.events[task_id].to_log))
 
     return log_content
 
