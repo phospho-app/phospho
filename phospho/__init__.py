@@ -29,7 +29,6 @@ client = None
 log_queue = None
 consumer = None
 current_session_id = None
-verbose = True
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +107,6 @@ def _log_single_event(
     global client
     global log_queue
     global current_session_id
-    global verbose
 
     assert (
         (log_queue is not None) and (client is not None)
@@ -136,7 +134,6 @@ def _log_single_event(
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
         output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
-        verbose=verbose,
     )
 
     # Override to_log parameter
@@ -153,7 +150,7 @@ def _log_single_event(
 
     # Every other kwargs will be directly stored in the logs, if it's json serializable
     if kwargs:
-        kwargs_to_log = convert_to_jsonable_dict(kwargs, verbose=verbose)
+        kwargs_to_log = convert_to_jsonable_dict(kwargs)
     else:
         kwargs_to_log = {}
 
