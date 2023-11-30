@@ -196,4 +196,31 @@ def test_wrap():
     # Streamed content should be the same
     for r, groundtruth_r in zip(response, MOCK_OPENAI_STREAM_RESPONSE):
         assert r == groundtruth_r
+
+
+def test_stream():
+    phospho.init()
+
+    # Streaming, sync
+
+    def fake_openai_call_stream(model, messages, stream: bool = True):
+        for stream_response in MOCK_OPENAI_STREAM_RESPONSE:
+            yield stream_response
+
+    query = {
+        "model": MOCK_OPENAI_QUERY["model"],
+        "messages": MOCK_OPENAI_QUERY["messages"],
+        "stream": True,
+    }
+    response = fake_openai_call_stream(**query)
+    log = phospho.log(input=query, output=response)
+    # Streamed content should be the same
+    for r, groundtruth_r in zip(response, MOCK_OPENAI_STREAM_RESPONSE):
+        assert r == groundtruth_r
+        raw_output = phospho.log_queue.events[log["task_id"]]["raw_output"]
+        if isinstance(raw_output, list):
+            assert raw_output[-1] == groundtruth_r
+        else:
+            assert raw_output == groundtruth_r
+
     # TODO : Validate that the connection was successful

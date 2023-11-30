@@ -240,7 +240,7 @@ def log(
         Callable[[Any], Tuple[Optional[str], bool]]
     ] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
-    stream: bool = True,
+    stream: bool = False,
     **kwargs: Dict[str, Any],
 ) -> Dict[str, object]:
     """Phospho's main all-purpose logging endpoint. Usage:
@@ -422,7 +422,7 @@ def wrap(
 
     Passing a non-keyword argument will log it in phospho with a integer id. Example:
 
-    `phospho.log(some_function)("some_value", "another_value")`
+    `phospho.wrap(some_function)("some_value", "another_value")`
 
     Will be logged as `{"0": "some_value", "1": "another_value"}`
 
