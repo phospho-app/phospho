@@ -87,4 +87,8 @@ Documentation
 
    faq/faq
 
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
 
+   apidocs/index
