@@ -1,0 +1,3 @@
+openai>=1.0
+phospho>=0.2
+streamlit>=1.28.2
