@@ -3,7 +3,12 @@ from .message import Message
 from .client import Client
 from .consumer import Consumer
 from .log_queue import LogQueue, Event
-from .utils import generate_timestamp, generate_uuid, convert_to_jsonable_dict
+from .utils import (
+    generate_timestamp,
+    generate_uuid,
+    convert_to_jsonable_dict,
+    is_jsonable,
+)
 from .extractor import get_input_output, RawDataType
 from .config import BASE_URL
 from ._version import __version__
@@ -270,7 +275,10 @@ def log(
     if not stream:
         # Push directly the log to log_queue
 
-        # TODO : Validate that output is the proper type, otherwise raise exception asking to set stream=True
+        # TODO : Make type validation cleaner
+        assert (
+            (output is None) or isinstance(output, str) or is_jsonable(output)
+        ), f"If stream=False, you can't log output type {type(output)}"
 
         log = _log_single_event(
             input=input,

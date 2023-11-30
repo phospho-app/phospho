@@ -213,7 +213,7 @@ def test_stream():
         "stream": True,
     }
     response = fake_openai_call_stream(**query)
-    log = phospho.log(input=query, output=response)
+    log = phospho.log(input=query, output=response, stream=True)
     # Streamed content should be the same
     for r, groundtruth_r in zip(response, MOCK_OPENAI_STREAM_RESPONSE):
         assert r == groundtruth_r
