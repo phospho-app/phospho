@@ -108,7 +108,7 @@ MOCK_OPENAI_STREAM_RESPONSE = [
 
 
 def test_openai_sync():
-    phospho.init(api_key="test", project_id="test", tick=0.05)
+    phospho.init(tick=0.05)
 
     query = MOCK_OPENAI_QUERY
     response = MOCK_OPENAI_RESPONSE
@@ -130,7 +130,7 @@ def test_openai_sync():
 
 
 def test_openai_stream():
-    phospho.init(api_key="test", project_id="test", tick=0.05)
+    phospho.init(tick=0.05)
 
     query = MOCK_OPENAI_QUERY
     stream_response = MOCK_OPENAI_STREAM_RESPONSE
@@ -164,7 +164,7 @@ def test_openai_stream():
 
 
 def test_wrap():
-    phospho.init(api_key="test", project_id="test", verbose=True)
+    phospho.init()
 
     # No streaming
     def fake_openai_call_no_stream(model, messages, stream: bool = False):
@@ -196,4 +196,41 @@ def test_wrap():
     # Streamed content should be the same
     for r, groundtruth_r in zip(response, MOCK_OPENAI_STREAM_RESPONSE):
         assert r == groundtruth_r
+
+
+def test_stream():
+    phospho.init()
+
+    # Streaming, sync
+
+    def fake_openai_call_stream(model, messages, stream: bool = True):
+        for stream_response in MOCK_OPENAI_STREAM_RESPONSE:
+            yield stream_response
+
+    class FakeStream:
+        def __init__(self, model, messages, stream: bool = True):
+            self._iterator = fake_openai_call_stream(model, messages, stream)
+
+        def __iter__(self):
+            return self._iterator
+
+        def __next__(self):
+            return self._iterator.__next__()
+
+    query = {
+        "model": MOCK_OPENAI_QUERY["model"],
+        "messages": MOCK_OPENAI_QUERY["messages"],
+        "stream": True,
+    }
+    response = FakeStream(**query)
+    log = phospho.log(input=query, output=response, stream=True)
+    # Streamed content should be the same
+    for r, groundtruth_r in zip(response, MOCK_OPENAI_STREAM_RESPONSE):
+        assert r == groundtruth_r
+        raw_output = phospho.log_queue.events[log["task_id"]].content["raw_output"]
+        if isinstance(raw_output, list):
+            assert raw_output[-1] == groundtruth_r.model_dump()
+        else:
+            assert raw_output == groundtruth_r.model_dump()
+
     # TODO : Validate that the connection was successful

@@ -31,7 +31,6 @@ st.title("Assistant")  # Let's do an LLM-powered assistant !
 phospho.init(
     api_key=st.secrets["PHOSPHO_API_KEY"],
     project_id=st.secrets["PHOSPHO_PROJECT_ID"],
-    verbose=True,
 )
 phospho.config.BASE_URL = "https://phospho-backend-zxs3h5fuba-ew.a.run.app/v0"
 

@@ -3,13 +3,20 @@ from .message import Message
 from .client import Client
 from .consumer import Consumer
 from .log_queue import LogQueue, Event
-from .utils import generate_timestamp, generate_uuid, convert_to_jsonable_dict
+from .utils import (
+    generate_timestamp,
+    generate_uuid,
+    convert_to_jsonable_dict,
+    is_jsonable,
+)
 from .extractor import get_input_output, RawDataType
 from .config import BASE_URL
 from ._version import __version__
 
+import pydantic
 import logging
 
+from copy import deepcopy
 from typing import (
     Dict,
     Any,
@@ -28,7 +35,6 @@ client = None
 log_queue = None
 consumer = None
 current_session_id = None
-verbose = True
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +42,6 @@ logger = logging.getLogger(__name__)
 def init(
     api_key: Optional[str] = None,
     project_id: Optional[str] = None,
-    verbose: bool = True,
     tick: float = 0.5,
 ) -> None:
     """
@@ -58,7 +63,7 @@ def init(
 
     client = Client(api_key=api_key, project_id=project_id)
     log_queue = LogQueue()
-    consumer = Consumer(log_queue=log_queue, client=client, verbose=verbose, tick=tick)
+    consumer = Consumer(log_queue=log_queue, client=client, tick=tick)
     # Start the consumer on a separate thread (this will periodically send logs to backend)
     consumer.start()
 
@@ -87,7 +92,7 @@ def new_session() -> str:
     return current_session_id
 
 
-def log(
+def _log_single_event(
     input: Union[RawDataType, str],
     output: Optional[Union[RawDataType, str]] = None,
     session_id: Optional[str] = None,
@@ -103,34 +108,11 @@ def log(
     to_log: bool = True,
     **kwargs: Dict[str, Any],
 ) -> Dict[str, object]:
-    """Phospho's main all-purpose logging endpoint. Usage:
-    ```
-    phospho.log(input="input", output="output")
-    ```
+    """ """
 
-    By default, phospho will try to interpret a string representation from `input` and `output`.
-    For example, OpenAI API calls. Arguments passed as `input` and `output` are then stored
-    in `raw_input` and `raw_output`, unless those are specified.
-
-    You can customize this behaviour using `input_to_str_function` and `output_to_str_function`.
-
-    `session_id` is used to group logs together. For example, a single conversation.
-
-    By default, every log is assigned to a unique `task_id` and is immediately pushed to backend.
-    However, if you pass multiple logs with the same `task_id` and `to_log=False`, they will
-    stay in queue until they receive the same `task_id` with `to_log=False`. They will then
-    be combined and pushed to backend.
-    You can automate this behaviour using `output_to_task_id_and_to_log_function`. This is used
-    to handle streaming.
-
-    Every other `**kwargs` will be added to the log content and stored.
-
-    Returns: Dict[str, object] The content of what has been logged.
-    """
     global client
     global log_queue
     global current_session_id
-    global verbose
 
     assert (
         (log_queue is not None) and (client is not None)
@@ -158,7 +140,6 @@ def log(
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
         output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
-        verbose=verbose,
     )
 
     # Override to_log parameter
@@ -175,7 +156,7 @@ def log(
 
     # Every other kwargs will be directly stored in the logs, if it's json serializable
     if kwargs:
-        kwargs_to_log = convert_to_jsonable_dict(kwargs, verbose=verbose)
+        kwargs_to_log = convert_to_jsonable_dict(kwargs)
     else:
         kwargs_to_log = {}
 
@@ -251,6 +232,138 @@ def log(
     return log_content
 
 
+def log(
+    input: Union[RawDataType, str],
+    output: Optional[Union[RawDataType, str, Iterable[RawDataType]]] = None,
+    session_id: Optional[str] = None,
+    task_id: Optional[str] = None,
+    raw_input: Optional[RawDataType] = None,
+    raw_output: Optional[RawDataType] = None,
+    # todo: group those into "transformation"
+    input_to_str_function: Optional[Callable[[Any], str]] = None,
+    output_to_str_function: Optional[Callable[[Any], str]] = None,
+    output_to_task_id_and_to_log_function: Optional[
+        Callable[[Any], Tuple[Optional[str], bool]]
+    ] = None,
+    concatenate_raw_outputs_if_task_id_exists: bool = True,
+    stream: bool = False,
+    **kwargs: Dict[str, Any],
+) -> Dict[str, object]:
+    """Phospho's main all-purpose logging endpoint. Usage:
+    ```
+    phospho.log(input="input", output="output")
+    ```
+
+    By default, phospho will try to interpret a string representation from `input` and `output`.
+    For example, OpenAI API calls. Arguments passed as `input` and `output` are then stored
+    in `raw_input` and `raw_output`, unless those are specified.
+
+    You can customize this behaviour using `input_to_str_function` and `output_to_str_function`.
+
+    `session_id` is used to group logs together. For example, a single conversation.
+
+    By default, every log is assigned to a unique `task_id` and is immediately pushed to backend.
+    However, if you pass multiple logs with the same `task_id` and `to_log=False`, they will
+    stay in queue until they receive the same `task_id` with `to_log=False`. They will then
+    be combined and pushed to backend.
+    You can automate this behaviour using `output_to_task_id_and_to_log_function`. This is used
+    to handle streaming.
+
+    Every other `**kwargs` will be added to the log content and stored.
+
+    Returns: Dict[str, object] The content of what has been logged.
+    """
+    if not stream:
+        # Push directly the log to log_queue
+
+        # TODO : Make type validation cleaner
+        assert (
+            (output is None)
+            or isinstance(output, str)
+            or isinstance(output, pydantic.BaseModel)
+            or is_jsonable(output)
+        ), f"If stream=False, you can't log output type {type(output)}"
+
+        log = _log_single_event(
+            input=input,
+            output=output,
+            session_id=session_id,
+            task_id=task_id,
+            raw_input=raw_input,
+            raw_output=raw_output,
+            input_to_str_function=input_to_str_function,
+            output_to_str_function=output_to_str_function,
+            output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
+            concatenate_raw_outputs_if_task_id_exists=concatenate_raw_outputs_if_task_id_exists,
+            to_log=True,
+            **kwargs,
+        )
+    else:
+        # Implement the streaming logic over the output
+        # Note: The output must be mutable
+
+        # Verify that output is iterable
+        assert not isinstance(
+            output, str
+        ), "output is a str. Pass stream=False to handle this case"
+        assert (
+            output is not None
+        ), "output is None. Pass stream=False to handle this case"
+        assert hasattr(output.__class__, "__iter__") and hasattr(
+            output.__class__, "__next__"
+        ), "Output must be iterable if stream=True"
+
+        # Wrap the class iterator with a phospho logging callback
+        if not hasattr(output.__class__, "_phospho_wrapped"):
+            # Create a copy of the iterator function
+            # Q: Do this with __iter__ as well ?
+            class_next_func_copy = deepcopy(output.__next__.__func__)
+
+            def wrapped_next(self):
+                """At every iteration step, phospho stores the intermediate value internally"""
+                value = class_next_func_copy(self)
+                _log_single_event(
+                    output=value, to_log=False, **output._phospho_metadata
+                )
+                return value
+
+            def wrapped_iter(self):
+                """The phospho wrapper flushes the log at the end of the iteration"""
+                while True:
+                    try:
+                        yield self.__next__()
+                    except StopIteration:
+                        # Iteration finished, push the logs
+                        _log_single_event(
+                            output=None, to_log=True, **self._phospho_metadata
+                        )
+                        break
+
+            # Update the class iterators to be wrapped
+            output.__class__.__next__ = wrapped_next
+            output.__class__.__iter__ = wrapped_iter
+            # Mark the class as wrapped to avoid wrapping it multiple time
+            output.__class__._phospho_wrapped = True
+
+        # Modify the instance inplace to carry additional metadata
+        output._phospho_metadata = {
+            "input": input,
+            # do not put output in the metadata, as it will change with __next__
+            "session_id": session_id,
+            "task_id": generate_uuid(),  # Mark these with the same, custom task_id
+            "raw_input": raw_input,
+            "raw_output": raw_output,
+            "input_to_str_function": input_to_str_function,
+            "output_to_str_function": output_to_str_function,
+            "output_to_task_id_and_to_log_function": output_to_task_id_and_to_log_function,
+            "concatenate_raw_outputs_if_task_id_exists": concatenate_raw_outputs_if_task_id_exists,
+        }
+        # Set the log return value to be this one:
+        log = {"output": None, **output._phospho_metadata}
+
+    return log
+
+
 def wrap(
     function: Callable[[Any], Any], **kwargs: Any
 ) -> Union[
@@ -321,7 +434,7 @@ def wrap(
 
     Passing a non-keyword argument will log it in phospho with a integer id. Example:
 
-    `phospho.log(some_function)("some_value", "another_value")`
+    `phospho.wrap(some_function)("some_value", "another_value")`
 
     Will be logged as `{"0": "some_value", "1": "another_value"}`
 
@@ -339,9 +452,9 @@ def wrap(
         # return a generator that also logs.
         for single_output in output:
             if single_output is not None:
-                log(
+                _log_single_event(
                     input={
-                        **{i: arg for i, arg in enumerate(wrap_args)},
+                        **{str(i): arg for i, arg in enumerate(wrap_args)},
                         **wrap_kwargs,
                     },
                     output=single_output,
@@ -352,7 +465,7 @@ def wrap(
                     **kwargs,
                 )
             else:
-                log(
+                _log_single_event(
                     input={
                         **{str(i): arg for i, arg in enumerate(wrap_args)},
                         **wrap_kwargs,
@@ -376,7 +489,7 @@ def wrap(
         # return a generator that also logs.
         async for single_output in await output:
             if single_output is not None:
-                log(
+                _log_single_event(
                     input={
                         **{str(i): arg for i, arg in enumerate(wrap_args)},
                         **wrap_kwargs,
@@ -389,7 +502,7 @@ def wrap(
                     **kwargs,
                 )
             else:
-                log(
+                _log_single_event(
                     input={
                         **{str(i): arg for i, arg in enumerate(wrap_args)},
                         **wrap_kwargs,
@@ -413,7 +526,7 @@ def wrap(
         if not stream:
             # Default behaviour (not streaming)
             #
-            log(
+            _log_single_event(
                 # Input is all the args and kwargs passed to the funciton
                 input={
                     **{str(i): arg for i, arg in enumerate(wrap_args)},
