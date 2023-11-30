@@ -13,6 +13,7 @@ from .extractor import get_input_output, RawDataType
 from .config import BASE_URL
 from ._version import __version__
 
+import pydantic
 import logging
 
 from copy import deepcopy
@@ -277,7 +278,10 @@ def log(
 
         # TODO : Make type validation cleaner
         assert (
-            (output is None) or isinstance(output, str) or is_jsonable(output)
+            (output is None)
+            or isinstance(output, str)
+            or isinstance(output, pydantic.BaseModel)
+            or is_jsonable(output)
         ), f"If stream=False, you can't log output type {type(output)}"
 
         log = _log_single_event(
