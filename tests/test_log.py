@@ -108,7 +108,7 @@ MOCK_OPENAI_STREAM_RESPONSE = [
 
 
 def test_openai_sync():
-    phospho.init(api_key="test", project_id="test", tick=0.05)
+    phospho.init(tick=0.05)
 
     query = MOCK_OPENAI_QUERY
     response = MOCK_OPENAI_RESPONSE
@@ -130,7 +130,7 @@ def test_openai_sync():
 
 
 def test_openai_stream():
-    phospho.init(api_key="test", project_id="test", tick=0.05)
+    phospho.init(tick=0.05)
 
     query = MOCK_OPENAI_QUERY
     stream_response = MOCK_OPENAI_STREAM_RESPONSE
@@ -164,7 +164,7 @@ def test_openai_stream():
 
 
 def test_wrap():
-    phospho.init(api_key="test", project_id="test", verbose=True)
+    phospho.init()
 
     # No streaming
     def fake_openai_call_no_stream(model, messages, stream: bool = False):

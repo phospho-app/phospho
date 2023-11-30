@@ -125,14 +125,13 @@ def get_input_output(
     output_to_task_id_and_to_log_function: Optional[
         Callable[[Any], Tuple[Optional[str], bool]]
     ] = None,
-    verbose: bool = True,
 ) -> Tuple[
     str,
     Optional[str],
     Optional[Union[Dict[str, object], str]],
     Optional[Union[Dict[str, object], str]],
     Optional[str],
-    bool,
+    Optional[bool],
 ]:
     """
     Convert any supported data type to standard, loggable inputs and outputs.
@@ -178,15 +177,11 @@ def get_input_output(
     else:
         # Extract input str representation from input
         input_to_log = input_to_str_function(input)
-        raw_input_to_log = convert_to_jsonable_dict(
-            convert_to_dict(input), verbose=verbose
-        )
+        raw_input_to_log = convert_to_jsonable_dict(convert_to_dict(input))
 
     # If raw input is specified, override
     if raw_input is not None:
-        raw_input_to_log = convert_to_jsonable_dict(
-            convert_to_dict(raw_input), verbose=verbose
-        )
+        raw_input_to_log = convert_to_jsonable_dict(convert_to_dict(raw_input))
 
     if output is not None:
         # Extract a string representation from output
@@ -196,17 +191,13 @@ def get_input_output(
         else:
             output_to_log = output_to_str_function(output)
             task_id_from_output, to_log = output_to_task_id_and_to_log_function(output)
-            raw_output_to_log = convert_to_jsonable_dict(
-                convert_to_dict(output), verbose=verbose
-            )
+            raw_output_to_log = convert_to_jsonable_dict(convert_to_dict(output))
     else:
         output_to_log = None
 
     # If raw output is specified, override
     if raw_output is not None:
-        raw_output_to_log = convert_to_jsonable_dict(
-            convert_to_dict(raw_output), verbose=verbose
-        )
+        raw_output_to_log = convert_to_jsonable_dict(convert_to_dict(raw_output))
 
     return (
         input_to_log,
