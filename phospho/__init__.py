@@ -87,7 +87,7 @@ def new_session() -> str:
     return current_session_id
 
 
-def log_single_event(
+def _log_single_event(
     input: Union[RawDataType, str],
     output: Optional[Union[RawDataType, str]] = None,
     session_id: Optional[str] = None,
@@ -275,7 +275,7 @@ def log(
 
         # TODO : Validate that output is the proper type, otherwise raise exception asking to set stream=True
 
-        log = log_single_event(
+        log = _log_single_event(
             input=input,
             output=output,
             session_id=session_id,
@@ -313,7 +313,9 @@ def log(
             def wrapped_next(self):
                 """At every iteration step, phospho stores the intermediate value internally"""
                 value = class_next_func_copy(self)
-                log_single_event(output=value, to_log=False, **output._phospho_metadata)
+                _log_single_event(
+                    output=value, to_log=False, **output._phospho_metadata
+                )
                 return value
 
             def wrapped_iter(self):
@@ -323,7 +325,7 @@ def log(
                         yield self.__next__()
                     except StopIteration:
                         # Iteration finished, push the logs
-                        log_single_event(
+                        _log_single_event(
                             output=None, to_log=True, **self._phospho_metadata
                         )
                         break
@@ -441,9 +443,9 @@ def wrap(
         # return a generator that also logs.
         for single_output in output:
             if single_output is not None:
-                log(
+                _log_single_event(
                     input={
-                        **{i: arg for i, arg in enumerate(wrap_args)},
+                        **{str(i): arg for i, arg in enumerate(wrap_args)},
                         **wrap_kwargs,
                     },
                     output=single_output,
@@ -454,7 +456,7 @@ def wrap(
                     **kwargs,
                 )
             else:
-                log(
+                _log_single_event(
                     input={
                         **{str(i): arg for i, arg in enumerate(wrap_args)},
                         **wrap_kwargs,
@@ -478,7 +480,7 @@ def wrap(
         # return a generator that also logs.
         async for single_output in await output:
             if single_output is not None:
-                log(
+                _log_single_event(
                     input={
                         **{str(i): arg for i, arg in enumerate(wrap_args)},
                         **wrap_kwargs,
@@ -491,7 +493,7 @@ def wrap(
                     **kwargs,
                 )
             else:
-                log(
+                _log_single_event(
                     input={
                         **{str(i): arg for i, arg in enumerate(wrap_args)},
                         **wrap_kwargs,
@@ -515,7 +517,7 @@ def wrap(
         if not stream:
             # Default behaviour (not streaming)
             #
-            log(
+            _log_single_event(
                 # Input is all the args and kwargs passed to the funciton
                 input={
                     **{str(i): arg for i, arg in enumerate(wrap_args)},
