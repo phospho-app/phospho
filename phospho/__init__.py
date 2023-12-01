@@ -15,6 +15,20 @@ from .extractor import get_input_output, RawDataType
 from .config import BASE_URL
 from ._version import __version__
 
+__all__ = [
+    "Client",
+    "Consumer",
+    "LogQueue",
+    "Event",
+    "generate_timestamp",
+    "generate_uuid",
+    "convert_to_jsonable_dict",
+    "get_input_output",
+    "RawDataType",
+    "MutableAsyncGenerator",
+    "MutableGenerator",
+]
+
 import pydantic
 import logging
 
@@ -54,10 +68,10 @@ def init(
     push logs content to the log_queue. Every tick, the consumer tries to push the content
     of the log_queue to the phospho backend.
 
-    api_key: Phospho API key
-    project_id: Phospho project id
-    verbose: whether to display logs
-    tick: how frequently the consumer tries to push logs to the backend (in seconds)
+    :param api_key: Phospho API key
+    :param project_id: Phospho project id
+    :param verbose: whether to display logs
+    :param tick: how frequently the consumer tries to push logs to the backend (in seconds)
     """
     global client
     global log_queue
@@ -88,7 +102,7 @@ def new_session() -> str:
     phospho.log("stuff", session_id="custom_session_id")
     ```
 
-    Returns the new session_id.
+    :returns: The new session_id.
     """
     global current_session_id
     current_session_id = generate_uuid()
@@ -111,8 +125,11 @@ def _log_single_event(
     to_log: bool = True,
     **kwargs: Dict[str, Any],
 ) -> Dict[str, object]:
-    """ """
+    """Log a single event.
 
+    Internal function used to push stuff to log_queue and mark them as to be sent
+    to the logging endpoint or not.
+    """
     global client
     global log_queue
     global current_session_id
@@ -362,7 +379,9 @@ def log(
     stream: bool = False,
     **kwargs: Dict[str, Any],
 ) -> Dict[str, object]:
-    """Phospho's main all-purpose logging endpoint. Usage:
+    """Phospho's main all-purpose logging endpoint, with support for streaming.
+
+    Usage:
     ```
     phospho.log(input="input", output="output")
     ```
@@ -384,7 +403,9 @@ def log(
 
     Every other `**kwargs` will be added to the log content and stored.
 
-    Returns: Dict[str, object] The content of what has been logged.
+    :returns:
+    - log_event (Dict[str, object]):
+        The content of what has been logged.
     """
     if stream:
         # Implement the streaming logic over the output
@@ -494,7 +515,7 @@ def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
     Hello! How can I assist you today?
     ```
 
-    ## Streaming
+    ### Streaming
 
     If the parameter `stream=True` is passed to the wrapped function, then the wrapped function returns
     a generator that iterates over the function output, and logs every individual output. Example:
@@ -523,7 +544,7 @@ def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
 
     Passing `stream=False` or `stream=None` disable the behaviour.
 
-    ## Non-keyword arguments
+    ### Non-keyword arguments
 
     Passing a non-keyword argument will log it in phospho with a integer id. Example:
 
@@ -533,9 +554,7 @@ def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
 
     Use keyword arguments to
 
-    ## Return
-
-    Returns: the wrapped function with additional logging.
+    :returns: The wrapped function with additional logging.
     """
 
     def streamed_function_wrapper(
