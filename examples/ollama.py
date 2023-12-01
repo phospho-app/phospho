@@ -19,25 +19,23 @@ def generate(prompt, context):
         stream=True,
     )
     r.raise_for_status()
+    response_iterator = r.iter_lines()
 
-    request_id = phospho.generate_uuid()
-    for line in r.iter_lines():
+    phospho.log(input=prompt, output=response_iterator, stream=True)
+
+    for line in response_iterator:
         body = json.loads(line)
         response_part = body.get("response", "")
         # the response streams one token at a time, print that as we receive it
         print(response_part, end="", flush=True)
 
         # Add a logging endpoint for every response_part
-        phospho.log(
-            input=prompt, output=response_part, task_id=request_id, to_log=False
-        )
 
         if "error" in body:
             raise Exception(body["error"])
 
         if body.get("done", False):
             # Say that the translation is finished
-            phospho.log(input=prompt, output=None, task_id=request_id, to_log=True)
             return body["context"]
 
 

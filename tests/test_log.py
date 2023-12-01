@@ -109,7 +109,7 @@ MOCK_OPENAI_STREAM_RESPONSE = [
 ]
 
 
-def test_openai_sync():
+def test_log_sync():
     phospho.init(tick=0.05)
 
     query = MOCK_OPENAI_QUERY
@@ -131,7 +131,7 @@ def test_openai_sync():
     # TODO : Validate that the connection was successful
 
 
-def test_openai_stream():
+def test_log_stream():
     phospho.init(tick=0.05)
 
     query = MOCK_OPENAI_QUERY

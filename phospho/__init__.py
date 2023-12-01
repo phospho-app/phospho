@@ -385,12 +385,12 @@ def log(
         # Implement the streaming logic over the output
         # Note: The output must be mutable. Generators are not mutable
         mutable_error = """phospho.log was called with stream=True, which requires output to be mutable. 
-However, output type {type(output)} is immutable because it's an instance of {instance},
+However, output type {output} is immutable because it's an instance of {instance},
 Wrap this generator into a mutable object for phospho.log to work:
 """
         if isinstance(output, AsyncGenerator):
             raise ValueError(
-                mutable_error.format(type(output), "AsyncGenerator")
+                mutable_error.format(output=type(output), instance="AsyncGenerator")
                 + """
 class MutableGenerator:
         def __init__(self, generator):
@@ -407,7 +407,7 @@ my_mutable_generator = MutableGenerator(generator)
             )
         elif isinstance(output, Generator):
             raise ValueError(
-                mutable_error.format(type(output), "Generator")
+                mutable_error.format(output=type(output), instance="Generator")
                 + """
 class MutableGenerator:
         def __init__(self, generator):
