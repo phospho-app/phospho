@@ -267,30 +267,37 @@ async def test_async_stream():
             self.i += 1
             return self._values[self.i - 1]
 
-    response = FakeAsyncStream(**query)
+    async def test_once():
+        response = FakeAsyncStream(**query)
 
-    log = phospho.log(input=query, output=response, stream=True)
+        log = phospho.log(input=query, output=response, stream=True)
 
-    task_id = log["task_id"]
-    assert task_id in phospho.log_queue.events.keys()
+        task_id = log["task_id"]
+        assert task_id not in phospho.log_queue.events.keys()
 
-    # Streamed content should be the same
-    i = 0
-    async for r in response:
-        resp = r
-        assert i < len(MOCK_OPENAI_STREAM_RESPONSE), str(resp)
-        groundtruth_r = MOCK_OPENAI_STREAM_RESPONSE[i]
-        assert r == groundtruth_r
-        # Log queue has been flushed at the last response
-        if i < len(MOCK_OPENAI_STREAM_RESPONSE) - 1:
-            log_content = phospho.log_queue.events[log["task_id"]].content
-            raw_output = log_content["raw_output"]
-            if isinstance(raw_output, list):
-                assert raw_output[-1] == groundtruth_r.model_dump()
-            else:
-                assert raw_output == groundtruth_r.model_dump()
-        i += 1
-    assert i <= len(MOCK_OPENAI_STREAM_RESPONSE), str(r)
+        # Streamed content should be the same
+        i = 0
+        async for r in response:
+            resp = r
+            assert i < len(MOCK_OPENAI_STREAM_RESPONSE), str(resp)
+            groundtruth_r = MOCK_OPENAI_STREAM_RESPONSE[i]
+            assert r == groundtruth_r
+            # Log queue has been flushed at the last response
+            if i < len(MOCK_OPENAI_STREAM_RESPONSE) - 1:
+                log_content = phospho.log_queue.events[log["task_id"]].content
+                raw_output = log_content["raw_output"]
+                if isinstance(raw_output, list):
+                    assert raw_output[-1] == groundtruth_r.model_dump()
+                else:
+                    assert raw_output == groundtruth_r.model_dump()
+            i += 1
+        assert i <= len(MOCK_OPENAI_STREAM_RESPONSE), str(r)
+        return task_id
+
+    # Test multiple times
+    task_id_1 = await test_once()
+    task_id_2 = await test_once()
+    assert task_id_1 != task_id_2
 
     # Test with another kind of generator
 
@@ -319,20 +326,22 @@ async def test_async_stream():
 
     log = phospho.log(input=query, output=response, stream=True)
     task_id = log["task_id"]
-    assert task_id in phospho.log_queue.events.keys()
-
+    # Nothing in log queue yet
+    assert task_id not in phospho.log_queue.events.keys()
     # Streamed content should be the same
     i = 0
     async for r in response:
-        assert i < len(MOCK_OPENAI_STREAM_RESPONSE)
-
+        resp = r
+        assert i < len(MOCK_OPENAI_STREAM_RESPONSE), str(resp)
         groundtruth_r = MOCK_OPENAI_STREAM_RESPONSE[i]
         assert r == groundtruth_r
         # Log queue has been flushed at the last response
         if i < len(MOCK_OPENAI_STREAM_RESPONSE) - 1:
-            raw_output = phospho.log_queue.events[task_id].content["raw_output"]
+            log_content = phospho.log_queue.events[log["task_id"]].content
+            raw_output = log_content["raw_output"]
             if isinstance(raw_output, list):
                 assert raw_output[-1] == groundtruth_r.model_dump()
             else:
                 assert raw_output == groundtruth_r.model_dump()
-            i += 1
+        i += 1
+    assert i <= len(MOCK_OPENAI_STREAM_RESPONSE), str(r)

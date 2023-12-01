@@ -319,7 +319,7 @@ def _wrap_iterable(
 
             # Update the class iterators to be wrapped
             output.__class__.__anext__ = wrapped_anext
-            output.__class__.__aiter__ = wrapped_aiter
+            # output.__class__.__aiter__ = wrapped_aiter
 
         else:
             raise NotImplementedError(
@@ -404,11 +404,12 @@ my_mutable_generator = MutableGenerator(generator)
         if isinstance(output, AsyncIterable) or isinstance(output, Iterable):
             _wrap_iterable(output)
             # Modify the instance inplace to carry additional metadata
+            task_id = generate_uuid()
             output._phospho_metadata = {
                 "input": input,
                 # do not put output in the metadata, as it will change with __next__
                 "session_id": session_id,
-                "task_id": generate_uuid(),  # Mark these with the same, custom task_id
+                "task_id": task_id,  # Mark these with the same, custom task_id
                 "raw_input": raw_input,
                 "raw_output": raw_output,
                 "input_to_str_function": input_to_str_function,
