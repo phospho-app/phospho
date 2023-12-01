@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-phospho.init(tick=0.001)
+phospho.init(tick=0.5)
 
 # NOTE: ollama must be running for this to work, start the ollama app or run `ollama serve`
 model = "zephyr"  # TODO: update this for whatever model you wish to use
@@ -23,10 +23,10 @@ def generate(prompt, context):
     )
     r.raise_for_status()
     response_iterator = r.iter_lines()
+
     # In order to directly log this to phospho, we need to wrap it this way
     response_iterator = phospho.MutableGenerator(response_iterator)
-
-    # log with phospho
+    # the generated content will be logged to phospho
     phospho.log(input=prompt, output=response_iterator, stream=True)
 
     for line in response_iterator:
@@ -34,8 +34,6 @@ def generate(prompt, context):
         response_part = body.get("response", "")
         # the response streams one token at a time, print that as we receive it
         print(response_part, end="", flush=True)
-
-        # Add a logging endpoint for every response_part
 
         if "error" in body:
             raise Exception(body["error"])
