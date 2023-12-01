@@ -54,7 +54,7 @@ def detect_str_from_input(input: RawDataType) -> str:
 
 def detect_task_id_and_to_log_from_output(
     output: RawDataType
-) -> Tuple[Optional[str], bool]:
+) -> Tuple[Optional[str], Optional[bool]]:
     """
     This function extracts from an arbitrary output an eventual task_id and to_log bool.
     task_id is used to grouped multiple outputs together.
@@ -82,7 +82,7 @@ def detect_task_id_and_to_log_from_output(
 
         return task_id, (finish_reason is not None)
     # Unimplemented
-    return None, True
+    return None, None
 
 
 def detect_str_from_output(output: RawDataType) -> str:
@@ -145,7 +145,7 @@ def get_input_output(
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_task_id_and_to_log_function: Optional[
-        Callable[[Any], Tuple[Optional[str], bool]]
+        Callable[[Any], Tuple[Optional[str], Optional[bool]]]
     ] = None,
 ) -> Tuple[
     str,
@@ -173,7 +173,7 @@ def get_input_output(
         of the output, raw_output if specified, or None if output is a str.
     task_id_from_output (Optional[str]): Task id detected from the output. Useful from
         keeping track of streaming outputs.
-    to_log (bool): Whether to log the event directly, or wait until a later event.
+    to_log (Optional[bool]): Whether to log the event directly, or wait until a later event.
         Useful for streaming.
     """
 
