@@ -214,7 +214,8 @@ def test_stream():
             self._iterator = fake_openai_call_stream(model, messages, stream)
 
         def __iter__(self):
-            return self._iterator
+            for item in self._iterator:
+                yield item
 
         def __next__(self):
             return self._iterator.__next__()
@@ -226,12 +227,16 @@ def test_stream():
     }
     response = FakeStream(**query)
     log = phospho.log(input=query, output=response, stream=True)
+    task_id = log["task_id"]
     # Streamed content should be the same
     i = 0
     for r in response:
         groundtruth_r = MOCK_OPENAI_STREAM_RESPONSE[i]
         assert r == groundtruth_r
-        raw_output = phospho.log_queue.events[log["task_id"]].content["raw_output"]
+        assert (
+            task_id in phospho.log_queue.events.keys()
+        ), f"{task_id} not found in the log_queue.events: {phospho.log_queue.events.keys()}, round {i}"
+        raw_output = phospho.log_queue.events[task_id].content["raw_output"]
         if isinstance(raw_output, list):
             assert raw_output[-1] == groundtruth_r.model_dump()
         else:
@@ -239,8 +244,6 @@ def test_stream():
         i += 1
 
     # TODO : Validate that the connection was successful
-
-    # Streaming, async
 
 
 @pytest.mark.asyncio
