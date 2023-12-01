@@ -38,6 +38,14 @@ phospho.collection
   - ```{autodoc2-docstring} phospho.new_session
     :summary:
     ```
+* - {py:obj}`_log_single_event <phospho._log_single_event>`
+  - ```{autodoc2-docstring} phospho._log_single_event
+    :summary:
+    ```
+* - {py:obj}`_wrap_iterable <phospho._wrap_iterable>`
+  - ```{autodoc2-docstring} phospho._wrap_iterable
+    :summary:
+    ```
 * - {py:obj}`log <phospho.log>`
   - ```{autodoc2-docstring} phospho.log
     :summary:
@@ -68,10 +76,6 @@ phospho.collection
     ```
 * - {py:obj}`current_session_id <phospho.current_session_id>`
   - ```{autodoc2-docstring} phospho.current_session_id
-    :summary:
-    ```
-* - {py:obj}`verbose <phospho.verbose>`
-  - ```{autodoc2-docstring} phospho.verbose
     :summary:
     ```
 * - {py:obj}`logger <phospho.logger>`
@@ -122,16 +126,6 @@ phospho.collection
 
 ````
 
-````{py:data} verbose
-:canonical: phospho.verbose
-:value: >
-   True
-
-```{autodoc2-docstring} phospho.verbose
-```
-
-````
-
 ````{py:data} logger
 :canonical: phospho.logger
 :value: >
@@ -142,7 +136,7 @@ phospho.collection
 
 ````
 
-````{py:function} init(api_key: typing.Optional[str] = None, project_id: typing.Optional[str] = None, verbose: bool = True, tick: float = 0.5) -> None
+````{py:function} init(api_key: typing.Optional[str] = None, project_id: typing.Optional[str] = None, tick: float = 0.5) -> None
 :canonical: phospho.init
 
 ```{autodoc2-docstring} phospho.init
@@ -156,14 +150,28 @@ phospho.collection
 ```
 ````
 
-````{py:function} log(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_task_id_and_to_log_function: typing.Optional[typing.Callable[[typing.Any], typing.Tuple[typing.Optional[str], bool]]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, to_log: bool = True, **kwargs: typing.Dict[str, typing.Any]) -> typing.Dict[str, object]
+````{py:function} _log_single_event(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_task_id_and_to_log_function: typing.Optional[typing.Callable[[typing.Any], typing.Tuple[typing.Optional[str], bool]]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, to_log: bool = True, **kwargs: typing.Dict[str, typing.Any]) -> typing.Dict[str, object]
+:canonical: phospho._log_single_event
+
+```{autodoc2-docstring} phospho._log_single_event
+```
+````
+
+````{py:function} _wrap_iterable(output: typing.Union[typing.Iterable[phospho.extractor.RawDataType], typing.AsyncIterable[phospho.extractor.RawDataType]]) -> None
+:canonical: phospho._wrap_iterable
+
+```{autodoc2-docstring} phospho._wrap_iterable
+```
+````
+
+````{py:function} log(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str, typing.Iterable[phospho.extractor.RawDataType]]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_task_id_and_to_log_function: typing.Optional[typing.Callable[[typing.Any], typing.Tuple[typing.Optional[str], bool]]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, stream: bool = False, **kwargs: typing.Dict[str, typing.Any]) -> typing.Dict[str, object]
 :canonical: phospho.log
 
 ```{autodoc2-docstring} phospho.log
 ```
 ````
 
-````{py:function} wrap(function: typing.Callable[[typing.Any], typing.Any], **kwargs: typing.Any) -> typing.Union[typing.Callable[[typing.Any], typing.Any], typing.Generator[typing.Any, typing.Any, None], typing.AsyncGenerator[typing.Any, None]]
+````{py:function} wrap(function: typing.Callable[[typing.Any], typing.Any], **kwargs: typing.Any) -> typing.Callable[[typing.Any], typing.Any]
 :canonical: phospho.wrap
 
 ```{autodoc2-docstring} phospho.wrap

@@ -89,7 +89,7 @@
 ```
 ````
 
-````{py:function} detect_task_id_and_to_log_from_output(output: phospho.extractor.RawDataType) -> typing.Tuple[typing.Optional[str], bool]
+````{py:function} detect_task_id_and_to_log_from_output(output: phospho.extractor.RawDataType) -> typing.Tuple[typing.Optional[str], typing.Optional[bool]]
 :canonical: phospho.extractor.detect_task_id_and_to_log_from_output
 
 ```{autodoc2-docstring} phospho.extractor.detect_task_id_and_to_log_from_output
@@ -103,7 +103,7 @@
 ```
 ````
 
-````{py:function} get_input_output(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str]] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_task_id_and_to_log_function: typing.Optional[typing.Callable[[typing.Any], typing.Tuple[typing.Optional[str], bool]]] = None, verbose: bool = True) -> typing.Tuple[str, typing.Optional[str], typing.Optional[typing.Union[typing.Dict[str, object], str]], typing.Optional[typing.Union[typing.Dict[str, object], str]], typing.Optional[str], typing.Optional[bool]]
+````{py:function} get_input_output(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str]] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_task_id_and_to_log_function: typing.Optional[typing.Callable[[typing.Any], typing.Tuple[typing.Optional[str], typing.Optional[bool]]]] = None) -> typing.Tuple[str, typing.Optional[str], typing.Optional[typing.Union[typing.Dict[str, object], str]], typing.Optional[typing.Union[typing.Dict[str, object], str]], typing.Optional[str], typing.Optional[bool]]
 :canonical: phospho.extractor.get_input_output
 
 ```{autodoc2-docstring} phospho.extractor.get_input_output
