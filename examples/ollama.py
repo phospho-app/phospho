@@ -1,11 +1,11 @@
 import phospho
 import json
 import requests
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
-phospho.init(tick=0.5)
+phospho.init(api_key="test", project_id="test", tick=0.5)
 
 # NOTE: ollama must be running for this to work, start the ollama app or run `ollama serve`
 model = "zephyr"  # TODO: update this for whatever model you wish to use
@@ -25,7 +25,11 @@ def generate(prompt, context):
     response_iterator = r.iter_lines()
 
     # In order to directly log this to phospho, we need to wrap it this way
-    response_iterator = phospho.MutableGenerator(response_iterator)
+    response_iterator = phospho.MutableGenerator(
+        generator=response_iterator,
+        # we need to indicate when the generation stops
+        stop=lambda line: json.loads(line).get("done", False),
+    )
     # the generated content will be logged to phospho
     phospho.log(input=prompt, output=response_iterator, stream=True)
 
