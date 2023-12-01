@@ -1,17 +1,16 @@
 import pytest
 import time
-import builtins
 import asyncio
 import phospho
-
+import logging
 
 from openai.types.chat import ChatCompletion, ChatCompletionMessage, ChatCompletionChunk
 from openai.types.completion_usage import CompletionUsage
-
 from openai.types.chat.chat_completion import Choice
-
 from openai.types.chat.chat_completion_chunk import ChoiceDelta
 from openai.types.chat.chat_completion_chunk import Choice as chunk_Choice
+
+logger = logging.getLogger(__name__)
 
 MOCK_OPENAI_QUERY = {
     "messages": [{"role": "user", "content": "Say hi !"}],
@@ -140,27 +139,22 @@ def test_openai_stream():
     expected_outputs = ["Hello", "Hello you", "Hello you!", "Hello you!"]
     assert len(stream_response) == len(expected_outputs)
     # Verify that the extractor matches the output
+    task_id = phospho.generate_uuid()
     for i, response, expected_output in zip(
         range(len(expected_outputs)), stream_response, expected_outputs
     ):
-        log_content = phospho.log(input=query, output=response)
+        log_content = phospho.log(input=query, output=response, task_id=task_id)
         assert (
             log_content["output"] == expected_output
         ), f"Expected output from extractor '{expected_output}' but instead got: {log_content['output']}"
         if i + 1 < len(expected_outputs):
             assert (
-                phospho.log_queue.events[
-                    "chatcmpl-8PWAOdCT73H5XUum52ny3NHnw2ZQx"
-                ].to_log
-                == False
+                phospho.log_queue.events[log_content["task_id"]].to_log == False
             ), f"First (i={i}) log events should be set as to_log=False"
         else:
             # Last call, we want the output to be marked as "to log"
             assert (
-                phospho.log_queue.events[
-                    "chatcmpl-8PWAOdCT73H5XUum52ny3NHnw2ZQx"
-                ].to_log
-                == True
+                phospho.log_queue.events[log_content["task_id"]].to_log == True
             ), f"Last (i={i}) log event should be set as to_log=True"
     time.sleep(0.1)
     # TODO : Validate that the connection was successful
@@ -228,61 +222,103 @@ def test_stream():
     response = FakeStream(**query)
     log = phospho.log(input=query, output=response, stream=True)
     # Streamed content should be the same
-    for r, groundtruth_r in zip(response, MOCK_OPENAI_STREAM_RESPONSE):
+    i = 0
+    for r in response:
+        groundtruth_r = MOCK_OPENAI_STREAM_RESPONSE[i]
         assert r == groundtruth_r
         raw_output = phospho.log_queue.events[log["task_id"]].content["raw_output"]
         if isinstance(raw_output, list):
             assert raw_output[-1] == groundtruth_r.model_dump()
         else:
             assert raw_output == groundtruth_r.model_dump()
+        i += 1
 
     # TODO : Validate that the connection was successful
 
     # Streaming, async
 
-    def aiter(iterable, /, *, wrap_sync=False):
-        try:
-            return builtins.aiter(iterable)
-        except TypeError:
-            if not wrap_sync:
-                raise
-        it = builtins.iter(iterable)
 
-        class _ait:
-            def __init__(self, it):
-                self._it = it
+@pytest.mark.asyncio
+async def test_async_stream():
+    phospho.init()
+    query = {
+        "model": MOCK_OPENAI_QUERY["model"],
+        "messages": MOCK_OPENAI_QUERY["messages"],
+        "stream": True,
+    }
 
-            async def __aiter__(self):
-                for i in self._it:
-                    yield i
-
-        return builtins.aiter(_ait(it))
-
-    async def fake_async_openai_call_stream(model, messages, stream: bool = True):
-        async for stream_response in aiter(MOCK_OPENAI_STREAM_RESPONSE):
-            yield stream_response
-
+    # This async class is similar to the OpenAI one
     class FakeAsyncStream:
         def __init__(self, model, messages, stream: bool = True):
-            self._iterator = fake_async_openai_call_stream(model, messages, stream)
+            self._values = MOCK_OPENAI_STREAM_RESPONSE
+            self.i = 0
 
-        async def __aiter__(self):
-            return self._iterator
+        def __aiter__(self):
+            return self
 
         async def __anext__(self):
-            return self._iterator.__next__()
+            if self.i >= len(self._values):
+                raise StopAsyncIteration
+            self.i += 1
+            return self._values[self.i - 1]
 
     response = FakeAsyncStream(**query)
+
     log = phospho.log(input=query, output=response, stream=True)
 
-    async def test_async_stream():
-        # Streamed content should be the same
-        async for r in response:
-            assert r == groundtruth_r
-            raw_output = phospho.log_queue.events[log["task_id"]].content["raw_output"]
-            if isinstance(raw_output, list):
-                assert raw_output[-1] == groundtruth_r.model_dump()
-            else:
-                assert raw_output == groundtruth_r.model_dump()
+    # Streamed content should be the same
+    i = 0
+    async for r in response:
+        resp = r
+        assert i < len(MOCK_OPENAI_STREAM_RESPONSE), str(resp)
+        groundtruth_r = MOCK_OPENAI_STREAM_RESPONSE[i]
+        assert r == groundtruth_r
+        raw_output = phospho.log_queue.events[log["task_id"]].content["raw_output"]
+        if isinstance(raw_output, list):
+            assert raw_output[-1] == groundtruth_r.model_dump()
+        else:
+            assert raw_output == groundtruth_r.model_dump()
+        i += 1
+    assert i <= len(MOCK_OPENAI_STREAM_RESPONSE), str(r)
 
-    asyncio.run(test_stream)
+    # Test with another kind of generator
+
+    async def fake_async_openai_call_stream(model, messages, stream: bool = True):
+        for stream_response in MOCK_OPENAI_STREAM_RESPONSE:
+            logger.debug(stream_response)
+            yield stream_response
+
+    class MutableGenerator:
+        def __init__(self, generator):
+            self.generator = generator
+
+        def __iter__(self):
+            return self
+
+        def __aiter__(self):
+            return self
+
+        def __next__(self):
+            return self.generator.__next__()
+
+        def __anext__(self):
+            return self.generator.__anext__()
+
+    response = MutableGenerator(fake_async_openai_call_stream(**query))
+
+    log = phospho.log(input=query, output=response, stream=True)
+
+    # Streamed content should be the same
+    i = 0
+    async for r in response:
+        resp = r
+        assert i < len(MOCK_OPENAI_STREAM_RESPONSE), str(resp)
+        groundtruth_r = MOCK_OPENAI_STREAM_RESPONSE[i]
+        assert r == groundtruth_r
+        raw_output = phospho.log_queue.events[log["task_id"]].content["raw_output"]
+        if isinstance(raw_output, list):
+            assert raw_output[-1] == groundtruth_r.model_dump()
+        else:
+            assert raw_output == groundtruth_r.model_dump()
+        i += 1
+    assert i <= len(MOCK_OPENAI_STREAM_RESPONSE), str(r)
