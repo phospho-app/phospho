@@ -141,7 +141,6 @@ def _log_single_event(
         raw_output=raw_output,
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
-        output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
     )
 
     # Override to_log parameter
@@ -286,37 +285,45 @@ def _wrap_iterable(
             output.__class__._phospho_wrapped = True
 
         elif isinstance(output, AsyncIterable):
-            class_anext_func_copy = deepcopy(output.__anext__.__func__)
+            if hasattr(output.__anext__, "__func__"):
+                class_anext_func_copy = deepcopy(output.__anext__.__func__)
+            else:
+                class_anext_func_copy = (
+                    output.__anext__
+                )  # deepcopy(output.__anext__.__call__)
 
             async def wrapped_anext(self):
                 """At every iteration step, phospho stores the intermediate value internally
                 if asked to do so for this instance."""
-                value = class_anext_func_copy(self)
-                # Only log instances that have the _phosphometadata attribute (set when
-                # passed to phospho.log)
-                if hasattr(self, "_phospho_metadata"):
-                    _log_single_event(
-                        output=value, to_log=False, **self._phospho_metadata
-                    )
-                return value
+                try:
+                    value = await class_anext_func_copy(self)
+                    # Only log instances that have the _phosphometadata attribute (set when
+                    # passed to phospho.log)
+                    if hasattr(self, "_phospho_metadata"):
+                        _log_single_event(
+                            output=value, to_log=False, **self._phospho_metadata
+                        )
+                    return value
+                except StopAsyncIteration:
+                    if hasattr(self, "_phospho_metadata"):
+                        _log_single_event(
+                            output=None, to_log=True, **self._phospho_metadata
+                        )
+                    raise StopAsyncIteration
 
             async def wrapped_aiter(self):
                 """The phospho wrapper flushes the log at the end of the iteration
                 if asked to do so for this instance."""
                 while True:
                     try:
-                        yield self.__next__()
-                    except StopIteration:
+                        yield self.__anext__()
+                    except StopAsyncIteration:
                         # Iteration finished, push the logs
-                        if hasattr(self, "_phospho_metadata"):
-                            _log_single_event(
-                                output=None, to_log=True, **self._phospho_metadata
-                            )
                         break
 
             # Update the class iterators to be wrapped
             output.__class__.__anext__ = wrapped_anext
-            output.__class__.__aiter__ = wrapped_aiter
+            # output.__class__.__aiter__ = wrapped_aiter
 
         else:
             raise NotImplementedError(
@@ -370,7 +377,32 @@ def log(
     """
     if stream:
         # Implement the streaming logic over the output
-        # Note: The output must be mutable
+        # Note: The output must be mutable. Generators are not mutable
+        if isinstance(output, AsyncGenerator) or isinstance(output, Generator):
+            raise ValueError(
+                "phospho.log was called with stream=True, which requires output to be mutable. "
+                + f"However, output type {type(output)} is immutable because it's an instance of Generator or AsyncGenerator,"
+                + "Wrap this generator into a mutable object for phospho.log to work:"
+                + """
+class MutableGenerator:
+        def __init__(self, generator):
+            self.generator = generator
+
+        def __iter__(self):
+            return self
+
+        def __aiter__(self):
+            return self
+
+        def __next__(self):
+            return self.generator.__next__()
+
+        def __anext__(self):
+            return self.generator.__anext__()
+
+my_mutable_generator = MutableGenerator(generator)
+"""
+            )
 
         # Verify that output is iterable
         if isinstance(output, AsyncIterable) or isinstance(output, Iterable):
