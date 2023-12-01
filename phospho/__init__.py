@@ -266,14 +266,21 @@ def _wrap_iterable(
             def wrapped_next(self):
                 """At every iteration step, phospho stores the intermediate value internally
                 if asked to do so for this instance."""
-                value = class_next_func_copy(self)
-                # Only log instances that have the _phosphometadata attribute (set when
-                # passed to phospho.log)
-                if hasattr(self, "_phospho_metadata"):
-                    _log_single_event(
-                        output=value, to_log=False, **self._phospho_metadata
-                    )
-                return value
+                try:
+                    value = class_next_func_copy(self)
+                    # Only log instances that have the _phosphometadata attribute (set when
+                    # passed to phospho.log)
+                    if hasattr(self, "_phospho_metadata"):
+                        _log_single_event(
+                            output=value, to_log=False, **self._phospho_metadata
+                        )
+                    return value
+                except StopIteration:
+                    if hasattr(self, "_phospho_metadata"):
+                        _log_single_event(
+                            output=None, to_log=True, **self._phospho_metadata
+                        )
+                    raise StopIteration
 
             def wrapped_iter(self):
                 """The phospho wrapper flushes the log at the end of the iteration
@@ -283,10 +290,6 @@ def _wrap_iterable(
                         yield self.__next__()
                     except StopIteration:
                         # Iteration finished, push the logs
-                        if hasattr(self, "_phospho_metadata"):
-                            _log_single_event(
-                                output=None, to_log=True, **self._phospho_metadata
-                            )
                         break
 
             # Update the class iterators to be wrapped
@@ -648,22 +651,46 @@ def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
 
 
 class MutableGenerator:
-    def __init__(self, generator):
+    def __init__(self, generator: Generator, stop: Callable[[Any], bool]):
+        """Transform a generator into a mutable object that can be logged.
+
+        generator (Generator):
+            The generator to be wrapped
+        stop (Callable[[Any], bool])):
+            Stopping criterion for generation. If stop(generated_value) is True,
+            then we stop the generation.
+        """
         self.generator = generator
+        self.stop = stop
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        return self.generator.__next__()
+        value = self.generator.__next__()
+        if self.stop(value):
+            raise StopIteration
+        return value
 
 
 class MutableAsyncGenerator:
-    def __init__(self, generator):
+    def __init__(self, generator: AsyncGenerator, stop: Callable[[Any], bool]):
+        """Transform an async generator into a mutable object that can be logged.
+
+        generator (AsyncGenerator):
+            The generator to be wrapped
+        stop (Callable[[Any], bool])):
+            Stopping criterion for generation. If stop(generated_value) is True,
+            then we stop the generation.
+        """
         self.generator = generator
+        self.stop = stop
 
     def __aiter__(self):
         return self
 
     async def __anext__(self):
-        return self.generator.__next__()
+        value = await self.generator.__anext__()
+        if self.stop(value):
+            raise StopAsyncIteration
+        return value
