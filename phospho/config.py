@@ -1,5 +1,5 @@
 """
-Configuration file
+Phospho internal configuration file
 """
 
 # BASE_URL = "http://localhost:8000/v0"

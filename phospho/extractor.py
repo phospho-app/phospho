@@ -4,7 +4,7 @@ import json
 
 from typing import Union, Dict, Any, Tuple, Optional, Callable
 
-from .utils import convert_to_jsonable_dict, generate_uuid
+from .utils import convert_to_jsonable_dict
 
 RawDataType = Union[Dict[str, Any], pydantic.BaseModel]
 
@@ -158,23 +158,45 @@ def get_input_output(
     """
     Convert any supported data type to standard, loggable inputs and outputs.
 
-    input: The input content to be logged. Can be a string, a dict, or a Pydantic model.
-    output: The output content to be logged. Can be a string, a dict, a Pydantic model, or None.
-    raw_input: Will be separately logged in raw_input_to_log if specified.
-    raw_output: Will be separately logged in raw_output_to_log if specified.
+    :param input:
+        The input content to be logged. Can be a string, a dict, or a Pydantic model.
 
-    Returns:
-    input_to_log (str): A string representation of the input.
-    output_to_log (Optional[str]): A string representation of the output,
-        or None if no output is specified.
-    raw_input_to_log (Optional[Dict[str, object]]): A dict representation
-        of the input, raw_input if specified, or None if input is a str.
-    raw_output_to_log (Optional[Dict[str, object]]): A dict representation
-        of the output, raw_output if specified, or None if output is a str.
-    task_id_from_output (Optional[str]): Task id detected from the output. Useful from
-        keeping track of streaming outputs.
-    to_log (Optional[bool]): Whether to log the event directly, or wait until a later event.
-        Useful for streaming.
+    :param output:
+        The output content to be logged. Can be a string, a dict, a Pydantic model, or None.
+
+    :param raw_input:
+        Will be separately logged in raw_input_to_log if specified.
+
+    :param raw_output:
+        Will be separately logged in raw_output_to_log if specified.
+
+    :param input_to_str_function:
+
+    :param output_to_str_function:
+
+    :param output_to_task_id_and_to_log_function:
+
+    :param verbose:
+
+
+    :return:
+    - input_to_log _(str)_ -
+        A string representation of the input.
+
+    - output_to_log _(Optional[str])_ -
+        A string representation of the output, or None if no output is specified.
+
+    - raw_input_to_log _(Optional[Dict[str, object]])_ -
+        A dict representation of the input, raw_input if specified, or None if input is a str.
+
+    - raw_output_to_log _(Optional[Dict[str, object]])_ -
+        A dict representation of the output, raw_output if specified, or None if output is a str.
+
+    - task_id_from_output _(Optional[str])_ -
+        Task id detected from the output. Useful from keeping track of streaming outputs.
+
+    - to_log _(Optional[bool])_ -
+        Whether to log the event directly, or wait until a later event. Useful for streaming.
     """
 
     # Default functions to extract string from input and output
