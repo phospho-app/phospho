@@ -294,7 +294,7 @@ def _wrap_iterable(
 
             # Update the class iterators to be wrapped
             output.__class__.__next__ = wrapped_next
-            # output.__class__.__iter__ = wrapped_iter
+            output.__class__.__iter__ = wrapped_iter
             # Mark the class as wrapped to avoid wrapping it multiple time
             output.__class__._phospho_wrapped = True
 
