@@ -186,18 +186,26 @@ def _log_single_event(
         # If the task_id already exists in log_queue, update the existing event content
         # Update the dict inplace
         existing_log_content = log_queue.events[task_id].content
+
+        # Concatenate the log event output strings, unless if everything is None
+        if existing_log_content["output"] is None and log_content["output"] is None:
+            fused_output = None
+        else:
+            if existing_log_content["output"] is None:
+                existing_log_content["output"] = ""
+            if log_content["output"] is None:
+                log_content["output"] = ""
+            fused_output = str(existing_log_content["output"]) + str(
+                log_content["output"]
+            )
+
         fused_log_content = {
             # Replace creation timestamp by the original one
             # Keep a trace of the latest timestamp. This will help computing streaming time
             "client_created_at": existing_log_content["client_created_at"],
             "last_update": log_content["client_created_at"],
             # Concatenate the log event output strings
-            "output": str(existing_log_content["output"]) + str(log_content["output"])
-            if (
-                existing_log_content["output"] is not None
-                and log_content["output"] is not None
-            )
-            else log_content["output"],
+            "output": fused_output,
             "raw_output": [
                 existing_log_content["raw_output"],
                 log_content["raw_output"],
