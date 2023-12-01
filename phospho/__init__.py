@@ -392,34 +392,16 @@ Wrap this generator into a mutable object for phospho.log to work:
             raise ValueError(
                 mutable_error.format(output=type(output), instance="AsyncGenerator")
                 + """
-class MutableGenerator:
-        def __init__(self, generator):
-            self.generator = generator
-
-        def __aiter__(self):
-            return self
-
-        def __anext__(self):
-            return self.generator.__anext__()
-
-my_mutable_generator = MutableGenerator(generator)
+mutable_output = phospho.MutableAsyncGenerator(generator)
+phospho.log(input=input, output=mutable_output, stream=True)\n
 """
             )
         elif isinstance(output, Generator):
             raise ValueError(
                 mutable_error.format(output=type(output), instance="Generator")
                 + """
-class MutableGenerator:
-        def __init__(self, generator):
-            self.generator = generator
-
-        def __iter__(self):
-            return self
-
-        def __next__(self):
-            return self.generator.__next__()
-
-my_mutable_generator = MutableGenerator(generator)
+mutable_output = phospho.MutableGenerator(generator)
+phospho.log(input=input, output=mutable_output, stream=True)\n
 """
             )
 
@@ -663,3 +645,25 @@ def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
                 )
 
     return wrapped_function
+
+
+class MutableGenerator:
+    def __init__(self, generator):
+        self.generator = generator
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.generator.__next__()
+
+
+class MutableAsyncGenerator:
+    def __init__(self, generator):
+        self.generator = generator
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        return self.generator.__next__()
