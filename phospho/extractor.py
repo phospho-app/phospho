@@ -1,5 +1,6 @@
 import logging
 import pydantic
+import json
 
 from typing import Union, Dict, Any, Tuple, Optional, Callable
 
@@ -16,10 +17,16 @@ def convert_to_dict(x: Any) -> Dict[str, object]:
         return x
     elif isinstance(x, pydantic.BaseModel):
         return x.model_dump()
+    elif isinstance(x, str):
+        # Probably a str representation of json
+        return json.loads(x)
+    elif isinstance(x, bytes):
+        # Probably a byte representation of json
+        return json.loads(x.decode())
     else:
         try:
             return dict(x)
-        except ValueError as e:
+        except TypeError as e:
             raise NotImplementedError(
                 f"Dict conversion not implemented for type {type(x)}: {x}"
             )
@@ -90,6 +97,16 @@ def detect_str_from_output(output: RawDataType) -> str:
         f"Detecting str from output class_name:{output_class_name} ; module:{output_module}"
     )
 
+    # If streaming and receiving bytes
+    if isinstance(output, bytes):
+        try:
+            # Assume it may be a json
+            output = convert_to_dict(output)
+        except Exception as e:
+            logger.warning(
+                f"Error while trying to convert output {type(output)} to dict"
+            )
+
     # OpenAI outputs
     if isinstance(output, pydantic.BaseModel):
         if output_class_name in ["ChatCompletion", "ChatCompletionChunk"]:
@@ -110,6 +127,11 @@ def detect_str_from_output(output: RawDataType) -> str:
                     else:
                         # None content = end of generation stream
                         return ""
+
+    # Ollama outputs
+    if isinstance(output, dict):
+        if "response" in output.keys():
+            return output["response"]
 
     # Unimplemented. Translate everything to str
     return str(output)
