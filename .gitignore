@@ -11,3 +11,4 @@ __pycache__/
 .env
 
 docs/build
+notebooks

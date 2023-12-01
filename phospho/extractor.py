@@ -1,9 +1,10 @@
 import logging
 import pydantic
+import json
 
 from typing import Union, Dict, Any, Tuple, Optional, Callable
 
-from .utils import convert_to_jsonable_dict, generate_uuid
+from .utils import convert_to_jsonable_dict
 
 RawDataType = Union[Dict[str, Any], pydantic.BaseModel]
 
@@ -16,10 +17,16 @@ def convert_to_dict(x: Any) -> Dict[str, object]:
         return x
     elif isinstance(x, pydantic.BaseModel):
         return x.model_dump()
+    elif isinstance(x, str):
+        # Probably a str representation of json
+        return json.loads(x)
+    elif isinstance(x, bytes):
+        # Probably a byte representation of json
+        return json.loads(x.decode())
     else:
         try:
             return dict(x)
-        except ValueError as e:
+        except TypeError as e:
             raise NotImplementedError(
                 f"Dict conversion not implemented for type {type(x)}: {x}"
             )
@@ -47,7 +54,7 @@ def detect_str_from_input(input: RawDataType) -> str:
 
 def detect_task_id_and_to_log_from_output(
     output: RawDataType
-) -> Tuple[Optional[str], bool]:
+) -> Tuple[Optional[str], Optional[bool]]:
     """
     This function extracts from an arbitrary output an eventual task_id and to_log bool.
     task_id is used to grouped multiple outputs together.
@@ -75,7 +82,7 @@ def detect_task_id_and_to_log_from_output(
 
         return task_id, (finish_reason is not None)
     # Unimplemented
-    return None, True
+    return None, None
 
 
 def detect_str_from_output(output: RawDataType) -> str:
@@ -89,6 +96,16 @@ def detect_str_from_output(output: RawDataType) -> str:
     logger.debug(
         f"Detecting str from output class_name:{output_class_name} ; module:{output_module}"
     )
+
+    # If streaming and receiving bytes
+    if isinstance(output, bytes):
+        try:
+            # Assume it may be a json
+            output = convert_to_dict(output)
+        except Exception as e:
+            logger.warning(
+                f"Error while trying to convert output {type(output)} to dict"
+            )
 
     # OpenAI outputs
     if isinstance(output, pydantic.BaseModel):
@@ -111,6 +128,11 @@ def detect_str_from_output(output: RawDataType) -> str:
                         # None content = end of generation stream
                         return ""
 
+    # Ollama outputs
+    if isinstance(output, dict):
+        if "response" in output.keys():
+            return output["response"]
+
     # Unimplemented. Translate everything to str
     return str(output)
 
@@ -123,9 +145,8 @@ def get_input_output(
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_task_id_and_to_log_function: Optional[
-        Callable[[Any], Tuple[Optional[str], bool]]
+        Callable[[Any], Tuple[Optional[str], Optional[bool]]]
     ] = None,
-    verbose: bool = True,
 ) -> Tuple[
     str,
     Optional[str],
@@ -174,7 +195,7 @@ def get_input_output(
     - task_id_from_output _(Optional[str])_ -
         Task id detected from the output. Useful from keeping track of streaming outputs.
 
-    - to_log _(bool)_ -
+    - to_log _(Optional[bool])_ -
         Whether to log the event directly, or wait until a later event. Useful for streaming.
     """
 
@@ -200,15 +221,11 @@ def get_input_output(
     else:
         # Extract input str representation from input
         input_to_log = input_to_str_function(input)
-        raw_input_to_log = convert_to_jsonable_dict(
-            convert_to_dict(input), verbose=verbose
-        )
+        raw_input_to_log = convert_to_jsonable_dict(convert_to_dict(input))
 
     # If raw input is specified, override
     if raw_input is not None:
-        raw_input_to_log = convert_to_jsonable_dict(
-            convert_to_dict(raw_input), verbose=verbose
-        )
+        raw_input_to_log = convert_to_jsonable_dict(convert_to_dict(raw_input))
 
     if output is not None:
         # Extract a string representation from output
@@ -218,17 +235,13 @@ def get_input_output(
         else:
             output_to_log = output_to_str_function(output)
             task_id_from_output, to_log = output_to_task_id_and_to_log_function(output)
-            raw_output_to_log = convert_to_jsonable_dict(
-                convert_to_dict(output), verbose=verbose
-            )
+            raw_output_to_log = convert_to_jsonable_dict(convert_to_dict(output))
     else:
         output_to_log = None
 
     # If raw output is specified, override
     if raw_output is not None:
-        raw_output_to_log = convert_to_jsonable_dict(
-            convert_to_dict(raw_output), verbose=verbose
-        )
+        raw_output_to_log = convert_to_jsonable_dict(convert_to_dict(raw_output))
 
     return (
         input_to_log,
