@@ -25,9 +25,10 @@ from typing import (
     Callable,
     Tuple,
     Iterable,
+    AsyncIterable,
     Coroutine,
-    AsyncGenerator,
     Generator,
+    AsyncGenerator,
 )
 
 
@@ -139,7 +140,6 @@ def _log_single_event(
         raw_output=raw_output,
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
-        output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
     )
 
     # Override to_log parameter
@@ -226,10 +226,110 @@ def _log_single_event(
         # Append event to log_queue
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
 
-    logger.debug("Updated dict:" + str(log_queue.events[task_id].content))
-    logger.debug("To log" + str(log_queue.events[task_id].to_log))
+    # logger.debug("Updated dict:" + str(log_queue.events[task_id].content))
+    # logger.debug("To log" + str(log_queue.events[task_id].to_log))
 
     return log_content
+
+
+def _wrap_iterable(
+    output: Union[Iterable[RawDataType], AsyncIterable[RawDataType]]
+) -> None:
+    """Wrap the class of a passed output so that it nows log its generated
+    content to phospho.
+
+    This mutate the class inplace and adds the attribute _phospho_wrapped
+    to avoid wrapping it again.
+
+    Logging will only be performed on instances that have the attribute
+    _phospho_metadata.
+    """
+    global log_queue
+
+    # Wrap the class iterator with a phospho logging callback
+    if not hasattr(output.__class__, "_phospho_wrapped") or (
+        output.__class__._phospho_wrapped is False
+    ):
+        # Create a copy of the iterator function
+        # Q: Do this with __iter__ as well ?
+        if isinstance(output, Iterable):
+            class_next_func_copy = deepcopy(output.__next__.__func__)
+
+            def wrapped_next(self):
+                """At every iteration step, phospho stores the intermediate value internally
+                if asked to do so for this instance."""
+                value = class_next_func_copy(self)
+                # Only log instances that have the _phosphometadata attribute (set when
+                # passed to phospho.log)
+                if hasattr(self, "_phospho_metadata"):
+                    _log_single_event(
+                        output=value, to_log=False, **self._phospho_metadata
+                    )
+                return value
+
+            def wrapped_iter(self):
+                """The phospho wrapper flushes the log at the end of the iteration
+                if asked to do so for this instance."""
+                while True:
+                    try:
+                        yield self.__next__()
+                    except StopIteration:
+                        # Iteration finished, push the logs
+                        if hasattr(self, "_phospho_metadata"):
+                            _log_single_event(
+                                output=None, to_log=True, **self._phospho_metadata
+                            )
+                        break
+
+            # Update the class iterators to be wrapped
+            output.__class__.__next__ = wrapped_next
+            output.__class__.__iter__ = wrapped_iter
+            # Mark the class as wrapped to avoid wrapping it multiple time
+            output.__class__._phospho_wrapped = True
+
+        elif isinstance(output, AsyncIterable):
+            class_anext_func_copy = deepcopy(output.__anext__.__func__)
+
+            async def wrapped_anext(self):
+                """At every iteration step, phospho stores the intermediate value internally
+                if asked to do so for this instance."""
+                try:
+                    value = await class_anext_func_copy(self)
+                    # Only log instances that have the _phosphometadata attribute (set when
+                    # passed to phospho.log)
+                    if hasattr(self, "_phospho_metadata"):
+                        _log_single_event(
+                            output=value, to_log=False, **self._phospho_metadata
+                        )
+                    return value
+                except StopAsyncIteration:
+                    if hasattr(self, "_phospho_metadata"):
+                        _log_single_event(
+                            output=None, to_log=True, **self._phospho_metadata
+                        )
+                    raise StopAsyncIteration
+
+            async def wrapped_aiter(self):
+                """The phospho wrapper flushes the log at the end of the iteration
+                if asked to do so for this instance."""
+                while True:
+                    try:
+                        yield await self.__anext__()
+                    except StopAsyncIteration:
+                        # Iteration finished, push the logs
+                        break
+
+            # Update the class iterators to be wrapped
+            output.__class__.__anext__ = wrapped_anext
+            # output.__class__.__aiter__ = wrapped_aiter
+
+        else:
+            raise NotImplementedError(
+                f"Unsupported output type for wrapping iterable: {type(output)}"
+            )
+
+        # Mark the class as wrapped to avoid wrapping it multiple time
+        output.__class__._phospho_wrapped = True
 
 
 def log(
@@ -273,104 +373,102 @@ def log(
 
     Returns: Dict[str, object] The content of what has been logged.
     """
-    if not stream:
-        # Push directly the log to log_queue
+    if stream:
+        # Implement the streaming logic over the output
+        # Note: The output must be mutable. Generators are not mutable
+        mutable_error = """phospho.log was called with stream=True, which requires output to be mutable. 
+However, output type {type(output)} is immutable because it's an instance of {instance},
+Wrap this generator into a mutable object for phospho.log to work:
+"""
+        if isinstance(output, AsyncGenerator):
+            raise ValueError(
+                mutable_error.format(type(output), "AsyncGenerator")
+                + """
+class MutableGenerator:
+        def __init__(self, generator):
+            self.generator = generator
 
+        def __aiter__(self):
+            return self
+
+        def __anext__(self):
+            return self.generator.__anext__()
+
+my_mutable_generator = MutableGenerator(generator)
+"""
+            )
+        elif isinstance(output, Generator):
+            raise ValueError(
+                mutable_error.format(type(output), "Generator")
+                + """
+class MutableGenerator:
+        def __init__(self, generator):
+            self.generator = generator
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            return self.generator.__next__()
+
+my_mutable_generator = MutableGenerator(generator)
+"""
+            )
+
+        # Verify that output is iterable
+        if isinstance(output, AsyncIterable) or isinstance(output, Iterable):
+            _wrap_iterable(output)
+            # Modify the instance inplace to carry additional metadata
+            task_id = generate_uuid()
+            output._phospho_metadata = {
+                "input": input,
+                # do not put output in the metadata, as it will change with __next__
+                "session_id": session_id,
+                "task_id": task_id,  # Mark these with the same, custom task_id
+                "raw_input": raw_input,
+                "raw_output": raw_output,
+                "input_to_str_function": input_to_str_function,
+                "output_to_str_function": output_to_str_function,
+                "output_to_task_id_and_to_log_function": output_to_task_id_and_to_log_function,
+                "concatenate_raw_outputs_if_task_id_exists": concatenate_raw_outputs_if_task_id_exists,
+            }
+            # Return the log:
+            log = {"output": None, **output._phospho_metadata}
+            # log = _log_single_event(**log, to_log=False)
+            return log
+        else:
+            logger.warning(
+                f"phospho.log was called with stream=True but output type {type(output)} is not supported. Trying to log with stream=False."
+            )
+    else:
+        # If stream=False, push directly the log to log_queue
         # TODO : Make type validation cleaner
         assert (
             (output is None)
             or isinstance(output, str)
             or isinstance(output, pydantic.BaseModel)
             or is_jsonable(output)
-        ), f"If stream=False, you can't log output type {type(output)}"
+        ), f"If stream=False, you can't log output type {type(output)}. If you want to log a stream, pass stream=True to phospho.log"
 
-        log = _log_single_event(
-            input=input,
-            output=output,
-            session_id=session_id,
-            task_id=task_id,
-            raw_input=raw_input,
-            raw_output=raw_output,
-            input_to_str_function=input_to_str_function,
-            output_to_str_function=output_to_str_function,
-            output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
-            concatenate_raw_outputs_if_task_id_exists=concatenate_raw_outputs_if_task_id_exists,
-            to_log=True,
-            **kwargs,
-        )
-    else:
-        # Implement the streaming logic over the output
-        # Note: The output must be mutable
-
-        # Verify that output is iterable
-        assert not isinstance(
-            output, str
-        ), "output is a str. Pass stream=False to handle this case"
-        assert (
-            output is not None
-        ), "output is None. Pass stream=False to handle this case"
-        assert hasattr(output.__class__, "__iter__") and hasattr(
-            output.__class__, "__next__"
-        ), "Output must be iterable if stream=True"
-
-        # Wrap the class iterator with a phospho logging callback
-        if not hasattr(output.__class__, "_phospho_wrapped"):
-            # Create a copy of the iterator function
-            # Q: Do this with __iter__ as well ?
-            class_next_func_copy = deepcopy(output.__next__.__func__)
-
-            def wrapped_next(self):
-                """At every iteration step, phospho stores the intermediate value internally"""
-                value = class_next_func_copy(self)
-                _log_single_event(
-                    output=value, to_log=False, **output._phospho_metadata
-                )
-                return value
-
-            def wrapped_iter(self):
-                """The phospho wrapper flushes the log at the end of the iteration"""
-                while True:
-                    try:
-                        yield self.__next__()
-                    except StopIteration:
-                        # Iteration finished, push the logs
-                        _log_single_event(
-                            output=None, to_log=True, **self._phospho_metadata
-                        )
-                        break
-
-            # Update the class iterators to be wrapped
-            output.__class__.__next__ = wrapped_next
-            output.__class__.__iter__ = wrapped_iter
-            # Mark the class as wrapped to avoid wrapping it multiple time
-            output.__class__._phospho_wrapped = True
-
-        # Modify the instance inplace to carry additional metadata
-        output._phospho_metadata = {
-            "input": input,
-            # do not put output in the metadata, as it will change with __next__
-            "session_id": session_id,
-            "task_id": generate_uuid(),  # Mark these with the same, custom task_id
-            "raw_input": raw_input,
-            "raw_output": raw_output,
-            "input_to_str_function": input_to_str_function,
-            "output_to_str_function": output_to_str_function,
-            "output_to_task_id_and_to_log_function": output_to_task_id_and_to_log_function,
-            "concatenate_raw_outputs_if_task_id_exists": concatenate_raw_outputs_if_task_id_exists,
-        }
-        # Set the log return value to be this one:
-        log = {"output": None, **output._phospho_metadata}
+    log = _log_single_event(
+        input=input,
+        output=output,
+        session_id=session_id,
+        task_id=task_id,
+        raw_input=raw_input,
+        raw_output=raw_output,
+        input_to_str_function=input_to_str_function,
+        output_to_str_function=output_to_str_function,
+        output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
+        concatenate_raw_outputs_if_task_id_exists=concatenate_raw_outputs_if_task_id_exists,
+        to_log=True,
+        **kwargs,
+    )
 
     return log
 
 
-def wrap(
-    function: Callable[[Any], Any], **kwargs: Any
-) -> Union[
-    Callable[[Any], Any],
-    Generator[Any, Any, None],
-    AsyncGenerator[Any, None],
-]:
+def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
     """
     This wrapper helps you log a function call to phospho by returning a wrapped version
     of the function.
