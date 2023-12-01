@@ -15,7 +15,6 @@ from ._version import __version__
 
 import pydantic
 import logging
-import inspect
 
 from copy import deepcopy
 from typing import (
@@ -245,6 +244,8 @@ def _wrap_iterable(
     Logging will only be performed on instances that have the attribute
     _phospho_metadata.
     """
+    global log_queue
+
     # Wrap the class iterator with a phospho logging callback
     if not hasattr(output.__class__, "_phospho_wrapped"):
         # Create a copy of the iterator function
@@ -285,12 +286,7 @@ def _wrap_iterable(
             output.__class__._phospho_wrapped = True
 
         elif isinstance(output, AsyncIterable):
-            if hasattr(output.__anext__, "__func__"):
-                class_anext_func_copy = deepcopy(output.__anext__.__func__)
-            else:
-                class_anext_func_copy = (
-                    output.__anext__
-                )  # deepcopy(output.__anext__.__call__)
+            class_anext_func_copy = deepcopy(output.__anext__.__func__)
 
             async def wrapped_anext(self):
                 """At every iteration step, phospho stores the intermediate value internally
@@ -316,14 +312,14 @@ def _wrap_iterable(
                 if asked to do so for this instance."""
                 while True:
                     try:
-                        yield self.__anext__()
+                        yield await self.__anext__()
                     except StopAsyncIteration:
                         # Iteration finished, push the logs
                         break
 
             # Update the class iterators to be wrapped
             output.__class__.__anext__ = wrapped_anext
-            # output.__class__.__aiter__ = wrapped_aiter
+            output.__class__.__aiter__ = wrapped_aiter
 
         else:
             raise NotImplementedError(
@@ -422,20 +418,21 @@ my_mutable_generator = MutableGenerator(generator)
             }
             # Return the log:
             log = {"output": None, **output._phospho_metadata}
+            # log = _log_single_event(**log, to_log=False)
             return log
         else:
             logger.warning(
                 f"phospho.log was called with stream=True but output type {type(output)} is not supported. Trying to log with stream=False."
             )
-
-    # If stream=False or stream validation failed, push directly the log to log_queue
-    # TODO : Make type validation cleaner
-    assert (
-        (output is None)
-        or isinstance(output, str)
-        or isinstance(output, pydantic.BaseModel)
-        or is_jsonable(output)
-    ), f"If stream=False, you can't log output type {type(output)}. If you want to log a stream, pass stream=True to phospho.log"
+    else:
+        # If stream=False, push directly the log to log_queue
+        # TODO : Make type validation cleaner
+        assert (
+            (output is None)
+            or isinstance(output, str)
+            or isinstance(output, pydantic.BaseModel)
+            or is_jsonable(output)
+        ), f"If stream=False, you can't log output type {type(output)}. If you want to log a stream, pass stream=True to phospho.log"
 
     log = _log_single_event(
         input=input,
