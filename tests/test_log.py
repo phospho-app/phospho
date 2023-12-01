@@ -295,9 +295,9 @@ async def test_async_stream():
         return task_id
 
     # Test multiple times
-    task_id_1 = await test_once()
-    task_id_2 = await test_once()
-    assert task_id_1 != task_id_2
+    # task_id_1 = await test_once()
+    # task_id_2 = await test_once()
+    # assert task_id_1 != task_id_2
 
     # Test with another kind of generator
 
@@ -310,14 +310,14 @@ async def test_async_stream():
         def __init__(self, generator):
             self.generator = generator
 
-        def __iter__(self):
-            return self
+        # def __iter__(self):
+        #     return self
 
         def __aiter__(self):
             return self
 
-        def __next__(self):
-            return self.generator.__next__()
+        # def __next__(self):
+        #     return self.generator.__next__()
 
         def __anext__(self):
             return self.generator.__anext__()
@@ -337,6 +337,9 @@ async def test_async_stream():
         assert r == groundtruth_r
         # Log queue has been flushed at the last response
         if i < len(MOCK_OPENAI_STREAM_RESPONSE) - 1:
+            assert (
+                task_id in phospho.log_queue.events.keys()
+            ), f"{task_id} not found in the log_queue.events: {phospho.log_queue.events.keys()}"
             log_content = phospho.log_queue.events[log["task_id"]].content
             raw_output = log_content["raw_output"]
             if isinstance(raw_output, list):

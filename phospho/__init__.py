@@ -226,8 +226,8 @@ def _log_single_event(
         # Append event to log_queue
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
 
-    logger.debug("Updated dict:" + str(log_queue.events[task_id].content))
-    logger.debug("To log" + str(log_queue.events[task_id].to_log))
+    # logger.debug("Updated dict:" + str(log_queue.events[task_id].content))
+    # logger.debug("To log" + str(log_queue.events[task_id].to_log))
 
     return log_content
 
@@ -247,7 +247,9 @@ def _wrap_iterable(
     global log_queue
 
     # Wrap the class iterator with a phospho logging callback
-    if not hasattr(output.__class__, "_phospho_wrapped"):
+    if not hasattr(output.__class__, "_phospho_wrapped") or (
+        output.__class__._phospho_wrapped is False
+    ):
         # Create a copy of the iterator function
         # Q: Do this with __iter__ as well ?
         if isinstance(output, Iterable):
@@ -374,11 +376,30 @@ def log(
     if stream:
         # Implement the streaming logic over the output
         # Note: The output must be mutable. Generators are not mutable
-        if isinstance(output, AsyncGenerator) or isinstance(output, Generator):
+        mutable_error = """phospho.log was called with stream=True, which requires output to be mutable. 
+However, output type {type(output)} is immutable because it's an instance of {instance},
+Wrap this generator into a mutable object for phospho.log to work:
+"""
+        if isinstance(output, AsyncGenerator):
             raise ValueError(
-                "phospho.log was called with stream=True, which requires output to be mutable. "
-                + f"However, output type {type(output)} is immutable because it's an instance of Generator or AsyncGenerator,"
-                + "Wrap this generator into a mutable object for phospho.log to work:"
+                mutable_error.format(type(output), "AsyncGenerator")
+                + """
+class MutableGenerator:
+        def __init__(self, generator):
+            self.generator = generator
+
+        def __aiter__(self):
+            return self
+
+        def __anext__(self):
+            return self.generator.__anext__()
+
+my_mutable_generator = MutableGenerator(generator)
+"""
+            )
+        elif isinstance(output, Generator):
+            raise ValueError(
+                mutable_error.format(type(output), "Generator")
                 + """
 class MutableGenerator:
         def __init__(self, generator):
@@ -387,14 +408,8 @@ class MutableGenerator:
         def __iter__(self):
             return self
 
-        def __aiter__(self):
-            return self
-
         def __next__(self):
             return self.generator.__next__()
-
-        def __anext__(self):
-            return self.generator.__anext__()
 
 my_mutable_generator = MutableGenerator(generator)
 """
