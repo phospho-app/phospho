@@ -9,6 +9,22 @@
 
 ## Module Contents
 
+### Classes
+
+````{list-table}
+:class: autosummary longtable
+:align: left
+
+* - {py:obj}`MutableGenerator <phospho.utils.MutableGenerator>`
+  - ```{autodoc2-docstring} phospho.utils.MutableGenerator
+    :summary:
+    ```
+* - {py:obj}`MutableAsyncGenerator <phospho.utils.MutableAsyncGenerator>`
+  - ```{autodoc2-docstring} phospho.utils.MutableAsyncGenerator
+    :summary:
+    ```
+````
+
 ### Functions
 
 ````{list-table}
@@ -95,3 +111,64 @@
 ```{autodoc2-docstring} phospho.utils.convert_to_jsonable_dict
 ```
 ````
+
+`````{py:class} MutableGenerator(generator: typing.Generator, stop: typing.Callable[[typing.Any], bool])
+:canonical: phospho.utils.MutableGenerator
+
+```{autodoc2-docstring} phospho.utils.MutableGenerator
+```
+
+```{rubric} Initialization
+```
+
+```{autodoc2-docstring} phospho.utils.MutableGenerator.__init__
+```
+
+````{py:method} __iter__()
+:canonical: phospho.utils.MutableGenerator.__iter__
+
+```{autodoc2-docstring} phospho.utils.MutableGenerator.__iter__
+```
+
+````
+
+````{py:method} __next__()
+:canonical: phospho.utils.MutableGenerator.__next__
+
+```{autodoc2-docstring} phospho.utils.MutableGenerator.__next__
+```
+
+````
+
+`````
+
+`````{py:class} MutableAsyncGenerator(generator: typing.AsyncGenerator, stop: typing.Callable[[typing.Any], bool])
+:canonical: phospho.utils.MutableAsyncGenerator
+
+```{autodoc2-docstring} phospho.utils.MutableAsyncGenerator
+```
+
+```{rubric} Initialization
+```
+
+```{autodoc2-docstring} phospho.utils.MutableAsyncGenerator.__init__
+```
+
+````{py:method} __aiter__()
+:canonical: phospho.utils.MutableAsyncGenerator.__aiter__
+
+```{autodoc2-docstring} phospho.utils.MutableAsyncGenerator.__aiter__
+```
+
+````
+
+````{py:method} __anext__()
+:canonical: phospho.utils.MutableAsyncGenerator.__anext__
+:async:
+
+```{autodoc2-docstring} phospho.utils.MutableAsyncGenerator.__anext__
+```
+
+````
+
+`````
