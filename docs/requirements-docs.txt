@@ -1,5 +1,5 @@
 sphinx == 6.2.1
 sphinx-book-theme == 1.0.1
 sphinx-copybutton == 0.5.2
-myst_parser
-sphinx-autodoc2
+myst_parser>=2.0.0
+sphinx-autodoc2>=0.5.0
