@@ -33,13 +33,21 @@ jobs:
       # Install dependencies if cache does not exist
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --with docs --no-interaction
+        run: poetry install --with docs --no-interaction --no-root
+        
+      - name: Install sphinx
+        run: |
+          pip install sphinx
       
+      - name: Install project
+        run: poetry install --no-interaction
+
       - name: Sphinx build
         working-directory: ./docs
         run: |
           make clean
           make html
+  
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         # this command only run on push to main
