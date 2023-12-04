@@ -1,6 +1,11 @@
 name: documentation
 
-on: [pull_request, workflow_dispatch]
+on:
+  push:
+    branches: 
+      dev
+      main
+  
 
 permissions:
   contents: write
@@ -47,20 +52,9 @@ jobs:
   
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
-        # this command only run on push to main
-        # if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        # The build files will be located on branch gh-pages
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/build/html/
           force_orphan: true
-
-      # - name: Deploy to GitHub Pages
-      #   uses: peaceiris/actions-gh-pages@v3
-      #   # if the branch is not main, deploy to a branch with the same name
-      #   if: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
-      #   with:
-      #     publish_branch: ${{ github.ref }}
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     publish_dir: _build/
-      #     force_orphan: true
