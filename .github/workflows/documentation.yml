@@ -39,9 +39,9 @@ jobs:
         run: poetry install --no-interaction
 
       - name: Sphinx build
-        working-directory: ./docs
         run: |
           source .venv/bin/activate
+          cd docs
           make clean
           make html
   
