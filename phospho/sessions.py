@@ -1,5 +1,5 @@
 """
-Option to store locally the session content, but risk of divergence with the server
+Access sessions
 """
 
 from phospho.collection import Collection

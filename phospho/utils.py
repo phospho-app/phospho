@@ -3,7 +3,7 @@ import json
 import uuid
 import logging
 
-from typing import Any, Dict
+from typing import Any, Dict, AsyncGenerator, Generator, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -45,3 +45,49 @@ def convert_to_jsonable_dict(
                 f"Logging skipped for the keys that aren't json serializable (no .toJSON() method): {', '.join(dropped_keys)}"
             )
     return new_arg_dict
+
+
+class MutableGenerator:
+    def __init__(self, generator: Generator, stop: Callable[[Any], bool]):
+        """Transform a generator into a mutable object that can be logged.
+
+        generator (Generator):
+            The generator to be wrapped
+        stop (Callable[[Any], bool])):
+            Stopping criterion for generation. If stop(generated_value) is True,
+            then we stop the generation.
+        """
+        self.generator = generator
+        self.stop = stop
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        value = self.generator.__next__()
+        if self.stop(value):
+            raise StopIteration
+        return value
+
+
+class MutableAsyncGenerator:
+    def __init__(self, generator: AsyncGenerator, stop: Callable[[Any], bool]):
+        """Transform an async generator into a mutable object that can be logged.
+
+        generator (AsyncGenerator):
+            The generator to be wrapped
+        stop (Callable[[Any], bool])):
+            Stopping criterion for generation. If stop(generated_value) is True,
+            then we stop the generation.
+        """
+        self.generator = generator
+        self.stop = stop
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        value = await self.generator.__anext__()
+        if self.stop(value):
+            raise StopAsyncIteration
+        return value

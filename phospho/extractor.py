@@ -1,9 +1,10 @@
 import logging
 import pydantic
+import json
 
 from typing import Union, Dict, Any, Tuple, Optional, Callable
 
-from .utils import convert_to_jsonable_dict, generate_uuid
+from .utils import convert_to_jsonable_dict
 
 RawDataType = Union[Dict[str, Any], pydantic.BaseModel]
 
@@ -16,10 +17,16 @@ def convert_to_dict(x: Any) -> Dict[str, object]:
         return x
     elif isinstance(x, pydantic.BaseModel):
         return x.model_dump()
+    elif isinstance(x, str):
+        # Probably a str representation of json
+        return json.loads(x)
+    elif isinstance(x, bytes):
+        # Probably a byte representation of json
+        return json.loads(x.decode())
     else:
         try:
             return dict(x)
-        except ValueError as e:
+        except TypeError as e:
             raise NotImplementedError(
                 f"Dict conversion not implemented for type {type(x)}: {x}"
             )
@@ -47,7 +54,7 @@ def detect_str_from_input(input: RawDataType) -> str:
 
 def detect_task_id_and_to_log_from_output(
     output: RawDataType
-) -> Tuple[Optional[str], bool]:
+) -> Tuple[Optional[str], Optional[bool]]:
     """
     This function extracts from an arbitrary output an eventual task_id and to_log bool.
     task_id is used to grouped multiple outputs together.
@@ -75,7 +82,7 @@ def detect_task_id_and_to_log_from_output(
 
         return task_id, (finish_reason is not None)
     # Unimplemented
-    return None, True
+    return None, None
 
 
 def detect_str_from_output(output: RawDataType) -> str:
@@ -89,6 +96,16 @@ def detect_str_from_output(output: RawDataType) -> str:
     logger.debug(
         f"Detecting str from output class_name:{output_class_name} ; module:{output_module}"
     )
+
+    # If streaming and receiving bytes
+    if isinstance(output, bytes):
+        try:
+            # Assume it may be a json
+            output = convert_to_dict(output)
+        except Exception as e:
+            logger.warning(
+                f"Error while trying to convert output {type(output)} to dict"
+            )
 
     # OpenAI outputs
     if isinstance(output, pydantic.BaseModel):
@@ -111,6 +128,11 @@ def detect_str_from_output(output: RawDataType) -> str:
                         # None content = end of generation stream
                         return ""
 
+    # Ollama outputs
+    if isinstance(output, dict):
+        if "response" in output.keys():
+            return output["response"]
+
     # Unimplemented. Translate everything to str
     return str(output)
 
@@ -123,37 +145,58 @@ def get_input_output(
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_task_id_and_to_log_function: Optional[
-        Callable[[Any], Tuple[Optional[str], bool]]
+        Callable[[Any], Tuple[Optional[str], Optional[bool]]]
     ] = None,
-    verbose: bool = True,
 ) -> Tuple[
     str,
     Optional[str],
     Optional[Union[Dict[str, object], str]],
     Optional[Union[Dict[str, object], str]],
     Optional[str],
-    bool,
+    Optional[bool],
 ]:
     """
     Convert any supported data type to standard, loggable inputs and outputs.
 
-    input: The input content to be logged. Can be a string, a dict, or a Pydantic model.
-    output: The output content to be logged. Can be a string, a dict, a Pydantic model, or None.
-    raw_input: Will be separately logged in raw_input_to_log if specified.
-    raw_output: Will be separately logged in raw_output_to_log if specified.
+    :param input:
+        The input content to be logged. Can be a string, a dict, or a Pydantic model.
 
-    Returns:
-    input_to_log (str): A string representation of the input.
-    output_to_log (Optional[str]): A string representation of the output,
-        or None if no output is specified.
-    raw_input_to_log (Optional[Dict[str, object]]): A dict representation
-        of the input, raw_input if specified, or None if input is a str.
-    raw_output_to_log (Optional[Dict[str, object]]): A dict representation
-        of the output, raw_output if specified, or None if output is a str.
-    task_id_from_output (Optional[str]): Task id detected from the output. Useful from
-        keeping track of streaming outputs.
-    to_log (bool): Whether to log the event directly, or wait until a later event.
-        Useful for streaming.
+    :param output:
+        The output content to be logged. Can be a string, a dict, a Pydantic model, or None.
+
+    :param raw_input:
+        Will be separately logged in raw_input_to_log if specified.
+
+    :param raw_output:
+        Will be separately logged in raw_output_to_log if specified.
+
+    :param input_to_str_function:
+
+    :param output_to_str_function:
+
+    :param output_to_task_id_and_to_log_function:
+
+    :param verbose:
+
+
+    :return:
+    - input_to_log _(str)_ -
+        A string representation of the input.
+
+    - output_to_log _(Optional[str])_ -
+        A string representation of the output, or None if no output is specified.
+
+    - raw_input_to_log _(Optional[Dict[str, object]])_ -
+        A dict representation of the input, raw_input if specified, or None if input is a str.
+
+    - raw_output_to_log _(Optional[Dict[str, object]])_ -
+        A dict representation of the output, raw_output if specified, or None if output is a str.
+
+    - task_id_from_output _(Optional[str])_ -
+        Task id detected from the output. Useful from keeping track of streaming outputs.
+
+    - to_log _(Optional[bool])_ -
+        Whether to log the event directly, or wait until a later event. Useful for streaming.
     """
 
     # Default functions to extract string from input and output
@@ -169,7 +212,7 @@ def get_input_output(
     raw_output_to_log: Optional[Union[Dict[str, object], str]] = None
 
     task_id_from_output = None
-    to_log = True
+    to_log = None
 
     # Extract a string representation from input
     if isinstance(input, str):
@@ -178,15 +221,11 @@ def get_input_output(
     else:
         # Extract input str representation from input
         input_to_log = input_to_str_function(input)
-        raw_input_to_log = convert_to_jsonable_dict(
-            convert_to_dict(input), verbose=verbose
-        )
+        raw_input_to_log = convert_to_jsonable_dict(convert_to_dict(input))
 
     # If raw input is specified, override
     if raw_input is not None:
-        raw_input_to_log = convert_to_jsonable_dict(
-            convert_to_dict(raw_input), verbose=verbose
-        )
+        raw_input_to_log = convert_to_jsonable_dict(convert_to_dict(raw_input))
 
     if output is not None:
         # Extract a string representation from output
@@ -196,17 +235,13 @@ def get_input_output(
         else:
             output_to_log = output_to_str_function(output)
             task_id_from_output, to_log = output_to_task_id_and_to_log_function(output)
-            raw_output_to_log = convert_to_jsonable_dict(
-                convert_to_dict(output), verbose=verbose
-            )
+            raw_output_to_log = convert_to_jsonable_dict(convert_to_dict(output))
     else:
         output_to_log = None
 
     # If raw output is specified, override
     if raw_output is not None:
-        raw_output_to_log = convert_to_jsonable_dict(
-            convert_to_dict(raw_output), verbose=verbose
-        )
+        raw_output_to_log = convert_to_jsonable_dict(convert_to_dict(raw_output))
 
     return (
         input_to_log,

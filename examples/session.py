@@ -3,7 +3,7 @@ import openai
 
 from typing import Tuple, Dict, Any
 
-phospho.init(tick=0.5)
+phospho.init()
 openai_client = openai.OpenAI()
 
 
