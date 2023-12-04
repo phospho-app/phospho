@@ -33,7 +33,7 @@ jobs:
       # Install dependencies if cache does not exist
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --with docs
+        run: poetry install --no-interaction --no-root --with doc
       
       - name: Sphinx build
         working-directory: ./docs
@@ -49,6 +49,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/html/
           force_orphan: true
+
       # - name: Deploy to GitHub Pages
       #   uses: peaceiris/actions-gh-pages@v3
       #   # if the branch is not main, deploy to a branch with the same name
