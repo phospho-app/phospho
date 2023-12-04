@@ -3,10 +3,11 @@
 ## Build the docs
 
 ```bash
-# Install dependencies.
-pip install -r requirements-docs.txt
+# Install docs dependencies with poetry
+poetry install --with docs
 
-# Build the docs.
+# Build the docs
+cd docs
 make clean
 make html
 ```
@@ -16,4 +17,5 @@ make html
 ```bash
 python -m http.server -d build/html/
 ```
+
 Launch your browser and open localhost:8000.
