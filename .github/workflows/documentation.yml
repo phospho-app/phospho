@@ -35,16 +35,13 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --with docs --no-interaction --no-root
         
-      - name: Install sphinx
-        run: |
-          pip install sphinx
-      
       - name: Install project
         run: poetry install --no-interaction
 
       - name: Sphinx build
         working-directory: ./docs
         run: |
+          source .venv/bin/activate
           make clean
           make html
   
