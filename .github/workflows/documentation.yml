@@ -50,9 +50,9 @@ jobs:
         # this command only run on push to main
         # if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         with:
-          publish_branch: gh-pages
+          publish_branch: ${{ github.ref }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/html/
+          publish_dir: docs/build/html/
           force_orphan: true
 
       # - name: Deploy to GitHub Pages
