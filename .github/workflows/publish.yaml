@@ -3,7 +3,7 @@ name: Upload Python Package
 
 on:
   release:
-    types: [published]
+    types: [released]
 
 permissions:
   contents: read
@@ -32,7 +32,6 @@ jobs:
 
     - name: Build
       run: poetry build
-
 
     - name: Publish
       run: poetry publish
