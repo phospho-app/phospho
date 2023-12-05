@@ -1,5 +1,5 @@
 # This workflow will upload a Python Package using Poetry
-name: Upload Python Package
+name: Publish to PyPI
 
 on:
   release:
