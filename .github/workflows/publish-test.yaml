@@ -33,5 +33,5 @@ jobs:
     - name: Build
       run: poetry build
     
-    - name: Publish pytest
-      run: poetry publish -r pytest
+    - name: Publish testpypi
+      run: poetry publish -r testpypi
