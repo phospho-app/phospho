@@ -27,11 +27,13 @@ jobs:
         virtualenvs-in-project: true
         installer-parallel: true
 
-    - name: Poetry add token
-      run: poetry config pypi-token.pypi ${{ secrets.PYPI_TEST_TOKEN }}
+    - name: Poetry create test pypi
+      run: |
+        poetry config.repositories.test-pypi https://test.pypi.org
+        poetry config pypi-token.test-pypi ${{ secrets.PYPI_TEST_TOKEN }}
 
     - name: Build
       run: poetry build
     
-    - name: Publish testpypi
-      run: poetry publish -r testpypi
+    - name: Publish test-pypi
+      run: poetry publish -r test-pypi
