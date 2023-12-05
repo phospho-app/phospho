@@ -29,7 +29,7 @@ jobs:
 
     - name: Poetry create test pypi
       run: |
-        poetry config.repositories.test-pypi https://test.pypi.org
+        poetry config repositories.test-pypi https://test.pypi.org
         poetry config pypi-token.test-pypi ${{ secrets.PYPI_TEST_TOKEN }}
 
     - name: Build
