@@ -18,11 +18,6 @@ phospho.init()
 # - (optional) metadata: string of a json with metadata about the task
 # - (optional) session_id: string with the session id
 
-# Example .csv with different rows
-# created_at,raw_input,raw_output,metadata,session_id
-# 1623312000,"{'prompt': 'This is a test', 'temperature': 0.7, 'max_tokens': 64}",'{"choices": [{"finish_reason": "length", "index": 0, "logprobs": null, "text": "This is a test of the emergency broadcast system. This is only a test. If this had been an actual emergency, you would have been instructed to tune to your local emergency broadcast station for further information. This concludes this test of the emergency broadcast system. Thank you for your cooperation."}]}\n',"{\"prompt\": \"This is a test\", \"temperature\": 0.7, \"max_tokens\": 64}",None
-
-
 # Load the data
 df = pd.read_csv(
     "/Users/nicolasoulianov/phospho/phospho/examples/push_data/example.csv", sep=";"
