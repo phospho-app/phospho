@@ -49,4 +49,8 @@ for _, row in df.iterrows():
         created_at=row["created_at"],
         metadata=row["metadata"],
         session_id=row["session_id"],
+        # This is how to customize the input/output to string conversion
+        # The input and output will be logged in raw_input and raw_output
+        input_to_str_function=lambda x: x["prompt"],
+        output_to_str_function=lambda x: x["choices"][0]["text"],
     )
