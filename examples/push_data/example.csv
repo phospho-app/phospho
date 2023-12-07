@@ -1,0 +1,2 @@
+created_at;raw_input;raw_output;metadata;session_id
+1623312000;"{'prompt': 'This is a test', 'temperature': 0.7, 'max_tokens': 64}";"{'choices': [{'finish_reason': 'length', 'text': 'Hello'}]}";;
