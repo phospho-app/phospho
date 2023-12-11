@@ -10,7 +10,7 @@ st.title("🎄🎅🏼 Santa ChatBot")
 left, right = st.columns(2)
 with left:
     if st.button("New chat"):
-        santa_claus_agent.new_session()
+        st.session_state.session_id = santa_claus_agent.new_session()
         st.session_state.messages = []
 with right:
     st.write("Have a conversation with Santa!")
@@ -20,15 +20,18 @@ with right:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# The messages between user and assistant are kept in the session_state (the local storage)
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# Start a session. A session is used to group interactions of a single chat
+if "session_id" not in st.session_state:
+    st.session_state.session_id = santa_claus_agent.new_session()
+
 
 # Fetch the first message and display it word by word
 if st.session_state.messages == []:
     with st.chat_message("assistant", avatar=avatars["assistant"]):
         message_placeholder = st.empty()
-        for streamed_content in santa_claus_agent.random_intro():
+        for streamed_content in santa_claus_agent.random_intro(
+            session_id=st.session_state.session_id
+        ):
             message_placeholder.markdown(streamed_content + "▌")
         message_placeholder.markdown(streamed_content)
         st.session_state.messages = [{"role": "assistant", "content": streamed_content}]
@@ -51,7 +54,9 @@ if prompt := st.chat_input("All I want for Christmas is..."):
         message_placeholder = st.empty()
         full_str_response = ""
         # We ask the Santa Claus agent to respond
-        full_str_response = santa_claus_agent.answer(messages=st.session_state.messages)
+        full_str_response = santa_claus_agent.answer(
+            messages=st.session_state.messages, session_id=st.session_state.session_id
+        )
         for resp in full_str_response:
             message_placeholder.markdown(resp + "▌")
         message_placeholder.markdown(resp)
