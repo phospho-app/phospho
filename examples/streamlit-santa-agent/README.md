@@ -31,7 +31,9 @@ streamlit run frontend.py
 
 ## Deploy on Streamlit Community Cloud 
 
-The easiest way to deploy this chatbot is on Streamlit Community Cloud
+The easiest way to deploy the chatbot on internet is with Streamlit Community Cloud.
+
+### Setup Streamlit
 
 Fork the [phospho repository](https://github.com/phospho-app/phospho) while connected to your github account.
 
@@ -57,11 +59,15 @@ PHOSPHO_API_KEY=...
 
 ![Add secrets to the Advanced Settings](screenshots/streamlit_secrets.png)
 
-Hit Save, and click deploy. Streamlit will now deploy your app on internet. 
+Hit Save, and click deploy. Streamlit will now deploy your app on internet. Once it's done, click on the _Share button_ on the top-right to share your Santa Claus chatbot. 
 
-You can chat with Santa Claus and share the link so anyone can access. 
+![Share your app](screenshots/share_app.png)
 
-Go to your [phospho dashboard](https://platform.phospho.app) to see the analysis phospho made of your conversation. 
+Have a chat with your agent!
+
+### Monitor your app
+
+Once people have talked to your agent, go to your [phospho dashboard](https://platform.phospho.app) to see the analysis phospho made of your conversation. 
 
 ![Learn more about your app on the phospho dashboard](screenshots/phospho_dashboard.png)
 
