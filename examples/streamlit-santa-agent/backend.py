@@ -39,7 +39,7 @@ class SantaClausAgent:
         }
     ]
 
-    def random_intro(self) -> Generator[str, Any, None]:
+    def random_intro(self, session_id: str) -> Generator[str, Any, None]:
         """This is used to greet the user when they log in"""
         # For additional personalisation, we also want to have prewritten answers.
         # LLM apps can combine LLM with traditional techniques to create awesome agents.
@@ -56,14 +56,16 @@ class SantaClausAgent:
             ]
         )
         # Let's log this intro to phospho in order to see which one is the most engaging
-        phospho.log(input="intro", output=chosen_intro)
+        phospho.log(input="intro", output=chosen_intro, session_id=session_id)
         # Create a streaming effect
         splitted_text = chosen_intro.split(" ")
         for i, word in enumerate(splitted_text):
             yield " ".join(splitted_text[: i + 1])
             time.sleep(0.05)
 
-    def answer(self, messages: List[Dict[str, str]]) -> Generator[str, Any, None]:
+    def answer(
+        self, messages: List[Dict[str, str]], session_id: str
+    ) -> Generator[str, Any, None]:
         """This methods generates a response to the user in the character of Santa Claus.
         This text is displayed word by word, as soon as they are generated.
 
@@ -94,7 +96,9 @@ class SantaClausAgent:
             # You can log each individual response in phospho
             # phospho takes care of aggregating all of the tokens into a single, sensible log.
             # It also logs all the parameters and all the responses, which is great for debugging
-            logged_content = phospho.log(input=full_prompt, output=response)
+            logged_content = phospho.log(
+                input=full_prompt, output=response, session_id=session_id
+            )
 
             # logged_content["output"] contains all the generated tokens until this point
             full_str_response = logged_content["output"] or ""
