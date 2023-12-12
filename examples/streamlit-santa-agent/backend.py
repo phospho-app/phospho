@@ -25,8 +25,8 @@ client = MistralClient(api_key=st.secrets["MISTRAL_API_KEY"])
 class SantaClausAgent:
     """This agent talks with the end user. It uses an LLM to generate texts."""
 
-    model = "gpt-3.5-turbo"
-    # model: str = "mistral-tiny"
+    # model = "gpt-3.5-turbo"
+    model: str = "mistral-medium"
 
     # This system prompt gives its personality to the agent
     system_prompt = {
@@ -101,7 +101,14 @@ class SantaClausAgent:
         # : Stream[ChatCompletionChunk]
         print("calling mistral")
         streaming_response = client.chat_stream(**full_prompt)
-        print(streaming_response)
+
+        # test phospho log
+        # streaming_response = phospho.wrap(
+        #     client.chat_stream,
+        #     # metadata={"intro": messages[0]["content"]},
+        #     stream=True,
+        # )(**full_prompt)
+
         full_str_response = ""
 
         # When you iterate on the stream, you get a token for every response
@@ -112,15 +119,6 @@ class SantaClausAgent:
             # It also logs all the parameters and all the responses, which is great for debugging
 
             resp = response.choices[0].delta.content
-
-            # logged_content = phospho.log(
-            #     input=full_prompt,
-            #     output=response,
-            #     # This is used to keep discussions separate in phospho
-            #     session_id=session_id,
-            #     # This is used to keep track of the last intro displayed
-            #     intro_displayed=self.last_intro_displayed,
-            # )
 
             # logged_content["output"] contains all the generated tokens until this point
             # full_str_response = logged_content["output"] or ""
