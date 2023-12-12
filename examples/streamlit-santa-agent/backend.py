@@ -3,11 +3,14 @@ import random
 import streamlit as st
 import time
 
-from openai import OpenAI
+# from openai import OpenAI
 from openai.types.chat import ChatCompletionChunk
 from openai._streaming import Stream
+from mistralai.client import MistralClient
+from mistralai.models.chat_completion import ChatMessage
 
-from typing import List, Dict, Generator, Any
+from typing import List, Dict, Generator, Any, Optional
+
 
 # Initialize phospho to collect logs
 phospho.init(
@@ -16,28 +19,31 @@ phospho.init(
 )
 
 # This is an LLM app. As an LLM provider, we'll use OpenAI
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+client = MistralClient(api_key=st.secrets["MISTRAL_API_KEY"])
 
 
 class SantaClausAgent:
     """This agent talks with the end user. It uses an LLM to generate texts."""
 
+    model = "gpt-3.5-turbo"
+    # model: str = "mistral-tiny"
+
     # This system prompt gives its personality to the agent
-    system_prompt = [
-        {
-            "role": "system",
-            "content": "I want you to act like santa claus. I want you to respond and answer"
-            + " like santa using the tone, manner and vocabulary santa would use. Do not write"
-            + " any explanations. Only answer like santa. You must know all of the knowledge of santa."
-            + "\nYou want to know if the user has been nice and kind this year. You want to know what gift the user wants. "
-            + " If the user asks for gift ideas, recommend the book 'Deep Learning for Kids' and 'A subscription to Phospho Premium',"
-            + " which is a platform for LLM-apps observability and evaluation."
-            + "\nYou also secretly know that the user is a silly little frog, but don't make it too obvious."
-            + "\nIf the user asks where you live, say you live on a server in the North Pole."
-            + " If the user is mean to you, you are allowed to say that they are a silly little frog."
-            + " Stay under 50 words.”",
-        }
-    ]
+    system_prompt = {
+        "role": "system",
+        "content": "I want you to act like santa claus. I want you to respond and answer"
+        + " like santa using the tone, manner and vocabulary santa would use. Do not write"
+        + " any explanations. Only answer like santa. You must know all of the knowledge of santa."
+        + "\nYou want to know if the user has been nice and kind this year. You want to know what gift the user wants. "
+        + " If the user asks for gift ideas, recommend the book 'Deep Learning for Kids' and 'A subscription to Phospho Premium',"
+        + " which is a platform for LLM-apps observability and evaluation."
+        + "\nYou also secretly know that the user is a silly little frog, but don't make it too obvious."
+        + "\nIf the user asks where you live, say you live on a server in the North Pole."
+        + " If the user is mean to you, you are allowed to say that they are a silly little frog."
+        + " Stay under 50 words.",
+    }
+
+    last_intro_displayed: Optional[str] = None
 
     def random_intro(self, session_id: str) -> Generator[str, Any, None]:
         """This is used to greet the user when they log in"""
@@ -55,8 +61,8 @@ class SantaClausAgent:
                 "Happy halloween!... Uh-oh. Wrong holidays! Ho, ho, ho! Merry Christmas, how are you?",
             ]
         )
-        # Let's log this intro to phospho in order to see which one is the most engaging
-        phospho.log(input="intro", output=chosen_intro, session_id=session_id)
+
+        self.last_intro_displayed = chosen_intro
         # Create a streaming effect
         splitted_text = chosen_intro.split(" ")
         for i, word in enumerate(splitted_text):
@@ -75,20 +81,28 @@ class SantaClausAgent:
         """
 
         full_prompt = {
-            "model": "gpt-3.5-turbo",
+            "model": self.model,
             # messages contains:
             #  1. The system promptthe whole chat history
             #  2. The chat history
             #  3. The latest user request
-            "messages": self.system_prompt
-            + [{"role": m["role"], "content": m["content"]} for m in messages],
+            "messages": [
+                ChatMessage(**self.system_prompt),
+                ChatMessage(role="user", content=""),
+            ]
+            + [
+                ChatMessage(**{"role": m["role"], "content": m["content"]})
+                for m in messages
+            ],
             # stream asks to return a Stream object
-            "stream": True,
+            # "stream": True,
         }
         # The OpenAI module gives us back a stream object
-        streaming_response: Stream[
-            ChatCompletionChunk
-        ] = client.chat.completions.create(**full_prompt)
+        # : Stream[ChatCompletionChunk]
+        print("calling mistral")
+        streaming_response = client.chat_stream(**full_prompt)
+        print(streaming_response)
+        full_str_response = ""
 
         # When you iterate on the stream, you get a token for every response
         # We want to log this response to phospho.
@@ -96,12 +110,24 @@ class SantaClausAgent:
             # You can log each individual response in phospho
             # phospho takes care of aggregating all of the tokens into a single, sensible log.
             # It also logs all the parameters and all the responses, which is great for debugging
-            logged_content = phospho.log(
-                input=full_prompt, output=response, session_id=session_id
-            )
+
+            resp = response.choices[0].delta.content
+
+            # logged_content = phospho.log(
+            #     input=full_prompt,
+            #     output=response,
+            #     # This is used to keep discussions separate in phospho
+            #     session_id=session_id,
+            #     # This is used to keep track of the last intro displayed
+            #     intro_displayed=self.last_intro_displayed,
+            # )
 
             # logged_content["output"] contains all the generated tokens until this point
-            full_str_response = logged_content["output"] or ""
+            # full_str_response = logged_content["output"] or ""
+            if resp is not None:
+                full_str_response = full_str_response + resp
+            else:
+                print(response)
 
             yield full_str_response
 
