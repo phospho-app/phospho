@@ -7,7 +7,7 @@ from openai import OpenAI
 from openai.types.chat import ChatCompletionChunk
 from openai._streaming import Stream
 
-from typing import List, Dict, Generator, Any
+from typing import List, Dict, Generator, Any, Optional
 
 # Initialize phospho to collect logs
 phospho.init(
@@ -55,8 +55,7 @@ class SantaClausAgent:
                 "Happy halloween!... Uh-oh. Wrong holidays! Ho, ho, ho! Merry Christmas, how are you?",
             ]
         )
-        # Let's log this intro to phospho in order to see which one is the most engaging
-        phospho.log(input="intro", output=chosen_intro, session_id=session_id)
+        self.latest_intro = chosen_intro
         # Create a streaming effect
         splitted_text = chosen_intro.split(" ")
         for i, word in enumerate(splitted_text):
@@ -97,7 +96,12 @@ class SantaClausAgent:
             # phospho takes care of aggregating all of the tokens into a single, sensible log.
             # It also logs all the parameters and all the responses, which is great for debugging
             logged_content = phospho.log(
-                input=full_prompt, output=response, session_id=session_id
+                input=full_prompt,
+                output=response,
+                # We use the session_id to group all the logs of a single chat
+                session_id=session_id,
+                # We add the used intro as a metadata. It is the first message of the chat.
+                metadata={"intro": messages[0]["content"]},
             )
 
             # logged_content["output"] contains all the generated tokens until this point
