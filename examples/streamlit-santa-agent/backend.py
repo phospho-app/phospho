@@ -55,7 +55,6 @@ class SantaClausAgent:
                 "Happy halloween!... Uh-oh. Wrong holidays! Ho, ho, ho! Merry Christmas, how are you?",
             ]
         )
-        self.latest_intro = chosen_intro
         # Create a streaming effect
         splitted_text = chosen_intro.split(" ")
         for i, word in enumerate(splitted_text):
