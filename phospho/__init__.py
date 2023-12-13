@@ -609,9 +609,11 @@ def _wrap(
 
 
 def wrap(
+    __fn: Optional[Callable[[Any], Any]] = None,
     *,
     stream: bool = False,
     stop: Optional[Callable[[Any], bool]] = None,
+    **meta_kwargs,
 ):
     """
     This wrapper helps you log a function call to phospho by returning a wrapped version
@@ -686,6 +688,14 @@ def wrap(
     """
 
     def meta_wrapper(func, *args, **kwargs):
-        return _wrap(func, *args, stream=stream, stop=stop, **kwargs)
+        # Merge the meta_args and meta_kwargs passed to phospho.wrap
+        # with the args and kwargs passed to the wrapped function
+        # and pass them to the wrapper
+        _meta_kwargs = {**meta_kwargs, **kwargs}
 
-    return meta_wrapper
+        return _wrap(func, *args, stream=stream, stop=stop, **_meta_kwargs)
+
+    if __fn is None:
+        return meta_wrapper
+    else:
+        return meta_wrapper(__fn)

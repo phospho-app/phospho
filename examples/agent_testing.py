@@ -26,13 +26,18 @@ def evaluation_function(
 ):
     """This is a simple evaluation function that calls OpenAI
     and asks which answer is better"""
+
+    # Extract str representation from the otuputs
+    old_output_str = phospho.extractor.detect_str_from_output(old_output)
+    new_output_str = phospho.extractor.detect_str_from_output(new_output)
+
     prompt = f"""Chose which of the response is better as an answer to the following context:
 ---
 Context: {context}
 ---
-Response A: {old_output}
+Response A: {old_output_str}
 ---
-Response B: {new_output}
+Response B: {new_output_str}
 ----
 
 Possible answers:
@@ -55,11 +60,11 @@ Choice: """
 tasks = phospho.client.tasks.get_all()
 
 for task in tasks:
-    new_output = santa_claus_agent.answer(**task.content["raw_input"])
+    new_output = santa_claus_agent.answer(**task.content["additional_output"])
 
     # Compare
     evaluation_function(
         task.content["input"],
-        task.content["raw_output"],
+        task.content["additional_output"],
         new_output,
     )
