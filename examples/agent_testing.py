@@ -5,7 +5,7 @@ import phospho
 from openai import OpenAI
 from collections import defaultdict
 
-from .streamlit_assistant.backend import SantaClausAgent
+from streamlit_santa_agent.backend import SantaClausAgent
 from dotenv import load_dotenv
 
 load_dotenv()
