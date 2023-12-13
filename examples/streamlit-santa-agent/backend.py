@@ -26,7 +26,7 @@ class SantaClausAgent:
     """This agent talks with the end user. It uses an LLM to generate texts."""
 
     # model = "gpt-3.5-turbo"
-    model: str = "mistral-medium"
+    model: str = "mistral-tiny"
 
     # This system prompt gives its personality to the agent
     system_prompt = {
