@@ -26,11 +26,11 @@ __all__ = [
     "RawDataType",
     "MutableAsyncGenerator",
     "MutableGenerator",
+    "client",
 ]
 
 import pydantic
 import logging
-import inspect
 
 from copy import deepcopy
 from typing import (
@@ -608,7 +608,11 @@ def _wrap(
     return wrapped_function
 
 
-def wrap(*, stream: bool = False, stop: Optional[Callable[[Any], bool]] = None):
+def wrap(
+    *,
+    stream: bool = False,
+    stop: Optional[Callable[[Any], bool]] = None,
+):
     """
     This wrapper helps you log a function call to phospho by returning a wrapped version
     of the function.
@@ -681,7 +685,7 @@ def wrap(*, stream: bool = False, stop: Optional[Callable[[Any], bool]] = None):
     :returns: The wrapped function with additional logging.
     """
 
-    def meta_wrapper(func):
-        return _wrap(func, stream=stream, stop=stop)
+    def meta_wrapper(func, *args, **kwargs):
+        return _wrap(func, *args, stream=stream, stop=stop, **kwargs)
 
     return meta_wrapper
