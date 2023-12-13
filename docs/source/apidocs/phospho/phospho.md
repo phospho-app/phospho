@@ -50,6 +50,10 @@ phospho.collection
   - ```{autodoc2-docstring} phospho.log
     :summary:
     ```
+* - {py:obj}`_wrap <phospho._wrap>`
+  - ```{autodoc2-docstring} phospho._wrap
+    :summary:
+    ```
 * - {py:obj}`wrap <phospho.wrap>`
   - ```{autodoc2-docstring} phospho.wrap
     :summary:
@@ -171,7 +175,14 @@ phospho.collection
 ```
 ````
 
-````{py:function} wrap(function: typing.Callable[[typing.Any], typing.Any], **kwargs: typing.Any) -> typing.Callable[[typing.Any], typing.Any]
+````{py:function} _wrap(__fn, stream: bool = False, stop: typing.Optional[typing.Callable[[typing.Any], bool]] = None, **meta_wrap_kwargs: typing.Any) -> typing.Callable[[typing.Any], typing.Any]
+:canonical: phospho._wrap
+
+```{autodoc2-docstring} phospho._wrap
+```
+````
+
+````{py:function} wrap(__fn: typing.Optional[typing.Callable[[typing.Any], typing.Any]] = None, *, stream: bool = False, stop: typing.Optional[typing.Callable[[typing.Any], bool]] = None, **meta_kwargs)
 :canonical: phospho.wrap
 
 ```{autodoc2-docstring} phospho.wrap

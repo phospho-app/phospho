@@ -109,7 +109,9 @@ class TaskCollection(Collection):
     # Get all tasks (filters can be applied)
     def get_all(self) -> List[Task]:
         """Returns a list of all of the project tasks"""
-        response = self._client._get(f"/projects/{self._client._project_id()}/tasks")
+        response = self._client._get(
+            f"/projects/{self._client._project_id()}/tasks",
+        )
         return [
             Task(client=self._client, task_id=task["id"], _content=task)
             for task in response.json()["tasks"]

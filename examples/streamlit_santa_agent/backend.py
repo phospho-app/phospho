@@ -9,17 +9,6 @@ from openai._streaming import Stream
 
 from typing import List, Dict, Generator, Any, Optional
 
-# Initialize phospho to collect logs
-phospho.config.BASE_URL = "http://127.0.0.1:8000/v0"
-
-phospho.init(
-    api_key=st.secrets["PHOSPHO_API_KEY"],
-    project_id=st.secrets["PHOSPHO_PROJECT_ID"],
-)
-
-# This is an LLM app. As an LLM provider, we'll use OpenAI
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-
 
 class SantaClausAgent:
     """This agent talks with the end user. It uses an LLM to generate texts."""
@@ -38,6 +27,9 @@ class SantaClausAgent:
         + " If the user is mean to you, you are allowed to say that they are a silly little frog."
         + " Stay under 50 words.”",
     }
+
+    def __init__(self, client: OpenAI):
+        self.client = client
 
     def new_session(self) -> None:
         """Start a new session_id. This is used to keep discussions separate in phospho."""
@@ -92,7 +84,7 @@ class SantaClausAgent:
         # The OpenAI module gives us back a stream object
         streaming_response: Stream[
             ChatCompletionChunk
-        ] = client.chat.completions.create(**full_prompt)
+        ] = self.client.chat.completions.create(**full_prompt)
 
         # When you iterate on the stream, you get a token for every response
         # We want to log this response to phospho.
@@ -125,7 +117,7 @@ class SantaClausAgent:
 
         streaming_response: Stream[
             ChatCompletionChunk
-        ] = client.chat.completions.create(
+        ] = self.client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[self.system_prompt]
             + [{"role": m["role"], "content": m["content"]} for m in messages],
@@ -134,3 +126,17 @@ class SantaClausAgent:
 
         for response in streaming_response:
             yield response.choices[0].delta.content
+
+
+# Initialize phospho to collect logs
+phospho.config.BASE_URL = "http://127.0.0.1:8000/v0"
+
+phospho.init(
+    api_key=st.secrets["PHOSPHO_API_KEY"],
+    project_id=st.secrets["PHOSPHO_PROJECT_ID"],
+)
+
+
+# This is an LLM app. As an LLM provider, we'll use OpenAI
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+santa_claus_agent = SantaClausAgent(client=client)

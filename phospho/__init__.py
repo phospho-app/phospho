@@ -14,6 +14,7 @@ from .utils import (
 from .extractor import get_input_output, RawDataType
 from ._version import __version__
 
+
 __all__ = [
     "Client",
     "Consumer",
@@ -27,6 +28,13 @@ __all__ = [
     "MutableAsyncGenerator",
     "MutableGenerator",
     "client",
+    "log_queue",
+    "consumer",
+    "current_session_id",
+    "new_session",
+    "log",
+    "wrap",
+    "extractor",
 ]
 
 import pydantic
