@@ -1,5 +1,6 @@
 from .log_queue import LogQueue
 from .client import Client
+from .config import BACKTEST_MODE
 
 import time
 import atexit
@@ -28,11 +29,14 @@ class Consumer(Thread):
         atexit.register(self.stop)
 
     def run(self) -> None:
+        # If we are in backtest mode, we don't want to send logs
         while self.running:
-            self.send_batch()
+            if not BACKTEST_MODE:
+                self.send_batch()
             time.sleep(self.tick)
 
-        self.send_batch()
+        if not BACKTEST_MODE:
+            self.send_batch()
 
     def send_batch(self) -> None:
         batch = self.log_queue.get_batch()

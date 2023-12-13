@@ -53,7 +53,7 @@
 
 ````
 
-````{py:method} refresh()
+````{py:method} refresh() -> None
 :canonical: phospho.tasks.Task.refresh
 
 ```{autodoc2-docstring} phospho.tasks.Task.refresh
@@ -80,6 +80,14 @@ Bases: {py:obj}`phospho.collection.Collection`
 :canonical: phospho.tasks.TaskCollection.create
 
 ```{autodoc2-docstring} phospho.tasks.TaskCollection.create
+```
+
+````
+
+````{py:method} get_all() -> typing.List[phospho.tasks.Task]
+:canonical: phospho.tasks.TaskCollection.get_all
+
+```{autodoc2-docstring} phospho.tasks.TaskCollection.get_all
 ```
 
 ````
