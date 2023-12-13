@@ -1,11 +1,12 @@
 from phospho.collection import Collection
-from phospho.client import Client
 
 from typing import Dict, Optional, List
 
 
 class Task:
     def __init__(self, client, task_id: str, _content: Optional[dict] = None):
+        from phospho.client import Client
+
         self._client: Client = client
         self._task_id: str = task_id
         self._content: Optional[dict] = _content
