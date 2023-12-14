@@ -23,6 +23,7 @@ if "messages" not in st.session_state:
 # Start a session. A session is used to group interactions of a single chat
 if "session_id" not in st.session_state:
     st.session_state.session_id = santa_claus_agent.new_session()
+    print("New session_id:", st.session_state.session_id)
 
 
 # Fetch the first message and display it word by word
@@ -54,6 +55,7 @@ if prompt := st.chat_input("All I want for Christmas is..."):
         message_placeholder = st.empty()
         full_str_response = ""
         # We ask the Santa Claus agent to respond token by token
+        print("session_id:", st.session_state.session_id)
         streamed_response = santa_claus_agent.answer(
             messages=st.session_state.messages, session_id=st.session_state.session_id
         )

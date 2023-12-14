@@ -31,9 +31,9 @@ class SantaClausAgent:
     def __init__(self):
         self.client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-    def new_session(self) -> None:
+    def new_session(self) -> str:
         """Start a new session_id. This is used to keep discussions separate in phospho."""
-        phospho.new_session()
+        return phospho.new_session()
 
     def random_intro(self, session_id: str) -> Generator[str, Any, None]:
         """This is used to greet the user when they log in"""
@@ -85,6 +85,14 @@ class SantaClausAgent:
         streaming_response: Stream[
             ChatCompletionChunk
         ] = self.client.chat.completions.create(**full_prompt)
+        logged_content = phospho.log(
+            input=full_prompt,
+            output=streaming_response,
+            # We use the session_id to group all the logs of a single chat
+            session_id=session_id,
+            # We add the used intro as a metadata. It is the first message of the chat.
+            metadata={"intro": messages[0]["content"]},
+        )
 
         # When you iterate on the stream, you get a token for every response
         # We want to log this response to phospho.
@@ -92,14 +100,6 @@ class SantaClausAgent:
             # You can log each individual response in phospho
             # phospho takes care of aggregating all of the tokens into a single, sensible log.
             # It also logs all the parameters and all the responses, which is great for debugging
-            logged_content = phospho.log(
-                input=full_prompt,
-                output=response,
-                # We use the session_id to group all the logs of a single chat
-                session_id=session_id,
-                # We add the used intro as a metadata. It is the first message of the chat.
-                metadata={"intro": messages[0]["content"]},
-            )
 
             # logged_content["output"] contains all the generated tokens until this point
             full_str_response = logged_content["output"] or ""
