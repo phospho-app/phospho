@@ -50,6 +50,10 @@ phospho.collection
   - ```{autodoc2-docstring} phospho.log
     :summary:
     ```
+* - {py:obj}`_wrap <phospho._wrap>`
+  - ```{autodoc2-docstring} phospho._wrap
+    :summary:
+    ```
 * - {py:obj}`wrap <phospho.wrap>`
   - ```{autodoc2-docstring} phospho.wrap
     :summary:
@@ -150,7 +154,7 @@ phospho.collection
 ```
 ````
 
-````{py:function} _log_single_event(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_task_id_and_to_log_function: typing.Optional[typing.Callable[[typing.Any], typing.Tuple[typing.Optional[str], bool]]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, to_log: bool = True, **kwargs: typing.Dict[str, typing.Any]) -> typing.Dict[str, object]
+````{py:function} _log_single_event(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, to_log: bool = True, **kwargs: typing.Dict[str, typing.Any]) -> typing.Dict[str, object]
 :canonical: phospho._log_single_event
 
 ```{autodoc2-docstring} phospho._log_single_event
@@ -171,7 +175,14 @@ phospho.collection
 ```
 ````
 
-````{py:function} wrap(function: typing.Callable[[typing.Any], typing.Any], **kwargs: typing.Any) -> typing.Callable[[typing.Any], typing.Any]
+````{py:function} _wrap(__fn, stream: bool = False, stop: typing.Optional[typing.Callable[[typing.Any], bool]] = None, **meta_wrap_kwargs: typing.Any) -> typing.Callable[[typing.Any], typing.Any]
+:canonical: phospho._wrap
+
+```{autodoc2-docstring} phospho._wrap
+```
+````
+
+````{py:function} wrap(__fn: typing.Optional[typing.Callable[[typing.Any], typing.Any]] = None, *, stream: bool = False, stop: typing.Optional[typing.Callable[[typing.Any], bool]] = None, **meta_kwargs)
 :canonical: phospho.wrap
 
 ```{autodoc2-docstring} phospho.wrap

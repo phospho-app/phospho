@@ -4,4 +4,6 @@ class Collection:
     """
 
     def __init__(self, client) -> None:
-        self._client = client
+        from phospho.client import Client
+
+        self._client: Client = client

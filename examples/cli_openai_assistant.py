@@ -1,8 +1,6 @@
 """
 This is an example minimal assistant in the console which logs interactions to phospho.
 
-It demonstrates how to use `phospho.wrap()` with streaming content.
-
 ## Setup 
 
 Create `.env` file:

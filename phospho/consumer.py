@@ -3,6 +3,7 @@ from .client import Client
 
 import time
 import atexit
+import os
 from threading import Thread
 
 import logging
@@ -28,11 +29,16 @@ class Consumer(Thread):
         atexit.register(self.stop)
 
     def run(self) -> None:
+        # If we are in backtest mode, we don't want to send logs
+        PHOSPHO_EXECUTION_MODE = os.getenv("PHOSPHO_EXECUTION_MODE")
+
         while self.running:
-            self.send_batch()
+            if PHOSPHO_EXECUTION_MODE != "backtest":
+                self.send_batch()
             time.sleep(self.tick)
 
-        self.send_batch()
+        if PHOSPHO_EXECUTION_MODE != "backtest":
+            self.send_batch()
 
     def send_batch(self) -> None:
         batch = self.log_queue.get_batch()
