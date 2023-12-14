@@ -1,7 +1,8 @@
 import streamlit as st
-from backend import santa_claus_agent
+from backend import SantaClausAgent
 
 # Let's do an LLM-powered Santa Claus agent !
+santa_claus_agent = SantaClausAgent()
 avatars = {"user": "🐸", "assistant": "🎅🏼"}
 
 # Let's dress up...

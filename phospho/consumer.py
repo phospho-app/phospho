@@ -1,9 +1,9 @@
 from .log_queue import LogQueue
 from .client import Client
-from .config import BACKTEST_MODE
 
 import time
 import atexit
+import os
 from threading import Thread
 
 import logging
@@ -30,12 +30,14 @@ class Consumer(Thread):
 
     def run(self) -> None:
         # If we are in backtest mode, we don't want to send logs
+        PHOSPHO_EXECUTION_MODE = os.getenv("PHOSPHO_EXECUTION_MODE")
+
         while self.running:
-            if not BACKTEST_MODE:
+            if PHOSPHO_EXECUTION_MODE != "backtest":
                 self.send_batch()
             time.sleep(self.tick)
 
-        if not BACKTEST_MODE:
+        if PHOSPHO_EXECUTION_MODE != "backtest":
             self.send_batch()
 
     def send_batch(self) -> None:

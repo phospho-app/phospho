@@ -28,8 +28,8 @@ class SantaClausAgent:
         + " Stay under 50 words.”",
     }
 
-    def __init__(self, client: OpenAI):
-        self.client = client
+    def __init__(self):
+        self.client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
     def new_session(self) -> None:
         """Start a new session_id. This is used to keep discussions separate in phospho."""
@@ -135,8 +135,3 @@ phospho.init(
     api_key=st.secrets["PHOSPHO_API_KEY"],
     project_id=st.secrets["PHOSPHO_PROJECT_ID"],
 )
-
-
-# This is an LLM app. As an LLM provider, we'll use OpenAI
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-santa_claus_agent = SantaClausAgent(client=client)
