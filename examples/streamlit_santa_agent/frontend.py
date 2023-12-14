@@ -23,7 +23,6 @@ if "messages" not in st.session_state:
 # Start a session. A session is used to group interactions of a single chat
 if "session_id" not in st.session_state:
     st.session_state.session_id = santa_claus_agent.new_session()
-    print("New session_id:", st.session_state.session_id)
 
 
 # Fetch the first message and display it word by word
