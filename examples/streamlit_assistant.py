@@ -43,7 +43,6 @@ if "messages" not in st.session_state:
 # Initialize a session. A session is used to group interactions of a single chat
 if "session_id" not in st.session_state:
     st.session_state.session_id = phospho.new_session()
-    print("New session id", st.session_state.session_id)
 
 # Messages are displayed the following way
 for message in st.session_state.messages:
