@@ -40,6 +40,10 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Initialize a session. A session is used to group interactions of a single chat
+if "session_id" not in st.session_state:
+    st.session_state.session_id = phospho.new_session()
+
 # Messages are displayed the following way
 for message in st.session_state.messages:
     with st.chat_message(name=message["role"]):
@@ -75,7 +79,12 @@ if prompt := st.chat_input("What is up?"):
 
         # ----> this is how you log to phospho
         logged_content = phospho.log(
-            input=full_prompt, output=streaming_response, stream=True
+            input=full_prompt,
+            output=streaming_response,
+            # We use the session_id to group all the logs of a single chat
+            session_id=st.session_state.session_id,
+            # Adapt the logging to streaming content
+            stream=True,
         )
 
         # When you iterate on the stream, you get a token for every response
