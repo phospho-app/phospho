@@ -3,6 +3,9 @@ This is an example of how to backtest an agent with phospho
 """
 import phospho
 import logging
+import os
+import concurrent.futures
+
 from openai import OpenAI
 from collections import defaultdict
 from pprint import pprint
@@ -12,12 +15,12 @@ from random import sample
 
 
 # Import the agent you want to test
-from streamlit_santa_agent.backend import santa_claus_agent
+from streamlit_santa_agent.backend import SantaClausAgent
 
 logger = logging.getLogger(__name__)
 
 # Initialize phospho in backtest mode
-phospho.config.BACKTEST_MODE = True
+os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
 phospho.init(project_id="jRg9zVIXRTqmokv84wSt")
 
 # Collect evaluation
@@ -59,8 +62,8 @@ Response B: {new_output_str}
 Possible answers:
 Choice A: Response A is better
 Choice B: Response B is better
-Choice C: Both are equal
-Choice D: Neither are correct
+Choice C: Both are equally good
+Choice D: Both are equally bad
 
 Choice: """
 
@@ -69,16 +72,24 @@ Choice: """
         model="gpt-3.5-turbo",
         max_tokens=2,
     )
-    EVALUATION_RESULTS[response.choices[0].message.content] += 1
+    text_response = response.choices[0].message.content
+    # Map back 'Choice A' to 'Response A is better' etc.
+    mapping = {
+        "Choice A": "Old output is better",
+        "Choice B": "New output is better",
+        "Choice C": "Same quality",
+        "Choice D": "Both are bad",
+    }
+
+    EVALUATION_RESULTS[mapping[text_response]] += 1
 
 
-# Pull the logs from phospho
-tasks = phospho.client.tasks.get_all()
+def evaluate_a_task(task):
+    """This function evaluates a single task"""
 
-
-for task in tasks:
     try:
         print("Task id: ", task.id)
+        santa_claus_agent = SantaClausAgent()
         new_output = santa_claus_agent.answer(**task.content["additional_input"])
         # Compare
         evaluation_function(
@@ -89,5 +100,20 @@ for task in tasks:
     except Exception as e:
         logger.error(f"Error while answering task {task.id}: {e}")
 
-pprint(COMPARISONS)
-print(EVALUATION_RESULTS)
+
+def main():
+    # Pull the logs from phospho
+    tasks = phospho.client.tasks.get_all()
+    if len(tasks) > 10:
+        tasks = sample(tasks, 10)
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # Submit tasks to the executor
+        executor.map(evaluate_a_task, tasks)
+
+    pprint(COMPARISONS)
+    print(EVALUATION_RESULTS)
+
+
+if __name__ == "__main__":
+    main()
