@@ -15,7 +15,7 @@ import phospho.config as config
 
 from phospho.sessions import SessionCollection
 from phospho.tasks import TaskCollection
-from phospho.steps import StepCollection
+from phospho.evals import Comparison
 
 
 class Client:
@@ -60,7 +60,6 @@ class Client:
 
     def _headers(self) -> Dict[str, str]:
         # TODO : "User-Agent": f"replicate-python/{__version__}",
-
         return {
             "Authorization": f"Bearer {self._api_key()}",
             "content-type": "application/json",
@@ -93,12 +92,28 @@ class Client:
 
     @property
     def sessions(self) -> SessionCollection:
+        """Return a SessionCollection to interact with the sessions of the project"""
         return SessionCollection(client=self)
 
     @property
     def tasks(self) -> TaskCollection:
+        """Return a TaskCollection to interact with the tasks of the project"""
         return TaskCollection(client=self)
 
-    # @property
-    # def steps(self) -> StepCollection:
-    #     return StepCollection(client=self)
+    def compare(
+        self, context_input: str, old_output: str, new_output: str
+    ) -> Comparison:
+        """
+        Compare the old and new answers to the context_input with an LLM
+        """
+        comparison_result = self._post(
+            "/evals/compare/",
+            payload={
+                "project_id": self._project_id(),
+                "context_input": context_input,
+                "old_output": old_output,
+                "new_output": new_output,
+            },
+        )
+
+        return Comparison.model_validate(comparison_result.json())

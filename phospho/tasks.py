@@ -1,15 +1,15 @@
 from phospho.collection import Collection
 
-from phospho.steps import Step
-
-from typing import Optional
+from typing import Dict, Optional, List
 
 
 class Task:
     def __init__(self, client, task_id: str, _content: Optional[dict] = None):
-        self._client = client
-        self._task_id = task_id
-        self._content = _content
+        from phospho.client import Client
+
+        self._client: Client = client
+        self._task_id: str = task_id
+        self._content: Optional[dict] = _content
 
     @property
     def id(self):
@@ -27,7 +27,7 @@ class Task:
 
         return self._content
 
-    def refresh(self):
+    def refresh(self) -> None:
         """
         Refresh the content of the task from the server
         Done inplace
@@ -71,6 +71,7 @@ class Task:
 class TaskCollection(Collection):
     # Get a task
     def get(self, task_id: str):
+        """Get a task by id"""
         # TODO: add filters, limits and pagination
 
         response = self._client._get(f"/tasks/{task_id}")
@@ -88,13 +89,16 @@ class TaskCollection(Collection):
         additional_output: Optional[dict] = None,
         data: Optional[dict] = None,
     ):
-        payload = {
+        """
+        Create a task
+        """
+        payload: Dict[str, object] = {
             "session_id": session_id,
             "sender_id": sender_id,
             "input": input,
             "additional_input": additional_input or {},
             "output": output,
-            "additional_output": additional_input or {},
+            "additional_output": additional_output or {},
             "data": data or {},
         }
 
@@ -102,8 +106,17 @@ class TaskCollection(Collection):
 
         return Task(self._client, response.json()["id"])
 
+    # Get all tasks (filters can be applied)
+    def get_all(self) -> List[Task]:
+        """Returns a list of all of the project tasks"""
+        response = self._client._get(
+            f"/projects/{self._client._project_id()}/tasks",
+        )
+        return [
+            Task(client=self._client, task_id=task["id"], _content=task)
+            for task in response.json()["tasks"]
+        ]
 
-# Get all tasks (filters can be applied)
 
 # Create a task
 

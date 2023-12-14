@@ -32,7 +32,6 @@ phospho.init(
     api_key=st.secrets["PHOSPHO_API_KEY"],
     project_id=st.secrets["PHOSPHO_PROJECT_ID"],
 )
-phospho.config.BASE_URL = "https://phospho-backend-zxs3h5fuba-ew.a.run.app/v0"
 
 # We will use OpenAI
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -40,6 +39,7 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 # The messages between user and assistant are kept in the session_state (the browser's cache)
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
 # Messages are displayed the following way
 for message in st.session_state.messages:
     with st.chat_message(name=message["role"]):
@@ -72,24 +72,18 @@ if prompt := st.chat_input("What is up?"):
         streaming_response: Stream[
             ChatCompletionChunk
         ] = client.chat.completions.create(**full_prompt)
+
+        # ----> this is how you log to phospho
+        logged_content = phospho.log(
+            input=full_prompt, output=streaming_response, stream=True
+        )
+
         # When you iterate on the stream, you get a token for every response
         for response in streaming_response:
-            # We can log each individual response in phospho
-            # phospho takes care of aggregating all of the tokens into a single, sensible log.
-            # It's battery-included.
-            # phospho will log all the parameters and all the responses, which is great for debugging
-            logged_content = phospho.log(input=full_prompt, output=response)
-
-            # We ask streamlit to display the output of the logged_content.
-            # This is equivalent to:
-            # full_str_response += response.choices[0].delta.content or ""
-            full_str_response = logged_content["output"] or ""
-
+            full_str_response += response.choices[0].delta.content or ""
             message_placeholder.markdown(full_str_response + "▌")
 
-        # If you don't want to log every streaming chunk (too much data ?)
-        # you can simply log the final output.
-        # phospho logging is meant to be flexible.
+        # If you don't want to log every streaming chunk, log only the final output.
         # phospho.log(input=full_prompt, output=full_str_response, metadata={"stuff": "other"})
         message_placeholder.markdown(full_str_response)
 

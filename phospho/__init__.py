@@ -12,8 +12,8 @@ from .utils import (
     MutableGenerator,
 )
 from .extractor import get_input_output, RawDataType
-from .config import BASE_URL
 from ._version import __version__
+from . import evals
 
 __all__ = [
     "Client",
@@ -27,6 +27,15 @@ __all__ = [
     "RawDataType",
     "MutableAsyncGenerator",
     "MutableGenerator",
+    "client",
+    "log_queue",
+    "consumer",
+    "current_session_id",
+    "new_session",
+    "log",
+    "wrap",
+    "extractor",
+    "evals",
 ]
 
 import pydantic
@@ -118,9 +127,6 @@ def _log_single_event(
     raw_output: Optional[RawDataType] = None,
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
-    output_to_task_id_and_to_log_function: Optional[
-        Callable[[Any], Tuple[Optional[str], bool]]
-    ] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
     to_log: bool = True,
     **kwargs: Dict[str, Any],
@@ -484,7 +490,141 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
     return log
 
 
-def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
+def _wrap(
+    __fn,
+    stream: bool = False,
+    stop: Optional[Callable[[Any], bool]] = None,
+    **meta_wrap_kwargs: Any,
+) -> Callable[[Any], Any]:
+    """
+    Internal wrapper
+    """
+    # Stop is the stopping criterion for streaming mode
+    if stop is None:
+        # Default behaviour = stop when None is returned
+        stop = lambda x: x is None
+
+    def streamed_function_wrapper(
+        func_args: Iterable[Any],
+        func_kwargs: Dict[str, Any],
+        output: Any,
+        task_id: str,
+    ):
+        # This function is used so that the wrapped_function can
+        # return a generator that also logs.
+        for single_output in output:
+            if not stop(single_output):
+                _log_single_event(
+                    input={
+                        **{str(i): arg for i, arg in enumerate(func_args)},
+                        **func_kwargs,
+                    },
+                    output=single_output,
+                    # Group the generated outputs with a unique task_id
+                    task_id=task_id,
+                    # By default, individual streamed calls are not immediately logged
+                    to_log=False,
+                    **meta_wrap_kwargs,
+                )
+            else:
+                _log_single_event(
+                    input={
+                        **{str(i): arg for i, arg in enumerate(func_args)},
+                        **func_kwargs,
+                    },
+                    output=None,
+                    task_id=task_id,
+                    to_log=True,
+                    **meta_wrap_kwargs,
+                )
+            yield single_output
+
+    async def async_streamed_function_wrapper(
+        func_args: Iterable[Any],
+        func_kwargs: Dict[str, Any],
+        output: Coroutine,
+        task_id: str,
+    ):
+        # This function is used so that the wrapped_function can
+        # return a generator that also logs.
+        async for single_output in await output:
+            if not stop(single_output):
+                _log_single_event(
+                    input={
+                        **{str(i): arg for i, arg in enumerate(func_args)},
+                        **func_kwargs,
+                    },
+                    output=single_output,
+                    # Group the generated outputs with a unique task_id
+                    task_id=task_id,
+                    # By default, individual streamed calls are not immediately logged
+                    to_log=False,
+                    **meta_wrap_kwargs,
+                )
+            else:
+                _log_single_event(
+                    input={
+                        **{str(i): arg for i, arg in enumerate(func_args)},
+                        **func_kwargs,
+                    },
+                    output=None,
+                    task_id=task_id,
+                    to_log=True,
+                    **meta_wrap_kwargs,
+                )
+            yield single_output
+
+    def wrapped_function(*func_args, **func_kwargs):
+        # Call the wrapped function
+        logging.debug("Wrapping function" + str(__fn))
+        output = __fn(*func_args, **func_kwargs)
+
+        # Log
+        # If not stream, but stream=True passed to the wrapped function, then have the streaming behaviour
+        if not stream and (func_kwargs.get("stream", False) is False):
+            # Default behaviour (not streaming): log the input and the output
+            _log_single_event(
+                # Input is all the args and kwargs passed to the funciton
+                input={
+                    **{str(i): arg for i, arg in enumerate(func_args)},
+                    **func_kwargs,
+                },
+                # Output is what the function returns
+                output=output,
+                # Also log everything passed to the wrapper
+                **meta_wrap_kwargs,
+            )
+            return output
+        else:
+            # Streaming behaviour
+            # Return a generator that log every individual streamed output
+            task_id = generate_uuid()
+            logging.debug("Wrapping function with stream=True" + str(output))
+            if isinstance(output, Coroutine):
+                return async_streamed_function_wrapper(
+                    func_args=func_args,
+                    func_kwargs=func_kwargs,
+                    output=output,
+                    task_id=task_id,
+                )
+            else:
+                return streamed_function_wrapper(
+                    func_args=func_args,
+                    func_kwargs=func_kwargs,
+                    output=output,
+                    task_id=task_id,
+                )
+
+    return wrapped_function
+
+
+def wrap(
+    __fn: Optional[Callable[[Any], Any]] = None,
+    *,
+    stream: bool = False,
+    stop: Optional[Callable[[Any], bool]] = None,
+    **meta_kwargs,
+):
     """
     This wrapper helps you log a function call to phospho by returning a wrapped version
     of the function.
@@ -557,115 +697,15 @@ def wrap(function: Callable[[Any], Any], **kwargs: Any) -> Callable[[Any], Any]:
     :returns: The wrapped function with additional logging.
     """
 
-    def streamed_function_wrapper(
-        wrap_args: Iterable[Any], wrap_kwargs: Dict[str, Any], output: Any, task_id: str
-    ):
-        # This function is used so that the wrapped_function can
-        # return a generator that also logs.
-        for single_output in output:
-            if single_output is not None:
-                _log_single_event(
-                    input={
-                        **{str(i): arg for i, arg in enumerate(wrap_args)},
-                        **wrap_kwargs,
-                    },
-                    output=single_output,
-                    # Group the generated outputs with a unique task_id
-                    task_id=task_id,
-                    # By default, individual streamed calls are not immediately logged
-                    to_log=False,
-                    **kwargs,
-                )
-            else:
-                _log_single_event(
-                    input={
-                        **{str(i): arg for i, arg in enumerate(wrap_args)},
-                        **wrap_kwargs,
-                    },
-                    output=None,
-                    # Group the generated outputs with a unique task_id
-                    task_id=task_id,
-                    # We interpret a None output as "log now"
-                    to_log=True,
-                    **kwargs,
-                )
-            yield single_output
+    def meta_wrapper(func, *args, **kwargs):
+        # Merge the meta_args and meta_kwargs passed to phospho.wrap
+        # with the args and kwargs passed to the wrapped function
+        # and pass them to the wrapper
+        _meta_kwargs = {**meta_kwargs, **kwargs}
 
-    async def async_streamed_function_wrapper(
-        wrap_args: Iterable[Any],
-        wrap_kwargs: Dict[str, Any],
-        output: Coroutine,
-        task_id: str,
-    ):
-        # This function is used so that the wrapped_function can
-        # return a generator that also logs.
-        async for single_output in await output:
-            if single_output is not None:
-                _log_single_event(
-                    input={
-                        **{str(i): arg for i, arg in enumerate(wrap_args)},
-                        **wrap_kwargs,
-                    },
-                    output=single_output,
-                    # Group the generated outputs with a unique task_id
-                    task_id=task_id,
-                    # By default, individual streamed calls are not immediately logged
-                    to_log=False,
-                    **kwargs,
-                )
-            else:
-                _log_single_event(
-                    input={
-                        **{str(i): arg for i, arg in enumerate(wrap_args)},
-                        **wrap_kwargs,
-                    },
-                    output=None,
-                    # Group the generated outputs with a unique task_id
-                    task_id=task_id,
-                    # We interpret a None output as "log now"
-                    to_log=True,
-                    **kwargs,
-                )
-            yield single_output
+        return _wrap(func, *args, stream=stream, stop=stop, **_meta_kwargs)
 
-    def wrapped_function(stream: Optional[bool] = None, *wrap_args, **wrap_kwargs):
-        if stream is not None:
-            output = function(*wrap_args, **wrap_kwargs, stream=stream)  # type: ignore
-        else:
-            output = function(*wrap_args, **wrap_kwargs)
-
-        # Call phospho.log
-        if not stream:
-            # Default behaviour (not streaming)
-            #
-            _log_single_event(
-                # Input is all the args and kwargs passed to the funciton
-                input={
-                    **{str(i): arg for i, arg in enumerate(wrap_args)},
-                    **wrap_kwargs,
-                },
-                # Output is what the function returns
-                output=output,
-                **kwargs,
-            )
-            return output
-        else:
-            # Streaming behaviour
-            # Return a generator that log every individual streamed output
-            task_id = generate_uuid()
-            if isinstance(output, Coroutine):
-                return async_streamed_function_wrapper(
-                    wrap_args=wrap_args,
-                    wrap_kwargs=wrap_kwargs,
-                    output=output,
-                    task_id=task_id,
-                )
-            else:
-                return streamed_function_wrapper(
-                    wrap_args=wrap_args,
-                    wrap_kwargs=wrap_kwargs,
-                    output=output,
-                    task_id=task_id,
-                )
-
-    return wrapped_function
+    if __fn is None:
+        return meta_wrapper
+    else:
+        return meta_wrapper(__fn)

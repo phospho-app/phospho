@@ -2,8 +2,8 @@ import streamlit as st
 from backend import SantaClausAgent
 
 # Let's do an LLM-powered Santa Claus agent !
-avatars = {"user": "🐸", "assistant": "🎅🏼"}
 santa_claus_agent = SantaClausAgent()
+avatars = {"user": "🐸", "assistant": "🎅🏼"}
 
 # Let's dress up...
 st.title("🎄🎅🏼 Santa ChatBot")
@@ -53,13 +53,16 @@ if prompt := st.chat_input("All I want for Christmas is..."):
     with st.chat_message("assistant", avatar=avatars["assistant"]):
         message_placeholder = st.empty()
         full_str_response = ""
-        # We ask the Santa Claus agent to respond
-        full_str_response = santa_claus_agent.answer(
+        # We ask the Santa Claus agent to respond token by token
+        streamed_response = santa_claus_agent.answer(
             messages=st.session_state.messages, session_id=st.session_state.session_id
         )
-        for resp in full_str_response:
-            message_placeholder.markdown(resp + "▌")
-        message_placeholder.markdown(resp)
+        for resp in streamed_response:
+            full_str_response += resp or ""
+            message_placeholder.markdown(full_str_response + "▌")
+        message_placeholder.markdown(full_str_response)
 
     # We update the local storage
-    st.session_state.messages.append({"role": "assistant", "content": resp})
+    st.session_state.messages.append(
+        {"role": "assistant", "content": full_str_response}
+    )
