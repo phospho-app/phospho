@@ -6,7 +6,6 @@ import logging
 import os
 import concurrent.futures
 
-from openai import OpenAI
 from collections import defaultdict
 from pprint import pprint
 from types import GeneratorType
