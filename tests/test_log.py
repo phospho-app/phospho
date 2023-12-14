@@ -119,15 +119,8 @@ def test_log_sync():
 
     assert log_content["input"] == "Say hi !"
     assert log_content["output"] == "Hello! How can I assist you today?"
-    assert log_content["session_id"] is not None, "default session_id should be created"
-    old_session_id = log_content["session_id"]
+    assert log_content["session_id"] is None, "By default session_id should be None"
 
-    log_content = phospho.log(input=query, output=response)
-    new_session_id = log_content["session_id"]
-    assert (
-        new_session_id == old_session_id
-    ), "session_id should be preserved between 2 continuous calls"
-    time.sleep(0.1)
     # TODO : Validate that the connection was successful
 
 
