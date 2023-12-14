@@ -10,7 +10,7 @@ from openai import OpenAI
 from collections import defaultdict
 from pprint import pprint
 from types import GeneratorType
-from typing import Any
+from typing import Any, Dict
 from random import sample
 
 
@@ -24,7 +24,7 @@ os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
 phospho.init(project_id="jRg9zVIXRTqmokv84wSt")
 
 # Collect evaluation
-EVALUATION_RESULTS = defaultdict(int)
+EVALUATION_RESULTS: Dict[str, int] = defaultdict(int)
 COMPARISONS = []
 
 # We'll do the evaluation with OpenAI

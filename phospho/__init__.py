@@ -578,9 +578,12 @@ def _wrap(
 
     def wrapped_function(*func_args, **func_kwargs):
         # Call the wrapped function
+        logging.debug("Wrapping function" + str(__fn))
         output = __fn(*func_args, **func_kwargs)
+
         # Log
-        if not stream:
+        # If not stream, but stream=True passed to the wrapped function, then have the streaming behaviour
+        if not stream and (func_kwargs.get("stream", False) is False):
             # Default behaviour (not streaming): log the input and the output
             _log_single_event(
                 # Input is all the args and kwargs passed to the funciton
@@ -598,6 +601,7 @@ def _wrap(
             # Streaming behaviour
             # Return a generator that log every individual streamed output
             task_id = generate_uuid()
+            logging.debug("Wrapping function with stream=True" + str(output))
             if isinstance(output, Coroutine):
                 return async_streamed_function_wrapper(
                     func_args=func_args,
