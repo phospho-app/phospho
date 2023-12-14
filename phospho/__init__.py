@@ -60,7 +60,6 @@ from typing import (
 client = None
 log_queue = None
 consumer = None
-current_session_id = None
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +84,6 @@ def init(
     global client
     global log_queue
     global consumer
-    global current_session_id
 
     client = Client(api_key=api_key, project_id=project_id)
     log_queue = LogQueue()
@@ -93,25 +91,21 @@ def init(
     # Start the consumer on a separate thread (this will periodically send logs to backend)
     consumer.start()
 
-    # Initialize session and task id
-    if current_session_id is None:
-        current_session_id = generate_uuid()
-
 
 def new_session() -> str:
     """
     Sessions are used to group tasks and logs together.
 
-    Use `phospho.new_session()` when you start a new conversation. All the following
-    calls to phospho.log() will be linked to this `session_id`.
+    Use `phospho.new_session()` when you start a new conversation. Store the returned
+    `session_id` and pass it to `phospho.log` to group logs together.
 
-    Alternatively, store `session_id` yourself, and pass the `session_id` parameter to
-    override `phospho.log` default behaviour:
     ```
-    phospho.log("stuff", session_id="custom_session_id")
+    session_id = phospho.new_session()
+    my_database.store(session_id)
+    phospho.log(input="stuff", session_id=session_id)
     ```
 
-    :returns: The new session_id.
+    :returns: The generated session_id.
     """
     global current_session_id
     current_session_id = generate_uuid()
@@ -143,12 +137,6 @@ def _log_single_event(
     assert (
         (log_queue is not None) and (client is not None)
     ), "phospho.log() was called but the global variable log_queue was not found. Make sure that phospho.init() was called."
-
-    # Session: if nothing specified, reuse existing id. Otherwise, update current id
-    if not session_id:
-        session_id = current_session_id
-    else:
-        current_session_id = session_id
 
     # Process the input and output to convert them to dict
     (
@@ -190,7 +178,7 @@ def _log_single_event(
         "client_created_at": generate_timestamp(),
         # metadata
         "project_id": client._project_id(),
-        "session_id": session_id,
+        "session_id": session_id,  # Note: can be None
         "task_id": task_id,
         # input
         "input": str(input_to_log),
