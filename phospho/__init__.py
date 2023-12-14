@@ -126,9 +126,6 @@ def _log_single_event(
     raw_output: Optional[RawDataType] = None,
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
-    output_to_task_id_and_to_log_function: Optional[
-        Callable[[Any], Tuple[Optional[str], bool]]
-    ] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
     to_log: bool = True,
     **kwargs: Dict[str, Any],
@@ -170,7 +167,7 @@ def _log_single_event(
     )
 
     # Override to_log parameter
-    if extracted_to_log is not None and to_log is False:
+    if extracted_to_log is not None:
         to_log = extracted_to_log
 
     # Task: use the task_id parameter, the task_id infered from inputs, or generate one
