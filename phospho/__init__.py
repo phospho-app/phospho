@@ -500,6 +500,9 @@ def _wrap(
     ):
         # This function is used so that the wrapped_function can
         # return a generator that also logs.
+        # Group the kwargs with the function kwargs
+        _meta_wrap_kwargs = {**meta_wrap_kwargs, **func_kwargs}
+
         for single_output in output:
             if not stop(single_output):
                 _log_single_event(
@@ -512,7 +515,7 @@ def _wrap(
                     task_id=task_id,
                     # By default, individual streamed calls are not immediately logged
                     to_log=False,
-                    **meta_wrap_kwargs,
+                    **_meta_wrap_kwargs,
                 )
             else:
                 _log_single_event(
@@ -523,7 +526,7 @@ def _wrap(
                     output=None,
                     task_id=task_id,
                     to_log=True,
-                    **meta_wrap_kwargs,
+                    **_meta_wrap_kwargs,
                 )
             yield single_output
 
@@ -535,6 +538,8 @@ def _wrap(
     ):
         # This function is used so that the wrapped_function can
         # return a generator that also logs.
+        _meta_wrap_kwargs = {**meta_wrap_kwargs, **func_kwargs}
+
         async for single_output in await output:
             if not stop(single_output):
                 _log_single_event(
@@ -547,7 +552,7 @@ def _wrap(
                     task_id=task_id,
                     # By default, individual streamed calls are not immediately logged
                     to_log=False,
-                    **meta_wrap_kwargs,
+                    **_meta_wrap_kwargs,
                 )
             else:
                 _log_single_event(
@@ -558,7 +563,7 @@ def _wrap(
                     output=None,
                     task_id=task_id,
                     to_log=True,
-                    **meta_wrap_kwargs,
+                    **_meta_wrap_kwargs,
                 )
             yield single_output
 
@@ -566,6 +571,8 @@ def _wrap(
         # Call the wrapped function
         logging.debug("Wrapping function" + str(__fn))
         output = __fn(*func_args, **func_kwargs)
+
+        _meta_wrap_kwargs = {**meta_wrap_kwargs, **func_kwargs}
 
         # Log
         # If not stream, but stream=True passed to the wrapped function, then have the streaming behaviour
@@ -580,7 +587,7 @@ def _wrap(
                 # Output is what the function returns
                 output=output,
                 # Also log everything passed to the wrapper
-                **meta_wrap_kwargs,
+                **_meta_wrap_kwargs,
             )
             return output
         else:
