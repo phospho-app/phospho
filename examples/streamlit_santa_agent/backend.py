@@ -61,7 +61,7 @@ class SantaClausAgent:
         self,
         messages: List[Dict[str, str]],
         session_id: str,
-    ) -> Generator[str, Any, None]:
+    ) -> Generator[Optional[str], Any, None]:
         """This methods generates a response to the user in the character of Santa Claus.
         This text is displayed word by word, as soon as they are generated.
 
@@ -85,6 +85,7 @@ class SantaClausAgent:
         streaming_response: Stream[
             ChatCompletionChunk
         ] = self.client.chat.completions.create(**full_prompt)
+
         logged_content = phospho.log(
             input=full_prompt,
             output=streaming_response,
@@ -95,16 +96,8 @@ class SantaClausAgent:
         )
 
         # When you iterate on the stream, you get a token for every response
-        # We want to log this response to phospho.
         for response in streaming_response:
-            # You can log each individual response in phospho
-            # phospho takes care of aggregating all of the tokens into a single, sensible log.
-            # It also logs all the parameters and all the responses, which is great for debugging
-
-            # logged_content["output"] contains all the generated tokens until this point
-            full_str_response = logged_content["output"] or ""
-
-            yield full_str_response
+            yield response.choices[0].delta.content
 
     @phospho.wrap(stream=True, stop=lambda token: token is None)
     def answer(
