@@ -17,6 +17,7 @@ phospho.sessions
 phospho.tasks
 phospho.config
 phospho.client
+phospho.evals
 phospho.extractor
 phospho.utils
 phospho.collection
@@ -78,10 +79,6 @@ phospho.collection
   - ```{autodoc2-docstring} phospho.consumer
     :summary:
     ```
-* - {py:obj}`current_session_id <phospho.current_session_id>`
-  - ```{autodoc2-docstring} phospho.current_session_id
-    :summary:
-    ```
 * - {py:obj}`logger <phospho.logger>`
   - ```{autodoc2-docstring} phospho.logger
     :summary:
@@ -116,16 +113,6 @@ phospho.collection
    None
 
 ```{autodoc2-docstring} phospho.consumer
-```
-
-````
-
-````{py:data} current_session_id
-:canonical: phospho.current_session_id
-:value: >
-   None
-
-```{autodoc2-docstring} phospho.current_session_id
 ```
 
 ````

@@ -93,4 +93,12 @@
 
 ````
 
+````{py:method} compare(context_input: str, old_output: str, new_output: str) -> phospho.evals.Comparison
+:canonical: phospho.client.Client.compare
+
+```{autodoc2-docstring} phospho.client.Client.compare
+```
+
+````
+
 `````
