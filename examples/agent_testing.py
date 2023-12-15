@@ -49,12 +49,14 @@ def evaluate_a_task(task):
 
     try:
         print("Task id: ", task.id)
+        context_input = task.content["input"]
+        old_output_str = task.content["output"]
         new_output_str = get_output_from_agent(task.content["additional_input"])
 
-        #
+        # Ask phospho: what's the best answer to the context_input ?
         comparison_result = phospho.client.compare(
-            task.content["input"],
-            task.content["output"],
+            context_input,
+            old_output_str,
             new_output_str,
         )
 
