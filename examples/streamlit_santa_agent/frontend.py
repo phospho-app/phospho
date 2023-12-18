@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_feedback import streamlit_feedback
 from backend import SantaClausAgent
 
 # Let's do an LLM-powered Santa Claus agent !
@@ -41,8 +42,11 @@ else:
         with st.chat_message(message["role"], avatar=avatars[message["role"]]):
             st.markdown(message["content"])
 
+
 # This is the user's textbox for chatting with the assistant
 if prompt := st.chat_input("All I want for Christmas is..."):
+    generation_finished = False
+
     # When the user sends a message...
     new_message = {"role": "user", "content": prompt}
     st.session_state.messages.append(new_message)
@@ -62,8 +66,24 @@ if prompt := st.chat_input("All I want for Christmas is..."):
             full_str_response += resp or ""
             message_placeholder.markdown(full_str_response + "▌")
         message_placeholder.markdown(full_str_response)
-
+        generation_finished = True
     # We update the local storage
     st.session_state.messages.append(
         {"role": "assistant", "content": full_str_response}
     )
+
+# Let's collect some feedback from the user
+
+
+def _submit_feedback(feedback: dict):
+    santa_claus_agent.feedback(raw_flag=feedback["score"], note=feedback["text"])
+    st.toast(f"Thank you for your feedback!🎅🏼")
+
+
+feedback = streamlit_feedback(
+    feedback_type="thumbs",
+    optional_text_label="[Optional] Please provide an explanation",
+    on_submit=_submit_feedback,
+    # To create a new feedback component for every message and session, you need to provide a unique key
+    key=f"{st.session_state.session_id}_{len(st.session_state.messages)}",
+)
