@@ -82,9 +82,9 @@ def test_client_sessions(client_instance):
     task.refresh()
 
     # Check if the retrieved task's content matches the created task's content
-    assert json.dumps(retrieved_task.content, sort_keys=True) == json.dumps(
-        task.content, sort_keys=True
-    )
+    assert json.dumps(
+        retrieved_task.content.model_dump(), sort_keys=True
+    ) == json.dumps(task.content.model_dump(), sort_keys=True)
 
     # Update the task
     # updated_task = task.update(data={"new_data": "updated_data"})
@@ -110,9 +110,9 @@ def test_client_sessions(client_instance):
     retrieved_task = client_instance.tasks.get(task.id)
 
     # Check if the retrieved task's content matches the created task's content
-    assert json.dumps(retrieved_task.content, sort_keys=True) == json.dumps(
-        task.content, sort_keys=True
-    )
+    assert json.dumps(
+        retrieved_task.content.model_dump(), sort_keys=True
+    ) == json.dumps(task.content.model_dump(), sort_keys=True)
 
     ### STEPS ###
 
