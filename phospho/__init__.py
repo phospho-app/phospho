@@ -1,8 +1,7 @@
-from .agent import Agent
-from .message import Message
 from .client import Client
 from .consumer import Consumer
 from .log_queue import LogQueue, Event
+from .tasks import Task
 from .utils import (
     generate_timestamp,
     generate_uuid,
@@ -30,7 +29,7 @@ __all__ = [
     "client",
     "log_queue",
     "consumer",
-    "current_session_id",
+    "latest_session_id",
     "new_session",
     "log",
     "wrap",
@@ -45,6 +44,7 @@ from copy import deepcopy
 from typing import (
     Dict,
     Any,
+    Literal,
     Optional,
     Union,
     Callable,
@@ -60,6 +60,8 @@ from typing import (
 client = None
 log_queue = None
 consumer = None
+latest_task_id = None
+latest_session_id = None
 
 logger = logging.getLogger(__name__)
 
@@ -107,9 +109,23 @@ def new_session() -> str:
 
     :returns: The generated session_id.
     """
-    global current_session_id
-    current_session_id = generate_uuid()
-    return current_session_id
+    global latest_session_id
+    latest_session_id = generate_uuid()
+    return latest_session_id
+
+
+def new_task() -> str:
+    """
+    Tasks are the main unit of logging in phospho.
+
+    Use `phospho.new_task()` when you start a new, complex task. Store the returned
+    `task_id` and pass it to `phospho.log` to group logs together.
+
+    :returns: The generated task_id.
+    """
+    global latest_session_id
+    latest_session_id = generate_uuid()
+    return latest_session_id
 
 
 def _log_single_event(
@@ -132,7 +148,8 @@ def _log_single_event(
     """
     global client
     global log_queue
-    global current_session_id
+    global latest_task_id
+    global latest_session_id
 
     assert (
         (log_queue is not None) and (client is not None)
@@ -166,6 +183,10 @@ def _log_single_event(
             task_id = generate_uuid()
         else:
             task_id = task_id_from_output
+
+    # Keep track of the latest task_id and session_id
+    latest_task_id = task_id
+    latest_session_id = session_id
 
     # Every other kwargs will be directly stored in the logs, if it's json serializable
     if kwargs:
@@ -704,3 +725,48 @@ def wrap(
         return meta_wrapper
     else:
         return meta_wrapper(__fn)
+
+
+def user_feedback(
+    task_id: str,
+    flag: Optional[Literal["success", "failure"]] = None,
+    note: Optional[str] = None,
+    source: str = "user",
+    raw_flag: Optional[str] = None,
+    raw_flag_to_flag: Optional[Callable[[Any], Literal["success", "failure"]]] = None,
+) -> Task:
+    """
+    Flag a task already logged to phospho as a `success` or a `failure`. This is useful to collect human feedback.
+
+    Note: Feedback can be directly logged with `phospho.log` by passing `flag` as a keyword argument.
+
+    :param task_id: The task_id of the task to flag
+    :param flag: The flag to set for the task. Either "success" or "failure"
+    :param note: An optional note to add to the task. For example, the reason for the flag.
+    :param source: The source of the feedback, such as "user", "system", "user@mail.com", etc.
+    :param raw_flag: The raw flag to set for the task. This can be a more complex object. If
+        flag is specified, this is ignored.
+    :param raw_flag_to_flag: A function to convert the raw_flag to a flag. If flag is specified,
+        this is ignored.
+    """
+
+    if flag is None:
+        if raw_flag is None:
+            logger.warning(
+                "Either flag or raw_flag must be specified when calling user_feedback. Nothing logged"
+            )
+            return
+        else:
+            if raw_flag_to_flag is None:
+                # Default behaviour: some values are mapped to success, others to failure
+                if raw_flag in ["success", "👍", "🙂", "😀"]:
+                    flag = "success"
+                else:
+                    flag = "failure"
+            else:
+                # Use the custom function
+                flag = raw_flag_to_flag(raw_flag)
+
+    # Call the client
+    updated_task = client.flag(task_id=task_id, flag=flag, source=source, note=note)
+    return updated_task

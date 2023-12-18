@@ -1,15 +1,23 @@
 from phospho.collection import Collection
 
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Union
+from phospho.models import TaskModel
 
 
 class Task:
-    def __init__(self, client, task_id: str, _content: Optional[dict] = None):
+    def __init__(
+        self, client, task_id: str, _content: Union[Optional[dict], TaskModel] = None
+    ):
         from phospho.client import Client
 
         self._client: Client = client
         self._task_id: str = task_id
-        self._content: Optional[dict] = _content
+        if not isinstance(_content, TaskModel) and _content is not None:
+            try:
+                _content = TaskModel(**_content)
+            except TypeError:  # Keep dict
+                pass
+        self._content: Optional[TaskModel] = _content
 
     @property
     def id(self):
@@ -23,7 +31,10 @@ class Task:
         if self._content is None:
             # Query the server
             response = self._client._get(f"/tasks/{self._task_id}")
-            self._content = response.json()
+            try:
+                self._content = TaskModel(**response.json())
+            except TypeError:  # Keep dict
+                self._content = response.json()
 
         return self._content
 
@@ -33,7 +44,10 @@ class Task:
         Done inplace
         """
         response = self._client._get(f"/tasks/{self._task_id}")
-        self._content = response.json()
+        try:
+            self._content = TaskModel(**response.json())
+        except TypeError:  # Keep dict
+            self._content = response.json()
 
     # def update(self, metadata: Optional[dict] = None, data: Optional[dict] = None):
     #     if metadata is None and data is None:

@@ -120,9 +120,17 @@ class SantaClausAgent:
         for response in streaming_response:
             yield response.choices[0].delta.content
 
+    def feedback(self, raw_flag: str, note: str) -> None:
+        """This method is used to collect feedback from the user.
+        It is called after the user has received a response from the agent.
+        """
+        phospho.user_feedback(
+            task_id=phospho.latest_task_id, raw_flag=raw_flag, note=note
+        )
+
 
 # Initialize phospho to collect logs
-# phospho.config.BASE_URL = "http://127.0.0.1:8000/v0"
+phospho.config.BASE_URL = "http://127.0.0.1:8000/v0"
 
 phospho.init(
     api_key=st.secrets["PHOSPHO_API_KEY"],
