@@ -232,7 +232,28 @@ def _log_single_event(
             fused_output = str(existing_log_content["output"]) + str(
                 log_content["output"]
             )
-
+        # Concatenate the raw_outputs to keep all the intermediate results to openai
+        if (
+            existing_log_content["raw_output"] is None
+            and log_content["raw_output"] is None
+        ):
+            fused_raw_output = None
+        else:
+            if existing_log_content["raw_output"] is None:
+                existing_log_content["raw_output"] = []
+            if log_content["raw_output"] is None:
+                log_content["raw_output"] = []
+            # Convert to list if not already
+            if not isinstance(existing_log_content["raw_output"], list):
+                existing_log_content["raw_output"] = [
+                    existing_log_content["raw_output"]
+                ]
+            if not isinstance(log_content["raw_output"], list):
+                log_content["raw_output"] = [log_content["raw_output"]]
+            fused_raw_output = (
+                existing_log_content["raw_output"] + log_content["raw_output"]
+            )
+        # Put all of this into a dict
         fused_log_content = {
             # Replace creation timestamp by the original one
             # Keep a trace of the latest timestamp. This will help computing streaming time
@@ -240,27 +261,14 @@ def _log_single_event(
             "last_update": log_content["client_created_at"],
             # Concatenate the log event output strings
             "output": fused_output,
-            "raw_output": [
-                existing_log_content["raw_output"],
-                log_content["raw_output"],
-            ]
-            if not isinstance(existing_log_content["raw_output"], list)
-            else existing_log_content["raw_output"] + [log_content["raw_output"]],
+            "raw_output": fused_raw_output,
         }
         # TODO : Turn this bool into a parametrizable list
         if concatenate_raw_outputs_if_task_id_exists:
             log_content.pop("raw_output")
         existing_log_content.update(log_content)
+        # Update the dict inplace
         existing_log_content.update(fused_log_content)
-        # Concatenate the raw_outputs to keep all the intermediate results to openai
-        if concatenate_raw_outputs_if_task_id_exists:
-            if isinstance(existing_log_content["raw_output"], list):
-                existing_log_content["raw_output"].append(raw_output_to_log)
-            else:
-                existing_log_content["raw_output"] = [
-                    existing_log_content["raw_output"],
-                    raw_output_to_log,
-                ]
         log_content = existing_log_content
         # Update the to_log status of event
         log_queue.events[task_id].to_log = to_log

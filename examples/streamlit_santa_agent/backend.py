@@ -130,7 +130,7 @@ class SantaClausAgent:
 
 
 # Initialize phospho to collect logs
-phospho.config.BASE_URL = "http://127.0.0.1:8000/v0"
+# phospho.config.BASE_URL = "http://127.0.0.1:8000/v0"
 
 phospho.init(
     api_key=st.secrets["PHOSPHO_API_KEY"],
