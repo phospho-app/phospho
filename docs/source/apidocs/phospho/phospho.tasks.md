@@ -25,7 +25,7 @@
 
 ### API
 
-`````{py:class} Task(client, task_id: str, _content: typing.Optional[dict] = None)
+`````{py:class} Task(client, task_id: str, _content: typing.Union[typing.Optional[dict], phospho.models.TaskModel] = None)
 :canonical: phospho.tasks.Task
 
 ```{autodoc2-docstring} phospho.tasks.Task
