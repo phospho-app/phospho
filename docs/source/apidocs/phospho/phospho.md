@@ -16,6 +16,7 @@
 phospho.sessions
 phospho.tasks
 phospho.config
+phospho.models
 phospho.client
 phospho.evals
 phospho.extractor
@@ -39,6 +40,10 @@ phospho.collection
   - ```{autodoc2-docstring} phospho.new_session
     :summary:
     ```
+* - {py:obj}`new_task <phospho.new_task>`
+  - ```{autodoc2-docstring} phospho.new_task
+    :summary:
+    ```
 * - {py:obj}`_log_single_event <phospho._log_single_event>`
   - ```{autodoc2-docstring} phospho._log_single_event
     :summary:
@@ -59,6 +64,10 @@ phospho.collection
   - ```{autodoc2-docstring} phospho.wrap
     :summary:
     ```
+* - {py:obj}`user_feedback <phospho.user_feedback>`
+  - ```{autodoc2-docstring} phospho.user_feedback
+    :summary:
+    ```
 ````
 
 ### Data
@@ -77,6 +86,14 @@ phospho.collection
     ```
 * - {py:obj}`consumer <phospho.consumer>`
   - ```{autodoc2-docstring} phospho.consumer
+    :summary:
+    ```
+* - {py:obj}`latest_task_id <phospho.latest_task_id>`
+  - ```{autodoc2-docstring} phospho.latest_task_id
+    :summary:
+    ```
+* - {py:obj}`latest_session_id <phospho.latest_session_id>`
+  - ```{autodoc2-docstring} phospho.latest_session_id
     :summary:
     ```
 * - {py:obj}`logger <phospho.logger>`
@@ -117,6 +134,26 @@ phospho.collection
 
 ````
 
+````{py:data} latest_task_id
+:canonical: phospho.latest_task_id
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.latest_task_id
+```
+
+````
+
+````{py:data} latest_session_id
+:canonical: phospho.latest_session_id
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.latest_session_id
+```
+
+````
+
 ````{py:data} logger
 :canonical: phospho.logger
 :value: >
@@ -138,6 +175,13 @@ phospho.collection
 :canonical: phospho.new_session
 
 ```{autodoc2-docstring} phospho.new_session
+```
+````
+
+````{py:function} new_task() -> str
+:canonical: phospho.new_task
+
+```{autodoc2-docstring} phospho.new_task
 ```
 ````
 
@@ -173,5 +217,12 @@ phospho.collection
 :canonical: phospho.wrap
 
 ```{autodoc2-docstring} phospho.wrap
+```
+````
+
+````{py:function} user_feedback(task_id: str, flag: typing.Optional[typing.Literal[success, failure]] = None, note: typing.Optional[str] = None, source: str = 'user', raw_flag: typing.Optional[str] = None, raw_flag_to_flag: typing.Optional[typing.Callable[[typing.Any], typing.Literal[success, failure]]] = None) -> phospho.tasks.Task
+:canonical: phospho.user_feedback
+
+```{autodoc2-docstring} phospho.user_feedback
 ```
 ````

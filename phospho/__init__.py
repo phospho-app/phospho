@@ -778,5 +778,6 @@ def user_feedback(
                 flag = raw_flag_to_flag(raw_flag)
 
     # Call the client
-    updated_task = client.flag(task_id=task_id, flag=flag, source=source, note=note)
+    current_task = Task(client=client, id=task_id, _content=None)
+    updated_task = current_task.update(flag=flag, source=source, note=note)
     return updated_task
