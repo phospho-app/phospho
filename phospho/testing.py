@@ -1,6 +1,7 @@
 import os
 import concurrent.futures
 import logging
+import inspect
 
 from phospho.client import Client
 from phospho.tasks import Task
@@ -15,13 +16,80 @@ from pprint import pprint
 logger = logging.getLogger(__name__)
 
 
+def adapt_task_to_agent_function(
+    task: Task, agent_function: Callable[[Any], Any]
+) -> Optional[Task]:
+    """This function adapts a task to match the signature of an agent function.
+
+    If the task is compatible with the agent function, this returns the task.
+
+    If the task is not compatible with the agent function, this returns a new task that
+    is compatible with the agent function, but that has less inputs.
+
+    If nothing can be done, this returns None.
+    """
+
+    # The compatibility is based on the parameters names in the agent function signature
+    agent_function_signature: inspect.Signature = inspect.signature(agent_function)
+    task_inputs = set(task.content.additional_input.keys())
+    agent_function_inputs = set(agent_function_signature.parameters.keys())
+
+    if task_inputs == agent_function_inputs:
+        # The task is compatible with the agent function
+        return task
+    elif task_inputs <= agent_function_inputs:
+        # The agent function takes more inputs than the task provides
+        # Check if those are optional in the agent function
+        for key in agent_function_inputs - task_inputs:
+            if (
+                agent_function_signature.parameters[key].default
+                is inspect.Parameter.empty
+            ):
+                # The agent function takes a non optional input that the task does not provide
+                # We can't adapt the task to the agent function
+                # Log what key is missing from the agent_function
+                logger.warning(
+                    f"Task {task.id} is not compatible with agent function {agent_function.__name__}: {key} is missing from the task"
+                )
+                return None
+        # All of the additional inputs are optional in the agent function
+        # So the task is compatible with the agent function
+        return task
+    elif task_inputs >= agent_function_inputs:
+        # We filter the task to only keep the keys that are in the agent function signature
+        new_task = Task(
+            id=task.id,
+            content={
+                "input": {
+                    key: task.content.input[key] for key in agent_function_inputs
+                },
+                "additional_input": task.content.additional_input,
+                "output": task.content.output,
+            },
+        )
+        # Log info that we filtered task inputs
+        logger.info(
+            f"Reduced the number of inputs of task {task.id} to match the agent function {agent_function.__name__}: removed {task_inputs - agent_function_inputs}"
+        )
+        return new_task
+    else:
+        # Check if the agent_function has an argument for any number of keyword arguments
+        for param in agent_function_signature.parameters.values():
+            if param.kind == inspect.Parameter.VAR_KEYWORD:
+                # The agent function takes a **kwargs argument
+                # The task is compatible with the agent function
+                return task
+
+    return None
+
+
 class PhosphoTest:
     def __init__(
         self,
         api_key: Optional[str] = None,
         project_id: Optional[str] = None,
         executor_type: Literal["parallel", "sequential"] = "parallel",
-        sample_size: Optional[int] = 10,
+        sample_size: Optional[int] = 2,
     ):
         """
         This is used to backtest an agent with phospho.
@@ -41,6 +109,8 @@ class PhosphoTest:
         """
         # Execution parameter
         self.sample_size = sample_size
+        if self.sample_size < 0:
+            raise ValueError("sample_size must be positive")
         self.executor_type = executor_type
 
         self.client = Client(api_key=api_key, project_id=project_id)
@@ -48,9 +118,6 @@ class PhosphoTest:
         # Results are temporary stored in memory
         self.evaluation_results: Dict[str, int] = defaultdict(int)
         self.comparisons: List[dict] = []
-
-        # Initialize phospho in backtest mode
-        os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
 
     def test(self, fn):
         """This is a de corator to add on top of functions
@@ -74,6 +141,8 @@ class PhosphoTest:
         # TODO : Handle the case 'there are more keys in additional_inputs than in the agent_function signature'
         # TODO : Handle the case 'there are more keys in the agent_function signature than in additional_inputs'
 
+        # check the value of PHOSPHO_EXECUTION_MODE
+        os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
         new_output = agent_function(**additional_input)
 
         # Handle generators
@@ -135,40 +204,59 @@ class PhosphoTest:
         # Pull the logs from phospho
         # TODO : Add time range filter
         tasks = self.client.tasks.get_all()
-        # TODO : Add a 'sample_size' with upsampling if the number of tasks is too small
-        if len(tasks) > self.sample_size:
-            # Downsample
-            sampled_tasks = sample(tasks, self.sample_size)
-        elif len(tasks) < self.sample_size:
-            # Upsample
-            # Duplicate the tasks
-            duplicated_tasks = tasks * int(1 + self.sample_size / len(tasks))
-            # Sample the remaining tasks
-            sampled_tasks = tasks + sample(
-                duplicated_tasks, self.sample_size % len(duplicated_tasks)
-            )
-        elif self.sample_size == None:
-            sampled_tasks = tasks
-        else:
-            sampled_tasks = tasks
-
-        # if len(tasks) > 10:
-        #     tasks = sample(tasks, 10)
 
         # TODO : Propper linkage of the task and the agent functions
-        task_to_evaluate = [
+        tasks_linked_to_function = [
             {"task": task, "agent_function": self.functions_to_evaluate[0]}
-            for task in sampled_tasks
+            for task in tasks
         ]
+
+        # Filter the tasks to only keep the ones that are compatible with the agent function
+        tasks_linked_to_function = [
+            {
+                "task": adapt_task_to_agent_function(
+                    task["task"], task["agent_function"]
+                ),
+                "agent_function": task["agent_function"],
+            }
+            for task in tasks_linked_to_function
+            if adapt_task_to_agent_function(task["task"], task["agent_function"])
+            is not None
+        ]
+
+        # TODO : More complex sampling
+        if self.sample_size is None:
+            # None = all the tasks
+            sampled_tasks = tasks_linked_to_function
+        elif self.sample_size == 0:
+            # 0 = no tasks
+            sampled_tasks = []
+        elif len(tasks_linked_to_function) > self.sample_size:
+            # Downsample
+            sampled_tasks = sample(tasks_linked_to_function, self.sample_size)
+        elif len(tasks_linked_to_function) < self.sample_size:
+            # Upsample
+            # Duplicate the tasks
+            duplicated_tasks = tasks_linked_to_function * int(
+                1 + self.sample_size / len(tasks)
+            )
+            # Sample the remaining tasks
+            sampled_tasks = tasks_linked_to_function + sample(
+                duplicated_tasks,
+                self.sample_size % len(duplicated_tasks)
+                - len(tasks_linked_to_function),
+            )
+        else:
+            sampled_tasks = tasks_linked_to_function
 
         # Evaluate the tasks in parallel
         if self.executor_type == "parallel":
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 # Submit tasks to the executor
                 # executor.map(self.evaluate_a_task, task_to_evaluate)
-                executor.map(self.evaluate_a_task, task_to_evaluate)
+                executor.map(self.evaluate_a_task, sampled_tasks)
         elif self.executor_type == "sequential":
-            for task in task_to_evaluate:
+            for task in sampled_tasks:
                 self.evaluate_a_task(task)
         else:
             raise NotImplementedError(
