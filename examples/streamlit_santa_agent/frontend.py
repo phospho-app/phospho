@@ -75,14 +75,15 @@ if prompt := st.chat_input("All I want for Christmas is..."):
 
 
 def _submit_feedback(feedback: dict):
-    santa_claus_agent.feedback(raw_flag=feedback["score"], note=feedback["text"])
+    santa_claus_agent.feedback(raw_flag=feedback["score"], notes=feedback["text"])
     st.toast(f"Thank you for your feedback!🎅🏼")
 
 
-feedback = streamlit_feedback(
-    feedback_type="thumbs",
-    optional_text_label="[Optional] Please provide an explanation",
-    on_submit=_submit_feedback,
-    # To create a new feedback component for every message and session, you need to provide a unique key
-    key=f"{st.session_state.session_id}_{len(st.session_state.messages)}",
-)
+if len(st.session_state.messages) > 1:
+    feedback = streamlit_feedback(
+        feedback_type="thumbs",
+        optional_text_label="[Optional] Please provide an explanation",
+        on_submit=_submit_feedback,
+        # To create a new feedback component for every message and session, you need to provide a unique key
+        key=f"{st.session_state.session_id}_{len(st.session_state.messages)}",
+    )
