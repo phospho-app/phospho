@@ -126,9 +126,9 @@ def new_task() -> str:
 
     :returns: The generated task_id.
     """
-    global latest_session_id
-    latest_session_id = generate_uuid()
-    return latest_session_id
+    global latest_task_id
+    latest_task_id = generate_uuid()
+    return latest_task_id
 
 
 def _log_single_event(
