@@ -31,6 +31,7 @@ __all__ = [
     "client",
     "log_queue",
     "consumer",
+    "latest_task_id",
     "latest_session_id",
     "new_session",
     "log",
