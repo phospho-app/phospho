@@ -6,7 +6,7 @@ from phospho.client import Client
 from phospho.tasks import Task
 from phospho import extractor
 from types import GeneratorType
-from typing import List, Dict, Optional, Callable, Any
+from typing import List, Dict, Optional, Callable, Any, Literal
 from collections import defaultdict
 
 from random import sample
@@ -20,11 +20,34 @@ class PhosphoTest:
         self,
         api_key: Optional[str] = None,
         project_id: Optional[str] = None,
+        executor_type: Literal["parallel", "sequential"] = "parallel",
+        sample_size: Optional[int] = 10,
     ):
-        self.evaluation_results: Dict[str, int] = defaultdict(int)
-        self.comparisons: List[dict] = []
+        """
+        This is used to backtest an agent with phospho.
+
+        Sample code:
+
+        ```
+        phospho_test = phospho.PhosphoTest()
+
+        @phospho_test.test
+        def test_santa(**inputs):
+            santa_claus_agent = SantaClausAgent()
+            return santa_claus_agent.answer(**inputs)
+
+        phospho_test.run()
+        ```
+        """
+        # Execution parameter
+        self.sample_size = sample_size
+        self.executor_type = executor_type
+
         self.client = Client(api_key=api_key, project_id=project_id)
         self.functions_to_evaluate: List[Callable[[Any], Any]] = []
+        # Results are temporary stored in memory
+        self.evaluation_results: Dict[str, int] = defaultdict(int)
+        self.comparisons: List[dict] = []
 
         # Initialize phospho in backtest mode
         os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
@@ -83,6 +106,7 @@ class PhosphoTest:
         )
 
         # Ask phospho: what's the best answer to the context_input ?
+        print(f"Comparing with phospho (task: {task.id})")
         comparison_result = self.client.compare(
             context_input,
             old_output_str,
@@ -90,6 +114,7 @@ class PhosphoTest:
         )
 
         # Collect the results
+        print(f"Collecting results (task: {task.id})")
         self.comparisons.append(
             {
                 "input": task.content.input,
@@ -102,43 +127,57 @@ class PhosphoTest:
         # except Exception as e:
         #     logger.error(f"Error while answering task {task.id}: {e}")
 
-    def run(self, executor_type: str = "parallel"):
+    def run(self):
         """
         Backtesting: This function pull all the tasks logged to phospho and run the agent on them.
-
-        TODO: This should be abstracted. The user should be able to run this with a single command
-        and basic filters, such as the agent to test, the project fetch tasks from, the time range, etc.
         """
 
         # Pull the logs from phospho
         # TODO : Add time range filter
         tasks = self.client.tasks.get_all()
         # TODO : Add a 'sample_size' with upsampling if the number of tasks is too small
-        if len(tasks) > 10:
-            tasks = sample(tasks, 10)
+        if len(tasks) > self.sample_size:
+            # Downsample
+            sampled_tasks = sample(tasks, self.sample_size)
+        elif len(tasks) < self.sample_size:
+            # Upsample
+            # Duplicate the tasks
+            duplicated_tasks = tasks * int(1 + self.sample_size / len(tasks))
+            # Sample the remaining tasks
+            sampled_tasks = tasks + sample(
+                duplicated_tasks, self.sample_size % len(duplicated_tasks)
+            )
+        elif self.sample_size == None:
+            sampled_tasks = tasks
+        else:
+            sampled_tasks = tasks
+
+        # if len(tasks) > 10:
+        #     tasks = sample(tasks, 10)
 
         # TODO : Propper linkage of the task and the agent functions
         task_to_evaluate = [
             {"task": task, "agent_function": self.functions_to_evaluate[0]}
-            for task in tasks
+            for task in sampled_tasks
         ]
 
         # Evaluate the tasks in parallel
-        if executor_type == "parallel":
+        if self.executor_type == "parallel":
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 # Submit tasks to the executor
                 # executor.map(self.evaluate_a_task, task_to_evaluate)
                 executor.map(self.evaluate_a_task, task_to_evaluate)
-        elif executor_type == "sequential":
+        elif self.executor_type == "sequential":
             for task in task_to_evaluate:
                 self.evaluate_a_task(task)
         else:
             raise NotImplementedError(
-                f"Executor type {executor_type} is not implemented"
+                f"Executor type {self.executor_type} is not implemented"
             )
 
         # Display a summary of the results
-        pprint(self.comparisons)
-        print(self.evaluation_results)
+        print("Phospho backtest results:")
+        # pprint(self.comparisons)
+        pprint(self.evaluation_results)
 
         # TODO : Push the results to phospho
