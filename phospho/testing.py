@@ -56,7 +56,8 @@ class PhosphoTest:
     def evaluate_a_task(self, task: Task, agent_function: Callable[[Any], Any]):
         """This function evaluates a single task using the phospho backend"""
 
-        try:
+        # try:
+        if True:
             print("Task id: ", task.id)
             context_input = task.content["input"]
             old_output_str = task.content["output"]
@@ -81,8 +82,8 @@ class PhosphoTest:
             )
             self.evaluation_results[comparison_result.comparison_result] += 1
 
-        except Exception as e:
-            logger.error(f"Error while answering task {task.id}: {e}")
+        # except Exception as e:
+        #     logger.error(f"Error while answering task {task.id}: {e}")
 
     def run(self):
         """
@@ -98,10 +99,10 @@ class PhosphoTest:
             tasks = sample(tasks, 10)
 
         # TODO : Propper linkage of the task and the agent functions
-        task_to_evaluate = {
-            "task": tasks,
-            "agent_function": self.functions_to_evaluate[0],
-        }
+        task_to_evaluate = [
+            {"task": task, "agent_function": self.functions_to_evaluate[0]}
+            for task in tasks
+        ]
 
         # Evaluate the tasks in parallel
         with concurrent.futures.ThreadPoolExecutor() as executor:
