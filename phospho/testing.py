@@ -48,6 +48,9 @@ class PhosphoTest:
             f"Calling {agent_function.__name__} with input {additional_input.__repr__()}"
         )
 
+        # TODO : Handle the case 'there are more keys in additional_inputs than in the agent_function signature'
+        # TODO : Handle the case 'there are more keys in the agent_function signature than in additional_inputs'
+
         new_output = agent_function(**additional_input)
 
         # Handle generators
@@ -108,7 +111,9 @@ class PhosphoTest:
         """
 
         # Pull the logs from phospho
+        # TODO : Add time range filter
         tasks = self.client.tasks.get_all()
+        # TODO : Add a 'sample_size' with upsampling if the number of tasks is too small
         if len(tasks) > 10:
             tasks = sample(tasks, 10)
 
