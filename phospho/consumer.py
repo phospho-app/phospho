@@ -29,16 +29,11 @@ class Consumer(Thread):
         atexit.register(self.stop)
 
     def run(self) -> None:
-        # If we are in backtest mode, we don't want to send logs
-        PHOSPHO_EXECUTION_MODE = os.getenv("PHOSPHO_EXECUTION_MODE")
-
         while self.running:
-            if PHOSPHO_EXECUTION_MODE != "backtest":
-                self.send_batch()
+            self.send_batch()
             time.sleep(self.tick)
 
-        if PHOSPHO_EXECUTION_MODE != "backtest":
-            self.send_batch()
+        self.send_batch()
 
     def send_batch(self) -> None:
         batch = self.log_queue.get_batch()
@@ -48,9 +43,13 @@ class Consumer(Thread):
             logger.debug(f"Sending {len(batch)} log events to {self.client.base_url}")
 
             try:
-                self.client._post(
-                    f"/log/{self.client._project_id()}", {"batched_log_events": batch}
-                )
+                # If we are in backtest mode, we don't want to send logs
+                PHOSPHO_EXECUTION_MODE = os.getenv("PHOSPHO_EXECUTION_MODE")
+                if PHOSPHO_EXECUTION_MODE != "backtest":
+                    self.client._post(
+                        f"/log/{self.client._project_id()}",
+                        {"batched_log_events": batch},
+                    )
             except Exception as e:
                 logger.warning(f"Error sending log events: {e}")
 
