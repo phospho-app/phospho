@@ -3,6 +3,7 @@ from .message import Message
 from .client import Client
 from .consumer import Consumer
 from .log_queue import LogQueue, Event
+from .tasks import Task
 from .utils import (
     generate_timestamp,
     generate_uuid,
@@ -30,7 +31,8 @@ __all__ = [
     "client",
     "log_queue",
     "consumer",
-    "current_session_id",
+    "latest_task_id",
+    "latest_session_id",
     "new_session",
     "log",
     "wrap",
@@ -45,6 +47,7 @@ from copy import deepcopy
 from typing import (
     Dict,
     Any,
+    Literal,
     Optional,
     Union,
     Callable,
@@ -60,6 +63,8 @@ from typing import (
 client = None
 log_queue = None
 consumer = None
+latest_task_id = None
+latest_session_id = None
 
 logger = logging.getLogger(__name__)
 
@@ -107,9 +112,23 @@ def new_session() -> str:
 
     :returns: The generated session_id.
     """
-    global current_session_id
-    current_session_id = generate_uuid()
-    return current_session_id
+    global latest_session_id
+    latest_session_id = generate_uuid()
+    return latest_session_id
+
+
+def new_task() -> str:
+    """
+    Tasks are the main unit of logging in phospho.
+
+    Use `phospho.new_task()` when you start a new, complex task. Store the returned
+    `task_id` and pass it to `phospho.log` to group logs together.
+
+    :returns: The generated task_id.
+    """
+    global latest_task_id
+    latest_task_id = generate_uuid()
+    return latest_task_id
 
 
 def _log_single_event(
@@ -132,7 +151,8 @@ def _log_single_event(
     """
     global client
     global log_queue
-    global current_session_id
+    global latest_task_id
+    global latest_session_id
 
     assert (
         (log_queue is not None) and (client is not None)
@@ -166,6 +186,10 @@ def _log_single_event(
             task_id = generate_uuid()
         else:
             task_id = task_id_from_output
+
+    # Keep track of the latest task_id and session_id
+    latest_task_id = task_id
+    latest_session_id = session_id
 
     # Every other kwargs will be directly stored in the logs, if it's json serializable
     if kwargs:
@@ -211,7 +235,28 @@ def _log_single_event(
             fused_output = str(existing_log_content["output"]) + str(
                 log_content["output"]
             )
-
+        # Concatenate the raw_outputs to keep all the intermediate results to openai
+        if (
+            existing_log_content["raw_output"] is None
+            and log_content["raw_output"] is None
+        ):
+            fused_raw_output = None
+        else:
+            if existing_log_content["raw_output"] is None:
+                existing_log_content["raw_output"] = []
+            if log_content["raw_output"] is None:
+                log_content["raw_output"] = []
+            # Convert to list if not already
+            if not isinstance(existing_log_content["raw_output"], list):
+                existing_log_content["raw_output"] = [
+                    existing_log_content["raw_output"]
+                ]
+            if not isinstance(log_content["raw_output"], list):
+                log_content["raw_output"] = [log_content["raw_output"]]
+            fused_raw_output = (
+                existing_log_content["raw_output"] + log_content["raw_output"]
+            )
+        # Put all of this into a dict
         fused_log_content = {
             # Replace creation timestamp by the original one
             # Keep a trace of the latest timestamp. This will help computing streaming time
@@ -219,27 +264,14 @@ def _log_single_event(
             "last_update": log_content["client_created_at"],
             # Concatenate the log event output strings
             "output": fused_output,
-            "raw_output": [
-                existing_log_content["raw_output"],
-                log_content["raw_output"],
-            ]
-            if not isinstance(existing_log_content["raw_output"], list)
-            else existing_log_content["raw_output"] + [log_content["raw_output"]],
+            "raw_output": fused_raw_output,
         }
         # TODO : Turn this bool into a parametrizable list
         if concatenate_raw_outputs_if_task_id_exists:
             log_content.pop("raw_output")
         existing_log_content.update(log_content)
+        # Update the dict inplace
         existing_log_content.update(fused_log_content)
-        # Concatenate the raw_outputs to keep all the intermediate results to openai
-        if concatenate_raw_outputs_if_task_id_exists:
-            if isinstance(existing_log_content["raw_output"], list):
-                existing_log_content["raw_output"].append(raw_output_to_log)
-            else:
-                existing_log_content["raw_output"] = [
-                    existing_log_content["raw_output"],
-                    raw_output_to_log,
-                ]
         log_content = existing_log_content
         # Update the to_log status of event
         log_queue.events[task_id].to_log = to_log
@@ -704,3 +736,49 @@ def wrap(
         return meta_wrapper
     else:
         return meta_wrapper(__fn)
+
+
+def user_feedback(
+    task_id: str,
+    flag: Optional[Literal["success", "failure"]] = None,
+    notes: Optional[str] = None,
+    source: str = "user",
+    raw_flag: Optional[str] = None,
+    raw_flag_to_flag: Optional[Callable[[Any], Literal["success", "failure"]]] = None,
+) -> Task:
+    """
+    Flag a task already logged to phospho as a `success` or a `failure`. This is useful to collect human feedback.
+
+    Note: Feedback can be directly logged with `phospho.log` by passing `flag` as a keyword argument.
+
+    :param task_id: The task_id of the task to flag
+    :param flag: The flag to set for the task. Either "success" or "failure"
+    :param notes: Optional notes to add to the task. For example, the reason for the flag.
+    :param source: The source of the feedback, such as "user", "system", "user@mail.com", etc.
+    :param raw_flag: The raw flag to set for the task. This can be a more complex object. If
+        flag is specified, this is ignored.
+    :param raw_flag_to_flag: A function to convert the raw_flag to a flag. If flag is specified,
+        this is ignored.
+    """
+
+    if flag is None:
+        if raw_flag is None:
+            logger.warning(
+                "Either flag or raw_flag must be specified when calling user_feedback. Nothing logged"
+            )
+            return
+        else:
+            if raw_flag_to_flag is None:
+                # Default behaviour: some values are mapped to success, others to failure
+                if raw_flag in ["success", "👍", "🙂", "😀"]:
+                    flag = "success"
+                else:
+                    flag = "failure"
+            else:
+                # Use the custom function
+                flag = raw_flag_to_flag(raw_flag)
+
+    # Call the client
+    current_task = Task(client=client, task_id=task_id, _content=None)
+    updated_task = current_task.update(flag=flag, flag_source=source, notes=notes)
+    return updated_task
