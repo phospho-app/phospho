@@ -15,6 +15,7 @@ from .utils import (
 from .extractor import get_input_output, RawDataType
 from ._version import __version__
 from . import evals
+from .testing import PhosphoTest
 
 __all__ = [
     "Client",
@@ -38,6 +39,7 @@ __all__ = [
     "wrap",
     "extractor",
     "evals",
+    "PhosphoTest",
 ]
 
 import pydantic

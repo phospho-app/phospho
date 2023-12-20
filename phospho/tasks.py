@@ -111,6 +111,7 @@ class TaskCollection(Collection):
     def get_all(self) -> List[Task]:
         """Returns a list of all of the project tasks"""
         # TODO : Filters
+        # TODO : Limit
 
         response = self._client._get(
             f"/projects/{self._client._project_id()}/tasks",
