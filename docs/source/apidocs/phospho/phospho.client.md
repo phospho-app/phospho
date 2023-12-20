@@ -101,4 +101,12 @@
 
 ````
 
+````{py:method} flag(task_id: str, flag: typing.Literal[success, failure], source: str = 'user', note: typing.Optional[str] = None) -> phospho.tasks.Task
+:canonical: phospho.client.Client.flag
+
+```{autodoc2-docstring} phospho.client.Client.flag
+```
+
+````
+
 `````

@@ -1,15 +1,23 @@
 from phospho.collection import Collection
 
-from typing import Dict, Optional, List
+from typing import Dict, Literal, Optional, List, Union
+from phospho.models import TaskModel
 
 
 class Task:
-    def __init__(self, client, task_id: str, _content: Optional[dict] = None):
+    def __init__(
+        self, client, task_id: str, _content: Union[Optional[dict], TaskModel] = None
+    ):
         from phospho.client import Client
 
         self._client: Client = client
         self._task_id: str = task_id
-        self._content: Optional[dict] = _content
+        if not isinstance(_content, TaskModel) and _content is not None:
+            try:
+                _content = TaskModel(**_content)
+            except TypeError:  # Keep dict
+                pass
+        self._content: Optional[TaskModel] = _content
 
     @property
     def id(self):
@@ -23,7 +31,10 @@ class Task:
         if self._content is None:
             # Query the server
             response = self._client._get(f"/tasks/{self._task_id}")
-            self._content = response.json()
+            try:
+                self._content = TaskModel(**response.json())
+            except TypeError:  # Keep dict
+                self._content = response.json()
 
         return self._content
 
@@ -33,43 +44,35 @@ class Task:
         Done inplace
         """
         response = self._client._get(f"/tasks/{self._task_id}")
-        self._content = response.json()
+        try:
+            self._content = TaskModel(**response.json())
+        except TypeError:  # Keep dict
+            self._content = response.json()
 
-    # def update(self, metadata: Optional[dict] = None, data: Optional[dict] = None):
-    #     if metadata is None and data is None:
-    #         raise ValueError(
-    #             "You must provide either metadata or data to update a task"
-    #         )
-
-    #     payload = {
-    #         "metadata": metadata or {},
-    #         "data": data or {},
-    #     }
-
-    #     response = self._client._post(f"/tasks/{self._task_id}/update", payload=payload)
-
-    #     return Task(self._client, response.json()["task_id"])
-
-    # List steps
-    # def list_steps(self):
-    #     """
-    #     Use a Generator? -> would enable streaming
-    #     TODO : add filters, limits and pagination
-    #     """
-    #     response = self._client._get(f"/tasks/{self._task_id}/steps")
-
-    #     steps_list = []
-
-    #     for step_content in response.json()["steps"]:
-    #         steps_list.append(
-    #             Step(self._client, step_content["step_id"], _content=step_content)
-    #         )
-
-    #     return steps_list
+    def update(
+        self,
+        metadata: Optional[dict] = None,
+        data: Optional[dict] = None,
+        notes: Optional[str] = None,
+        flag: Optional[Literal["success", "failure"]] = None,
+        flag_source: Optional[str] = None,
+    ):
+        response = self._client._post(
+            f"/tasks/{self._task_id}",
+            payload={
+                "metadata": metadata,
+                "data": data,
+                "notes": notes,
+                "flag": flag,
+                "flag_source": flag_source,
+            },
+        )
+        return Task(
+            client=self._client, task_id=self._task_id, _content=response.json()
+        )
 
 
 class TaskCollection(Collection):
-    # Get a task
     def get(self, task_id: str):
         """Get a task by id"""
         # TODO: add filters, limits and pagination
@@ -78,7 +81,6 @@ class TaskCollection(Collection):
 
         return Task(self._client, response.json()["id"], _content=response.json())
 
-    # Create a task
     def create(
         self,
         session_id: str,
@@ -106,9 +108,10 @@ class TaskCollection(Collection):
 
         return Task(self._client, response.json()["id"])
 
-    # Get all tasks (filters can be applied)
     def get_all(self) -> List[Task]:
         """Returns a list of all of the project tasks"""
+        # TODO : Filters
+
         response = self._client._get(
             f"/projects/{self._client._project_id()}/tasks",
         )
@@ -116,10 +119,3 @@ class TaskCollection(Collection):
             Task(client=self._client, task_id=task["id"], _content=task)
             for task in response.json()["tasks"]
         ]
-
-
-# Create a task
-
-# Update a task
-
-# Get the all steps for a task

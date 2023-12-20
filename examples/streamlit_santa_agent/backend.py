@@ -104,6 +104,7 @@ class SantaClausAgent:
         self,
         messages: List[Dict[str, str]],
         session_id: str,
+        execution_type: int = 382,
     ) -> Generator[Optional[str], Any, None]:
         """Same as answer, but with phospho.wrap, which automatically logs the input
         and output of the function."""
@@ -119,6 +120,14 @@ class SantaClausAgent:
 
         for response in streaming_response:
             yield response.choices[0].delta.content
+
+    def feedback(self, raw_flag: str, notes: str) -> None:
+        """This method is used to collect feedback from the user.
+        It is called after the user has received a response from the agent.
+        """
+        phospho.user_feedback(
+            task_id=phospho.latest_task_id, raw_flag=raw_flag, notes=notes
+        )
 
 
 # Initialize phospho to collect logs

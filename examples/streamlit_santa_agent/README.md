@@ -2,7 +2,7 @@
 
 This is an example of a simple Santa Claus chatbot, implemented with phospho and streamlit.
 
-[--> Click here to chat now with Santa Claus!](https://santa-chatbot-phospho.streamlit.app)
+[--> Click here to chat now with Santa Claus!](https://santa-agent.streamlit.app)
 
 ![Santa Claus chatbot](screenshots/chatbot.png)
 
@@ -25,7 +25,7 @@ You need an OpenAI key and a phospho account.
 Run the frontend the following way:
 
 ```bash
-cd streamlit-agent # Make sure you are in this repository
+cd streamlit_santa_agent # Make sure you are in this repository
 streamlit run frontend.py
 ```
 

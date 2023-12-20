@@ -7,14 +7,14 @@ TODO
 - Add support for AsyncIO -> be non blocking in the background
 """
 import os
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 
 import requests
 
 import phospho.config as config
 
 from phospho.sessions import SessionCollection
-from phospho.tasks import TaskCollection
+from phospho.tasks import TaskCollection, Task
 from phospho.evals import Comparison
 
 
@@ -86,7 +86,6 @@ class Client:
 
         if response.status_code >= 200 and response.status_code < 300:
             return response
-
         else:
             raise ValueError(f"Error posting to {url}: {response.json()}")
 
@@ -117,3 +116,25 @@ class Client:
         )
 
         return Comparison.model_validate(comparison_result.json())
+
+    def flag(
+        self,
+        task_id: str,
+        flag: Literal["success", "failure"],
+        source: str = "user",
+        note: Optional[str] = None,
+    ) -> Task:
+        """
+        Flag a task as a success or a failure. Returns the task.
+        """
+
+        # TODO: add note to the payload
+
+        response = self._post(
+            f"/tasks/{task_id}/flag/",
+            payload={
+                "flag": flag,
+                "source": source,
+            },
+        )
+        return Task(client=self, task_id=task_id, _content=response.json())
