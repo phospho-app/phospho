@@ -67,24 +67,9 @@ class Task:
                 "flag_source": flag_source,
             },
         )
-        return Task(client=self._client, id=self._task_id, _content=response.json())
-
-    # List steps
-    # def list_steps(self):
-    #     """
-    #     Use a Generator? -> would enable streaming
-    #     TODO : add filters, limits and pagination
-    #     """
-    #     response = self._client._get(f"/tasks/{self._task_id}/steps")
-
-    #     steps_list = []
-
-    #     for step_content in response.json()["steps"]:
-    #         steps_list.append(
-    #             Step(self._client, step_content["step_id"], _content=step_content)
-    #         )
-
-    #     return steps_list
+        return Task(
+            client=self._client, task_id=self._task_id, _content=response.json()
+        )
 
 
 class TaskCollection(Collection):

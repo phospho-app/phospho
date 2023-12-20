@@ -740,7 +740,7 @@ def wrap(
 def user_feedback(
     task_id: str,
     flag: Optional[Literal["success", "failure"]] = None,
-    note: Optional[str] = None,
+    notes: Optional[str] = None,
     source: str = "user",
     raw_flag: Optional[str] = None,
     raw_flag_to_flag: Optional[Callable[[Any], Literal["success", "failure"]]] = None,
@@ -752,7 +752,7 @@ def user_feedback(
 
     :param task_id: The task_id of the task to flag
     :param flag: The flag to set for the task. Either "success" or "failure"
-    :param note: An optional note to add to the task. For example, the reason for the flag.
+    :param notes: Optional notes to add to the task. For example, the reason for the flag.
     :param source: The source of the feedback, such as "user", "system", "user@mail.com", etc.
     :param raw_flag: The raw flag to set for the task. This can be a more complex object. If
         flag is specified, this is ignored.
@@ -778,6 +778,6 @@ def user_feedback(
                 flag = raw_flag_to_flag(raw_flag)
 
     # Call the client
-    current_task = Task(client=client, id=task_id, _content=None)
-    updated_task = current_task.update(flag=flag, source=source, note=note)
+    current_task = Task(client=client, task_id=task_id, _content=None)
+    updated_task = current_task.update(flag=flag, flag_source=source, notes=notes)
     return updated_task
