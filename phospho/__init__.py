@@ -1,3 +1,4 @@
+import os
 from .agent import Agent
 from .message import Message
 from .client import Client
@@ -407,7 +408,7 @@ def log(
     concatenate_raw_outputs_if_task_id_exists: bool = True,
     stream: bool = False,
     **kwargs: Dict[str, Any],
-) -> Dict[str, object]:
+) -> Optional[Dict[str, object]]:
     """Phospho's main all-purpose logging endpoint, with support for streaming.
 
     Usage:
@@ -436,6 +437,11 @@ def log(
     - log_event (Dict[str, object]):
         The content of what has been logged.
     """
+    PHOSPHO_EXECUTION_MODE = os.getenv("PHOSPHO_EXECUTION_MODE")
+    if PHOSPHO_EXECUTION_MODE == "backtest":
+        # In backtest mode, don't log anything
+        return None
+
     if stream:
         # Implement the streaming logic over the output
         # Note: The output must be mutable. Generators are not mutable
@@ -644,6 +650,11 @@ def _wrap(
                     output=output,
                     task_id=task_id,
                 )
+
+    PHOSPHO_EXECUTION_MODE = os.getenv("PHOSPHO_EXECUTION_MODE")
+    if PHOSPHO_EXECUTION_MODE == "backtest":
+        # In backtest mode, don't wrap the function
+        return __fn
 
     return wrapped_function
 
