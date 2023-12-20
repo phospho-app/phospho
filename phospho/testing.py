@@ -38,11 +38,18 @@ class PhosphoTest:
 
         return fn
 
-    def get_output_from_agent(self, input: Any, agent_function: Callable[[Any], Any]):
+    def get_output_from_agent(
+        self, additional_input: Any, agent_function: Callable[[Any], Any]
+    ):
         """
         This function will return the output of the agent given an input
         """
-        new_output = agent_function(**input)
+        print(
+            f"Calling {agent_function.__name__} with input {additional_input.__repr__()}"
+        )
+
+        new_output = agent_function(**additional_input)
+
         # Handle generators
         if isinstance(new_output, GeneratorType):
             full_resp = ""
@@ -53,39 +60,46 @@ class PhosphoTest:
                 new_output_str = extractor.detect_str_from_output(new_output)
         return new_output_str
 
-    def evaluate_a_task(self, task: Task, agent_function: Callable[[Any], Any]):
+    def evaluate_a_task(
+        self, task_to_evaluate: Dict[str, Any]
+    ):  # task: Task, agent_function: Callable[[Any], Any]):
         """This function evaluates a single task using the phospho backend"""
 
+        task = task_to_evaluate["task"]
+        agent_function = task_to_evaluate["agent_function"]
+
+        print("Task id: ", task.id)
+
         # try:
-        if True:
-            print("Task id: ", task.id)
-            context_input = task.content["input"]
-            old_output_str = task.content["output"]
-            new_output_str = self.get_output_from_agent(
-                task.content["additional_input"]
-            )
+        # if True:
+        # Get the output from the agent
+        context_input = task.content.input
+        old_output_str = task.content.output
+        new_output_str = self.get_output_from_agent(
+            task.content.additional_input, agent_function
+        )
 
-            # Ask phospho: what's the best answer to the context_input ?
-            comparison_result = self.client.compare(
-                context_input,
-                old_output_str,
-                new_output_str,
-            )
+        # Ask phospho: what's the best answer to the context_input ?
+        comparison_result = self.client.compare(
+            context_input,
+            old_output_str,
+            new_output_str,
+        )
 
-            # Collect the results
-            self.comparisons.append(
-                {
-                    "input": task.content["input"],
-                    "old": task.content["output"],
-                    "new": new_output_str,
-                }
-            )
-            self.evaluation_results[comparison_result.comparison_result] += 1
+        # Collect the results
+        self.comparisons.append(
+            {
+                "input": task.content.input,
+                "old": task.content.output,
+                "new": new_output_str,
+            }
+        )
+        self.evaluation_results[comparison_result.comparison_result] += 1
 
         # except Exception as e:
         #     logger.error(f"Error while answering task {task.id}: {e}")
 
-    def run(self):
+    def run(self, executor_type: str = "parallel"):
         """
         Backtesting: This function pull all the tasks logged to phospho and run the agent on them.
 
@@ -105,9 +119,18 @@ class PhosphoTest:
         ]
 
         # Evaluate the tasks in parallel
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            # Submit tasks to the executor
-            executor.map(self.evaluate_a_task, task_to_evaluate)
+        if executor_type == "parallel":
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                # Submit tasks to the executor
+                # executor.map(self.evaluate_a_task, task_to_evaluate)
+                executor.map(self.evaluate_a_task, task_to_evaluate)
+        elif executor_type == "sequential":
+            for task in task_to_evaluate:
+                self.evaluate_a_task(task)
+        else:
+            raise NotImplementedError(
+                f"Executor type {executor_type} is not implemented"
+            )
 
         # Display a summary of the results
         pprint(self.comparisons)

@@ -20,9 +20,9 @@ phospho_test = phospho.PhosphoTest()
 
 
 @phospho_test.test
-def test_santa():
+def test_santa(**inputs):
     santa_claus_agent = SantaClausAgent()
-    new_output = santa_claus_agent.answer(**input)
+    return santa_claus_agent.answer(**inputs)
 
 
 phospho_test.run()
