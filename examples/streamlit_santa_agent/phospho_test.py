@@ -1,16 +1,22 @@
 """
 This is an example of how to backtest an agent with phospho
+
+1. Setup the API key and project id as environment variables
+2. Run the script
+
+```bash
+export PHOSPHO_API_KEY=your_api_key
+export PHOSPHO_PROJECT_ID=your_project_id
+python phospho_test.py
+```
 """
 import phospho
-import streamlit as st
 
 # This is the agent to test
 from backend import SantaClausAgent
 
-phospho_test = phospho.PhosphoTest(
-    api_key=st.secrets["PHOSPHO_API_KEY"],
-    project_id=st.secrets["PHOSPHO_PROJECT_ID"],
-)
+
+phospho_test = phospho.PhosphoTest()
 
 
 @phospho_test.test
