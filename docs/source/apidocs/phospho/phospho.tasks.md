@@ -61,6 +61,14 @@
 
 ````
 
+````{py:method} update(metadata: typing.Optional[dict] = None, data: typing.Optional[dict] = None, notes: typing.Optional[str] = None, flag: typing.Optional[typing.Literal[success, failure]] = None, flag_source: typing.Optional[str] = None)
+:canonical: phospho.tasks.Task.update
+
+```{autodoc2-docstring} phospho.tasks.Task.update
+```
+
+````
+
 `````
 
 `````{py:class} TaskCollection(client)
