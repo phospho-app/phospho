@@ -16,7 +16,7 @@ import phospho
 from backend import SantaClausAgent
 
 phospho.config.BASE_URL = "http://localhost:8000/v0"
-phospho_test = phospho.PhosphoTest(executor_type="sequential")
+phospho_test = phospho.PhosphoTest(executor_type="parallel", sample_size=100)
 
 
 @phospho_test.test

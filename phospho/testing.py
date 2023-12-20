@@ -2,6 +2,7 @@ import os
 import concurrent.futures
 import logging
 import inspect
+import time
 
 from phospho.client import Client
 from phospho.tasks import Task
@@ -89,7 +90,7 @@ class PhosphoTest:
         api_key: Optional[str] = None,
         project_id: Optional[str] = None,
         executor_type: Literal["parallel", "sequential"] = "parallel",
-        sample_size: Optional[int] = 2,
+        sample_size: Optional[int] = 10,
     ):
         """
         This is used to backtest an agent with phospho.
@@ -119,10 +120,13 @@ class PhosphoTest:
         self.evaluation_results: Dict[str, int] = defaultdict(int)
         self.comparisons: List[dict] = []
 
-    def test(self, fn):
+    def test(self, fn: Callable[[Any], Any]) -> Callable[[Any], Any]:
         """This is a de corator to add on top of functions
         to test them with the phospho backend
         """
+
+        # TODO: Add task_name as a parameter
+        # TODO: Add custom instructions for comparison and evaluation as a parameter
 
         self.functions_to_evaluate.append(fn)
 
@@ -201,6 +205,9 @@ class PhosphoTest:
         Backtesting: This function pull all the tasks logged to phospho and run the agent on them.
         """
 
+        # Start timer
+        start_time = time.time()
+
         # Pull the logs from phospho
         # TODO : Add time range filter
         # TODO : Add pull from dataset
@@ -264,8 +271,15 @@ class PhosphoTest:
                 f"Executor type {self.executor_type} is not implemented"
             )
 
+        # Stop timer
+        end_time = time.time()
+
         # Display a summary of the results
         print("Phospho backtest results:")
+        print(f"Total number of tasks: {len(tasks)}")
+        print(f"Number of tasks sampled: {len(sampled_tasks)}")
+        print(f"Total time: {end_time - start_time} seconds")
+        print(f"Results:")
         # pprint(self.comparisons)
         pprint(self.evaluation_results)
 
