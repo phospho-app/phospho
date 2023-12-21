@@ -84,6 +84,73 @@ def adapt_task_to_agent_function(
     return None
 
 
+class BacktestLoader:
+    def __init__(self, functions_to_evaluate, sample_size: Optional[int] = 10):
+        self.sample_size = sample_size
+        if self.sample_size < 0:
+            raise ValueError("sample_size must be positive")
+
+        # Pull the logs from phospho
+        # TODO : Add time range filter
+        # TODO : Add pull from dataset
+        tasks = self.client.tasks.get_all()
+
+        # TODO : Propper linkage of the task and the agent functions
+        tasks_linked_to_function = [
+            {"task": task, "agent_function": self.functions_to_evaluate[0]}
+            for task in tasks
+        ]
+
+        # Filter the tasks to only keep the ones that are compatible with the agent function
+        tasks_linked_to_function = [
+            {
+                "task": adapt_task_to_agent_function(
+                    task["task"], task["agent_function"]
+                ),
+                "agent_function": task["agent_function"],
+            }
+            for task in tasks_linked_to_function
+            if adapt_task_to_agent_function(task["task"], task["agent_function"])
+            is not None
+        ]
+
+        # TODO : More complex sampling
+        if self.sample_size is None:
+            # None = all the tasks
+            sampled_tasks = tasks_linked_to_function
+        elif self.sample_size == 0:
+            # 0 = no tasks
+            sampled_tasks = []
+        elif len(tasks_linked_to_function) > self.sample_size:
+            # Downsample
+            sampled_tasks = sample(tasks_linked_to_function, self.sample_size)
+        elif len(tasks_linked_to_function) < self.sample_size:
+            # Upsample
+            # Duplicate the tasks
+            duplicated_tasks = tasks_linked_to_function * int(
+                1 + self.sample_size / len(tasks)
+            )
+            # Sample the remaining tasks
+            sampled_tasks = tasks_linked_to_function + sample(
+                duplicated_tasks,
+                self.sample_size % len(duplicated_tasks)
+                - len(tasks_linked_to_function),
+            )
+        else:
+            sampled_tasks = tasks_linked_to_function
+
+        self.sampled_tasks = sampled_tasks
+
+    def __iter__(self):
+        return iter(self.sampled_tasks)
+
+    def __next__(self):
+        return next(self.sampled_tasks)
+
+    def __len__(self):
+        return len(self.sampled_tasks)
+
+
 class PhosphoTest:
     def __init__(
         self,
@@ -109,9 +176,7 @@ class PhosphoTest:
         ```
         """
         # Execution parameter
-        self.sample_size = sample_size
-        if self.sample_size < 0:
-            raise ValueError("sample_size must be positive")
+
         self.executor_type = executor_type
 
         self.client = Client(api_key=api_key, project_id=project_id)
@@ -208,64 +273,21 @@ class PhosphoTest:
         # Start timer
         start_time = time.time()
 
-        # Pull the logs from phospho
-        # TODO : Add time range filter
-        # TODO : Add pull from dataset
-        tasks = self.client.tasks.get_all()
-
-        # TODO : Propper linkage of the task and the agent functions
-        tasks_linked_to_function = [
-            {"task": task, "agent_function": self.functions_to_evaluate[0]}
-            for task in tasks
-        ]
-
-        # Filter the tasks to only keep the ones that are compatible with the agent function
-        tasks_linked_to_function = [
-            {
-                "task": adapt_task_to_agent_function(
-                    task["task"], task["agent_function"]
-                ),
-                "agent_function": task["agent_function"],
-            }
-            for task in tasks_linked_to_function
-            if adapt_task_to_agent_function(task["task"], task["agent_function"])
-            is not None
-        ]
-
-        # TODO : More complex sampling
-        if self.sample_size is None:
-            # None = all the tasks
-            sampled_tasks = tasks_linked_to_function
-        elif self.sample_size == 0:
-            # 0 = no tasks
-            sampled_tasks = []
-        elif len(tasks_linked_to_function) > self.sample_size:
-            # Downsample
-            sampled_tasks = sample(tasks_linked_to_function, self.sample_size)
-        elif len(tasks_linked_to_function) < self.sample_size:
-            # Upsample
-            # Duplicate the tasks
-            duplicated_tasks = tasks_linked_to_function * int(
-                1 + self.sample_size / len(tasks)
-            )
-            # Sample the remaining tasks
-            sampled_tasks = tasks_linked_to_function + sample(
-                duplicated_tasks,
-                self.sample_size % len(duplicated_tasks)
-                - len(tasks_linked_to_function),
-            )
-        else:
-            sampled_tasks = tasks_linked_to_function
+        tasks_linked_to_function = BacktestLoader(
+            self.functions_to_evaluate, sample_size=10
+        )
 
         # Evaluate the tasks in parallel
         if self.executor_type == "parallel":
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 # Submit tasks to the executor
                 # executor.map(self.evaluate_a_task, task_to_evaluate)
-                executor.map(self.evaluate_a_task, sampled_tasks)
+                executor.map(self.evaluate_a_task, tasks_linked_to_function)
         elif self.executor_type == "sequential":
-            for task in sampled_tasks:
-                self.evaluate_a_task(task)
+            for task_function in tasks_linked_to_function:
+                self.evaluate_a_task(
+                    task_function["task"], task_function["agent_function"]
+                )
         else:
             raise NotImplementedError(
                 f"Executor type {self.executor_type} is not implemented"
@@ -276,11 +298,8 @@ class PhosphoTest:
 
         # Display a summary of the results
         print("Phospho backtest results:")
-        print(f"Total number of tasks: {len(tasks)}")
-        print(f"Number of tasks sampled: {len(sampled_tasks)}")
+        print(f"Total number of tasks: {len(tasks_linked_to_function)}")
         print(f"Total time: {end_time - start_time} seconds")
         print(f"Results:")
         # pprint(self.comparisons)
         pprint(self.evaluation_results)
-
-        # TODO : Push the results to phospho
