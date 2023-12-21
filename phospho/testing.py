@@ -85,7 +85,12 @@ def adapt_task_to_agent_function(
 
 
 class BacktestLoader:
-    def __init__(self, functions_to_evaluate, sample_size: Optional[int] = 10):
+    def __init__(
+        self,
+        client: Client,
+        function_to_evaluate: Callable[[Any], Any],
+        sample_size: Optional[int] = 10,
+    ):
         self.sample_size = sample_size
         if self.sample_size < 0:
             raise ValueError("sample_size must be positive")
@@ -93,12 +98,11 @@ class BacktestLoader:
         # Pull the logs from phospho
         # TODO : Add time range filter
         # TODO : Add pull from dataset
-        tasks = self.client.tasks.get_all()
+        tasks = client.tasks.get_all()
 
         # TODO : Propper linkage of the task and the agent functions
         tasks_linked_to_function = [
-            {"task": task, "agent_function": self.functions_to_evaluate[0]}
-            for task in tasks
+            {"task": task, "agent_function": function_to_evaluate} for task in tasks
         ]
 
         # Filter the tasks to only keep the ones that are compatible with the agent function
@@ -178,7 +182,6 @@ class PhosphoTest:
         # Execution parameter
 
         self.executor_type = executor_type
-
         self.client = Client(api_key=api_key, project_id=project_id)
         self.functions_to_evaluate: List[Callable[[Any], Any]] = []
         # Results are temporary stored in memory
@@ -274,7 +277,9 @@ class PhosphoTest:
         start_time = time.time()
 
         tasks_linked_to_function = BacktestLoader(
-            self.functions_to_evaluate, sample_size=10
+            client=self.client,
+            function_to_evaluate=self.functions_to_evaluate[0],
+            sample_size=10,
         )
 
         # Evaluate the tasks in parallel
