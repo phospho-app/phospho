@@ -100,7 +100,11 @@ class Client:
         return TaskCollection(client=self)
 
     def compare(
-        self, context_input: str, old_output: str, new_output: str
+        self,
+        context_input: str,
+        old_output: str,
+        new_output: str,
+        test_id: Optional[str] = None,
     ) -> Comparison:
         """
         Compare the old and new answers to the context_input with an LLM
@@ -112,10 +116,23 @@ class Client:
                 "context_input": context_input,
                 "old_output": old_output,
                 "new_output": new_output,
+                "test_id": test_id,
             },
         )
 
         return Comparison.model_validate(comparison_result.json())
+
+    def evaluate(
+        self,
+        context_input: str,
+        output: str,
+        test_id: Optional[str] = None,
+    ) -> Task:
+        """
+        Evaluate the output of a task as a success or a failure. Returns the task.
+        """
+        # Not implemented in the backend
+        pass
 
     def flag(
         self,
