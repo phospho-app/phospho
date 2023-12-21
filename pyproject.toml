@@ -9,9 +9,10 @@ documentation = "https://docs.phospho.app"
 keywords = ['LLM', 'Agents', 'gen ai', 'phospho', 'analytics', 'observability']
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0"
+python = ">=3.9,<4.0"
 requests = "^2.31.0"
 pydantic = "^2.5.2"
+pandas = "^2.1.4"
 
 
 [tool.poetry.group.test.dependencies]

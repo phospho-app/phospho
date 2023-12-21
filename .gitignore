@@ -12,3 +12,5 @@ __pycache__/
 
 docs/build
 notebooks
+.mypy_cache
+.devcontainer/*
