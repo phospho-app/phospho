@@ -25,4 +25,4 @@ def test_santa(**inputs):
     return santa_claus_agent.answer(**inputs)
 
 
-phospho_test.run(source_loader_params={"sample_size": 5})
+phospho_test.run(source_loader_params={"sample_size": 5}, metrics=["evaluate"])
