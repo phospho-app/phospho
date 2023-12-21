@@ -320,6 +320,15 @@ class PhosphoTest:
             # Default metric is compare
             metrics = ["compare"]
 
+        if len(self.functions_to_evaluate) == 0:
+            raise ValueError(
+                "You need to add at least one function to evaluate with the @phospho_test.test decorator"
+            )
+        elif len(self.functions_to_evaluate) > 1:
+            raise NotImplementedError(
+                "Only one function to evaluate is supported for now"
+            )
+
         # Start timer
         start_time = time.time()
 
