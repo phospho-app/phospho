@@ -33,3 +33,35 @@ class TaskModel(BaseModel):
     events: Optional[List] = Field(default_factory=list)
     # The environment is a label
     environment: str = Field(default="default environment")
+
+
+class Test(BaseModel):
+    id: str = Field(default_factory=generate_uuid)
+    project_id: str
+    created_by: str  # uid of the user who created the test
+    created_at: int = Field(default_factory=generate_timestamp)
+    last_updated_at: int
+    terminated_at: Optional[int] = None
+    status: Literal["started", "completed", "canceled"]
+    summary: dict = Field(default_factory=dict)
+
+
+ComparisonResults = Literal[
+    "Old output is better",
+    "New output is better",
+    "Same quality",
+    "Both are bad",
+    "Error",
+]
+
+
+class Comparison(BaseModel):
+    id: str
+    created_at: int
+    project_id: str
+    instructions: Optional[str] = None
+    context_input: str
+    old_output: str
+    new_output: str
+    comparison_result: ComparisonResults
+    source: str

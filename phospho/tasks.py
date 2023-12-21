@@ -38,6 +38,13 @@ class Task:
 
         return self._content
 
+    def content_as_dict(self) -> dict:
+        content = self.content
+        if isinstance(content, TaskModel):
+            return content.model_dump()
+        else:
+            return content
+
     def refresh(self) -> None:
         """
         Refresh the content of the task from the server
@@ -111,6 +118,7 @@ class TaskCollection(Collection):
     def get_all(self) -> List[Task]:
         """Returns a list of all of the project tasks"""
         # TODO : Filters
+        # TODO : Limit
 
         response = self._client._get(
             f"/projects/{self._client._project_id()}/tasks",

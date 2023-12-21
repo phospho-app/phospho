@@ -15,7 +15,7 @@ import phospho.config as config
 
 from phospho.sessions import SessionCollection
 from phospho.tasks import TaskCollection, Task
-from phospho.evals import Comparison
+from phospho.models import Comparison, Test
 
 
 class Client:
@@ -100,7 +100,11 @@ class Client:
         return TaskCollection(client=self)
 
     def compare(
-        self, context_input: str, old_output: str, new_output: str
+        self,
+        context_input: str,
+        old_output: str,
+        new_output: str,
+        test_id: Optional[str] = None,
     ) -> Comparison:
         """
         Compare the old and new answers to the context_input with an LLM
@@ -112,6 +116,7 @@ class Client:
                 "context_input": context_input,
                 "old_output": old_output,
                 "new_output": new_output,
+                "test_id": test_id,
             },
         )
 
@@ -138,3 +143,16 @@ class Client:
             },
         )
         return Task(client=self, task_id=task_id, _content=response.json())
+
+    def create_test(self) -> Test:
+        """
+        Start a test
+        """
+
+        response = self._post(
+            "/tests/",
+            payload={
+                "project_id": self._project_id(),
+            },
+        )
+        return Test(**response.json())
