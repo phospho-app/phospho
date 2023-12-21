@@ -16,7 +16,7 @@ import phospho
 from backend import SantaClausAgent
 
 phospho.config.BASE_URL = "http://localhost:8000/v0"
-phospho_test = phospho.PhosphoTest(executor_type="parallel", sample_size=5)
+phospho_test = phospho.PhosphoTest(executor_type="parallel")
 
 
 @phospho_test.test
@@ -25,4 +25,4 @@ def test_santa(**inputs):
     return santa_claus_agent.answer(**inputs)
 
 
-phospho_test.run()
+phospho_test.run(source_loader_params={"sample_size": 5})
