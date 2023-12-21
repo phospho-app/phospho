@@ -148,6 +148,8 @@ class Client:
         """
         Start a test
         """
+        return "test"
+
         response = self._post(
             f"/tests/{self._project_id()}/create/",
         )

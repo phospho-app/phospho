@@ -4,7 +4,8 @@ import logging
 import inspect
 import time
 import pandas as pd
-import phospho
+
+
 from phospho.client import Client
 from phospho.tasks import Task
 from phospho import extractor
@@ -15,6 +16,8 @@ from collections import defaultdict
 from random import sample
 
 logger = logging.getLogger(__name__)
+phospho_init = lambda **x: None
+phospho_log = lambda **x: None
 
 
 def adapt_task_to_agent_function(
@@ -106,17 +109,13 @@ class BacktestLoader:
         ]
 
         # Filter the tasks to only keep the ones that are compatible with the agent function
-        tasks_linked_to_function = [
-            {
-                "task": adapt_task_to_agent_function(
-                    task["task"], task["agent_function"]
-                ),
-                "agent_function": task["agent_function"],
-            }
-            for task in tasks_linked_to_function
-            if adapt_task_to_agent_function(task["task"], task["agent_function"])
-            is not None
-        ]
+        tasks_linked_to_function = []
+        for task in tasks:
+            adapted_task = adapt_task_to_agent_function(task, function_to_evaluate)
+            if adapted_task is not None:
+                tasks_linked_to_function.append(
+                    {"task": adapted_task, "agent_function": function_to_evaluate}
+                )
 
         # TODO : More complex sampling
         if self.sample_size is None:
@@ -224,8 +223,8 @@ class PhosphoTest:
         self.test_id: Optional[str] = None
 
     def test(self, fn: Callable[[Any], Any]) -> Callable[[Any], Any]:
-        """This is a de corator to add on top of functions
-        to test them with the phospho backend
+        """
+        Add this as a decorator on top of the evaluation function.
         """
 
         # TODO: Add task_name as a parameter
@@ -236,7 +235,10 @@ class PhosphoTest:
         return fn
 
     def get_output_from_agent(
-        self, additional_input: Any, agent_function: Callable[[Any], Any]
+        self,
+        additional_input: Any,
+        agent_function: Callable[[Any], Any],
+        execution_mode: str,
     ):
         """
         This function will return the output of the agent given an input
@@ -245,11 +247,11 @@ class PhosphoTest:
             f"Calling {agent_function.__name__} with input {additional_input.__repr__()}"
         )
 
-        # TODO : Handle the case 'there are more keys in additional_inputs than in the agent_function signature'
-        # TODO : Handle the case 'there are more keys in the agent_function signature than in additional_inputs'
+        # TODO : Make it so that that we use input or additional_input depending on the
+        # signature (input type) of the agent function
 
-        # check the value of PHOSPHO_EXECUTION_MODE
-        os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
+        if execution_mode == "backtest":
+            os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
         new_output = agent_function(**additional_input)
 
         # Handle generators
@@ -263,28 +265,35 @@ class PhosphoTest:
         return new_output_str
 
     def evaluate(self, task_to_evaluate: Dict[str, Any]):
-        """Run the evaluation pipeline on the task"""
+        """
+        Run the evaluation pipeline on the task
+        """
+
         task = task_to_evaluate["task"]
         agent_function = task_to_evaluate["agent_function"]
 
         # Get the output from the agent
         context_input = task.content.input
         new_output_str = self.get_output_from_agent(
-            task.content.additional_input, agent_function
+            additional_input=task.content.additional_input,
+            agent_function=agent_function,
+            execution_mode="evaluate",
         )
 
         # Ask phospho: what's the best answer to the context_input ?
         print(f"Evaluating with phospho (task: {task.id})")
-        phospho.log(
-            context_input,
-            new_output_str,
+        phospho_log(
+            input=context_input,
+            output=new_output_str,
             test_id=self.test_id,
         )
 
     def compare(
         self, task_to_compare: Dict[str, Any]
     ) -> None:  # task: Task, agent_function: Callable[[Any], Any]):
-        """Compares the output of the task with the output of the agent function"""
+        """
+        Compares the output of the task with the output of the agent function
+        """
 
         task = task_to_compare["task"]
         agent_function = task_to_compare["agent_function"]
@@ -294,7 +303,9 @@ class PhosphoTest:
         context_input = task.content.input
         old_output_str = task.content.output
         new_output_str = self.get_output_from_agent(
-            task.content.additional_input, agent_function
+            additional_input=task.content.additional_input,
+            agent_function=agent_function,
+            execution_mode="compare",
         )
 
         # Ask phospho: what's the best answer to the context_input ?
@@ -353,15 +364,19 @@ class PhosphoTest:
             )
 
         for metric in metrics:
-            # Get the evaluation function
-            assert metric in [
-                "compare",
-                "evaluate",
-            ], "Implemented metrics: 'compare', 'evaluate'"
-            # For evaluate, we'll need to init phospho and use .log
             if metric == "evaluate":
-                phospho.init(self.client.api_key, self.client.project_id)
-            evaluation_function = getattr(self, metric)
+                from phospho import init as phospho_init
+                from phospho import log as phospho_log
+
+                # For evaluate, we'll need to init phospho and use .log
+                phospho_init(self.client.api_key, self.client.project_id)
+                evaluation_function = self.evaluate
+            elif metric == "compare":
+                evaluation_function = self.compare
+            else:
+                raise NotImplementedError(
+                    f"Metric {metric} is not implemented. Implemented metrics: 'compare', 'evaluate'"
+                )
 
             # Evaluate the tasks in parallel
             if self.executor_type == "parallel":

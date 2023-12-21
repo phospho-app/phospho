@@ -15,7 +15,6 @@ from .utils import (
 )
 from .extractor import get_input_output, RawDataType
 from ._version import __version__
-from . import evals
 from . import config
 from .testing import PhosphoTest
 
@@ -40,7 +39,6 @@ __all__ = [
     "log",
     "wrap",
     "extractor",
-    "evals",
     "PhosphoTest",
 ]
 
