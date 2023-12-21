@@ -27,7 +27,8 @@ class TestInput(BaseModel, extra="allow"):
     output: Optional[str] = None
     task_id: Optional[str] = None
 
-    def from_task(self, task: Task) -> "TestInput":
+    @classmethod
+    def from_task(cls, task: Task) -> "TestInput":
         return TestInput(**task.content_as_dict())
 
 
@@ -110,6 +111,8 @@ class BacktestLoader:
         # TODO : Add time range filter
         # TODO : Add pull from dataset
         tasks = client.tasks.get_all()
+        if len(tasks) == 0:
+            raise ValueError("No tasks found in the project")
 
         # Filter the tasks to only keep the ones that are compatible with the agent function
         tasks_linked_to_function = []
@@ -133,7 +136,7 @@ class BacktestLoader:
             # Upsample
             # Duplicate the tasks
             duplicated_tasks = tasks_linked_to_function * int(
-                1 + self.sample_size / len(tasks)
+                1 + self.sample_size / len(tasks_linked_to_function)
             )
             # Sample the remaining tasks
             sampled_tasks = tasks_linked_to_function + sample(
@@ -404,3 +407,4 @@ class PhosphoTest:
         print(f"Total number of tasks: {len(tasks_linked_to_function)}")
         print(f"Total time: {end_time - start_time} seconds")
         print(f"Test id: {self.test_id}")
+        print("Waiting for phospho to finish the evaluation...")
