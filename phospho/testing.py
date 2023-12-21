@@ -4,7 +4,7 @@ import logging
 import inspect
 import time
 import pandas as pd
-
+import phospho
 from phospho.client import Client
 from phospho.tasks import Task
 from phospho import extractor
@@ -13,7 +13,6 @@ from typing import List, Dict, Optional, Callable, Any, Literal
 from collections import defaultdict
 
 from random import sample
-from pprint import pprint
 
 logger = logging.getLogger(__name__)
 
@@ -222,6 +221,7 @@ class PhosphoTest:
         # Results are temporary stored in memory
         self.evaluation_results: Dict[str, int] = defaultdict(int)
         self.comparisons: List[dict] = []
+        self.test_id: Optional[str] = None
 
     def test(self, fn: Callable[[Any], Any]) -> Callable[[Any], Any]:
         """This is a de corator to add on top of functions
@@ -275,9 +275,10 @@ class PhosphoTest:
 
         # Ask phospho: what's the best answer to the context_input ?
         print(f"Evaluating with phospho (task: {task.id})")
-        evaluation_result = self.client.evaluate(
+        phospho.log(
             context_input,
             new_output_str,
+            test_id=self.test_id,
         )
 
     def compare(
@@ -298,7 +299,7 @@ class PhosphoTest:
 
         # Ask phospho: what's the best answer to the context_input ?
         print(f"Comparing with phospho (task: {task.id})")
-        comparison_result = self.client.compare(
+        self.client.compare(
             context_input,
             old_output_str,
             new_output_str,
@@ -333,6 +334,8 @@ class PhosphoTest:
         start_time = time.time()
 
         # TODO : Get the test_id
+        self.test_id = self.client.create_test()
+
         if source_loader == "backtest":
             tasks_linked_to_function = BacktestLoader(
                 client=self.client,
@@ -355,6 +358,9 @@ class PhosphoTest:
                 "compare",
                 "evaluate",
             ], "Implemented metrics: 'compare', 'evaluate'"
+            # For evaluate, we'll need to init phospho and use .log
+            if metric == "evaluate":
+                phospho.init(self.client.api_key, self.client.project_id)
             evaluation_function = getattr(self, metric)
 
             # Evaluate the tasks in parallel

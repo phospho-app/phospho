@@ -33,3 +33,30 @@ class TaskModel(BaseModel):
     events: Optional[List] = Field(default_factory=list)
     # The environment is a label
     environment: str = Field(default="default environment")
+
+
+class Test(BaseModel):
+    test_id: str
+    created_at: int
+    project_id: str
+
+
+ComparisonResults = Literal[
+    "Old output is better",
+    "New output is better",
+    "Same quality",
+    "Both are bad",
+    "Error",
+]
+
+
+class Comparison(BaseModel):
+    id: str
+    created_at: int
+    project_id: str
+    instructions: Optional[str] = None
+    context_input: str
+    old_output: str
+    new_output: str
+    comparison_result: ComparisonResults
+    source: str
