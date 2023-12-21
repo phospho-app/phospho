@@ -15,7 +15,7 @@ import phospho.config as config
 
 from phospho.sessions import SessionCollection
 from phospho.tasks import TaskCollection, Task
-from phospho.evals import Comparison
+from phospho.models import Comparison, Test
 
 
 class Client:
@@ -122,18 +122,6 @@ class Client:
 
         return Comparison.model_validate(comparison_result.json())
 
-    def evaluate(
-        self,
-        context_input: str,
-        output: str,
-        test_id: Optional[str] = None,
-    ) -> Task:
-        """
-        Evaluate the output of a task as a success or a failure. Returns the task.
-        """
-        # Not implemented in the backend
-        pass
-
     def flag(
         self,
         task_id: str,
@@ -155,3 +143,12 @@ class Client:
             },
         )
         return Task(client=self, task_id=task_id, _content=response.json())
+
+    def create_test(self) -> Test:
+        """
+        Start a test
+        """
+        response = self._post(
+            f"/tests/{self._project_id()}/create/",
+        )
+        return response.json()
