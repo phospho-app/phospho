@@ -5,13 +5,14 @@ import inspect
 import time
 import pandas as pd
 
+from types import GeneratorType
+from typing import List, Dict, Optional, Callable, Any, Literal
+from collections import defaultdict
+from pydantic import BaseModel
 
 from phospho.client import Client
 from phospho.tasks import Task
 from phospho import extractor
-from types import GeneratorType
-from typing import List, Dict, Optional, Callable, Any, Literal
-from collections import defaultdict
 
 from random import sample
 
@@ -20,9 +21,19 @@ phospho_init = lambda **x: None
 phospho_log = lambda **x: None
 
 
+class TestInput(BaseModel, extra="allow"):
+    input: str
+    additional_input: Optional[dict] = None
+    output: Optional[str] = None
+    task_id: Optional[str] = None
+
+    def from_task(self, task: Task) -> "TestInput":
+        return TestInput(**task.content_as_dict())
+
+
 def adapt_task_to_agent_function(
     task: Task, agent_function: Callable[[Any], Any]
-) -> Optional[Task]:
+) -> Optional[TestInput]:
     """This function adapts a task to match the signature of an agent function.
 
     If the task is compatible with the agent function, this returns the task.
@@ -40,7 +51,7 @@ def adapt_task_to_agent_function(
 
     if task_inputs == agent_function_inputs:
         # The task is compatible with the agent function
-        return task
+        return TestInput.from_task(task)
     elif task_inputs <= agent_function_inputs:
         # The agent function takes more inputs than the task provides
         # Check if those are optional in the agent function
@@ -58,19 +69,16 @@ def adapt_task_to_agent_function(
                 return None
         # All of the additional inputs are optional in the agent function
         # So the task is compatible with the agent function
-        return task
+        return TestInput.from_task(task)
     elif task_inputs >= agent_function_inputs:
         # We filter the task to only keep the keys that are in the agent function signature
-        new_task = Task(
-            id=task.id,
-            content={
-                "input": {
-                    key: task.content.input[key] for key in agent_function_inputs
-                },
-                "additional_input": task.content.additional_input,
-                "output": task.content.output,
-            },
+        new_task = TestInput(
+            task_id=task.id,
+            input={key: task.content.input[key] for key in agent_function_inputs},
+            additional_input=task.content.additional_input,
+            output=task.content.output,
         )
+
         # Log info that we filtered task inputs
         logger.info(
             f"Reduced the number of inputs of task {task.id} to match the agent function {agent_function.__name__}: removed {task_inputs - agent_function_inputs}"
@@ -82,7 +90,7 @@ def adapt_task_to_agent_function(
             if param.kind == inspect.Parameter.VAR_KEYWORD:
                 # The agent function takes a **kwargs argument
                 # The task is compatible with the agent function
-                return task
+                return TestInput.from_task(task)
 
     return None
 
@@ -103,21 +111,15 @@ class BacktestLoader:
         # TODO : Add pull from dataset
         tasks = client.tasks.get_all()
 
-        # TODO : Propper linkage of the task and the agent functions
-        tasks_linked_to_function = [
-            {"task": task, "agent_function": function_to_evaluate} for task in tasks
-        ]
-
         # Filter the tasks to only keep the ones that are compatible with the agent function
         tasks_linked_to_function = []
         for task in tasks:
             adapted_task = adapt_task_to_agent_function(task, function_to_evaluate)
             if adapted_task is not None:
                 tasks_linked_to_function.append(
-                    {"task": adapted_task, "agent_function": function_to_evaluate}
+                    {"test_input": adapted_task, "agent_function": function_to_evaluate}
                 )
 
-        # TODO : More complex sampling
         if self.sample_size is None:
             # None = all the tasks
             sampled_tasks = tasks_linked_to_function
@@ -157,36 +159,34 @@ class BacktestLoader:
 class PandasLoader:
     def __init__(self, path: str, function_to_evaluate: Callable[[Any], Any]):
         if path.endswith(".csv"):
-            self.dataset = pd.read_csv(path)
+            self.df = pd.read_csv(path)
         elif path.endswith(".json"):
-            self.dataset = pd.read_json(path)
+            self.df = pd.read_json(path)
         elif path.endswith(".xlsx"):
-            self.dataset = pd.read_excel(path)
+            self.df = pd.read_excel(path)
         else:
             raise NotImplementedError(
                 f"File format {path.split('.')[-1]} is not supported. Supported formats: .csv, .json, .xlsx"
             )
+        # Create an iterator over the dataset
+        self.dataset = iter(self.df.to_dict(orient="records"))
+
         self.function_to_evaluate = function_to_evaluate
 
     def __iter__(self):
-        return iter(self.dataset)
+        return self
 
     def __next__(self):
         next_item = next(self.dataset)
         # TODO : Verify it has the right columns for the function_to_evaluate
-        # Cast to Task
-        task = Task(
-            id=next_item["id"],
-            content={
-                "input": next_item["input"],
-                "additional_input": next_item.get("additional_input", None),
-                "output": next_item.get("output", None),
-            },
-        )
+        test_input = TestInput(**next_item)
         return {
-            "task": task,
+            "test_input": test_input,
             "agent_function": self.function_to_evaluate,
         }
+
+    def __len__(self):
+        return self.df.shape[0]
 
 
 class PhosphoTest:
@@ -269,19 +269,19 @@ class PhosphoTest:
         Run the evaluation pipeline on the task
         """
 
-        task = task_to_evaluate["task"]
+        test_input: TestInput = task_to_evaluate["test_input"]
         agent_function = task_to_evaluate["agent_function"]
 
         # Get the output from the agent
-        context_input = task.content.input
+        context_input = test_input.input
         new_output_str = self.get_output_from_agent(
-            additional_input=task.content.additional_input,
+            additional_input=test_input.additional_input,
             agent_function=agent_function,
             execution_mode="evaluate",
         )
 
         # Ask phospho: what's the best answer to the context_input ?
-        print(f"Evaluating with phospho (task: {task.id})")
+        print(f"Evaluating with phospho (task: {test_input.id})")
         phospho_log(
             input=context_input,
             output=new_output_str,
@@ -295,21 +295,21 @@ class PhosphoTest:
         Compares the output of the task with the output of the agent function
         """
 
-        task = task_to_compare["task"]
+        test_input: TestInput = task_to_compare["test_input"]
         agent_function = task_to_compare["agent_function"]
-        print("Comparing task id: ", task.id)
+        print("Comparing task id: ", test_input.id)
 
         # Get the output from the agent
-        context_input = task.content.input
-        old_output_str = task.content.output
+        context_input = test_input.input
+        old_output_str = test_input.output
         new_output_str = self.get_output_from_agent(
-            additional_input=task.content.additional_input,
+            additional_input=test_input.additional_input,
             agent_function=agent_function,
             execution_mode="compare",
         )
 
         # Ask phospho: what's the best answer to the context_input ?
-        print(f"Comparing with phospho (task: {task.id})")
+        print(f"Comparing with phospho (task: {test_input.id})")
         self.client.compare(
             context_input,
             old_output_str,
@@ -332,6 +332,7 @@ class PhosphoTest:
             # Default metric is compare
             metrics = ["compare"]
 
+        # TODO : Propper linkage of the test_input and the agent functions
         if len(self.functions_to_evaluate) == 0:
             raise ValueError(
                 "You need to add at least one function to evaluate with the @phospho_test.test decorator"
@@ -387,7 +388,7 @@ class PhosphoTest:
             elif self.executor_type == "sequential":
                 for task_function in tasks_linked_to_function:
                     evaluation_function(
-                        task_function["task"], task_function["agent_function"]
+                        task_function["test_input"], task_function["agent_function"]
                     )
             else:
                 raise NotImplementedError(

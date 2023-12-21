@@ -38,6 +38,13 @@ class Task:
 
         return self._content
 
+    def content_as_dict(self) -> dict:
+        content = self.content
+        if isinstance(content, TaskModel):
+            return content.model_dump()
+        else:
+            return content
+
     def refresh(self) -> None:
         """
         Refresh the content of the task from the server
