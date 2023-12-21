@@ -1,6 +1,4 @@
 import pytest
-import time
-import asyncio
 import phospho
 import logging
 

@@ -1,7 +1,6 @@
 import threading
 import pydantic
-from collections import defaultdict
-from typing import Dict, Any, List
+from typing import Dict, List
 
 from .utils import generate_uuid
 
