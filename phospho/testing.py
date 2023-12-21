@@ -346,7 +346,8 @@ class PhosphoTest:
         start_time = time.time()
 
         # TODO : Get the test_id
-        self.test_id = self.client.create_test()
+        self.test = self.client.create_test()
+        self.test_id = self.test.id
 
         if source_loader == "backtest":
             tasks_linked_to_function = BacktestLoader(
@@ -399,9 +400,7 @@ class PhosphoTest:
         end_time = time.time()
 
         # Display a summary of the results
-        print("Phospho backtest results:")
+        print("Finished running the tests")
         print(f"Total number of tasks: {len(tasks_linked_to_function)}")
         print(f"Total time: {end_time - start_time} seconds")
-
-        # TODO : Fetch the results from the backend
-        # TODO : Display the results
+        print(f"Test id: {self.test_id}")

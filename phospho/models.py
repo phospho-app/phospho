@@ -36,9 +36,14 @@ class TaskModel(BaseModel):
 
 
 class Test(BaseModel):
-    test_id: str
-    created_at: int
+    id: str = Field(default_factory=generate_uuid)
     project_id: str
+    created_by: str  # uid of the user who created the test
+    created_at: int = Field(default_factory=generate_timestamp)
+    last_updated_at: int
+    terminated_at: Optional[int] = None
+    status: Literal["started", "completed", "canceled"]
+    summary: dict = Field(default_factory=dict)
 
 
 ComparisonResults = Literal[

@@ -148,9 +148,11 @@ class Client:
         """
         Start a test
         """
-        return "test"
 
         response = self._post(
-            f"/tests/{self._project_id()}/create/",
+            "/tests/",
+            payload={
+                "project_id": self._project_id(),
+            },
         )
-        return response.json()
+        return Test(**response.json())
