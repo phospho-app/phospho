@@ -26,9 +26,9 @@ def test_santa(**inputs):
 
 
 phospho_test.run(
-    source_loader="pandas",
-    source_loader_params={"path": "golden_dataset.xlsx"},
-    # source_loader="backtest",
-    # source_loader_params={"sample_size": 5},
+    # source_loader="pandas",
+    # source_loader_params={"path": "golden_dataset.xlsx"},
+    source_loader="backtest",
+    source_loader_params={"sample_size": 5},
     metrics=["evaluate"],
 )
