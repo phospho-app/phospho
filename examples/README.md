@@ -12,5 +12,5 @@ This folder contains examples on how to use phospho to log in different contexts
 
 ## Agent examples
 
-- [streamlit-santa-agent](streamlit-santa-agent) A fun Santa Claus agent in a sync streamlitwebapp
-- [fastapi-streamlit-santa-agent](streamlit-santa-agent) A fun Santa Claus agent with an async FastAPI backend and Streamlit frontend
+- [streamlit_santa_agent](streamlit_santa_agent) A fun Santa Claus agent in a sync streamlitwebapp
+- [fastapi_streamlit_santa_agent](fastapi_streamlit_santa_agent) A fun Santa Claus agent with an async FastAPI backend and Streamlit frontend
