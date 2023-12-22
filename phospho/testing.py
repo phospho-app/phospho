@@ -31,11 +31,10 @@ class TestInput(BaseModel, extra="allow"):
         # Combine the input and additional_input
         if task.content.additional_input is not None:
             function_input = task.content.additional_input
+        elif task.content.input is not None:
+            function_input.update({"input": task.content.input})
         else:
             function_input = {}
-
-        if task.content.input is not None:
-            function_input.update({"input": task.content.input})
 
         return TestInput(function_input=function_input, **task.content_as_dict())
 
@@ -401,8 +400,7 @@ class PhosphoTest:
         # TODO : Make it so that that we use input or additional_input depending on the
         # signature (input type) of the agent function
 
-        if execution_mode == "backtest":
-            os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
+        os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
         new_output = agent_function(**function_input)
 
         # Handle generators
@@ -422,7 +420,7 @@ class PhosphoTest:
         """
         Run the evaluation pipeline on the task
         """
-        global phospho_log
+        from phospho import log as phospho_log
 
         test_input: TestInput = task_to_evaluate["test_input"]
         agent_function = task_to_evaluate["agent_function"]
@@ -436,7 +434,7 @@ class PhosphoTest:
         )
 
         # Ask phospho: what's the best answer to the context_input ?
-        print(f"Evaluating with phospho (task: {test_input.id})")
+        print("Evaluating with phospho")
         phospho_log(
             input=context_input,
             output=new_output_str,
@@ -521,7 +519,6 @@ class PhosphoTest:
             for metric in metrics:
                 if metric == "evaluate":
                     from phospho import init as phospho_init
-                    from phospho import log as phospho_log
 
                     # For evaluate, we'll need to init phospho and use .log
                     phospho_init(self.client.api_key, self.client.project_id)
