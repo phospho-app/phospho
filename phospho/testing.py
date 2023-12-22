@@ -388,7 +388,7 @@ class PhosphoTest:
         self,
         function_input: Dict[str, Any],
         agent_function: Callable[[Any], Any],
-        execution_mode: str,
+        metric_name: str,
     ):
         """
         This function will return the output of the agent given an input
@@ -400,7 +400,7 @@ class PhosphoTest:
         # TODO : Make it so that that we use input or additional_input depending on the
         # signature (input type) of the agent function
 
-        os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
+        os.environ["PHOSPHO_TEST_METRIC"] = metric_name
         new_output = agent_function(**function_input)
 
         # Handle generators
@@ -420,8 +420,6 @@ class PhosphoTest:
         """
         Run the evaluation pipeline on the task
         """
-        import phospho
-
         test_input: TestInput = task_to_evaluate["test_input"]
         agent_function = task_to_evaluate["agent_function"]
 
@@ -430,17 +428,11 @@ class PhosphoTest:
         new_output_str = self.get_output_from_agent(
             function_input=test_input.function_input,
             agent_function=agent_function,
-            execution_mode="evaluate",
+            metric_name="evaluate",
         )
 
         # Ask phospho: what's the best answer to the context_input ?
         print("Evaluating with phospho")
-        os.environ["PHOSPHO_EXECUTION_MODE"] = ""
-        phospho.log(
-            input=context_input,
-            output=new_output_str,
-            test_id=self.test_id,
-        )
 
     def compare(
         self, task_to_compare: Dict[str, Any]
@@ -459,7 +451,7 @@ class PhosphoTest:
         new_output_str = self.get_output_from_agent(
             function_input=test_input.function_input,
             agent_function=agent_function,
-            execution_mode="compare",
+            metric_name="compare",
         )
 
         # Ask phospho: what's the best answer to the context_input ?
@@ -494,6 +486,7 @@ class PhosphoTest:
         )
         self.test_id = self.test.id
         print(f"Starting test: {self.test_id}")
+        os.environ["PHOSPHO_TEST_ID"] = self.test_id
 
         for function_name, function_to_eval in self.functions_to_evaluate.items():
             print(f"Running tests for: {function_name}")
@@ -573,5 +566,7 @@ class PhosphoTest:
         print(f"Total time: {end_time - start_time} seconds")
         print(f"Test id: {self.test_id}")
         print("Waiting for evaluation to finish...")
-        # Mark the test as completed
-        self.client.update_test(test_id=self.test_id, status="completed")
+        # Mark the test as completed and get results
+        test_result = self.client.update_test(test_id=self.test_id, status="completed")
+        print("Test result:")
+        print(test_result)
