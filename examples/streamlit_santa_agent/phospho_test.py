@@ -51,4 +51,4 @@ def test_santa_dataset(
     return santa_claus_agent.answer(messages=[{"role": "user", "content": input}])
 
 
-phospho_test.run(executor_type="sequential")
+phospho_test.run(executor_type="parallel")
