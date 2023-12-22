@@ -103,8 +103,7 @@ class SantaClausAgent:
     def answer(
         self,
         messages: List[Dict[str, str]],
-        session_id: str,
-        execution_type: int = 382,
+        session_id: Optional[str] = None,
     ) -> Generator[Optional[str], Any, None]:
         """Same as answer, but with phospho.wrap, which automatically logs the input
         and output of the function."""

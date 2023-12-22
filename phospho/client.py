@@ -144,7 +144,7 @@ class Client:
         )
         return Task(client=self, task_id=task_id, _content=response.json())
 
-    def create_test(self) -> Test:
+    def create_test(self, summary: Optional[dict] = None) -> Test:
         """
         Start a test
         """
@@ -153,6 +153,22 @@ class Client:
             "/tests/",
             payload={
                 "project_id": self._project_id(),
+                "summary": summary,
+            },
+        )
+        return Test(**response.json())
+
+    def update_test(
+        self, test_id: str, status: Literal["completed", "canceled"]
+    ) -> Test:
+        """
+        Update a test
+        """
+
+        response = self._post(
+            f"/tests/{test_id}",
+            payload={
+                "status": status,
             },
         )
         return Test(**response.json())
