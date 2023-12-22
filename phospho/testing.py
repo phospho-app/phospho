@@ -17,11 +17,10 @@ from phospho import extractor
 from random import sample
 
 logger = logging.getLogger(__name__)
-phospho_init = lambda **x: None
-phospho_log = lambda **x: None
 
 
 class TestInput(BaseModel, extra="allow"):
+    function_input: dict  # What we pass to the function
     input: str
     additional_input: Optional[dict] = None
     output: Optional[str] = None
@@ -29,7 +28,16 @@ class TestInput(BaseModel, extra="allow"):
 
     @classmethod
     def from_task(cls, task: Task) -> "TestInput":
-        return TestInput(**task.content_as_dict())
+        # Combine the input and additional_input
+        if task.content.additional_input is not None:
+            function_input = task.content.additional_input
+        else:
+            function_input = {}
+
+        if task.content.input is not None:
+            function_input.update({"input": task.content.input})
+
+        return TestInput(function_input=function_input, **task.content_as_dict())
 
 
 def adapt_task_to_agent_function(
@@ -96,6 +104,33 @@ def adapt_task_to_agent_function(
     return None
 
 
+def adapt_to_sample_size(list_to_sample, sample_size):
+    """
+    This function will adapt the list to sample to match the sample size.
+    """
+    if sample_size is None:
+        # None = all the tasks
+        sampled_list = list_to_sample
+    elif sample_size == 0:
+        # 0 = no tasks
+        sampled_list = []
+    elif len(list_to_sample) > sample_size:
+        # Downsample
+        sampled_list = sample(list_to_sample, sample_size)
+    elif len(list_to_sample) < sample_size:
+        # Upsample
+        # Duplicate the tasks
+        duplicated_tasks = list_to_sample * int(1 + sample_size / len(list_to_sample))
+        # Sample the remaining tasks
+        sampled_list = list_to_sample + sample(
+            duplicated_tasks,
+            sample_size % len(duplicated_tasks) - len(list_to_sample),
+        )
+    else:
+        sampled_list = list_to_sample
+    return sampled_list
+
+
 class BacktestLoader:
     def __init__(
         self,
@@ -123,31 +158,7 @@ class BacktestLoader:
                     {"test_input": adapted_task, "agent_function": function_to_evaluate}
                 )
 
-        if self.sample_size is None:
-            # None = all the tasks
-            sampled_tasks = tasks_linked_to_function
-        elif self.sample_size == 0:
-            # 0 = no tasks
-            sampled_tasks = []
-        elif len(tasks_linked_to_function) > self.sample_size:
-            # Downsample
-            sampled_tasks = sample(tasks_linked_to_function, self.sample_size)
-        elif len(tasks_linked_to_function) < self.sample_size:
-            # Upsample
-            # Duplicate the tasks
-            duplicated_tasks = tasks_linked_to_function * int(
-                1 + self.sample_size / len(tasks_linked_to_function)
-            )
-            # Sample the remaining tasks
-            sampled_tasks = tasks_linked_to_function + sample(
-                duplicated_tasks,
-                self.sample_size % len(duplicated_tasks)
-                - len(tasks_linked_to_function),
-            )
-        else:
-            sampled_tasks = tasks_linked_to_function
-
-        self.sampled_tasks = sampled_tasks
+        self.sampled_tasks = adapt_to_sample_size(tasks_linked_to_function)
 
     def __iter__(self):
         return iter(self.sampled_tasks)
@@ -159,7 +170,7 @@ class BacktestLoader:
         return len(self.sampled_tasks)
 
 
-class PandasLoader:
+class DatasetLoader:
     def __init__(self, path: str, function_to_evaluate: Callable[[Any], Any]):
         if path.endswith(".csv"):
             self.df = pd.read_csv(path)
@@ -197,7 +208,6 @@ class PhosphoTest:
         self,
         api_key: Optional[str] = None,
         project_id: Optional[str] = None,
-        executor_type: Literal["parallel", "sequential"] = "parallel",
     ):
         """
         This is used to backtest an agent with phospho.
@@ -217,15 +227,20 @@ class PhosphoTest:
         """
         # Execution parameter
 
-        self.executor_type = executor_type
         self.client = Client(api_key=api_key, project_id=project_id)
-        self.functions_to_evaluate: List[Callable[[Any], Any]] = []
+        self.functions_to_evaluate: Dict[str, Any] = {}
         # Results are temporary stored in memory
         self.evaluation_results: Dict[str, int] = defaultdict(int)
         self.comparisons: List[dict] = []
         self.test_id: Optional[str] = None
 
-    def test(self, fn: Callable[[Any], Any]) -> Callable[[Any], Any]:
+    def test(
+        self,
+        fn: Callable[[Any], Any],
+        source_loader: Literal["backtest", "dataset"] = "backtest",
+        source_loader_params: Optional[Dict[str, Any]] = None,
+        metrics: Optional[List[Literal["compare", "evaluate"]]] = None,
+    ) -> Callable[[Any], Any]:
         """
         Add this as a decorator on top of the evaluation function.
         """
@@ -233,13 +248,25 @@ class PhosphoTest:
         # TODO: Add task_name as a parameter
         # TODO: Add custom instructions for comparison and evaluation as a parameter
 
-        self.functions_to_evaluate.append(fn)
+        if metrics is None:
+            metrics = ["evaluate"]
+
+        if source_loader_params is None:
+            source_loader_params = {}
+
+        self.functions_to_evaluate[fn.__name__] = {
+            "function": fn,
+            "function_name": fn.__name__,
+            "source_loader": source_loader,
+            "source_loader_params": source_loader_params,
+            "metrics": metrics,
+        }
 
         return fn
 
     def get_output_from_agent(
         self,
-        additional_input: Any,
+        function_input: Dict[str, Any],
         agent_function: Callable[[Any], Any],
         execution_mode: str,
     ):
@@ -247,7 +274,7 @@ class PhosphoTest:
         This function will return the output of the agent given an input
         """
         print(
-            f"Calling {agent_function.__name__} with input {additional_input.__repr__()}"
+            f"Calling {agent_function.__name__} with input {function_input.__repr__()}"
         )
 
         # TODO : Make it so that that we use input or additional_input depending on the
@@ -255,7 +282,7 @@ class PhosphoTest:
 
         if execution_mode == "backtest":
             os.environ["PHOSPHO_EXECUTION_MODE"] = "backtest"
-        new_output = agent_function(**additional_input)
+        new_output = agent_function(**function_input)
 
         # Handle generators
         if isinstance(new_output, GeneratorType):
@@ -271,6 +298,7 @@ class PhosphoTest:
         """
         Run the evaluation pipeline on the task
         """
+        global phospho_log
 
         test_input: TestInput = task_to_evaluate["test_input"]
         agent_function = task_to_evaluate["agent_function"]
@@ -278,7 +306,7 @@ class PhosphoTest:
         # Get the output from the agent
         context_input = test_input.input
         new_output_str = self.get_output_from_agent(
-            additional_input=test_input.additional_input,
+            function_input=test_input.function_input,
             agent_function=agent_function,
             execution_mode="evaluate",
         )
@@ -306,7 +334,7 @@ class PhosphoTest:
         context_input = test_input.input
         old_output_str = test_input.output
         new_output_str = self.get_output_from_agent(
-            additional_input=test_input.additional_input,
+            function_input=test_input.function_input,
             agent_function=agent_function,
             execution_mode="compare",
         )
@@ -321,19 +349,11 @@ class PhosphoTest:
 
     def run(
         self,
-        source_loader: Literal["backtest", "pandas"] = "backtest",
-        source_loader_params: Optional[Dict[str, Any]] = None,
-        metrics: Optional[List[Literal["compare", "evaluate"]]] = None,
+        executor_type: Literal["parallel", "sequential"] = "parallel",
     ):
         """
         Backtesting: This function pull all the tasks logged to phospho and run the agent on them.
         """
-
-        if source_loader_params is None:
-            source_loader_params = {}
-        if metrics is None:
-            # Default metric is compare
-            metrics = ["compare"]
 
         # TODO : Propper linkage of the test_input and the agent functions
         if len(self.functions_to_evaluate) == 0:
@@ -349,55 +369,62 @@ class PhosphoTest:
         start_time = time.time()
 
         # TODO : Get the test_id
-        self.test = self.client.create_test()
+        self.test = self.client.create_test(summary=self.functions_to_evaluate)
         self.test_id = self.test.id
+        print(f"Starting test: {self.test_id}")
 
-        if source_loader == "backtest":
-            tasks_linked_to_function = BacktestLoader(
-                client=self.client,
-                function_to_evaluate=self.functions_to_evaluate[0],
-                **source_loader_params,
-            )
-        elif source_loader == "pandas":
-            tasks_linked_to_function = PandasLoader(
-                function_to_evaluate=self.functions_to_evaluate[0],
-                **source_loader_params,
-            )
-        else:
-            raise NotImplementedError(
-                f"Source loader {source_loader} is not implemented"
-            )
+        for function_name, function_to_eval in self.functions_to_evaluate.items():
+            print(f"Running tests for: {function_name}")
+            source_loader = function_to_eval["source_loader"]
+            source_loader_params = function_to_eval["source_loader_params"]
+            metrics = function_to_eval["metrics"]
 
-        for metric in metrics:
-            if metric == "evaluate":
-                from phospho import init as phospho_init
-                from phospho import log as phospho_log
-
-                # For evaluate, we'll need to init phospho and use .log
-                phospho_init(self.client.api_key, self.client.project_id)
-                evaluation_function = self.evaluate
-            elif metric == "compare":
-                evaluation_function = self.compare
+            if source_loader == "backtest":
+                tasks_linked_to_function = BacktestLoader(
+                    client=self.client,
+                    function_to_evaluate=self.functions_to_evaluate[0],
+                    **source_loader_params,
+                )
+            elif source_loader == "dataset":
+                tasks_linked_to_function = DatasetLoader(
+                    function_to_evaluate=self.functions_to_evaluate[0],
+                    **source_loader_params,
+                )
             else:
                 raise NotImplementedError(
-                    f"Metric {metric} is not implemented. Implemented metrics: 'compare', 'evaluate'"
+                    f"Source loader {source_loader} is not implemented"
                 )
 
-            # Evaluate the tasks in parallel
-            if self.executor_type == "parallel":
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    # Submit tasks to the executor
-                    # executor.map(self.evaluate_a_task, task_to_evaluate)
-                    executor.map(evaluation_function, tasks_linked_to_function)
-            elif self.executor_type == "sequential":
-                for task_function in tasks_linked_to_function:
-                    evaluation_function(
-                        task_function["test_input"], task_function["agent_function"]
+            for metric in metrics:
+                if metric == "evaluate":
+                    from phospho import init as phospho_init
+                    from phospho import log as phospho_log
+
+                    # For evaluate, we'll need to init phospho and use .log
+                    phospho_init(self.client.api_key, self.client.project_id)
+                    evaluation_function = self.evaluate
+                elif metric == "compare":
+                    evaluation_function = self.compare
+                else:
+                    raise NotImplementedError(
+                        f"Metric {metric} is not implemented. Implemented metrics: 'compare', 'evaluate'"
                     )
-            else:
-                raise NotImplementedError(
-                    f"Executor type {self.executor_type} is not implemented"
-                )
+
+                # Evaluate the tasks in parallel
+                if executor_type == "parallel":
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        # Submit tasks to the executor
+                        # executor.map(self.evaluate_a_task, task_to_evaluate)
+                        executor.map(evaluation_function, tasks_linked_to_function)
+                elif executor_type == "sequential":
+                    for task_function in tasks_linked_to_function:
+                        evaluation_function(
+                            task_function["test_input"], task_function["agent_function"]
+                        )
+                else:
+                    raise NotImplementedError(
+                        f"Executor type {self.executor_type} is not implemented"
+                    )
 
         # Stop timer
         end_time = time.time()
@@ -407,4 +434,6 @@ class PhosphoTest:
         print(f"Total number of tasks: {len(tasks_linked_to_function)}")
         print(f"Total time: {end_time - start_time} seconds")
         print(f"Test id: {self.test_id}")
-        print("Waiting for phospho to finish the evaluation...")
+        print("Waiting for evaluation to finish...")
+        # Mark the test as completed
+        self.client.update_test(test_id=self.test_id, status="completed")
