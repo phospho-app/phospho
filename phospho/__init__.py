@@ -435,10 +435,6 @@ def log(
     - log_event (Dict[str, object]):
         The content of what has been logged.
     """
-    PHOSPHO_EXECUTION_MODE = os.getenv("PHOSPHO_EXECUTION_MODE")
-    if PHOSPHO_EXECUTION_MODE == "backtest":
-        # In backtest mode, don't log anything
-        return None
 
     if stream:
         # Implement the streaming logic over the output
@@ -648,11 +644,6 @@ def _wrap(
                     output=output,
                     task_id=task_id,
                 )
-
-    PHOSPHO_EXECUTION_MODE = os.getenv("PHOSPHO_EXECUTION_MODE")
-    if PHOSPHO_EXECUTION_MODE == "backtest":
-        # In backtest mode, don't wrap the function
-        return __fn
 
     return wrapped_function
 

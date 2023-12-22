@@ -43,13 +43,24 @@ class Consumer(Thread):
             logger.debug(f"Sending {len(batch)} log events to {self.client.base_url}")
 
             try:
-                # If we are in backtest mode, we don't want to send logs
-                PHOSPHO_EXECUTION_MODE = os.getenv("PHOSPHO_EXECUTION_MODE")
-                if PHOSPHO_EXECUTION_MODE != "backtest":
+                PHOSPHO_TEST_ID = os.getenv("PHOSPHO_TEST_ID")
+                PHOSPHO_TEST_METRIC = os.getenv("PHOSPHO_TEST_METRIC")
+                if PHOSPHO_TEST_ID is None:
+                    # Normal behaviour : send logs to backend
                     self.client._post(
                         f"/log/{self.client._project_id()}",
                         {"batched_log_events": batch},
                     )
+                elif PHOSPHO_TEST_ID is not None:
+                    # Test mode: send logs if we are in the right metric
+                    if PHOSPHO_TEST_METRIC == "evaluate":
+                        # Add the test_id to the log events
+                        for event in batch:
+                            event["test_id"] = PHOSPHO_TEST_ID
+                        self.client._post(
+                            f"/log/{self.client._project_id()}",
+                            {"batched_log_events": batch},
+                        )
             except Exception as e:
                 logger.warning(f"Error sending log events: {e}")
 
