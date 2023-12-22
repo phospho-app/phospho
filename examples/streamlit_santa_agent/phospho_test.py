@@ -41,9 +41,11 @@ def test_santa(messages: List[Dict[str, str]]):
     },
     metrics=["evaluate", "compare"],
 )
-def test_santa_dataset(input: str):
+def test_santa_dataset(
+    input: str,  # The parameters names must match the column name in the dataset
+):
     santa_claus_agent = SantaClausAgent()
     return santa_claus_agent.answer(messages=[{"role": "user", "content": input}])
 
 
-phospho_test.run(executor_type="sequential")
+phospho_test.run(executor_type="parallel")
