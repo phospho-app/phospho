@@ -14,6 +14,7 @@ import phospho
 
 # This is the agent to test
 from backend import SantaClausAgent
+from typing import Dict, List
 
 phospho.config.BASE_URL = "http://localhost:8000/v0"
 phospho_test = phospho.PhosphoTest()
@@ -27,9 +28,9 @@ phospho_test = phospho.PhosphoTest()
         "compare",  # Compare the old and new outputs
     ],
 )
-def test_santa(**inputs):
+def test_santa(messages: List[Dict[str, str]]):
     santa_claus_agent = SantaClausAgent()
-    return santa_claus_agent.answer(**inputs)
+    return santa_claus_agent.answer(messages)
 
 
 @phospho_test.test(
@@ -45,4 +46,4 @@ def test_santa_dataset(input: str):
     return santa_claus_agent.answer(messages=[{"role": "user", "content": input}])
 
 
-phospho_test.run(executor_type="parallel")
+phospho_test.run(executor_type="sequential")

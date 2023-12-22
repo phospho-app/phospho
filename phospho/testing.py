@@ -40,6 +40,65 @@ class TestInput(BaseModel, extra="allow"):
         return TestInput(function_input=function_input, **task.content_as_dict())
 
 
+def adapt_dict_to_agent_function(
+    dict_to_adapt: dict, agent_function: Callable[[Any], Any]
+) -> Optional[dict]:
+    """This function adapts a dict to match the signature of an agent function.
+
+    If the dict is compatible with the agent function, this returns the dict.
+
+    If the dict is not compatible with the agent function, this returns a new dict that
+    is compatible with the agent function, but that has less keys.
+
+    If nothing can be done, this returns None.
+    """
+
+    # The compatibility is based on the parameters names in the agent function signature
+    agent_function_signature: inspect.Signature = inspect.signature(agent_function)
+    dict_keys = set(dict_to_adapt.keys())
+    agent_function_inputs = set(agent_function_signature.parameters.keys())
+
+    if dict_keys == agent_function_inputs:
+        # The dict is compatible with the agent function
+        return dict_to_adapt
+    elif dict_keys <= agent_function_inputs:
+        # The agent function takes more inputs than the dict provides
+        # Check if those are optional in the agent function
+        for key in agent_function_inputs - dict_keys:
+            if (
+                agent_function_signature.parameters[key].default
+                is inspect.Parameter.empty
+            ):
+                # The agent function takes a non optional input that the dict does not provide
+                # We can't adapt the dict to the agent function
+                # Log what key is missing from the agent_function
+                logger.warning(
+                    f"Dict {dict_to_adapt} is not compatible with agent function {agent_function.__name__}: {key} is missing from the dict"
+                )
+                return None
+        # All of the additional inputs are optional in the agent function
+        # So the dict is compatible with the agent function
+        return dict_to_adapt
+    elif dict_keys >= agent_function_inputs:
+        # We filter the dict to only keep the keys that are in the agent function signature
+        new_dict = {
+            key: dict_to_adapt[key] for key in agent_function_inputs if key in dict_keys
+        }
+
+        # Log info that we filtered dict keys
+        logger.info(
+            f"Reduced the number of keys of dict {dict_to_adapt} to match the agent function {agent_function.__name__}: removed {dict_keys - agent_function_inputs}"
+        )
+        return new_dict
+    else:
+        # Check if the agent_function has an argument for any number of keyword arguments
+        for param in agent_function_signature.parameters.values():
+            if param.kind == inspect.Parameter.VAR_KEYWORD:
+                return dict_to_adapt
+
+    return None
+
+
 def adapt_task_to_agent_function(
     task: Task, agent_function: Callable[[Any], Any]
 ) -> Optional[TestInput]:
@@ -82,10 +141,11 @@ def adapt_task_to_agent_function(
     elif task_inputs >= agent_function_inputs:
         # We filter the task to only keep the keys that are in the agent function signature
         new_task = TestInput(
+            function_input={
+                key: task.content.additional_input[key] for key in agent_function_inputs
+            },
             task_id=task.id,
-            input={key: task.content.input[key] for key in agent_function_inputs},
-            additional_input=task.content.additional_input,
-            output=task.content.output,
+            **task.content_as_dict(),
         )
 
         # Log info that we filtered task inputs
@@ -157,12 +217,14 @@ class BacktestLoader:
                     {"test_input": adapted_task, "agent_function": agent_function}
                 )
 
-        self.sampled_tasks = adapt_to_sample_size(
-            list_to_sample=tasks_linked_to_function, sample_size=sample_size
+        self.sampled_tasks = iter(
+            adapt_to_sample_size(
+                list_to_sample=tasks_linked_to_function, sample_size=sample_size
+            )
         )
 
     def __iter__(self):
-        return iter(self.sampled_tasks)
+        return self
 
     def __next__(self):
         return next(self.sampled_tasks)
@@ -178,6 +240,35 @@ class DatasetLoader:
         path: str,
         test_n_times: Optional[int] = None,
     ):
+        """
+        Loads a dataset from a file and returns an iterator over the dataset.
+
+        The dataset can be a .csv, .json or .xlsx file.
+
+        The columns of the dataset must match the signature of the agent function to evaluate. Extra columns will be ignored.
+
+        Moreover, if metrics is "compare", the dataset must have a column "output" that will be used as the old output.
+
+        Example:
+
+            ```
+            phospho_test = phospho.PhosphoTest()
+
+            @phospho_test.test(
+                source_loader="dataset",
+                source_loader_params={
+                    "path": "golden_dataset.xlsx",
+                },
+                metrics=["evaluate"],
+            )
+            def test_santa_dataset(input: str):
+                santa_claus_agent = SantaClausAgent()
+                return santa_claus_agent.answer(messages=[{"role": "user", "content": input}])
+            ```
+
+        In this example, the dataset must have a column "input" that will be used as the input of the agent function.
+
+        """
         if path.endswith(".csv"):
             self.df = pd.read_csv(path)
         elif path.endswith(".json"):
@@ -205,8 +296,11 @@ class DatasetLoader:
     def __next__(self):
         next_item = next(self.dataset)
         # TODO : Verify it has the right columns for the function_to_evaluate
+        function_input = adapt_dict_to_agent_function(
+            next_item, self.function_to_evaluate
+        )
         test_input = TestInput(
-            function_input=next_item,
+            function_input=function_input,
             input=next_item.get("input", None),
             output=next_item.get("output", None),
         )
@@ -220,6 +314,10 @@ class DatasetLoader:
 
 
 class PhosphoTest:
+    client: Client
+    functions_to_evaluate: Dict[str, Any]
+    test_id: Optional[str]
+
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -241,13 +339,8 @@ class PhosphoTest:
         phospho_test.run()
         ```
         """
-        # Execution parameter
-
         self.client = Client(api_key=api_key, project_id=project_id)
         self.functions_to_evaluate: Dict[str, Any] = {}
-        # Results are temporary stored in memory
-        self.evaluation_results: Dict[str, int] = defaultdict(int)
-        self.comparisons: List[dict] = []
         self.test_id: Optional[str] = None
 
     def test(
@@ -317,9 +410,12 @@ class PhosphoTest:
             full_resp = ""
             for response in new_output:
                 full_resp += response or ""
-                new_output_str = extractor.detect_str_from_output(full_resp)
-            else:
-                new_output_str = extractor.detect_str_from_output(new_output)
+            new_output_str = extractor.detect_str_from_output(full_resp)
+        else:
+            new_output_str = extractor.detect_str_from_output(new_output)
+
+        print(f"Output {agent_function.__name__}: {new_output_str}")
+
         return new_output_str
 
     def evaluate(self, task_to_evaluate: Dict[str, Any]):
@@ -433,11 +529,13 @@ class PhosphoTest:
                 elif metric == "compare":
                     evaluation_function = self.compare
                 else:
+                    # TODO : Add more metrics
                     raise NotImplementedError(
                         f"Metric {metric} is not implemented. Implemented metrics: 'compare', 'evaluate'"
                     )
 
                 # Evaluate the tasks in parallel
+                # TODO : Add more executor types to handle different types of parallelism
                 if executor_type == "parallel":
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         # Submit tasks to the executor
@@ -445,9 +543,20 @@ class PhosphoTest:
                         executor.map(evaluation_function, tasks_linked_to_function)
                 elif executor_type == "sequential":
                     for task_function in tasks_linked_to_function:
-                        evaluation_function(
-                            task_function["test_input"], task_function["agent_function"]
+                        evaluation_function(task_function)
+                elif executor_type == "async":
+                    # TODO : Do more tests with async executor and async agent_function
+                    import asyncio
+
+                    loop = asyncio.get_event_loop()
+                    loop.run_until_complete(
+                        asyncio.gather(
+                            *[
+                                evaluation_function(task_function)
+                                for task_function in tasks_linked_to_function
+                            ]
                         )
+                    )
                 else:
                     raise NotImplementedError(
                         f"Executor type {self.executor_type} is not implemented"
