@@ -20,9 +20,9 @@ phospho_test = phospho.PhosphoTest()
 
 
 @phospho_test.test(
-    source_loader="backtest",
+    source_loader="backtest",  # Load data from logged phospho data
     source_loader_params={"sample_size": 5},
-    metrics=["compare"],
+    metrics=["compare"],  # Compare the old and new outputs
 )
 def test_santa(**inputs):
     santa_claus_agent = SantaClausAgent()
@@ -31,10 +31,13 @@ def test_santa(**inputs):
 
 @phospho_test.test(
     source_loader="dataset",
-    source_loader_params={"path": "golden_dataset.xlsx"},
-    metrics=["evaluate"],
+    source_loader_params={
+        "path": "golden_dataset.xlsx",  # Path to a local file
+        "test_n_times": 2,  # Number of times to test the agent on the dataset
+    },
+    metrics=["evaluate"],  # Evaluate number of successes and failures
 )
-def test_santa_dataset(input):
+def test_santa_dataset(input: str):
     santa_claus_agent = SantaClausAgent()
     return santa_claus_agent.answer(messages=[{"role": "user", "content": input}])
 
