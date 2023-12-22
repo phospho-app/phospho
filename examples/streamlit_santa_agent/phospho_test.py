@@ -22,7 +22,7 @@ phospho_test = phospho.PhosphoTest()
 
 @phospho_test.test(
     source_loader="backtest",  # Load data from logged phospho data
-    source_loader_params={"sample_size": 5},
+    source_loader_params={"sample_size": 10},
     metrics=[
         "evaluate",  # Evaluate number of successes and failures
         "compare",  # Compare the old and new outputs
@@ -39,7 +39,10 @@ def test_santa(messages: List[Dict[str, str]]):
         "path": "golden_dataset.xlsx",  # Path to a local file
         "test_n_times": 2,  # Number of times to test the agent on the dataset
     },
-    metrics=["evaluate", "compare"],
+    metrics=[
+        "evaluate",
+        "compare",
+    ],
 )
 def test_santa_dataset(
     input: str,  # The parameters names must match the column name in the dataset
@@ -48,4 +51,4 @@ def test_santa_dataset(
     return santa_claus_agent.answer(messages=[{"role": "user", "content": input}])
 
 
-phospho_test.run(executor_type="parallel")
+phospho_test.run(executor_type="sequential")
