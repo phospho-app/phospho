@@ -7,7 +7,6 @@ import pandas as pd
 
 from types import GeneratorType
 from typing import List, Dict, Optional, Callable, Any, Literal
-from collections import defaultdict
 from pydantic import BaseModel
 
 from phospho.client import Client
@@ -15,6 +14,7 @@ from phospho.tasks import Task
 from phospho import extractor
 
 from random import sample
+from pprint import pprint
 
 logger = logging.getLogger(__name__)
 
@@ -569,4 +569,4 @@ class PhosphoTest:
         # Mark the test as completed and get results
         test_result = self.client.update_test(test_id=self.test_id, status="completed")
         print("Test result:")
-        print(test_result)
+        pprint(test_result.model_dump())
