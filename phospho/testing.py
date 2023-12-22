@@ -420,7 +420,7 @@ class PhosphoTest:
         """
         Run the evaluation pipeline on the task
         """
-        from phospho import log as phospho_log
+        import phospho
 
         test_input: TestInput = task_to_evaluate["test_input"]
         agent_function = task_to_evaluate["agent_function"]
@@ -435,7 +435,8 @@ class PhosphoTest:
 
         # Ask phospho: what's the best answer to the context_input ?
         print("Evaluating with phospho")
-        phospho_log(
+        os.environ["PHOSPHO_EXECUTION_MODE"] = ""
+        phospho.log(
             input=context_input,
             output=new_output_str,
             test_id=self.test_id,
@@ -450,7 +451,7 @@ class PhosphoTest:
 
         test_input: TestInput = task_to_compare["test_input"]
         agent_function = task_to_compare["agent_function"]
-        print("Comparing task id: ", test_input.id)
+        print("Comparing task id: ", test_input)
 
         # Get the output from the agent
         context_input = test_input.input
@@ -464,9 +465,10 @@ class PhosphoTest:
         # Ask phospho: what's the best answer to the context_input ?
         print(f"Comparing with phospho (task: {test_input.id})")
         self.client.compare(
-            context_input,
-            old_output_str,
-            new_output_str,
+            context_input=context_input,
+            old_output=old_output_str,
+            new_output=new_output_str,
+            test_id=self.test_id,
         )
 
     def run(
@@ -518,10 +520,10 @@ class PhosphoTest:
 
             for metric in metrics:
                 if metric == "evaluate":
-                    from phospho import init as phospho_init
+                    import phospho
 
                     # For evaluate, we'll need to init phospho and use .log
-                    phospho_init(self.client.api_key, self.client.project_id)
+                    phospho.init(self.client.api_key, self.client.project_id)
                     evaluation_function = self.evaluate
                 elif metric == "compare":
                     evaluation_function = self.compare
@@ -558,6 +560,9 @@ class PhosphoTest:
                     raise NotImplementedError(
                         f"Executor type {self.executor_type} is not implemented"
                     )
+
+                if metric == "evaluate":
+                    phospho.consumer.send_batch()
 
         # Stop timer
         end_time = time.time()
