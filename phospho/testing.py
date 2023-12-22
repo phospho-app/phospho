@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class TestInput(BaseModel, extra="allow"):
     function_input: dict  # What we pass to the function
-    input: str
+    input: Optional[str] = None
     additional_input: Optional[dict] = None
     output: Optional[str] = None
     task_id: Optional[str] = None
@@ -108,6 +108,9 @@ def adapt_to_sample_size(list_to_sample, sample_size):
     """
     This function will adapt the list to sample to match the sample size.
     """
+    if sample_size < 0:
+        raise ValueError("sample_size must be positive")
+
     if sample_size is None:
         # None = all the tasks
         sampled_list = list_to_sample
@@ -135,13 +138,9 @@ class BacktestLoader:
     def __init__(
         self,
         client: Client,
-        function_to_evaluate: Callable[[Any], Any],
+        agent_function: Callable[[Any], Any],
         sample_size: Optional[int] = 10,
     ):
-        self.sample_size = sample_size
-        if self.sample_size < 0:
-            raise ValueError("sample_size must be positive")
-
         # Pull the logs from phospho
         # TODO : Add time range filter
         # TODO : Add pull from dataset
@@ -152,13 +151,15 @@ class BacktestLoader:
         # Filter the tasks to only keep the ones that are compatible with the agent function
         tasks_linked_to_function = []
         for task in tasks:
-            adapted_task = adapt_task_to_agent_function(task, function_to_evaluate)
+            adapted_task = adapt_task_to_agent_function(task, agent_function)
             if adapted_task is not None:
                 tasks_linked_to_function.append(
-                    {"test_input": adapted_task, "agent_function": function_to_evaluate}
+                    {"test_input": adapted_task, "agent_function": agent_function}
                 )
 
-        self.sampled_tasks = adapt_to_sample_size(tasks_linked_to_function)
+        self.sampled_tasks = adapt_to_sample_size(
+            list_to_sample=tasks_linked_to_function, sample_size=sample_size
+        )
 
     def __iter__(self):
         return iter(self.sampled_tasks)
@@ -173,7 +174,7 @@ class BacktestLoader:
 class DatasetLoader:
     def __init__(
         self,
-        function_to_evaluate: Callable[[Any], Any],
+        agent_function: Callable[[Any], Any],
         path: str,
         test_n_times: Optional[int] = None,
     ):
@@ -184,6 +185,7 @@ class DatasetLoader:
         elif path.endswith(".xlsx"):
             self.df = pd.read_excel(path)
         else:
+            # TODO : Add more file formats
             raise NotImplementedError(
                 f"File format {path.split('.')[-1]} is not supported. Supported formats: .csv, .json, .xlsx"
             )
@@ -195,7 +197,7 @@ class DatasetLoader:
         # Create an iterator over the dataset
         self.dataset = iter(self.df.to_dict(orient="records"))
 
-        self.function_to_evaluate = function_to_evaluate
+        self.function_to_evaluate = agent_function
 
     def __iter__(self):
         return self
@@ -203,7 +205,11 @@ class DatasetLoader:
     def __next__(self):
         next_item = next(self.dataset)
         # TODO : Verify it has the right columns for the function_to_evaluate
-        test_input = TestInput(**next_item)
+        test_input = TestInput(
+            function_input=next_item,
+            input=next_item.get("input", None),
+            output=next_item.get("output", None),
+        )
         return {
             "test_input": test_input,
             "agent_function": self.function_to_evaluate,
@@ -246,7 +252,7 @@ class PhosphoTest:
 
     def test(
         self,
-        fn: Callable[[Any], Any],
+        fn: Optional[Callable[[Any], Any]] = None,
         source_loader: Literal["backtest", "dataset"] = "backtest",
         source_loader_params: Optional[Dict[str, Any]] = None,
         metrics: Optional[List[Literal["compare", "evaluate"]]] = None,
@@ -257,22 +263,34 @@ class PhosphoTest:
 
         # TODO: Add task_name as a parameter
         # TODO: Add custom instructions for comparison and evaluation as a parameter
-
         if metrics is None:
             metrics = ["evaluate"]
 
         if source_loader_params is None:
             source_loader_params = {}
 
-        self.functions_to_evaluate[fn.__name__] = {
-            "function": fn,
-            "function_name": fn.__name__,
-            "source_loader": source_loader,
-            "source_loader_params": source_loader_params,
-            "metrics": metrics,
-        }
+        def meta_wrapper(
+            fn: Optional[Callable[[Any], Any]] = None,
+            source_loader: Literal["backtest", "dataset"] = "backtest",
+            source_loader_params: Optional[Dict[str, Any]] = None,
+            metrics: Optional[List[Literal["compare", "evaluate"]]] = None,
+        ):
+            self.functions_to_evaluate[fn.__name__] = {
+                "function": fn,
+                "function_name": fn.__name__,
+                "source_loader": source_loader,
+                "source_loader_params": source_loader_params,
+                "metrics": metrics,
+            }
 
-        return fn
+            return fn
+
+        if fn is None:
+            return lambda fn: meta_wrapper(
+                fn, source_loader, source_loader_params, metrics
+            )
+        else:
+            return meta_wrapper(fn, source_loader, source_loader_params, metrics)
 
     def get_output_from_agent(
         self,
@@ -368,7 +386,16 @@ class PhosphoTest:
         # Start timer
         start_time = time.time()
 
-        self.test = self.client.create_test(summary=self.functions_to_evaluate)
+        self.test = self.client.create_test(
+            summary={
+                function_name: {
+                    "source_loader": function_to_eval["source_loader"],
+                    "source_loader_params": function_to_eval["source_loader_params"],
+                    "metrics": function_to_eval["metrics"],
+                }
+                for function_name, function_to_eval in self.functions_to_evaluate.items()
+            }
+        )
         self.test_id = self.test.id
         print(f"Starting test: {self.test_id}")
 
@@ -377,16 +404,17 @@ class PhosphoTest:
             source_loader = function_to_eval["source_loader"]
             source_loader_params = function_to_eval["source_loader_params"]
             metrics = function_to_eval["metrics"]
+            agent_function = function_to_eval["function"]
 
             if source_loader == "backtest":
                 tasks_linked_to_function = BacktestLoader(
                     client=self.client,
-                    function_to_evaluate=self.functions_to_evaluate[0],
+                    agent_function=agent_function,
                     **source_loader_params,
                 )
             elif source_loader == "dataset":
                 tasks_linked_to_function = DatasetLoader(
-                    function_to_evaluate=self.functions_to_evaluate[0],
+                    agent_function=agent_function,
                     **source_loader_params,
                 )
             else:
