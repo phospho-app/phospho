@@ -171,7 +171,12 @@ class BacktestLoader:
 
 
 class DatasetLoader:
-    def __init__(self, path: str, function_to_evaluate: Callable[[Any], Any]):
+    def __init__(
+        self,
+        function_to_evaluate: Callable[[Any], Any],
+        path: str,
+        test_n_times: Optional[int] = None,
+    ):
         if path.endswith(".csv"):
             self.df = pd.read_csv(path)
         elif path.endswith(".json"):
@@ -182,6 +187,11 @@ class DatasetLoader:
             raise NotImplementedError(
                 f"File format {path.split('.')[-1]} is not supported. Supported formats: .csv, .json, .xlsx"
             )
+
+        # If test_n_times is not None, we'll repeat the dataset n times
+        if test_n_times is not None:
+            self.df = pd.concat([self.df] * test_n_times)
+
         # Create an iterator over the dataset
         self.dataset = iter(self.df.to_dict(orient="records"))
 
@@ -358,7 +368,6 @@ class PhosphoTest:
         # Start timer
         start_time = time.time()
 
-        # TODO : Get the test_id
         self.test = self.client.create_test(summary=self.functions_to_evaluate)
         self.test_id = self.test.id
         print(f"Starting test: {self.test_id}")
