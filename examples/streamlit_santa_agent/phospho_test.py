@@ -14,21 +14,38 @@ import phospho
 
 # This is the agent to test
 from backend import SantaClausAgent
+from typing import Dict, List
 
 phospho.config.BASE_URL = "http://localhost:8000/v0"
-phospho_test = phospho.PhosphoTest(executor_type="parallel")
+phospho_test = phospho.PhosphoTest()
 
 
-@phospho_test.test
-def test_santa(**inputs):
-    santa_claus_agent = SantaClausAgent()
-    return santa_claus_agent.answer(**inputs)
-
-
-phospho_test.run(
-    # source_loader="pandas",
-    # source_loader_params={"path": "golden_dataset.xlsx"},
-    source_loader="backtest",
+@phospho_test.test(
+    source_loader="backtest",  # Load data from logged phospho data
     source_loader_params={"sample_size": 5},
-    metrics=["evaluate"],
+    metrics=[
+        "evaluate",  # Evaluate number of successes and failures
+        "compare",  # Compare the old and new outputs
+    ],
 )
+def test_santa(messages: List[Dict[str, str]]):
+    santa_claus_agent = SantaClausAgent()
+    return santa_claus_agent.answer(messages)
+
+
+@phospho_test.test(
+    source_loader="dataset",
+    source_loader_params={
+        "path": "golden_dataset.xlsx",  # Path to a local file
+        "test_n_times": 2,  # Number of times to test the agent on the dataset
+    },
+    metrics=["evaluate", "compare"],
+)
+def test_santa_dataset(
+    input: str,  # The parameters names must match the column name in the dataset
+):
+    santa_claus_agent = SantaClausAgent()
+    return santa_claus_agent.answer(messages=[{"role": "user", "content": input}])
+
+
+phospho_test.run(executor_type="parallel")
