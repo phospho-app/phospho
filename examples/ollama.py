@@ -54,8 +54,6 @@ def main():
         print()
         context = generate(user_input, context)
         print()
-        print(phospho.log_queue.events)
-        print()
 
 
 if __name__ == "__main__":
