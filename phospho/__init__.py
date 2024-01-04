@@ -435,6 +435,8 @@ def log(
         The content of what has been logged.
     """
 
+    # TODO : Improve so that List[pydantic.BaseModel] are also logged
+
     if stream:
         # Implement the streaming logic over the output
         # Note: The output must be mutable. Generators are not mutable

@@ -35,36 +35,16 @@ class PhosphoLangchainCallbackHandler(BaseCallbackHandler):
         self.intermediate_inputs = []
         self.intermediate_outputs = []
 
-    def on_llm_start(
-        self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
-    ) -> Any:
-        """Run when LLM starts running."""
-        print("START llm")
-
-    def on_chat_model_start(
-        self,
-        serialized: Dict[str, Any],
-        messages: List[List[BaseMessage]],
-        **kwargs: Any,
-    ) -> Any:
-        """Run when Chat Model starts running."""
-
-    def on_llm_new_token(self, token: str, **kwargs: Any) -> Any:
-        """Run on new LLM token. Only available when streaming is enabled."""
-
-    def on_llm_end(self, response: LLMResult, **kwargs: Any) -> Any:
-        """Run when LLM ends running."""
-
-    def on_llm_error(
-        self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
-    ) -> Any:
-        """Run when LLM errors."""
-
     def on_chain_start(
         self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
     ) -> Any:
         """Run when chain starts running."""
-        inputs_to_log = convert_to_jsonable_dict(inputs)
+
+        # TODO : Improve so that List[Documents] are also logged
+        if isinstance(inputs, str):
+            inputs_to_log = inputs
+        else:
+            inputs_to_log = convert_to_jsonable_dict(inputs)
 
         parent_run_id = kwargs.get("parent_run_id", False)
         if parent_run_id is None:
@@ -76,6 +56,7 @@ class PhosphoLangchainCallbackHandler(BaseCallbackHandler):
     def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> Any:
         """Run when chain ends running."""
 
+        # TODO : Improve so that List[Documents] are also logged
         if isinstance(outputs, str):
             output_to_log = outputs
         else:
@@ -101,28 +82,35 @@ class PhosphoLangchainCallbackHandler(BaseCallbackHandler):
         self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
     ) -> Any:
         """Run when chain errors."""
+        # Log the error
+        output_to_log = str(error)
+        self.phospho.log(
+            input=self.main_input,
+            output=output_to_log,
+            session_id=self.session_id,
+            raw_input={"intermediate_inputs": self.intermediate_inputs},
+            raw_output={"intermediate_outputs": self.intermediate_outputs},
+            **kwargs,
+        )
 
     def on_tool_start(
         self, serialized: Dict[str, Any], input_str: str, **kwargs: Any
     ) -> Any:
         """Run when tool starts running."""
+        # Add to intermediate inputs
+        self.intermediate_inputs.append(input_str)
 
     def on_tool_end(self, output: str, **kwargs: Any) -> Any:
         """Run when tool ends running."""
+        # Add to intermediate outputs
+        self.intermediate_outputs.append(output)
 
     def on_tool_error(
         self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
     ) -> Any:
         """Run when tool errors."""
-
-    def on_text(self, text: str, **kwargs: Any) -> Any:
-        """Run on arbitrary text."""
-
-    def on_agent_action(self, action: AgentAction, **kwargs: Any) -> Any:
-        """Run on agent action."""
-
-    def on_agent_finish(self, finish: AgentFinish, **kwargs: Any) -> Any:
-        """Run on agent end."""
+        # Add to intermediate outputs as error
+        self.intermediate_outputs.append(str(error))
 
 
 class PhosphoLangchaiAsyncCallbackHandler(AsyncCallbackHandler):
