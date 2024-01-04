@@ -1,4 +1,3 @@
 langchain
 openai
-docarray
-tiktoken
+faiss-cpu
