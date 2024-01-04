@@ -128,4 +128,6 @@ class PhosphoLangchainCallbackHandler(BaseCallbackHandler):
 class PhosphoLangchaiAsyncCallbackHandler(AsyncCallbackHandler):
     """Phospho async callback handler for Langchain."""
 
-    pass
+    def __init__(self, **kwargs: Any) -> None:
+        # TODO
+        raise NotImplementedError()
