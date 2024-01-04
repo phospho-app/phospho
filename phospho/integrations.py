@@ -1,4 +1,5 @@
 from typing import Dict, Any, List, Union, Optional
+from phospho.utils import convert_to_jsonable_dict
 
 try:
     from langchain_core.messages import BaseMessage
@@ -27,13 +28,18 @@ class PhosphoLangchainCallbackHandler(BaseCallbackHandler):
 
         self.phospho = phospho
         self.phospho.init(api_key=api_key, project_id=project_id, tick=tick)
-        self.last_inputs = None
-        self.last_outputs = None
+
+        # Content to be logged
+        self.main_input = None
+        self.main_output = None
+        self.intermediate_inputs = []
+        self.intermediate_outputs = []
 
     def on_llm_start(
         self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
     ) -> Any:
         """Run when LLM starts running."""
+        print("START llm")
 
     def on_chat_model_start(
         self,
@@ -58,17 +64,38 @@ class PhosphoLangchainCallbackHandler(BaseCallbackHandler):
         self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
     ) -> Any:
         """Run when chain starts running."""
-        self.last_inputs = inputs
+        inputs_to_log = convert_to_jsonable_dict(inputs)
+
+        parent_run_id = kwargs.get("parent_run_id", False)
+        if parent_run_id is None:
+            # Start of the main chain
+            self.main_input = inputs_to_log
+        else:
+            self.intermediate_inputs.append(inputs_to_log)
 
     def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> Any:
         """Run when chain ends running."""
-        self.last_outputs = outputs
 
-        self.phospho.log(
-            inputs=self.last_inputs,
-            outputs=self.last_outputs,
-            **kwargs,
-        )
+        if isinstance(outputs, str):
+            output_to_log = outputs
+        else:
+            output_to_log = convert_to_jsonable_dict(outputs)
+
+        parent_run_id = kwargs.get("parent_run_id", False)
+        if parent_run_id is None:
+            # End of the main chain
+            self.main_output = output_to_log
+
+            self.phospho.log(
+                input=self.main_input,
+                output=output_to_log,
+                session_id=self.session_id,
+                raw_input={"intermediate_inputs": self.intermediate_inputs},
+                raw_output={"intermediate_outputs": self.intermediate_outputs},
+                **kwargs,
+            )
+        else:
+            self.intermediate_outputs.append(output_to_log)
 
     def on_chain_error(
         self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
