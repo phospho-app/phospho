@@ -1,4 +1,3 @@
-import os
 from .agent import Agent
 from .message import Message
 from .client import Client
@@ -15,7 +14,7 @@ from .utils import (
 )
 from .extractor import get_input_output, RawDataType
 from ._version import __version__
-from . import config
+from . import config, integrations
 from .testing import PhosphoTest
 
 __all__ = [
