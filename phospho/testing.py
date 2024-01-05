@@ -562,7 +562,7 @@ class PhosphoTest:
 
         # Display a summary of the results
         print("Finished running the tests")
-        print(f"Total number of tasks: {len(tasks_linked_to_function)}")
+        print(f"Total number of tasks: {len(list(tasks_linked_to_function))}")
         print(f"Total time: {end_time - start_time} seconds")
         print(f"Test id: {self.test_id}")
         print("Waiting for evaluation to finish...")
