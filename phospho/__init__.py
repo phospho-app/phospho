@@ -1,4 +1,3 @@
-import os
 from .agent import Agent
 from .message import Message
 from .client import Client
@@ -8,14 +7,15 @@ from .tasks import Task
 from .utils import (
     generate_timestamp,
     generate_uuid,
-    convert_to_jsonable_dict,
+    filter_nonjsonable_keys,
     is_jsonable,
     MutableAsyncGenerator,
     MutableGenerator,
+    convert_content_to_loggable_content,
 )
 from .extractor import get_input_output, RawDataType
 from ._version import __version__
-from . import config
+from . import config, integrations
 from .testing import PhosphoTest
 
 __all__ = [
@@ -25,7 +25,9 @@ __all__ = [
     "Event",
     "generate_timestamp",
     "generate_uuid",
-    "convert_to_jsonable_dict",
+    "filter_nonjsonable_keys",
+    "is_jsonable",
+    "__version__",
     "get_input_output",
     "RawDataType",
     "MutableAsyncGenerator",
@@ -40,6 +42,8 @@ __all__ = [
     "wrap",
     "extractor",
     "PhosphoTest",
+    "config",
+    "integrations",
 ]
 
 import pydantic
@@ -156,6 +160,12 @@ def _log_single_event(
     global latest_task_id
     global latest_session_id
 
+    input = convert_content_to_loggable_content(input)
+    output = convert_content_to_loggable_content(output)
+    raw_input = convert_content_to_loggable_content(raw_input)
+    raw_output = convert_content_to_loggable_content(raw_output)
+    kwargs = convert_content_to_loggable_content(kwargs)
+
     assert (
         (log_queue is not None) and (client is not None)
     ), "phospho.log() was called but the global variable log_queue was not found. Make sure that phospho.init() was called."
@@ -195,7 +205,7 @@ def _log_single_event(
 
     # Every other kwargs will be directly stored in the logs, if it's json serializable
     if kwargs:
-        kwargs_to_log = convert_to_jsonable_dict(kwargs)
+        kwargs_to_log = filter_nonjsonable_keys(kwargs)
     else:
         kwargs_to_log = {}
 
@@ -487,13 +497,13 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
             )
     else:
         # If stream=False, push directly the log to log_queue
-        # TODO : Make type validation cleaner
-        assert (
-            (output is None)
-            or isinstance(output, str)
-            or isinstance(output, pydantic.BaseModel)
-            or is_jsonable(output)
-        ), f"If stream=False, you can't log output type {type(output)}. If you want to log a stream, pass stream=True to phospho.log"
+
+        assert not isinstance(output, AsyncIterable) or not isinstance(
+            output, Iterable
+        ), (
+            "Phospho can't log output type {type(output)} with stream=False. To log a stream, pass stream=True."
+            + " To log a complex object, pass a pydantic.BaseModel or a json serializable object."
+        )
 
     log = _log_single_event(
         input=input,
