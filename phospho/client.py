@@ -150,7 +150,7 @@ class Client:
         """
 
         response = self._post(
-            "/tests/",
+            "/tests",
             payload={
                 "project_id": self._project_id(),
                 "summary": summary,
