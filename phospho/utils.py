@@ -63,6 +63,9 @@ def convert_content_to_loggable_content(content: Any) -> Union[Dict[str, object]
         return content.model_dump()
     elif isinstance(content, pydantic.v1.BaseModel):
         return content.dict()
+    elif isinstance(content, bytes):
+        # Probably a byte representation of json
+        return json.loads(content.decode())
     else:
         # Fallback to str
         logger.debug(

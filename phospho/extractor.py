@@ -128,8 +128,21 @@ def detect_str_from_output(output: RawDataType) -> str:
                         # None content = end of generation stream
                         return ""
 
-    # Ollama outputs
     if isinstance(output, dict):
+        # OpenAI outputs
+        if "choices" in output.keys():
+            choices = output["choices"]
+            if isinstance(choices, list) and len(choices) > 0:
+                # output = ChatCompletionMessage.choices[0].message.content
+                message = choices[0].get("message", None)
+                content = message.get("content", None)
+                if content is not None:
+                    return str(content)
+            else:
+                # None content = end of generation stream
+                return ""
+
+        # Ollama outputs
         if "response" in output.keys():
             return output["response"]
 
