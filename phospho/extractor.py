@@ -4,7 +4,7 @@ import json
 
 from typing import Union, Dict, Any, Tuple, Optional, Callable
 
-from .utils import convert_to_jsonable_dict
+from .utils import filter_nonjsonable_keys
 
 RawDataType = Union[Dict[str, Any], pydantic.BaseModel]
 
@@ -214,11 +214,11 @@ def get_input_output(
     else:
         # Extract input str representation from input
         input_to_log = input_to_str_function(input)
-        raw_input_to_log = convert_to_jsonable_dict(convert_to_dict(input))
+        raw_input_to_log = filter_nonjsonable_keys(convert_to_dict(input))
 
     # If raw input is specified, override
     if raw_input is not None:
-        raw_input_to_log = convert_to_jsonable_dict(convert_to_dict(raw_input))
+        raw_input_to_log = filter_nonjsonable_keys(convert_to_dict(raw_input))
 
     if output is not None:
         # Extract a string representation from output
@@ -228,13 +228,13 @@ def get_input_output(
         else:
             output_to_log = output_to_str_function(output)
             # task_id_from_output, to_log = output_to_task_id_and_to_log_function(output)
-            raw_output_to_log = convert_to_jsonable_dict(convert_to_dict(output))
+            raw_output_to_log = filter_nonjsonable_keys(convert_to_dict(output))
     else:
         output_to_log = None
 
     # If raw output is specified, override
     if raw_output is not None:
-        raw_output_to_log = convert_to_jsonable_dict(convert_to_dict(raw_output))
+        raw_output_to_log = filter_nonjsonable_keys(convert_to_dict(raw_output))
 
     return (
         input_to_log,

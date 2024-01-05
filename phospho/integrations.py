@@ -1,5 +1,5 @@
 from typing import Dict, Any, List, Union, Optional
-from phospho.utils import convert_to_jsonable_dict
+from phospho.utils import filter_nonjsonable_keys
 
 try:
     from langchain_core.messages import BaseMessage
@@ -40,11 +40,7 @@ class PhosphoLangchainCallbackHandler(BaseCallbackHandler):
     ) -> Any:
         """Run when chain starts running."""
 
-        # TODO : Improve so that List[Documents] are also logged
-        if isinstance(inputs, str):
-            inputs_to_log = inputs
-        else:
-            inputs_to_log = convert_to_jsonable_dict(inputs)
+        inputs_to_log = inputs
 
         parent_run_id = kwargs.get("parent_run_id", False)
         if parent_run_id is None:
@@ -56,11 +52,7 @@ class PhosphoLangchainCallbackHandler(BaseCallbackHandler):
     def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> Any:
         """Run when chain ends running."""
 
-        # TODO : Improve so that List[Documents] are also logged
-        if isinstance(outputs, str):
-            output_to_log = outputs
-        else:
-            output_to_log = convert_to_jsonable_dict(outputs)
+        output_to_log = outputs
 
         parent_run_id = kwargs.get("parent_run_id", False)
         if parent_run_id is None:
