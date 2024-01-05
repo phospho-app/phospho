@@ -135,9 +135,17 @@ def detect_str_from_output(output: RawDataType) -> str:
             if isinstance(choices, list) and len(choices) > 0:
                 # output = ChatCompletionMessage.choices[0].message.content
                 message = choices[0].get("message", None)
-                content = message.get("content", None)
-                if content is not None:
-                    return str(content)
+                if message is not None:
+                    # ChatCompletion
+                    content = message.get("content", None)
+                    if content is not None:
+                        return str(content)
+                else:
+                    # ChatCompletionChunk (streaming)
+                    choice_delta = choices[0].get("delta", None)
+                    content = choice_delta.get("content", None)
+                    if content is not None:
+                        return str(content)
             else:
                 # None content = end of generation stream
                 return ""
