@@ -174,7 +174,6 @@ def _log_single_event(
         output_to_log,
         raw_input_to_log,
         raw_output_to_log,
-        task_id_from_output,
     ) = get_input_output(
         input=input,
         output=output,
@@ -186,11 +185,7 @@ def _log_single_event(
 
     # Task: use the task_id parameter, the task_id infered from inputs, or generate one
     if task_id is None:
-        if task_id_from_output is None:
-            # if nothing specified, create new id.
-            task_id = generate_uuid()
-        else:
-            task_id = task_id_from_output
+        task_id = generate_uuid()
 
     # Keep track of the latest task_id and session_id
     latest_task_id = task_id
