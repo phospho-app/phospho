@@ -432,12 +432,12 @@ def log(
 
     `session_id` is used to group logs together. For example, a single conversation.
 
-    By default, every log is assigned to a unique `task_id` and is immediately pushed to backend.
-    However, if you pass multiple logs with the same `task_id` and `to_log=False`, they will
-    stay in queue until they receive the same `task_id` with `to_log=False`. They will then
-    be combined and pushed to backend.
-    You can automate this behaviour using `output_to_task_id_and_to_log_function`. This is used
-    to handle streaming.
+    `task_id` is used to identify a single task. For example, a single message in a conversation.
+    This is useful to log user feedback on a specific task (see phospho.user_feedback).
+
+    `stream` is used to log a stream of data. For example, a generator. If `stream=True`, then
+    `phospho.log` returns a generator that also logs every individual output. See `phospho.wrap`
+    for more details.
 
     Every other `**kwargs` will be added to the log content and stored.
 
