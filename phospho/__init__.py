@@ -764,7 +764,8 @@ def user_feedback(
 
     Note: Feedback can be directly logged with `phospho.log` by passing `flag` as a keyword argument.
 
-    :param task_id: The task_id of the task to flag
+    :param task_id: The task_id of the task to flag. Get the task_id from the returned value of phospho.log, use phospho.new_task
+        to generate a new task_id, or use pospho.latest_task_id.
     :param flag: The flag to set for the task. Either "success" or "failure"
     :param notes: Optional notes to add to the task. For example, the reason for the flag.
     :param source: The source of the feedback, such as "user", "system", "user@mail.com", etc.
