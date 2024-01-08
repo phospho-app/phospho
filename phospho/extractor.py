@@ -170,8 +170,6 @@ def get_input_output(
     Optional[str],
     Optional[Union[Dict[str, object], str]],
     Optional[Union[Dict[str, object], str]],
-    Optional[str],
-    Optional[bool],
 ]:
     """
     Convert any supported data type to standard, loggable inputs and outputs.
@@ -218,8 +216,6 @@ def get_input_output(
     raw_input_to_log: Optional[Union[Dict[str, object], str]] = None
     raw_output_to_log: Optional[Union[Dict[str, object], str]] = None
 
-    task_id_from_output = None
-
     # Extract a string representation from input
     if isinstance(input, str):
         input_to_log = input
@@ -240,7 +236,6 @@ def get_input_output(
             raw_output_to_log = output
         else:
             output_to_log = output_to_str_function(output)
-            # task_id_from_output, to_log = output_to_task_id_and_to_log_function(output)
             raw_output_to_log = filter_nonjsonable_keys(convert_to_dict(output))
     else:
         output_to_log = None
@@ -254,5 +249,4 @@ def get_input_output(
         output_to_log,
         raw_input_to_log,
         raw_output_to_log,
-        task_id_from_output,
     )
