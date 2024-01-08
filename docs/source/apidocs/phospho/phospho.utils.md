@@ -47,8 +47,8 @@
   - ```{autodoc2-docstring} phospho.utils.filter_nonjsonable_keys
     :summary:
     ```
-* - {py:obj}`convert_to_jsonable_dict <phospho.utils.convert_to_jsonable_dict>`
-  - ```{autodoc2-docstring} phospho.utils.convert_to_jsonable_dict
+* - {py:obj}`convert_content_to_loggable_content <phospho.utils.convert_content_to_loggable_content>`
+  - ```{autodoc2-docstring} phospho.utils.convert_content_to_loggable_content
     :summary:
     ```
 ````
@@ -98,17 +98,17 @@
 ```
 ````
 
-````{py:function} filter_nonjsonable_keys(arg_dict: dict) -> dict
+````{py:function} filter_nonjsonable_keys(arg_dict: dict, verbose: bool = False) -> typing.Dict[str, object]
 :canonical: phospho.utils.filter_nonjsonable_keys
 
 ```{autodoc2-docstring} phospho.utils.filter_nonjsonable_keys
 ```
 ````
 
-````{py:function} convert_to_jsonable_dict(arg_dict: dict, verbose: bool = False) -> typing.Dict[str, object]
-:canonical: phospho.utils.convert_to_jsonable_dict
+````{py:function} convert_content_to_loggable_content(content: typing.Any) -> typing.Union[typing.Dict[str, object], str]
+:canonical: phospho.utils.convert_content_to_loggable_content
 
-```{autodoc2-docstring} phospho.utils.convert_to_jsonable_dict
+```{autodoc2-docstring} phospho.utils.convert_content_to_loggable_content
 ```
 ````
 

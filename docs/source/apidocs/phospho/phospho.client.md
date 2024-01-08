@@ -93,7 +93,7 @@
 
 ````
 
-````{py:method} compare(context_input: str, old_output: str, new_output: str) -> phospho.evals.Comparison
+````{py:method} compare(context_input: str, old_output: str, new_output: str, test_id: typing.Optional[str] = None) -> phospho.models.Comparison
 :canonical: phospho.client.Client.compare
 
 ```{autodoc2-docstring} phospho.client.Client.compare
@@ -105,6 +105,22 @@
 :canonical: phospho.client.Client.flag
 
 ```{autodoc2-docstring} phospho.client.Client.flag
+```
+
+````
+
+````{py:method} create_test(summary: typing.Optional[dict] = None) -> phospho.models.Test
+:canonical: phospho.client.Client.create_test
+
+```{autodoc2-docstring} phospho.client.Client.create_test
+```
+
+````
+
+````{py:method} update_test(test_id: str, status: typing.Literal[completed, canceled]) -> phospho.models.Test
+:canonical: phospho.client.Client.update_test
+
+```{autodoc2-docstring} phospho.client.Client.update_test
 ```
 
 ````
