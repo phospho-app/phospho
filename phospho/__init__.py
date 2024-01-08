@@ -46,7 +46,6 @@ __all__ = [
     "integrations",
 ]
 
-import pydantic
 import logging
 
 from copy import deepcopy
@@ -57,7 +56,6 @@ from typing import (
     Optional,
     Union,
     Callable,
-    Tuple,
     Iterable,
     AsyncIterable,
     Coroutine,
@@ -176,8 +174,6 @@ def _log_single_event(
         output_to_log,
         raw_input_to_log,
         raw_output_to_log,
-        task_id_from_output,
-        extracted_to_log,
     ) = get_input_output(
         input=input,
         output=output,
@@ -187,17 +183,9 @@ def _log_single_event(
         output_to_str_function=output_to_str_function,
     )
 
-    # Override to_log parameter
-    if extracted_to_log is not None:
-        to_log = extracted_to_log
-
     # Task: use the task_id parameter, the task_id infered from inputs, or generate one
     if task_id is None:
-        if task_id_from_output is None:
-            # if nothing specified, create new id.
-            task_id = generate_uuid()
-        else:
-            task_id = task_id_from_output
+        task_id = generate_uuid()
 
     # Keep track of the latest task_id and session_id
     latest_task_id = task_id
@@ -410,9 +398,6 @@ def log(
     # todo: group those into "transformation"
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
-    output_to_task_id_and_to_log_function: Optional[
-        Callable[[Any], Tuple[Optional[str], bool]]
-    ] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
     stream: bool = False,
     **kwargs: Dict[str, Any],
@@ -432,12 +417,12 @@ def log(
 
     `session_id` is used to group logs together. For example, a single conversation.
 
-    By default, every log is assigned to a unique `task_id` and is immediately pushed to backend.
-    However, if you pass multiple logs with the same `task_id` and `to_log=False`, they will
-    stay in queue until they receive the same `task_id` with `to_log=False`. They will then
-    be combined and pushed to backend.
-    You can automate this behaviour using `output_to_task_id_and_to_log_function`. This is used
-    to handle streaming.
+    `task_id` is used to identify a single task. For example, a single message in a conversation.
+    This is useful to log user feedback on a specific task (see phospho.user_feedback).
+
+    `stream` is used to log a stream of data. For example, a generator. If `stream=True`, then
+    `phospho.log` returns a generator that also logs every individual output. See `phospho.wrap`
+    for more details.
 
     Every other `**kwargs` will be added to the log content and stored.
 
@@ -484,7 +469,6 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
                 "raw_output": raw_output,
                 "input_to_str_function": input_to_str_function,
                 "output_to_str_function": output_to_str_function,
-                "output_to_task_id_and_to_log_function": output_to_task_id_and_to_log_function,
                 "concatenate_raw_outputs_if_task_id_exists": concatenate_raw_outputs_if_task_id_exists,
             }
             # Return the log:
@@ -514,7 +498,6 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
         raw_output=raw_output,
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
-        output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
         concatenate_raw_outputs_if_task_id_exists=concatenate_raw_outputs_if_task_id_exists,
         to_log=True,
         **kwargs,
@@ -764,7 +747,8 @@ def user_feedback(
 
     Note: Feedback can be directly logged with `phospho.log` by passing `flag` as a keyword argument.
 
-    :param task_id: The task_id of the task to flag
+    :param task_id: The task_id of the task to flag. Get the task_id from the returned value of phospho.log, use phospho.new_task
+        to generate a new task_id, or use pospho.latest_task_id.
     :param flag: The flag to set for the task. Either "success" or "failure"
     :param notes: Optional notes to add to the task. For example, the reason for the flag.
     :param source: The source of the feedback, such as "user", "system", "user@mail.com", etc.

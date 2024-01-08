@@ -53,6 +53,14 @@
 
 ````
 
+````{py:method} content_as_dict() -> dict
+:canonical: phospho.tasks.Task.content_as_dict
+
+```{autodoc2-docstring} phospho.tasks.Task.content_as_dict
+```
+
+````
+
 ````{py:method} refresh() -> None
 :canonical: phospho.tasks.Task.refresh
 
