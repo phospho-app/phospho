@@ -46,7 +46,6 @@ __all__ = [
     "integrations",
 ]
 
-import pydantic
 import logging
 
 from copy import deepcopy
@@ -57,7 +56,6 @@ from typing import (
     Optional,
     Union,
     Callable,
-    Tuple,
     Iterable,
     AsyncIterable,
     Coroutine,
@@ -177,7 +175,6 @@ def _log_single_event(
         raw_input_to_log,
         raw_output_to_log,
         task_id_from_output,
-        extracted_to_log,
     ) = get_input_output(
         input=input,
         output=output,
@@ -186,10 +183,6 @@ def _log_single_event(
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
     )
-
-    # Override to_log parameter
-    if extracted_to_log is not None:
-        to_log = extracted_to_log
 
     # Task: use the task_id parameter, the task_id infered from inputs, or generate one
     if task_id is None:
@@ -410,9 +403,6 @@ def log(
     # todo: group those into "transformation"
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
-    output_to_task_id_and_to_log_function: Optional[
-        Callable[[Any], Tuple[Optional[str], bool]]
-    ] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
     stream: bool = False,
     **kwargs: Dict[str, Any],
@@ -484,7 +474,6 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
                 "raw_output": raw_output,
                 "input_to_str_function": input_to_str_function,
                 "output_to_str_function": output_to_str_function,
-                "output_to_task_id_and_to_log_function": output_to_task_id_and_to_log_function,
                 "concatenate_raw_outputs_if_task_id_exists": concatenate_raw_outputs_if_task_id_exists,
             }
             # Return the log:
@@ -514,7 +503,6 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
         raw_output=raw_output,
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
-        output_to_task_id_and_to_log_function=output_to_task_id_and_to_log_function,
         concatenate_raw_outputs_if_task_id_exists=concatenate_raw_outputs_if_task_id_exists,
         to_log=True,
         **kwargs,

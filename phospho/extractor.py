@@ -192,8 +192,6 @@ def get_input_output(
 
     :param output_to_str_function:
 
-    :param verbose:
-
 
     :return:
     - input_to_log _(str)_ -
@@ -208,11 +206,6 @@ def get_input_output(
     - raw_output_to_log _(Optional[Dict[str, object]])_ -
         A dict representation of the output, raw_output if specified, or None if output is a str.
 
-    - task_id_from_output _(Optional[str])_ -
-        Task id detected from the output. Useful from keeping track of streaming outputs.
-
-    - to_log _(Optional[bool])_ -
-        Whether to log the event directly, or wait until a later event. Useful for streaming.
     """
 
     # Default functions to extract string from input and output
@@ -226,7 +219,6 @@ def get_input_output(
     raw_output_to_log: Optional[Union[Dict[str, object], str]] = None
 
     task_id_from_output = None
-    to_log = None
 
     # Extract a string representation from input
     if isinstance(input, str):
@@ -263,5 +255,4 @@ def get_input_output(
         raw_input_to_log,
         raw_output_to_log,
         task_id_from_output,
-        to_log,
     )
