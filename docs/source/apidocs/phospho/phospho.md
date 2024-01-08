@@ -200,7 +200,7 @@ phospho.integrations
 ```
 ````
 
-````{py:function} log(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str, typing.Iterable[phospho.extractor.RawDataType]]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_task_id_and_to_log_function: typing.Optional[typing.Callable[[typing.Any], typing.Tuple[typing.Optional[str], bool]]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, stream: bool = False, **kwargs: typing.Dict[str, typing.Any]) -> typing.Optional[typing.Dict[str, object]]
+````{py:function} log(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str, typing.Iterable[phospho.extractor.RawDataType]]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, stream: bool = False, **kwargs: typing.Dict[str, typing.Any]) -> typing.Optional[typing.Dict[str, object]]
 :canonical: phospho.log
 
 ```{autodoc2-docstring} phospho.log
