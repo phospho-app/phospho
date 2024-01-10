@@ -44,7 +44,9 @@ def filter_nonjsonable_keys(arg_dict: dict, verbose: bool = False) -> Dict[str, 
     return new_arg_dict
 
 
-def convert_content_to_loggable_content(content: Any) -> Union[Dict[str, object], str]:
+def convert_content_to_loggable_content(
+    content: Any
+) -> Union[Dict[str, object], str, None]:
     """
     Convert objects to json serializable content. Notably, nested dicts and lists are converted.
     """
@@ -58,7 +60,8 @@ def convert_content_to_loggable_content(content: Any) -> Union[Dict[str, object]
         }
         return new_content
     elif isinstance(content, list):
-        return [convert_content_to_loggable_content(x) for x in content]
+        # Special case for list
+        return str([convert_content_to_loggable_content(x) for x in content])
     elif isinstance(content, pydantic.BaseModel):
         return content.model_dump()
     elif isinstance(content, pydantic.v1.BaseModel):
