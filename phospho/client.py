@@ -41,8 +41,8 @@ class Client:
             token = os.environ.get("PHOSPHO_API_KEY")
         if not token:
             raise ValueError(
-                "No API key provided. You need to set the PHOSPHO_API_KEY environment variable or create"
-                + " a client with `phospho.Client(api_key=...)`.\n\nFind your API key on https://phospho.app"
+                "No API key provided. You need to set the PHOSPHO_API_KEY environment variable or init phospho with"
+                + " `phospho.init(api_key=...)`.\n\nFind your API key on https://phospho.ai"
             )
         return token
 
@@ -54,7 +54,7 @@ class Client:
         if not project_id:
             raise ValueError(
                 "No project id provided. You need to set the PHOSPHO_PROJECT_ID environment"
-                + " variable or create a client with `phospho.Client(project_id=...)`."
+                + " variable or init phospho with `phospho.init(project_id=...)`."
             )
         return project_id
 
@@ -76,7 +76,15 @@ class Client:
             return response
 
         else:
-            raise ValueError(f"Error getting {url}: {response.json()}")
+            try:
+                json = response.json()
+                raise ValueError(
+                    f"Error posting {url} (code: {response.status_code}): {json}"
+                )
+            except Exception as e:
+                raise ValueError(
+                    f"Error posting {url} (code: {response.status_code}): {response.text}"
+                )
 
     def _post(
         self, path: str, payload: Optional[Dict[str, object]] = None
@@ -87,7 +95,15 @@ class Client:
         if response.status_code >= 200 and response.status_code < 300:
             return response
         else:
-            raise ValueError(f"Error posting to {url}: {response.json()}")
+            try:
+                json = response.json()
+                raise ValueError(
+                    f"Error posting {url} (code: {response.status_code}): {json}"
+                )
+            except Exception as e:
+                raise ValueError(
+                    f"Error posting {url} (code: {response.status_code}): {response.text}"
+                )
 
     @property
     def sessions(self) -> SessionCollection:
