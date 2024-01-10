@@ -1,6 +1,7 @@
 import pytest
 import phospho
 import logging
+import time
 
 from openai.types.chat import ChatCompletion, ChatCompletionMessage, ChatCompletionChunk
 from openai.types.completion_usage import CompletionUsage
@@ -108,7 +109,7 @@ MOCK_OPENAI_STREAM_RESPONSE = [
 
 
 def test_log_sync():
-    phospho.init(tick=0.05)
+    phospho.init(tick=0.05, raise_error_on_fail_to_send=True)
 
     query = MOCK_OPENAI_QUERY
     response = MOCK_OPENAI_RESPONSE
@@ -121,9 +122,11 @@ def test_log_sync():
 
     # TODO : Validate that the connection was successful
 
+    time.sleep(0.1)
+
 
 def test_wrap():
-    phospho.init()
+    phospho.init(tick=0.05, raise_error_on_fail_to_send=True)
 
     # No streaming
     def fake_openai_call_no_stream(model, messages, stream: bool = False):
@@ -156,9 +159,11 @@ def test_wrap():
     for r, groundtruth_r in zip(response, MOCK_OPENAI_STREAM_RESPONSE):
         assert r == groundtruth_r
 
+    time.sleep(0.1)
+
 
 def test_stream():
-    phospho.init()
+    phospho.init(tick=0.05, raise_error_on_fail_to_send=True)
 
     # Streaming, sync
 
@@ -201,11 +206,13 @@ def test_stream():
         i += 1
 
     # TODO : Validate that the connection was successful
+    time.sleep(0.1)
 
 
 @pytest.mark.asyncio
 async def test_async_stream():
-    phospho.init()
+    phospho.init(tick=0.05, raise_error_on_fail_to_send=True)
+
     query = {
         "model": MOCK_OPENAI_QUERY["model"],
         "messages": MOCK_OPENAI_QUERY["messages"],
@@ -308,3 +315,5 @@ async def test_async_stream():
                 assert raw_output == groundtruth_r.model_dump()
         i += 1
     assert i <= len(MOCK_OPENAI_STREAM_RESPONSE), str(r)
+
+    time.sleep(0.1)

@@ -77,6 +77,7 @@ def init(
     api_key: Optional[str] = None,
     project_id: Optional[str] = None,
     tick: float = 0.5,
+    raise_error_on_fail_to_send: bool = False,
 ) -> None:
     """
     Initialize the phospho logging module.
@@ -96,7 +97,12 @@ def init(
 
     client = Client(api_key=api_key, project_id=project_id)
     log_queue = LogQueue()
-    consumer = Consumer(log_queue=log_queue, client=client, tick=tick)
+    consumer = Consumer(
+        log_queue=log_queue,
+        client=client,
+        tick=tick,
+        raise_error_on_fail_to_send=raise_error_on_fail_to_send,
+    )
     # Start the consumer on a separate thread (this will periodically send logs to backend)
     consumer.start()
 
