@@ -111,6 +111,29 @@ MOCK_OPENAI_STREAM_RESPONSE = [
 def test_log_sync():
     phospho.init(tick=0.05, raise_error_on_fail_to_send=True)
 
+    # Log a string
+    log_content = phospho.log(
+        input="Say hi !", output="Hello! How can I assist you today?"
+    )
+
+    # Log a list
+    log_content = phospho.log(
+        input=["Say hi !", "Say hi again !"],
+        output=[
+            "Hello! How can I assist you today?",
+            "Hello! How can I assist you today?",
+        ],
+    )
+
+    # Log a dict
+    log_content = phospho.log(
+        input={"Say hi !": "Say hi again !"},
+        output={
+            "Hello! How can I assist you today?": "Hello! How can I assist you today?"
+        },
+    )
+
+    # Log openai (extraction)
     query = MOCK_OPENAI_QUERY
     response = MOCK_OPENAI_RESPONSE
 
