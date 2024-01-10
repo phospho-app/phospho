@@ -19,11 +19,13 @@ class Consumer(Thread):
         log_queue: LogQueue,
         client: Client,
         tick: float = 0.5,  # How often to try to send logs
+        raise_error_on_fail_to_send: bool = False,
     ) -> None:
         self.running = True
         self.log_queue = log_queue
         self.client = client
         self.tick = tick
+        self.raise_error_on_fail_to_send = raise_error_on_fail_to_send
 
         Thread.__init__(self, daemon=True)
         atexit.register(self.stop)
@@ -64,8 +66,12 @@ class Consumer(Thread):
             except Exception as e:
                 logger.warning(f"Error sending log events: {e}")
 
-                # Put all the events back into the log queue, so they are logged next tick
-                self.log_queue.add_batch(batch)
+                if self.raise_error_on_fail_to_send:
+                    # If we are in a test, we want to raise the error
+                    raise e
+                else:
+                    # Put all the events back into the log queue, so they are logged next tick
+                    self.log_queue.add_batch(batch)
 
     def stop(self):
         self.running = False

@@ -26,7 +26,7 @@
 ````{py:data} BASE_URL
 :canonical: phospho.config.BASE_URL
 :value: >
-   'https://api.phospho.ai/v0'
+   'https://api.phospho.ai/v2'
 
 ```{autodoc2-docstring} phospho.config.BASE_URL
 ```

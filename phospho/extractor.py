@@ -4,7 +4,7 @@ import json
 
 from typing import Union, Dict, Any, Tuple, Optional, Callable
 
-from .utils import filter_nonjsonable_keys
+from .utils import filter_nonjsonable_keys, is_jsonable
 
 RawDataType = Union[Dict[str, Any], pydantic.BaseModel]
 
@@ -26,6 +26,8 @@ def convert_to_dict(x: Any) -> Dict[str, object]:
     else:
         try:
             return dict(x)
+        except ValueError as e:
+            raise ValueError(f"Could not convert to dict: {x}. Error: {e}")
         except TypeError as e:
             raise NotImplementedError(
                 f"Dict conversion not implemented for type {type(x)}: {x}"
@@ -223,11 +225,17 @@ def get_input_output(
     else:
         # Extract input str representation from input
         input_to_log = input_to_str_function(input)
-        raw_input_to_log = filter_nonjsonable_keys(convert_to_dict(input))
+        if not is_jsonable(input):
+            raw_input_to_log = filter_nonjsonable_keys(convert_to_dict(input))
+        else:
+            raw_input_to_log = input
 
     # If raw input is specified, override
     if raw_input is not None:
-        raw_input_to_log = filter_nonjsonable_keys(convert_to_dict(raw_input))
+        if not is_jsonable(raw_input):
+            raw_input_to_log = filter_nonjsonable_keys(convert_to_dict(raw_input))
+        else:
+            raw_input_to_log = raw_input
 
     if output is not None:
         # Extract a string representation from output
@@ -236,13 +244,19 @@ def get_input_output(
             raw_output_to_log = output
         else:
             output_to_log = output_to_str_function(output)
-            raw_output_to_log = filter_nonjsonable_keys(convert_to_dict(output))
+            if not is_jsonable(output):
+                raw_output_to_log = filter_nonjsonable_keys(convert_to_dict(output))
+            else:
+                raw_output_to_log = output
     else:
         output_to_log = None
 
     # If raw output is specified, override
     if raw_output is not None:
-        raw_output_to_log = filter_nonjsonable_keys(convert_to_dict(raw_output))
+        if not is_jsonable(raw_output):
+            raw_output_to_log = filter_nonjsonable_keys(convert_to_dict(raw_output))
+        else:
+            raw_output_to_log = raw_output
 
     return (
         input_to_log,
