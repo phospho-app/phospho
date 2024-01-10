@@ -4,7 +4,7 @@ Phospho is a platform to help you monitor LLM apps.
 
 With phospho, monitor every user interaction with your LLM app to identify issues and improve performance. Understand how users use your app and which versions of your product are the most successful.
 
-Read the docs at [docs.phospho.app](https://docs.phospho.app/).
+Read the docs at [docs.phospho.app](https://docs.phospho.ai/).
 
 > _Warning_ : This project is still under active development!
 
@@ -18,7 +18,7 @@ pip install --upgrade phospho
 
 ## Quickstart
 
-Create an account on [phospho](https://platform.phospho.app/). Create an API key and note down the project id. Set them as environment variables:
+Create an account on [phospho](https://platform.phospho.ai/). Create an API key and note down the project id. Set them as environment variables:
 
 ```bash
 export PHOSPHO_API_KEY="your-api-key"
@@ -57,9 +57,9 @@ response = openai_client.chat.completions.create(**query)
 phospho.log(input=query, output=response)
 ```
 
-Monitor and visualize your agent on the [phospho dashboard](https://platform.phospho.app/).
+Monitor and visualize your agent on the [phospho dashboard](https://platform.phospho.ai/).
 
 ## Usage
 
-Read the docs at [docs.phospho.app](https://docs.phospho.app/) for more information.
+Read the docs at [docs.phospho.app](https://docs.phospho.ai/) for more information.
 Use your phospho dashboard to monitor your agent, score interactions and detect events.
