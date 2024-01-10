@@ -6,7 +6,7 @@ With phospho, monitor every user interaction with your LLM app to identify issue
 
 Read the docs at [docs.phospho.app](https://docs.phospho.app/).
 
-> *Warning* : This project is still under active development!
+> _Warning_ : This project is still under active development!
 
 ## Installation of the phospho client
 
@@ -18,19 +18,18 @@ pip install --upgrade phospho
 
 ## Quickstart
 
-Create a phospho account and go to the [phospho dashboard](https://platform.phospho.app/). Create a project. In your project settings, create an API key. Set them as environment variables:
+Create an account on [phospho](https://platform.phospho.app/). Create an API key and note down the project id. Set them as environment variables:
 
 ```bash
-export PHOSPHO_PROJECT_ID="project-id"
 export PHOSPHO_API_KEY="your-api-key"
+export PHOSPHO_PROJECT_ID="project-id"
 ```
 
-In the code of your LLM app, log interactions with your agent using `phospho.log()`. 
+In the code of your LLM app, log interactions with your agent using `phospho.log()`.
 
 ```python
 import phospho
 
-# Your project id and api key are set as environment variables
 phospho.init()
 
 # This is how you log interactions to phospho as strings
@@ -38,7 +37,7 @@ phospho.log(input="The user input", output="Your LLM app output")
 
 ```
 
-You can also directly pass OpenAI API query and responses (or any object with same format) to phospho : 
+You can also directly pass OpenAI API query and responses (or any object with same format) to phospho :
 
 ```python
 import phospho
@@ -49,8 +48,8 @@ openai_client = openai.OpenAI()
 
 # This is your agent code
 query = {
-    "messages": [{"role": "user", "content": "The user input"}], 
-    "model": "gpt-3.5-turbo", 
+    "messages": [{"role": "user", "content": "The user input"}],
+    "model": "gpt-3.5-turbo",
 }
 response = openai_client.chat.completions.create(**query)
 
@@ -58,9 +57,9 @@ response = openai_client.chat.completions.create(**query)
 phospho.log(input=query, output=response)
 ```
 
-Monitor and visualize your agent on the [phospho dashboard](https://platform.phospho.app/). 
+Monitor and visualize your agent on the [phospho dashboard](https://platform.phospho.app/).
 
 ## Usage
 
-Read the docs at [docs.phospho.app](https://docs.phospho.app/) for more information. 
+Read the docs at [docs.phospho.app](https://docs.phospho.app/) for more information.
 Use your phospho dashboard to monitor your agent, score interactions and detect events.
