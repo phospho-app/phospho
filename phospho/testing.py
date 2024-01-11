@@ -3,7 +3,6 @@ import concurrent.futures
 import logging
 import inspect
 import time
-import pandas as pd
 
 from types import GeneratorType
 from typing import List, Dict, Optional, Callable, Any, Literal
@@ -266,8 +265,14 @@ class DatasetLoader:
             ```
 
         In this example, the dataset must have a column "input" that will be used as the input of the agent function.
-
         """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError(
+                "You need to install pandas to use the dataset loader. Run `pip install pandas`."
+            )
+
         if path.endswith(".csv"):
             self.df = pd.read_csv(path)
         elif path.endswith(".json"):
