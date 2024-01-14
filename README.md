@@ -10,7 +10,7 @@ Read the docs at [docs.phospho.ai](https://docs.phospho.ai/).
 
 ## Installation of the phospho client
 
-You need Python `>=3.9`
+You need Python `>=3.8`
 
 ```bash
 pip install --upgrade phospho
