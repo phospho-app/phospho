@@ -165,7 +165,7 @@ phospho.integrations
 
 ````
 
-````{py:function} init(api_key: typing.Optional[str] = None, project_id: typing.Optional[str] = None, tick: float = 0.5) -> None
+````{py:function} init(api_key: typing.Optional[str] = None, project_id: typing.Optional[str] = None, tick: float = 0.5, raise_error_on_fail_to_send: bool = False) -> None
 :canonical: phospho.init
 
 ```{autodoc2-docstring} phospho.init

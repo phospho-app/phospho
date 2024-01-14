@@ -105,7 +105,7 @@
 ```
 ````
 
-````{py:function} convert_content_to_loggable_content(content: typing.Any) -> typing.Union[typing.Dict[str, object], str]
+````{py:function} convert_content_to_loggable_content(content: typing.Any) -> typing.Union[typing.Dict[str, object], str, None]
 :canonical: phospho.utils.convert_content_to_loggable_content
 
 ```{autodoc2-docstring} phospho.utils.convert_content_to_loggable_content
