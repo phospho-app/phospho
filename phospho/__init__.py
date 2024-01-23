@@ -76,6 +76,7 @@ logger = logging.getLogger(__name__)
 def init(
     api_key: Optional[str] = None,
     project_id: Optional[str] = None,
+    base_url: Optional[str] = None,
     tick: float = 0.5,
     raise_error_on_fail_to_send: bool = False,
 ) -> None:
@@ -88,6 +89,7 @@ def init(
 
     :param api_key: Phospho API key
     :param project_id: Phospho project id
+    :param base_url: URL to the phospho backend
     :param verbose: whether to display logs
     :param tick: how frequently the consumer tries to push logs to the backend (in seconds)
     """
@@ -95,7 +97,7 @@ def init(
     global log_queue
     global consumer
 
-    client = Client(api_key=api_key, project_id=project_id)
+    client = Client(api_key=api_key, project_id=project_id, base_url=base_url)
     log_queue = LogQueue()
     consumer = Consumer(
         log_queue=log_queue,
