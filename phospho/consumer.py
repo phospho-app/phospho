@@ -31,12 +31,19 @@ class Consumer(Thread):
         Thread.__init__(self, daemon=True)
         atexit.register(self.stop)
 
+    def get_wait_time(self) -> float:
+        """
+        Get the time to wait before sending the next batch of logs.
+        The time is doubled for each consecutive error.
+        """
+        if self.nb_consecutive_errors == 0:
+            return self.tick
+        return min(self.tick * (2 ** (self.nb_consecutive_errors - 1)), 60)
+
     def run(self) -> None:
         while self.running:
             self.send_batch()
-            # Add a backoff if we have consecutive errors
-            wait_time = min(self.tick * (2**self.nb_consecutive_errors), 60)
-            time.sleep(wait_time)
+            time.sleep(self.get_wait_time())
 
         self.send_batch()
 
@@ -69,15 +76,17 @@ class Consumer(Thread):
                         )
                         self.nb_consecutive_errors = 0
             except Exception as e:
-                logger.warning(f"Error sending log events: {e}")
-
                 if self.raise_error_on_fail_to_send:
                     # If we are in a test, we want to raise the error
                     raise e
                 else:
+                    self.nb_consecutive_errors += 1
+                    logger.warning(
+                        f"Error sending log events: {e}. Retrying in {self.get_wait_time()}s"
+                    )
+
                     # Put all the events back into the log queue, so they are logged next tick
                     self.log_queue.add_batch(batch)
-                    self.nb_consecutive_errors += 1
 
     def stop(self):
         self.running = False
