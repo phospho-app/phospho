@@ -76,6 +76,7 @@ logger = logging.getLogger(__name__)
 def init(
     api_key: Optional[str] = None,
     project_id: Optional[str] = None,
+    base_url: Optional[str] = None,
     tick: float = 0.5,
     raise_error_on_fail_to_send: bool = False,
 ) -> None:
@@ -88,6 +89,7 @@ def init(
 
     :param api_key: Phospho API key
     :param project_id: Phospho project id
+    :param base_url: URL to the phospho backend
     :param verbose: whether to display logs
     :param tick: how frequently the consumer tries to push logs to the backend (in seconds)
     """
@@ -95,7 +97,7 @@ def init(
     global log_queue
     global consumer
 
-    client = Client(api_key=api_key, project_id=project_id)
+    client = Client(api_key=api_key, project_id=project_id, base_url=base_url)
     log_queue = LogQueue()
     consumer = Consumer(
         log_queue=log_queue,
@@ -399,6 +401,7 @@ def log(
     output: Optional[Union[RawDataType, str, Iterable[RawDataType]]] = None,
     session_id: Optional[str] = None,
     task_id: Optional[str] = None,
+    version_id: Optional[str] = None,
     raw_input: Optional[RawDataType] = None,
     raw_output: Optional[RawDataType] = None,
     # todo: group those into "transformation"
@@ -426,11 +429,14 @@ def log(
     `task_id` is used to identify a single task. For example, a single message in a conversation.
     This is useful to log user feedback on a specific task (see phospho.user_feedback).
 
+    `version_id` is used for A/B testing. It is a string that identifies the version of the
+    code that generated the log. For example, "v1.0.0" or "test".
+
     `stream` is used to log a stream of data. For example, a generator. If `stream=True`, then
     `phospho.log` returns a generator that also logs every individual output. See `phospho.wrap`
     for more details.
 
-    Every other `**kwargs` will be added to the log content and stored.
+    Every other `**kwargs` will be added to the metadata and stored.
 
     :returns:
     - log_event (Dict[str, object]):
@@ -471,6 +477,7 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
                 # do not put output in the metadata, as it will change with __next__
                 "session_id": session_id,
                 "task_id": task_id,  # Mark these with the same, custom task_id
+                "version_id": version_id,
                 "raw_input": raw_input,
                 "raw_output": raw_output,
                 "input_to_str_function": input_to_str_function,
@@ -500,6 +507,7 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
         output=output,
         session_id=session_id,
         task_id=task_id,
+        version_id=version_id,
         raw_input=raw_input,
         raw_output=raw_output,
         input_to_str_function=input_to_str_function,

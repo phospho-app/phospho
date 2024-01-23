@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "phospho"
-version = "0.2.12"
+version = "0.2.13"
 description = "Analytics for LLM apps"
 authors = ["Pierre-Louis Biojout <dev@phospho.app>"]
 readme = "README.md"
