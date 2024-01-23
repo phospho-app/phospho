@@ -36,7 +36,7 @@ class Consumer(Thread):
         Get the time to wait before sending the next batch of logs.
         The time is doubled for each consecutive error.
         """
-        if self.nb_consecutive_errors == 0:
+        if self.nb_consecutive_errors < 1:
             return self.tick
         return min(self.tick * (2 ** (self.nb_consecutive_errors - 1)), 60)
 
