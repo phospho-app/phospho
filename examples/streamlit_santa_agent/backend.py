@@ -99,7 +99,7 @@ class SantaClausAgent:
         for response in streaming_response:
             yield response.choices[0].delta.content
 
-    @phospho.wrap(stream=True, stop=lambda token: token is None)
+    @phospho.wrap(stream=True, stop=lambda token: token is None, version_id="test")
     def answer(
         self,
         messages: List[Dict[str, str]],
@@ -130,9 +130,9 @@ class SantaClausAgent:
 
 
 # Initialize phospho to collect logs
-# phospho.config.BASE_URL = "http://127.0.0.1:8000/v0"
 
 phospho.init(
     api_key=st.secrets["PHOSPHO_API_KEY"],
     project_id=st.secrets["PHOSPHO_PROJECT_ID"],
+    base_url="http://127.0.0.1:8000/v2",
 )
