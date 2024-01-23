@@ -26,6 +26,7 @@ class Consumer(Thread):
         self.client = client
         self.tick = tick
         self.raise_error_on_fail_to_send = raise_error_on_fail_to_send
+        self.nb_consecutive_errors = 0
 
         Thread.__init__(self, daemon=True)
         atexit.register(self.stop)
@@ -33,7 +34,9 @@ class Consumer(Thread):
     def run(self) -> None:
         while self.running:
             self.send_batch()
-            time.sleep(self.tick)
+            # Add a backoff if we have consecutive errors
+            wait_time = min(self.tick * (2**self.nb_consecutive_errors), 60)
+            time.sleep(wait_time)
 
         self.send_batch()
 
@@ -53,6 +56,7 @@ class Consumer(Thread):
                         f"/log/{self.client._project_id()}",
                         {"batched_log_events": batch},
                     )
+                    self.nb_consecutive_errors = 0
                 elif PHOSPHO_TEST_ID is not None:
                     # Test mode: send logs if we are in the right metric
                     if PHOSPHO_TEST_METRIC == "evaluate":
@@ -63,6 +67,7 @@ class Consumer(Thread):
                             f"/log/{self.client._project_id()}",
                             {"batched_log_events": batch},
                         )
+                        self.nb_consecutive_errors = 0
             except Exception as e:
                 logger.warning(f"Error sending log events: {e}")
 
@@ -72,6 +77,7 @@ class Consumer(Thread):
                 else:
                     # Put all the events back into the log queue, so they are logged next tick
                     self.log_queue.add_batch(batch)
+                    self.nb_consecutive_errors += 1
 
     def stop(self):
         self.running = False
