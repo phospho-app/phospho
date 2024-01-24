@@ -99,7 +99,7 @@ class SantaClausAgent:
         for response in streaming_response:
             yield response.choices[0].delta.content
 
-    @phospho.wrap(stream=True, stop=lambda token: token is None, version_id="test")
+    @phospho.wrap(stream=True, stop=lambda token: token is None, version_id="test_2")
     def answer(
         self,
         messages: List[Dict[str, str]],
