@@ -7,7 +7,7 @@ santa_claus_agent = SantaClausAgent()
 avatars = {"user": "🐸", "assistant": "🎅🏼"}
 
 # Let's dress up...
-st.title("🎄🎅🏼 Santa ChatBot")
+st.title("🎄🎅🏼 This is an example chatbot of a phospho user")
 left, right = st.columns(2)
 with left:
     if st.button("New chat"):
