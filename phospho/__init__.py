@@ -16,7 +16,7 @@ from .utils import (
 from .extractor import (
     extract_data_from_input,
     extract_data_from_output,
-    extract_usage_from_input_output,
+    extract_metadata_from_input_output,
     RawDataType,
 )
 from ._version import __version__
@@ -159,7 +159,7 @@ def _log_single_event(
     output_to_str_function: Optional[Callable[[Any], str]] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
     input_output_to_usage_function: Optional[
-        Callable[[Any, Any], Union[models.Usage, Dict[str, float]]]
+        Callable[[Any, Any], Dict[str, float]]
     ] = None,
     to_log: bool = True,
     **kwargs: Any,
@@ -201,7 +201,7 @@ def _log_single_event(
         raw_output=raw_output,
         output_to_str_function=output_to_str_function,
     )
-    usage_to_log = extract_usage_from_input_output(
+    metadata_to_log = extract_metadata_from_input_output(
         input=input,
         output=output,
         input_output_to_usage_function=input_output_to_usage_function,
@@ -237,7 +237,7 @@ def _log_single_event(
         "raw_output": raw_output_to_log,
         "raw_output_type_name": type(output).__name__,
         # other
-        "usage": usage_to_log,
+        **metadata_to_log,
         **kwargs_to_log,
     }
 
@@ -281,7 +281,13 @@ def _log_single_event(
             fused_raw_output = (
                 existing_log_content["raw_output"] + log_content["raw_output"]
             )
-        # If usage in metadata, sum the usage
+        # For usage metrics in metadata, apply heuristics
+        if "completion_tokens" in log_content:
+            fused_competion_tokens: int = log_content["completion_tokens"]
+            fused_competion_tokens += existing_log_content.get("completion_tokens", 0)
+        if "total_tokens" in log_content:
+            fused_total_tokens: int = log_content["total_tokens"]
+            fused_total_tokens += existing_log_content.get("total_tokens", 0)
 
         # Put all of this into a dict
         fused_log_content = {
@@ -292,6 +298,8 @@ def _log_single_event(
             # Concatenate the log event output strings
             "output": fused_output,
             "raw_output": fused_raw_output,
+            "completion_tokens": fused_competion_tokens,
+            "total_tokens": fused_total_tokens,
         }
         # TODO : Turn this bool into a parametrizable list
         if concatenate_raw_outputs_if_task_id_exists:
@@ -428,9 +436,7 @@ def log(
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
-    output_to_usage_function: Optional[
-        Callable[[Any], Union[models.Usage, Dict[str, float]]]
-    ] = None,
+    input_output_to_usage_function: Optional[Callable[[Any], Dict[str, float]]] = None,
     stream: bool = False,
     **kwargs: Dict[str, Any],
 ) -> Optional[Dict[str, object]]:
@@ -457,9 +463,9 @@ def log(
 
     `user_id` is used to identify the user. For example, a user's email.
 
-    `output_to_usage_function` is used to count the number of tokens in prompt and in completion.
-    It takes output as a value and returns a `Usage` object, or a dict with keys `prompt_tokens`,
-    `completion_tokens`, `total_tokens`.
+    `input_output_to_usage_function` is used to count the number of tokens in prompt and in completion.
+    It takes (input, output) as a value and returns a dict with keys `prompt_tokens`, `completion_tokens`,
+    `total_tokens`.
 
     `stream` is used to log a stream of data. For example, a generator. If `stream=True`, then
     `phospho.log` returns a generator that also logs every individual output. See `phospho.wrap`
@@ -512,6 +518,7 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
                 "raw_output": raw_output,
                 "input_to_str_function": input_to_str_function,
                 "output_to_str_function": output_to_str_function,
+                "input_output_to_usage_function": input_output_to_usage_function,
                 "concatenate_raw_outputs_if_task_id_exists": concatenate_raw_outputs_if_task_id_exists,
             }
             # Return the log:
@@ -543,6 +550,7 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
         raw_output=raw_output,
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
+        input_output_to_usage_function=input_output_to_usage_function,
         concatenate_raw_outputs_if_task_id_exists=concatenate_raw_outputs_if_task_id_exists,
         to_log=True,
         **kwargs,
