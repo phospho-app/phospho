@@ -162,15 +162,33 @@ def detect_str_from_output(output: RawDataType) -> str:
     return str(output)
 
 
-def detect_usage_from_input_output(input: Any, output: Any) -> Optional[Usage]:
+def detect_usage_from_input_output(
+    input: Any, output: Any
+) -> Optional[Dict[str, float]]:
+    """
+    Returns a dict with keys `prompt_tokens`, `completion_tokens`, `total_tokens`.
+    """
     # OpenAI-like API return the usage in the output
     if isinstance(output, dict):
         if "usage" in output.keys():
-            try:
-                usage = Usage.model_validate(output["usage"])
-            except Exception as e:
-                pass
-            return usage
+            return output["usage"]
+        if output.get("object", None) == "chat.completion.chunk":
+            # When streaming, we generate token by token
+            return {"completion_tokens": 1}
+    return None
+
+
+def detect_model_from_input_output(input: Any, output: Any) -> Optional[str]:
+    """
+    Returns the model used to generate the output.
+    """
+    # OpenAI-like API return the model in the output
+    if isinstance(output, dict):
+        if "model" in output.keys():
+            return output["model"]
+    if isinstance(input, dict):
+        if "model" in input.keys():
+            return input["model"]
     return None
 
 
@@ -296,23 +314,28 @@ def extract_data_from_input(
     )
 
 
-def extract_usage_from_input_output(
+def extract_metadata_from_input_output(
     input: Union[RawDataType, str],
     output: Optional[Union[RawDataType, str]] = None,
     input_output_to_usage_function: Optional[
-        Callable[[Any, Any], Union[Usage, Dict[str, float]]]
+        Callable[[Any, Any], Dict[str, float]]
     ] = None,
-) -> Optional[Dict[str, float]]:
+) -> Dict[str, object]:
     """
     Extract usage from input and output.
     """
-    usage_model: Optional[Union[Dict[str, float], Usage]] = None
-    usage: Optional[Dict[str, float]] = None
-    if input_output_to_usage_function is None:
-        usage_model = detect_usage_from_input_output(input, output)
-    else:
-        usage_model = input_output_to_usage_function(input, output)
-    if isinstance(usage_model, pydantic.BaseModel):
-        usage = usage_model.model_dump()
+    metadata: Dict[str, object] = {}
 
-    return usage
+    if input_output_to_usage_function is None:
+        usage = detect_usage_from_input_output(input, output)
+
+    else:
+        usage = input_output_to_usage_function(input, output)
+    if usage is not None:
+        metadata.update(usage)
+
+    model = detect_model_from_input_output(input, output)
+    if model is not None:
+        metadata.update({"model": model})
+
+    return metadata
