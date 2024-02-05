@@ -167,6 +167,8 @@ def detect_usage_from_input_output(
     Returns a dict with keys `prompt_tokens`, `completion_tokens`, `total_tokens`.
     """
     # OpenAI-like API return the usage in the output
+    if isinstance(output, pydantic.BaseModel):
+        output = output.model_dump()
     if isinstance(output, dict):
         if "usage" in output.keys():
             return output["usage"]
@@ -320,7 +322,12 @@ def extract_metadata_from_input_output(
     ] = None,
 ) -> Dict[str, object]:
     """
-    Extract usage from input and output.
+    Extract metadata from input and output:
+
+    - usage (Optional[Dict[str, float]])
+        A dict with keys `prompt_tokens`, `completion_tokens`, `total_tokens`.
+    - model (Optional[str])
+        The model used to generate the output.
     """
     metadata: Dict[str, object] = {}
 
