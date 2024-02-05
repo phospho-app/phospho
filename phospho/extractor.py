@@ -1,12 +1,10 @@
 import logging
 import pydantic
 import json
-import tiktoken
 
 from typing import Union, Dict, Any, Tuple, Optional, Callable
 
 from .utils import filter_nonjsonable_keys, is_jsonable
-from .models import Usage
 
 RawDataType = Union[Dict[str, Any], pydantic.BaseModel]
 
