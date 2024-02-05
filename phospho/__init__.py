@@ -282,11 +282,13 @@ def _log_single_event(
                 existing_log_content["raw_output"] + log_content["raw_output"]
             )
         # For usage metrics in metadata, apply heuristics
+        fused_competion_tokens: Optional[int] = None
         if "completion_tokens" in log_content:
-            fused_competion_tokens: int = log_content["completion_tokens"]
+            fused_competion_tokens = log_content["completion_tokens"]
             fused_competion_tokens += existing_log_content.get("completion_tokens", 0)
+        fused_total_tokens: Optional[int] = None
         if "total_tokens" in log_content:
-            fused_total_tokens: int = log_content["total_tokens"]
+            fused_total_tokens = log_content["total_tokens"]
             fused_total_tokens += existing_log_content.get("total_tokens", 0)
 
         # Put all of this into a dict
@@ -298,9 +300,11 @@ def _log_single_event(
             # Concatenate the log event output strings
             "output": fused_output,
             "raw_output": fused_raw_output,
-            "completion_tokens": fused_competion_tokens,
-            "total_tokens": fused_total_tokens,
         }
+        if fused_competion_tokens is not None:
+            fused_log_content["completion_tokens"] = fused_competion_tokens
+        if fused_total_tokens is not None:
+            fused_log_content["total_tokens"] = fused_total_tokens
         # TODO : Turn this bool into a parametrizable list
         if concatenate_raw_outputs_if_task_id_exists:
             log_content.pop("raw_output")
