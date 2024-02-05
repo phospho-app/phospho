@@ -13,9 +13,14 @@ from .utils import (
     MutableGenerator,
     convert_content_to_loggable_content,
 )
-from .extractor import get_input_output, RawDataType
+from .extractor import (
+    extract_data_from_input,
+    extract_data_from_output,
+    extract_usage_from_input_output,
+    RawDataType,
+)
 from ._version import __version__
-from . import config, integrations
+from . import config, integrations, models
 from .testing import PhosphoTest
 
 __all__ = [
@@ -28,7 +33,7 @@ __all__ = [
     "filter_nonjsonable_keys",
     "is_jsonable",
     "__version__",
-    "get_input_output",
+    "extract_data_from_input_output",
     "RawDataType",
     "MutableAsyncGenerator",
     "MutableGenerator",
@@ -153,8 +158,11 @@ def _log_single_event(
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
+    input_output_to_usage_function: Optional[
+        Callable[[Any, Any], Union[models.Usage, Dict[str, float]]]
+    ] = None,
     to_log: bool = True,
-    **kwargs: Dict[str, Any],
+    **kwargs: Any,
 ) -> Dict[str, object]:
     """Log a single event.
 
@@ -179,16 +187,24 @@ def _log_single_event(
     # Process the input and output to convert them to dict
     (
         input_to_log,
-        output_to_log,
         raw_input_to_log,
+    ) = extract_data_from_input(
+        input=input,
+        raw_input=raw_input,
+        input_to_str_function=input_to_str_function,
+    )
+    (
+        output_to_log,
         raw_output_to_log,
-    ) = get_input_output(
+    ) = extract_data_from_output(
+        output=output,
+        raw_output=raw_output,
+        output_to_str_function=output_to_str_function,
+    )
+    usage_to_log = extract_usage_from_input_output(
         input=input,
         output=output,
-        raw_input=raw_input,
-        raw_output=raw_output,
-        input_to_str_function=input_to_str_function,
-        output_to_str_function=output_to_str_function,
+        input_output_to_usage_function=input_output_to_usage_function,
     )
 
     # Task: use the task_id parameter, the task_id infered from inputs, or generate one
@@ -221,6 +237,7 @@ def _log_single_event(
         "raw_output": raw_output_to_log,
         "raw_output_type_name": type(output).__name__,
         # other
+        "usage": usage_to_log,
         **kwargs_to_log,
     }
 
@@ -264,6 +281,8 @@ def _log_single_event(
             fused_raw_output = (
                 existing_log_content["raw_output"] + log_content["raw_output"]
             )
+        # If usage in metadata, sum the usage
+
         # Put all of this into a dict
         fused_log_content = {
             # Replace creation timestamp by the original one
@@ -402,12 +421,16 @@ def log(
     session_id: Optional[str] = None,
     task_id: Optional[str] = None,
     version_id: Optional[str] = None,
+    user_id: Optional[str] = None,
     raw_input: Optional[RawDataType] = None,
     raw_output: Optional[RawDataType] = None,
     # todo: group those into "transformation"
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
+    output_to_usage_function: Optional[
+        Callable[[Any], Union[models.Usage, Dict[str, float]]]
+    ] = None,
     stream: bool = False,
     **kwargs: Dict[str, Any],
 ) -> Optional[Dict[str, object]]:
@@ -431,6 +454,12 @@ def log(
 
     `version_id` is used for A/B testing. It is a string that identifies the version of the
     code that generated the log. For example, "v1.0.0" or "test".
+
+    `user_id` is used to identify the user. For example, a user's email.
+
+    `output_to_usage_function` is used to count the number of tokens in prompt and in completion.
+    It takes output as a value and returns a `Usage` object, or a dict with keys `prompt_tokens`,
+    `completion_tokens`, `total_tokens`.
 
     `stream` is used to log a stream of data. For example, a generator. If `stream=True`, then
     `phospho.log` returns a generator that also logs every individual output. See `phospho.wrap`
@@ -477,6 +506,7 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
                 # do not put output in the metadata, as it will change with __next__
                 "session_id": session_id,
                 "task_id": task_id,  # Mark these with the same, custom task_id
+                "user_id": user_id,
                 "version_id": version_id,
                 "raw_input": raw_input,
                 "raw_output": raw_output,
@@ -507,6 +537,7 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
         output=output,
         session_id=session_id,
         task_id=task_id,
+        user_id=user_id,
         version_id=version_id,
         raw_input=raw_input,
         raw_output=raw_output,
@@ -793,3 +824,12 @@ def user_feedback(
     current_task = Task(client=client, task_id=task_id, _content=None)
     updated_task = current_task.update(flag=flag, flag_source=source, notes=notes)
     return updated_task
+
+
+def flush() -> None:
+    """
+    Flush the log_queue. This will send all the logs to phospho.
+    """
+    global consumer
+
+    consumer.send_batch()
