@@ -65,8 +65,3 @@ class Comparison(BaseModel):
     new_output: str
     comparison_result: ComparisonResults
     source: str
-
-class Usage(BaseModel):
-    prompt_tokens: int
-    completion_tokens: int 
-    total_tokens: int
