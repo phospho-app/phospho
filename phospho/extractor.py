@@ -1,10 +1,12 @@
 import logging
 import pydantic
 import json
+import tiktoken
 
 from typing import Union, Dict, Any, Tuple, Optional, Callable
 
 from .utils import filter_nonjsonable_keys, is_jsonable
+from .models import Usage
 
 RawDataType = Union[Dict[str, Any], pydantic.BaseModel]
 
@@ -160,48 +162,41 @@ def detect_str_from_output(output: RawDataType) -> str:
     return str(output)
 
 
-def get_input_output(
-    input: Union[RawDataType, str],
+def detect_usage_from_input_output(input: Any, output: Any) -> Optional[Usage]:
+    # OpenAI-like API return the usage in the output
+    if isinstance(output, dict):
+        if "usage" in output.keys():
+            try:
+                usage = Usage.model_validate(output["usage"])
+            except Exception as e:
+                pass
+            return usage
+    return None
+
+
+def extract_data_from_output(
     output: Optional[Union[RawDataType, str]] = None,
-    raw_input: Optional[RawDataType] = None,
     raw_output: Optional[RawDataType] = None,
-    input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
 ) -> Tuple[
-    str,
     Optional[str],
-    Optional[Union[Dict[str, object], str]],
     Optional[Union[Dict[str, object], str]],
 ]:
     """
     Convert any supported data type to standard, loggable inputs and outputs.
 
-    :param input:
-        The input content to be logged. Can be a string, a dict, or a Pydantic model.
-
     :param output:
         The output content to be logged. Can be a string, a dict, a Pydantic model, or None.
 
-    :param raw_input:
-        Will be separately logged in raw_input_to_log if specified.
-
     :param raw_output:
         Will be separately logged in raw_output_to_log if specified.
-
-    :param input_to_str_function:
 
     :param output_to_str_function:
 
 
     :return:
-    - input_to_log _(str)_ -
-        A string representation of the input.
-
     - output_to_log _(Optional[str])_ -
         A string representation of the output, or None if no output is specified.
-
-    - raw_input_to_log _(Optional[Dict[str, object]])_ -
-        A dict representation of the input, raw_input if specified, or None if input is a str.
 
     - raw_output_to_log _(Optional[Dict[str, object]])_ -
         A dict representation of the output, raw_output if specified, or None if output is a str.
@@ -209,33 +204,10 @@ def get_input_output(
     """
 
     # Default functions to extract string from input and output
-    if input_to_str_function is None:
-        input_to_str_function = detect_str_from_input
     if output_to_str_function is None:
         output_to_str_function = detect_str_from_output
 
-    # To avoid mypy errors
-    raw_input_to_log: Optional[Union[Dict[str, object], str]] = None
     raw_output_to_log: Optional[Union[Dict[str, object], str]] = None
-
-    # Extract a string representation from input
-    if isinstance(input, str):
-        input_to_log = input
-        raw_input_to_log = input
-    else:
-        # Extract input str representation from input
-        input_to_log = input_to_str_function(input)
-        if not is_jsonable(input):
-            raw_input_to_log = filter_nonjsonable_keys(convert_to_dict(input))
-        else:
-            raw_input_to_log = input
-
-    # If raw input is specified, override
-    if raw_input is not None:
-        if not is_jsonable(raw_input):
-            raw_input_to_log = filter_nonjsonable_keys(convert_to_dict(raw_input))
-        else:
-            raw_input_to_log = raw_input
 
     if output is not None:
         # Extract a string representation from output
@@ -259,8 +231,88 @@ def get_input_output(
             raw_output_to_log = raw_output
 
     return (
-        input_to_log,
         output_to_log,
-        raw_input_to_log,
         raw_output_to_log,
     )
+
+
+def extract_data_from_input(
+    input: Union[RawDataType, str],
+    raw_input: Optional[RawDataType] = None,
+    input_to_str_function: Optional[Callable[[Any], str]] = None,
+) -> Tuple[
+    str,
+    Optional[Union[Dict[str, object], str]],
+]:
+    """
+    Convert any supported data type to standard, loggable inputs.
+
+    :param input:
+        The input content to be logged. Can be a string, a dict, or a Pydantic model.
+
+    :param raw_input:
+        Will be separately logged in raw_input_to_log if specified.
+
+    :param input_to_str_function:
+
+
+    :return:
+    - input_to_log _(str)_ -
+        A string representation of the input.
+
+    - raw_input_to_log _(Optional[Dict[str, object]])_ -
+        A dict representation of the input, raw_input if specified, or None if input is a str.
+
+    """
+
+    # Default functions to extract string from input and output
+    if input_to_str_function is None:
+        input_to_str_function = detect_str_from_input
+
+    raw_input_to_log: Optional[Union[Dict[str, object], str]] = None
+
+    # Extract a string representation from input
+    if isinstance(input, str):
+        input_to_log = input
+        raw_input_to_log = input
+    else:
+        # Extract input str representation from input
+        input_to_log = input_to_str_function(input)
+        if not is_jsonable(input):
+            raw_input_to_log = filter_nonjsonable_keys(convert_to_dict(input))
+        else:
+            raw_input_to_log = input
+
+    # If raw input is specified, override
+    if raw_input is not None:
+        if not is_jsonable(raw_input):
+            raw_input_to_log = filter_nonjsonable_keys(convert_to_dict(raw_input))
+        else:
+            raw_input_to_log = raw_input
+
+    return (
+        input_to_log,
+        raw_input_to_log,
+    )
+
+
+def extract_usage_from_input_output(
+    input: Union[RawDataType, str],
+    output: Optional[Union[RawDataType, str]] = None,
+    input_output_to_usage_function: Optional[
+        Callable[[Any, Any], Union[Usage, Dict[str, float]]]
+    ] = None,
+) -> Optional[Dict[str, float]]:
+    """
+    Extract usage from input and output.
+    """
+    usage_model: Optional[Union[Dict[str, float], Usage]] = None
+    usage: Optional[Dict[str, float]] = None
+    if input_output_to_usage_function is None:
+        usage_model = detect_usage_from_input_output(input, output)
+    else:
+        usage_model = input_output_to_usage_function(input, output)
+    if isinstance(usage_model, pydantic.BaseModel):
+        usage = usage_model.model_dump()
+
+    return usage
