@@ -52,6 +52,7 @@ __all__ = [
 ]
 
 import logging
+import pydantic
 
 from copy import deepcopy
 from typing import (
@@ -585,6 +586,13 @@ def _wrap(
                         return True
                     if choices[0].get("delta", {}).get("content", None) is None:
                         return True
+            if isinstance(x, pydantic.BaseModel):
+                try:
+                    finish_reason = x.choices[0].finish_reason
+                    if finish_reason is not None:
+                        return True
+                except Exception as e:
+                    pass
             return False
 
         stop = default_stop_function
