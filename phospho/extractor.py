@@ -144,13 +144,13 @@ def detect_str_from_output(output: RawDataType) -> str:
                         return str(content)
                 else:
                     # ChatCompletionChunk (streaming)
-                    choice_delta = choices[0].get("delta", None)
+                    choice_delta = choices[0].get("delta", {})
                     content = choice_delta.get("content", None)
                     if content is not None:
                         return str(content)
-            else:
-                # None content = end of generation stream
-                return ""
+                    else:
+                        # None content = end of generation stream
+                        return ""
 
         # Ollama outputs
         if "response" in output.keys():
