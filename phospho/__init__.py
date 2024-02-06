@@ -13,9 +13,14 @@ from .utils import (
     MutableGenerator,
     convert_content_to_loggable_content,
 )
-from .extractor import get_input_output, RawDataType
+from .extractor import (
+    extract_data_from_input,
+    extract_data_from_output,
+    extract_metadata_from_input_output,
+    RawDataType,
+)
 from ._version import __version__
-from . import config, integrations
+from . import config, integrations, models
 from .testing import PhosphoTest
 
 __all__ = [
@@ -28,7 +33,7 @@ __all__ = [
     "filter_nonjsonable_keys",
     "is_jsonable",
     "__version__",
-    "get_input_output",
+    "extract_data_from_input_output",
     "RawDataType",
     "MutableAsyncGenerator",
     "MutableGenerator",
@@ -47,6 +52,7 @@ __all__ = [
 ]
 
 import logging
+import pydantic
 
 from copy import deepcopy
 from typing import (
@@ -153,8 +159,11 @@ def _log_single_event(
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
+    input_output_to_usage_function: Optional[
+        Callable[[Any, Any], Dict[str, float]]
+    ] = None,
     to_log: bool = True,
-    **kwargs: Dict[str, Any],
+    **kwargs: Any,
 ) -> Dict[str, object]:
     """Log a single event.
 
@@ -179,16 +188,24 @@ def _log_single_event(
     # Process the input and output to convert them to dict
     (
         input_to_log,
-        output_to_log,
         raw_input_to_log,
+    ) = extract_data_from_input(
+        input=input,
+        raw_input=raw_input,
+        input_to_str_function=input_to_str_function,
+    )
+    (
+        output_to_log,
         raw_output_to_log,
-    ) = get_input_output(
+    ) = extract_data_from_output(
+        output=output,
+        raw_output=raw_output,
+        output_to_str_function=output_to_str_function,
+    )
+    metadata_to_log = extract_metadata_from_input_output(
         input=input,
         output=output,
-        raw_input=raw_input,
-        raw_output=raw_output,
-        input_to_str_function=input_to_str_function,
-        output_to_str_function=output_to_str_function,
+        input_output_to_usage_function=input_output_to_usage_function,
     )
 
     # Task: use the task_id parameter, the task_id infered from inputs, or generate one
@@ -213,7 +230,7 @@ def _log_single_event(
         "session_id": session_id,  # Note: can be None
         "task_id": task_id,
         # input
-        "input": str(input_to_log),
+        "input": input_to_log,
         "raw_input": raw_input_to_log,
         "raw_input_type_name": type(input).__name__,
         # output
@@ -221,6 +238,7 @@ def _log_single_event(
         "raw_output": raw_output_to_log,
         "raw_output_type_name": type(output).__name__,
         # other
+        **metadata_to_log,
         **kwargs_to_log,
     }
 
@@ -264,6 +282,16 @@ def _log_single_event(
             fused_raw_output = (
                 existing_log_content["raw_output"] + log_content["raw_output"]
             )
+        # For usage metrics in metadata, apply heuristics
+        fused_completion_tokens: Optional[int] = None
+        if "completion_tokens" in log_content:
+            fused_completion_tokens = log_content["completion_tokens"]
+            fused_completion_tokens += existing_log_content.get("completion_tokens", 0)
+        fused_total_tokens: Optional[int] = None
+        if "total_tokens" in log_content:
+            fused_total_tokens = log_content["total_tokens"]
+            fused_total_tokens += existing_log_content.get("total_tokens", 0)
+
         # Put all of this into a dict
         fused_log_content = {
             # Replace creation timestamp by the original one
@@ -274,6 +302,10 @@ def _log_single_event(
             "output": fused_output,
             "raw_output": fused_raw_output,
         }
+        if fused_completion_tokens is not None:
+            fused_log_content["completion_tokens"] = fused_completion_tokens
+        if fused_total_tokens is not None:
+            fused_log_content["total_tokens"] = fused_total_tokens
         # TODO : Turn this bool into a parametrizable list
         if concatenate_raw_outputs_if_task_id_exists:
             log_content.pop("raw_output")
@@ -402,12 +434,14 @@ def log(
     session_id: Optional[str] = None,
     task_id: Optional[str] = None,
     version_id: Optional[str] = None,
+    user_id: Optional[str] = None,
     raw_input: Optional[RawDataType] = None,
     raw_output: Optional[RawDataType] = None,
     # todo: group those into "transformation"
     input_to_str_function: Optional[Callable[[Any], str]] = None,
     output_to_str_function: Optional[Callable[[Any], str]] = None,
     concatenate_raw_outputs_if_task_id_exists: bool = True,
+    input_output_to_usage_function: Optional[Callable[[Any], Dict[str, float]]] = None,
     stream: bool = False,
     **kwargs: Dict[str, Any],
 ) -> Optional[Dict[str, object]]:
@@ -431,6 +465,12 @@ def log(
 
     `version_id` is used for A/B testing. It is a string that identifies the version of the
     code that generated the log. For example, "v1.0.0" or "test".
+
+    `user_id` is used to identify the user. For example, a user's email.
+
+    `input_output_to_usage_function` is used to count the number of tokens in prompt and in completion.
+    It takes (input, output) as a value and returns a dict with keys `prompt_tokens`, `completion_tokens`,
+    `total_tokens`.
 
     `stream` is used to log a stream of data. For example, a generator. If `stream=True`, then
     `phospho.log` returns a generator that also logs every individual output. See `phospho.wrap`
@@ -477,11 +517,13 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
                 # do not put output in the metadata, as it will change with __next__
                 "session_id": session_id,
                 "task_id": task_id,  # Mark these with the same, custom task_id
+                "user_id": user_id,
                 "version_id": version_id,
                 "raw_input": raw_input,
                 "raw_output": raw_output,
                 "input_to_str_function": input_to_str_function,
                 "output_to_str_function": output_to_str_function,
+                "input_output_to_usage_function": input_output_to_usage_function,
                 "concatenate_raw_outputs_if_task_id_exists": concatenate_raw_outputs_if_task_id_exists,
             }
             # Return the log:
@@ -507,11 +549,13 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
         output=output,
         session_id=session_id,
         task_id=task_id,
+        user_id=user_id,
         version_id=version_id,
         raw_input=raw_input,
         raw_output=raw_output,
         input_to_str_function=input_to_str_function,
         output_to_str_function=output_to_str_function,
+        input_output_to_usage_function=input_output_to_usage_function,
         concatenate_raw_outputs_if_task_id_exists=concatenate_raw_outputs_if_task_id_exists,
         to_log=True,
         **kwargs,
@@ -531,8 +575,27 @@ def _wrap(
     """
     # Stop is the stopping criterion for streaming mode
     if stop is None:
-        # Default behaviour = stop when None is returned
-        stop = lambda x: x is None
+
+        def default_stop_function(x: Any) -> bool:
+            if x is None:
+                return True
+            if isinstance(x, dict):
+                choices = x.get("choices", [])
+                if len(choices) > 0:
+                    if choices[0].get("finish_reason", None) is not None:
+                        return True
+                    if choices[0].get("delta", {}).get("content", None) is None:
+                        return True
+            if isinstance(x, pydantic.BaseModel):
+                try:
+                    finish_reason = x.choices[0].finish_reason
+                    if finish_reason is not None:
+                        return True
+                except Exception as e:
+                    pass
+            return False
+
+        stop = default_stop_function
 
     def streamed_function_wrapper(
         func_args: Iterable[Any],
@@ -793,3 +856,12 @@ def user_feedback(
     current_task = Task(client=client, task_id=task_id, _content=None)
     updated_task = current_task.update(flag=flag, flag_source=source, notes=notes)
     return updated_task
+
+
+def flush() -> None:
+    """
+    Flush the log_queue. This will send all the logs to phospho.
+    """
+    global consumer
+
+    consumer.send_batch()
