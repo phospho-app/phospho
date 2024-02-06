@@ -229,7 +229,7 @@ def _log_single_event(
         "session_id": session_id,  # Note: can be None
         "task_id": task_id,
         # input
-        "input": str(input_to_log),
+        "input": input_to_log,
         "raw_input": raw_input_to_log,
         "raw_input_type_name": type(input).__name__,
         # output
@@ -574,8 +574,20 @@ def _wrap(
     """
     # Stop is the stopping criterion for streaming mode
     if stop is None:
-        # Default behaviour = stop when None is returned
-        stop = lambda x: x is None
+
+        def default_stop_function(x: Any) -> bool:
+            if x is None:
+                return True
+            if isinstance(x, dict):
+                choices = x.get("choices", [])
+                if len(choices) > 0:
+                    if choices[0].get("finish_reason", None) is not None:
+                        return True
+                    if choices[0].get("delta", {}).get("content", None) is None:
+                        return True
+            return False
+
+        stop = default_stop_function
 
     def streamed_function_wrapper(
         func_args: Iterable[Any],
