@@ -283,10 +283,10 @@ def _log_single_event(
                 existing_log_content["raw_output"] + log_content["raw_output"]
             )
         # For usage metrics in metadata, apply heuristics
-        fused_competion_tokens: Optional[int] = None
+        fused_completion_tokens: Optional[int] = None
         if "completion_tokens" in log_content:
-            fused_competion_tokens = log_content["completion_tokens"]
-            fused_competion_tokens += existing_log_content.get("completion_tokens", 0)
+            fused_completion_tokens = log_content["completion_tokens"]
+            fused_completion_tokens += existing_log_content.get("completion_tokens", 0)
         fused_total_tokens: Optional[int] = None
         if "total_tokens" in log_content:
             fused_total_tokens = log_content["total_tokens"]
@@ -302,8 +302,8 @@ def _log_single_event(
             "output": fused_output,
             "raw_output": fused_raw_output,
         }
-        if fused_competion_tokens is not None:
-            fused_log_content["completion_tokens"] = fused_competion_tokens
+        if fused_completion_tokens is not None:
+            fused_log_content["completion_tokens"] = fused_completion_tokens
         if fused_total_tokens is not None:
             fused_log_content["total_tokens"] = fused_total_tokens
         # TODO : Turn this bool into a parametrizable list
