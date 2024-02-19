@@ -49,7 +49,6 @@ class Consumer(Thread):
 
     def send_batch(self) -> None:
         batch = self.log_queue.get_batch()
-        logger.debug(f"Batch: {batch}")
 
         if len(batch) > 0:
             logger.debug(f"Sending {len(batch)} log events to {self.client.base_url}")
