@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, List, Literal, Union
+from typing import Dict, Iterable, Literal, Optional, Union
 import yaml
 
 import phospho.lab.job_library as job_library
@@ -41,13 +41,16 @@ class Job:
 
 
 class Laboratory:
-    def __init__(self):
+    def __init__(self, config: Optional[dict] = None):
         """
         The Laboratory is a setup of jobs that can be run on messages.
         """
-        # Read the configuration file
-        with open("phospho-config.yaml") as f:
-            self.config = yaml.load(f, Loader=yaml.FullLoader)
+        if config is None:
+            # Read the configuration file
+            with open("phospho-config.yaml") as f:
+                self.config = yaml.load(f, Loader=yaml.FullLoader)
+        else:
+            self.config = config
 
         # Create the jobs from the configuration
         self.jobs = []
@@ -78,10 +81,10 @@ class Laboratory:
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
                     # executor.map(self.evaluate_a_task, task_to_evaluate)
-                    executor.map(job, message)
+                    executor.map(job.job_function, message)
             elif executor_type == "sequential":
-                for once_message in message:
-                    job(once_message)
+                for one_message in message:
+                    job.job_function(one_message)
             elif executor_type == "async":
                 raise NotImplementedError(
                     f"Executor type {executor_type} is not implemented"
