@@ -15,6 +15,7 @@ openai_client = openai.Client()
 def prompt_to_bool(
     message: Message,
     prompt: str,
+    message_context: Optional[str] = None,
     format_kwargs: Optional[dict] = None,
     model: str = "gpt-3.5-turbo",
 ) -> JobResult:
@@ -31,7 +32,9 @@ def prompt_to_bool(
             {
                 "role": "user",
                 "content": prompt.format(
-                    message_content=message.content, **format_kwargs
+                    message_content=message.content,
+                    message_context=message_context,
+                    **format_kwargs,
                 ),
             },
         ],
@@ -56,6 +59,7 @@ def prompt_to_literal(
     message: Message,
     prompt: str,
     output_literal: List[str],
+    message_context: Optional[str] = None,
     format_kwargs: Optional[dict] = None,
     model: str = "gpt-3.5-turbo",
 ) -> JobResult:
@@ -72,7 +76,9 @@ def prompt_to_literal(
             {
                 "role": "user",
                 "content": prompt.format(
-                    message_content=message.content, **format_kwargs
+                    message_content=message.content,
+                    message_context=message_context,
+                    **format_kwargs,
                 ),
             },
         ],
