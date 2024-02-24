@@ -35,6 +35,9 @@ class Job:
         """
         Run the job on the message.
         """
+        # TODO: Infer for each message its context (if any)
+        # The context is the previous messages of the session
+
         result = self.job_function(message, **self.params)
         self.job_results[message.id] = result
         return result
@@ -75,17 +78,17 @@ class Laboratory:
         if isinstance(message, Message):
             message = [message]
 
-        # Run all the experiments in parallel for each message
+        # Run the jobs sequentially on every message
         for job in self.jobs:
             if executor_type == "parallel":
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
                     # executor.map(self.evaluate_a_task, task_to_evaluate)
-                    executor.map(job.job_function, message)
+                    executor.map(job.run, message)
             elif executor_type == "sequential":
                 for one_message in message:
-                    job.job_function(one_message)
-            elif executor_type == "async":
+                    job.run(one_message)
+            else:
                 raise NotImplementedError(
                     f"Executor type {executor_type} is not implemented"
                 )
