@@ -1,14 +1,14 @@
 import asyncio
-import nest_asyncio
-
-import logging
 import concurrent.futures
+import logging
 from typing import Callable, Dict, Iterable, List, Literal, Optional, Union
 
+import nest_asyncio
 
 import phospho.lab.job_library as job_library
 
-from .models import Any, JobResult, Message, ResultType
+from .models import Any, EmptyConfig, JobConfig, JobResult, Message, ResultType
+from .utils import generate_configurations
 
 # This is a workaround to avoid the error "RuntimeError: This event loop is already running" in jupyter notebooks
 nest_asyncio.apply()
@@ -19,6 +19,11 @@ class Job:
     job_id: str
     params: Dict[str, Any]
     job_results: Dict[str, JobResult]
+    job_predictions: Dict[str, Dict[str, JobResult]]
+    job_config: JobConfig  # Stores the current config and the possible config values as an instanciated pydantic object
+    job_configurations: Dict[
+        str, JobConfig
+    ]  # Stores all the possible config from the model
     job_function: Union[
         Callable[..., JobResult],
         Callable[..., asyncio.Future[JobResult]],  # For async jobs
@@ -30,6 +35,7 @@ class Job:
         job_name: Optional[str] = None,
         job_id: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
+        job_config: JobConfig = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
@@ -61,6 +67,16 @@ class Job:
         # message.id -> job_result
         self.job_results: Dict[str, JobResult] = {}
 
+        # If the config values are provided, store them
+        if job_config is not None:
+            self.job_config = job_config
+            # generate all the possible configuration from the model
+            self.job_configurations = generate_configurations(self.job_config)
+        else:
+            logger.warning("No job_config provided. Running with empty config")
+            self.job_config = EmptyConfig()
+            self.job_configurations = generate_configurations(self.job_config)
+
     def run(self, message: Message) -> JobResult:
         """
         Run the job on the message.
@@ -69,9 +85,19 @@ class Job:
         # The context is the previous messages of the session
 
         if asyncio.iscoroutinefunction(self.job_function):
-            result = asyncio.run(self.job_function(message, **self.params))
+            result = asyncio.run(
+                self.job_function(
+                    message,
+                    **self.params,
+                    job_config=self.job_config,
+                )
+            )
         else:
-            result = self.job_function(message, **self.params)
+            result = self.job_function(
+                message,
+                **self.params,
+                job_config=self.job_config,
+            )
 
         if result is None:
             logger.error(f"Job {self.job_id} returned None for message {message.id}.")
