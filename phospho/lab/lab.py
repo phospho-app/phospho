@@ -1,14 +1,17 @@
-import logging
+import asyncio
 import concurrent.futures
+import logging
 from typing import Callable, Dict, Iterable, List, Literal, Optional, Union
 
-import yaml
+import nest_asyncio
 
 import phospho.lab.job_library as job_library
 
-from .models import Any, JobResult, Message, JobConfig, EmptyConfig
+from .models import Any, EmptyConfig, JobConfig, JobResult, Message, ResultType
 from .utils import generate_configurations
 
+# This is a workaround to avoid the error "RuntimeError: This event loop is already running" in jupyter notebooks
+nest_asyncio.apply()
 logger = logging.getLogger(__name__)
 
 
@@ -21,6 +24,10 @@ class Job:
     job_configurations: Dict[
         str, JobConfig
     ]  # Stores all the possible config from the model
+    job_function: Union[
+        Callable[..., JobResult],
+        Callable[..., asyncio.Future[JobResult]],  # For async jobs
+    ]
 
     def __init__(
         self,
@@ -77,11 +84,29 @@ class Job:
         # TODO: Infer for each message its context (if any)
         # The context is the previous messages of the session
 
-        result = self.job_function(
-            message,
-            **self.params,
-            job_config=self.job_config,
-        )
+        if asyncio.iscoroutinefunction(self.job_function):
+            result = asyncio.run(
+                self.job_function(
+                    message,
+                    **self.params,
+                    job_config=self.job_config,
+                )
+            )
+        else:
+            result = self.job_function(
+                message,
+                **self.params,
+                job_config=self.job_config,
+            )
+
+        if result is None:
+            logger.error(f"Job {self.job_id} returned None for message {message.id}.")
+            result = JobResult(
+                job_id=self.job_id,
+                result_type=ResultType.error,
+                value=None,
+            )
+
         self.job_results[message.id] = result
         return result
 
@@ -115,6 +140,7 @@ class Workload:
         """
         Create a Workload from a configuration dictionary.
         """
+
         workload = cls()
         # Create the jobs from the configuration
         # TODO : Adds some kind of validation
@@ -133,8 +159,15 @@ class Workload:
         """
         Create a Workload from a configuration file.
         """
-        with open(config_filename) as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
+        if config_filename.endswith(".yaml") or config_filename.endswith(".yml"):
+            import yaml
+
+            with open(config_filename) as f:
+                config = yaml.load(f, Loader=yaml.FullLoader)
+        else:
+            raise NotImplementedError(
+                f"File extension {config_filename.split('.')[-1]} is not supported. Use .from_config() instead."
+            )
         return cls.from_config(config)
 
     def run(
