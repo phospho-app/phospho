@@ -1,4 +1,3 @@
-from .agent import Agent
 from .client import Client
 from .consumer import Consumer
 from .log_queue import LogQueue, Event

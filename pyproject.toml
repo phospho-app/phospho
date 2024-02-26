@@ -12,6 +12,7 @@ keywords = ['LLM', 'Agents', 'gen ai', 'phospho', 'analytics', 'observability']
 python = ">=3.8,<4.0"
 requests = "^2.31.0"
 pydantic = "^2.5.2"
+nest-asyncio = "^1.6.0"
 
 [tool.poetry.group.dev]
 optional = true
