@@ -479,7 +479,7 @@ class PhosphoTest:
         # Start timer
         start_time = time.time()
 
-        self.test = self.client.create_test(
+        test = self.client.create_test(
             summary={
                 function_name: {
                     "source_loader": function_to_eval["source_loader"],
@@ -489,9 +489,9 @@ class PhosphoTest:
                 for function_name, function_to_eval in self.functions_to_evaluate.items()
             }
         )
-        self.test_id = self.test.id
-        print(f"Starting test: {self.test_id}")
-        os.environ["PHOSPHO_TEST_ID"] = self.test_id
+        test_id = test.id
+        print(f"Starting test: {test_id}")
+        os.environ["PHOSPHO_TEST_ID"] = test_id
 
         for function_name, function_to_eval in self.functions_to_evaluate.items():
             print(f"Running tests for: {function_name}")
@@ -556,7 +556,7 @@ class PhosphoTest:
                     )
                 else:
                     raise NotImplementedError(
-                        f"Executor type {self.executor_type} is not implemented"
+                        f"Executor type {executor_type} is not implemented"
                     )
 
                 if metric == "evaluate":
@@ -572,6 +572,6 @@ class PhosphoTest:
         print(f"Test id: {self.test_id}")
         print("Waiting for evaluation to finish...")
         # Mark the test as completed and get results
-        test_result = self.client.update_test(test_id=self.test_id, status="completed")
+        test_result = self.client.update_test(test_id=test_id, status="completed")
         print("Test result:")
         pprint(test_result.model_dump())
