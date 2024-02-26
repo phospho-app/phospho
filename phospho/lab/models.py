@@ -1,7 +1,9 @@
-from pydantic import BaseModel, Field
-from phospho.utils import generate_timestamp, generate_uuid
-from typing import Any, Optional, List
 from enum import Enum
+from typing import Any, List, Literal, Optional
+
+from pydantic import BaseModel, Field
+
+from phospho.utils import generate_timestamp, generate_uuid
 
 
 class Message(BaseModel):
@@ -95,4 +97,27 @@ class JobResult(BaseModel):
     result_type: ResultType
     value: Any
     logs: List[Any] = Field(default_factory=list)
+
+
+class EmptyConfig(BaseModel):
+    pass
+
+
+# Custom configuration class for our implementation of the lab
+# If you wish not to use any config, you can use the EmptyConfig class
+# You need to pass default values for each parameter
+class JobConfig(BaseModel):
+    pass
+
+
+### CUSTOM MODELS ##
+
+
+class EventDetectionConfig(JobConfig):
+    model: Literal["gpt-4", "gpt-3.5-turbo"] = "gpt-4"  # OpenAI model name
+    # instruction: str
+
+
+class EvalConfig(JobConfig):
+    model: Literal["gpt-4", "gpt-3.5-turbo"] = "gpt-4"  # OpenAI model name
     metadata: dict = Field(default_factory=dict)

@@ -4,14 +4,16 @@ Each job is a function that takes a message and a set of parameters and returns 
 The result is a JobResult object.
 """
 
+import logging
 import random
+import time
 from typing import List, Literal, Optional, cast
-from .models import Message, JobResult, ResultType
+
+import openai
+
 from phospho import config
 
-import time
-import openai
-import logging
+from .models import JobConfig, JobResult, Message, ResultType
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +27,7 @@ def prompt_to_bool(
     prompt: str,
     format_kwargs: Optional[dict] = None,
     model: str = "gpt-3.5-turbo",
+    job_config: JobConfig = JobConfig(),
 ) -> JobResult:
     """
     Runs a prompt on a message and returns a boolean result.
@@ -38,7 +41,7 @@ def prompt_to_bool(
         **format_kwargs,
     )
     response = openai_client.chat.completions.create(
-        model=model,
+        model=job_config.model,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {
@@ -70,6 +73,7 @@ def prompt_to_literal(
     output_literal: List[str],
     format_kwargs: Optional[dict] = None,
     model: str = "gpt-3.5-turbo",
+    job_config: JobConfig = JobConfig(),
 ) -> JobResult:
     """
     Runs a prompt on a message and returns a str from the list ouput_literal.
@@ -85,7 +89,7 @@ def prompt_to_literal(
         **format_kwargs,
     )
     response = openai_client.chat.completions.create(
-        model=model,
+        model=job_config.model,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {
