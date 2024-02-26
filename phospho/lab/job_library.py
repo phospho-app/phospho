@@ -5,7 +5,7 @@ The result is a JobResult object.
 """
 
 from typing import List, Optional
-from .models import Message, JobResult
+from .models import Message, JobResult, JobConfig
 
 import openai
 
@@ -19,6 +19,7 @@ def prompt_to_bool(
     message_context: Optional[str] = None,
     format_kwargs: Optional[dict] = None,
     model: str = "gpt-3.5-turbo",
+    job_config: JobConfig = JobConfig(),
 ) -> JobResult:
     """
     Runs a prompt on a message and returns a boolean result.
@@ -32,7 +33,7 @@ def prompt_to_bool(
         **format_kwargs,
     )
     response = openai_client.chat.completions.create(
-        model=model,
+        model=job_config.model,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {
@@ -65,6 +66,7 @@ def prompt_to_literal(
     message_context: Optional[str] = None,
     format_kwargs: Optional[dict] = None,
     model: str = "gpt-3.5-turbo",
+    job_config: JobConfig = JobConfig(),
 ) -> JobResult:
     """
     Runs a prompt on a message and returns a str from the list ouput_literal.
@@ -78,7 +80,7 @@ def prompt_to_literal(
         **format_kwargs,
     )
     response = openai_client.chat.completions.create(
-        model=model,
+        model=job_config.model,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {

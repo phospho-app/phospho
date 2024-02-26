@@ -1,3 +1,4 @@
+import logging
 import concurrent.futures
 from typing import Callable, Dict, Iterable, List, Literal, Optional, Union
 
@@ -5,7 +6,10 @@ import yaml
 
 import phospho.lab.job_library as job_library
 
-from .models import Any, JobResult, Message, JobConfig
+from .models import Any, JobResult, Message, JobConfig, EmptyConfig
+from .utils import generate_configurations
+
+logger = logging.getLogger(__name__)
 
 
 class Job:
@@ -13,7 +17,10 @@ class Job:
     params: Dict[str, Any]
     job_results: Dict[str, JobResult]
     job_predictions: Dict[str, Dict[str, JobResult]]
-    job_config: JobConfig  # Stores the current config and the possible config values. Can be None.
+    job_config: JobConfig  # Stores the current config and the possible config values as an instanciated pydantic object
+    job_configurations: Dict[
+        str, JobConfig
+    ]  # Stores all the possible config from the model
 
     def __init__(
         self,
@@ -21,7 +28,7 @@ class Job:
         job_name: Optional[str] = None,
         job_id: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
-        config_values: Dict[str, List[Any]] = None,
+        job_config: JobConfig = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
@@ -54,14 +61,14 @@ class Job:
         self.job_results: Dict[str, JobResult] = {}
 
         # If the config values are provided, store them
-        if config_values is not None:
-            # For each config value, we consider the first one to be the desired conig value
-            current_config = {k: v[0] for k, v in config_values.items()}
-            self.job_config = JobConfig(
-                current_config=current_config, config_values=config_values
-            )
+        if job_config is not None:
+            self.job_config = job_config
+            # generate all the possible configuration from the model
+            self.job_configurations = generate_configurations(self.job_config)
         else:
-            self.job_config = None
+            logger.warning("No job_config provided. Running with empty config")
+            self.job_config = EmptyConfig()
+            self.job_configurations = generate_configurations(self.job_config)
 
     def run(self, message: Message) -> JobResult:
         """
@@ -70,7 +77,11 @@ class Job:
         # TODO: Infer for each message its context (if any)
         # The context is the previous messages of the session
 
-        result = self.job_function(message, **self.params)
+        result = self.job_function(
+            message,
+            **self.params,
+            job_config=self.job_config,
+        )
         self.job_results[message.id] = result
         return result
 
