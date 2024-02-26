@@ -121,3 +121,20 @@ class MutableAsyncGenerator:
         if self.stop(value):
             raise StopAsyncIteration
         return value
+
+
+def fits_in_context_window(prompt: str, context_window_size: int) -> bool:
+    """
+    Check if the prompt fits in the context window
+    context_window_size is the number of tokens of the context window
+    """
+    try:
+        import tiktoken
+    except ImportError:
+        raise ImportError(
+            "Please install the `tiktoken` package to use the `fits_in_context_window` function."
+        )
+
+    encoding = tiktoken.get_encoding("cl100k_base")
+    num_tokens = len(encoding.encode(prompt))
+    return num_tokens <= context_window_size

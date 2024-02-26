@@ -4,8 +4,10 @@ Each job is a function that takes a message and a set of parameters and returns 
 The result is a JobResult object.
 """
 
-from typing import List, Optional, Tuple
+import random
+from typing import List, Literal, Optional, Tuple, cast
 from .models import Message, JobResult
+from app import config
 
 import time
 import openai
@@ -227,3 +229,235 @@ You have to say if the event is present in the transcript or not. Respond with o
     logger.debug(f"event_detection detected event {event_name} : {detected_event}")
     # Return the result
     return detected_event, evaluation_source
+
+
+async def evaluate_task(
+    task_input: str,
+    task_output: str,
+    previous_task_input: str = "",
+    previous_task_output: str = "",
+    successful_examples: list = [],  # {input, output, flag}
+    unsuccessful_examples: list = [],  # {input, output}
+    org_id: Optional[str] = None,
+    model_name: str = "gpt-4-1106-preview",
+    few_shot_min_number_of_examples: int = 5,
+    few_shot_max_number_of_examples: int = 10,
+) -> Optional[Literal["success", "failure"]]:
+    """
+    We expect the more relevant examples to be at the beginning of the list (cf db query)
+    """
+    from phospho.utils import fits_in_context_window
+
+    async def get_flag(
+        prompt: str,
+        store_llm_call: bool = True,
+        model_name: str = "gpt-4-1106-preview",
+        org_id: Optional[str] = None,
+    ) -> Optional[Literal["success", "failure"]]:
+        response = await async_openai_client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0,
+        )
+
+        # Call the API
+        start_time = time.time()
+
+        llm_response = response.choices[0].message.content
+
+        # TODO : Fix this
+        # Store the query and the response in the database
+        # if store_llm_call:
+        #     # WARNING : adds latency
+        #     # Create the llm_call object from the pydantic model
+        #     llm_call_obj = LlmCall(
+        #         model=model_name,
+        #         prompt=prompt,
+        #         llm_output=llm_response,
+        #         api_call_time=time.time() - start_time,
+        #         evaluation_source=config.EVALUATION_SOURCE,
+        #         org_id=org_id,
+        #     )
+        #     mongo_db = await get_mongo_db()
+        #     await mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+
+        # Parse the llm response to avoid basic errors
+        if llm_response is not None:
+            llm_response = llm_response.strip()
+            llm_response = llm_response.lower()
+            if "success" in llm_response:
+                llm_response = "success"
+            if "failure" in llm_response:
+                llm_response = "failure"
+
+        if llm_response in ["success", "failure"]:
+            return cast(Literal["success", "failure"], llm_response)
+        else:
+            # TODO : raise an error
+            # llm_response = "undefined"
+            logger.warning(
+                f"LLM response not in ['success', 'failure']:\"{llm_response}\""
+            )
+            return None
+
+    async def few_shot_eval(
+        task_input: str,
+        task_output: str,
+        successful_examples: list = [],  # {input, output, flag}
+        unsuccessful_examples: list = [],  # {input, output}
+    ) -> Optional[Literal["success", "failure"]]:
+        """
+        Few shot classification of a task using Cohere classification API
+        We want to have the same number of successful examples and unsuccessful examples
+        We want to have the most recent examples for the two categories (the ones with the smaller index in the list)
+        """
+        import cohere
+        from cohere.responses.classify import Example
+
+        co = cohere.AsyncClient(config.COHERE_API_KEY, timeout=40)
+
+        # Truncate the examples to the max number of examples
+        if len(successful_examples) > few_shot_max_number_of_examples // 2:
+            successful_examples = successful_examples[
+                : few_shot_max_number_of_examples // 2
+            ]
+            logger.debug(
+                f"truncated successful examples to {few_shot_max_number_of_examples // 2} examples"
+            )
+
+        if len(unsuccessful_examples) > few_shot_max_number_of_examples // 2:
+            unsuccessful_examples = unsuccessful_examples[
+                : few_shot_max_number_of_examples // 2
+            ]
+            logger.debug(
+                f"truncated unsuccessful examples to {few_shot_max_number_of_examples // 2} examples"
+            )
+
+        # Build the examples
+        examples = []
+        for example in successful_examples:
+            text_prompt = f"User: {example['input']}\nAssistant: {example['output']}"
+            examples.append(Example(text_prompt, "success"))
+        for example in unsuccessful_examples:
+            text_prompt = f"User: {example['input']}\nAssistant: {example['output']}"
+            examples.append(Example(text_prompt, "failure"))
+
+        # Shuffle the examples
+        random.shuffle(examples)
+
+        if len(examples) > few_shot_max_number_of_examples:
+            examples = examples[:few_shot_max_number_of_examples]
+            logger.debug(
+                f"truncated examples to {few_shot_max_number_of_examples} examples"
+            )
+
+        # Build the prompt to classify
+        text_prompt_to_classify = f"User: {task_input}\nAssistant: {task_output}"
+        inputs = [text_prompt_to_classify]  # TODO : batching later?
+
+        response = await co.classify(
+            model="large",
+            inputs=inputs,
+            examples=examples,
+        )
+        await co.close()  # the AsyncClient client should be closed when done
+
+        flag = response.classifications[0].prediction
+        confidence = response.classifications[0].confidence
+
+        # TODO : add check on confidence ?
+
+        logger.debug(f"few_shot_eval flag : {flag}, confidence : {confidence}")
+
+        if flag in ["success", "failure"]:
+            return flag
+        else:
+            raise Exception("The flag is not success or failure")
+
+    # Get the model max input token length
+    max_tokens_input_lenght = (
+        128 * 1000 - 1000
+    )  # 32k is the max input length for gpt-4-1106-preview, we remove 1k to be safe
+
+    merged_examples = []
+
+    min_number_of_examples = min(len(successful_examples), len(unsuccessful_examples))
+
+    for i in range(0, min_number_of_examples):
+        merged_examples.append(successful_examples[i])
+        merged_examples.append(unsuccessful_examples[i])
+
+    # Shuffle the examples
+    random.shuffle(merged_examples)
+
+    # Build the prompt
+
+    if len(merged_examples) < few_shot_min_number_of_examples:
+        # Zero shot mode
+        logger.debug("running eval in zero shot mode")
+
+        # Build zero shot prompt
+
+        # If there is a previous task, add it to the prompt
+        if previous_task_input != "" and previous_task_output != "":
+            prompt = f"""
+            You are evaluating an interaction between a user and an assistant. 
+            Your goal is to determine if the assistant was helpful or not to the user.
+
+            Here is the previous interaction between the user and the assistant:
+            [START PREVIOUS INTERACTION]
+            User: {previous_task_input}
+            Assistant: {previous_task_output}
+            [END PREVIOUS INTERACTION]
+
+            Here is the interaction between the user and the assistant you need to evaluate:
+            [START INTERACTION]
+            User: {task_input}
+            Assistant: {task_output}
+            [END INTERACTION]
+
+            Respond with only one word, success if the assistant was helpful, failure if not.
+            """
+        else:
+            prompt = f"""
+            You are an impartial judge evaluating an interaction between a user and an assistant. 
+            Your goal is to determine if the assistant was helpful or not to the user.
+
+            Here is the interaction between the user and the assistant:
+            [START INTERACTION]
+            User: {task_input}
+            Assistant: {task_output}
+            [END INTERACTION]
+
+            Respond with only one word, success if the assistant was helpful, failure if not.
+            """
+
+        # Check the context window size
+        if fits_in_context_window(prompt, max_tokens_input_lenght):
+            # Call the API
+            flag = await get_flag(prompt, org_id=org_id)
+            return flag
+
+        else:
+            logger.error("The prompt does not fit in the context window")
+            # flag = "undefined"
+            flag = None
+            return flag
+
+    else:
+        # Few shot mode, we have enough examples to use them
+        flag = await few_shot_eval(
+            task_input,
+            task_output,
+            successful_examples=successful_examples,
+            unsuccessful_examples=unsuccessful_examples,
+        )
+
+        logger.debug(
+            f"running eval in few shot mode with Cohere classifier and {len(merged_examples)} examples"
+        )
+
+        return flag
