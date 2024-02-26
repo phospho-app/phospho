@@ -1,33 +1,52 @@
-from typing import Dict, Iterable, Literal, Optional, Union
+import concurrent.futures
+from typing import Callable, Dict, Iterable, List, Literal, Optional, Union
+
 import yaml
 
 import phospho.lab.job_library as job_library
-import concurrent.futures
 
-
-from .models import Message, JobResult
+from .models import Any, JobResult, Message
 
 
 class Job:
     job_id: str
-    params: dict
+    params: Dict[str, Any]
     job_results: Dict[str, JobResult]
 
     def __init__(
         self,
-        job_id: str,
-        job_name: str,
-        params: dict,
+        job_function: Optional[Callable[..., JobResult]] = None,
+        job_name: Optional[str] = None,
+        job_id: Optional[str] = None,
+        params: Optional[Dict[str, Any]] = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
         It stores the result.
         """
-        self.job_id = job_id
+
+        if params is None:
+            params = {}
         self.params = params
-        # from the module .job_library import the function with the name job_name
-        job_function = getattr(job_library, job_name)
+
+        if job_function is None and job_name is None:
+            raise ValueError("Please provide a job_function or a job_name.")
+
+        if job_name is not None:
+            # from the module .job_library import the function with the name job_name
+            job_function = getattr(job_library, job_name)
+        assert job_function is not None, "Please provide a job_function or a job_name."
         self.job_function = job_function
+
+        if job_id is None:
+            if job_name is not None:
+                job_id = job_name
+            else:
+                # Make it the name of the function
+                job_id = job_function.__name__
+
+        self.job_id = job_id
+
         # message.id -> job_result
         self.job_results: Dict[str, JobResult] = {}
 
@@ -43,37 +62,59 @@ class Job:
         return result
 
 
-class Laboratory:
-    def __init__(self, config: Optional[dict] = None):
-        """
-        The Laboratory is a setup of jobs that can be run on messages.
-        """
-        if config is None:
-            # Read the configuration file
-            with open("phospho-config.yaml") as f:
-                self.config = yaml.load(f, Loader=yaml.FullLoader)
-        else:
-            self.config = config
+class Workload:
+    jobs: List[Job]
 
-        # Create the jobs from the configuration
+    def __init__(self):
+        """
+        A Workload is a set of jobs to be performed on a message.
+        """
         self.jobs = []
-        for job_id, job_config in self.config["jobs"].items():
+
+    def add_job(self, job: Job):
+        """
+        Add a job to the workload.
+        """
+        self.jobs.append(job)
+
+    @classmethod
+    def from_config(cls, config: dict) -> "Workload":
+        """
+        Create a Workload from a configuration dictionary.
+        """
+        workload = cls()
+        # Create the jobs from the configuration
+        # TODO : Adds some kind of validation
+        for job_id, job_config in config["jobs"].items():
             job = Job(
                 job_id=job_id,
                 job_name=job_config["name"],
-                params=job_config["params"],
+                params=job_config.get("params", {}),
             )
-            self.jobs.append(job)
+            workload.add_job(job)
 
-    def run_experiment(
+        return workload
+
+    @classmethod
+    def from_config_file(
+        cls, config_filename: str = "phospho-config.yaml"
+    ) -> "Workload":
+        """
+        Create a Workload from a configuration file.
+        """
+        with open(config_filename) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+        return cls.from_config(config)
+
+    def run(
         self,
         message: Union[Message, Iterable[Message]],
         executor_type: Literal["parallel", "sequential"] = "parallel",
     ) -> Dict[str, Dict[str, JobResult]]:
         """
-        Perform all the jobs on the message.
+        Runs all the jobs on the message.
 
-        Returns: a mapping of job_id -> message.id -> job_result
+        Returns: a mapping of message.id -> job_id -> job_result
         """
         if isinstance(message, Message):
             message = [message]
@@ -94,6 +135,11 @@ class Laboratory:
                 )
 
         # Collect the results:
-        # Result is a mapping of job_name -> job_result
-        results = {job.job_id: job.job_results for job in self.jobs}
+        # Result is a mapping of message.id -> job_id -> job_result
+        results: Dict[str, Dict[str, JobResult]] = {}
+        for one_message in message:
+            results[one_message.id] = {}
+            for job in self.jobs:
+                results[one_message.id][job.job_id] = job.job_results[one_message.id]
+
         return results
