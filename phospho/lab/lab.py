@@ -5,13 +5,15 @@ import yaml
 
 import phospho.lab.job_library as job_library
 
-from .models import Any, JobResult, Message
+from .models import Any, JobResult, Message, JobConfig
 
 
 class Job:
     job_id: str
     params: Dict[str, Any]
     job_results: Dict[str, JobResult]
+    job_predictions: Dict[str, Dict[str, JobResult]]
+    job_config: JobConfig  # Stores the current config and the possible config values. Can be None.
 
     def __init__(
         self,
@@ -19,6 +21,7 @@ class Job:
         job_name: Optional[str] = None,
         job_id: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
+        config_values: Dict[str, List[Any]] = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
@@ -49,6 +52,16 @@ class Job:
 
         # message.id -> job_result
         self.job_results: Dict[str, JobResult] = {}
+
+        # If the config values are provided, store them
+        if config_values is not None:
+            # For each config value, we consider the first one to be the desired conig value
+            current_config = {k: v[0] for k, v in config_values.items()}
+            self.job_config = JobConfig(
+                current_config=current_config, config_values=config_values
+            )
+        else:
+            self.job_config = None
 
     def run(self, message: Message) -> JobResult:
         """

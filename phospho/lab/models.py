@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from phospho.utils import generate_timestamp, generate_uuid
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Dict
 
 
 class Message(BaseModel):
@@ -18,3 +18,8 @@ class JobResult(BaseModel):
     result_type: str
     value: Any
     logs: List[Any] = Field(default_factory=list)
+
+
+class JobConfig(BaseModel):
+    current_config: Dict[str, Any]
+    config_values: Dict[str, List[Any]]
