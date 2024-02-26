@@ -1,7 +1,6 @@
 import concurrent.futures
 from typing import Callable, Dict, Iterable, List, Literal, Optional, Union
 
-import yaml
 
 import phospho.lab.job_library as job_library
 
@@ -91,6 +90,7 @@ class Workload:
         """
         Create a Workload from a configuration dictionary.
         """
+
         workload = cls()
         # Create the jobs from the configuration
         # TODO : Adds some kind of validation
@@ -109,8 +109,15 @@ class Workload:
         """
         Create a Workload from a configuration file.
         """
-        with open(config_filename) as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
+        if config_filename.endswith(".yaml") or config_filename.endswith(".yml"):
+            import yaml
+
+            with open(config_filename) as f:
+                config = yaml.load(f, Loader=yaml.FullLoader)
+        else:
+            raise NotImplementedError(
+                f"File extension {config_filename.split('.')[-1]} is not supported. Use .from_config() instead."
+            )
         return cls.from_config(config)
 
     def run(
