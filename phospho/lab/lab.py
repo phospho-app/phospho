@@ -1,11 +1,18 @@
 import asyncio
+import nest_asyncio
+
+import logging
 import concurrent.futures
 from typing import Callable, Dict, Iterable, List, Literal, Optional, Union
 
 
 import phospho.lab.job_library as job_library
 
-from .models import Any, JobResult, Message
+from .models import Any, JobResult, Message, ResultType
+
+# This is a workaround to avoid the error "RuntimeError: This event loop is already running" in jupyter notebooks
+nest_asyncio.apply()
+logger = logging.getLogger(__name__)
 
 
 class Job:
@@ -61,11 +68,19 @@ class Job:
         # TODO: Infer for each message its context (if any)
         # The context is the previous messages of the session
 
-        # If the job is async, we await the result
         if asyncio.iscoroutinefunction(self.job_function):
             result = asyncio.run(self.job_function(message, **self.params))
         else:
             result = self.job_function(message, **self.params)
+
+        if result is None:
+            logger.error(f"Job {self.job_id} returned None for message {message.id}.")
+            result = JobResult(
+                job_id=self.job_id,
+                result_type=ResultType.error,
+                value=None,
+            )
+
         self.job_results[message.id] = result
         return result
 

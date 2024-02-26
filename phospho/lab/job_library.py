@@ -7,7 +7,7 @@ The result is a JobResult object.
 import random
 from typing import List, Literal, Optional, cast
 from .models import Message, JobResult, ResultType
-from app import config
+from phospho import config
 
 import time
 import openai
@@ -23,7 +23,6 @@ async_openai_client = openai.AsyncClient()
 def prompt_to_bool(
     message: Message,
     prompt: str,
-    message_context: Optional[str] = None,
     format_kwargs: Optional[dict] = None,
     model: str = "gpt-3.5-turbo",
 ) -> JobResult:
@@ -35,7 +34,7 @@ def prompt_to_bool(
 
     formated_prompt = prompt.format(
         message_content=message.content,
-        message_context=message_context,
+        message_context=message.previous_messages_transcript(with_role=True),
         **format_kwargs,
     )
     response = openai_client.chat.completions.create(
@@ -58,7 +57,7 @@ def prompt_to_bool(
         bool_response = response.choices[0].message.content.lower() == "true"
 
     return JobResult(
-        job_name="prompt_to_bool",
+        job_id="prompt_to_bool",
         result_type=ResultType.bool,
         value=bool_response,
         logs=[formated_prompt, response.choices[0].message.content],
@@ -69,7 +68,6 @@ def prompt_to_literal(
     message: Message,
     prompt: str,
     output_literal: List[str],
-    message_context: Optional[str] = None,
     format_kwargs: Optional[dict] = None,
     model: str = "gpt-3.5-turbo",
 ) -> JobResult:
@@ -80,8 +78,10 @@ def prompt_to_literal(
         format_kwargs = {}
 
     formated_prompt = prompt.format(
-        message_content=message.content,
-        message_context=message_context,
+        message_content=message.transcript(with_role=True),
+        message_context=message.transcript(
+            only_previous_messages=True, with_previous_messages=True, with_role=True
+        ),
         **format_kwargs,
     )
     response = openai_client.chat.completions.create(
@@ -104,7 +104,7 @@ def prompt_to_literal(
         # Best scenario: Check if the response is in the output_literal
         if response_content in output_literal:
             return JobResult(
-                job_name="prompt_to_literal",
+                job_id="prompt_to_literal",
                 result_type=ResultType.literal,
                 value=response_content,
                 logs=[formated_prompt, response.choices[0].message.content],
@@ -113,14 +113,14 @@ def prompt_to_literal(
         for literal in output_literal:
             if literal in response_content:
                 return JobResult(
-                    job_name="prompt_to_literal",
+                    job_id="prompt_to_literal",
                     result_type=ResultType.literal,
                     value=response_content,
                     logs=[formated_prompt, response.choices[0].message.content],
                 )
 
     return JobResult(
-        job_name="prompt_to_literal",
+        job_id="prompt_to_literal",
         result_type=ResultType.literal,
         value=literal_response,
         logs=[formated_prompt, response.choices[0].message.content],
@@ -128,22 +128,26 @@ def prompt_to_literal(
 
 
 async def event_detection(
-    task_transcript: str,
+    message: Message,
     event_name: str,
     event_description: str,
-    task_context_transcript: str = "",
     model: str = "gpt-3.5-turbo",
 ) -> JobResult:
+    """
+    Detects if an event is present in a message.
+    """
+
     # Build the prompt
-    if task_context_transcript == "":
+    if len(message.previous_messages) > 0:
         prompt = f"""
 You are classifying an interaction between an end user and an assistant. The assistant is a chatbot that can perform tasks for the end user and answer his questions. 
 The assistant might make some mistakes or not be useful.
-The event you are looking for is : {event_description}. The name of the event is : {event_name}
+The event you are looking for is: {event_description}
+The name of the event is: {event_name}
 
 Here is the transcript of the interaction:
 [START INTERACTION]
-{task_transcript}
+{message.latest_interaction()}
 [END INTERACTION]
 
 You have to say if the event is present in the transcript or not. Respond with only one word, True or False.
@@ -152,17 +156,17 @@ You have to say if the event is present in the transcript or not. Respond with o
         prompt = f"""
 You are classifying an interaction between an end user and an assistant. The assistant is a chatbot that can perform tasks for the end user and answer his questions. 
 The assistant might make some mistakes or not be useful.
-The event you are looking for is : {event_description} 
-The name of the event is : {event_name}
+The event you are looking for is: {event_description} 
+The name of the event is: {event_name}
 
-Here is the previous messages of the conversation before the interaction to help you better understand the extract:
+Here are the previous messages of the conversation before the interaction to help you better understand the extract:
 [START CONTEXT]
-{task_context_transcript}
+{message.latest_interaction_context()}
 [END CONTEXT]
 
 Here is the transcript of the interaction:
 [START INTERACTION]
-{task_transcript}
+{message.latest_interaction()}
 [END INTERACTION]
 
 You have to say if the event is present in the transcript or not. Respond with only one word, True or False.
@@ -186,7 +190,7 @@ You have to say if the event is present in the transcript or not. Respond with o
     except Exception as e:
         logger.error(f"event_detection call to OpenAI API failed : {e}")
         return JobResult(
-            job_name="event_detection",
+            job_id="event_detection",
             result_type=ResultType.error,
             value=None,
             logs=[prompt, str(e)],
@@ -234,7 +238,7 @@ You have to say if the event is present in the transcript or not. Respond with o
     logger.debug(f"event_detection detected event {event_name} : {detected_event}")
     # Return the result
     return JobResult(
-        job_name="event_detection",
+        job_id="event_detection",
         result_type=result_type,
         value=detected_event,
         logs=[prompt, llm_response],
@@ -246,12 +250,7 @@ You have to say if the event is present in the transcript or not. Respond with o
 
 
 async def evaluate_task(
-    task_input: str,
-    task_output: str,
-    previous_task_input: str = "",
-    previous_task_output: str = "",
-    successful_examples: Optional[list] = None,  # {input, output, flag}
-    unsuccessful_examples: Optional[list] = None,  # {input, output}
+    message: Message,
     model_name: str = "gpt-4-1106-preview",
     few_shot_min_number_of_examples: int = 5,
     few_shot_max_number_of_examples: int = 10,
@@ -260,13 +259,21 @@ async def evaluate_task(
     Evaluate a task:
     - If there are not enough examples, use the zero shot expensive classifier
     - If there are enough examples, use the cheaper few shot classifier
+
+    Message.metadata = {
+        "successful_examples": [{input, output, flag}],
+        "unsuccessful_examples": [{input, output, flag}],
+    }
     """
     from phospho.utils import fits_in_context_window
 
-    if successful_examples is None:
-        successful_examples = []
-    if unsuccessful_examples is None:
-        unsuccessful_examples = []
+    successful_examples = message.metadata.get("successful_examples", [])
+    unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
+
+    assert isinstance(successful_examples, list), "successful_examples is not a list"
+    assert isinstance(
+        unsuccessful_examples, list
+    ), "unsuccessful_examples is not a list"
 
     # 32k is the max input length for gpt-4-1106-preview, we remove 1k to be safe
     # TODO : Make this adaptative to model name
@@ -343,10 +350,9 @@ async def evaluate_task(
             return None
 
     async def few_shot_evaluation(
-        task_input: str,
-        task_output: str,
-        successful_examples: Optional[list] = None,  # {input, output, flag}
-        unsuccessful_examples: Optional[list] = None,  # {input, output}
+        message: Message,
+        successful_examples: list,  # {input, output, flag}
+        unsuccessful_examples: list,  # {input, output}
     ) -> Optional[Literal["success", "failure"]]:
         """
         Few shot classification of a task using Cohere classification API
@@ -356,11 +362,6 @@ async def evaluate_task(
         """
         import cohere
         from cohere.responses.classify import Example
-
-        if successful_examples is None:
-            successful_examples = []
-        if unsuccessful_examples is None:
-            unsuccessful_examples = []
 
         co = cohere.AsyncClient(config.COHERE_API_KEY, timeout=40)
 
@@ -397,7 +398,7 @@ async def evaluate_task(
             )
 
         # Build the prompt to classify
-        text_prompt_to_classify = f"User: {task_input}\nAssistant: {task_output}"
+        text_prompt_to_classify = message.transcript(with_role=True)
         inputs = [text_prompt_to_classify]  # TODO : batching later?
 
         response = await co.classify(
@@ -426,21 +427,19 @@ async def evaluate_task(
         # Build zero shot prompt
 
         # If there is a previous task, add it to the prompt
-        if previous_task_input != "" and previous_task_output != "":
+        if len(message.previous_messages) > 0:
             prompt = f"""
             You are evaluating an interaction between a user and an assistant. 
             Your goal is to determine if the assistant was helpful or not to the user.
 
             Here is the previous interaction between the user and the assistant:
             [START PREVIOUS INTERACTION]
-            User: {previous_task_input}
-            Assistant: {previous_task_output}
+            {message.previous_messages_transcript(with_role=True)}
             [END PREVIOUS INTERACTION]
 
             Here is the interaction between the user and the assistant you need to evaluate:
             [START INTERACTION]
-            User: {task_input}
-            Assistant: {task_output}
+            {message.transcript(with_role=True)}
             [END INTERACTION]
 
             Respond with only one word, success if the assistant was helpful, failure if not.
@@ -452,8 +451,7 @@ async def evaluate_task(
 
             Here is the interaction between the user and the assistant:
             [START INTERACTION]
-            User: {task_input}
-            Assistant: {task_output}
+            {message.transcript(with_role=True)}
             [END INTERACTION]
 
             Respond with only one word, success if the assistant was helpful, failure if not.
@@ -472,14 +470,13 @@ async def evaluate_task(
             f"Running eval in few shot mode with Cohere classifier and {len(merged_examples)} examples"
         )
         flag = await few_shot_evaluation(
-            task_input,
-            task_output,
+            message=message,
             successful_examples=successful_examples,
             unsuccessful_examples=unsuccessful_examples,
         )
 
     return JobResult(
-        job_name="evaluate_task",
+        job_id="evaluate_task",
         result_type=ResultType.literal,
         value=flag,
         logs=[prompt, flag],
