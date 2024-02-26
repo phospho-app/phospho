@@ -5,8 +5,8 @@ The result is a JobResult object.
 """
 
 import random
-from typing import List, Literal, Optional, Tuple, cast
-from .models import Message, JobResult
+from typing import List, Literal, Optional, cast
+from .models import Message, JobResult, ResultType
 from app import config
 
 import time
@@ -59,7 +59,7 @@ def prompt_to_bool(
 
     return JobResult(
         job_name="prompt_to_bool",
-        result_type="bool",
+        result_type=ResultType.bool,
         value=bool_response,
         logs=[formated_prompt, response.choices[0].message.content],
     )
@@ -105,21 +105,23 @@ def prompt_to_literal(
         if response_content in output_literal:
             return JobResult(
                 job_name="prompt_to_literal",
-                result_type="literal",
+                result_type=ResultType.literal,
                 value=response_content,
+                logs=[formated_prompt, response.choices[0].message.content],
             )
         # Greedy: Check if the response contains one of the output_literal
         for literal in output_literal:
             if literal in response_content:
                 return JobResult(
                     job_name="prompt_to_literal",
-                    result_type="literal",
+                    result_type=ResultType.literal,
                     value=response_content,
+                    logs=[formated_prompt, response.choices[0].message.content],
                 )
 
     return JobResult(
         job_name="prompt_to_literal",
-        result_type="literal",
+        result_type=ResultType.literal,
         value=literal_response,
         logs=[formated_prompt, response.choices[0].message.content],
     )
@@ -130,10 +132,8 @@ async def event_detection(
     event_name: str,
     event_description: str,
     task_context_transcript: str = "",
-    store_llm_call: bool = True,
-    org_id: Optional[str] = None,
     model: str = "gpt-3.5-turbo",
-) -> Tuple[bool, str]:
+) -> JobResult:
     # Build the prompt
     if task_context_transcript == "":
         prompt = f"""
@@ -185,7 +185,12 @@ You have to say if the event is present in the transcript or not. Respond with o
         )
     except Exception as e:
         logger.error(f"event_detection call to OpenAI API failed : {e}")
-        return False, "error"
+        return JobResult(
+            job_name="event_detection",
+            result_type=ResultType.error,
+            value=None,
+            logs=[prompt, str(e)],
+        )
 
     api_call_time = time.time() - start_time
 
@@ -198,14 +203,14 @@ You have to say if the event is present in the transcript or not. Respond with o
         llm_response = llm_response.strip()
 
     # Validate the output
+    result_type = ResultType.bool
     if llm_response == "True" or llm_response == "true":
         detected_event = True
     elif llm_response == "False" or llm_response == "false":
         detected_event = False
     else:
-        raise Exception(
-            f"The classifier did not return True or False (got : {llm_response})"
-        )
+        result_type = ResultType.error
+        detected_event = None
 
     # Identifier of the source of the evaluation, with the version of the model if phospho
     evaluation_source = "phospho-4"
@@ -228,7 +233,16 @@ You have to say if the event is present in the transcript or not. Respond with o
 
     logger.debug(f"event_detection detected event {event_name} : {detected_event}")
     # Return the result
-    return detected_event, evaluation_source
+    return JobResult(
+        job_name="event_detection",
+        result_type=result_type,
+        value=detected_event,
+        logs=[prompt, llm_response],
+        metadata={
+            "api_call_time": api_call_time,
+            "evaluation_source": evaluation_source,
+        },
+    )
 
 
 async def evaluate_task(
@@ -236,24 +250,51 @@ async def evaluate_task(
     task_output: str,
     previous_task_input: str = "",
     previous_task_output: str = "",
-    successful_examples: list = [],  # {input, output, flag}
-    unsuccessful_examples: list = [],  # {input, output}
-    org_id: Optional[str] = None,
+    successful_examples: Optional[list] = None,  # {input, output, flag}
+    unsuccessful_examples: Optional[list] = None,  # {input, output}
     model_name: str = "gpt-4-1106-preview",
     few_shot_min_number_of_examples: int = 5,
     few_shot_max_number_of_examples: int = 10,
-) -> Optional[Literal["success", "failure"]]:
+) -> JobResult:
     """
-    We expect the more relevant examples to be at the beginning of the list (cf db query)
+    Evaluate a task:
+    - If there are not enough examples, use the zero shot expensive classifier
+    - If there are enough examples, use the cheaper few shot classifier
     """
     from phospho.utils import fits_in_context_window
 
-    async def get_flag(
+    if successful_examples is None:
+        successful_examples = []
+    if unsuccessful_examples is None:
+        unsuccessful_examples = []
+
+    # 32k is the max input length for gpt-4-1106-preview, we remove 1k to be safe
+    # TODO : Make this adaptative to model name
+    max_tokens_input_lenght = 128 * 1000 - 1000
+    merged_examples = []
+    min_number_of_examples = min(len(successful_examples), len(unsuccessful_examples))
+
+    for i in range(0, min_number_of_examples):
+        merged_examples.append(successful_examples[i])
+        merged_examples.append(unsuccessful_examples[i])
+
+    # Shuffle the examples
+    random.shuffle(merged_examples)
+
+    # Additional metadata
+    api_call_time: Optional[float] = None
+
+    async def zero_shot_evaluation(
         prompt: str,
-        store_llm_call: bool = True,
         model_name: str = "gpt-4-1106-preview",
-        org_id: Optional[str] = None,
     ) -> Optional[Literal["success", "failure"]]:
+        """
+        Call the LLM API to get a zero shot classification of a task
+        as a success or a failure.
+        """
+        nonlocal api_call_time
+
+        start_time = time.time()
         response = await async_openai_client.chat.completions.create(
             model=model_name,
             messages=[
@@ -263,10 +304,8 @@ async def evaluate_task(
             temperature=0,
         )
 
-        # Call the API
-        start_time = time.time()
-
         llm_response = response.choices[0].message.content
+        api_call_time = time.time() - start_time
 
         # TODO : Fix this
         # Store the query and the response in the database
@@ -303,40 +342,43 @@ async def evaluate_task(
             )
             return None
 
-    async def few_shot_eval(
+    async def few_shot_evaluation(
         task_input: str,
         task_output: str,
-        successful_examples: list = [],  # {input, output, flag}
-        unsuccessful_examples: list = [],  # {input, output}
+        successful_examples: Optional[list] = None,  # {input, output, flag}
+        unsuccessful_examples: Optional[list] = None,  # {input, output}
     ) -> Optional[Literal["success", "failure"]]:
         """
         Few shot classification of a task using Cohere classification API
-        We want to have the same number of successful examples and unsuccessful examples
-        We want to have the most recent examples for the two categories (the ones with the smaller index in the list)
+        We balance the number of examples for each category (success, failure).
+        We use the most recent examples for the two categories
+        (the ones with the smaller index in the list)
         """
         import cohere
         from cohere.responses.classify import Example
 
+        if successful_examples is None:
+            successful_examples = []
+        if unsuccessful_examples is None:
+            unsuccessful_examples = []
+
         co = cohere.AsyncClient(config.COHERE_API_KEY, timeout=40)
 
+        half_few_shot_max = few_shot_max_number_of_examples // 2
         # Truncate the examples to the max number of examples
-        if len(successful_examples) > few_shot_max_number_of_examples // 2:
-            successful_examples = successful_examples[
-                : few_shot_max_number_of_examples // 2
-            ]
+        if len(successful_examples) > half_few_shot_max:
+            successful_examples = successful_examples[:half_few_shot_max]
             logger.debug(
-                f"truncated successful examples to {few_shot_max_number_of_examples // 2} examples"
+                f"truncated successful examples to {half_few_shot_max} examples"
             )
 
-        if len(unsuccessful_examples) > few_shot_max_number_of_examples // 2:
-            unsuccessful_examples = unsuccessful_examples[
-                : few_shot_max_number_of_examples // 2
-            ]
+        if len(unsuccessful_examples) > half_few_shot_max:
+            unsuccessful_examples = unsuccessful_examples[:half_few_shot_max]
             logger.debug(
-                f"truncated unsuccessful examples to {few_shot_max_number_of_examples // 2} examples"
+                f"truncated unsuccessful examples to {half_few_shot_max} examples"
             )
 
-        # Build the examples
+        # Format the examples
         examples = []
         for example in successful_examples:
             text_prompt = f"User: {example['input']}\nAssistant: {example['output']}"
@@ -351,7 +393,7 @@ async def evaluate_task(
         if len(examples) > few_shot_max_number_of_examples:
             examples = examples[:few_shot_max_number_of_examples]
             logger.debug(
-                f"truncated examples to {few_shot_max_number_of_examples} examples"
+                f"Truncated examples to {few_shot_max_number_of_examples} examples"
             )
 
         # Build the prompt to classify
@@ -377,27 +419,9 @@ async def evaluate_task(
         else:
             raise Exception("The flag is not success or failure")
 
-    # Get the model max input token length
-    max_tokens_input_lenght = (
-        128 * 1000 - 1000
-    )  # 32k is the max input length for gpt-4-1106-preview, we remove 1k to be safe
-
-    merged_examples = []
-
-    min_number_of_examples = min(len(successful_examples), len(unsuccessful_examples))
-
-    for i in range(0, min_number_of_examples):
-        merged_examples.append(successful_examples[i])
-        merged_examples.append(unsuccessful_examples[i])
-
-    # Shuffle the examples
-    random.shuffle(merged_examples)
-
-    # Build the prompt
-
     if len(merged_examples) < few_shot_min_number_of_examples:
         # Zero shot mode
-        logger.debug("running eval in zero shot mode")
+        logger.debug("Running eval in zero shot mode")
 
         # Build zero shot prompt
 
@@ -437,27 +461,27 @@ async def evaluate_task(
 
         # Check the context window size
         if fits_in_context_window(prompt, max_tokens_input_lenght):
-            # Call the API
-            flag = await get_flag(prompt, org_id=org_id)
-            return flag
-
+            flag = await zero_shot_evaluation(prompt, model_name=model_name)
         else:
             logger.error("The prompt does not fit in the context window")
-            # flag = "undefined"
-            flag = None
-            return flag
+            flag = None  # TODO: Fallback to a bigger model
 
     else:
         # Few shot mode, we have enough examples to use them
-        flag = await few_shot_eval(
+        logger.debug(
+            f"Running eval in few shot mode with Cohere classifier and {len(merged_examples)} examples"
+        )
+        flag = await few_shot_evaluation(
             task_input,
             task_output,
             successful_examples=successful_examples,
             unsuccessful_examples=unsuccessful_examples,
         )
 
-        logger.debug(
-            f"running eval in few shot mode with Cohere classifier and {len(merged_examples)} examples"
-        )
-
-        return flag
+    return JobResult(
+        job_name="evaluate_task",
+        result_type=ResultType.literal,
+        value=flag,
+        logs=[prompt, flag],
+        metadata={"api_call_time": api_call_time},
+    )
