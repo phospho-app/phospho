@@ -61,15 +61,24 @@ class Job:
         self.job_results[message.id] = result
         return result
 
+    def __repr__(self):
+        # Make every parameter on a new line
+        concatenated_params = "\n".join(
+            [f"    {k}: {v}" for k, v in self.params.items()]
+        )
+        return f"Job(\n  job_id={self.job_id},\n  job_name={self.job_function.__name__},\n  params={{\n{concatenated_params}\n  }}\n)"
+
 
 class Workload:
     jobs: List[Job]
+    results: Dict[str, Dict[str, JobResult]]
 
     def __init__(self):
         """
         A Workload is a set of jobs to be performed on a message.
         """
         self.jobs = []
+        self.results = {}
 
     def add_job(self, job: Job):
         """
@@ -96,9 +105,7 @@ class Workload:
         return workload
 
     @classmethod
-    def from_config_file(
-        cls, config_filename: str = "phospho-config.yaml"
-    ) -> "Workload":
+    def from_file(cls, config_filename: str = "phospho-config.yaml") -> "Workload":
         """
         Create a Workload from a configuration file.
         """
@@ -108,7 +115,7 @@ class Workload:
 
     def run(
         self,
-        message: Union[Message, Iterable[Message]],
+        messages: Iterable[Message],
         executor_type: Literal["parallel", "sequential"] = "parallel",
     ) -> Dict[str, Dict[str, JobResult]]:
         """
@@ -116,18 +123,17 @@ class Workload:
 
         Returns: a mapping of message.id -> job_id -> job_result
         """
-        if isinstance(message, Message):
-            message = [message]
 
         # Run the jobs sequentially on every message
+        # TODO : Run the jobs in parallel on every message
         for job in self.jobs:
             if executor_type == "parallel":
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
                     # executor.map(self.evaluate_a_task, task_to_evaluate)
-                    executor.map(job.run, message)
+                    executor.map(job.run, messages)
             elif executor_type == "sequential":
-                for one_message in message:
+                for one_message in messages:
                     job.run(one_message)
             else:
                 raise NotImplementedError(
@@ -137,9 +143,14 @@ class Workload:
         # Collect the results:
         # Result is a mapping of message.id -> job_id -> job_result
         results: Dict[str, Dict[str, JobResult]] = {}
-        for one_message in message:
+        for one_message in messages:
             results[one_message.id] = {}
             for job in self.jobs:
                 results[one_message.id][job.job_id] = job.job_results[one_message.id]
 
+        self.results = results
         return results
+
+    def __repr__(self):
+        concatenated_jobs = "\n".join([f"  {job}" for job in self.jobs])
+        return f"Workload(jobs=[\n{concatenated_jobs}\n])"

@@ -9,6 +9,7 @@ from .models import Message, JobResult
 
 import openai
 
+# TODO: Turn this into a shared resource managed by the Workload
 openai_client = openai.Client()
 
 
@@ -25,17 +26,18 @@ def prompt_to_bool(
     if format_kwargs is None:
         format_kwargs = {}
 
+    formated_prompt = prompt.format(
+        message_content=message.content,
+        message_context=message_context,
+        **format_kwargs,
+    )
     response = openai_client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {
                 "role": "user",
-                "content": prompt.format(
-                    message_content=message.content,
-                    message_context=message_context,
-                    **format_kwargs,
-                ),
+                "content": formated_prompt,
             },
         ],
         max_tokens=1,
@@ -52,6 +54,7 @@ def prompt_to_bool(
         job_name="prompt_to_bool",
         result_type="bool",
         value=bool_response,
+        logs=[formated_prompt, response.choices[0].message.content],
     )
 
 
@@ -69,17 +72,18 @@ def prompt_to_literal(
     if format_kwargs is None:
         format_kwargs = {}
 
+    formated_prompt = prompt.format(
+        message_content=message.content,
+        message_context=message_context,
+        **format_kwargs,
+    )
     response = openai_client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {
                 "role": "user",
-                "content": prompt.format(
-                    message_content=message.content,
-                    message_context=message_context,
-                    **format_kwargs,
-                ),
+                "content": formated_prompt,
             },
         ],
         max_tokens=1,
@@ -110,4 +114,5 @@ def prompt_to_literal(
         job_name="prompt_to_literal",
         result_type="literal",
         value=literal_response,
+        logs=[formated_prompt, response.choices[0].message.content],
     )
