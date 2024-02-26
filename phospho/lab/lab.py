@@ -1,3 +1,4 @@
+import asyncio
 import concurrent.futures
 from typing import Callable, Dict, Iterable, List, Literal, Optional, Union
 
@@ -11,6 +12,10 @@ class Job:
     job_id: str
     params: Dict[str, Any]
     job_results: Dict[str, JobResult]
+    job_function: Union[
+        Callable[..., JobResult],
+        Callable[..., asyncio.Future[JobResult]],  # For async jobs
+    ]
 
     def __init__(
         self,
@@ -56,7 +61,11 @@ class Job:
         # TODO: Infer for each message its context (if any)
         # The context is the previous messages of the session
 
-        result = self.job_function(message, **self.params)
+        # If the job is async, we await the result
+        if asyncio.iscoroutinefunction(self.job_function):
+            result = asyncio.run(self.job_function(message, **self.params))
+        else:
+            result = self.job_function(message, **self.params)
         self.job_results[message.id] = result
         return result
 
