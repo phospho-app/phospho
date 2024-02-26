@@ -4,13 +4,18 @@ Each job is a function that takes a message and a set of parameters and returns 
 The result is a JobResult object.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from .models import Message, JobResult
 
+import time
 import openai
+import logging
+
+logger = logging.getLogger(__name__)
 
 # TODO: Turn this into a shared resource managed by the Workload
 openai_client = openai.Client()
+async_openai_client = openai.AsyncClient()
 
 
 def prompt_to_bool(
@@ -116,3 +121,109 @@ def prompt_to_literal(
         value=literal_response,
         logs=[formated_prompt, response.choices[0].message.content],
     )
+
+
+async def event_detection(
+    task_transcript: str,
+    event_name: str,
+    event_description: str,
+    task_context_transcript: str = "",
+    store_llm_call: bool = True,
+    org_id: Optional[str] = None,
+    model: str = "gpt-3.5-turbo",
+) -> Tuple[bool, str]:
+    # Build the prompt
+    if task_context_transcript == "":
+        prompt = f"""
+You are classifying an interaction between an end user and an assistant. The assistant is a chatbot that can perform tasks for the end user and answer his questions. 
+The assistant might make some mistakes or not be useful.
+The event you are looking for is : {event_description}. The name of the event is : {event_name}
+
+Here is the transcript of the interaction:
+[START INTERACTION]
+{task_transcript}
+[END INTERACTION]
+
+You have to say if the event is present in the transcript or not. Respond with only one word, True or False.
+    """
+    else:
+        prompt = f"""
+You are classifying an interaction between an end user and an assistant. The assistant is a chatbot that can perform tasks for the end user and answer his questions. 
+The assistant might make some mistakes or not be useful.
+The event you are looking for is : {event_description} 
+The name of the event is : {event_name}
+
+Here is the previous messages of the conversation before the interaction to help you better understand the extract:
+[START CONTEXT]
+{task_context_transcript}
+[END CONTEXT]
+
+Here is the transcript of the interaction:
+[START INTERACTION]
+{task_transcript}
+[END INTERACTION]
+
+You have to say if the event is present in the transcript or not. Respond with only one word, True or False.
+    """
+
+    logger.debug(f"event_detection prompt : {prompt}")
+
+    # Call the API
+    start_time = time.time()
+
+    try:
+        response = await async_openai_client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=1,
+            temperature=0,
+        )
+    except Exception as e:
+        logger.error(f"event_detection call to OpenAI API failed : {e}")
+        return False, "error"
+
+    api_call_time = time.time() - start_time
+
+    logger.debug(f"event_detection call to OpenAI API ({api_call_time} sec)")
+
+    # Parse the response
+    llm_response = response.choices[0].message.content
+    logger.debug(f"event_detection llm_response : {llm_response}")
+    if llm_response is not None:
+        llm_response = llm_response.strip()
+
+    # Validate the output
+    if llm_response == "True" or llm_response == "true":
+        detected_event = True
+    elif llm_response == "False" or llm_response == "false":
+        detected_event = False
+    else:
+        raise Exception(
+            f"The classifier did not return True or False (got : {llm_response})"
+        )
+
+    # Identifier of the source of the evaluation, with the version of the model if phospho
+    evaluation_source = "phospho-4"
+
+    # TODO : Make it so that this works again
+    # Store the query and the response in the database
+    # if store_llm_call:
+    #     # WARNING : adds latency
+    #     # Create the llm_call object from the pydantic model
+    #     llm_call_obj = LlmCall(
+    #         model=model,
+    #         prompt=prompt,
+    #         llm_output=llm_response,
+    #         api_call_time=api_call_time,
+    #         evaluation_source=evaluation_source,
+    #         org_id=org_id,
+    #     )
+    #     mongo_db = await get_mongo_db()
+    #     mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+
+    logger.debug(f"event_detection detected event {event_name} : {detected_event}")
+    # Return the result
+    return detected_event, evaluation_source
