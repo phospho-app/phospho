@@ -8,7 +8,6 @@ import nest_asyncio
 import phospho.lab.job_library as job_library
 
 from .models import JobConfig, JobResult, Message, ResultType
-from .utils import generate_configurations
 
 # This is a workaround to avoid the error "RuntimeError: This event loop is already running" in jupyter notebooks
 nest_asyncio.apply()
@@ -73,11 +72,13 @@ class Job:
         if job_config is not None:
             self.config = job_config
             # generate all the possible configuration from the model
-            self.alternative_configs = generate_configurations(self.config)
+            self.alternative_configs = self.config.generate_configurations()
         else:
             logger.warning("No job_config provided. Running with empty config")
             self.config = JobConfig()
-            self.alternative_configs = generate_configurations(self.config)
+            self.alternative_configs = []
+
+        self.alternative_results = []
 
     def run(self, message: Message) -> JobResult:
         """
@@ -103,6 +104,86 @@ class Job:
 
         self.results[message.id] = result
         return result
+
+    def _run_on_alternative_configurations(
+        self, message: Message
+    ) -> List[List[JobResult]]:
+        """
+        Run the job on the message with all the possible configurations except the default.
+        Results are appended to the job_predictions attribute.
+        """
+        if len(self.alternative_results) == 0:
+            raise ValueError(
+                "No alternative configurations to run the job on. Please run .optimize first."
+            )
+
+        for alternative_config_index in range(0, len(self.alternative_configs)):
+            params = self.alternative_configs[alternative_config_index].model_dump()
+            if asyncio.iscoroutinefunction(self.job_function):
+                prediction = asyncio.run(self.job_function(message, **params))
+            else:
+                prediction = self.job_function(message, **params)
+
+            if prediction is None:
+                logger.error(
+                    f"Job {self.id} returned None for message {message.id} on alternative config run."
+                )
+                prediction = JobResult(
+                    job_id=self.id,
+                    result_type=ResultType.error,
+                    value=None,
+                )
+
+            # Add the prediction to the job_predictions
+            current_predictions = self.alternative_results[alternative_config_index]
+            current_predictions.append(prediction)
+            self.alternative_results[alternative_config_index] = current_predictions
+
+        return self.alternative_results
+
+    def optimize(self, accuracy_threshold: float = 1.0, min_count: int = 10) -> None:
+        """
+        After having run the job on all the alternative configurations,
+        optimize the job by comparing all the predictions to the results with the default configuration.
+        - If the current configuration is the optimal, do nothing.
+        - If the current configuration is not the optimal, update the config attribute.
+
+        For now, we just check if the accuracy is above the threshold.
+        """
+        # Check that we have enough predictions to start the optimization
+        if len(self.results) < min_count:
+            return
+
+        accuracies: List[float] = []
+        # For each alternative config, we compute the accuracy_vector
+        for alternative_config_index in range(0, len(self.alternative_configs)):
+            # Results are considered the groundtruth. Compare the alternative results to this ref
+            accuracy_vector = [
+                1 if output == label else 0
+                for output, label in zip(
+                    self.alternative_results[alternative_config_index], self.results
+                )
+            ]
+            accuracy = sum(accuracy_vector) / len(accuracy_vector)
+            accuracies.append(accuracy)
+
+        # The latest items are the most preferred ones
+        # The instanciated config is the reference one (most truthful)
+        # We want to take the latest one that is above the threshold.
+        for i in range(len(accuracies) - 1, -1, -1):
+            if accuracies[i] > accuracy_threshold:
+                logger.info(
+                    f"Found a less costly config with accuracy of {accuracies[i]}. Swapping to it."
+                )
+                # This configuration becames the default configuration
+                self.config = self.alternative_configs[i]
+                # We keep the results of the more costly config as the results
+                # Might be an empty list
+                self.alternative_configs = self.alternative_configs[i + 1 :]
+                # We drop the results of the other sub-optimal configurations
+                # Might be an empty list
+                self.alternative_results = self.alternative_results[i + 1 :]
+                break
 
     def __repr__(self):
         # Make every parameter on a new line
