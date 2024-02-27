@@ -12,17 +12,6 @@ from .models import JobConfig, JobResult, Message, ResultType
 logger = logging.getLogger(__name__)
 
 
-try:
-    # This is a workaround to avoid the error "RuntimeError: This event loop is already running" in jupyter notebooks
-    # Related issue: https://github.com/NVIDIA/NeMo-Guardrails/issues/112
-    nest_asyncio.apply()
-except Exception as e:
-    logger.info(
-        "Could not apply nest_asyncio. This is not a problem if you are not running in a jupyter notebook."
-        + f"Error: {e}"
-    )
-
-
 class Job:
     id: str
     job_function: Union[
@@ -89,17 +78,14 @@ class Job:
 
         self.alternative_results = []
 
-    def run(self, message: Message) -> JobResult:
+    async def async_run(self, message: Message) -> JobResult:
         """
-        Run the job on the message.
+        Asynchronously run the job on the message.
         """
-        # TODO: Infer for each message its context (if any)
-        # The context is the previous messages of the session
-
         params = self.config.model_dump()
 
         if asyncio.iscoroutinefunction(self.job_function):
-            result = asyncio.run(self.job_function(message, **params))
+            result = await self.job_function(message, **params)
         else:
             result = self.job_function(message, **params)
 
@@ -116,7 +102,7 @@ class Job:
 
     def _run_on_alternative_configurations(
         self, message: Message
-    ) -> List[List[JobResult]]:
+    ) -> List[Dict[str, JobResult]]:
         """
         Run the job on the message with all the possible configurations except the default.
         Results are appended to the job_predictions attribute.
@@ -258,7 +244,7 @@ class Workload:
             )
         return cls.from_config(config)
 
-    def run(
+    async def async_run(
         self,
         messages: Iterable[Message],
         executor_type: Literal["parallel", "sequential"] = "parallel",
@@ -276,10 +262,14 @@ class Workload:
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
                     # executor.map(self.evaluate_a_task, task_to_evaluate)
-                    executor.map(job.run, messages)
+                    executor_results = executor.map(job.async_run, messages)
+                    # Await all the results
+                    for one_result in executor_results:
+                        if asyncio.iscoroutine(one_result):
+                            await one_result
             elif executor_type == "sequential":
                 for one_message in messages:
-                    job.run(one_message)
+                    await job.async_run(one_message)
             else:
                 raise NotImplementedError(
                     f"Executor type {executor_type} is not implemented"
