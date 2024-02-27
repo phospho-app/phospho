@@ -120,6 +120,7 @@ class Job:
 
 class Workload:
     jobs: List[Job]
+    # Result is a mapping of message.id -> job_id -> JobResult
     results: Dict[str, Dict[str, JobResult]]
 
     def __init__(self):
