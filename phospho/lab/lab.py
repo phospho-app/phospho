@@ -32,45 +32,45 @@ class Job:
 
     def __init__(
         self,
-        job_id: Optional[str] = None,
+        id: Optional[str] = None,
         job_function: Optional[
             Union[
                 Callable[..., JobResult],
                 Callable[..., Awaitable[JobResult]],  # For async jobs
             ]
         ] = None,
-        job_name: Optional[str] = None,
-        job_config: Optional[JobConfig] = None,
+        name: Optional[str] = None,
+        config: Optional[JobConfig] = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
         It stores the result.
         """
 
-        if job_function is None and job_name is None:
+        if job_function is None and name is None:
             raise ValueError("Please provide a job_function or a job_name.")
 
-        if job_name is not None:
+        if name is not None:
             # from the module .job_library import the function with the name job_name
-            job_function = getattr(job_library, job_name)
+            job_function = getattr(job_library, name)
         assert job_function is not None, "Please provide a job_function or a job_name."
         self.job_function = job_function
 
-        if job_id is None:
-            if job_name is not None:
-                job_id = job_name
+        if id is None:
+            if name is not None:
+                id = name
             else:
                 # Make it the name of the function
-                job_id = job_function.__name__
+                id = job_function.__name__
 
-        self.id = job_id
+        self.id = id
 
         # message.id -> job_result
         self.results: Dict[str, JobResult] = {}
 
         # If the config values are provided, store them
-        if job_config is not None:
-            self.config = job_config
+        if config is not None:
+            self.config = config
             # generate all the possible configuration from the model
             self.alternative_configs = self.config.generate_configurations()
         else:
@@ -223,9 +223,9 @@ class Workload:
         for job_id, job_config in config["jobs"].items():
             job_config_model = JobConfig(**job_config.get("config", {}))
             job = Job(
-                job_id=job_id,
-                job_name=job_config["name"],
-                job_config=job_config_model,
+                id=job_id,
+                name=job_config["name"],
+                config=job_config_model,
             )
             workload.add_job(job)
 
