@@ -99,14 +99,10 @@ class JobResult(BaseModel):
     logs: List[Any] = Field(default_factory=list)
 
 
-class EmptyConfig(BaseModel):
-    pass
-
-
 # Custom configuration class for our implementation of the lab
 # If you wish not to use any config, you can use the EmptyConfig class
 # You need to pass default values for each parameter
-class JobConfig(BaseModel):
+class JobConfig(BaseModel, extra="allow"):
     pass
 
 
