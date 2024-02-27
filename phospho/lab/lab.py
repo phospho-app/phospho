@@ -19,11 +19,11 @@ class Job:
     job_id: str
     params: Dict[str, Any]
     job_results: Dict[str, JobResult]
-    job_predictions: Dict[str, Dict[str, JobResult]]
+    job_predictions: List[
+        List[JobResult]
+    ]  # First indice is the config index in job_configurations
     job_config: JobConfig  # Stores the current config and the possible config values as an instanciated pydantic object
-    job_configurations: Dict[
-        str, JobConfig
-    ]  # Stores all the possible config from the model
+    job_configurations: List[JobConfig]  # Stores all the possible config from the model
     job_function: Union[
         Callable[..., JobResult],
         Callable[..., asyncio.Future[JobResult]],  # For async jobs
@@ -110,12 +110,92 @@ class Job:
         self.job_results[message.id] = result
         return result
 
+    def run_on_alternative_configurations(self, message: Message) -> List[JobResult]:
+        """
+        Run the job on the message with all the possible configurations except the default.
+        Results are appended to the job_predictions attribute.
+        """
+        for alternative_config_index in range(0, len(self.job_configurations)):
+            if asyncio.iscoroutinefunction(self.job_function):
+                prediction = asyncio.run(
+                    self.job_function(
+                        message,
+                        **self.params,
+                        job_config=self.job_configurations[alternative_config_index],
+                    )
+                )
+            else:
+                prediction = self.job_function(
+                    message,
+                    **self.params,
+                    job_config=self.job_configurations[alternative_config_index],
+                )
+
+            if prediction is None:
+                logger.error(
+                    f"Job {self.job_id} returned None for message {message.id} on alternative config run."
+                )
+                prediction = JobResult(
+                    job_id=self.job_id,
+                    result_type=ResultType.error,
+                    value=None,
+                )
+
+            # Add the prediction to the job_predictions
+            current_predictions = self.job_predictions[alternative_config_index]
+            current_predictions.append(prediction)
+            self.job_predictions[alternative_config_index] = current_predictions
+
+    def optimize(self, accuracy_threshold=1.0, min_count=10):
+        """
+        Optimize the job by comparing all the predictions to the results with the default configuration.
+        If the current configuration is the optimal, do nothing.
+        If the current configuration is not the optimal, update the job_config attribute.
+        For now, we just check if the accuracy is above the threshold.
+        """
+        # Check that we have enough predictions to start the optimization
+        if len(self.job_results) < min_count:
+            return
+
+        accuracies = []
+        # For each alternative config, we compute the accuracy_vector
+        for alternative_config_index in range(0, len(self.job_configurations)):
+            # Generate the accuracy vector
+            accuracy_vector = [
+                1 if output == label else 0
+                for output, label in zip(
+                    self.job_predictions[alternative_config_index], self.job_results
+                )
+            ]
+            # Compute the accuracy
+            accuracy = sum(accuracy_vector) / len(accuracy_vector)
+            # Add it to the accuracies
+            accuracies.append(accuracy)
+
+        # We want to take the last item of the accuracy list with a good enough accuracy (defined as above the threshold)
+        for i in range(len(accuracies) - 1, -1, -1):
+            if accuracies[i] > accuracy_threshold:
+                logger.info(
+                    f"Found a less costly config with accuracy of {accuracies[i]}. Swapping to it."
+                )
+                # This configuration becames the default configuration
+                self.job_config = self.job_configurations[i]
+                # We keep the results of the more costly config as the results
+                self.job_configurations = self.job_configurations[
+                    i + 1 :
+                ]  # Might be an empty list
+                # We drop the results of the other sub-optimal configurations
+                self.job_predictions = self.job_predictions[
+                    i + 1 :
+                ]  # Might be an empty list
+
     def __repr__(self):
         # Make every parameter on a new line
         concatenated_params = "\n".join(
             [f"    {k}: {v}" for k, v in self.params.items()]
         )
-        return f"Job(\n  job_id={self.job_id},\n  job_name={self.job_function.__name__},\n  params={{\n{concatenated_params}\n  }}\n)"
+
+        return f"Job(\n  job_id={self.job_id},\n  job_name={self.job_function.__name__},\n  params={{\n{concatenated_params}\n  }}\n )"
 
 
 class Workload:
