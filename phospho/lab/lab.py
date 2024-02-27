@@ -26,7 +26,7 @@ class Job:
     results: Dict[str, JobResult]
 
     # List of alternative results for the job
-    alternative_results: List[List[JobResult]]
+    alternative_results: List[Dict[str, JobResult]]
     # Stores all the possible config from the model
     alternative_configs: List[JobConfig]
 
@@ -136,7 +136,7 @@ class Job:
 
             # Add the prediction to the job_predictions
             current_predictions = self.alternative_results[alternative_config_index]
-            current_predictions.append(prediction)
+            current_predictions[message.id] = prediction
             self.alternative_results[alternative_config_index] = current_predictions
 
         return self.alternative_results
@@ -159,11 +159,13 @@ class Job:
         for alternative_config_index in range(0, len(self.alternative_configs)):
             # Results are considered the groundtruth. Compare the alternative results to this ref
             accuracy_vector = [
-                1 if output == label else 0
-                for output, label in zip(
-                    self.alternative_results[alternative_config_index], self.results
-                )
+                1
+                if self.alternative_results[alternative_config_index][key]
+                == self.results[key]
+                else 0
+                for key in self.results
             ]
+
             accuracy = sum(accuracy_vector) / len(accuracy_vector)
             accuracies.append(accuracy)
 
