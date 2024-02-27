@@ -9,9 +9,18 @@ import phospho.lab.job_library as job_library
 
 from .models import JobConfig, JobResult, Message, ResultType
 
-# This is a workaround to avoid the error "RuntimeError: This event loop is already running" in jupyter notebooks
-nest_asyncio.apply()
 logger = logging.getLogger(__name__)
+
+
+try:
+    # This is a workaround to avoid the error "RuntimeError: This event loop is already running" in jupyter notebooks
+    # Related issue: https://github.com/NVIDIA/NeMo-Guardrails/issues/112
+    nest_asyncio.apply()
+except Exception as e:
+    logger.info(
+        "Could not apply nest_asyncio. This is not a problem if you are not running in a jupyter notebook."
+        + f"Error: {e}"
+    )
 
 
 class Job:
