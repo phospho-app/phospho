@@ -82,6 +82,7 @@ class Job:
         """
         Asynchronously run the job on the message.
         """
+        logger.info(f"Running job {self.id} on message {message.id}.")
         params = self.config.model_dump()
 
         if asyncio.iscoroutinefunction(self.job_function):
@@ -261,12 +262,9 @@ class Workload:
             if executor_type == "parallel":
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
-                    # executor.map(self.evaluate_a_task, task_to_evaluate)
                     executor_results = executor.map(job.async_run, messages)
-                    # Await all the results
-                    for one_result in executor_results:
-                        if asyncio.iscoroutine(one_result):
-                            await one_result
+                # Await all the results
+                await asyncio.gather(*executor_results)
             elif executor_type == "sequential":
                 for one_message in messages:
                     await job.async_run(one_message)
