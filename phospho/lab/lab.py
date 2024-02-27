@@ -16,20 +16,20 @@ logger = logging.getLogger(__name__)
 
 
 class Job:
-    job_id: str
+    id: str
     job_function: Union[
         Callable[..., JobResult],
         Callable[..., Awaitable[JobResult]],  # For async jobs
     ]
     # Stores the current config and the possible config values as an instanciated pydantic object
-    job_config: JobConfig
+    config: JobConfig
     # message.id -> job_result
-    job_results: Dict[str, JobResult]
+    results: Dict[str, JobResult]
 
-    # List
-    job_predictions: List[JobResult]
+    # List of alternative results for the job
+    alternative_results: List[List[JobResult]]
     # Stores all the possible config from the model
-    job_configurations: List[JobConfig]
+    alternative_configs: List[JobConfig]
 
     def __init__(
         self,
@@ -64,20 +64,20 @@ class Job:
                 # Make it the name of the function
                 job_id = job_function.__name__
 
-        self.job_id = job_id
+        self.id = job_id
 
         # message.id -> job_result
-        self.job_results: Dict[str, JobResult] = {}
+        self.results: Dict[str, JobResult] = {}
 
         # If the config values are provided, store them
         if job_config is not None:
-            self.job_config = job_config
+            self.config = job_config
             # generate all the possible configuration from the model
-            self.job_configurations = generate_configurations(self.job_config)
+            self.alternative_configs = generate_configurations(self.config)
         else:
             logger.warning("No job_config provided. Running with empty config")
-            self.job_config = JobConfig()
-            self.job_configurations = generate_configurations(self.job_config)
+            self.config = JobConfig()
+            self.alternative_configs = generate_configurations(self.config)
 
     def run(self, message: Message) -> JobResult:
         """
@@ -86,7 +86,7 @@ class Job:
         # TODO: Infer for each message its context (if any)
         # The context is the previous messages of the session
 
-        params = self.job_config.model_dump()
+        params = self.config.model_dump()
 
         if asyncio.iscoroutinefunction(self.job_function):
             result = asyncio.run(self.job_function(message, **params))
@@ -94,14 +94,14 @@ class Job:
             result = self.job_function(message, **params)
 
         if result is None:
-            logger.error(f"Job {self.job_id} returned None for message {message.id}.")
+            logger.error(f"Job {self.id} returned None for message {message.id}.")
             result = JobResult(
-                job_id=self.job_id,
+                job_id=self.id,
                 result_type=ResultType.error,
                 value=None,
             )
 
-        self.job_results[message.id] = result
+        self.results[message.id] = result
         return result
 
     def __repr__(self):
@@ -109,7 +109,7 @@ class Job:
         concatenated_params = "\n".join(
             [f"    {k}: {v}" for k, v in self.params.items()]
         )
-        return f"Job(\n  job_id={self.job_id},\n  job_name={self.job_function.__name__},\n  params={{\n{concatenated_params}\n  }}\n)"
+        return f"Job(\n  job_id={self.id},\n  job_name={self.job_function.__name__},\n  params={{\n{concatenated_params}\n  }}\n)"
 
 
 class Workload:
@@ -199,7 +199,7 @@ class Workload:
         for one_message in messages:
             results[one_message.id] = {}
             for job in self.jobs:
-                results[one_message.id][job.job_id] = job.job_results[one_message.id]
+                results[one_message.id][job.id] = job.results[one_message.id]
 
         self.results = results
         return results

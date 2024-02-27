@@ -13,7 +13,7 @@ import openai
 
 from phospho import config
 
-from .models import JobConfig, JobResult, Message, ResultType
+from .models import JobResult, Message, ResultType
 
 logger = logging.getLogger(__name__)
 
