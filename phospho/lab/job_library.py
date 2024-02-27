@@ -17,10 +17,6 @@ from .models import JobConfig, JobResult, Message, ResultType
 
 logger = logging.getLogger(__name__)
 
-# TODO: Turn this into a shared resource managed by the Workload
-openai_client = openai.Client()
-async_openai_client = openai.AsyncClient()
-
 
 def prompt_to_bool(
     message: Message,
@@ -31,6 +27,8 @@ def prompt_to_bool(
     """
     Runs a prompt on a message and returns a boolean result.
     """
+    openai_client = openai.Client()
+
     if format_kwargs is None:
         format_kwargs = {}
 
@@ -76,6 +74,8 @@ def prompt_to_literal(
     """
     Runs a prompt on a message and returns a str from the list ouput_literal.
     """
+    openai_client = openai.Client()
+
     if format_kwargs is None:
         format_kwargs = {}
 
@@ -138,6 +138,8 @@ async def event_detection(
     """
     Detects if an event is present in a message.
     """
+
+    async_openai_client = openai.AsyncClient()
 
     # Build the prompt
     if len(message.previous_messages) > 0:
@@ -268,6 +270,8 @@ async def evaluate_task(
     }
     """
     from phospho.utils import fits_in_context_window
+
+    async_openai_client = openai.AsyncClient()
 
     successful_examples = message.metadata.get("successful_examples", [])
     unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])

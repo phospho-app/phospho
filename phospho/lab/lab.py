@@ -1,13 +1,13 @@
 import asyncio
 import concurrent.futures
 import logging
-from typing import Callable, Dict, Iterable, List, Literal, Optional, Union
+from typing import Awaitable, Callable, Dict, Iterable, List, Literal, Optional, Union
 
 import nest_asyncio
 
 import phospho.lab.job_library as job_library
 
-from .models import Any, EmptyConfig, JobConfig, JobResult, Message, ResultType
+from .models import JobConfig, JobResult, Message, ResultType
 from .utils import generate_configurations
 
 # This is a workaround to avoid the error "RuntimeError: This event loop is already running" in jupyter notebooks
@@ -19,7 +19,7 @@ class Job:
     job_id: str
     job_function: Union[
         Callable[..., JobResult],
-        Callable[..., asyncio.Future[JobResult]],  # For async jobs
+        Callable[..., Awaitable[JobResult]],  # For async jobs
     ]
     # Stores the current config and the possible config values as an instanciated pydantic object
     job_config: JobConfig
@@ -33,9 +33,14 @@ class Job:
 
     def __init__(
         self,
-        job_function: Optional[Callable[..., JobResult]] = None,
-        job_name: Optional[str] = None,
         job_id: Optional[str] = None,
+        job_function: Optional[
+            Union[
+                Callable[..., JobResult],
+                Callable[..., Awaitable[JobResult]],  # For async jobs
+            ]
+        ] = None,
+        job_name: Optional[str] = None,
         job_config: Optional[JobConfig] = None,
     ):
         """
@@ -109,6 +114,7 @@ class Job:
 
 class Workload:
     jobs: List[Job]
+    # Result is a mapping of message.id -> job_id -> JobResult
     results: Dict[str, Dict[str, JobResult]]
 
     def __init__(self):

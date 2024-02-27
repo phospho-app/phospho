@@ -97,6 +97,7 @@ class JobResult(BaseModel):
     result_type: ResultType
     value: Any
     logs: List[Any] = Field(default_factory=list)
+    metadata: dict = Field(default_factory=dict)
 
 
 # Custom configuration class for our implementation of the lab
