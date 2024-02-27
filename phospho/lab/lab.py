@@ -1,7 +1,7 @@
 import asyncio
 import concurrent.futures
 import logging
-from typing import Callable, Dict, Iterable, List, Literal, Optional, Union
+from typing import Awaitable, Callable, Dict, Iterable, List, Literal, Optional, Union
 
 import nest_asyncio
 
@@ -27,7 +27,7 @@ class Job:
     ]  # Stores all the possible config from the model
     job_function: Union[
         Callable[..., JobResult],
-        Callable[..., asyncio.Coroutine[JobResult]],  # For async jobs
+        Callable[..., Awaitable[JobResult]],  # For async jobs
     ]
 
     def __init__(
@@ -36,7 +36,7 @@ class Job:
         job_function: Optional[
             Union[
                 Callable[..., JobResult],
-                Callable[..., asyncio.Coroutine[JobResult]],  # For async jobs
+                Callable[..., Awaitable[JobResult]],  # For async jobs
             ]
         ] = None,
         job_name: Optional[str] = None,
