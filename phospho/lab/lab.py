@@ -17,34 +17,31 @@ logger = logging.getLogger(__name__)
 
 class Job:
     job_id: str
-    params: Dict[str, Any]
-    job_results: Dict[str, JobResult]
-    job_predictions: Dict[str, Dict[str, JobResult]]
-    job_config: JobConfig  # Stores the current config and the possible config values as an instanciated pydantic object
-    job_configurations: Dict[
-        str, JobConfig
-    ]  # Stores all the possible config from the model
     job_function: Union[
         Callable[..., JobResult],
         Callable[..., asyncio.Future[JobResult]],  # For async jobs
     ]
+    # Stores the current config and the possible config values as an instanciated pydantic object
+    job_config: JobConfig
+    # message.id -> job_result
+    job_results: Dict[str, JobResult]
+
+    # List
+    job_predictions: List[JobResult]
+    # Stores all the possible config from the model
+    job_configurations: List[JobConfig]
 
     def __init__(
         self,
         job_function: Optional[Callable[..., JobResult]] = None,
         job_name: Optional[str] = None,
         job_id: Optional[str] = None,
-        params: Optional[Dict[str, Any]] = None,
-        job_config: JobConfig = None,
+        job_config: Optional[JobConfig] = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
         It stores the result.
         """
-
-        if params is None:
-            params = {}
-        self.params = params
 
         if job_function is None and job_name is None:
             raise ValueError("Please provide a job_function or a job_name.")
@@ -74,7 +71,7 @@ class Job:
             self.job_configurations = generate_configurations(self.job_config)
         else:
             logger.warning("No job_config provided. Running with empty config")
-            self.job_config = EmptyConfig()
+            self.job_config = JobConfig()
             self.job_configurations = generate_configurations(self.job_config)
 
     def run(self, message: Message) -> JobResult:
@@ -84,20 +81,12 @@ class Job:
         # TODO: Infer for each message its context (if any)
         # The context is the previous messages of the session
 
+        params = self.job_config.model_dump()
+
         if asyncio.iscoroutinefunction(self.job_function):
-            result = asyncio.run(
-                self.job_function(
-                    message,
-                    **self.params,
-                    job_config=self.job_config,
-                )
-            )
+            result = asyncio.run(self.job_function(message, **params))
         else:
-            result = self.job_function(
-                message,
-                **self.params,
-                job_config=self.job_config,
-            )
+            result = self.job_function(message, **params)
 
         if result is None:
             logger.error(f"Job {self.job_id} returned None for message {message.id}.")
@@ -145,10 +134,11 @@ class Workload:
         # Create the jobs from the configuration
         # TODO : Adds some kind of validation
         for job_id, job_config in config["jobs"].items():
+            job_config_model = JobConfig(**job_config.get("config", {}))
             job = Job(
                 job_id=job_id,
                 job_name=job_config["name"],
-                params=job_config.get("params", {}),
+                job_config=job_config_model,
             )
             workload.add_job(job)
 
