@@ -1,13 +1,14 @@
-import phospho
+import os
 import random
-import streamlit as st
 import time
+from typing import Any, Dict, Generator, List, Optional
 
+import streamlit as st
 from openai import OpenAI
-from openai.types.chat import ChatCompletionChunk
 from openai._streaming import Stream
+from openai.types.chat import ChatCompletionChunk
 
-from typing import List, Dict, Generator, Any, Optional
+import phospho
 
 
 class SantaClausAgent:
@@ -134,5 +135,6 @@ class SantaClausAgent:
 phospho.init(
     api_key=st.secrets["PHOSPHO_API_KEY"],
     project_id=st.secrets["PHOSPHO_PROJECT_ID"],
-    base_url="http://127.0.0.1:8000/v2",
+    # base_url="http://127.0.0.1:8000/v2",
+    base_url=os.getenv("PHOSPHO_BASE_URL"),
 )
