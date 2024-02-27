@@ -99,6 +99,7 @@ class Job:
         params = self.config.model_dump()
 
         if asyncio.iscoroutinefunction(self.job_function):
+            logger.debug(f"Running job {self.id} with async function.")
             result = asyncio.run(self.job_function(message, **params))
         else:
             result = self.job_function(message, **params)
