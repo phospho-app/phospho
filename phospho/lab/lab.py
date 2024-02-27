@@ -7,8 +7,7 @@ import nest_asyncio
 
 import phospho.lab.job_library as job_library
 
-from .models import Any, EmptyConfig, JobConfig, JobResult, Message, ResultType
-from .utils import generate_configurations
+from .models import JobConfig, JobResult, Message, ResultType
 
 # This is a workaround to avoid the error "RuntimeError: This event loop is already running" in jupyter notebooks
 nest_asyncio.apply()
@@ -16,72 +15,70 @@ logger = logging.getLogger(__name__)
 
 
 class Job:
-    job_id: str
-    params: Dict[str, Any]
-    job_results: Dict[str, JobResult]
-    job_predictions: Dict[str, Dict[str, JobResult]]
-    # Stores the current config and the possible config values as an instanciated pydantic object
-    job_config: JobConfig
-    job_configurations: Dict[
-        str, JobConfig
-    ]  # Stores all the possible config from the model
+    id: str
     job_function: Union[
         Callable[..., JobResult],
         Callable[..., Awaitable[JobResult]],  # For async jobs
     ]
+    # Stores the current config and the possible config values as an instanciated pydantic object
+    config: JobConfig
+    # message.id -> job_result
+    results: Dict[str, JobResult]
+
+    # List of alternative results for the job
+    alternative_results: List[List[JobResult]]
+    # Stores all the possible config from the model
+    alternative_configs: List[JobConfig]
 
     def __init__(
         self,
-        job_id: Optional[str] = None,
+        id: Optional[str] = None,
         job_function: Optional[
             Union[
                 Callable[..., JobResult],
                 Callable[..., Awaitable[JobResult]],  # For async jobs
             ]
         ] = None,
-        job_name: Optional[str] = None,
-        job_config: Optional[JobConfig] = None,
-        params: Optional[Dict[str, Any]] = None,
+        name: Optional[str] = None,
+        config: Optional[JobConfig] = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
         It stores the result.
         """
 
-        if params is None:
-            params = {}
-        self.params = params
-
-        if job_function is None and job_name is None:
+        if job_function is None and name is None:
             raise ValueError("Please provide a job_function or a job_name.")
 
-        if job_name is not None:
+        if name is not None:
             # from the module .job_library import the function with the name job_name
-            job_function = getattr(job_library, job_name)
+            job_function = getattr(job_library, name)
         assert job_function is not None, "Please provide a job_function or a job_name."
         self.job_function = job_function
 
-        if job_id is None:
-            if job_name is not None:
-                job_id = job_name
+        if id is None:
+            if name is not None:
+                id = name
             else:
                 # Make it the name of the function
-                job_id = job_function.__name__
+                id = job_function.__name__
 
-        self.job_id = job_id
+        self.id = id
 
         # message.id -> job_result
-        self.job_results: Dict[str, JobResult] = {}
+        self.results: Dict[str, JobResult] = {}
 
         # If the config values are provided, store them
-        if job_config is not None:
-            self.job_config = job_config
+        if config is not None:
+            self.config = config
             # generate all the possible configuration from the model
-            self.job_configurations = generate_configurations(self.job_config)
+            self.alternative_configs = self.config.generate_configurations()
         else:
             logger.warning("No job_config provided. Running with empty config")
-            self.job_config = EmptyConfig()
-            self.job_configurations = generate_configurations(self.job_config)
+            self.config = JobConfig()
+            self.alternative_configs = []
+
+        self.alternative_results = []
 
     def run(self, message: Message) -> JobResult:
         """
@@ -90,38 +87,110 @@ class Job:
         # TODO: Infer for each message its context (if any)
         # The context is the previous messages of the session
 
+        params = self.config.model_dump()
+
         if asyncio.iscoroutinefunction(self.job_function):
-            result = asyncio.run(
-                self.job_function(
-                    message,
-                    **self.params,
-                    job_config=self.job_config,
-                )
-            )
+            result = asyncio.run(self.job_function(message, **params))
         else:
-            result = self.job_function(
-                message,
-                **self.params,
-                job_config=self.job_config,
-            )
+            result = self.job_function(message, **params)
 
         if result is None:
-            logger.error(f"Job {self.job_id} returned None for message {message.id}.")
+            logger.error(f"Job {self.id} returned None for message {message.id}.")
             result = JobResult(
-                job_id=self.job_id,
+                job_id=self.id,
                 result_type=ResultType.error,
                 value=None,
             )
 
-        self.job_results[message.id] = result
+        self.results[message.id] = result
         return result
+
+    def _run_on_alternative_configurations(
+        self, message: Message
+    ) -> List[List[JobResult]]:
+        """
+        Run the job on the message with all the possible configurations except the default.
+        Results are appended to the job_predictions attribute.
+        """
+        if len(self.alternative_results) == 0:
+            raise ValueError(
+                "No alternative configurations to run the job on. Please run .optimize first."
+            )
+
+        for alternative_config_index in range(0, len(self.alternative_configs)):
+            params = self.alternative_configs[alternative_config_index].model_dump()
+            if asyncio.iscoroutinefunction(self.job_function):
+                prediction = asyncio.run(self.job_function(message, **params))
+            else:
+                prediction = self.job_function(message, **params)
+
+            if prediction is None:
+                logger.error(
+                    f"Job {self.id} returned None for message {message.id} on alternative config run."
+                )
+                prediction = JobResult(
+                    job_id=self.id,
+                    result_type=ResultType.error,
+                    value=None,
+                )
+
+            # Add the prediction to the job_predictions
+            current_predictions = self.alternative_results[alternative_config_index]
+            current_predictions.append(prediction)
+            self.alternative_results[alternative_config_index] = current_predictions
+
+        return self.alternative_results
+
+    def optimize(self, accuracy_threshold: float = 1.0, min_count: int = 10) -> None:
+        """
+        After having run the job on all the alternative configurations,
+        optimize the job by comparing all the predictions to the results with the default configuration.
+        - If the current configuration is the optimal, do nothing.
+        - If the current configuration is not the optimal, update the config attribute.
+
+        For now, we just check if the accuracy is above the threshold.
+        """
+        # Check that we have enough predictions to start the optimization
+        if len(self.results) < min_count:
+            return
+
+        accuracies: List[float] = []
+        # For each alternative config, we compute the accuracy_vector
+        for alternative_config_index in range(0, len(self.alternative_configs)):
+            # Results are considered the groundtruth. Compare the alternative results to this ref
+            accuracy_vector = [
+                1 if output == label else 0
+                for output, label in zip(
+                    self.alternative_results[alternative_config_index], self.results
+                )
+            ]
+            accuracy = sum(accuracy_vector) / len(accuracy_vector)
+            accuracies.append(accuracy)
+
+        # The latest items are the most preferred ones
+        # The instanciated config is the reference one (most truthful)
+        # We want to take the latest one that is above the threshold.
+        for i in range(len(accuracies) - 1, -1, -1):
+            if accuracies[i] > accuracy_threshold:
+                logger.info(
+                    f"Found a less costly config with accuracy of {accuracies[i]}. Swapping to it."
+                )
+                # This configuration becames the default configuration
+                self.config = self.alternative_configs[i]
+                # We keep the results of the more costly config as the results
+                # Might be an empty list
+                self.alternative_configs = self.alternative_configs[i + 1 :]
+                # We drop the results of the other sub-optimal configurations
+                # Might be an empty list
+                self.alternative_results = self.alternative_results[i + 1 :]
+                break
 
     def __repr__(self):
         # Make every parameter on a new line
         concatenated_params = "\n".join(
             [f"    {k}: {v}" for k, v in self.params.items()]
         )
-        return f"Job(\n  job_id={self.job_id},\n  job_name={self.job_function.__name__},\n  params={{\n{concatenated_params}\n  }}\n)"
+        return f"Job(\n  job_id={self.id},\n  job_name={self.job_function.__name__},\n  params={{\n{concatenated_params}\n  }}\n)"
 
 
 class Workload:
@@ -152,10 +221,11 @@ class Workload:
         # Create the jobs from the configuration
         # TODO : Adds some kind of validation
         for job_id, job_config in config["jobs"].items():
+            job_config_model = JobConfig(**job_config.get("config", {}))
             job = Job(
-                job_id=job_id,
-                job_name=job_config["name"],
-                params=job_config.get("params", {}),
+                id=job_id,
+                name=job_config["name"],
+                config=job_config_model,
             )
             workload.add_job(job)
 
@@ -210,7 +280,7 @@ class Workload:
         for one_message in messages:
             results[one_message.id] = {}
             for job in self.jobs:
-                results[one_message.id][job.job_id] = job.job_results[one_message.id]
+                results[one_message.id][job.id] = job.results[one_message.id]
 
         self.results = results
         return results

@@ -13,7 +13,7 @@ import openai
 
 from phospho import config
 
-from .models import JobConfig, JobResult, Message, ResultType
+from .models import JobResult, Message, ResultType
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,6 @@ def prompt_to_bool(
     prompt: str,
     format_kwargs: Optional[dict] = None,
     model: str = "gpt-3.5-turbo",
-    job_config: JobConfig = JobConfig(),
 ) -> JobResult:
     """
     Runs a prompt on a message and returns a boolean result.
@@ -39,7 +38,7 @@ def prompt_to_bool(
         **format_kwargs,
     )
     response = openai_client.chat.completions.create(
-        model=job_config.model,
+        model=model,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {
@@ -71,7 +70,6 @@ def prompt_to_literal(
     output_literal: List[str],
     format_kwargs: Optional[dict] = None,
     model: str = "gpt-3.5-turbo",
-    job_config: JobConfig = JobConfig(),
 ) -> JobResult:
     """
     Runs a prompt on a message and returns a str from the list ouput_literal.
@@ -89,7 +87,7 @@ def prompt_to_literal(
         **format_kwargs,
     )
     response = openai_client.chat.completions.create(
-        model=job_config.model,
+        model=model,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {
