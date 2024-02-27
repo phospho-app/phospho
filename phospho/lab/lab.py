@@ -20,22 +20,28 @@ class Job:
     params: Dict[str, Any]
     job_results: Dict[str, JobResult]
     job_predictions: Dict[str, Dict[str, JobResult]]
-    job_config: JobConfig  # Stores the current config and the possible config values as an instanciated pydantic object
+    # Stores the current config and the possible config values as an instanciated pydantic object
+    job_config: JobConfig
     job_configurations: Dict[
         str, JobConfig
     ]  # Stores all the possible config from the model
     job_function: Union[
         Callable[..., JobResult],
-        Callable[..., asyncio.Future[JobResult]],  # For async jobs
+        Callable[..., asyncio.Coroutine[JobResult]],  # For async jobs
     ]
 
     def __init__(
         self,
-        job_function: Optional[Callable[..., JobResult]] = None,
-        job_name: Optional[str] = None,
         job_id: Optional[str] = None,
+        job_function: Optional[
+            Union[
+                Callable[..., JobResult],
+                Callable[..., asyncio.Coroutine[JobResult]],  # For async jobs
+            ]
+        ] = None,
+        job_name: Optional[str] = None,
+        job_config: Optional[JobConfig] = None,
         params: Optional[Dict[str, Any]] = None,
-        job_config: JobConfig = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
