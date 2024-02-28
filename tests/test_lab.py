@@ -55,7 +55,7 @@ async def test_evaluation():
             id="talking_about_product",
             job_function=lab.job_library.evaluate_task,
             config=EvalConfig(
-                few_shot_min_number_of_examples=1,
+                few_shot_min_number_of_examples=4,
             ),
         )
     )
@@ -98,14 +98,24 @@ async def test_evaluation():
                         "input": "How to buy the tires on the website?",
                         "output": "You just need to click on the checkout button.",
                         "flag": "success",
-                    }
+                    },
+                    {
+                        "input": "How to buy the tires on the website?",
+                        "output": "You just need to click on the checkout button.",
+                        "flag": "success",
+                    },
                 ],
                 "unsuccessful_examples": [
                     {
                         "input": "How to buy the tires on the website?",
                         "output": "I don't know what you are talking about.",
                         "flag": "failure",
-                    }
+                    },
+                    {
+                        "input": "How to buy the tires on the website?",
+                        "output": "I don't know what you are talking about.",
+                        "flag": "failure",
+                    },
                 ],
             },
         ),
