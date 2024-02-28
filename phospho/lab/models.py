@@ -8,6 +8,10 @@ from phospho.utils import generate_timestamp, generate_uuid
 
 from .utils import get_literal_values
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class Message(BaseModel):
     id: str = Field(default_factory=generate_uuid)
@@ -136,10 +140,12 @@ class JobConfig(BaseModel, extra="allow"):
             combinations = all_combinations
 
         # Create a list of JobConfig objects with all possible combinations
-        config_objects = [
-            self.__class__(**dict(zip(literal_values.keys(), combo)))
-            for combo in combinations
-        ]
+        config_objects = []
+        for combo in combinations:
+            print(f"Generating config for {combo}")
+            config_as_dict = self.model_dump()
+            config_as_dict.update(dict(zip(literal_values.keys(), combo)))
+            config_objects.append(self.__class__(**config_as_dict))
 
         return config_objects
 
