@@ -472,6 +472,7 @@ async def evaluate_task(
 
     else:
         # Few shot mode, we have enough examples to use them
+        prompt = None
         logger.debug(
             f"Running eval in few shot mode with Cohere classifier and {len(merged_examples)} examples"
         )
