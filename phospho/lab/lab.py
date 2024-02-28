@@ -77,6 +77,8 @@ class Job:
             self.alternative_configs = []
 
         self.alternative_results = []
+        for c in self.alternative_configs:
+            self.alternative_results.append({})
 
     async def async_run(self, message: Message) -> JobResult:
         """
@@ -101,22 +103,21 @@ class Job:
         self.results[message.id] = result
         return result
 
-    def _run_on_alternative_configurations(
+    async def async_run_on_alternative_configurations(
         self, message: Message
     ) -> List[Dict[str, JobResult]]:
         """
-        Run the job on the message with all the possible configurations except the default.
+        Asynchronously run the job on the message in all the laternative configurations, except the default.
         Results are appended to the job_predictions attribute.
         """
-        if len(self.alternative_results) == 0:
-            raise ValueError(
-                "No alternative configurations to run the job on. Please run .optimize first."
-            )
+        if len(self.alternative_configs) == 0:
+            logger.warning("No alternative configuarations found. Skipping.")
+            return [{}]
 
         for alternative_config_index in range(0, len(self.alternative_configs)):
             params = self.alternative_configs[alternative_config_index].model_dump()
             if asyncio.iscoroutinefunction(self.job_function):
-                prediction = asyncio.run(self.job_function(message, **params))
+                prediction = await self.job_function(message, **params)
             else:
                 prediction = self.job_function(message, **params)
 
@@ -130,10 +131,8 @@ class Job:
                     value=None,
                 )
 
-            # Add the prediction to the job_predictions
-            current_predictions = self.alternative_results[alternative_config_index]
-            current_predictions[message.id] = prediction
-            self.alternative_results[alternative_config_index] = current_predictions
+            # Add the prediction to the alternative_results
+            self.alternative_results[alternative_config_index][message.id] = prediction
 
         return self.alternative_results
 
@@ -146,8 +145,32 @@ class Job:
 
         For now, we just check if the accuracy is above the threshold.
         """
+        # Check that the alternative_results are not empty
+        if len(self.alternative_results) == 0:
+            logger.warning(
+                """
+                No alternative results found. 
+                This can be caused by not having alternative configs or if you didn't called the 
+                async_run_on_alternative_configurations on the jobs. 
+                Skipping.
+                """
+            )
+            return
+
+        # Check that each alternative_result is each the same length as the results
+        for alternative_result in self.alternative_results:
+            if len(alternative_result) != len(self.results):
+                logger.error(
+                    """
+                    The alternative_results are not the same length as the results. 
+                    Skipping.
+                    """
+                )
+                return
+
         # Check that we have enough predictions to start the optimization
         if len(self.results) < min_count:
+            logger.info("Not enough results to start the optimization. Skipping.")
             return
 
         accuracies: List[float] = []
@@ -156,8 +179,8 @@ class Job:
             # Results are considered the groundtruth. Compare the alternative results to this ref
             accuracy_vector = [
                 1
-                if self.alternative_results[alternative_config_index][key]
-                == self.results[key]
+                if self.alternative_results[alternative_config_index][key].value
+                == self.results[key].value
                 else 0
                 for key in self.results
             ]
@@ -165,11 +188,15 @@ class Job:
             accuracy = sum(accuracy_vector) / len(accuracy_vector)
             accuracies.append(accuracy)
 
+        # DEBUG
+        print(f"accuracies: {accuracies}")
+
         # The latest items are the most preferred ones
         # The instanciated config is the reference one (most truthful)
         # We want to take the latest one that is above the threshold.
         for i in range(len(accuracies) - 1, -1, -1):
-            if accuracies[i] > accuracy_threshold:
+            print("in for loop")
+            if accuracies[i] >= accuracy_threshold:
                 logger.info(
                     f"Found a less costly config with accuracy of {accuracies[i]}. Swapping to it."
                 )
@@ -184,11 +211,7 @@ class Job:
                 break
 
     def __repr__(self):
-        # Make every parameter on a new line
-        concatenated_params = "\n".join(
-            [f"    {k}: {v}" for k, v in self.params.items()]
-        )
-        return f"Job(\n  job_id={self.id},\n  job_name={self.job_function.__name__},\n  params={{\n{concatenated_params}\n  }}\n)"
+        return f"Job(\n  job_id={self.id},\n  job_name={self.job_function.__name__},\n  config={{\n{self.config}\n  }}\n)"
 
 
 class Workload:
@@ -283,6 +306,53 @@ class Workload:
 
         self.results = results
         return results
+
+    async def async_run_on_alternative_configurations(
+        self,
+        messages: Iterable[Message],
+        executor_type: Literal["parallel", "sequential"] = "parallel",
+    ) -> Dict[str, Dict[str, JobResult]]:
+        """
+        Runs all the jobs on the message.
+
+        Returns: a mapping of message.id -> job_id -> job_result
+        """
+
+        # Run the jobs sequentially on every message
+        # TODO : Run the jobs in parallel on every message
+        for job in self.jobs:
+            if executor_type == "parallel":
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    # Submit tasks to the executor
+                    executor_predictions = executor.map(
+                        job.async_run_on_alternative_configurations, messages
+                    )
+                # Await all the results
+                await asyncio.gather(*executor_predictions)
+            elif executor_type == "sequential":
+                for one_message in messages:
+                    await job.async_run_on_alternative_configurations(one_message)
+            else:
+                raise NotImplementedError(
+                    f"Executor type {executor_type} is not implemented"
+                )
+
+        # We do not collect the results here, as we want to keep the alternative results
+        # They are stored in the job object, in the alternative_results attribute
+
+    def optimize_jobs(
+        self, accuracy_threshold: float = 1.0, min_count: int = 10
+    ) -> None:
+        """
+        After having run the job on all the alternative configurations,
+        optimize the job by comparing all the predictions to the results with the default configuration.
+        - If the current configuration is the optimal, do nothing.
+        - If the current configuration is not the optimal, update the config attribute.
+
+        For now, we just check if the accuracy is above the threshold.
+        """
+        for job in self.jobs:
+            job.optimize(accuracy_threshold=accuracy_threshold, min_count=min_count)
 
     def __repr__(self):
         concatenated_jobs = "\n".join([f"  {job}" for job in self.jobs])
