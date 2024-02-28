@@ -20,6 +20,7 @@ optional = true
 openai = "^1.12.0"
 tiktoken = "^0.6.0"
 cohere = "^4.51"
+ollama = "^0.1.6"
 
 [tool.poetry.group.dev]
 optional = true
