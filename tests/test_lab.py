@@ -53,7 +53,7 @@ async def test_evaluation():
     workload.add_job(
         lab.Job(
             id="talking_about_product",
-            function=lab.job_library.evaluate_task,
+            job_function=lab.job_library.evaluate_task,
             config=EvalConfig(
                 few_shot_min_number_of_examples=1,
             ),
