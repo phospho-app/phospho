@@ -184,11 +184,7 @@ class Job:
                 break
 
     def __repr__(self):
-        # Make every parameter on a new line
-        concatenated_params = "\n".join(
-            [f"    {k}: {v}" for k, v in self.params.items()]
-        )
-        return f"Job(\n  job_id={self.id},\n  job_name={self.job_function.__name__},\n  params={{\n{concatenated_params}\n  }}\n)"
+        return f"Job(\n  job_id={self.id},\n  job_name={self.job_function.__name__},\n  config={{\n{self.config}\n  }}\n)"
 
 
 class Workload:
