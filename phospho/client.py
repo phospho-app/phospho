@@ -143,19 +143,18 @@ class Client:
         task_id: str,
         flag: Literal["success", "failure"],
         source: str = "user",
-        note: Optional[str] = None,
+        notes: Optional[str] = None,
     ) -> Task:
         """
         Flag a task as a success or a failure. Returns the task.
         """
-
-        # TODO: add note to the payload
 
         response = self._post(
             f"/tasks/{task_id}/flag/",
             payload={
                 "flag": flag,
                 "source": source,
+                "notes": notes,
             },
         )
         return Task(client=self, task_id=task_id, _content=response.json())
