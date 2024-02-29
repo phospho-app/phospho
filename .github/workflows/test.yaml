@@ -37,7 +37,7 @@ jobs:
         run: poetry install --with dev --extras "lab" --no-interaction --no-root
 
       - name: Install project
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --extras "lab"
 
       - name: Run tests
         env:

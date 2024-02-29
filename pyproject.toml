@@ -13,15 +13,12 @@ python = ">=3.9,<4.0"
 requests = "^2.31.0"
 pydantic = "^2.5.2"
 
-[tool.poetry.group.lab]
-optional = true
-
-[tool.poetry.group.lab.dependencies]
-openai = "^1.12.0"
-tiktoken = "^0.6.0"
-cohere = "^4.51"
-ollama = "^0.1.6"
-mistralai = "^0.1.3"
+# Optional dependencies for the lab
+openai = { version = "^1.12.0", optional = true }
+tiktoken = { version = "^0.6.0", optional = true }
+cohere = { version = "^4.51", optional = true }
+ollama = { version = "^0.1.6", optional = true }
+mistralai = { version = "^0.1.3", optional = true }
 
 [tool.poetry.group.dev]
 optional = true
@@ -47,4 +44,7 @@ sphinx-autodoc2 = "^0.5.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-exclude = ["tests/", ".github/", ".pytest_cache/", "docs/"]
+exclude = ["tests/", ".github/", ".pytest_cache/", "docs/", "local/"]
+
+[tool.poetry.extras]
+lab = ["openai", "tiktoken", "cohere", "ollama", "mistralai"]
