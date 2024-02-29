@@ -1,0 +1,136 @@
+name: Deploy to Production
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - "extractor/**"
+    branches:
+      - main
+
+jobs:
+  deploy_extractor_production:
+    runs-on: ubuntu-latest
+    environment: production
+
+    defaults:
+      run:
+        working-directory: extractor
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: "auth"
+        uses: "google-github-actions/auth@v2"
+        env:
+          GCP_JSON_CREDENTIALS: ${{ secrets.GCP_JSON_CREDENTIALS }}
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_CREDENTIALS }}
+
+      - name: Set up GCP Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: "Use gcloud CLI"
+        run: "gcloud info"
+
+      - name: Build the container image
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          gcloud builds submit \
+            --config cloudbuild-production.yaml
+
+      - name: Deploy to Cloud Run in Production Env
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          MONGODB_NAME: ${{ vars.MONGODB_NAME }}
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+          EXTRACTOR_SECRET_KEY: ${{ secrets.EXTRACTOR_SECRET_KEY }}
+          EXTRACTOR_SENTRY_DSN: ${{ secrets.EXTRACTOR_SENTRY_DSN }}
+        run: |
+          gcloud run deploy phospho-extractor \
+            --project $GCP_PROJECT_ID \
+            --port 80 \
+            --region europe-west1 \
+            --allow-unauthenticated \
+            --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,ENVIRONMENT=production,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,COHERE_API_KEY=$COHERE_API_KEY,EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_SENTRY_DSN=$EXTRACTOR_SENTRY_DSN \
+            --image europe-west1-docker.pkg.dev/portal-385519/phospho-extractor/app:production
+
+  deploy_backend_production:
+    runs-on: ubuntu-latest
+    environment: production
+
+    defaults:
+      run:
+        working-directory: backend
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: "auth"
+        uses: "google-github-actions/auth@v2"
+        env:
+          GCP_JSON_CREDENTIALS: ${{ secrets.GCP_JSON_CREDENTIALS }}
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_CREDENTIALS }}
+
+      - name: Set up GCP Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: "Use gcloud CLI"
+        run: "gcloud info"
+
+      - name: Build the container image
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        # https://cloud.google.com/sdk/gcloud/reference/builds/submit
+        run: |
+          gcloud builds submit \
+            --config cloudbuild-production.yaml
+
+      - name: Deploy to Cloud Run in Production Env
+        # skip during local actions testing (this is what staging is for)
+        if: ${{ !env.ACT }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          PROPELAUTH_API_KEY: ${{ secrets.PROPELAUTH_API_KEY }}
+          PROPELAUTH_URL: ${{ vars.PROPELAUTH_URL }}
+          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          MONGODB_NAME: ${{ vars.MONGODB_NAME }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+          PHOSPHO_API_KEY_ONBOARDING: ${{ secrets.PHOSPHO_API_KEY_ONBOARDING }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          EXTRACTOR_SECRET_KEY: ${{ secrets.EXTRACTOR_SECRET_KEY }}
+          EXTRACTOR_URL: ${{ vars.EXTRACTOR_URL }}
+        run: |
+          gcloud run deploy phospho-backend \
+            --project $GCP_PROJECT_ID \
+            --port 80 \
+            --memory 2Gi \
+            --region europe-west1 \
+            --allow-unauthenticated \
+            --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,RESEND_API_KEY=$RESEND_API_KEY,ENVIRONMENT=production,SLACK_URL=$SLACK_URL,SENTRY_DSN=$SENTRY_DSN,PROPELAUTH_API_KEY=$PROPELAUTH_API_KEY,PROPELAUTH_URL=$PROPELAUTH_URL,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,QDRANT_URL=$QDRANT_URL,QDRANT_API_KEY=$QDRANT_API_KEY,COHERE_API_KEY=$COHERE_API_KEY,PHOSPHO_API_KEY_ONBOARDING=$PHOSPHO_API_KEY_ONBOARDING,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET,EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_URL=$EXTRACTOR_URL \
+            --image europe-west1-docker.pkg.dev/portal-385519/phospho-backend/app:production

@@ -1,0 +1,6 @@
+propelauth_py
+functions-framework==3.*
+python-dotenv
+resend
+pymongo
+pydantic
