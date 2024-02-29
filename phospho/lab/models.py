@@ -142,7 +142,6 @@ class JobConfig(BaseModel, extra="allow"):
         # Create a list of JobConfig objects with all possible combinations
         config_objects = []
         for combo in combinations:
-            print(f"Generating config for {combo}")
             config_as_dict = self.model_dump()
             config_as_dict.update(dict(zip(literal_values.keys(), combo)))
             config_objects.append(self.__class__(**config_as_dict))
