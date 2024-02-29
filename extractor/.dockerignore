@@ -1,0 +1,4 @@
+.env
+.other_secrets
+tests
+.pytest_cache

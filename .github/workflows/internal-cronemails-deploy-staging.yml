@@ -1,0 +1,69 @@
+name: Deploy backend cronemails
+
+on:
+  push:
+    paths:
+      - "internal-tools/cronemails/**"
+    branches:
+      - dev
+
+jobs:
+  deploy_cronemails:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    defaults:
+      run:
+        working-directory: internal-tools/cronemails
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: "auth"
+        uses: "google-github-actions/auth@v2"
+        env:
+          GCP_JSON_CREDENTIALS: ${{ secrets.GCP_JSON_CREDENTIALS }}
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_CREDENTIALS }}
+
+      - name: Set up GCP Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: "Use gcloud CLI"
+        run: "gcloud info"
+
+      - name: "Deploy to Cloud functions"
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          PROPELAUTH_API_KEY: ${{ secrets.PROPELAUTH_API_KEY }}
+          PROPELAUTH_URL: ${{ vars.PROPELAUTH_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          MONGODB_NAME: ${{ vars.MONGODB_NAME }}
+        run:
+          "gcloud functions deploy cronemails \
+          --runtime python311 \
+          --source . \
+          --entry-point main \
+          --trigger-http \
+          --region europe-west1 \
+          --project $GCP_PROJECT_ID \
+          --allow-unauthenticated \
+          --set-env-vars PROPELAUTH_API_KEY=$PROPELAUTH_API_KEY,PROPELAUTH_URL=$PROPELAUTH_URL,RESEND_API_KEY=$RESEND_API_KEY,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME "
+
+          # Make sure the Cloud Scheduler API is enabled
+      - name: "Configure GCP cron job (run every day at 18:00 CET)"
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: "gcloud scheduler jobs create http cronemails \
+          --schedule '0 18 * * *' \
+          --location europe-west1 \
+          --uri https://europe-west1-$GCP_PROJECT_ID.cloudfunctions.net/cronemails \
+          --project $GCP_PROJECT_ID"
