@@ -48,7 +48,7 @@ jobs:
         run: poetry install --with docs,dev --extras "lab" --no-interaction --no-root
 
       - name: Install project
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --extras "lab"
 
       - name: Sphinx build
         run: |
