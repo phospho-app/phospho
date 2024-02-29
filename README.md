@@ -1,70 +1,78 @@
-# phospho Python Client
+# phospho: Product Analytics platform for LLM apps
 
-Phospho is a platform to help you monitor LLM apps.
+<div align="center">
+<img src="./platform/public/image/phospho-banner.png" alt="phospho logo">
+<a href="https://www.npmjs.com/package/phospho"><img src="https://img.shields.io/npm/v/phospho?style=flat-square&label=npm+phospho" alt="phospho npm package"></a>
+<a href="https://pypi.python.org/pypi/phospho"><img src="https://img.shields.io/pypi/v/phospho?style=flat-square&label=pypi+phospho" alt="phospho Python package on PyPi"></a>
+<a href="https://www.ycombinator.com/companies/phospho"><img src="https://img.shields.io/badge/Y%20Combinator-W24-orange?style=flat-square" alt="Y Combinator W24"></a>
+<a href="https://discord.gg/MXqBJ9pBsx"><img alt="Discord" src="https://img.shields.io/discord/1106594252043071509"></a>
+</div>
 
-With phospho, monitor every user interaction with your LLM app to identify issues and improve performance. Understand how users use your app and which versions of your product are the most successful.
+Phospho is the product analytics platform for LLM apps. Track user interactions to detect issues and extract insights. Gather user feedback and measure success. Iterate on your app to create the best conversational experience for your users.
 
-Read the docs at [docs.phospho.ai](https://docs.phospho.ai/).
+## Key Features
 
-> _Warning_ : This project is still under active development!
+- Flexible logging
+- Automatic evaluation
+- Insights extraction
+- Data visualization
+- Collaboration
 
-## Installation of the phospho client
+## Demo
 
-You need Python `>=3.8`
+https://github.com/phospho-app/monorepo/assets/58109554/efad0411-5647-42e8-81d3-73971ac6de7f
+
+## Get started
+
+### Hosted version
+
+The easiest way to get started with phospho is to use the hosted cloud version of the app:
+
+1. Create a [phospho account](https://phospho.ai)
+2. Install a phospho client: `pip install phospho` or `npm i phospho`
+3. Create environment variables for `PHOSPHO_API_KEY` and `PHOSPHO_PROJECT_ID`
+4. Initialize phospho: `phospho.init()`
+5. Log to phospho with `phospho.log(input="question", output="answer")`
+
+[Follow this guide to get started.](https://docs.phospho.ai/getting-started)
+
+### Self deploy
+
+This repository contains the implementation of the platform frontend, the API backend, and the insights extraction pipeline.
+
+- `phospho-python`: Python client with analytics engine
+- `extractor`: FastAPI analytics service wrapping the analytics engine
+- `backend`: FastAPI backend
+- `platform`: NextJS frontend
+- `internal-tools`: Platform management tools
+
+1. Clone the repo:
 
 ```bash
-pip install --upgrade phospho
+git clone git@github.com:phospho-app/monorepo.git
 ```
 
-## Quickstart
+2. Register to the core external services:
+   - OpenAI (or another OpenAI-compatible model provider)
+   - Cohere
+   - MongoDB Atlas (Alternative: self host a MongoDB)
+3. (Optional) Extend the platform capabilities by registering to additional services:
 
-Create an account on [phospho](https://platform.phospho.ai/). Create an API key and note down the project id. Set them as environment variables:
+   - Resend (emails)
+   - Sentry (performance analytics)
+   - Propelauth (authentication)
+   - Stripe (payment)
 
-```bash
-export PHOSPHO_API_KEY="your-api-key"
-export PHOSPHO_PROJECT_ID="project-id"
-```
+4. Follow the deployment instructions in backend/README.md and platform/README.md
 
-In the code of your LLM app, log interactions with your agent using `phospho.log()`.
+5. Enjoy !
 
-```python
-import phospho
+## Licence
 
-phospho.init()
+This project is licensed under the Apache 2.0 License - see the [LICENSE file](./LICENCE) for details
 
-# This is how you log interactions to phospho as strings
-phospho.log(input="The user input", output="Your LLM app output")
+## Related projects
 
-```
-
-You can also directly pass OpenAI API query and responses (or any object with same format) to phospho :
-
-```python
-import phospho
-import openai
-
-phospho.init()
-openai_client = openai.OpenAI()
-
-# This is your agent code
-query = {
-    "messages": [{"role": "user", "content": "The user input"}],
-    "model": "gpt-3.5-turbo",
-}
-response = openai_client.chat.completions.create(**query)
-
-# Log the interactions to phospho
-phospho.log(input=query, output=response)
-```
-
-Monitor and visualize your agent on the [phospho dashboard](https://platform.phospho.ai/).
-
-## phospho lab
-
-You can also use phospho locally to run evaluations and event detection on your text messages.
-See the [phospho lab documentation](https://docs.phospho.ai/local/phospho-lab) for more information or the notebook `quicksart.ipynb` in the `notebooks` folder.
-
-## Usage
-
-Read the docs at [docs.phospho.ai](https://docs.phospho.ai/) for more information.
-Use your phospho dashboard to monitor your agent, score interactions and detect events.
+- [phospho Javascript client](https://github.com/phospho-app/phosphojs)
+- [phospho UI React components](https://github.com/phospho-app/phospho-ui-react)
+- [phospho fastassert constrained inference](https://github.com/phospho-app/fastassert)
