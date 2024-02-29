@@ -59,6 +59,11 @@ phospho.log(input=query, output=response)
 
 Monitor and visualize your agent on the [phospho dashboard](https://platform.phospho.ai/).
 
+## phospho lab
+
+You can also use phospho locally to run evaluations and event detection on your text messages.
+See the [phospho lab documentation](https://docs.phospho.ai/local/phospho-lab) for more information or the notebook `quicksart.ipynb` in the `notebooks` folder.
+
 ## Usage
 
 Read the docs at [docs.phospho.ai](https://docs.phospho.ai/) for more information.
