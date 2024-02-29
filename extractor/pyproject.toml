@@ -20,8 +20,7 @@ cohere = "^4.48"
 pytest = "^8.0.1"
 pytest-asyncio = "^0.23.5"
 sentry-sdk = { extras = ["fastapi"], version = "^1.40.5" }
-phospho = "^0.2.20"
-nest-asyncio = "^1.6.0"
+phospho = { extras = ["lab"], version = "^0.3.0" }
 
 
 [build-system]
