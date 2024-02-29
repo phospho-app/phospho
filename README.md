@@ -24,6 +24,66 @@ https://github.com/phospho-app/monorepo/assets/58109554/efad0411-5647-42e8-81d3-
 
 ## Get started
 
+### Local quickstart
+
+You can use the phospho lab locally to extract evaluations and events from your messages.
+
+You will need ot install the phospho package with the `lab` extra:
+
+```
+pip install "phospho[lab]"
+```
+
+You need to set youOPENAI_API_KEY as an environment variable.
+
+```
+export OPENAI_API_KEY=your_openai_api_key
+```
+
+Then you can use the phospho lab to run extractions on your messages (for instance just using openai)
+
+```python
+from phospho import lab
+
+# Create the phospho workload
+workload = lab.Workload()
+
+# Define the job configurations
+class EventConfig(lab.JobConfig):
+    event_name: str
+    event_description: str
+
+# Let's add an event detection task to our workload
+workload.add_job(
+            lab.Job(
+                id="question_answering",
+                job_function=lab.job_library.event_detection,
+                config=EventConfig(
+                    event_name="question_answering",
+                    event_description="The user asks a question to the assistant",
+                ),
+            )
+        )
+
+# Let's add some messages to analyze
+message = lab.Message(
+                    id="my_message_id",
+                    role="User",
+                    content="What is the weather today in Paris?",
+                )
+
+# Run the workload on the message
+await workload.async_run(
+            messages=[message],
+            executor_type="sequential",
+        )
+
+# Check the results of the workload
+message_results = workload.results["my_message_id"]
+
+print(f"Result of the event detection: {message_results['question_answering'].value}")
+```
+
 ### Hosted version
 
 The easiest way to get started with phospho is to use the hosted cloud version of the app:
