@@ -3,7 +3,6 @@ import concurrent.futures
 import logging
 from typing import Awaitable, Callable, Dict, Iterable, List, Literal, Optional, Union
 
-import nest_asyncio
 
 import phospho.lab.job_library as job_library
 
@@ -311,7 +310,7 @@ class Workload:
         self,
         messages: Iterable[Message],
         executor_type: Literal["parallel", "sequential"] = "parallel",
-    ) -> Dict[str, Dict[str, JobResult]]:
+    ) -> None:
         """
         Runs all the jobs on the message.
 
