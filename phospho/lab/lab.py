@@ -10,6 +10,7 @@ import phospho.lab.job_library as job_library
 from .models import JobConfig, JobResult, Message, ResultType
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Job:
@@ -84,7 +85,7 @@ class Job:
         """
         Asynchronously run the job on the message.
         """
-        logger.info(f"Running job {self.id} on message {message.id}.")
+        logger.debug(f"Running job {self.id} on message {message.id}.")
         params = self.config.model_dump()
 
         if asyncio.iscoroutinefunction(self.job_function):
@@ -195,7 +196,6 @@ class Job:
         # The instanciated config is the reference one (most truthful)
         # We want to take the latest one that is above the threshold.
         for i in range(len(accuracies) - 1, -1, -1):
-            print("in for loop")
             if accuracies[i] >= accuracy_threshold:
                 logger.info(
                     f"Found a less costly config with accuracy of {accuracies[i]}. Swapping to it."
