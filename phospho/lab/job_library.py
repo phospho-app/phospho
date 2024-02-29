@@ -257,7 +257,6 @@ def sync_event_detection(
     assert (
         llm is not None
     ), "Language model not found. Are you sure the model_id is correct?"
-    async_openai_client = openai.AsyncClient()
 
     # Build the prompt
     if len(message.previous_messages) > 0:
@@ -303,7 +302,7 @@ You have to say if the event is present in the transcript or not. Respond with o
         llm_response = llm.invoke(prompt)
 
     except Exception as e:
-        logger.error(f"event_detection call to OpenAI API failed : {e}")
+        logger.error(f"event_detection call to LLM failed : {e}")
         return JobResult(
             job_id="event_detection",
             result_type=ResultType.error,
