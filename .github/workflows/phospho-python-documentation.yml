@@ -4,16 +4,18 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "backend/**"
+      - "phospho-python/**"
     branches:
       - dev
       - main
+  release:
+    types: [released]
 
 permissions:
   contents: write
 
 jobs:
-  build_phosph_python_doc:
+  build_phospho_python_doc:
     runs-on: ubuntu-latest
     defaults:
       run:
