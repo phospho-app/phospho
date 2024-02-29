@@ -1,0 +1,20 @@
+
+__pycache__/
+.pytest_cache
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+
+# Environment
+.env
+
+docs/build
+.mypy_cache
+.devcontainer/*
+
+venv/
+.venv/
+
+local/

@@ -1,0 +1,65 @@
+name: Deploy backend lifecheck
+
+on:
+  push:
+    paths:
+      - "internal-tools/lifecheck/**"
+    branches:
+      - main
+      - dev
+
+jobs:
+  deploy_lifecheck:
+    runs-on: ubuntu-latest
+    environment: production
+
+    defaults:
+      run:
+        working-directory: internal-tools/lifecheck
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: "auth"
+        uses: "google-github-actions/auth@v2"
+        env:
+          GCP_JSON_CREDENTIALS: ${{ secrets.GCP_JSON_CREDENTIALS }}
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_CREDENTIALS }}
+
+      - name: Set up GCP Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: "Use gcloud CLI"
+        run: "gcloud info"
+
+      - name: "Deploy to Cloud functions"
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+        run:
+          "gcloud functions deploy lifecheck \
+          --runtime python311 \
+          --source . \
+          --trigger-http \
+          --region europe-west1 \
+          --project $GCP_PROJECT_ID \
+          --allow-unauthenticated \
+          --set-env-vars SLACK_URL=$SLACK_URL"
+
+          # Make sure the Cloud Scheduler API is enabled
+      - name: "Configure GCP cron job (run every 5 minutes)"
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: "gcloud scheduler jobs create http lifecheck \
+          --schedule '*/5 * * * *' \
+          --location europe-west1 \
+          --uri https://europe-west1-$GCP_PROJECT_ID.cloudfunctions.net/lifecheck \
+          --project $GCP_PROJECT_ID"
