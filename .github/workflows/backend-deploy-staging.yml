@@ -1,6 +1,7 @@
 name: Deploy to Staging
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "backend/**"

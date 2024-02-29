@@ -1,6 +1,7 @@
 name: Backend tests
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - "backend/**"

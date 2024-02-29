@@ -1,6 +1,7 @@
 name: Deploy backend lifecheck
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "internal-tools/lifecheck/**"
