@@ -1,6 +1,7 @@
 "use client";
 
 import DownloadButton from "@/components/download-csv";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -26,17 +27,14 @@ import { FilterX } from "lucide-react";
 import { Sparkles } from "lucide-react";
 import React, { useState } from "react";
 
-import { Button } from "../../ui/button";
 import { getColumns } from "./tasks-table-columns";
 
 interface DataTableProps<TData, TValue> {
   // columns: any[]; // ColumnDef<TData, TValue>[];
-  handleViewClick: (task: TaskWithEvents) => void;
   project_id: string;
 }
 
 export function TasksTable<TData, TValue>({
-  handleViewClick,
   project_id,
 }: DataTableProps<TData, TValue>) {
   const selectedProject = navigationStateStore(
@@ -84,7 +82,7 @@ export function TasksTable<TData, TValue>({
     setIsLoading(false);
   };
 
-  const columns = getColumns({ handleViewClick: handleViewClick });
+  const columns = getColumns();
 
   const table = useReactTable({
     data: tasksWithEvents,
