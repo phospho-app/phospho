@@ -28,7 +28,7 @@ https://github.com/phospho-app/phospho/assets/78322686/fb1379bf-32f1-492e-be86-d
 
 The phospho lab is the core analytics component of phospho. The phospho lab helps you run batched evaluations and event detections on your messages.
 
-[The phospho lab is the core analytics component of phospho](./phospho_diagram.png)
+![The phospho lab is the core analytics component of phospho](./phospho_diagram.png)
 
 Install the phospho lab:
 
