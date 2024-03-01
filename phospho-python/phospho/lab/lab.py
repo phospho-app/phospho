@@ -2,8 +2,9 @@ import asyncio
 import concurrent.futures
 import logging
 from typing import Awaitable, Callable, Dict, Iterable, List, Literal, Optional, Union
-import pandas as pd
 
+
+import pandas as pd
 
 import phospho.lab.job_library as job_library
 
@@ -272,6 +273,7 @@ class Workload:
         self,
         messages: Iterable[Message],
         executor_type: Literal["parallel", "sequential"] = "parallel",
+        max_parallelism: int = 10,
     ) -> Dict[str, Dict[str, JobResult]]:
         """
         Runs all the jobs on the message.
@@ -283,10 +285,17 @@ class Workload:
         # TODO : Run the jobs in parallel on every message
         for job in self.jobs:
             if executor_type == "parallel":
+                # Await all the results
+                semaphore = asyncio.Semaphore(max_parallelism)
+
+                async def job_limit_wrap(url):
+                    async with semaphore:
+                        return await job.async_run(url)
+
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
-                    executor_results = executor.map(job.async_run, messages)
-                # Await all the results
+                    executor_results = executor.map(job_limit_wrap, messages)
+
                 await asyncio.gather(*executor_results)
             elif executor_type == "sequential":
                 for one_message in messages:
