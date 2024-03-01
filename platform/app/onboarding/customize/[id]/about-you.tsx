@@ -130,6 +130,7 @@ export default function AboutYou({
         if (Object.keys(project.settings?.events).length >= 10) {
           // Reached the events limit
           // Redirect to the home page
+          console.log("Reached the events limit", project.settings?.events);
           router.push("/");
         }
       }
@@ -184,6 +185,9 @@ export default function AboutYou({
       if (!response.ok) {
         // This project doesn't exist or the user doesn't have access to it.
         // Redirect the user to the home page.
+        console.log(
+          "Project doesn't exist or the user doesn't have access to it",
+        );
         router.push("/");
         return;
       }

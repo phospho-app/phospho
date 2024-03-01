@@ -301,6 +301,7 @@ async def add_events(
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
     # Add events to the project
+    logger.debug(f"Adding events to project {project_id}: {events.events}")
     updated_project = await add_project_events(project_id, events.events)
     return updated_project
 
