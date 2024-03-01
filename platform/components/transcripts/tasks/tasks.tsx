@@ -41,11 +41,6 @@ const Tasks: React.FC = () => {
     }
   }, [project_id, tasksWithEvents?.length]);
 
-  // If the view button is clicked
-  const handleViewClick = (task: TaskWithEvents) => {
-    router.push(`/org/transcripts/tasks/${task.id}`);
-  };
-
   if (!project_id) {
     return <></>;
   }
@@ -142,10 +137,7 @@ const Tasks: React.FC = () => {
                   </CardContent>
                 </Card>
               )}
-            <TasksTable
-              handleViewClick={handleViewClick}
-              project_id={project_id}
-            />
+            <TasksTable project_id={project_id} />
           </div>
 
           <div className="h-20"></div>
