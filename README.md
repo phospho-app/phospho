@@ -20,15 +20,15 @@ Support us by starring this repo! ⭐
 - Data visualization
 - Collaboration
 
+![The phospho lab is the core analytics component of phospho](./phospho_diagram.png)
+
 ## Demo
 
 https://github.com/phospho-app/phospho/assets/78322686/fb1379bf-32f1-492e-be86-d29879056dc3
 
-### phospho lab quickstart
+## Quickstart: Discover the phospho lab
 
 The phospho lab is the core analytics component of phospho. The phospho lab helps you run batched evaluations and event detections on your messages.
-
-![The phospho lab is the core analytics component of phospho](./phospho_diagram.png)
 
 Install the phospho lab:
 
@@ -84,9 +84,9 @@ The event question_answering was detected: True
 
 This event detection pipeline can then be linked to other bricks through webhooks or used to notice patterns in the user data.
 
-### Hosted version
+## Access the hosted version
 
-The easiest way to get started with phospho is to use the hosted cloud version of the app:
+To manage the phospho lab evaluations on a collaborative platform, the easiest way is to register to the hosted version.
 
 1. Create a [phospho account](https://phospho.ai)
 2. Install a phospho client: `pip install phospho` or `npm i phospho`
