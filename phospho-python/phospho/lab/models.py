@@ -1,4 +1,5 @@
 import itertools
+import logging
 from enum import Enum
 from typing import Any, List, Literal, Optional
 
@@ -7,8 +8,6 @@ from pydantic import BaseModel, Field
 from phospho.utils import generate_timestamp, generate_uuid
 
 from .utils import get_literal_values
-
-import logging
 
 logger = logging.getLogger(__name__)
 
