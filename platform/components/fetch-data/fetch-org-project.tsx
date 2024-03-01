@@ -154,5 +154,20 @@ export default function FetchOrgProject() {
     }
   }
 
+  // Fetch the selected project from the server. This is useful when the user
+  // change the settings
+  const { data: fetchedProject } = useSWR(
+    [
+      `/api/projects/${selectedProject?.id}`,
+      accessToken,
+      selectedProject?.settings?.events?.length,
+    ],
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+  );
+  if (fetchedProject) {
+    console.log("Updating fetchedProject:", fetchedProject);
+    setSelectedProject(fetchedProject);
+  }
+
   return <></>;
 }
