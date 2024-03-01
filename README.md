@@ -24,64 +24,60 @@ https://github.com/phospho-app/monorepo/assets/58109554/efad0411-5647-42e8-81d3-
 
 ## Get started
 
-### Local quickstart
+### Quickstart
 
-You can use the phospho lab locally to extract evaluations and events from your messages.
+The phospho lab is how you can run batched evaluations and event detections on your messages.
 
-You will need to install the phospho package with the `lab` extra:
+Install the phospho package with the `lab` extra:
 
 ```
 pip install "phospho[lab]"
 ```
 
-You need to set youOPENAI_API_KEY as an environment variable.
+Set OPENAI_API_KEY as an environment variable.
 
 ```
 export OPENAI_API_KEY=your_openai_api_key
 ```
 
-Then you can use the phospho lab to run extractions on your messages (for instance just using openai)
+Phospho helps you define a bunch of jobs to efficiently run in a workload on users messages.
 
 ```python
 from phospho import lab
 
-# Create the phospho workload
+# A workload is a set of jobs to run on messages
+# A job is a Python function that leverages LLM and ML models to extract insights from text
 workload = lab.Workload()
-
-# Define the job configurations
-class EventConfig(lab.JobConfig):
-    event_name: str
-    event_description: str
-
-# Let's add an event detection task to our workload
 workload.add_job(
-            lab.Job(
-                id="question_answering",
-                job_function=lab.job_library.event_detection,
-                config=EventConfig(
-                    event_name="question_answering",
-                    event_description="The user asks a question to the assistant",
-                ),
-            )
-        )
+   lab.Job(
+         id="question_answering",
+         job_function=lab.job_library.event_detection,
+         config=lab.EventConfig(
+            event_name="question_answering",
+            event_description="The user asks a question to the assistant",
+         ),
+   )
+)
 
-# Let's add some messages to analyze
-message = lab.Message(
-                    id="my_message_id",
-                    role="User",
-                    content="What is the weather today in Paris?",
-                )
-
-# Run the workload on the message
+# The workload runs the jobs in parallel on all the messages to perform analytics
 await workload.async_run(
-            messages=[message],
-            executor_type="sequential",
-        )
+   messages=[
+      lab.Message(
+            id="my_message_id",
+            role="User",
+            content="What is the weather today in Paris?",
+         )
+   ],
+)
 
-# Check the results of the workload
 message_results = workload.results["my_message_id"]
+print(f"The event question_answering was detected: {message_results['question_answering'].value}")
+```
 
-print(f"Result of the event detection: {message_results['question_answering'].value}")
+You get:
+
+```
+The event question_answering was detected: True
 ```
 
 ### Hosted version

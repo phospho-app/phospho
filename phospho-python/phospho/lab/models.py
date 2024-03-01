@@ -160,3 +160,8 @@ class EventDetectionConfig(JobConfig):
 class EvalConfig(JobConfig):
     model: Literal["gpt-4", "gpt-3.5-turbo"] = "gpt-4"  # OpenAI model name
     metadata: dict = Field(default_factory=dict)
+
+
+class EventConfig(JobConfig):
+    event_name: str
+    event_description: str
