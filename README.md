@@ -10,6 +10,8 @@
 
 Phospho is the product analytics platform for LLM apps. Track user interactions to detect issues and extract insights. Gather user feedback and measure success. Iterate on your app to create the best conversational experience for your users.
 
+Support us by starring this repo! ⭐
+
 ## Key Features
 
 - Flexible logging
