@@ -55,7 +55,7 @@ jobs:
           COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         run: |
           source .venv/bin/activate
-          pytest test_log
+          pytest -k test_log
       # Test the phospho package, with lab. This has extra dependencies
       - name: Install project with lab
         run: poetry install --no-interaction --extras "lab"
@@ -67,4 +67,4 @@ jobs:
           COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         run: |
           source .venv/bin/activate
-          pytest test_lab
+          pytest -k test_lab
