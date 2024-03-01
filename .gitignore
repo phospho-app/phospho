@@ -1,20 +1,8 @@
-
-__pycache__/
-.pytest_cache
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
 .DS_Store
-
-# Environment
-.env
-
-docs/build
-.mypy_cache
-.devcontainer/*
-
+.vscode/
 venv/
-.venv/
-
-local/
+__pycache__
+.streamlit
+secrets.toml
+.pytest_cache
+.env
