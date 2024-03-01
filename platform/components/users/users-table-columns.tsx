@@ -3,6 +3,7 @@ import { UserMetadata } from "@/models/metadata";
 import { dataStateStore } from "@/store/store";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "../ui/badge";
@@ -188,14 +189,11 @@ export function getColumns() {
         if (!user_id) return <></>;
         return (
           <span>
-            <Button
-              variant="ghost"
-              onClick={() =>
-                router.push(`/org/users/${encodeURIComponent(user_id)}`)
-              }
-            >
-              <ChevronRight />
-            </Button>
+            <Link href={`/org/users/${encodeURIComponent(user_id)}`}>
+              <Button variant="ghost">
+                <ChevronRight />
+              </Button>
+            </Link>
           </span>
         );
       },
