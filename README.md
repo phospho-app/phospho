@@ -24,21 +24,21 @@ Support us by starring this repo! ⭐
 
 https://github.com/phospho-app/phospho/assets/78322686/fb1379bf-32f1-492e-be86-d29879056dc3
 
-## Get started
+### phospho lab quickstart
 
-### Quickstart
+The phospho lab is the core analytics component of phospho. The phospho lab helps you run batched evaluations and event detections on your messages.
 
-The phospho lab is how you can run batched evaluations and event detections on your messages.
+[The phospho lab is the core analytics component of phospho](./phospho_diagram.png)
 
-Install the phospho package with the `lab` extra:
+Install the phospho lab:
 
 ```
 pip install "phospho[lab]"
 ```
 
-Set OPENAI_API_KEY as an environment variable.
+We will run a simple Event detection job that use OpenAI to read a message and figure out whether an Event happened or not.
 
-```
+```bash
 export OPENAI_API_KEY=your_openai_api_key
 ```
 
@@ -81,6 +81,8 @@ You get:
 ```
 The event question_answering was detected: True
 ```
+
+This event detection pipeline can then be linked to other bricks through webhooks or used to notice patterns in the user data.
 
 ### Hosted version
 
