@@ -10,6 +10,7 @@ sentry_sdk.init(
     traces_sample_rate=0.1,
     profiles_sample_rate=0.1,
 )
+sentry_sdk.set_level("warning")
 
 app = FastAPI()
 
