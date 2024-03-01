@@ -1,11 +1,13 @@
 from typing import List, Union
-from app.api.v2.models.log import LogError
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 from pydantic import ValidationError
 
 from app.api.v2.models import LogEvent, LogReply, LogRequest
+from app.api.v2.models.log import LogError
 from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
+from app.security.authentification import raise_error_if_not_in_pro_tier
 from app.services.mongo.log import process_log
 
 router = APIRouter(tags=["Logs"])
@@ -25,6 +27,7 @@ async def store_batch_of_log_events(
     """Store the log_content in the logs database"""
 
     await verify_propelauth_org_owns_project_id(org, project_id)
+    raise_error_if_not_in_pro_tier(org)
 
     # We return the valid log events
     logged_events: List[Union[LogEvent, LogError]] = []
