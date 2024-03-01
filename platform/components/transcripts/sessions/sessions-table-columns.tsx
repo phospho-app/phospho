@@ -1,26 +1,24 @@
-import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Event } from "@/models/events";
-import { SessionWithEvents } from "@/models/sessions";
-import { dataStateStore } from "@/store/store";
-import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
-
-import { Badge } from "../../ui/badge";
-import { Button } from "../../ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../../ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
+import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
+import { Event } from "@/models/events";
+import { SessionWithEvents } from "@/models/sessions";
+import { dataStateStore } from "@/store/store";
+import { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 export function getColumns() {
   const uniqueEventNamesInData = dataStateStore(
     (state) => state.uniqueEventNamesInData,
   );
-  const router = useRouter();
 
   // Create the columns for the data table
   const columns: ColumnDef<SessionWithEvents>[] = [
@@ -53,11 +51,7 @@ export function getColumns() {
       },
       accessorKey: "created_at",
       cell: ({ row }) => (
-        <span
-          onClick={() =>
-            router.push(`/org/transcripts/sessions/${row.original.id}`)
-          }
-        >
+        <span>
           {formatUnixTimestampToLiteralDatetime(
             Number(row.original.created_at),
           )}
@@ -149,14 +143,11 @@ export function getColumns() {
         if (!session) return <></>;
         return (
           <span>
-            <Button
-              variant="ghost"
-              onClick={() =>
-                router.push(`/org/transcripts/sessions/${row.original.id}`)
-              }
-            >
-              <ChevronRight />
-            </Button>
+            <Link href={`/org/transcripts/sessions/${session.id}`}>
+              <Button variant="ghost">
+                <ChevronRight />
+              </Button>
+            </Link>
           </span>
         );
       },
