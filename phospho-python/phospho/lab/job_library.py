@@ -9,12 +9,10 @@ import random
 import time
 from typing import List, Literal, Optional, cast
 
-import openai
-
 from phospho import config
 
-from .models import JobResult, Message, ResultType
 from .language_models import get_async_client, get_provider_and_model, get_sync_client
+from .models import JobResult, Message, ResultType
 
 logger = logging.getLogger(__name__)
 
