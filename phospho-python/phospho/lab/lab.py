@@ -1,10 +1,18 @@
 import asyncio
 import concurrent.futures
 import logging
-from typing import Awaitable, Callable, Dict, Iterable, List, Literal, Optional, Union
+from typing import (
+    Awaitable,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Union,
+    Any,
+)
 
-
-import pandas as pd
 
 import phospho.lab.job_library as job_library
 
@@ -379,10 +387,12 @@ class Workload:
         self._results = results
         return results
 
-    def results_df(self) -> pd.DataFrame:
+    def results_df(self) -> Any:
         """
         Returns the results as a pandas dataframe
         """
+        import pandas as pd
+
         results = self.results
 
         if results is None:

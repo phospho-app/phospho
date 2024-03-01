@@ -1,6 +1,10 @@
 import os
 from typing import Tuple
-from openai import AsyncOpenAI, OpenAI
+
+try:
+    from openai import AsyncOpenAI, OpenAI
+except ImportError:
+    pass
 
 
 def get_provider_and_model(model: str) -> Tuple[str, str]:
