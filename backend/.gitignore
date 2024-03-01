@@ -1,0 +1,24 @@
+.vscode
+# Ignore  mac osx hidden files
+.DS_Store
+
+# Caches
+.ruff_cache
+.pytest_cache
+__pycache__/
+.mypy_cache
+
+# local folder
+venv/
+local/
+
+# Local test script
+tests/script.py
+test.py
+
+# Credentials
+other_secrets
+.env
+
+#Patch
+changes.patch

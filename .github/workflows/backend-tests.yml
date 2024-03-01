@@ -1,0 +1,73 @@
+name: Backend tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "backend/**"
+    branches:
+      - dev
+
+permissions:
+  contents: read
+
+jobs:
+  test_back:
+    runs-on: ubuntu-latest
+    environment: test
+    # This job will be canceled if it does not complete within 4 minutes
+    timeout-minutes: 4
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "poetry"
+
+      # Install dependencies if cache does not exist
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-root
+
+      - name: Test with pytest
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ENVIRONMENT: "test"
+          SLACK_URL: ${{ secrets.SLACK_URL }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          PROPELAUTH_API_KEY: ${{ secrets.PROPELAUTH_API_KEY }}
+          PROPELAUTH_URL: ${{ vars.PROPELAUTH_URL }}
+          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          MONGODB_NAME: ${{ vars.MONGODB_NAME }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          # Test API key for the phospho API
+          PHOSPHO_API_KEY: ${{ secrets.PHOSPHO_API_KEY }}
+          PHOSPHO_BACKEND_URL: ${{ vars.PHOSPHO_BACKEND_URL }}
+          TEST_PROPELAUTH_ORG_ID: ${{ vars.TEST_PROPELAUTH_ORG_ID }}
+          TEST_PROPELAUTH_USER_ID: ${{ vars.TEST_PROPELAUTH_USER_ID }}
+          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+          PHOSPHO_API_KEY_ONBOARDING: ${{ secrets.PHOSPHO_API_KEY_ONBOARDING }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }} # Note: this is a dummy variable in test environment
+          EXTRACTOR_URL: ${{ vars.EXTRACTOR_URL }}
+        # Specify here the tests you want to run after the -k flag
+        run: |
+          source .venv/bin/activate
+          poetry run pytest tests/api/ -vvv
+          poetry run pytest tests/services/ -vvv

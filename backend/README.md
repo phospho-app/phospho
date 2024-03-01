@@ -1,0 +1,149 @@
+# phospho backend
+
+## Local install and setup
+
+This project use Poetry and Python 3.11
+
+```bash
+cd backend
+conda create -n phospho-env python=3.11
+pip install poetry
+poetry install
+```
+
+### Environment file
+
+```bash
+ENVIRONMENT="test"
+
+# Services
+RESEND_API_KEY=
+OPENAI_API_KEY=
+SENTRY_DSN=
+
+# Database
+MONGODB_NAME="test"
+MONGODB_URL="mongodb+srv://..." # Look in MongoDB atlas
+
+# Slack webhook
+SLACK_URL= # Look in Slack admin
+
+# GCP
+GCP_PROJECT_ID="portal-385519"
+GCP_JSON_CREDENTIALS=
+
+# Auth
+PROPELAUTH_URL="https://80082208909.propelauthtest.com"
+PROPELAUTH_API_KEY=
+
+# For testing. You can replace this by any user from the Propelauth TEST env
+TEST_PROPELAUTH_ORG_ID="f63c18ff-7fad-4436-8bf4-8a336a596d94"
+TEST_PROPELAUTH_USER_ID="65bd900c-cb79-4bd8-a278-5ea5f2a0f362"
+PHOSPHO_API_KEY=
+
+# Cohere API key, a tesing for testing, should be deployed with a production one
+COHERE_API_KEY=
+
+# Extractor API key and URL
+EXTRACTOR_SECRET_KEY=""
+EXTRACTOR_URL="http://127.0.0.1:7605" # In test mode
+```
+
+### Run tests
+
+1. Make sure you have setup your environment variables. To load the .env files:
+
+   ```
+   set -o allexport; source .env; set +o allexport
+   ```
+
+2. Start the local server in test mode :
+
+   ```bash
+   poetry run uvicorn app.main:app --reload
+   ```
+
+3. Run tests through poetry
+
+   ```bash
+   poetry run pytest
+   ```
+
+## Services to set up
+
+### Install MongoDB local
+
+We use MongoDB Atlas to host the database in the cloud.
+
+However, if you want to experiment more, you can setup MongoDB on your own computer. [Install MongoDB locally to have your own local database.](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/)
+
+```bash
+brew tap mongodb/brew
+brew update
+brew install mongodb-community@7.0
+```
+
+Add the MongoDB as a backend service
+
+```bash
+brew services start mongodb-community@7.0
+```
+
+Disable telemetry for privacy reasons
+
+```bash
+mongosh
+disableTelemetry()
+```
+
+When running `mongosh`, you'll see an URL. Note it down.
+
+```text
+Connecting to:		mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.1.1
+Using MongoDB:		7.0.2
+Using Mongosh:		2.1.1
+```
+
+In the Python backend, we use the async client [Motor](https://motor.readthedocs.io/en/stable/tutorial-asyncio.html). Async lets the backend do stuff while it's waiting for the db response.
+
+In tests and other scripts, you can use [Pymongo](https://pymongo.readthedocs.io/en/stable/tutorial.html). It is synchronous and installed when you install Motor. It's useful when you need to wait for the response anyways.
+
+### Run the
+
+### Run backend server
+
+```
+uvicorn app.main:app --reload
+```
+
+## Running tests locally
+
+## Deployment
+
+This app is packaged in a Docker container and is deployed with github actions.
+
+- The step by step is available in the [github workflow backend-deploy](../.github/workflows/backend-deploy.yml)
+- Build step are executed in GCP with [cloud build](https://cloud.google.com/sdk/gcloud/reference/builds/submit)
+- Tool for building: [Kaniko](https://github.com/GoogleContainerTools/kaniko). This is useful for caching. See [cloudbuild.yaml](./cloudbuild.yaml) for configuration.
+- Tool for the build steps: Docker. See the [Dockerfile](./Dockerfile) for how the execution environment is packaged.
+
+## Scripts
+
+### Populate the local test database
+
+Run :
+
+```
+python scripts/populate_local_db.py
+```
+
+You will be prompted for your API key and project id (TEST env of propelAuth)
+
+## To decide
+
+At which level do we handle the try excepts? Service level? db level?
+Timestamp format? Typing (str or int)?
+
+## Common issues
+
+Pydantic models make the app crash if a field value is None and the field is not Optional.

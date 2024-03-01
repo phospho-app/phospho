@@ -1,0 +1,46 @@
+[tool.poetry]
+name = "app"
+version = "0.1.0"
+description = "Backend of Phospho"
+authors = ["Nicolas Oulianov <nicolas.oulianov@phospho.app>"]
+license = "Copyright Phospho 2024"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+aiohttp = ">=3.8.6"
+fastapi = ">=0.109.0"
+llama-index = ">=0.9.32"
+loguru = ">=0.7.2"
+motor = ">=3.3.2"
+numpy = ">=1.26.3"
+openai = ">=1.7.2"
+openpyxl = ">=3.1.2"
+pandas = "2.1.4"
+phospho = ">=0.2.19"
+propelauth-fastapi = ">=2.1.8"
+propelauth-py = ">=3.1.9"
+protobuf = "4.25.2"
+pydantic = "2.5.3"
+pytest = "7.4.3"
+pytest-asyncio = "^0.23.3"
+python-dotenv = "1.0.0"
+requests = "2.31.0"
+tiktoken = ">=0.5.1"
+uvicorn = ">=0.23.2"
+sentry-sdk = { version = ">=1.39.1", extras = ["fastapi"] }
+google-cloud-language = "^2.12.0"
+google-api-python-client = "^2.115.0"
+qdrant-client = "^1.7.1"
+resend = "^0.7.2"
+cohere = "^4.45"
+stripe = "^8.2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
