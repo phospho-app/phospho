@@ -28,7 +28,7 @@ https://github.com/phospho-app/monorepo/assets/58109554/efad0411-5647-42e8-81d3-
 
 You can use the phospho lab locally to extract evaluations and events from your messages.
 
-You will need ot install the phospho package with the `lab` extra:
+You will need to install the phospho package with the `lab` extra:
 
 ```
 pip install "phospho[lab]"
