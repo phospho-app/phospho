@@ -20,7 +20,7 @@ Phospho is the product analytics platform for LLM apps. Track user interactions 
 
 ## Demo
 
-https://github.com/phospho-app/monorepo/assets/58109554/efad0411-5647-42e8-81d3-73971ac6de7f
+https://github.com/phospho-app/phospho/assets/78322686/fb1379bf-32f1-492e-be86-d29879056dc3
 
 ## Get started
 
