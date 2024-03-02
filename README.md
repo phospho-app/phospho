@@ -10,6 +10,8 @@
 
 Phospho is the product analytics platform for LLM apps. Track user interactions to detect issues and extract insights. Gather user feedback and measure success. Iterate on your app to create the best conversational experience for your users.
 
+Ship your LLM app with in production with confidence, and iterate on it with insights from your users.
+
 Support us by starring this repo! ⭐
 
 ## Key Features
@@ -84,7 +86,9 @@ You get:
 The event question_answering was detected: True
 ```
 
-This event detection pipeline can then be linked to other bricks through webhooks or used to notice patterns in the user data.
+This event detection pipeline can then be linked back to your product or alerting solution (eg. Slack) through webhooks or used to notice patterns in the user data.
+
+You can use other jobs from the phospho library or create your own jobs to run on your messages.
 
 ## Access the hosted version
 
