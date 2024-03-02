@@ -20,7 +20,9 @@ Support us by starring this repo! ⭐
 - Data visualization
 - Collaboration
 
-![The phospho lab is the core analytics component of phospho](./phospho_diagram.png)
+<div align="center">
+<img src="./phospho_diagram.png" alt="phospho logo">
+</div>
 
 ## Demo
 
