@@ -84,9 +84,9 @@ You get:
 The event question_answering was detected: True
 ```
 
-This event detection pipeline can then be linked to other bricks through webhooks or used to notice patterns in the user data.
+This event detection pipeline can then be linked back to your product or alerting solution (eg. Slack) through webhooks or used to notice patterns in the user data.
 
-You can use other jobs from the library or create your own jobs to run on your messages.
+You can use other jobs from the phospho library or create your own jobs to run on your messages.
 
 ## Access the hosted version
 
