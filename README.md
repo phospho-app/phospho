@@ -21,7 +21,7 @@ Support us by starring this repo! ⭐
 - Collaboration
 
 <div align="center">
-<img src="./phospho_diagram.png" alt="phospho logo">
+<img src="./phospho_diagram.png" alt="phospho diagram" style="max-width:600px">
 </div>
 
 ## Demo
