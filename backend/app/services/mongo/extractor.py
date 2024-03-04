@@ -2,15 +2,15 @@
 A service to interact with the extractor server behing this main app
 """
 
-import httpx
-from app.db.models import Task
-from app.core import config
-from loguru import logger
 import traceback
+from typing import List, Union
 
-
+import httpx
+from app.api.v2.models import LogError, LogEvent
+from app.core import config
 from app.services.slack import slack_notification
 from app.utils import generate_uuid
+from loguru import logger
 
 
 def health_check():
@@ -36,18 +36,22 @@ def check_health():
         logger.debug(f"Extractor server is reachable at url {config.EXTRACTOR_URL}")
 
 
-async def run_main_pipeline(task: Task):
+async def run_log_process(logged_events: List[LogEvent], project_id: str, org_id: str):
     """
-    Run the main pipeline on a task asynchronously
+    Run the log procesing pipeline on a task asynchronously
     """
     async with httpx.AsyncClient() as client:
         logger.debug(
-            f"Calling the extractor API for task {task.id}: {config.EXTRACTOR_URL}/v1/pipelines/main"
+            f"Calling the extractor API for {len(logged_events)} logevents, project {project_id} org {org_id}: {config.EXTRACTOR_URL}/v1/pipelines/log"
         )
         try:
             response = await client.post(
-                f"{config.EXTRACTOR_URL}/v1/pipelines/main",  # WARNING: hardcoded API version
-                json={"task": task.model_dump()},
+                f"{config.EXTRACTOR_URL}/v1/pipelines/log",  # WARNING: hardcoded API version
+                json={
+                    "logged_events": logged_events,
+                    "project_id": project_id,
+                    "org_id": org_id,
+                },
                 headers={
                     "Authorization": f"Bearer {config.EXTRACTOR_SECRET_KEY}",
                     "Content-Type": "application/json",
@@ -67,7 +71,7 @@ async def run_main_pipeline(task: Task):
             errror_id = generate_uuid()
             error_message = f"Caught error while calling main pipeline (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)
-            logger.error(f"Task: {task}")
+
             traceback.print_exc()
             if config.ENVIRONMENT == "production":
                 if len(error_message) > 200:

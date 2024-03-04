@@ -76,10 +76,12 @@ app.add_middleware(
 )
 
 # Database
+
 app.add_event_handler("startup", connect_and_init_db)
 app.add_event_handler("startup", init_qdrant)
 app.add_event_handler("shutdown", close_mongo_db)
 app.add_event_handler("shutdown", close_qdrant)
+
 
 # Other services
 app.add_event_handler("startup", check_health)
