@@ -52,4 +52,10 @@ COHERE_API_KEY = os.getenv("COHERE_API_KEY")
 ### SENTRY ###
 EXTRACTOR_SENTRY_DSN = os.getenv("EXTRACTOR_SENTRY_DSN")
 
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+### Vector Search ###
+QDRANT_URL = os.getenv("QDRANT_URL")
+if QDRANT_URL is None:
+    raise Exception("QDRANT_URL is missing from the environment variables")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+if QDRANT_API_KEY is None:
+    raise Exception("QDRANT_API_KEY is missing from the environment variables")
