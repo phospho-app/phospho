@@ -61,6 +61,7 @@ class LogReply(BaseModel):
     logged_events: List[Union[LogEvent, LogError]]
 
 
-class LogProcessRequest(LogReply):
+class LogProcessRequest(BaseModel):
+    logs_to_process: List[LogEvent]
     project_id: str
     org_id: str
