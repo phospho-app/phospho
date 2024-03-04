@@ -216,7 +216,7 @@ def collect_metadata(log_event: LogEvent) -> Optional[dict]:
     metadata = filter_nonjsonable_keys(metadata)
 
     # Compute token count
-    model = metadata.get("model", None)
+    model: Optional[str] = metadata.get("model", None)
     tokenizer = None
 
     if "prompt_tokens" not in metadata.keys():

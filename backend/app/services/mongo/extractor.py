@@ -1,12 +1,12 @@
 """
-A service to interact with the extractor server behing this main app
+A service to interact with the extractor server
 """
 
 import traceback
-from typing import List, Union
+from typing import List
 
 import httpx
-from app.api.v2.models import LogError, LogEvent
+from app.api.v2.models import LogEvent
 from app.core import config
 from app.services.slack import slack_notification
 from app.utils import generate_uuid
@@ -36,19 +36,21 @@ def check_health():
         logger.debug(f"Extractor server is reachable at url {config.EXTRACTOR_URL}")
 
 
-async def run_log_process(logged_events: List[LogEvent], project_id: str, org_id: str):
+async def run_log_process(
+    logs_to_process: List[LogEvent], project_id: str, org_id: str
+):
     """
     Run the log procesing pipeline on a task asynchronously
     """
     async with httpx.AsyncClient() as client:
         logger.debug(
-            f"Calling the extractor API for {len(logged_events)} logevents, project {project_id} org {org_id}: {config.EXTRACTOR_URL}/v1/pipelines/log"
+            f"Calling the extractor API for {len(logs_to_process)} logevents, project {project_id} org {org_id}: {config.EXTRACTOR_URL}/v1/pipelines/log"
         )
         try:
             response = await client.post(
                 f"{config.EXTRACTOR_URL}/v1/pipelines/log",  # WARNING: hardcoded API version
                 json={
-                    "logged_events": logged_events,
+                    "logs_to_process": logs_to_process,
                     "project_id": project_id,
                     "org_id": org_id,
                 },

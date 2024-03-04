@@ -82,7 +82,7 @@ async def store_batch_of_log_events(
     # All the tasks to process were deemed as valid and part of the usage quota
     background_tasks.add_task(
         run_log_process,
-        logged_events=logs_to_process,
+        logs_to_process=logs_to_process,
         project_id=project_id,
         org_id=org["org"].get("org_id"),
     )
