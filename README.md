@@ -90,7 +90,7 @@ This event detection pipeline can then be linked back to your product or alertin
 
 You can use other jobs from the phospho library or create your own jobs to run on your messages.
 
-See more examples of what you can do with phospho in the [examples folder](./phospho-python/examples).
+See more examples of what you can do with phospho in the [examples folder](./examples).
 
 ## Access the hosted version
 
