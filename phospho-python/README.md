@@ -1,6 +1,6 @@
 # phospho Python Client
 
-Phospho is a platform to help you monitor LLM apps.
+Phospho is an open source platform to help you monitor LLM apps.
 
 With phospho, monitor every user interaction with your LLM app to identify issues and improve performance. Understand how users use your app and which versions of your product are the most successful.
 
