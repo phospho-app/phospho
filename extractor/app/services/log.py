@@ -344,7 +344,10 @@ async def ignore_existing_tasks(
 
 
 async def process_log_without_session_id(
-    project_id: str, org_id: str, list_of_log_event: List[LogEvent]
+    project_id: str,
+    org_id: str,
+    list_of_log_event: List[LogEvent],
+    trigger_pipeline: bool = True,
 ) -> None:
     """
     Process a list of log events without session_id
@@ -377,22 +380,26 @@ async def process_log_without_session_id(
     if len(tasks_to_create) > 0:
         await mongo_db["tasks"].insert_many(tasks_to_create)
 
-    # Vectorize them
-    await add_vectorized_tasks(tasks_id_to_process)
+    if trigger_pipeline:
+        # Vectorize them
+        await add_vectorized_tasks(tasks_id_to_process)
 
-    # Trigger the pipeline
-    for task_id in tasks_id_to_process:
-        # Fetch the task data from the database
-        # For now it's a double call to the database, but it's not a big deal
-        task_data = await get_task_by_id(task_id)
-        logger.info(f"Logevent: pipeline triggered for task {task_id}")
-        await main_pipeline(task_data)
+        # Trigger the pipeline
+        for task_id in tasks_id_to_process:
+            # Fetch the task data from the database
+            # For now it's a double call to the database, but it's not a big deal
+            task_data = await get_task_by_id(task_id)
+            logger.info(f"Logevent: pipeline triggered for task {task_id}")
+            await main_pipeline(task_data)
 
     return None
 
 
 async def process_log_with_session_id(
-    project_id: str, org_id: str, list_of_log_event: List[LogEvent]
+    project_id: str,
+    org_id: str,
+    list_of_log_event: List[LogEvent],
+    trigger_pipeline: bool = True,
 ) -> None:
     """
     Process a list of log events with session_id
@@ -518,19 +525,23 @@ async def process_log_with_session_id(
     else:
         logger.info("Logevent: no session to create")
 
-    # Vectorize them
-    await add_vectorized_tasks(tasks_id_to_process)
+    if trigger_pipeline:
+        # Vectorize them
+        await add_vectorized_tasks(tasks_id_to_process)
 
-    # Trigger the pipeline
-    for task_id in tasks_id_to_process:
-        # Fetch the task data from the database
-        # For now it's a double call to the database, but it's not a big deal
-        task_data = await get_task_by_id(task_id)
-        await main_pipeline(task_data)
+        # Trigger the pipeline
+        for task_id in tasks_id_to_process:
+            # Fetch the task data from the database
+            # For now it's a double call to the database, but it's not a big deal
+            task_data = await get_task_by_id(task_id)
+            await main_pipeline(task_data)
 
 
 async def process_log(
-    project_id: str, org_id: str, logs_to_process: List[LogEvent]
+    project_id: str,
+    org_id: str,
+    logs_to_process: List[LogEvent],
+    extra_logs_to_save: List[LogEvent],
 ) -> None:
     """From logs
     - Create Tasks
@@ -547,7 +558,7 @@ async def process_log(
 
     nonerror_log_events = [
         log_event
-        for log_event in logs_to_process
+        for log_event in logs_to_process + extra_logs_to_save
         if not log_is_error(log_event) and isinstance(log_event, LogEvent)
     ]
     logger.info(f"Logevent: saving {len(nonerror_log_events)} non-error log events")
@@ -563,9 +574,7 @@ async def process_log(
         project_id=project_id,
         org_id=org_id,
         list_of_log_event=[
-            log_event
-            for log_event in nonerror_log_events
-            if log_event.session_id is None
+            log_event for log_event in logs_to_process if log_event.session_id is None
         ],
     )
 
@@ -575,9 +584,35 @@ async def process_log(
         org_id=org_id,
         list_of_log_event=[
             log_event
-            for log_event in nonerror_log_events
+            for log_event in logs_to_process
             if log_event.session_id is not None
         ],
     )
+
+    if len(extra_logs_to_save) > 0:
+        logger.info(f"Logevent: saving {len(extra_logs_to_save)} extra log events")
+        # Process logs without session_id
+        await process_log_without_session_id(
+            project_id=project_id,
+            org_id=org_id,
+            list_of_log_event=[
+                log_event
+                for log_event in extra_logs_to_save
+                if log_event.session_id is None
+            ],
+            trigger_pipeline=False,
+        )
+
+        # Process logs with session_id
+        await process_log_with_session_id(
+            project_id=project_id,
+            org_id=org_id,
+            list_of_log_event=[
+                log_event
+                for log_event in extra_logs_to_save
+                if log_event.session_id is not None
+            ],
+            trigger_pipeline=False,
+        )
 
     return None

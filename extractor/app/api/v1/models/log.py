@@ -63,5 +63,6 @@ class LogReply(BaseModel):
 
 class LogProcessRequest(BaseModel):
     logs_to_process: List[LogEvent]
+    extra_logs_to_save: List[LogEvent]
     project_id: str
     org_id: str
