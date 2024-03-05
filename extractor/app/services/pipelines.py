@@ -75,31 +75,31 @@ async def event_detection_pipeline(task: Task) -> None:
         )
     # Convert the tasks into a list of messages
     previous_messages = []
-    for task in task_context:
+    for i, previous_task in enumerate(task_context):
         previous_messages.append(
             lab.Message(
-                id="input_" + task.id,
+                id="input_" + previous_task.id,
                 role="User",
-                content=task.input,
+                content=previous_task.input,
             )
         )
-        if task.output is not None:
+        if previous_task.output is not None:
             previous_messages.append(
                 lab.Message(
-                    id="output_" + task.id,
+                    id="output_" + previous_task.id,
                     role="Assistant",
-                    content=task.output,
+                    content=previous_task.output,
                 )
             )
     if task_data.output is not None:
         previous_messages.append(
             lab.Message(
-                id="input_" + task.id,
+                id="input_" + task_data.id,
                 role="User",
                 content=task_data.input,
             )
         )
-        latest_message_id = "output_" + task.id
+        latest_message_id = "output_" + task_data.id
         await workload.async_run(
             messages=[
                 lab.Message(
@@ -111,7 +111,7 @@ async def event_detection_pipeline(task: Task) -> None:
             executor_type="sequential",
         )
     else:
-        latest_message_id = "input_" + task.id
+        latest_message_id = "input_" + task_data.id
         await workload.async_run(
             messages=[
                 lab.Message(
@@ -132,18 +132,18 @@ async def event_detection_pipeline(task: Task) -> None:
         metadata = result.metadata
         llm_call = metadata.get("llm_call", None)
         if llm_call is not None:
-            llm_call_obj = LlmCall(**llm_call, org_id=task.org_id)
+            llm_call_obj = LlmCall(**llm_call, org_id=task_data.org_id)
             mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
 
         # When the event is detected, result is True
         if result.value:
-            logger.info(f"Event {event_name} detected for task {task.id}")
+            logger.info(f"Event {event_name} detected for task {task_data.id}")
             # Get the event definition
             event = valid_project_events[event_name]
             # Push to db
             detected_event_data = Event(
                 event_name=event_name,
-                task_id=task.id,
+                task_id=task_data.id,
                 session_id=task_data.session_id,
                 project_id=project_id,
                 source=result.metadata.get("source", "phospho-unknown"),
