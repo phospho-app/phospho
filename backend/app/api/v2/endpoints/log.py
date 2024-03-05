@@ -12,6 +12,7 @@ from app.security import (
 )
 from app.services.mongo.extractor import run_log_process
 from app.services.mongo.emails import send_quota_exceeded_email
+from app.core import config
 
 router = APIRouter(tags=["Logs"])
 
@@ -36,8 +37,8 @@ async def store_batch_of_log_events(
     logs_to_process: List[LogEvent] = []
 
     org_plan = await get_quota(project_id)
-    current_usage = org_plan["current_usage"]
-    max_usage = org_plan["max_usage"]
+    current_usage = org_plan.get("current_usage", 0)
+    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_TASKS)
 
     for log_event_model in log_request.batched_log_events:
         # Validate the log in a second time, using the pydantic model
