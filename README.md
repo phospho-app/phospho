@@ -12,8 +12,6 @@ Phospho is the text analytics platform for LLM apps. Detect issues and extract i
 
 Ship your LLM app in production with confidence, and iterate on it with insights from your users.
 
-Support us by starring this repo! ⭐
-
 ## Key Features
 
 - Flexible logging
@@ -34,7 +32,7 @@ https://github.com/phospho-app/phospho/assets/78322686/fb1379bf-32f1-492e-be86-d
 
 The phospho lab is the core analytics component of phospho. The phospho lab helps you run batched evaluations and event detections on your messages.
 
-Install the phospho lab:
+### Step 1 - Install the phospho lab:
 
 ```
 pip install "phospho[lab]"
@@ -45,6 +43,8 @@ We will run a simple Event detection job that use OpenAI to read a message and f
 ```bash
 export OPENAI_API_KEY=your_openai_api_key
 ```
+
+### Step 2 - Run the event detection job:
 
 Phospho helps you define a bunch of jobs to efficiently run in a workload on users messages.
 
@@ -80,7 +80,7 @@ message_results = workload.results["my_message_id"]
 print(f"The event question_answering was detected: {message_results['question_answering'].value}")
 ```
 
-You get:
+### Step 3 - Check the results:
 
 ```
 The event question_answering was detected: True
@@ -92,19 +92,7 @@ You can use other jobs from the phospho library or create your own jobs to run o
 
 See more examples of what you can do with phospho in the [examples folder](./examples).
 
-## Access the hosted version
-
-To manage the phospho lab evaluations on a collaborative platform, the easiest way is to register to the hosted version.
-
-1. Create a [phospho account](https://phospho.ai)
-2. Install a phospho client: `pip install phospho` or `npm i phospho`
-3. Create environment variables for `PHOSPHO_API_KEY` and `PHOSPHO_PROJECT_ID`
-4. Initialize phospho: `phospho.init()`
-5. Log to phospho with `phospho.log(input="question", output="answer")`
-
-[Follow this guide to get started.](https://docs.phospho.ai/getting-started)
-
-### Self deploy
+## Self deploy
 
 This repository contains the implementation of the platform frontend, the API backend, and the insights extraction pipeline.
 
@@ -134,6 +122,18 @@ git clone git@github.com:phospho-app/monorepo.git
 4. Follow the deployment instructions in backend/README.md and platform/README.md
 
 5. Enjoy !
+
+## Access the hosted version
+
+To manage the phospho lab evaluations on a collaborative platform, the easiest way is to register to the hosted version.
+
+1. Create a [phospho account](https://phospho.ai)
+2. Install a phospho client: `pip install phospho` or `npm i phospho`
+3. Create environment variables for `PHOSPHO_API_KEY` and `PHOSPHO_PROJECT_ID`
+4. Initialize phospho: `phospho.init()`
+5. Log to phospho with `phospho.log(input="question", output="answer")`
+
+[Follow this guide to get started.](https://docs.phospho.ai/getting-started)
 
 ## Licence
 
