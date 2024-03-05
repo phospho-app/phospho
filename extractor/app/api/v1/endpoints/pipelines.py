@@ -43,6 +43,6 @@ async def post_log(
             process_log,
             project_id=request_body.project_id,
             org_id=request_body.org_id,
-            log_reply=request_body.logs_to_process,
+            logs_to_process=request_body.logs_to_process,
         )
     return {"status": "ok"}
