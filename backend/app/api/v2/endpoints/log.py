@@ -56,7 +56,9 @@ async def store_batch_of_log_events(
             )
             logged_events.append(valid_log_event)
             # Process this log only if the usage quota is not reached
-            if current_usage < max_usage:
+            if max_usage is None or (
+                max_usage is not None and current_usage < max_usage
+            ):
                 logs_to_process.append(valid_log_event)
                 current_usage += 1
             else:
