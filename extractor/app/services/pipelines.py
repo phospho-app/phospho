@@ -4,7 +4,7 @@ from typing import Dict
 from loguru import logger
 
 from app.core import config
-from app.db.models import Eval, Event, EventDefinition, Task
+from app.db.models import Eval, Event, EventDefinition, LlmCall, Task
 from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
@@ -128,6 +128,13 @@ async def event_detection_pipeline(task: Task) -> None:
     message_results = workload.results[latest_message_id]
     logger.debug(f"Results of the event detection pipeline: {message_results}")
     for event_name, result in message_results.items():
+        # Store the LLM call in the database
+        metadata = result.metadata
+        llm_call = metadata.get("llm_call", None)
+        if llm_call is not None:
+            llm_call_obj = LlmCall(**llm_call, org_id=task.org_id)
+            mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+
         # When the event is detected, result is True
         if result.value:
             logger.info(f"Event {event_name} detected for task {task.id}")
@@ -290,6 +297,14 @@ async def task_scoring_pipeline(task: Task) -> None:
     await workload.async_run(messages=messages, executor_type="sequential")
     # Check the results of the workload
     flag = workload.results["output_" + task.id]["evaluate_task"].value
+    metadata = workload.results["output_" + task.id]["evaluate_task"].metadata
+    llm_call = metadata.get("llm_call", None)
+    if llm_call is not None:
+        llm_call_obj = LLMCall(**llm_call, org_id=task.org_id)
+        mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+
+    mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+
     logger.debug(f"Flag for task {task.id} : {flag}")
     # Create the Evaluation object and store it in the db
     evaluation_data = Eval(
