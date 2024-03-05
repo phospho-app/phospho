@@ -19,6 +19,18 @@
   - ```{autodoc2-docstring} phospho.config.BASE_URL
     :summary:
     ```
+* - {py:obj}`OPENAI_API_KEY <phospho.config.OPENAI_API_KEY>`
+  - ```{autodoc2-docstring} phospho.config.OPENAI_API_KEY
+    :summary:
+    ```
+* - {py:obj}`COHERE_API_KEY <phospho.config.COHERE_API_KEY>`
+  - ```{autodoc2-docstring} phospho.config.COHERE_API_KEY
+    :summary:
+    ```
+* - {py:obj}`MISTRAL_API_KEY <phospho.config.MISTRAL_API_KEY>`
+  - ```{autodoc2-docstring} phospho.config.MISTRAL_API_KEY
+    :summary:
+    ```
 ````
 
 ### API
@@ -29,6 +41,36 @@
    'https://api.phospho.ai/v2'
 
 ```{autodoc2-docstring} phospho.config.BASE_URL
+```
+
+````
+
+````{py:data} OPENAI_API_KEY
+:canonical: phospho.config.OPENAI_API_KEY
+:value: >
+   'get(...)'
+
+```{autodoc2-docstring} phospho.config.OPENAI_API_KEY
+```
+
+````
+
+````{py:data} COHERE_API_KEY
+:canonical: phospho.config.COHERE_API_KEY
+:value: >
+   'get(...)'
+
+```{autodoc2-docstring} phospho.config.COHERE_API_KEY
+```
+
+````
+
+````{py:data} MISTRAL_API_KEY
+:canonical: phospho.config.MISTRAL_API_KEY
+:value: >
+   'get(...)'
+
+```{autodoc2-docstring} phospho.config.MISTRAL_API_KEY
 ```
 
 ````
