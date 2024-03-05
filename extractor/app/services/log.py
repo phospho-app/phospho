@@ -1,24 +1,20 @@
-import tiktoken
 from typing import Any, Dict, List, Optional, Union
+
+import openai
+import tiktoken
 from loguru import logger
 
-from app.core import config
-
 # DB
-from app.api.v2.models import LogEvent, LogReply
+from app.api.v1.models import LogEvent, LogReply
 from app.db.models import Session, Task
 from app.db.mongo import get_mongo_db
+from app.db.qdrant import get_qdrant, models
+from app.services.pipelines import main_pipeline
 
 # Service
-from app.services.mongo.search import add_vectorized_tasks
-from app.services.mongo.tasks import get_task_by_id
-from app.services.mongo.emails import send_quota_exceeded_email
-from app.services.mongo.extractor import run_main_pipeline
-
+from app.services.tasks import get_task_by_id
 from app.utils import generate_timestamp
 from phospho.utils import filter_nonjsonable_keys, is_jsonable
-
-from app.security.authorization import authorize_main_pipeline
 
 
 # Create a task
@@ -220,7 +216,7 @@ def collect_metadata(log_event: LogEvent) -> Optional[dict]:
     metadata = filter_nonjsonable_keys(metadata)
 
     # Compute token count
-    model = metadata.get("model", None)
+    model: Optional[str] = metadata.get("model", None)
     tokenizer = None
 
     if "prompt_tokens" not in metadata.keys():
@@ -247,6 +243,49 @@ def collect_metadata(log_event: LogEvent) -> Optional[dict]:
             )
 
     return metadata
+
+
+async def add_vectorized_tasks(
+    tasks_id: List[str],
+):
+    mongo_db = await get_mongo_db()
+    qdrant_db = await get_qdrant()
+    # Get tasks
+    tasks = await mongo_db["tasks"].find({"id": {"$in": tasks_id}}).to_list(length=None)
+    tasks = [Task.model_validate(task) for task in tasks]
+
+    openai_client = openai.AsyncClient()
+
+    # Create tasks_text representations
+    tasks_text = [f"{task.input} {task.output}" for task in tasks]
+    try:
+        # TODO : count the number of token for each task_text and if it's too big, do something smart
+        embedding = await openai_client.embeddings.create(
+            input=tasks_text, model="text-embedding-3-small"
+        )
+    except openai.APIError as e:
+        logger.warning(f"Error while embedding the tasks: {e}")
+        return
+
+    try:
+        await qdrant_db.upsert(
+            collection_name="tasks",
+            points=[
+                models.PointStruct(
+                    id=task.id,
+                    vector=embedding.embedding,
+                    payload={
+                        "task_id": task.id,
+                        "project_id": task.project_id,
+                        "session_id": task.session_id,
+                    },
+                )
+                for task, embedding in zip(tasks, embedding.data)
+            ],
+        )
+    except Exception as e:
+        logger.warning(f"Error while adding the tasks to Qdrant: {e}")
+        return
 
 
 def create_task_from_logevent(
@@ -346,30 +385,8 @@ async def process_log_without_session_id(
         # Fetch the task data from the database
         # For now it's a double call to the database, but it's not a big deal
         task_data = await get_task_by_id(task_id)
-        # AUTHORIZATION
-        # NOTE: For now, we check every time which is costly. We should do it for each batch, but then there is a risk of a massive batch being authorized wrongly
-        pipeline_authorized = await authorize_main_pipeline(task_data.project_id)
-
-        # If the project is not authorized
-        # This is due to the usage quota exceded
-        if not pipeline_authorized:
-            logger.warning(
-                f"Project with id {task_data.project_id} has reached the maximum number of tasks allowed"
-            )
-            if task_data.project_id not in config.CICD_PROJECTS:
-                # await slack_notification(
-                #     f"Projet {task_data.project_id} is full (we don't know who's the owner!). Skipping event detection for task {task_id}"
-                # )
-                pass
-
-            # Send an email to the project owner (only one!)
-            await send_quota_exceeded_email(task_data.project_id)
-            # Do nothing and continue to the next task
-        else:
-            # Trigger the pipeline
-            # await main_pipeline(task_data)
-            await run_main_pipeline(task_data)
-            logger.info(f"Logevent: pipeline triggered for task {task_id}")
+        logger.info(f"Logevent: pipeline triggered for task {task_id}")
+        await main_pipeline(task_data)
 
     return None
 
@@ -509,40 +526,19 @@ async def process_log_with_session_id(
         # Fetch the task data from the database
         # For now it's a double call to the database, but it's not a big deal
         task_data = await get_task_by_id(task_id)
-        # AUTHORIZATION
-        # NOTE: For now, we check every time which is costly. We should do it for each batch, but then there is a risk of a massive batch being authorized wrongly
-        pipeline_authorized = await authorize_main_pipeline(task_data.project_id)
-
-        # If the project is not authorized
-        # This is due to the usage quota exceded
-        if not pipeline_authorized:
-            logger.warning(
-                f"Project with id {task_data.project_id} has reached the maximum number of tasks allowed"
-            )
-            if task_data.project_id not in config.CICD_PROJECTS:
-                # await slack_notification(
-                #     f"Projet {task_data.project_id} is full (we don't know who's the owner!). Skipping event detection for task {task_id}"
-                # )
-                pass
-
-            # Send an email to the project owner (only one!)
-            await send_quota_exceeded_email(task_data.project_id)
-            # Do nothing and continue to the next task
-        else:
-            # Trigger the pipeline
-            # await main_pipeline(task_data)
-            await run_main_pipeline(task_data)
-            logger.info(f"Logevent: triggered pipeline for task {task_data.id}")
+        await main_pipeline(task_data)
 
 
-async def process_log(project_id: str, org_id: str, log_reply: LogReply) -> None:
+async def process_log(
+    project_id: str, org_id: str, logs_to_process: List[LogEvent]
+) -> None:
     """From logs
     - Create Tasks
     - Create a Session
     - Trigger the Tasks processing pipeline
     """
     mongo_db = await get_mongo_db()
-    logger.info(f"Logevent: processing {len(log_reply.logged_events)} log events")
+    logger.info(f"Logevent: processing {len(logs_to_process)} log events")
 
     def log_is_error(log_event):
         if isinstance(log_event, dict) and "Error in log" in log_event:
@@ -551,7 +547,7 @@ async def process_log(project_id: str, org_id: str, log_reply: LogReply) -> None
 
     nonerror_log_events = [
         log_event
-        for log_event in log_reply.logged_events
+        for log_event in logs_to_process
         if not log_is_error(log_event) and isinstance(log_event, LogEvent)
     ]
     logger.info(f"Logevent: saving {len(nonerror_log_events)} non-error log events")
