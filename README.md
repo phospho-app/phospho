@@ -1,4 +1,4 @@
-# phospho: Product Analytics platform for LLM apps
+# phospho: Text Analytics Platform for LLM Apps
 
 <div align="center">
 <img src="./platform/public/image/phospho-banner.png" alt="phospho logo">
@@ -8,7 +8,9 @@
 <a href="https://discord.gg/MXqBJ9pBsx"><img alt="Discord" src="https://img.shields.io/discord/1106594252043071509"></a>
 </div>
 
-Phospho is the product analytics platform for LLM apps. Track user interactions to detect issues and extract insights. Gather user feedback and measure success. Iterate on your app to create the best conversational experience for your users.
+Phospho is the text analytics platform for LLM apps. Detect issues and extract insights from text messages of your users or your app. Gather user feedback and measure success. Iterate on your app to create the best conversational experience for your users.
+
+Ship your LLM app in production with confidence, and iterate on it with insights from your users.
 
 Support us by starring this repo! ⭐
 
@@ -20,7 +22,9 @@ Support us by starring this repo! ⭐
 - Data visualization
 - Collaboration
 
-![The phospho lab is the core analytics component of phospho](./phospho_diagram.png)
+<div align="center">
+<img src="./phospho_diagram.png" alt="phospho diagram" width=450>
+</div>
 
 ## Demo
 
@@ -82,7 +86,11 @@ You get:
 The event question_answering was detected: True
 ```
 
-This event detection pipeline can then be linked to other bricks through webhooks or used to notice patterns in the user data.
+This event detection pipeline can then be linked back to your product or alerting solution (eg. Slack) through webhooks or used to notice patterns in the user data.
+
+You can use other jobs from the phospho library or create your own jobs to run on your messages.
+
+See more examples of what you can do with phospho in the [examples folder](./examples).
 
 ## Access the hosted version
 

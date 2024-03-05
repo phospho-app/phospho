@@ -5,8 +5,14 @@ from loguru import logger
 from pydantic import ValidationError
 
 from app.api.v2.models import LogEvent, LogReply, LogRequest
-from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
-from app.services.mongo.log import process_log
+from app.security import (
+    authenticate_org_key,
+    verify_propelauth_org_owns_project_id,
+    get_quota,
+)
+from app.services.mongo.extractor import run_log_process
+from app.services.mongo.emails import send_quota_exceeded_email
+from app.core import config
 
 router = APIRouter(tags=["Logs"])
 
@@ -28,6 +34,12 @@ async def store_batch_of_log_events(
 
     # We return the valid log events
     logged_events: List[Union[LogEvent, LogError]] = []
+    logs_to_process: List[LogEvent] = []
+
+    org_plan = await get_quota(project_id)
+    current_usage = org_plan.get("current_usage", 0)
+    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_TASKS)
+
     for log_event_model in log_request.batched_log_events:
         # Validate the log in a second time, using the pydantic model
         try:
@@ -43,6 +55,20 @@ async def store_batch_of_log_events(
                 log_event_model.model_dump(), strict=True
             )
             logged_events.append(valid_log_event)
+            # Process this log only if the usage quota is not reached
+            if max_usage is None or (
+                max_usage is not None and current_usage < max_usage
+            ):
+                logs_to_process.append(valid_log_event)
+                current_usage += 1
+            else:
+                logger.warning(f"Max usage quota reached for project {project_id}")
+                background_tasks.add_task(send_quota_exceeded_email, project_id)
+                logged_events.append(
+                    LogError(
+                        error_in_log=f"Max usage quota reached for project {project_id}: {current_usage}/{max_usage} logs"
+                    )
+                )
         except ValidationError as e:
             logger.info(f"Skip logevent processing due to validation error: {e}")
             logged_events.append(LogError(error_in_log=str(e)))
@@ -55,9 +81,11 @@ async def store_batch_of_log_events(
             logged_events.append(LogError(error_in_log=str(e)))
 
     log_reply = LogReply(logged_events=logged_events)
+
+    # All the tasks to process were deemed as valid and part of the usage quota
     background_tasks.add_task(
-        process_log,
-        log_reply=log_reply,
+        run_log_process,
+        logs_to_process=logs_to_process,
         project_id=project_id,
         org_id=org["org"].get("org_id"),
     )

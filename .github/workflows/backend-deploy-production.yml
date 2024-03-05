@@ -56,13 +56,15 @@ jobs:
           COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
           EXTRACTOR_SECRET_KEY: ${{ secrets.EXTRACTOR_SECRET_KEY }}
           EXTRACTOR_SENTRY_DSN: ${{ secrets.EXTRACTOR_SENTRY_DSN }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
         run: |
           gcloud run deploy phospho-extractor \
             --project $GCP_PROJECT_ID \
             --port 80 \
             --region europe-west1 \
             --allow-unauthenticated \
-            --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,ENVIRONMENT=production,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,COHERE_API_KEY=$COHERE_API_KEY,EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_SENTRY_DSN=$EXTRACTOR_SENTRY_DSN \
+            --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,ENVIRONMENT=production,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,COHERE_API_KEY=$COHERE_API_KEY,EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_SENTRY_DSN=$EXTRACTOR_SENTRY_DSN,QDRANT_URL=$QDRANT_URL,QDRANT_API_KEY=$QDRANT_API_KEY \
             --image europe-west1-docker.pkg.dev/portal-385519/phospho-extractor/app:production
 
   deploy_backend_production:
