@@ -529,14 +529,16 @@ async def process_log_with_session_id(
         await main_pipeline(task_data)
 
 
-async def process_log(project_id: str, org_id: str, log_reply: LogReply) -> None:
+async def process_log(
+    project_id: str, org_id: str, logs_to_process: List[LogEvent]
+) -> None:
     """From logs
     - Create Tasks
     - Create a Session
     - Trigger the Tasks processing pipeline
     """
     mongo_db = await get_mongo_db()
-    logger.info(f"Logevent: processing {len(log_reply.logged_events)} log events")
+    logger.info(f"Logevent: processing {len(logs_to_process)} log events")
 
     def log_is_error(log_event):
         if isinstance(log_event, dict) and "Error in log" in log_event:
@@ -545,7 +547,7 @@ async def process_log(project_id: str, org_id: str, log_reply: LogReply) -> None
 
     nonerror_log_events = [
         log_event
-        for log_event in log_reply.logged_events
+        for log_event in logs_to_process
         if not log_is_error(log_event) and isinstance(log_event, LogEvent)
     ]
     logger.info(f"Logevent: saving {len(nonerror_log_events)} non-error log events")
