@@ -378,7 +378,7 @@ async def process_log_without_session_id(
     # Create the tasks
     tasks_to_create = await ignore_existing_tasks(tasks_to_create)
     if len(tasks_to_create) > 0:
-        await mongo_db["tasks"].update_many(tasks_to_create, upsert=True)
+        await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
 
     if trigger_pipeline:
         # Vectorize them
@@ -486,7 +486,7 @@ async def process_log_with_session_id(
     # Create the tasks
     tasks_to_create = await ignore_existing_tasks(tasks_to_create)
     if len(tasks_to_create) > 0:
-        await mongo_db["tasks"].update_many(tasks_to_create, upsert=True)
+        await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
 
     # Add sessions to database
     if len(sessions_to_create) > 0:
@@ -518,8 +518,8 @@ async def process_log_with_session_id(
             logger.info(
                 f"Creating sessions: {' '.join([session_id for session_id in sessions_to_create.keys()])}"
             )
-            insert_result = await mongo_db["sessions"].update_many(
-                sessions_to_create_dump, upsert=True
+            insert_result = await mongo_db["sessions"].insert_many(
+                sessions_to_create_dump, ordered=False
             )
             logger.info(f"Created {len(insert_result.inserted_ids)} sessions")
     else:
