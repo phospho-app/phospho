@@ -3,7 +3,7 @@ A service to interact with the extractor server
 """
 
 import traceback
-from typing import List
+from typing import List, Optional
 
 import httpx
 from app.api.v2.models import LogEvent
