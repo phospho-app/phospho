@@ -97,7 +97,7 @@ class ResultType(Enum):
     literal = "literal"
 
 
-class JobResult(BaseModel):
+class JobResult(BaseModel, extra="allow"):
     created_at: int = Field(default_factory=generate_timestamp)
     job_id: str
     result_type: ResultType

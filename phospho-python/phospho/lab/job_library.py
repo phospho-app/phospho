@@ -227,22 +227,6 @@ You have to say if the event is present in the transcript or not. Respond with o
     # Identifier of the source of the evaluation, with the version of the model if phospho
     evaluation_source = "phospho-4"
 
-    # TODO : Make it so that this works again
-    # Store the query and the response in the database
-    # if store_llm_call:
-    #     # WARNING : adds latency
-    #     # Create the llm_call object from the pydantic model
-    #     llm_call_obj = LlmCall(
-    #         model=model,
-    #         prompt=prompt,
-    #         llm_output=llm_response,
-    #         api_call_time=api_call_time,
-    #         evaluation_source=evaluation_source,
-    #         org_id=org_id,
-    #     )
-    #     mongo_db = await get_mongo_db()
-    #     mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
-
     logger.debug(f"event_detection detected event {event_name} : {detected_event}")
     # Return the result
     return JobResult(
@@ -253,6 +237,13 @@ You have to say if the event is present in the transcript or not. Respond with o
         metadata={
             "api_call_time": api_call_time,
             "evaluation_source": evaluation_source,
+            "llm_call": {
+                "model": model_name,
+                "prompt": prompt,
+                "llm_output": llm_response,
+                "api_call_time": api_call_time,
+                "evaluation_source": evaluation_source,
+            },
         },
     )
 
@@ -301,6 +292,7 @@ async def evaluate_task(
 
     # Additional metadata
     api_call_time: Optional[float] = None
+    llm_call: Optional[dict] = None
 
     async def zero_shot_evaluation(
         prompt: str,
@@ -311,6 +303,7 @@ async def evaluate_task(
         as a success or a failure.
         """
         nonlocal api_call_time
+        nonlocal llm_call
 
         start_time = time.time()
         response = await async_openai_client.chat.completions.create(
@@ -325,21 +318,13 @@ async def evaluate_task(
         llm_response = response.choices[0].message.content
         api_call_time = time.time() - start_time
 
-        # TODO : Fix this
-        # Store the query and the response in the database
-        # if store_llm_call:
-        #     # WARNING : adds latency
-        #     # Create the llm_call object from the pydantic model
-        #     llm_call_obj = LlmCall(
-        #         model=model_name,
-        #         prompt=prompt,
-        #         llm_output=llm_response,
-        #         api_call_time=time.time() - start_time,
-        #         evaluation_source=config.EVALUATION_SOURCE,
-        #         org_id=org_id,
-        #     )
-        #     mongo_db = await get_mongo_db()
-        #     await mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+        llm_call = {
+            "model": model_name,
+            "prompt": prompt,
+            "llm_output": llm_response,
+            "api_call_time": api_call_time,
+            "evaluation_source": "phospho-4",
+        }
 
         # Parse the llm response to avoid basic errors
         if llm_response is not None:
@@ -492,5 +477,8 @@ async def evaluate_task(
         result_type=ResultType.literal,
         value=flag,
         logs=[prompt, flag],
-        metadata={"api_call_time": api_call_time},
+        metadata={
+            "api_call_time": api_call_time,
+            "llm_call": llm_call,
+        },
     )
