@@ -3,7 +3,7 @@ A service to interact with the extractor server
 """
 
 import traceback
-from typing import List
+from typing import List, Optional
 
 import httpx
 from app.api.v2.models import LogEvent
@@ -38,11 +38,17 @@ def check_health():
 
 
 async def run_log_process(
-    logs_to_process: List[LogEvent], project_id: str, org_id: str
+    logs_to_process: List[LogEvent],
+    project_id: str,
+    org_id: str,
+    extra_logs_to_save: Optional[List[LogEvent]] = None,
 ):
     """
     Run the log procesing pipeline on a task asynchronously
     """
+    if extra_logs_to_save is None:
+        extra_logs_to_save = []
+
     async with httpx.AsyncClient() as client:
         logger.debug(
             f"Calling the extractor API for {len(logs_to_process)} logevents, project {project_id} org {org_id}: {config.EXTRACTOR_URL}/v1/pipelines/log"
@@ -53,6 +59,9 @@ async def run_log_process(
                 json={
                     "logs_to_process": [
                         log_event.model_dump() for log_event in logs_to_process
+                    ],
+                    "extra_logs_to_save": [
+                        log_event.model_dump() for log_event in extra_logs_to_save
                     ],
                     "project_id": project_id,
                     "org_id": org_id,

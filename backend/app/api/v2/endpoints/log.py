@@ -35,6 +35,7 @@ async def store_batch_of_log_events(
     # We return the valid log events
     logged_events: List[Union[LogEvent, LogError]] = []
     logs_to_process: List[LogEvent] = []
+    extra_logs_to_save: List[LogEvent] = []
 
     org_plan = await get_quota(project_id)
     current_usage = org_plan.get("current_usage", 0)
@@ -69,6 +70,7 @@ async def store_batch_of_log_events(
                         error_in_log=f"Max usage quota reached for project {project_id}: {current_usage}/{max_usage} logs"
                     )
                 )
+                extra_logs_to_save.append(valid_log_event)
         except ValidationError as e:
             logger.info(f"Skip logevent processing due to validation error: {e}")
             logged_events.append(LogError(error_in_log=str(e)))
@@ -86,6 +88,7 @@ async def store_batch_of_log_events(
     background_tasks.add_task(
         run_log_process,
         logs_to_process=logs_to_process,
+        extra_logs_to_save=extra_logs_to_save,
         project_id=project_id,
         org_id=org["org"].get("org_id"),
     )

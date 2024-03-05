@@ -44,5 +44,6 @@ async def post_log(
             project_id=request_body.project_id,
             org_id=request_body.org_id,
             logs_to_process=request_body.logs_to_process,
+            extra_logs_to_save=request_body.extra_logs_to_save,
         )
     return {"status": "ok"}
