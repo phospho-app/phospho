@@ -51,7 +51,9 @@ async def run_log_process(
             response = await client.post(
                 f"{config.EXTRACTOR_URL}/v1/pipelines/log",  # WARNING: hardcoded API version
                 json={
-                    "logs_to_process": logs_to_process,
+                    "logs_to_process": [
+                        log_event.model_dump() for log_event in logs_to_process
+                    ],
                     "project_id": project_id,
                     "org_id": org_id,
                 },
