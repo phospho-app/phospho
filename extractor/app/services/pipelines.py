@@ -300,10 +300,8 @@ async def task_scoring_pipeline(task: Task) -> None:
     metadata = workload.results["output_" + task.id]["evaluate_task"].metadata
     llm_call = metadata.get("llm_call", None)
     if llm_call is not None:
-        llm_call_obj = LLMCall(**llm_call, org_id=task.org_id)
+        llm_call_obj = LlmCall(**llm_call, org_id=task.org_id)
         mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
-
-    mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
 
     logger.debug(f"Flag for task {task.id} : {flag}")
     # Create the Evaluation object and store it in the db
