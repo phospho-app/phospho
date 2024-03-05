@@ -1,7 +1,11 @@
 # Examples
 
-This folder contains examples on how to use phospho to log in different contexts. 
+This folder contains examples on how to use phospho to log in different contexts.
 
+## Notebooks
+
+- [Quickstart](quickstart.ipynb) A quickstart guide to using phospho lab
+- [Creating a Custom Job](custom-job.ipynb) How to create a custom job and run it with phospho lab
 
 ## Simple examples
 
