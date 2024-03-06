@@ -182,6 +182,10 @@ def collect_metadata(log_event: LogEvent) -> Optional[dict]:
 async def add_vectorized_tasks(
     tasks_id: List[str],
 ):
+    """
+    Compute the vector representation of the tasks and add them to Qdrant database
+    """
+    logger.info(f"Vectorizing {len(tasks_id)} tasks and adding them to Qdrant")
     mongo_db = await get_mongo_db()
     qdrant_db = await get_qdrant()
     # Get tasks
@@ -289,7 +293,9 @@ async def process_log_without_session_id(
     if len(list_of_log_event) == 0:
         logger.debug("No log event without session_id to process")
         return None
-
+    logger.info(
+        f"Project {project_id}: processing {len(list_of_log_event)} log events without session_id"
+    )
     mongo_db = await get_mongo_db()
 
     tasks_id_to_process: List[str] = []
@@ -323,7 +329,7 @@ async def process_log_without_session_id(
             # Fetch the task data from the database
             # For now it's a double call to the database, but it's not a big deal
             task_data = await get_task_by_id(task_id)
-            logger.info(f"Logevent: pipeline triggered for task {task_id}")
+            logger.info(f"Project {project_id}: pipeline triggered for task {task_id}")
             await main_pipeline(task_data)
 
     return None
@@ -341,7 +347,9 @@ async def process_log_with_session_id(
     if len(list_of_log_event) == 0:
         logger.debug("No log event with session_id to process")
         return None
-
+    logger.info(
+        f"Project {project_id}: processing {len(list_of_log_event)} log events with session_id"
+    )
     tasks_id_to_process: List[str] = []
     tasks_to_create: List[Dict[str, object]] = []
     sessions_to_create: Dict[str, Dict[str, Any]] = {}
@@ -483,7 +491,7 @@ async def process_log(
     - Trigger the Tasks processing pipeline
     """
     mongo_db = await get_mongo_db()
-    logger.info(f"Logevent: processing {len(logs_to_process)} log events")
+    logger.info(f"Project {project_id}: processing {len(logs_to_process)} log events")
 
     def log_is_error(log_event):
         if isinstance(log_event, dict) and "Error in log" in log_event:
@@ -495,8 +503,9 @@ async def process_log(
         for log_event in logs_to_process + extra_logs_to_save
         if not log_is_error(log_event) and isinstance(log_event, LogEvent)
     ]
-    logger.info(f"Logevent: saving {len(nonerror_log_events)} non-error log events")
-
+    logger.info(
+        f"Project {project_id}: saving {len(nonerror_log_events)} non-error log events"
+    )
     # Save the non-error log events
     if len(nonerror_log_events) > 0:
         mongo_db["logs"].insert_many(
@@ -524,7 +533,9 @@ async def process_log(
     )
 
     if len(extra_logs_to_save) > 0:
-        logger.info(f"Logevent: saving {len(extra_logs_to_save)} extra log events")
+        logger.info(
+            f"Project {project_id}: saving {len(extra_logs_to_save)} extra log events"
+        )
         # Process logs without session_id
         await process_log_without_session_id(
             project_id=project_id,

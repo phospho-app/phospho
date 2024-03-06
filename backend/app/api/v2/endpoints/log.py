@@ -83,6 +83,9 @@ async def store_batch_of_log_events(
             logged_events.append(LogError(error_in_log=str(e)))
 
     log_reply = LogReply(logged_events=logged_events)
+    logger.debug(
+        f"Project {project_id} replying to log request with {len(logged_events)}: {len(logs_to_process)} valid logs and {len(extra_logs_to_save)} extra logs to save."
+    )
 
     # All the tasks to process were deemed as valid and part of the usage quota
     background_tasks.add_task(
