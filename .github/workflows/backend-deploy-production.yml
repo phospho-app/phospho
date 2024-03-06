@@ -62,6 +62,7 @@ jobs:
           gcloud run deploy phospho-extractor \
             --project $GCP_PROJECT_ID \
             --port 80 \
+            --memory 1Gi \
             --region europe-west1 \
             --allow-unauthenticated \
             --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,ENVIRONMENT=production,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,COHERE_API_KEY=$COHERE_API_KEY,EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_SENTRY_DSN=$EXTRACTOR_SENTRY_DSN,QDRANT_URL=$QDRANT_URL,QDRANT_API_KEY=$QDRANT_API_KEY \
@@ -131,7 +132,7 @@ jobs:
           gcloud run deploy phospho-backend \
             --project $GCP_PROJECT_ID \
             --port 80 \
-            --memory 2Gi \
+            --memory 1Gi \
             --region europe-west1 \
             --allow-unauthenticated \
             --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,RESEND_API_KEY=$RESEND_API_KEY,ENVIRONMENT=production,SLACK_URL=$SLACK_URL,SENTRY_DSN=$SENTRY_DSN,PROPELAUTH_API_KEY=$PROPELAUTH_API_KEY,PROPELAUTH_URL=$PROPELAUTH_URL,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,QDRANT_URL=$QDRANT_URL,QDRANT_API_KEY=$QDRANT_API_KEY,COHERE_API_KEY=$COHERE_API_KEY,PHOSPHO_API_KEY_ONBOARDING=$PHOSPHO_API_KEY_ONBOARDING,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET,EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_URL=$EXTRACTOR_URL \
