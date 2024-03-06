@@ -75,7 +75,7 @@
 
 ````
 
-`````{py:class} TestInput(**data: typing.Any)
+`````{py:class} TestInput(/, **data: typing.Any)
 :canonical: phospho.testing.TestInput
 
 Bases: {py:obj}`pydantic.BaseModel`
