@@ -11,10 +11,8 @@ from app.db.models import Task
 
 async def fetch_previous_tasks(task_id: str) -> List[Task]:
     """
-    Fetch all the previous tasks until the task,
-    if the task is linked to a session.
-
-    TODO : query limits
+    Fetch all the previous tasks until the task, if the task is linked to a session.
+    TODO : Query limits
     """
     # Get the document with a specific ID
     mongo_db = await get_mongo_db()
@@ -53,20 +51,13 @@ def generate_task_transcript(
     user_identifier : the identifier of the messages of the end user (for the LLM)
     assistant_identifier : the identifier of the messages of the assistant (for the LLM)
 
-    Returns a transcript of the session
+    Returns a transcript of a task
     """
     transcript = ""
     for task in list_of_task:
         # Add the task name and description to the transcript
         transcript += f"{user_identifier} {task.input}\n"
-        transcript += f"{assistant_identifier} {task.output or ' '}\n"
-
-        # There is now the output in the task data
-
-        # Add the output of the last step to the transcript
-        # if len(step[1]) > 0:
-        # If the last step is the finale step, we add the output to the transcript
-        # if step[1][-1].get('is_last', False):
-        # transcript += f"{assistant_identifier} {step[1][-1].get('output', ' ')}\n"
+        if task.output is not None:
+            transcript += f"{assistant_identifier} {task.output}\n"
 
     return transcript
