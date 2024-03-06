@@ -20,10 +20,11 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { FilterX } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, FilterX } from "lucide-react";
 import { Sparkles } from "lucide-react";
 import React, { useState } from "react";
 
@@ -92,10 +93,13 @@ export function TasksTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setTasksColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     state: {
       columnFilters: tasksColumnsFilters,
       sorting,
     },
+    pageCount: -1,
+    autoResetPageIndex: false,
   });
 
   return (
@@ -103,7 +107,7 @@ export function TasksTable<TData, TValue>({
       <div className="flex flex-row gap-x-2">
         <div className="flex flex-col mb-2 flex-grow">
           <Input
-            placeholder="Search for tasks about a topic"
+            placeholder="Search for a topic"
             value={
               // (table.getColumn("output")?.getFilterValue() as string) ?? ""
               query
@@ -123,7 +127,7 @@ export function TasksTable<TData, TValue>({
             className="max-w-sm"
           />
         </div>
-        <div className="mr-4">
+        <div>
           <Button
             onClick={async () => {
               table.setColumnFilters(
@@ -133,13 +137,13 @@ export function TasksTable<TData, TValue>({
             }}
             variant="outline"
           >
-            <Sparkles className="h-4 w-4 mr-1" />
+            <Sparkles className="h-4 w-4" />
             Search
           </Button>
         </div>
         {isLoading && (
           <svg
-            className="animate-spin -ml-1 h-5 w-5 text-white"
+            className="animate-spin ml-1 h-5 w-5 text-white"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -168,7 +172,28 @@ export function TasksTable<TData, TValue>({
           }}
         >
           <FilterX className="h-4 w-4 mr-1" />
-          Clear all filters
+          Clear
+        </Button>
+        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+          Page {table.getState().pagination.pageIndex + 1}
+        </div>
+        <Button
+          variant="outline"
+          className="w-8 p-0"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          <span className="sr-only">Go to previous page</span>
+          <ChevronLeftIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          className="w-8 p-0"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          <span className="sr-only">Go to next page</span>
+          <ChevronRightIcon className="h-4 w-4" />
         </Button>
       </div>
 
