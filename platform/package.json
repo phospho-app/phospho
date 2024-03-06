@@ -52,7 +52,7 @@
     "node-fetch": "^3.3.2",
     "phospho": "^1.2.2",
     "postcss": ">=8.4.31",
-    "posthog-js": "^1.101.0",
+    "posthog-js": "^1.111.0",
     "react": "18.2.0",
     "react-code-blocks": "^0.1.6",
     "react-dom": "18.2.0",
