@@ -105,7 +105,7 @@ This repository contains the implementation of the platform frontend, the API ba
 1. Clone the repo:
 
 ```bash
-git clone git@github.com:phospho-app/monorepo.git
+git clone git@github.com:phospho-app/phospho.git
 ```
 
 2. Register to the core external services:
