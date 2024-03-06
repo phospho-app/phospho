@@ -39,7 +39,7 @@
 
 ### API
 
-`````{py:class} EvalModel(**data: typing.Any)
+`````{py:class} EvalModel(/, **data: typing.Any)
 :canonical: phospho.models.EvalModel
 
 Bases: {py:obj}`pydantic.BaseModel`
@@ -123,7 +123,7 @@ Bases: {py:obj}`pydantic.BaseModel`
 
 `````
 
-`````{py:class} TaskModel(**data: typing.Any)
+`````{py:class} TaskModel(/, **data: typing.Any)
 :canonical: phospho.models.TaskModel
 
 Bases: {py:obj}`pydantic.BaseModel`
@@ -284,7 +284,7 @@ Bases: {py:obj}`pydantic.BaseModel`
 
 `````
 
-`````{py:class} Test(**data: typing.Any)
+`````{py:class} Test(/, **data: typing.Any)
 :canonical: phospho.models.Test
 
 Bases: {py:obj}`pydantic.BaseModel`
@@ -389,7 +389,7 @@ Bases: {py:obj}`pydantic.BaseModel`
 
 ````
 
-`````{py:class} Comparison(**data: typing.Any)
+`````{py:class} Comparison(/, **data: typing.Any)
 :canonical: phospho.models.Comparison
 
 Bases: {py:obj}`pydantic.BaseModel`

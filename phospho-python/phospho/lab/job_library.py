@@ -482,3 +482,21 @@ async def evaluate_task(
             "llm_call": llm_call,
         },
     )
+
+
+def get_nb_tokens(
+    message: Message, model: Optional[str] = "openai:gpt-3.5-turbo-0613", tokenizer=None
+) -> JobResult:
+    """
+    Get the number of tokens in a message.
+    """
+    from phospho.lab.utils import num_tokens_from_messages
+
+    if model is not None:
+        provider, model = get_provider_and_model(model)
+
+    return JobResult(
+        job_id="get_nb_tokens",
+        result_type=ResultType.literal,
+        value=num_tokens_from_messages([message.model_dump()], model, tokenizer),
+    )
