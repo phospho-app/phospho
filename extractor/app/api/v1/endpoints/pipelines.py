@@ -39,6 +39,9 @@ async def post_log(
     is_request_authenticated: bool = Depends(authenticate_key),
 ):
     if is_request_authenticated:
+        logger.info(
+            f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
+        )
         background_tasks.add_task(
             process_log,
             project_id=request_body.project_id,
