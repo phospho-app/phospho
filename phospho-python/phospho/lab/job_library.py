@@ -1,5 +1,5 @@
 """
-Collection of jobs for the laboratory. 
+Collection of jobs for the laboratory.
 Each job is a function that takes a message and a set of parameters and returns a result.
 The result is a JobResult object.
 """
@@ -466,11 +466,56 @@ async def evaluate_task(
         logger.debug(
             f"Running eval in few shot mode with Cohere classifier and {len(merged_examples)} examples"
         )
-        flag = await few_shot_evaluation(
-            message=message,
-            successful_examples=successful_examples,
-            unsuccessful_examples=unsuccessful_examples,
-        )
+        # We add a try with a fallback to zero shot if the function returns an error
+        try:
+            flag = await few_shot_evaluation(
+                message=message,
+                successful_examples=successful_examples,
+                unsuccessful_examples=unsuccessful_examples,
+            )
+        except Exception as e:
+            logger.error(
+                f"Error in few shot evaluation (falling back to zero shot mode) : {e}"
+            )
+            # Build zero shot prompt
+
+            # If there is a previous task, add it to the prompt
+            if len(message.previous_messages) > 0:
+                prompt = f"""
+                You are evaluating an interaction between a user and an assistant. 
+                Your goal is to determine if the assistant was helpful or not to the user.
+
+                Here is the previous interaction between the user and the assistant:
+                [START PREVIOUS INTERACTION]
+                {message.previous_messages_transcript(with_role=True)}
+                [END PREVIOUS INTERACTION]
+
+                Here is the interaction between the user and the assistant you need to evaluate:
+                [START INTERACTION]
+                {message.transcript(with_role=True)}
+                [END INTERACTION]
+
+                Respond with only one word, success if the assistant was helpful, failure if not.
+                """
+            else:
+                prompt = f"""
+                You are an impartial judge evaluating an interaction between a user and an assistant. 
+                Your goal is to determine if the assistant was helpful or not to the user.
+
+                Here is the interaction between the user and the assistant:
+                [START INTERACTION]
+                {message.transcript(with_role=True)}
+                [END INTERACTION]
+
+                Respond with only one word, success if the assistant was helpful, failure if not.
+                """
+
+            # Check the context window size
+            if fits_in_context_window(prompt, max_tokens_input_lenght):
+                flag = await zero_shot_evaluation(prompt, model_name=model_name)
+            else:
+                logger.error("The prompt does not fit in the context window")
+                flag = None  # TODO: Fallback to a bigger model
 
     return JobResult(
         job_id="evaluate_task",
