@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import openai
 from loguru import logger
@@ -260,7 +260,8 @@ def create_task_from_logevent(
 
 async def ignore_existing_tasks(
     tasks_to_create: List[Dict[str, object]],
-) -> List[Dict[str, object]]:
+    tasks_id_to_process: List[str],
+) -> Tuple[List[Dict[str, object]], List[str]]:
     """
     Filter out tasks that already exist in the database
     """
@@ -278,7 +279,13 @@ async def ignore_existing_tasks(
             and task["id"] not in new_tasks_to_create
         ):
             new_tasks_to_create.append(task)
-    return new_tasks_to_create
+
+    # Filter tasks_id_to_process
+    tasks_id_to_process = [
+        task_id for task_id in tasks_id_to_process if task_id not in existing_task_ids
+    ]
+
+    return new_tasks_to_create, tasks_id_to_process
 
 
 async def process_log_without_session_id(
@@ -316,7 +323,9 @@ async def process_log_without_session_id(
         return None
 
     # Create the tasks
-    tasks_to_create = await ignore_existing_tasks(tasks_to_create)
+    tasks_to_create, tasks_id_to_process = await ignore_existing_tasks(
+        tasks_to_create, tasks_id_to_process
+    )
     if len(tasks_to_create) > 0:
         await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
 
@@ -426,7 +435,9 @@ async def process_log_with_session_id(
                     sessions_to_earliest_task[log_event.session_id] = task
 
     # Create the tasks
-    tasks_to_create = await ignore_existing_tasks(tasks_to_create)
+    tasks_to_create, tasks_id_to_process = await ignore_existing_tasks(
+        tasks_to_create, tasks_id_to_process
+    )
     if len(tasks_to_create) > 0:
         await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
 
