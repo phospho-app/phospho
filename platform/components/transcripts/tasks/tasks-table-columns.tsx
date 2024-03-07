@@ -174,6 +174,18 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
     {
       header: "Input",
       accessorKey: "input",
+      cell: (row) => {
+        const input = row.getValue() as string; // asserting the type as string
+        return (
+          <span>
+            {input
+              ? input.length > 50
+                ? input.substring(0, 50) + "..."
+                : input
+              : "-"}
+          </span>
+        );
+      },
     },
     {
       header: "Output",
