@@ -1,6 +1,7 @@
 "use client";
 
 import DownloadButton from "@/components/download-csv";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,7 +26,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronLeftIcon, ChevronRightIcon, FilterX } from "lucide-react";
-import { Sparkles } from "lucide-react";
+import { Database, Sparkles } from "lucide-react";
+import Link from "next/link";
 import React, { useState } from "react";
 
 import { getColumns } from "./tasks-table-columns";
@@ -98,7 +100,7 @@ export function TasksTable<TData, TValue>({
       columnFilters: tasksColumnsFilters,
       sorting,
     },
-    pageCount: -1,
+    // pageCount: 10,
     autoResetPageIndex: false,
   });
 
@@ -175,7 +177,8 @@ export function TasksTable<TData, TValue>({
           Clear
         </Button>
         <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1}
+          Page {table.getState().pagination.pageIndex + 1}/{" "}
+          {table.getPageCount()}
         </div>
         <Button
           variant="outline"
@@ -196,7 +199,30 @@ export function TasksTable<TData, TValue>({
           <ChevronRightIcon className="h-4 w-4" />
         </Button>
       </div>
+      {table.getState().pagination.pageIndex + 1 > 5 && (
+        <Alert className="mb-2 ">
+          <div className="flex justify-between">
+            <div></div>
+            <div className="flex space-x-4">
+              <Database className="w-8 h-8" />
 
+              <div>
+                <AlertTitle>Only the latest tasks are displayed</AlertTitle>
+                <AlertDescription>
+                  <div>Scale your insights with the phospho Python SDK</div>
+                </AlertDescription>
+              </div>
+              <Link
+                href="https://docs.phospho.ai/integrations/python/analytics"
+                target="_blank"
+              >
+                <Button>Learn more</Button>
+              </Link>
+            </div>
+            <div></div>
+          </div>
+        </Alert>
+      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>

@@ -42,8 +42,10 @@ function FetchHasTasksSessions() {
   const setABTests = dataStateStore((state) => state.setABTests);
 
   // Fetch the has session
-  const { data: hasSessionData, error: sessionError } = useSWR(
-    [`/api/explore/${project_id}/has-sessions`, accessToken],
+  const { data: hasSessionData } = useSWR(
+    project_id
+      ? [`/api/explore/${project_id}/has-sessions`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
   );
   if (hasSessionData) {
@@ -51,8 +53,8 @@ function FetchHasTasksSessions() {
   }
 
   // Fetch has tasks
-  const { data: hasTasksData, error: tasksError } = useSWR(
-    [`/api/explore/${project_id}/has-tasks`, accessToken],
+  const { data: hasTasksData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
   );
   if (hasTasksData) {
@@ -60,8 +62,10 @@ function FetchHasTasksSessions() {
   }
 
   // Fetch has enough labelled tasks
-  const { data: hasLabelledTasksData, error: labelledTasksError } = useSWR(
-    [`/api/explore/${project_id}/has-enough-labelled-tasks`, accessToken],
+  const { data: hasLabelledTasksData } = useSWR(
+    project_id
+      ? [`/api/explore/${project_id}/has-enough-labelled-tasks`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
   );
   if (hasLabelledTasksData) {
@@ -82,8 +86,10 @@ function FetchHasTasksSessions() {
   }
 
   // Fetch all tasks
-  const { data: tasksData, error: fetchTasksError } = useSWR(
-    [`/api/projects/${project_id}/tasks`, accessToken],
+  const { data: tasksData } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/tasks?limit=200`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
   if (
@@ -101,8 +107,10 @@ function FetchHasTasksSessions() {
   }
 
   // Fetch all sessions
-  const { data: sessionsData, error: fetchSessionsError } = useSWR(
-    [`/api/projects/${project_id}/sessions`, accessToken],
+  const { data: sessionsData } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/sessions?limit=200`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
   if (
@@ -125,8 +133,8 @@ function FetchHasTasksSessions() {
   }
 
   // Fetch all users
-  const { data: usersData, error: fetchUsersError } = useSWR(
-    [`/api/projects/${project_id}/users`, accessToken],
+  const { data: usersData } = useSWR(
+    project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
   if (
@@ -139,7 +147,7 @@ function FetchHasTasksSessions() {
 
   // Fetch ABTests
   const { data: abTestsData } = useSWR(
-    [`/api/explore/${project_id}/ab-tests`, accessToken],
+    project_id ? [`/api/explore/${project_id}/ab-tests`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken),
   );
   if (abTestsData?.abtests) {
@@ -148,7 +156,7 @@ function FetchHasTasksSessions() {
 
   // Fetch tests
   const { data: testsData } = useSWR(
-    [`/api/projects/${project_id}/tests`, accessToken],
+    project_id ? [`/api/projects/${project_id}/tests`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken),
   );
   if (testsData?.tests) {
