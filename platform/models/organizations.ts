@@ -7,6 +7,7 @@ export interface UsageQuota {
 }
 
 export interface OrgMetadata {
+  org_id: string;
   plan?: string | null; // "hobby" or "pro"
   customer_id?: string | null; // Stripe customer id
   initialized?: boolean | null; // Whether the org has been initialized
