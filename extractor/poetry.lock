@@ -1117,13 +1117,13 @@ xml = ["lxml (>=4.9.2)"]
 
 [[package]]
 name = "phospho"
-version = "0.3.5"
+version = "0.3.6"
 description = "Text Analytics for LLM apps"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "phospho-0.3.5-py3-none-any.whl", hash = "sha256:01be55a91cd01ad9efac90c6fb203457267d600b0f99aa63494927539102496c"},
-    {file = "phospho-0.3.5.tar.gz", hash = "sha256:0c55076d95286f8058034080f34f2e2472d6a8894ef6c3df73a63e62ee8ec39f"},
+    {file = "phospho-0.3.6-py3-none-any.whl", hash = "sha256:b80fb46acbe35b8f24dd24229f7c4da244becc98c8e9d0045de35259d1ac5332"},
+    {file = "phospho-0.3.6.tar.gz", hash = "sha256:9e7f082720a4c99a812301d996cb03aa161b0eb40fc66190ddc26e84a2383f48"},
 ]
 
 [package.dependencies]
@@ -1565,13 +1565,13 @@ files = [
 
 [[package]]
 name = "qdrant-client"
-version = "1.7.3"
+version = "1.8.0"
 description = "Client library for the Qdrant vector search engine"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "qdrant_client-1.7.3-py3-none-any.whl", hash = "sha256:b062420ba55eb847652c7d2a26404fb1986bea13aa785763024013f96a7a915c"},
-    {file = "qdrant_client-1.7.3.tar.gz", hash = "sha256:7b809be892cdc5137ae80ea3335da40c06499ad0b0072b5abc6bad79da1d29fc"},
+    {file = "qdrant_client-1.8.0-py3-none-any.whl", hash = "sha256:fa28d3eb64c0c57ec029c7c85c71f6c72c197f92502022655741f3632c518e29"},
+    {file = "qdrant_client-1.8.0.tar.gz", hash = "sha256:2a1a3f2cbacc7adba85644cf6cfdee20401cf25764b32da479c81fb63e178d15"},
 ]
 
 [package.dependencies]
@@ -1587,7 +1587,7 @@ pydantic = ">=1.10.8"
 urllib3 = ">=1.26.14,<3"
 
 [package.extras]
-fastembed = ["fastembed (==0.1.1)"]
+fastembed = ["fastembed (==0.2.2)"]
 
 [[package]]
 name = "regex"
