@@ -1,4 +1,5 @@
 import itertools
+import logging
 from enum import Enum
 from typing import Any, List, Literal, Optional
 
@@ -7,8 +8,6 @@ from pydantic import BaseModel, Field
 from phospho.utils import generate_timestamp, generate_uuid
 
 from .utils import get_literal_values
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +97,7 @@ class ResultType(Enum):
     literal = "literal"
 
 
-class JobResult(BaseModel):
+class JobResult(BaseModel, extra="allow"):
     created_at: int = Field(default_factory=generate_timestamp)
     job_id: str
     result_type: ResultType
@@ -160,3 +159,8 @@ class EventDetectionConfig(JobConfig):
 class EvalConfig(JobConfig):
     model: Literal["gpt-4", "gpt-3.5-turbo"] = "gpt-4"  # OpenAI model name
     metadata: dict = Field(default_factory=dict)
+
+
+class EventConfig(JobConfig):
+    event_name: str
+    event_description: str

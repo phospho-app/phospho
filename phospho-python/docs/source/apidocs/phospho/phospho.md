@@ -7,6 +7,15 @@
 :allowtitles:
 ```
 
+## Subpackages
+
+```{toctree}
+:titlesonly:
+:maxdepth: 3
+
+phospho.lab
+```
+
 ## Submodules
 
 ```{toctree}
@@ -69,6 +78,10 @@ phospho.integrations
   - ```{autodoc2-docstring} phospho.user_feedback
     :summary:
     ```
+* - {py:obj}`flush <phospho.flush>`
+  - ```{autodoc2-docstring} phospho.flush
+    :summary:
+    ```
 ````
 
 ### Data
@@ -77,10 +90,6 @@ phospho.integrations
 :class: autosummary longtable
 :align: left
 
-* - {py:obj}`__all__ <phospho.__all__>`
-  - ```{autodoc2-docstring} phospho.__all__
-    :summary:
-    ```
 * - {py:obj}`log_queue <phospho.log_queue>`
   - ```{autodoc2-docstring} phospho.log_queue
     :summary:
@@ -104,16 +113,6 @@ phospho.integrations
 ````
 
 ### API
-
-````{py:data} __all__
-:canonical: phospho.__all__
-:value: >
-   ['Client', 'Consumer', 'LogQueue', 'Event', 'generate_timestamp', 'generate_uuid', 'filter_nonjsonab...
-
-```{autodoc2-docstring} phospho.__all__
-```
-
-````
 
 ````{py:data} log_queue
 :canonical: phospho.log_queue
@@ -186,7 +185,7 @@ phospho.integrations
 ```
 ````
 
-````{py:function} _log_single_event(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, to_log: bool = True, **kwargs: typing.Dict[str, typing.Any]) -> typing.Dict[str, object]
+````{py:function} _log_single_event(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, input_output_to_usage_function: typing.Optional[typing.Callable[[typing.Any, typing.Any], typing.Dict[str, float]]] = None, to_log: bool = True, **kwargs: typing.Any) -> typing.Dict[str, object]
 :canonical: phospho._log_single_event
 
 ```{autodoc2-docstring} phospho._log_single_event
@@ -200,7 +199,7 @@ phospho.integrations
 ```
 ````
 
-````{py:function} log(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str, typing.Iterable[phospho.extractor.RawDataType]]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, version_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, stream: bool = False, **kwargs: typing.Dict[str, typing.Any]) -> typing.Optional[typing.Dict[str, object]]
+````{py:function} log(input: typing.Union[phospho.extractor.RawDataType, str], output: typing.Optional[typing.Union[phospho.extractor.RawDataType, str, typing.Iterable[phospho.extractor.RawDataType]]] = None, session_id: typing.Optional[str] = None, task_id: typing.Optional[str] = None, version_id: typing.Optional[str] = None, user_id: typing.Optional[str] = None, raw_input: typing.Optional[phospho.extractor.RawDataType] = None, raw_output: typing.Optional[phospho.extractor.RawDataType] = None, input_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, output_to_str_function: typing.Optional[typing.Callable[[typing.Any], str]] = None, concatenate_raw_outputs_if_task_id_exists: bool = True, input_output_to_usage_function: typing.Optional[typing.Callable[[typing.Any], typing.Dict[str, float]]] = None, stream: bool = False, **kwargs: typing.Any) -> typing.Optional[typing.Dict[str, object]]
 :canonical: phospho.log
 
 ```{autodoc2-docstring} phospho.log
@@ -225,5 +224,12 @@ phospho.integrations
 :canonical: phospho.user_feedback
 
 ```{autodoc2-docstring} phospho.user_feedback
+```
+````
+
+````{py:function} flush() -> None
+:canonical: phospho.flush
+
+```{autodoc2-docstring} phospho.flush
 ```
 ````

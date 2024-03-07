@@ -51,6 +51,10 @@
   - ```{autodoc2-docstring} phospho.utils.convert_content_to_loggable_content
     :summary:
     ```
+* - {py:obj}`fits_in_context_window <phospho.utils.fits_in_context_window>`
+  - ```{autodoc2-docstring} phospho.utils.fits_in_context_window
+    :summary:
+    ```
 ````
 
 ### Data
@@ -172,3 +176,10 @@
 ````
 
 `````
+
+````{py:function} fits_in_context_window(prompt: str, context_window_size: int) -> bool
+:canonical: phospho.utils.fits_in_context_window
+
+```{autodoc2-docstring} phospho.utils.fits_in_context_window
+```
+````

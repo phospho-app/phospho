@@ -1,7 +1,17 @@
 import asyncio
 import concurrent.futures
 import logging
-from typing import Awaitable, Callable, Dict, Iterable, List, Literal, Optional, Union
+from typing import (
+    Awaitable,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Union,
+    Any,
+)
 
 
 import phospho.lab.job_library as job_library
@@ -216,14 +226,14 @@ class Job:
 class Workload:
     jobs: List[Job]
     # Result is a mapping of message.id -> job_id -> JobResult
-    results: Dict[str, Dict[str, JobResult]]
+    _results: Optional[Dict[str, Dict[str, JobResult]]]
 
     def __init__(self):
         """
         A Workload is a set of jobs to be performed on a message.
         """
         self.jobs = []
-        self.results = {}
+        self._results = None
 
     def add_job(self, job: Job):
         """
@@ -271,6 +281,7 @@ class Workload:
         self,
         messages: Iterable[Message],
         executor_type: Literal["parallel", "sequential"] = "parallel",
+        max_parallelism: int = 10,
     ) -> Dict[str, Dict[str, JobResult]]:
         """
         Runs all the jobs on the message.
@@ -282,10 +293,17 @@ class Workload:
         # TODO : Run the jobs in parallel on every message
         for job in self.jobs:
             if executor_type == "parallel":
+                # Await all the results
+                semaphore = asyncio.Semaphore(max_parallelism)
+
+                async def job_limit_wrap(url):
+                    async with semaphore:
+                        return await job.async_run(url)
+
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
-                    executor_results = executor.map(job.async_run, messages)
-                # Await all the results
+                    executor_results = executor.map(job_limit_wrap, messages)
+
                 await asyncio.gather(*executor_results)
             elif executor_type == "sequential":
                 for one_message in messages:
@@ -303,7 +321,7 @@ class Workload:
             for job in self.jobs:
                 results[one_message.id][job.id] = job.results[one_message.id]
 
-        self.results = results
+        self._results = results
         return results
 
     async def async_run_on_alternative_configurations(
@@ -356,3 +374,42 @@ class Workload:
     def __repr__(self):
         concatenated_jobs = "\n".join([f"  {job}" for job in self.jobs])
         return f"Workload(jobs=[\n{concatenated_jobs}\n])"
+
+    @property
+    def results(self) -> Optional[Dict[str, Dict[str, JobResult]]]:
+        if self._results is None:
+            logger.warning("Results are not available. Please run the workload first.")
+            return None
+        return self._results
+
+    @results.setter
+    def results(self, results: Dict[str, Dict[str, JobResult]]):
+        self._results = results
+        return results
+
+    def results_df(self) -> Any:
+        """
+        Returns the results as a pandas dataframe
+        """
+        import pandas as pd
+
+        results = self.results
+
+        if results is None:
+            return pd.DataFrame()
+
+        # results is a dict from message.id -> job_id -> job_result
+        # Flatten the results such that : every row is a message, and every column is a job_result.value
+        # The index is the message.id
+        # The columns are the job_id
+        # The values are the job_result.value
+        results_df = pd.DataFrame.from_dict(
+            {
+                message_id: {
+                    job_id: result.value for job_id, result in job_results.items()
+                }
+                for message_id, job_results in results.items()
+            },
+            orient="index",
+        )
+        return results_df

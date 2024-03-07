@@ -121,22 +121,23 @@ async def add_project_events(project_id: str, events: List[EventDefinition]) -> 
     mongo_db = await get_mongo_db()
     # Get the current events settings
     current_project = await get_project_by_id(project_id)
+    logger.debug(f"Current project: {current_project}")
     if not current_project:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
     if not current_project.settings:
         current_project.settings = {}
     current_events = current_project.settings.get("events", {})
+    logger.debug(f"Current events: {current_events}")
     # Add the new events
     for event in events:
-        current_events[event.event_name] = {
-            "description": event.description,
-            "webhook": event.webhook,
-        }
+        current_events[event.event_name] = event.model_dump()
     # Update the project
+    logger.debug(f"New events: {current_events}")
     await mongo_db["projects"].update_one(
         {"id": project_id}, {"$set": {"settings.events": current_events}}
     )
     updated_project = await get_project_by_id(project_id)
+    logger.debug(f"Updated project: {updated_project} {updated_project.settings}")
     return updated_project
 
 
@@ -698,7 +699,7 @@ async def suggest_events_for_use_case(
                 purpose=purpose,
                 user_id=user_id,
             )
-            task_id = logged_content.get("task_id", None)
+            task_id: str = logged_content.get("task_id", None)
             return existing_events, task_id
 
     # Otherwise, generate the events

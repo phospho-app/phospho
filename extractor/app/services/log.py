@@ -1,24 +1,20 @@
-import tiktoken
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import openai
 from loguru import logger
 
-from app.core import config
-
 # DB
-from app.api.v2.models import LogEvent, LogReply
+from app.api.v1.models import LogEvent
 from app.db.models import Session, Task
 from app.db.mongo import get_mongo_db
+from app.db.qdrant import get_qdrant, models
+from app.services.pipelines import main_pipeline
 
 # Service
-from app.services.mongo.search import add_vectorized_tasks
-from app.services.mongo.tasks import get_task_by_id
-from app.services.mongo.emails import send_quota_exceeded_email
-from app.services.mongo.extractor import run_main_pipeline
-
+from app.services.tasks import get_task_by_id
 from app.utils import generate_timestamp
 from phospho.utils import filter_nonjsonable_keys, is_jsonable
-
-from app.security.authorization import authorize_main_pipeline
+from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
 
 
 # Create a task
@@ -58,72 +54,6 @@ def get_time_created_at(client_created_at: Optional[int], created_at: Optional[i
     ):
         return generate_timestamp()
     return client_created_at
-
-
-def get_tokenizer(model: Optional[str]) -> tiktoken.Encoding:
-    if model is None:
-        logger.debug("Model not found. Using cl100k_base tokenizer.")
-        return tiktoken.get_encoding("cl100k_base")
-    try:
-        return tiktoken.encoding_for_model(model)
-    except KeyError:
-        logger.warning("Model not found. Using cl100k_base tokenizer.")
-        return tiktoken.get_encoding("cl100k_base")
-
-
-def num_tokens_from_messages(
-    messages: List[dict], model: Optional[str] = "gpt-3.5-turbo-0613", tokenizer=None
-):
-    """
-    Return the number of tokens used by a list of messages.
-
-    https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb
-    """
-    if tokenizer is None:
-        tokenizer = get_tokenizer(model)
-    if model is None:
-        logger.warning(
-            "num_tokens_from_messages() was called without a model. Using gpt-3.5-turbo"
-        )
-        model = "gpt-3.5-turbo"
-    if model in {
-        "gpt-3.5-turbo-0613",
-        "gpt-3.5-turbo-16k-0613",
-        "gpt-4-0314",
-        "gpt-4-32k-0314",
-        "gpt-4-0613",
-        "gpt-4-32k-0613",
-    }:
-        tokens_per_message = 3
-        tokens_per_name = 1
-    elif model == "gpt-3.5-turbo-0301":
-        tokens_per_message = (
-            4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
-        )
-        tokens_per_name = -1  # if there's a name, the role is omitted
-    elif "gpt-3.5-turbo" in model:
-        logger.debug(
-            "Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613."
-        )
-        return num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613")
-    elif "gpt-4" in model:
-        logger.debug(
-            "Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613."
-        )
-        return num_tokens_from_messages(messages, model="gpt-4-0613")
-    else:
-        logger.warning(
-            f"""num_tokens_from_messages() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."""
-        )
-    num_tokens = 0
-    for message in messages:
-        num_tokens += tokens_per_message
-        for key, value in message.items():
-            num_tokens += len(tokenizer.encode(value))
-            if key == "name":
-                num_tokens += tokens_per_name
-    num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
-    return num_tokens
 
 
 def get_nb_tokens_prompt_tokens(
@@ -220,7 +150,7 @@ def collect_metadata(log_event: LogEvent) -> Optional[dict]:
     metadata = filter_nonjsonable_keys(metadata)
 
     # Compute token count
-    model = metadata.get("model", None)
+    model: Optional[str] = metadata.get("model", None)
     tokenizer = None
 
     if "prompt_tokens" not in metadata.keys():
@@ -247,6 +177,53 @@ def collect_metadata(log_event: LogEvent) -> Optional[dict]:
             )
 
     return metadata
+
+
+async def add_vectorized_tasks(
+    tasks_id: List[str],
+):
+    """
+    Compute the vector representation of the tasks and add them to Qdrant database
+    """
+    logger.info(f"Vectorizing {len(tasks_id)} tasks and adding them to Qdrant")
+    mongo_db = await get_mongo_db()
+    qdrant_db = await get_qdrant()
+    # Get tasks
+    tasks = await mongo_db["tasks"].find({"id": {"$in": tasks_id}}).to_list(length=None)
+    tasks = [Task.model_validate(task) for task in tasks]
+
+    openai_client = openai.AsyncClient()
+
+    # Create tasks_text representations
+    tasks_text = [f"{task.input} {task.output}" for task in tasks]
+    try:
+        # TODO : count the number of token for each task_text and if it's too big, do something smart
+        embedding = await openai_client.embeddings.create(
+            input=tasks_text, model="text-embedding-3-small"
+        )
+    except openai.APIError as e:
+        logger.warning(f"Error while embedding the tasks: {e}")
+        return
+
+    try:
+        await qdrant_db.upsert(
+            collection_name="tasks",
+            points=[
+                models.PointStruct(
+                    id=task.id,
+                    vector=embedding.embedding,
+                    payload={
+                        "task_id": task.id,
+                        "project_id": task.project_id,
+                        "session_id": task.session_id,
+                    },
+                )
+                for task, embedding in zip(tasks, embedding.data)
+            ],
+        )
+    except Exception as e:
+        logger.warning(f"Error while adding the tasks to Qdrant: {e}")
+        return
 
 
 def create_task_from_logevent(
@@ -283,7 +260,8 @@ def create_task_from_logevent(
 
 async def ignore_existing_tasks(
     tasks_to_create: List[Dict[str, object]],
-) -> List[Dict[str, object]]:
+    tasks_id_to_process: List[str],
+) -> Tuple[List[Dict[str, object]], List[str]]:
     """
     Filter out tasks that already exist in the database
     """
@@ -301,11 +279,20 @@ async def ignore_existing_tasks(
             and task["id"] not in new_tasks_to_create
         ):
             new_tasks_to_create.append(task)
-    return new_tasks_to_create
+
+    # Filter tasks_id_to_process
+    tasks_id_to_process = [
+        task_id for task_id in tasks_id_to_process if task_id not in existing_task_ids
+    ]
+
+    return new_tasks_to_create, tasks_id_to_process
 
 
 async def process_log_without_session_id(
-    project_id: str, org_id: str, list_of_log_event: List[LogEvent]
+    project_id: str,
+    org_id: str,
+    list_of_log_event: List[LogEvent],
+    trigger_pipeline: bool = True,
 ) -> None:
     """
     Process a list of log events without session_id
@@ -313,7 +300,9 @@ async def process_log_without_session_id(
     if len(list_of_log_event) == 0:
         logger.debug("No log event without session_id to process")
         return None
-
+    logger.info(
+        f"Project {project_id}: processing {len(list_of_log_event)} log events without session_id"
+    )
     mongo_db = await get_mongo_db()
 
     tasks_id_to_process: List[str] = []
@@ -334,48 +323,32 @@ async def process_log_without_session_id(
         return None
 
     # Create the tasks
-    tasks_to_create = await ignore_existing_tasks(tasks_to_create)
+    tasks_to_create, tasks_id_to_process = await ignore_existing_tasks(
+        tasks_to_create, tasks_id_to_process
+    )
     if len(tasks_to_create) > 0:
-        await mongo_db["tasks"].insert_many(tasks_to_create)
+        await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
 
-    # Vectorize them
-    await add_vectorized_tasks(tasks_id_to_process)
+    if trigger_pipeline:
+        # Vectorize them
+        await add_vectorized_tasks(tasks_id_to_process)
 
-    # Trigger the pipeline
-    for task_id in tasks_id_to_process:
-        # Fetch the task data from the database
-        # For now it's a double call to the database, but it's not a big deal
-        task_data = await get_task_by_id(task_id)
-        # AUTHORIZATION
-        # NOTE: For now, we check every time which is costly. We should do it for each batch, but then there is a risk of a massive batch being authorized wrongly
-        pipeline_authorized = await authorize_main_pipeline(task_data.project_id)
-
-        # If the project is not authorized
-        # This is due to the usage quota exceded
-        if not pipeline_authorized:
-            logger.warning(
-                f"Project with id {task_data.project_id} has reached the maximum number of tasks allowed"
-            )
-            if task_data.project_id not in config.CICD_PROJECTS:
-                # await slack_notification(
-                #     f"Projet {task_data.project_id} is full (we don't know who's the owner!). Skipping event detection for task {task_id}"
-                # )
-                pass
-
-            # Send an email to the project owner (only one!)
-            await send_quota_exceeded_email(task_data.project_id)
-            # Do nothing and continue to the next task
-        else:
-            # Trigger the pipeline
-            # await main_pipeline(task_data)
-            await run_main_pipeline(task_data)
-            logger.info(f"Logevent: pipeline triggered for task {task_id}")
+        # Trigger the pipeline
+        for task_id in tasks_id_to_process:
+            # Fetch the task data from the database
+            # For now it's a double call to the database, but it's not a big deal
+            task_data = await get_task_by_id(task_id)
+            logger.info(f"Project {project_id}: pipeline triggered for task {task_id}")
+            await main_pipeline(task_data)
 
     return None
 
 
 async def process_log_with_session_id(
-    project_id: str, org_id: str, list_of_log_event: List[LogEvent]
+    project_id: str,
+    org_id: str,
+    list_of_log_event: List[LogEvent],
+    trigger_pipeline: bool = True,
 ) -> None:
     """
     Process a list of log events with session_id
@@ -383,7 +356,9 @@ async def process_log_with_session_id(
     if len(list_of_log_event) == 0:
         logger.debug("No log event with session_id to process")
         return None
-
+    logger.info(
+        f"Project {project_id}: processing {len(list_of_log_event)} log events with session_id"
+    )
     tasks_id_to_process: List[str] = []
     tasks_to_create: List[Dict[str, object]] = []
     sessions_to_create: Dict[str, Dict[str, Any]] = {}
@@ -460,9 +435,11 @@ async def process_log_with_session_id(
                     sessions_to_earliest_task[log_event.session_id] = task
 
     # Create the tasks
-    tasks_to_create = await ignore_existing_tasks(tasks_to_create)
+    tasks_to_create, tasks_id_to_process = await ignore_existing_tasks(
+        tasks_to_create, tasks_id_to_process
+    )
     if len(tasks_to_create) > 0:
-        await mongo_db["tasks"].insert_many(tasks_to_create)
+        await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
 
     # Add sessions to database
     if len(sessions_to_create) > 0:
@@ -495,54 +472,37 @@ async def process_log_with_session_id(
                 f"Creating sessions: {' '.join([session_id for session_id in sessions_to_create.keys()])}"
             )
             insert_result = await mongo_db["sessions"].insert_many(
-                sessions_to_create_dump
+                sessions_to_create_dump, ordered=False
             )
             logger.info(f"Created {len(insert_result.inserted_ids)} sessions")
     else:
         logger.info("Logevent: no session to create")
 
-    # Vectorize them
-    await add_vectorized_tasks(tasks_id_to_process)
+    if trigger_pipeline:
+        # Vectorize them
+        await add_vectorized_tasks(tasks_id_to_process)
 
-    # Trigger the pipeline
-    for task_id in tasks_id_to_process:
-        # Fetch the task data from the database
-        # For now it's a double call to the database, but it's not a big deal
-        task_data = await get_task_by_id(task_id)
-        # AUTHORIZATION
-        # NOTE: For now, we check every time which is costly. We should do it for each batch, but then there is a risk of a massive batch being authorized wrongly
-        pipeline_authorized = await authorize_main_pipeline(task_data.project_id)
-
-        # If the project is not authorized
-        # This is due to the usage quota exceded
-        if not pipeline_authorized:
-            logger.warning(
-                f"Project with id {task_data.project_id} has reached the maximum number of tasks allowed"
-            )
-            if task_data.project_id not in config.CICD_PROJECTS:
-                # await slack_notification(
-                #     f"Projet {task_data.project_id} is full (we don't know who's the owner!). Skipping event detection for task {task_id}"
-                # )
-                pass
-
-            # Send an email to the project owner (only one!)
-            await send_quota_exceeded_email(task_data.project_id)
-            # Do nothing and continue to the next task
-        else:
-            # Trigger the pipeline
-            # await main_pipeline(task_data)
-            await run_main_pipeline(task_data)
-            logger.info(f"Logevent: triggered pipeline for task {task_data.id}")
+        # Trigger the pipeline
+        for task_id in tasks_id_to_process:
+            # Fetch the task data from the database
+            # For now it's a double call to the database, but it's not a big deal
+            task_data = await get_task_by_id(task_id)
+            await main_pipeline(task_data)
 
 
-async def process_log(project_id: str, org_id: str, log_reply: LogReply) -> None:
+async def process_log(
+    project_id: str,
+    org_id: str,
+    logs_to_process: List[LogEvent],
+    extra_logs_to_save: List[LogEvent],
+) -> None:
     """From logs
     - Create Tasks
     - Create a Session
     - Trigger the Tasks processing pipeline
     """
     mongo_db = await get_mongo_db()
-    logger.info(f"Logevent: processing {len(log_reply.logged_events)} log events")
+    logger.info(f"Project {project_id}: processing {len(logs_to_process)} log events")
 
     def log_is_error(log_event):
         if isinstance(log_event, dict) and "Error in log" in log_event:
@@ -551,11 +511,12 @@ async def process_log(project_id: str, org_id: str, log_reply: LogReply) -> None
 
     nonerror_log_events = [
         log_event
-        for log_event in log_reply.logged_events
+        for log_event in logs_to_process + extra_logs_to_save
         if not log_is_error(log_event) and isinstance(log_event, LogEvent)
     ]
-    logger.info(f"Logevent: saving {len(nonerror_log_events)} non-error log events")
-
+    logger.info(
+        f"Project {project_id}: saving {len(nonerror_log_events)} non-error log events"
+    )
     # Save the non-error log events
     if len(nonerror_log_events) > 0:
         mongo_db["logs"].insert_many(
@@ -567,9 +528,7 @@ async def process_log(project_id: str, org_id: str, log_reply: LogReply) -> None
         project_id=project_id,
         org_id=org_id,
         list_of_log_event=[
-            log_event
-            for log_event in nonerror_log_events
-            if log_event.session_id is None
+            log_event for log_event in logs_to_process if log_event.session_id is None
         ],
     )
 
@@ -579,9 +538,37 @@ async def process_log(project_id: str, org_id: str, log_reply: LogReply) -> None
         org_id=org_id,
         list_of_log_event=[
             log_event
-            for log_event in nonerror_log_events
+            for log_event in logs_to_process
             if log_event.session_id is not None
         ],
     )
+
+    if len(extra_logs_to_save) > 0:
+        logger.info(
+            f"Project {project_id}: saving {len(extra_logs_to_save)} extra log events"
+        )
+        # Process logs without session_id
+        await process_log_without_session_id(
+            project_id=project_id,
+            org_id=org_id,
+            list_of_log_event=[
+                log_event
+                for log_event in extra_logs_to_save
+                if log_event.session_id is None
+            ],
+            trigger_pipeline=False,
+        )
+
+        # Process logs with session_id
+        await process_log_with_session_id(
+            project_id=project_id,
+            org_id=org_id,
+            list_of_log_event=[
+                log_event
+                for log_event in extra_logs_to_save
+                if log_event.session_id is not None
+            ],
+            trigger_pipeline=False,
+        )
 
     return None

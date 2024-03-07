@@ -1,4 +1,4 @@
-# phospho: Product Analytics platform for LLM apps
+# phospho: Text Analytics Platform for LLM Apps
 
 <div align="center">
 <img src="./platform/public/image/phospho-banner.png" alt="phospho logo">
@@ -8,7 +8,9 @@
 <a href="https://discord.gg/MXqBJ9pBsx"><img alt="Discord" src="https://img.shields.io/discord/1106594252043071509"></a>
 </div>
 
-Phospho is the product analytics platform for LLM apps. Track user interactions to detect issues and extract insights. Gather user feedback and measure success. Iterate on your app to create the best conversational experience for your users.
+Phospho is the text analytics platform for LLM apps. Detect issues and extract insights from text messages of your users or your app. Gather user feedback and measure success. Iterate on your app to create the best conversational experience for your users.
+
+Ship your LLM app in production with confidence, and iterate on it with insights from your users.
 
 ## Key Features
 
@@ -18,85 +20,79 @@ Phospho is the product analytics platform for LLM apps. Track user interactions 
 - Data visualization
 - Collaboration
 
+<div align="center">
+<img src="./phospho_diagram.png" alt="phospho diagram" width=450>
+</div>
+
 ## Demo
 
-https://github.com/phospho-app/monorepo/assets/58109554/efad0411-5647-42e8-81d3-73971ac6de7f
+https://github.com/phospho-app/phospho/assets/78322686/fb1379bf-32f1-492e-be86-d29879056dc3
 
-## Get started
+## Quickstart: Discover the phospho lab
 
-### Local quickstart
+The phospho lab is the core analytics component of phospho. The phospho lab helps you run batched evaluations and event detections on your messages.
 
-You can use the phospho lab locally to extract evaluations and events from your messages.
-
-You will need ot install the phospho package with the `lab` extra:
+### Step 1 - Install the phospho lab:
 
 ```
 pip install "phospho[lab]"
 ```
 
-You need to set youOPENAI_API_KEY as an environment variable.
+We will run a simple Event detection job that use OpenAI to read a message and figure out whether an Event happened or not.
 
-```
+```bash
 export OPENAI_API_KEY=your_openai_api_key
 ```
 
-Then you can use the phospho lab to run extractions on your messages (for instance just using openai)
+### Step 2 - Run the event detection job:
+
+Phospho helps you define a bunch of jobs to efficiently run in a workload on users messages.
 
 ```python
 from phospho import lab
 
-# Create the phospho workload
+# A workload is a set of jobs to run on messages
+# A job is a Python function that leverages LLM and ML models to extract insights from text
 workload = lab.Workload()
-
-# Define the job configurations
-class EventConfig(lab.JobConfig):
-    event_name: str
-    event_description: str
-
-# Let's add an event detection task to our workload
 workload.add_job(
-            lab.Job(
-                id="question_answering",
-                job_function=lab.job_library.event_detection,
-                config=EventConfig(
-                    event_name="question_answering",
-                    event_description="The user asks a question to the assistant",
-                ),
-            )
-        )
+   lab.Job(
+         id="question_answering",
+         job_function=lab.job_library.event_detection,
+         config=lab.EventConfig(
+            event_name="question_answering",
+            event_description="The user asks a question to the assistant",
+         ),
+   )
+)
 
-# Let's add some messages to analyze
-message = lab.Message(
-                    id="my_message_id",
-                    role="User",
-                    content="What is the weather today in Paris?",
-                )
-
-# Run the workload on the message
+# The workload runs the jobs in parallel on all the messages to perform analytics
 await workload.async_run(
-            messages=[message],
-            executor_type="sequential",
-        )
+   messages=[
+      lab.Message(
+            id="my_message_id",
+            role="User",
+            content="What is the weather today in Paris?",
+         )
+   ],
+)
 
-# Check the results of the workload
 message_results = workload.results["my_message_id"]
-
-print(f"Result of the event detection: {message_results['question_answering'].value}")
+print(f"The event question_answering was detected: {message_results['question_answering'].value}")
 ```
 
-### Hosted version
+### Step 3 - Check the results:
 
-The easiest way to get started with phospho is to use the hosted cloud version of the app:
+```
+The event question_answering was detected: True
+```
 
-1. Create a [phospho account](https://phospho.ai)
-2. Install a phospho client: `pip install phospho` or `npm i phospho`
-3. Create environment variables for `PHOSPHO_API_KEY` and `PHOSPHO_PROJECT_ID`
-4. Initialize phospho: `phospho.init()`
-5. Log to phospho with `phospho.log(input="question", output="answer")`
+This event detection pipeline can then be linked back to your product or alerting solution (eg. Slack) through webhooks or used to notice patterns in the user data.
 
-[Follow this guide to get started.](https://docs.phospho.ai/getting-started)
+You can use other jobs from the phospho library or create your own jobs to run on your messages.
 
-### Self deploy
+See more examples of what you can do with phospho in the [examples folder](./examples).
+
+## Self deploy
 
 This repository contains the implementation of the platform frontend, the API backend, and the insights extraction pipeline.
 
@@ -109,7 +105,7 @@ This repository contains the implementation of the platform frontend, the API ba
 1. Clone the repo:
 
 ```bash
-git clone git@github.com:phospho-app/monorepo.git
+git clone git@github.com:phospho-app/phospho.git
 ```
 
 2. Register to the core external services:
@@ -126,6 +122,18 @@ git clone git@github.com:phospho-app/monorepo.git
 4. Follow the deployment instructions in backend/README.md and platform/README.md
 
 5. Enjoy !
+
+## Access the hosted version
+
+To manage the phospho lab evaluations on a collaborative platform, the easiest way is to register to the hosted version.
+
+1. Create a [phospho account](https://phospho.ai)
+2. Install a phospho client: `pip install phospho` or `npm i phospho`
+3. Create environment variables for `PHOSPHO_API_KEY` and `PHOSPHO_PROJECT_ID`
+4. Initialize phospho: `phospho.init()`
+5. Log to phospho with `phospho.log(input="question", output="answer")`
+
+[Follow this guide to get started.](https://docs.phospho.ai/getting-started)
 
 ## Licence
 

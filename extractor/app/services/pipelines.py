@@ -4,7 +4,7 @@ from typing import Dict
 from loguru import logger
 
 from app.core import config
-from app.db.models import Eval, Event, EventDefinition, Task
+from app.db.models import Eval, Event, EventDefinition, LlmCall, Task
 from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
@@ -75,31 +75,31 @@ async def event_detection_pipeline(task: Task) -> None:
         )
     # Convert the tasks into a list of messages
     previous_messages = []
-    for task in task_context:
+    for i, previous_task in enumerate(task_context):
         previous_messages.append(
             lab.Message(
-                id="input_" + task.id,
+                id="input_" + previous_task.id,
                 role="User",
-                content=task.input,
+                content=previous_task.input,
             )
         )
-        if task.output is not None:
+        if previous_task.output is not None:
             previous_messages.append(
                 lab.Message(
-                    id="output_" + task.id,
+                    id="output_" + previous_task.id,
                     role="Assistant",
-                    content=task.output,
+                    content=previous_task.output,
                 )
             )
     if task_data.output is not None:
         previous_messages.append(
             lab.Message(
-                id="input_" + task.id,
+                id="input_" + task_data.id,
                 role="User",
                 content=task_data.input,
             )
         )
-        latest_message_id = "output_" + task.id
+        latest_message_id = "output_" + task_data.id
         await workload.async_run(
             messages=[
                 lab.Message(
@@ -111,7 +111,7 @@ async def event_detection_pipeline(task: Task) -> None:
             executor_type="sequential",
         )
     else:
-        latest_message_id = "input_" + task.id
+        latest_message_id = "input_" + task_data.id
         await workload.async_run(
             messages=[
                 lab.Message(
@@ -128,15 +128,22 @@ async def event_detection_pipeline(task: Task) -> None:
     message_results = workload.results[latest_message_id]
     logger.debug(f"Results of the event detection pipeline: {message_results}")
     for event_name, result in message_results.items():
+        # Store the LLM call in the database
+        metadata = result.metadata
+        llm_call = metadata.get("llm_call", None)
+        if llm_call is not None:
+            llm_call_obj = LlmCall(**llm_call, org_id=task_data.org_id)
+            mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+
         # When the event is detected, result is True
         if result.value:
-            logger.info(f"Event {event_name} detected for task {task.id}")
+            logger.info(f"Event {event_name} detected for task {task_data.id}")
             # Get the event definition
             event = valid_project_events[event_name]
             # Push to db
             detected_event_data = Event(
                 event_name=event_name,
-                task_id=task.id,
+                task_id=task_data.id,
                 session_id=task_data.session_id,
                 project_id=project_id,
                 source=result.metadata.get("source", "phospho-unknown"),
@@ -290,6 +297,12 @@ async def task_scoring_pipeline(task: Task) -> None:
     await workload.async_run(messages=messages, executor_type="sequential")
     # Check the results of the workload
     flag = workload.results["output_" + task.id]["evaluate_task"].value
+    metadata = workload.results["output_" + task.id]["evaluate_task"].metadata
+    llm_call = metadata.get("llm_call", None)
+    if llm_call is not None:
+        llm_call_obj = LlmCall(**llm_call, org_id=task.org_id)
+        mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+
     logger.debug(f"Flag for task {task.id} : {flag}")
     # Create the Evaluation object and store it in the db
     evaluation_data = Eval(

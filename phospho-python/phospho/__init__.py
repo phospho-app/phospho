@@ -412,7 +412,7 @@ def log(
     concatenate_raw_outputs_if_task_id_exists: bool = True,
     input_output_to_usage_function: Optional[Callable[[Any], Dict[str, float]]] = None,
     stream: bool = False,
-    **kwargs: Dict[str, Any],
+    **kwargs: Any,
 ) -> Optional[Dict[str, object]]:
     """Phospho's main all-purpose logging endpoint, with support for streaming.
 

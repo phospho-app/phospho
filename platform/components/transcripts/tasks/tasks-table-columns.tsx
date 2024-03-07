@@ -1,25 +1,21 @@
-import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Event } from "@/models/events";
-import { TaskWithEvents } from "@/models/tasks";
-import { dataStateStore } from "@/store/store";
-import { ColumnDef, filterFns } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
-
-import { Badge } from "../../ui/badge";
-import { Button } from "../../ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../../ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
+import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
+import { Event } from "@/models/events";
+import { TaskWithEvents } from "@/models/tasks";
+import { dataStateStore } from "@/store/store";
+import { ColumnDef, filterFns } from "@tanstack/react-table";
+import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import Link from "next/link";
 
-export function getColumns({
-  handleViewClick,
-}: {
-  handleViewClick: (task: TaskWithEvents) => void;
-}): ColumnDef<TaskWithEvents>[] {
+export function getColumns(): ColumnDef<TaskWithEvents>[] {
   const uniqueEventNamesInData = dataStateStore(
     (state) => state.uniqueEventNamesInData,
   );
@@ -54,7 +50,7 @@ export function getColumns({
       },
       accessorKey: "created_at",
       cell: ({ row }) => (
-        <span onClick={() => handleViewClick(row.original)}>
+        <span>
           {formatUnixTimestampToLiteralDatetime(
             Number(row.original.created_at),
           )}
@@ -178,6 +174,18 @@ export function getColumns({
     {
       header: "Input",
       accessorKey: "input",
+      cell: (row) => {
+        const input = row.getValue() as string; // asserting the type as string
+        return (
+          <span>
+            {input
+              ? input.length > 50
+                ? input.substring(0, 50) + "..."
+                : input
+              : "-"}
+          </span>
+        );
+      },
     },
     {
       header: "Output",
@@ -203,9 +211,11 @@ export function getColumns({
         // Handle undefined edge case
         if (!task) return <></>;
         return (
-          <Button variant="ghost" onClick={() => handleViewClick(task)}>
-            <ChevronRight />
-          </Button>
+          <Link href={`/org/transcripts/tasks/${task.id}`}>
+            <Button variant="ghost">
+              <ChevronRight />
+            </Button>
+          </Link>
         );
       },
     },
