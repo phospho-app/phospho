@@ -35,6 +35,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
       "8e530a71-8739-450a-844a-5a6430067f9a", // y
       "2fdbcf01-eb52-4747-bb14-b66621973e8f", // sa
       "5a3d67ab-231c-4ad1-adba-84b6842668ad", // sa (a)
+      "7e8f6db2-3b6b-4bf6-84ee-3f226b81e43d", // di
     ];
     if (!EXEMPTED_ORG_IDS.includes(selectedOrgId)) {
       router.push("/onboarding/plan?redirect=true");
