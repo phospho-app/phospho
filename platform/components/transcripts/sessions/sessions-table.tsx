@@ -1,5 +1,7 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -19,10 +21,16 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { FilterX, Sparkles } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Database,
+  FilterX,
+  Sparkles,
+} from "lucide-react";
+import Link from "next/link";
 import React, { useState } from "react";
 
-import { Button } from "../../ui/button";
 import { getColumns } from "./sessions-table-columns";
 
 interface DataTableProps<TData, TValue> {
@@ -91,6 +99,8 @@ export function SessionsTable<TData, TValue>({
       columnFilters: sessionsColumnsFilters,
       sorting,
     },
+    pageCount: -1,
+    autoResetPageIndex: false,
   });
 
   if (!selectedProject) {
@@ -102,7 +112,7 @@ export function SessionsTable<TData, TValue>({
       <div className="flex flex-row gap-x-4">
         <div className="flex flex-col mb-2 flex-grow">
           <Input
-            placeholder="Search for sessions about a topic"
+            placeholder="Search for a topic"
             value={
               // (table.getColumn("output")?.getFilterValue() as string) ?? ""
               query
@@ -121,12 +131,12 @@ export function SessionsTable<TData, TValue>({
           />
         </div>
         <Button onClick={query_tasks} variant="outline">
-          <Sparkles className="h-4 w-4 mr-1" />
+          <Sparkles className="h-4 w-4" />
           Search
         </Button>
         {isLoading && (
           <svg
-            className="animate-spin -ml-1 h-5 w-5 text-white"
+            className="animate-spin ml-1 h-5 w-5 text-white"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -154,10 +164,55 @@ export function SessionsTable<TData, TValue>({
           }}
         >
           <FilterX className="h-4 w-4 mr-1" />
-          Clear all filters
+          Clear
+        </Button>
+        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+          Page {table.getState().pagination.pageIndex + 1}/
+          {table.getPageCount()}
+        </div>
+        <Button
+          variant="outline"
+          className="w-8 p-0"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          <span className="sr-only">Go to previous page</span>
+          <ChevronLeftIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          className="w-8 p-0"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          <span className="sr-only">Go to next page</span>
+          <ChevronRightIcon className="h-4 w-4" />
         </Button>
       </div>
+      {table.getState().pagination.pageIndex + 1 > 5 && (
+        <Alert className="mb-2 ">
+          <div className="flex justify-between">
+            <div></div>
+            <div className="flex space-x-4">
+              <Database className="w-8 h-8" />
 
+              <div>
+                <AlertTitle>Only the latest sessions are displayed</AlertTitle>
+                <AlertDescription>
+                  <div>Scale your insights with the phospho Python SDK</div>
+                </AlertDescription>
+              </div>
+              <Link
+                href="https://docs.phospho.ai/integrations/python/analytics"
+                target="_blank"
+              >
+                <Button>Learn more</Button>
+              </Link>
+            </div>
+            <div></div>
+          </div>
+        </Alert>
+      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
