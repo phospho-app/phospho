@@ -1,7 +1,7 @@
 """
 All the models stored in database.
 
-This contains also some business logic. 
+This contains also some business logic.
 """
 
 from typing import List, Literal, Optional
@@ -173,3 +173,7 @@ class LlmCall(BaseModel):
     api_call_time: float  # In seconds
     # Identifier of the source of the evaluation, with the version of the model if phospho
     evaluation_source: Optional[str] = None
+    # Identifier of the task that triggered the LLM call TODO: change it to a message later
+    task_id: Optional[str] = None
+    # Job id related to the call, to identify the function related to the call
+    job_id: Optional[str] = None
