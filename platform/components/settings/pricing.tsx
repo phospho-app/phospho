@@ -218,8 +218,8 @@ export default function Pricing({
       },
       pro: {
         title: "Pro",
-        price: "299$/month",
-        tagline: "Try for free for 30 days",
+        price: "15 days free, then 299$/month",
+        tagline: "Try for free for 15 days",
       },
       enterprise: {
         title: "Enterprise",
