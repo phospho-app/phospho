@@ -47,7 +47,7 @@
     "date-fns": "^2.30.0",
     "embla-carousel-react": "^8.0.0-rc22",
     "lucide-react": "^0.274.0",
-    "next": "13.4.20",
+    "next": "13.4.19",
     "next-themes": "^0.2.1",
     "node-fetch": "^3.3.2",
     "phospho": "^1.2.2",
