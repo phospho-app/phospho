@@ -203,6 +203,13 @@ async def post_create_checkout_session(
             cancel_url=f"{config.PHOSPHO_FRONTEND_URL}/checkout/cancel",
             customer_email=user.email,
             metadata={"org_id": org_id},
+            subscription_data={
+                "trial_settings": {
+                    "end_behavior": {"missing_payment_method": "cancel"}
+                },
+                "trial_period_days": 15,
+                "description": "Unlock the full potential of phospho.",
+            },
         )
     except Exception as e:
         return {"error": f"Unexpected error: {e}"}
