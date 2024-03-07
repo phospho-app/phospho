@@ -4,22 +4,16 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 from pydantic import ValidationError
 
-from app.api.v2.models import LogEvent, LogReply, LogRequest
-<<<<<<< HEAD
-from app.api.v2.models.log import LogError
-from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
-from app.security.authentification import raise_error_if_not_in_pro_tier
-from app.services.mongo.log import process_log
-=======
+from app.api.v2.models import LogEvent, LogReply, LogRequest, LogError
 from app.security import (
     authenticate_org_key,
     verify_propelauth_org_owns_project_id,
     get_quota,
 )
+from app.security.authentification import raise_error_if_not_in_pro_tier
 from app.services.mongo.extractor import run_log_process
 from app.services.mongo.emails import send_quota_exceeded_email
 from app.core import config
->>>>>>> dev
 
 router = APIRouter(tags=["Logs"])
 
