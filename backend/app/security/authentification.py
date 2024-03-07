@@ -151,7 +151,7 @@ def raise_error_if_not_in_pro_tier(org: dict) -> None:
         return
 
     org_metadata = org.get("metadata", {"plan": "hobby"})
-    if org_metadata.get("plan") != "pro":
+    if org_metadata is None or org_metadata.get("plan") != "pro":
         raise HTTPException(
             status_code=403,
             detail="This feature is only available for pro tier phospho orgs. Upgrade plan on https://platform.phospho.ai/",
