@@ -1,4 +1,3 @@
-from fastapi.responses import RedirectResponse
 import stripe
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Header, Request
 from loguru import logger
@@ -157,13 +156,15 @@ async def get_org_usage_quota(
     "/organizations/{org_id}/metadata",
     description="Get the metadata of an organization",
 )
-async def get_org_metadat(
+async def get_org_metadata(
     org_id: str,
     user: User = Depends(propelauth.require_user),
 ):
     org = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_id)
-    return org.get("metadata", {"plan": "hobby"})
+    org_metadata = org.get("metadata", {"plan": "hobby"})
+    org_metadata.update({"org_id": org_id})
+    return org_metadata
 
 
 @router.post(

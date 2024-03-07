@@ -64,7 +64,7 @@ function CtaButton({
 
   if (tierName === "hobby" && displayHobbyCTA === true) {
     return (
-      <Link href="/org/transcripts/tasks">
+      <Link href="https://github.com/phospho-app/phospho" target="_blank">
         <Button>Select plan</Button>
       </Link>
     );
@@ -212,9 +212,9 @@ export default function Pricing({
   const pricingData: PricingData = {
     tiers: {
       hobby: {
-        title: "Hobby",
-        price: "0$/month",
-        tagline: "No credit card required",
+        title: "Open source",
+        price: "Free",
+        tagline: "Join the community!",
       },
       pro: {
         title: "Pro",
@@ -242,7 +242,7 @@ export default function Pricing({
         type: "section",
         label: "Team members",
         tiers: {
-          hobby: "1 free",
+          hobby: "Self-hosted",
           pro: "15 max",
           enterprise: "Custom",
         },
@@ -251,7 +251,7 @@ export default function Pricing({
         type: "section",
         label: "Custom events",
         tiers: {
-          hobby: "10 different",
+          hobby: "Self-billed",
           pro: "100 different",
           enterprise: "Unlimited",
         },
@@ -262,11 +262,6 @@ export default function Pricing({
       },
       {
         type: "section",
-        label: "Generic Evaluations",
-        tiers: { hobby: true, pro: true, enterprise: true },
-      },
-      {
-        type: "section",
         label: "Custom Evaluations",
         tiers: { hobby: true, pro: true, enterprise: true },
       },
@@ -274,6 +269,11 @@ export default function Pricing({
         type: "section",
         label: "Events Detection",
         tiers: { hobby: true, pro: true, enterprise: true },
+      },
+      {
+        type: "section",
+        label: "Cloud hosting",
+        tiers: { hobby: false, pro: true, enterprise: true },
       },
       {
         type: "section",
