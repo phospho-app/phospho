@@ -96,7 +96,9 @@ export default function FetchOrgProject() {
 
   // Fetch the org metadata
   const { data: fetchedOrgMetadata, error: orgMetadataError } = useSWR(
-    [`/api/organizations/${selectedOrgId}/metadata`, accessToken],
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
   if (orgMetadataError) {
@@ -117,7 +119,9 @@ export default function FetchOrgProject() {
     data: { projects: Project[] } | null | undefined;
     error: any;
   } = useSWR(
-    [`/api/organizations/${selectedOrgId}/projects`, accessToken],
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/projects`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
   if (projectFetchingError) {
@@ -157,11 +161,13 @@ export default function FetchOrgProject() {
   // Fetch the selected project from the server. This is useful when the user
   // change the settings
   const { data: fetchedProject } = useSWR(
-    [
-      `/api/projects/${selectedProject?.id}`,
-      accessToken,
-      selectedProject?.settings?.events?.length,
-    ],
+    selectedProject?.id
+      ? [
+          `/api/projects/${selectedProject?.id}`,
+          accessToken,
+          selectedProject?.settings?.events?.length,
+        ]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
   if (fetchedProject) {
