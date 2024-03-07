@@ -101,7 +101,7 @@ export function SessionsTable<TData, TValue>({
       columnFilters: sessionsColumnsFilters,
       sorting,
     },
-    pageCount: -1,
+    // pageCount: -1,
     autoResetPageIndex: false,
   });
 
