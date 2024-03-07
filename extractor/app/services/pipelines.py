@@ -132,7 +132,12 @@ async def event_detection_pipeline(task: Task) -> None:
         metadata = result.metadata
         llm_call = metadata.get("llm_call", None)
         if llm_call is not None:
-            llm_call_obj = LlmCall(**llm_call, org_id=task_data.org_id)
+            llm_call_obj = LlmCall(
+                **llm_call,
+                org_id=task_data.org_id,
+                task_id=task.id,
+                job_id="event_name",
+            )
             mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
 
         # When the event is detected, result is True
@@ -300,7 +305,9 @@ async def task_scoring_pipeline(task: Task) -> None:
     metadata = workload.results["output_" + task.id]["evaluate_task"].metadata
     llm_call = metadata.get("llm_call", None)
     if llm_call is not None:
-        llm_call_obj = LlmCall(**llm_call, org_id=task.org_id)
+        llm_call_obj = LlmCall(
+            **llm_call, org_id=task.org_id, task_id=task.id, job_id="evaluate_task"
+        )
         mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
 
     logger.debug(f"Flag for task {task.id} : {flag}")
