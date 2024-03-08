@@ -83,6 +83,9 @@ const MetadataForm: React.FC<{}> = ({}) => {
       }).then((response) => {
         return response?.pivot_table;
       }),
+    {
+      keepPreviousData: true,
+    },
     // {
     //   revalidateIfStale: false,
     //   revalidateOnFocus: false,

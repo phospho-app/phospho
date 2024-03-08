@@ -107,6 +107,9 @@ const TasksDataviz: React.FC = () => {
           event_name: eventFilter,
         },
       }),
+    {
+      keepPreviousData: true,
+    },
   );
   const totalNbTasks: number | null | undefined =
     totalNbTasksData?.total_nb_tasks;
@@ -128,6 +131,9 @@ const TasksDataviz: React.FC = () => {
           event_name: eventFilter,
         },
       }),
+    {
+      keepPreviousData: true,
+    },
   );
   const mostDetectedEvent: string | null | undefined =
     mostDetectedEventData?.most_detected_event;
@@ -149,6 +155,9 @@ const TasksDataviz: React.FC = () => {
           event_name: eventFilter,
         },
       }),
+    {
+      keepPreviousData: true,
+    },
   );
   const globalSuccessRate: number | null | undefined = Math.round(
     (globalSuccessRateData?.global_success_rate * 10000) / 100,
@@ -179,6 +188,9 @@ const TasksDataviz: React.FC = () => {
             return nb_daily_task;
           });
         }),
+      {
+        keepPreviousData: true,
+      },
     );
 
   const { data: eventsRanking }: { data: EventsRanking[] | null | undefined } =
@@ -202,6 +214,9 @@ const TasksDataviz: React.FC = () => {
             (a: EventsRanking, b: EventsRanking) => b.nb_events - a.nb_events,
           ),
         ),
+      {
+        keepPreviousData: true,
+      },
     );
 
   const {
@@ -232,6 +247,9 @@ const TasksDataviz: React.FC = () => {
           },
         );
       }),
+    {
+      keepPreviousData: true,
+    },
   );
 
   if (!project_id) {
