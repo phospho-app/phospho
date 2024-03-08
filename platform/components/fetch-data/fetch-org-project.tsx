@@ -170,7 +170,14 @@ export default function FetchOrgProject() {
       : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
-  if (fetchedProject) {
+  if (
+    fetchedProject &&
+    (selectedProject === null ||
+      selectedProject === undefined ||
+      fetchedProject.id !== selectedProject.id ||
+      fetchedProject.settings?.events?.length !==
+        selectedProject.settings?.events?.length)
+  ) {
     console.log("Updating fetchedProject:", fetchedProject);
     setSelectedProject(fetchedProject);
   }

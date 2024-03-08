@@ -66,24 +66,36 @@ const Users = () => {
   const { data: userCountData, error: fetchUserCountError } = useSWR(
     [`/api/metadata/${project_id}/count/tasks/user_id`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
   const userCount = userCountData?.value;
 
   const { data: userAverageData, error: fetchUserAverageError } = useSWR(
     [`/api/metadata/${project_id}/average/tasks/user_id`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
   const userAverage = Math.round(userAverageData?.value * 100) / 100;
 
   const { data: userTop10Data, error: fetchUserTop10Error } = useSWR(
     [`/api/metadata/${project_id}/top10/tasks/user_id`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
   const userTop10 = userTop10Data?.value;
 
   const { data: userBottom10Data, error: fetchUserBottom10Error } = useSWR(
     [`/api/metadata/${project_id}/bottom10/tasks/user_id`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
   const userBottom10 = userBottom10Data?.value;
 
