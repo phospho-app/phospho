@@ -23,6 +23,9 @@ const User = ({ params }: { params: { id: string } }) => {
   } = useSWR(
     [`/api/metadata/${project_id}/user/${user_id}`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
 
   return (

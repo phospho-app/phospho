@@ -484,25 +484,25 @@ async def get_most_detected_event_name(
         main_filter["event_name"] = {"$in": event_name_filter}
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
+        {
+            "$lookup": {
+                "from": "tasks",
+                "localField": "task_id",
+                "foreignField": "id",
+                "as": "tasks",
+            },
+        },
     ]
     # Filter on the flag
     if flag_filter is not None:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "tasks",
-                        "localField": "task_id",
-                        "foreignField": "id",
-                        "as": "tasks",
-                    },
-                },
-                {"$match": {"tasks.flag": flag_filter}},
-            ]
+        pipeline.append(
+            {"$match": {"tasks.flag": flag_filter}},
         )
     pipeline.extend(
         [
-            {"$group": {"_id": "$event_name", "count": {"$sum": 1}}},
+            # Deduplicate the events by task_id and event_name
+            {"$group": {"_id": {"task_id": "$task_id", "event_name": "$event_name"}}},
+            {"$group": {"_id": "$_id.event_name", "count": {"$sum": 1}}},
             {"$sort": {"count": -1}},
             {"$limit": 1},
         ]
@@ -593,24 +593,24 @@ async def get_top_event_names_and_count(
         main_filter["event_name"] = {"$in": event_name_filter}
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
+        {
+            "$lookup": {
+                "from": "tasks",
+                "localField": "task_id",
+                "foreignField": "id",
+                "as": "tasks",
+            }
+        },
     ]
     if flag_filter is not None:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "tasks",
-                        "localField": "task_id",
-                        "foreignField": "id",
-                        "as": "tasks",
-                    }
-                },
-                {"$match": {"tasks.flag": flag_filter}},
-            ]
+        pipeline.append(
+            {"$match": {"tasks.flag": flag_filter}},
         )
     pipeline.extend(
         [
-            {"$group": {"_id": "$event_name", "nb_events": {"$sum": 1}}},
+            # Deduplicate the events by task_id and event_name
+            {"$group": {"_id": {"task_id": "$task_id", "event_name": "$event_name"}}},
+            {"$group": {"_id": "$_id.event_name", "nb_events": {"$sum": 1}}},
             {"$project": {"_id": 0, "event_name": "$_id", "nb_events": 1}},
             {"$sort": {"count": -1}},
             {"$limit": limit},
@@ -1569,11 +1569,21 @@ async def get_success_rate_by_event_name(
             }
         },
         {"$unwind": "$tasks"},
+        # Deduplicate based on event.event_name x task.id
         {
             "$group": {
-                "_id": "$event_name",
+                "_id": {
+                    "event_name": "$event_name",
+                    "task_id": "$tasks.id",
+                },
+                "flag": {"$first": "$tasks.flag"},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id.event_name",
                 "success_rate": {
-                    "$avg": {"$cond": [{"$eq": ["$tasks.flag", "success"]}, 1, 0]}
+                    "$avg": {"$cond": [{"$eq": ["$flag", "success"]}, 1, 0]}
                 },
             }
         },
@@ -1725,6 +1735,16 @@ async def get_events_per_day(project_id: str):
             },
         },
         {"$unwind": "$events"},
+        # Deduplicate based on event.event_name x task.id
+        {
+            "$group": {
+                "_id": {
+                    "date": "$date",
+                    "event_name": "$events.event_name",
+                    "task_id": "$id",
+                },
+            }
+        },
         {
             "$group": {
                 "_id": {

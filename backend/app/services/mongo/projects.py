@@ -167,8 +167,6 @@ async def get_all_tasks(
     main_filter["project_id"] = project_id
     if flag_filter:
         main_filter["flag"] = flag_filter
-    if event_name_filter:
-        main_filter["event_name"] = {"$in": event_name_filter}
     if last_eval_source_filter:
         main_filter["last_eval.source"] = last_eval_source_filter
     if metadata_filter:
