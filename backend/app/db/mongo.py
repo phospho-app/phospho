@@ -1,3 +1,4 @@
+import pymongo
 from loguru import logger
 
 from app.core.config import (
@@ -31,6 +32,98 @@ async def connect_and_init_db():
                 uuidRepresentation="standard",
             )
             logger.info(f"Connected to mongodb (MONGODB_NAME={MONGODB_NAME})")
+
+            # Create indexes
+            # https://motor.readthedocs.io/en/stable/api-tornado/motor_collection.html#motor.motor_tornado.MotorCollection.create_index
+            # Projects
+            mongo_db[MONGODB_NAME]["projects"].create_index(
+                "id", unique=True, background=True
+            )
+            mongo_db[MONGODB_NAME]["projects"].create_index("org_id", background=True)
+
+            # Sessions
+            mongo_db[MONGODB_NAME]["sessions"].create_index(
+                "id", unique=True, background=True
+            )
+            mongo_db[MONGODB_NAME]["sessions"].create_index(
+                "project_id", background=True
+            )
+            mongo_db[MONGODB_NAME]["sessions"].create_index("org_id", background=True)
+            mongo_db[MONGODB_NAME]["sessions"].create_index(
+                [("created_at", pymongo.DESCENDING)], background=True
+            )
+            mongo_db[MONGODB_NAME]["sessions"].create_index(
+                ["project_id", ("created_at", pymongo.DESCENDING)], background=True
+            )
+
+            # Tasks
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                "id", unique=True, background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index("org_id", background=True)
+            mongo_db[MONGODB_NAME]["tasks"].create_index("session_id", background=True)
+            mongo_db[MONGODB_NAME]["tasks"].create_index("project_id", background=True)
+            mongo_db[MONGODB_NAME]["tasks"].create_index("test_id", background=True)
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                [("created_at", pymongo.DESCENDING)], background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                ["project_id", "test_id", ("created_at", pymongo.DESCENDING)],
+                background=True,
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                ["project_id", "test_id", "flag", ("created_at", pymongo.DESCENDING)],
+                background=True,
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                ["project_id", "flag"], background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                "metadata.version_id", background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                "metadata.user_id", background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                "last_eval.source", background=True
+            )
+
+            # Evals
+            mongo_db[MONGODB_NAME]["evals"].create_index(
+                "id", unique=True, background=True
+            )
+            mongo_db[MONGODB_NAME]["evals"].create_index("task_id", background=True)
+            mongo_db[MONGODB_NAME]["evals"].create_index("session_id", background=True)
+            mongo_db[MONGODB_NAME]["evals"].create_index("project_id", background=True)
+            mongo_db[MONGODB_NAME]["evals"].create_index("test_id", background=True)
+            mongo_db[MONGODB_NAME]["evals"].create_index(
+                ["project_id", "source", "value"], background=True
+            )
+
+            # Events
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                "id", unique=True, background=True
+            )
+            mongo_db[MONGODB_NAME]["events"].create_index("event_name", background=True)
+            mongo_db[MONGODB_NAME]["events"].create_index("project_id", background=True)
+            mongo_db[MONGODB_NAME]["events"].create_index("session_id", background=True)
+            mongo_db[MONGODB_NAME]["events"].create_index("task_id", background=True)
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                ["event_name", "task_id"], background=True
+            )
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                ["project_id", "event_name", "task_id"], background=True
+            )
+
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                [("created_at", pymongo.DESCENDING)], background=True
+            )
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                ["project_id", ("created_at", pymongo.DESCENDING)], background=True
+            )
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                ["project_id", "event_name"], background=True
+            )
 
         except Exception as e:
             logger.warning(f"Error while connecting to Mongo: {e}")
