@@ -69,6 +69,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
       revalidateIfStale: false,
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
+      keepPreviousData: true,
     },
   );
   const session_with_events = sessionData;

@@ -39,6 +39,9 @@ function SuccessRateByEvent({ project_id }: { project_id: string }) {
           };
         });
       }),
+    {
+      keepPreviousData: true,
+    },
   );
 
   return (
