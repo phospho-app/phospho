@@ -93,6 +93,9 @@ const SessionsDataviz: React.FC = () => {
           event_name: eventFilter,
         },
       }),
+    {
+      keepPreviousData: true,
+    },
   );
   const totalNbSessions = totalNbSessionsData?.total_nb_sessions;
 
@@ -110,6 +113,9 @@ const SessionsDataviz: React.FC = () => {
           event_name: eventFilter,
         },
       }),
+    {
+      keepPreviousData: true,
+    },
   );
   const averageSessionLength =
     Math.round(averageSessionLengthData?.average_session_length * 10000) / 100;
@@ -128,6 +134,9 @@ const SessionsDataviz: React.FC = () => {
           event_name: eventFilter,
         },
       }),
+    {
+      keepPreviousData: true,
+    },
   );
   const lastTaskSuccessRate =
     Math.round(lastTaskSuccessRateData?.last_task_success_rate * 10000) / 100;
@@ -159,6 +168,9 @@ const SessionsDataviz: React.FC = () => {
           return element;
         });
       }),
+    {
+      keepPreviousData: true,
+    },
   );
 
   const {
@@ -181,6 +193,9 @@ const SessionsDataviz: React.FC = () => {
       }).then((data) => {
         return data.session_length_histogram;
       }),
+    {
+      keepPreviousData: true,
+    },
   );
 
   const {
@@ -209,6 +224,9 @@ const SessionsDataviz: React.FC = () => {
           },
         );
       }),
+    {
+      keepPreviousData: true,
+    },
   );
 
   if (!project_id) {
@@ -308,7 +326,7 @@ const SessionsDataviz: React.FC = () => {
                     <YAxis />
                     <Tooltip />
                     <Bar
-                      dataKey="session_length"
+                      dataKey="nb_sessions"
                       fill="#22c55e"
                       radius={[4, 4, 0, 0]}
                       barSize={20}
