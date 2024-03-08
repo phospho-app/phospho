@@ -10,7 +10,6 @@ import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
-import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -179,37 +178,8 @@ const SessionsDataviz: React.FC = () => {
         sessions_filter: {
           event_name: eventFilter,
         },
-      }),
-  );
-
-  const {
-    data: sessionLengthPerDay,
-  }: {
-    data: SessionLengthPerDay[] | undefined;
-  } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/sessions`,
-      accessToken,
-      eventFilter,
-      "session_length_per_day",
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["session_length_per_day"],
-        sessions_filter: {
-          event_name: eventFilter,
-        },
       }).then((data) => {
-        return data.session_length_per_day?.map(
-          (element: SessionLengthPerDay) => {
-            const date = new Date(element.date);
-            const day = date.toLocaleDateString("en-US", {
-              weekday: "short",
-            });
-            element.day = day;
-            return element;
-          },
-        );
+        return data.session_length_histogram;
       }),
   );
 
@@ -338,7 +308,7 @@ const SessionsDataviz: React.FC = () => {
                     <YAxis />
                     <Tooltip />
                     <Bar
-                      dataKey="nb_sessions"
+                      dataKey="session_length"
                       fill="#22c55e"
                       radius={[4, 4, 0, 0]}
                       barSize={20}

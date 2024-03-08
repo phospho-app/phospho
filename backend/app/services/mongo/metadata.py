@@ -436,6 +436,34 @@ async def breakdown_by_sum_of_metadata_field(
                     "as": "events",
                 },
             },
+            # Deduplicate the event by event_name and task_id
+            {
+                "$addFields": {
+                    "events": {
+                        "$reduce": {
+                            "input": "$events",
+                            "initialValue": [],
+                            "in": {
+                                "$concatArrays": [
+                                    "$$value",
+                                    {
+                                        "$cond": [
+                                            {
+                                                "$in": [
+                                                    "$$this.event_name",
+                                                    "$$value.event_name",
+                                                ]
+                                            },
+                                            [],
+                                            ["$$this"],
+                                        ]
+                                    },
+                                ]
+                            },
+                        }
+                    }
+                }
+            },
             {"$unwind": "$events"},
         ]
         breakdown_by_col = "events.event_name"
