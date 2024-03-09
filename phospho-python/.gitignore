@@ -18,3 +18,4 @@ venv/
 .venv/
 
 local/
+notebooks/

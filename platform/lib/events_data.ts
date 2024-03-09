@@ -8,7 +8,7 @@ interface DayCount {
 
 export function getCountsPerDay(
   events: Event[],
-  event_names: string[]
+  event_names: string[],
 ): DayCount[] {
   const currentDate = new Date();
   const countsPerDay: DayCount[] = [];
@@ -32,9 +32,9 @@ export function getCountsPerDay(
       const eventCounts: { [eventName: string]: number } = {};
 
       // Initialize counts for each event name
-      event_names.forEach((event_name) => {
+      event_names?.forEach((event_name) => {
         eventCounts[event_name] = filteredEvents.filter(
-          (event) => event.event_name === event_name
+          (event) => event.event_name === event_name,
         ).length;
       });
 
@@ -65,7 +65,7 @@ export function getCountsPerDay(
 
 export function getCountsPerMinute(
   events: Event[],
-  event_names: string[]
+  event_names: string[],
 ): DayCount[] {
   const countsPerMinute: DayCount[] = [];
   const currentTime = new Date(); // Current time in UTC
@@ -73,10 +73,10 @@ export function getCountsPerMinute(
 
   for (let i = 0; i < 30; i++) {
     const startTime = new Date(
-      currentTime.getTime() - (i + 1) * secondsPerMinute * 1000
+      currentTime.getTime() - (i + 1) * secondsPerMinute * 1000,
     );
     const endTime = new Date(
-      currentTime.getTime() - i * secondsPerMinute * 1000
+      currentTime.getTime() - i * secondsPerMinute * 1000,
     );
 
     const filteredEvents = events.filter((event) => {
@@ -87,9 +87,9 @@ export function getCountsPerMinute(
     const eventCounts: { [eventName: string]: number } = {};
 
     // Initialize counts for each event name
-    event_names.forEach((event_name) => {
+    event_names?.forEach((event_name) => {
       eventCounts[event_name] = filteredEvents.filter(
-        (event) => event.event_name === event_name
+        (event) => event.event_name === event_name,
       ).length;
     });
 
@@ -111,14 +111,14 @@ export function getCountsPerMinute(
 // Get the count for each event name during the last 30 minutes
 export function getCountsPerEvent(
   events: Event[],
-  event_names: string[]
+  event_names: string[],
 ): { event_name: string; total: number }[] {
   const countsPerEvent: { event_name: string; total: number }[] = [];
 
   // Counting occurrences of each event
-  event_names.forEach((eventName) => {
+  event_names?.forEach((eventName) => {
     const filteredEvents = events.filter(
-      (event) => event.event_name === eventName
+      (event) => event.event_name === eventName,
     );
     countsPerEvent.push({
       event_name: eventName,

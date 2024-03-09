@@ -1,12 +1,16 @@
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends
 
-from app.api.v2.models import ProjectTasksFilter, Sessions, Tasks
+from app.api.v2.models import ProjectTasksFilter, Sessions, Tasks, FlattenedTasks
 
 # from app.db.client import firestore_db as firestore_db
 from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
 from app.services.mongo.projects import get_all_sessions, get_all_tasks
+from app.services.mongo.explore import (
+    fetch_flattened_tasks,
+    update_from_flattened_tasks,
+)
 
 router = APIRouter(tags=["Projects"])
 
@@ -60,3 +64,50 @@ async def get_tasks(
         metadata_filter=task_filter.metadata,
     )
     return Tasks(tasks=tasks)
+
+
+@router.get(
+    "/projects/{project_id}/tasks/flat",
+    response_model=FlattenedTasks,
+    description="Get all the tasks of a project",
+)
+async def get_flattened_tasks(
+    project_id: str,
+    limit: int = 1000,
+    org: dict = Depends(authenticate_org_key),
+) -> FlattenedTasks:
+    """
+    Get all the tasks of a project in a flattened format.
+
+    Args:
+        project_id: The id of the project
+        limit: The maximum number of tasks to return
+    """
+    await verify_propelauth_org_owns_project_id(org, project_id)
+
+    flattened_tasks = await fetch_flattened_tasks(
+        project_id=project_id,
+        limit=limit,
+    )
+    return FlattenedTasks(flattened_tasks=flattened_tasks)
+
+
+@router.post(
+    "/projects/{project_id}/tasks/flat",
+    description="Update the tasks of a project using a flattened format",
+)
+async def post_flattened_tasks(
+    project_id: str,
+    flattened_tasks: FlattenedTasks,
+    org: dict = Depends(authenticate_org_key),
+) -> None:
+    """
+    Update the tasks of a project using a flattened format.
+    """
+    await verify_propelauth_org_owns_project_id(org, project_id)
+
+    await update_from_flattened_tasks(
+        project_id=project_id,
+        flattened_tasks=flattened_tasks.flattened_tasks,
+    )
+    return None
