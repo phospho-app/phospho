@@ -4,19 +4,21 @@ Explore metrics service
 import datetime
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
-import pydantic
 import pandas as pd
+import pydantic
 
 # Models
 from app.api.platform.models import ABTest, ProjectEventsFilters, Topics
-from app.api.v2.models import ProjectTasksFilter
+from app.api.v2.models import ProjectTasksFilter, FlattenedTask
 from app.db.mongo import get_mongo_db
 from app.services.mongo.projects import (
     get_all_events,
     get_all_tasks,
 )
 from app.utils import generate_timestamp, get_last_week_timestamps
+from fastapi import HTTPException
 from loguru import logger
+from pymongo import UpdateOne
 
 
 async def project_has_tasks(project_id: str) -> bool:
@@ -1833,3 +1835,140 @@ async def get_dashboard_aggregated_metrics(
         output["events_per_day"] = await get_events_per_day(project_id=project_id)
 
     return output
+
+
+async def fetch_flattened_tasks(project_id: str, limit: int = 1000) -> List[dict]:
+    """
+    Get a flattened representation of the tasks of a project for analytics
+    """
+    # Create an aggregated table
+    mongo_db = await get_mongo_db()
+
+    # Aggregation pipeline
+    pipeline = [
+        {"$match": {"project_id": project_id}},
+        {
+            "$lookup": {
+                "from": "events",
+                "localField": "id",
+                "foreignField": "task_id",
+                "as": "events",
+            }
+        },
+        # Deduplicate events based on event_name
+        {
+            "$set": {
+                "events": {
+                    "$reduce": {
+                        "input": "$events",
+                        "initialValue": [],
+                        "in": {
+                            "$concatArrays": [
+                                "$$value",
+                                {
+                                    "$cond": [
+                                        {
+                                            "$in": [
+                                                "$$this.event_name",
+                                                "$$value.event_name",
+                                            ]
+                                        },
+                                        [],
+                                        ["$$this"],
+                                    ]
+                                },
+                            ]
+                        },
+                    }
+                },
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$events",
+                "preserveNullAndEmptyArrays": True,
+            }
+        },
+        {
+            "$project": {
+                "task_id": "$id",
+                "task_input": "$input",
+                "task_output": "$output",
+                "task_metadata": "$metadata",
+                "task_eval": "$flag",
+                "task_eval_source": "$last_eval.source",
+                "task_eval_at": "$last_eval.created_at",
+                "task_created_at": "$created_at",
+                "session_id": "session_id",
+                "event_name": "$events.event_name",
+                "event_created_at": "$events.created_at",
+            }
+        },
+        {"$sort": {"task_created_at": -1}},
+    ]
+    # Query Mongo
+    flattened_tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
+
+    return flattened_tasks
+
+
+async def update_from_flattened_tasks(
+    project_id: str, flattened_tasks: List[FlattenedTask]
+) -> bool:
+    """
+    Update the tasks of a project from a flattened representation.
+    Used in combination with get_flattened_tasks
+
+    Supported flat fields:
+
+    task_id
+    task_metadata
+    """
+
+    # Verify that all the task_id belong to the project_id
+    mongo_db = await get_mongo_db()
+    project_ids_in_db = (
+        await mongo_db["tasks"]
+        .aggregate(
+            [
+                {"$match": {"id": {"$in": [task.task_id for task in flattened_tasks]}}},
+                {"$project": {"project_id": 1}},
+            ]
+        )
+        .to_list(length=2)
+    )
+    # Compute the intersection of the project_ids
+    project_ids_in_db = set(
+        [project_id["project_id"] for project_id in project_ids_in_db]
+    )
+    # If the intersection is not empty, it means that the task_id belong to another project
+    if project_ids_in_db - {project_id} != set():
+        raise HTTPException(
+            status_code=403,
+            detail=f"Access denied to tasks not in project {project_id}",
+        )
+
+    # A single row is a combination of task x event x eval
+
+    # Reformat the list into a list of UpdateMany or DeleteMany
+    task_update = {}
+    for task in flattened_tasks:
+        if task.task_metadata:
+            task_update[task.task_id] = {
+                "metadata": task.task_metadata,
+            }
+
+    update_statements = [
+        UpdateOne(
+            {"id": task_id, "project_id": project_id},
+            values_to_update,
+        )
+        for task_id, values_to_update in task_update.items()
+    ]
+
+    # Execute the update
+    if update_statements:
+        results = await mongo_db["tasks"].bulk_write(update_statements)
+        return results.modified_count > 0
+
+    return False
