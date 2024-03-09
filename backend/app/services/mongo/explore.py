@@ -1747,28 +1747,22 @@ async def get_events_per_day(project_id: str):
                 },
             }
         },
-        {
-            "$group": {
-                "_id": {
-                    "date": "$date",
-                    "event_name": "$events.event_name",
-                },
-                "count": {"$sum": 1},
-            }
-        },
         # Group by event name and date to get the number of events per day
         {
             "$group": {
-                "_id": {"date": "$_id", "event_name": "$event_name"},
-                "count": {"$sum": "$count"},
+                "_id": {
+                    "date": "$_id.date",
+                    "event_name": "$_id.event_name",
+                },
+                "count": {"$sum": 1},
             }
         },
         # Project the result
         {
             "$project": {
                 "_id": 0,
-                "date": "$_id.date.date",
-                "event_name": "$_id.date.event_name",
+                "date": "$_id.date",
+                "event_name": "$_id.event_name",
                 "count": 1,
             }
         },
