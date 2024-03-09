@@ -37,3 +37,12 @@ class TaskUpdateRequest(BaseModel):
     notes: Optional[str] = None
     flag: Optional[Literal["success", "failure"]] = None
     flag_source: Optional[str] = None
+
+
+class FlattenedTask(BaseModel, extra="allow"):
+    task_id: str
+    task_metadata: Optional[dict] = None
+
+
+class FlattenedTasks(BaseModel):
+    flattened_tasks: List[FlattenedTask]

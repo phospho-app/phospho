@@ -14,5 +14,13 @@ from .projects import (
 )
 from .search import SearchQuery, SearchResponse
 from .sessions import Session, SessionCreationRequest, Sessions, SessionUpdateRequest
-from .tasks import Task, TaskCreationRequest, TaskFlagRequest, Tasks, TaskUpdateRequest
+from .tasks import (
+    Task,
+    TaskCreationRequest,
+    TaskFlagRequest,
+    Tasks,
+    TaskUpdateRequest,
+    FlattenedTask,
+    FlattenedTasks,
+)
 from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest

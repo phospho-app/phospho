@@ -834,3 +834,22 @@ def flush() -> None:
     global consumer
 
     consumer.send_batch()
+
+
+try:
+    import pandas as pd
+
+    def tasks_df(limit: int = 1000) -> pd.DataFrame:
+        """
+        Get all the tasks of a project in a pandas DataFrame.
+        """
+        global client
+
+        if client is None:
+            raise ValueError("Call phospho.init() before calling phospho.tasks_df()")
+
+        flattened_tasks = client.tasks_flat(limit=limit).get("flattened_tasks", [])
+        return pd.DataFrame(flattened_tasks)
+
+except ImportError:
+    pass
