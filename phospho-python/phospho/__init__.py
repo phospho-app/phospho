@@ -862,7 +862,17 @@ try:
             raise ValueError("Call phospho.init() before calling phospho.tasks_df()")
 
         flattened_tasks = client.tasks_flat(limit=limit).get("flattened_tasks", [])
-        return pd.DataFrame(flattened_tasks)
+        tasks_df = pd.DataFrame(flattened_tasks)
+        # Convert task_created_at and event_created_at to a datetime
+        tasks_df["task_created_at"] = pd.to_datetime(
+            tasks_df["task_created_at"], unit="s"
+        )
+        tasks_df["task_eval_at"] = pd.to_datetime(tasks_df["task_eval_at"], unit="s")
+        tasks_df["event_created_at"] = pd.to_datetime(
+            tasks_df["event_created_at"], unit="s"
+        )
+        return tasks_df
+
 
 except ImportError:
     pass
