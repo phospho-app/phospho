@@ -1831,7 +1831,9 @@ async def get_dashboard_aggregated_metrics(
     return output
 
 
-async def fetch_flattened_tasks(project_id: str, limit: int = 1000) -> List[dict]:
+async def fetch_flattened_tasks(
+    project_id: str, limit: int = 1000
+) -> List[FlattenedTask]:
     """
     Get a flattened representation of the tasks of a project for analytics
     """
@@ -1902,6 +1904,12 @@ async def fetch_flattened_tasks(project_id: str, limit: int = 1000) -> List[dict
     ]
     # Query Mongo
     flattened_tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
+    # Ignore _id field
+    flattened_tasks = [
+        {k: v for k, v in task.items() if k != "_id"} for task in flattened_tasks
+    ]
+    # Cast
+    flattened_tasks = [FlattenedTask.model_validate(task) for task in flattened_tasks]
 
     return flattened_tasks
 

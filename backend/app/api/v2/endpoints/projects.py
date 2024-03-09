@@ -68,14 +68,14 @@ async def get_tasks(
 
 @router.get(
     "/projects/{project_id}/tasks/flat",
-    response_model=List[dict],
+    response_model=FlattenedTasks,
     description="Get all the tasks of a project",
 )
 async def get_flattened_tasks(
     project_id: str,
     limit: int = 1000,
     org: dict = Depends(authenticate_org_key),
-) -> List[dict]:
+) -> FlattenedTasks:
     """
     Get all the tasks of a project in a flattened format.
 
@@ -89,12 +89,11 @@ async def get_flattened_tasks(
         project_id=project_id,
         limit=limit,
     )
-    return flattened_tasks
+    return FlattenedTasks(flattened_tasks=flattened_tasks)
 
 
 @router.post(
     "/projects/{project_id}/tasks/flat",
-    response_model=List[dict],
     description="Update the tasks of a project using a flattened format",
 )
 async def post_flattened_tasks(
