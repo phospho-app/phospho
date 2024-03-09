@@ -187,3 +187,14 @@ class Client:
             },
         )
         return Test(**response.json())
+
+    def tasks_flat(self, limit: int = 1000) -> dict:
+        """
+        Get all the tasks of a project in a flattened format.
+        """
+
+        response = self._get(
+            f"/projects/{self._project_id()}/tasks/flat",
+            params={"limit": limit},
+        )
+        return response.json()
