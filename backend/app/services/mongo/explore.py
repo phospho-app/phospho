@@ -1895,7 +1895,7 @@ async def fetch_flattened_tasks(
                 "task_eval_source": "$last_eval.source",
                 "task_eval_at": "$last_eval.created_at",
                 "task_created_at": "$created_at",
-                "session_id": "session_id",
+                "session_id": "$session_id",
                 "event_name": "$events.event_name",
                 "event_created_at": "$events.created_at",
             }
