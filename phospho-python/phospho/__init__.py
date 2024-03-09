@@ -787,7 +787,7 @@ def user_feedback(
     source: str = "user",
     raw_flag: Optional[str] = None,
     raw_flag_to_flag: Optional[Callable[[Any], Literal["success", "failure"]]] = None,
-) -> Task:
+) -> Optional[Task]:
     """
     Flag a task already logged to phospho as a `success` or a `failure`. This is useful to collect human feedback.
 
@@ -802,6 +802,8 @@ def user_feedback(
         flag is specified, this is ignored.
     :param raw_flag_to_flag: A function to convert the raw_flag to a flag. If flag is specified,
         this is ignored.
+
+    :returns: The updated task. If the task_id is not found, returns None.
     """
 
     if flag is None:
@@ -809,7 +811,7 @@ def user_feedback(
             logger.warning(
                 "Either flag or raw_flag must be specified when calling user_feedback. Nothing logged"
             )
-            return
+            return None
         else:
             if raw_flag_to_flag is None:
                 # Default behaviour: some values are mapped to success, others to failure
@@ -822,9 +824,15 @@ def user_feedback(
                 flag = raw_flag_to_flag(raw_flag)
 
     # Call the client
-    current_task = Task(client=client, task_id=task_id, _content=None)
-    updated_task = current_task.update(flag=flag, flag_source=source, notes=notes)
-    return updated_task
+    try:
+        current_task = Task(client=client, task_id=task_id, _content=None)
+        updated_task = current_task.update(flag=flag, flag_source=source, notes=notes)
+        return updated_task
+    except Exception as e:
+        logger.warning(
+            f"Failed to flag task {task_id} as {flag}. The task_id was not found. Error: {e}"
+        )
+        return None
 
 
 def flush() -> None:
@@ -833,4 +841,38 @@ def flush() -> None:
     """
     global consumer
 
-    consumer.send_batch()
+    if consumer is None:
+        logger.warning(
+            "phospho.flush() was called but the global variable consumer was not found. Make sure that phospho.init() was called."
+        )
+    else:
+        consumer.send_batch()
+
+
+try:
+    import pandas as pd
+
+    def tasks_df(limit: int = 1000) -> pd.DataFrame:
+        """
+        Get all the tasks of a project in a pandas DataFrame.
+        """
+        global client
+
+        if client is None:
+            raise ValueError("Call phospho.init() before calling phospho.tasks_df()")
+
+        flattened_tasks = client.tasks_flat(limit=limit).get("flattened_tasks", [])
+        tasks_df = pd.DataFrame(flattened_tasks)
+        # Convert task_created_at and event_created_at to a datetime
+        tasks_df["task_created_at"] = pd.to_datetime(
+            tasks_df["task_created_at"], unit="s"
+        )
+        tasks_df["task_eval_at"] = pd.to_datetime(tasks_df["task_eval_at"], unit="s")
+        tasks_df["event_created_at"] = pd.to_datetime(
+            tasks_df["event_created_at"], unit="s"
+        )
+        return tasks_df
+
+
+except ImportError:
+    pass
