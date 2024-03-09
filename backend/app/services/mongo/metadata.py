@@ -330,7 +330,6 @@ async def fetch_user_metadata(
     ]
 
     users = await mongo_db["tasks"].aggregate(metadata_pipeline).to_list(length=None)
-    logger.debug(f"Users: {users}")
     if users is None or users == []:
         raise HTTPException(status_code=404, detail="User not found")
 

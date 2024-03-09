@@ -81,7 +81,7 @@ const EventsLast7Days = ({ project_id }: { project_id: string }) => {
   };
 
   // Assign a random color to each event name
-  const eventColors: EventColorMapping = uniqueEventNames.reduce(
+  const eventColors: EventColorMapping = uniqueEventNames?.reduce(
     (acc, eventName) => {
       colorIndex++;
       acc[eventName] = predefinedColors[colorIndex] || getRandomColor();
@@ -137,7 +137,7 @@ const EventsLast7Days = ({ project_id }: { project_id: string }) => {
               dot={false}
             />
 
-            {uniqueEventNames.map((eventName, index) => (
+            {uniqueEventNames?.map((eventName, index) => (
               <Line
                 key={index}
                 type="monotone"
