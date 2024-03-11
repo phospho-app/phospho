@@ -11,9 +11,9 @@ load_dotenv()  # take environment variables from .env.
 logger.info("Loading environment variables from .env file")
 
 ### ENVIRONMENT ###
-# To check if we are in production or `test` environment.
-# ENV can be test, staging or production. Default: staging
-ENVIRONMENT = os.getenv("ENVIRONMENT", "staging")
+# To check if we are in production, preview, staging or test environment.
+# ENV can be test, staging or production. Default: preview
+ENVIRONMENT = os.getenv("ENVIRONMENT", "preview")
 logger.info(f"ENVIRONMENT: {ENVIRONMENT}")
 
 ### MONGODB ###
@@ -27,27 +27,8 @@ if ENVIRONMENT == "production" and MONGODB_NAME != "production":
 if MONGODB_NAME == "production" and ENVIRONMENT != "production":
     raise Exception("MONGODB_NAME is set to 'production' in non-production environment")
 
-
-### DATABASE ###
-KEY_COLLECTION = "keys"
-KEY_PREFIX = "sk-"
-
-### GCP ###
-
-PROJECT_ID_GCLOUD = "portal-385519"  # Project ID
-
-# Google Storage Buckets
-APP_TEMPLATE_BUCKET = "phospho-app-template"
-APP_TEMPLATE_VERSION = "v0_0_3"
-AGENTS_BUCKET = "phospho-agents"  # AGENTS_BUCKET/PROJECT_NAME/agent
-BUILD_LOGS_BUCKET = "phospho-build-logs"  # BUILD_LOGS_BUCKET/PROJECT_NAME/timestamp/ -> timestamp of build
-CLONED_REPO_BUCKET = "cloned_repo"
-
-# Google Cloud Run
-REGION = "europe-west9"
-MAX_INSTANCES = 5
-
 ### USAGE LIMITS ###
+# TODO: disabled in preview
 # Maximum number of projects per user
 MAX_PROJECTS_PER_USER = 100
 
@@ -58,26 +39,7 @@ PLAN_HOBBY_MAX_NB_TASKS = 5 * 1000
 PLAN_HOBBY_MAX_USERS = 1
 PLAN_PRO_MAX_USERS = 15
 
-
-### SECURITY ###
-
-EXCLUDED_LOG_KEYWORDS = ["gserviceaccount", "googleapis.com"]
-
 ### DOCUMENTATION ##
-
-# Hide the github endpoints in the OpenAPI documentation
-if ENVIRONMENT == "test":
-    SHOW_GITHUB_ENDPOINTS = True
-    SHOW_LOGS_ENDPOINTS = True
-    SHOW_DEPLOYMENTS_ENDPOINTS = True
-    SHOW_SECRETS_ENDPOINTS = True
-    SHOW_NOTIFICATIONS_ENDPOINTS = True
-else:
-    SHOW_GITHUB_ENDPOINTS = False
-    SHOW_LOGS_ENDPOINTS = False
-    SHOW_DEPLOYMENTS_ENDPOINTS = False
-    SHOW_SECRETS_ENDPOINTS = False
-    SHOW_NOTIFICATIONS_ENDPOINTS = False
 
 ADMIN_EMAIL = "notifications@phospho.app"  # Used when new users sign up
 
