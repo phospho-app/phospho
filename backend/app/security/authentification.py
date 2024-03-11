@@ -1,9 +1,8 @@
 """
 Handle all authentification related tasks.
 
-We now use Propelauth for authentification. Firebase auth is deprecated.
+We now use Propelauth for authentification.
 """
-
 
 from typing import Literal, Optional
 
@@ -23,7 +22,7 @@ bearer = HTTPBearer()
 
 
 def authenticate_org_key(
-    authorization: HTTPAuthorizationCredentials = Depends(bearer)
+    authorization: HTTPAuthorizationCredentials = Depends(bearer),
 ) -> dict:
     """
     API key authentification for orgs
