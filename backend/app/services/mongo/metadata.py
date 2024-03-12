@@ -235,6 +235,7 @@ async def fetch_user_metadata(
                 "avg_success_rate": {"$avg": {"$toInt": "$is_success"}},
                 "tasks": {"$push": "$$ROOT"},
                 "total_tokens": {"$sum": "$metadata.total_tokens"},
+                "events": {"$push": "$events"},
             }
         },
         {"$sort": {"_id": 1}},
@@ -244,6 +245,17 @@ async def fetch_user_metadata(
                 "localField": "tasks.session_id",
                 "foreignField": "id",
                 "as": "sessions",
+            }
+        },
+        {
+            "$set": {
+                "events": {
+                    "$reduce": {
+                        "input": "$events",
+                        "initialValue": [],
+                        "in": {"$setUnion": ["$$value", "$$this"]},
+                    }
+                }
             }
         },
         # If events or sessions are None, set to empty list
@@ -324,6 +336,8 @@ async def fetch_user_metadata(
     users = await mongo_db["tasks"].aggregate(metadata_pipeline).to_list(length=None)
     if users is None or users == []:
         raise HTTPException(status_code=404, detail="User not found")
+
+    logger.debug(f"User metadata: {users[0]}")
 
     users = [UserMetadata.model_validate(data) for data in users]
 
