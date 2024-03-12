@@ -3,11 +3,27 @@
 import Pricing from "@/components/settings/pricing";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Page({ params }: { params: { id: string } }) {
+  const router = useRouter();
   // This page is used during the onboarding for the user to pick a plan.
   // It is also used as a paywall when the user tries to access a page that
   // requires a plan.
+
+  // It is disbaled in preview mode
+  // In this case, users are redirected to the root page
+  
+
+  // This page is used during the onboarding for the user to pick a plan.
+  // It is also used as a paywall when the user tries to access a page that
+  // requires a plan.
+
+  // It is disbaled in preview mode
+  // In this case, users are redirected to the root page
+  if (process.env.NEXT_PUBLIC_APP_ENV === "preview") {
+    router.push("org/transcripts/tasks");
+  }
 
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");

@@ -102,10 +102,19 @@ This repository contains the implementation of the platform frontend, the API ba
 - `platform`: NextJS frontend
 - `internal-tools`: Platform management tools
 
+### Prerequisites
+
+Ensure you have the following installed:
+
+- Docker
+- Docker Compose
+
+### 60 seconds deploy
+
 1. Clone the repo:
 
 ```bash
-git clone git@github.com:phospho-app/phospho.git
+git clone git@github.com:phospho-app/phospho.git && cd phospho
 ```
 
 2. Register to the core external services:
