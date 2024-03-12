@@ -19,6 +19,7 @@ services:
       - app_network
     depends_on:
       - extractor
+      - mongodb
   extractor:
     build: ./extractor
     ports:
@@ -27,7 +28,20 @@ services:
       - ./extractor/.env.docker
     networks:
       - app_network
+    depends_on:
+      - mongodb
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app_network
 
 networks:
   app_network:
     driver: bridge
+
+volumes:
+  mongodb_data:

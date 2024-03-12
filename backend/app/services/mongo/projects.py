@@ -628,7 +628,7 @@ Relevant events:
                 )
                 for k, v in default_events.items()
             ],
-            None,
+            {},  # Empty logged content
         )
     # Extract the events from the response
     extracted_events = response.choices[0].message.content.split("\n")[1:]
@@ -653,18 +653,21 @@ Relevant events:
     execution_time = time.time() - start_time
 
     # Log to phospho
-    logged_content = phospho.log(
-        input=prompt,
-        output=extracted_events,
-        system_prompt=system_prompt,
-        temperature=0.2,
-        execution_time=execution_time,
-        build=build,
-        purpose=purpose,
-        model="gpt-3.5-turbo",
-        user_id=user_id,
-    )
-    logger.info(f"Logged content: {logged_content}")
+    if config.ENVIRONMENT != "preview":
+        logged_content = phospho.log(
+            input=prompt,
+            output=extracted_events,
+            system_prompt=system_prompt,
+            temperature=0.2,
+            execution_time=execution_time,
+            build=build,
+            purpose=purpose,
+            model="gpt-3.5-turbo",
+            user_id=user_id,
+        )
+        logger.info(f"Logged content: {logged_content}")
+    else:
+        logged_content = {}
     return events, logged_content
 
 
@@ -693,15 +696,19 @@ async def suggest_events_for_use_case(
                 )
                 for event in existing_suggestions["suggested_events"]
             ]
-            logged_content = phospho.log(
-                input=f"Build: {build}, Purpose: {purpose}",
-                output=existing_suggestions["suggested_events"],
-                execution_time=0,
-                build=build,
-                purpose=purpose,
-                user_id=user_id,
-            )
-            task_id: str = logged_content.get("task_id", None)
+            if config.ENVIRONMENT != "preview":
+                logged_content = phospho.log(
+                    input=f"Build: {build}, Purpose: {purpose}",
+                    output=existing_suggestions["suggested_events"],
+                    execution_time=0,
+                    build=build,
+                    purpose=purpose,
+                    user_id=user_id,
+                )
+                task_id: str = logged_content.get("task_id", None)
+            else:
+                logged_content = {}
+                task_id = None
             return existing_events, task_id
 
     # Otherwise, generate the events
