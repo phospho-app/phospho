@@ -253,73 +253,77 @@ async def email_project_tasks(
     uid: str,
     limit: Optional[int] = 1000,
 ):
-    tasks_list = await get_all_tasks(project_id=project_id)
+    if config.ENVIRONMENT != "preview":
+        tasks_list = await get_all_tasks(project_id=project_id)
 
-    # Get the user email
-    user = propelauth.fetch_user_metadata_by_user_id(uid, include_orgs=False)
+        # Get the user email
+        user = propelauth.fetch_user_metadata_by_user_id(uid, include_orgs=False)
 
-    # Use Resend to send the email
-    resend.api_key = config.RESEND_API_KEY
+        # Use Resend to send the email
+        resend.api_key = config.RESEND_API_KEY
 
-    try:
-        # Convert task list to Pandas DataFrame
-        df = pd.DataFrame([task.model_dump() for task in tasks_list])
+        try:
+            # Convert task list to Pandas DataFrame
+            df = pd.DataFrame([task.model_dump() for task in tasks_list])
 
-        # Convert the DataFrame to a CSV string, then to bytes
-        csv_string = df.to_csv(index=False)
-        csv_bytes = csv_string.encode()
+            # Convert the DataFrame to a CSV string, then to bytes
+            csv_string = df.to_csv(index=False)
+            csv_bytes = csv_string.encode()
 
-        # Get the excel file buffer
-        excel_buffer = io.BytesIO()
-        df.to_excel(excel_buffer, index=False)
-        excel_data = excel_buffer.getvalue()
-        # encoded_excel = base64.b64encode(excel_data).decode()
+            # Get the excel file buffer
+            excel_buffer = io.BytesIO()
+            df.to_excel(excel_buffer, index=False)
+            excel_data = excel_buffer.getvalue()
+            # encoded_excel = base64.b64encode(excel_data).decode()
 
-        params = {
-            "from": "phospho <contact@phospho.ai>",
-            "to": [user.get("email")],
-            "subject": "Your exported tasks are ready",
-            "html": f"""<p>Hello!<br><br>Here are attached your exported tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
-            <p><br>So, what do you think about phospho for now? Feel free to respond to this email address and share your toughts !</p>
-            <p>Enjoy,<br>
-            The Phospho Team</p>
-            """,
-            "attachments": [
-                {
-                    "filename": "tasks.csv",
-                    "content": list(csv_bytes),  # Attach the bytes content directly
-                },
-                {
-                    "filename": "tasks.xlsx",
-                    "content": list(
-                        excel_data
-                    ),  # Attach the bytes content directly for Excel
-                },
-            ],
-        }
+            params = {
+                "from": "phospho <contact@phospho.ai>",
+                "to": [user.get("email")],
+                "subject": "Your exported tasks are ready",
+                "html": f"""<p>Hello!<br><br>Here are attached your exported tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
+                <p><br>So, what do you think about phospho for now? Feel free to respond to this email address and share your toughts !</p>
+                <p>Enjoy,<br>
+                The Phospho Team</p>
+                """,
+                "attachments": [
+                    {
+                        "filename": "tasks.csv",
+                        "content": list(csv_bytes),  # Attach the bytes content directly
+                    },
+                    {
+                        "filename": "tasks.xlsx",
+                        "content": list(
+                            excel_data
+                        ),  # Attach the bytes content directly for Excel
+                    },
+                ],
+            }
 
-        email = resend.Emails.send(params)
+            email = resend.Emails.send(params)
 
-        logger.info(f"Successfully sent tasks by email to {user.get('email')}")
+            logger.info(f"Successfully sent tasks by email to {user.get('email')}")
 
-    except Exception as e:
-        logger.error(f"Error sending tasks by email: {e}")
+        except Exception as e:
+            logger.error(f"Error sending tasks by email: {e}")
 
-        # Send an error message to the user
-        params = {
-            "from": "phospho <contact@phospho.ai>",
-            "to": [user.get("email")],
-            "subject": "Error exporting your tasks",
-            "html": f"""<p>Hello!<br><br>We could not export your tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
-            <p><br>Please contact the support at contact@phospho.app</p>
-            <p>Best,<br>
-            The Phospho Team</p>
-            """,
-        }
+            # Send an error message to the user
+            params = {
+                "from": "phospho <contact@phospho.ai>",
+                "to": [user.get("email")],
+                "subject": "Error exporting your tasks",
+                "html": f"""<p>Hello!<br><br>We could not export your tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
+                <p><br>Please contact the support at contact@phospho.app</p>
+                <p>Best,<br>
+                The Phospho Team</p>
+                """,
+            }
 
-        email = resend.Emails.send(params)
+            email = resend.Emails.send(params)
 
-        logger.debug("Sent error message to user")
+            logger.debug("Sent error message to user")
+
+    else:
+        logger.warning("Preview environment: emails disabled")
 
 
 async def get_all_events(
