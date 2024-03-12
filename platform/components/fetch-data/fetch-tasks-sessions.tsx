@@ -10,7 +10,6 @@ import useSWR from "swr";
 
 function FetchHasTasksSessions() {
   // This module data related to the tasks and sessions of the project
-
   const { accessToken } = useUser();
   const { toast } = useToast();
 
