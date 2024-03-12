@@ -44,7 +44,6 @@ PLAN_PRO_MAX_USERS = 15
 ADMIN_EMAIL = "notifications@phospho.app"  # Used when new users sign up
 
 ### OPENAI ###
-OPENAI_ORGANIZATION = "org-kH8tMbx6wJGWWUb3qQiLk73Z"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 ### Vector Search ###
@@ -93,13 +92,20 @@ COHERE_API_KEY = os.getenv("COHERE_API_KEY")
 PHOSPHO_API_KEY_ONBOARDING = os.getenv("PHOSPHO_API_KEY_ONBOARDING")
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
-assert (
-    STRIPE_SECRET_KEY is not None
-), "STRIPE_SECRET_KEY is missing from the environment variables"
+if ENVIRONMENT != "preview":
+    assert (
+        STRIPE_SECRET_KEY is not None
+    ), "STRIPE_SECRET_KEY is missing from the environment variables"
+else:
+    STRIPE_SECRET_KEY = "NO_STRIPE_SECRET_KEY"
+
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
-assert (
-    STRIPE_WEBHOOK_SECRET is not None
-), "STRIPE_WEBHOOK_SECRET is missing from the environment variables"
+if ENVIRONMENT != "preview":
+    assert (
+        STRIPE_WEBHOOK_SECRET is not None
+    ), "STRIPE_WEBHOOK_SECRET is missing from the environment variables"
+else:
+    STRIPE_WEBHOOK_SECRET = "NO_STRIPE_WEBHOOK_SECRET"
 
 if ENVIRONMENT == "production":
     PHOSPHO_FRONTEND_URL = "https://platform.phospho.ai"
