@@ -344,7 +344,7 @@ async def get_all_events(
                 ),
             }
     if not include_removed:
-        additional_event_filters["removed"] = False
+        additional_event_filters["removed"] = {"$ne": True}
 
     events = (
         await mongo_db["events"]
