@@ -157,8 +157,8 @@ async def event_detection_pipeline(task: Task) -> None:
             )
             mongo_db["events"].insert_one(detected_event_data.model_dump())
             # Update the task object with the event
-            mongo_db["tasks"].update_one(
-                {"id": task.id},
+            mongo_db["tasks"].update_many(
+                {"id": task.id, "project_id": task.project_id},
                 # Add the event to the list of events
                 {"$push": {"events": detected_event_data.model_dump()}},
             )

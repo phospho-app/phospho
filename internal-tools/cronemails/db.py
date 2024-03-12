@@ -215,7 +215,10 @@ def get_last_week_kpis(org_id: str) -> Optional[WeeklyReportKpisModel]:
     top_events = list(
         db["events"].aggregate(
             [
-                {"$match": {"org_id": org_id, "created_at": {"$gt": seven_days_ago}}},
+                {
+                    "$match": {"org_id": org_id, "created_at": {"$gt": seven_days_ago}},
+                    "removed": {"$ne": True},
+                },
                 {"$group": {"_id": "$event_name", "count": {"$sum": 1}}},
                 {"$sort": {"count": -1}},
                 {"$limit": 3},
@@ -231,7 +234,11 @@ def get_last_week_kpis(org_id: str) -> Optional[WeeklyReportKpisModel]:
     )
 
     nb_events = db["events"].count_documents(
-        {"org_id": org_id, "created_at": {"$gt": seven_days_ago}}
+        {
+            "org_id": org_id,
+            "created_at": {"$gt": seven_days_ago},
+            "removed": {"$ne": True},
+        }
     )
 
     return WeeklyReportKpisModel(
