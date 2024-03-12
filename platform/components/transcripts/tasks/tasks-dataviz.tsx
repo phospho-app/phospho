@@ -180,6 +180,9 @@ const TasksDataviz: React.FC = () => {
             event_name: eventFilter,
           },
         }).then((data) => {
+          if (!data?.nb_daily_tasks) {
+            return null;
+          }
           return data?.nb_daily_tasks?.map((nb_daily_task: NbDailyTasks) => {
             const date = new Date(nb_daily_task.date);
             nb_daily_task.day = date.toLocaleDateString("en-US", {
@@ -209,11 +212,14 @@ const TasksDataviz: React.FC = () => {
             flag: flagFilter,
             event_name: eventFilter,
           },
-        }).then((data) =>
+        }).then((data) => {
+          if (!data?.events_ranking) {
+            return null;
+          }
           data?.events_ranking?.sort(
             (a: EventsRanking, b: EventsRanking) => b.nb_events - a.nb_events,
-          ),
-        ),
+          );
+        }),
       {
         keepPreviousData: true,
       },
@@ -239,6 +245,9 @@ const TasksDataviz: React.FC = () => {
           event_name: eventFilter,
         },
       }).then((data) => {
+        if (!data?.success_rate_per_task_position) {
+          return null;
+        }
         return data?.success_rate_per_task_position?.map(
           (success_rate: SuccessRateByPosition) => {
             success_rate.success_rate =

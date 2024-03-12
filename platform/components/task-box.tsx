@@ -23,6 +23,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Event, EventDefinition } from "@/models/events";
 import { Task, TaskWithEvents } from "@/models/tasks";
 import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { Check, Trash } from "lucide-react";
 import React from "react";
 import ReactMarkdown from "react-markdown";
@@ -36,6 +37,8 @@ const InteractiveEventBadge = ({
   task: TaskWithEvents;
   setTask: (task: TaskWithEvents) => void;
 }) => {
+  const { accessToken } = useUser();
+
   const selectedProject = navigationStateStore(
     (state) => state.selectedProject,
   );
@@ -76,18 +79,20 @@ const InteractiveEventBadge = ({
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-red-500"
-          onClick={() => {
-            setTask({
-              ...task,
-              events: task.events.filter(
-                (e) => e.event_name !== event.event_name,
-              ),
+          onClick={async () => {
+            // Call the API to remove the event from the task
+            const response = await fetch(`/api/tasks/${task.id}/remove-event`, {
+              method: "POST",
+              headers: {
+                Authorization: "Bearer " + accessToken,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                event_name: event.event_name,
+              }),
             });
-            toast({
-              title: "Coming soon 🛠️",
-              description:
-                "This feature is still being developed. Your changes were not be saved.",
-            });
+            const response_json = await response.json();
+            setTask(response_json);
           }}
         >
           <Trash className="w-4 h-4 mr-2" /> Delete
@@ -107,15 +112,13 @@ const AddEvent = ({
   if (!task) {
     return <></>;
   }
-  const { toast } = useToast();
+  const { accessToken } = useUser();
   const events = task.events;
   const selectedProject = navigationStateStore(
     (state) => state.selectedProject,
   );
-  // Project events is an object : {event_name: EventDefinition}
 
-  // const projectEvents: Map<string, EventDefinition> =
-  //   selectedProject?.settings?.events || null;
+  // Project events is an object : {event_name: EventDefinition}
   const projectEvents: Record<string, EventDefinition> =
     selectedProject?.settings?.events || null;
 
@@ -152,28 +155,23 @@ const AddEvent = ({
               <HoverCardTrigger>
                 <DropdownMenuItem
                   key={event_name}
-                  onClick={() => {
-                    // Adds the event to the task and updates the task
-                    setTask({
-                      ...task,
-                      events: [
-                        ...task.events,
-                        {
-                          id: "0", // TODO: generate a real id
-                          created_at: Math.floor(Date.now() / 1000),
-                          task_id: task.id,
-                          session_id: task.session_id,
-                          project_id: task.project_id,
-                          event_name: event_name,
-                          source: "owner",
+                  onClick={async () => {
+                    // Call the API to ad the event to the task
+                    const response = await fetch(
+                      `/api/tasks/${task.id}/add-event`,
+                      {
+                        method: "POST",
+                        headers: {
+                          Authorization: "Bearer " + accessToken,
+                          "Content-Type": "application/json",
                         },
-                      ],
-                    });
-                    toast({
-                      title: "Coming soon 🛠️",
-                      description:
-                        "This feature is still being developed. Your changes were not be saved.",
-                    });
+                        body: JSON.stringify({
+                          event: event,
+                        }),
+                      },
+                    );
+                    const response_json = await response.json();
+                    setTask(response_json);
                   }}
                 >
                   {event_name}
@@ -195,10 +193,12 @@ const TaskBox = ({
   task,
   setTask,
   setFlag,
+  refresh,
 }: {
   task: TaskWithEvents;
-  setTask: (task: Task) => void;
+  setTask: (task: TaskWithEvents) => void;
   setFlag: (flag: string) => void;
+  refresh: boolean;
 }) => {
   return (
     <div className="mb-2 p-1 border border-gray-800 rounded">

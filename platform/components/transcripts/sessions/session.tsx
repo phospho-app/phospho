@@ -22,6 +22,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
   const { accessToken } = useUser();
   let unique_events: Event[] = [];
   const [sessionTasks, setSessionTasks] = useState<TaskWithEvents[]>([]);
+  const [refresh, setRefresh] = useState(false);
 
   // Get the tasks from the API
   useEffect(() => {
@@ -74,19 +75,21 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
   );
   const session_with_events = sessionData;
 
-  const setTask = (task: Task) => {
+  const setTask = (task: TaskWithEvents) => {
     console.log("SET TASK", task);
     const updatedTasks = sessionTasks?.map((t: TaskWithEvents) => {
       if (t.id === task.id) {
         t.flag = task.flag;
         t.last_eval = task.last_eval;
         t.notes = task.notes;
+        t.events = task.events;
       }
       return t;
     });
     // sessionTasks = updatedTasks;
     setSessionTasks(updatedTasks);
     // mutate(`/api/sessions/${session_id}/tasks`);
+    setRefresh(!refresh);
   };
 
   const setFlag = (flag: string) => {};
@@ -145,6 +148,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
               task={task}
               setTask={setTask}
               setFlag={setFlag}
+              refresh={refresh}
             ></TaskBox>
           ))}
         </CardContent>
