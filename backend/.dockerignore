@@ -1,3 +1,4 @@
 .env
+.env.docker
 .other_secrets
 tests
