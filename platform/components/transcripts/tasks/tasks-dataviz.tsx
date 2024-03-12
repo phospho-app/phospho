@@ -219,6 +219,7 @@ const TasksDataviz: React.FC = () => {
           data?.events_ranking?.sort(
             (a: EventsRanking, b: EventsRanking) => b.nb_events - a.nb_events,
           );
+          return data?.events_ranking;
         }),
       {
         keepPreviousData: true,
