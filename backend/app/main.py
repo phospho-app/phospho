@@ -25,11 +25,17 @@ if config.ENVIRONMENT == "production":
     )
     sentry_sdk.set_level("warning")
 
-# Used for to analyze the onboarding process
-phospho.init(
-    project_id="b20659d0932d4edbb2b9682d3e6a0ccb",
-    api_key=config.PHOSPHO_API_KEY_ONBOARDING,
-)
+if config.ENVIRONMENT != "preview":
+    # Used for to analyze the onboarding process
+    phospho.init(
+        project_id="b20659d0932d4edbb2b9682d3e6a0ccb",
+        api_key=config.PHOSPHO_API_KEY_ONBOARDING,
+    )
+else:
+    phospho.init(
+        project_id="NO_PROJECT_ID",
+        api_key="NO_API_KEY",
+    )
 
 # Check that the
 

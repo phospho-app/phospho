@@ -1,0 +1,33 @@
+services:
+  platform:
+    build: ./platform
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./platform/.env.docker
+    networks:
+      - app_network
+    depends_on:
+      - backend
+  backend:
+    build: ./backend
+    ports:
+      - "80:80"
+    env_file:
+      - ./backend/.env.docker
+    networks:
+      - app_network
+    depends_on:
+      - extractor
+  extractor:
+    build: ./extractor
+    ports:
+      - "7605:7605"
+    env_file:
+      - ./extractor/.env.docker
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
