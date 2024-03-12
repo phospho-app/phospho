@@ -172,6 +172,7 @@ export function TasksTable<TData, TValue>({
             table.setColumnFilters([]);
             setQuery("");
           }}
+          disabled={tasksColumnsFilters.length === 0}
         >
           <FilterX className="h-4 w-4 mr-1" />
           Clear
