@@ -213,9 +213,7 @@ const TasksDataviz: React.FC = () => {
             event_name: eventFilter,
           },
         }).then((data) => {
-          console.log("events_ranking", data);
           if (!data?.events_ranking) {
-            console.log("events_ranking is null");
             return null;
           }
           data?.events_ranking?.sort(
