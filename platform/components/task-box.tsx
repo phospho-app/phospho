@@ -80,18 +80,6 @@ const InteractiveEventBadge = ({
         <DropdownMenuItem
           className="text-red-500"
           onClick={async () => {
-            setTask({
-              ...task,
-              events: task.events.filter(
-                (e) => e.event_name !== event.event_name,
-              ),
-            });
-            // toast({
-            //   title: "Coming soon 🛠️",
-            //   description:
-            //     "This feature is still being developed. Your changes were not be saved.",
-            // });
-
             // Call the API to remove the event from the task
             const response = await fetch(`/api/tasks/${task.id}/remove-event`, {
               method: "POST",
@@ -103,6 +91,8 @@ const InteractiveEventBadge = ({
                 event_name: event.event_name,
               }),
             });
+            const response_json = await response.json();
+            setTask(response_json);
           }}
         >
           <Trash className="w-4 h-4 mr-2" /> Delete
@@ -166,22 +156,6 @@ const AddEvent = ({
                 <DropdownMenuItem
                   key={event_name}
                   onClick={async () => {
-                    // Adds the event to the task and updates the task
-                    setTask({
-                      ...task,
-                      events: [
-                        ...task.events,
-                        {
-                          id: "0", // TODO: generate a real id
-                          created_at: Math.floor(Date.now() / 1000),
-                          task_id: task.id,
-                          session_id: task.session_id,
-                          project_id: task.project_id,
-                          event_name: event_name,
-                          source: "owner",
-                        },
-                      ],
-                    });
                     // Call the API to ad the event to the task
                     const response = await fetch(
                       `/api/tasks/${task.id}/add-event`,
@@ -196,8 +170,8 @@ const AddEvent = ({
                         }),
                       },
                     );
-
-                    // TODO : Use the response to update the task
+                    const response_json = await response.json();
+                    setTask(response_json);
                   }}
                 >
                   {event_name}
@@ -219,10 +193,12 @@ const TaskBox = ({
   task,
   setTask,
   setFlag,
+  refresh,
 }: {
   task: TaskWithEvents;
-  setTask: (task: Task) => void;
+  setTask: (task: TaskWithEvents) => void;
   setFlag: (flag: string) => void;
+  refresh: boolean;
 }) => {
   return (
     <div className="mb-2 p-1 border border-gray-800 rounded">
