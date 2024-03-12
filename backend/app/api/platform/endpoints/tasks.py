@@ -5,6 +5,7 @@ from app.api.platform.models import (
     Task,
     TaskFlagRequest,
     TaskUpdateRequest,
+    EventDefinition,
 )
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
@@ -12,6 +13,8 @@ from app.services.mongo.tasks import (
     flag_task,
     get_task_by_id,
     update_task,
+    add_event_to_task,
+    remove_event_from_task,
 )
 
 router = APIRouter(tags=["Tasks"])
@@ -60,7 +63,7 @@ async def post_flag_task(
 @router.post(
     "/tasks/{task_id}",
     response_model=Task,
-    description="Update a task metadata",
+    description="Update a task",
 )
 async def post_update_task(
     task_id: str,
@@ -68,7 +71,7 @@ async def post_update_task(
     user: User = Depends(propelauth.require_user),
 ) -> Task:
     """
-    Edit the metadata of a task
+    Edit a logged task
     """
     task = await get_task_by_id(task_id)
     await verify_if_propelauth_user_can_access_project(user, task.project_id)
@@ -76,5 +79,48 @@ async def post_update_task(
     updated_task = await update_task(
         task_model=task,
         **taskUpdateRequest.model_dump(),
+    )
+    return updated_task
+
+
+@router.post(
+    "/tasks/{task_id}/add-event",
+    response_model=Task,
+    description="Add an event to a task",
+)
+async def post_add_event_to_task(
+    task_id: str,
+    event: EventDefinition,
+    user: User = Depends(propelauth.require_user),
+) -> Task:
+    """
+    Add an event to a task
+    """
+    task = await get_task_by_id(task_id)
+    await verify_if_propelauth_user_can_access_project(user, task.project_id)
+
+    updated_task = await add_event_to_task(task=task, event=event)
+    return updated_task
+
+
+@router.post(
+    "/tasks/{task_id}/delete-event",
+    response_model=Task,
+    description="Remove an event from a task",
+)
+async def post_remove_event_from_task(
+    task_id: str,
+    event_name: str,
+    user: User = Depends(propelauth.require_user),
+) -> Task:
+    """
+    Remove an event from a task
+    """
+    task = await get_task_by_id(task_id)
+    await verify_if_propelauth_user_can_access_project(user, task.project_id)
+
+    updated_task = await remove_event_from_task(
+        task=task,
+        event_name=event_name,
     )
     return updated_task

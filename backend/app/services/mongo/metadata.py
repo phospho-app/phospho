@@ -240,14 +240,6 @@ async def fetch_user_metadata(
         {"$sort": {"_id": 1}},
         {
             "$lookup": {
-                "from": "events",
-                "localField": "tasks.id",
-                "foreignField": "task_id",
-                "as": "events",
-            }
-        },
-        {
-            "$lookup": {
                 "from": "sessions",
                 "localField": "tasks.session_id",
                 "foreignField": "id",
@@ -427,14 +419,6 @@ async def breakdown_by_sum_of_metadata_field(
 
     if breakdown_by == "event_name":
         pipeline += [
-            {
-                "$lookup": {
-                    "from": "events",
-                    "localField": "id",
-                    "foreignField": "task_id",
-                    "as": "events",
-                },
-            },
             # Deduplicate the event by event_name and task_id
             {
                 "$addFields": {
