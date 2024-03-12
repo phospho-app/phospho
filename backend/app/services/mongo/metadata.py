@@ -338,6 +338,7 @@ async def fetch_user_metadata(
         raise HTTPException(status_code=404, detail="User not found")
 
     users = [UserMetadata.model_validate(data) for data in users]
+    # logger.debug(f"User metadata: {users}")
 
     return users
 

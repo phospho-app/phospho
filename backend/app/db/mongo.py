@@ -104,9 +104,7 @@ async def connect_and_init_db():
             mongo_db[MONGODB_NAME]["events"].create_index(
                 "id", unique=True, background=True
             )
-            mongo_db[MONGODB_NAME]["events"].create_index(
-                "removed", unique=True, background=True
-            )
+            mongo_db[MONGODB_NAME]["events"].create_index("removed", background=True)
             mongo_db[MONGODB_NAME]["events"].create_index("event_name", background=True)
             mongo_db[MONGODB_NAME]["events"].create_index("project_id", background=True)
             mongo_db[MONGODB_NAME]["events"].create_index("session_id", background=True)
