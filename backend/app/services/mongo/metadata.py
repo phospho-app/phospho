@@ -180,7 +180,10 @@ async def fetch_user_metadata(
         ]
 
     # First, we update the relevant sessions collection with the session_length
-    session_pipeline = match_pipeline + [
+    session_pipeline = [
+        {
+            "$match": {"project_id": project_id},
+        },
         {
             "$lookup": {
                 "from": "tasks",
