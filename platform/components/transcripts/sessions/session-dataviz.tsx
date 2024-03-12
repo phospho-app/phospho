@@ -118,7 +118,7 @@ const SessionsDataviz: React.FC = () => {
     },
   );
   const averageSessionLength =
-    Math.round(averageSessionLengthData?.average_session_length * 10000) / 100;
+    Math.round(averageSessionLengthData?.average_session_length * 100) / 100;
 
   const { data: lastTaskSuccessRateData } = useSWR(
     [

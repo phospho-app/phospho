@@ -826,7 +826,9 @@ async def get_global_average_session_length(
     """
     mongo_db = await get_mongo_db()
     pipeline: List[Dict[str, object]] = [
-        {"$match": {"project_id": project_id}},
+        {
+            "$match": {"project_id": project_id, "session_id": {"$ne": None}},
+        },
     ]
     if event_name_filter is not None:
         pipeline.append(
