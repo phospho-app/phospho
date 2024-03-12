@@ -159,6 +159,9 @@ const SessionsDataviz: React.FC = () => {
           event_name: eventFilter,
         },
       }).then((data) => {
+        if (!data.nb_sessions_per_day) {
+          return [];
+        }
         return data.nb_sessions_per_day?.map((element: NbSessions) => {
           const date = new Date(element.date);
           const day = date.toLocaleDateString("en-US", {
@@ -191,6 +194,9 @@ const SessionsDataviz: React.FC = () => {
           event_name: eventFilter,
         },
       }).then((data) => {
+        if (!data.session_length_histogram) {
+          return [];
+        }
         return data.session_length_histogram;
       }),
     {
@@ -216,6 +222,9 @@ const SessionsDataviz: React.FC = () => {
           event_name: eventFilter,
         },
       }).then((data) => {
+        if (!data.success_rate_per_task_position) {
+          return [];
+        }
         return data.success_rate_per_task_position?.map(
           (element: SuccessRateByPosition) => {
             element.success_rate =

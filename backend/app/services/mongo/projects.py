@@ -187,14 +187,6 @@ async def get_all_tasks(
         pipeline = [
             {"$match": main_filter},
             {"$sort": {"created_at": -1}},
-            {
-                "$lookup": {
-                    "from": "events",
-                    "localField": "id",
-                    "foreignField": "task_id",
-                    "as": "events",
-                }
-            },
             # Deduplicate events names. We want the unique event_names of the task
             {
                 "$addFields": {
@@ -326,6 +318,7 @@ async def get_all_events(
     project_id: str,
     limit: Optional[int] = None,
     events_filter: Optional[ProjectEventsFilters] = None,
+    include_removed: bool = False,
 ) -> List[Event]:
     mongo_db = await get_mongo_db()
     additional_event_filters: Dict[str, object] = {}
@@ -350,6 +343,8 @@ async def get_all_events(
                     events_filter.created_at_end
                 ),
             }
+    if not include_removed:
+        additional_event_filters["removed"] = False
 
     events = (
         await mongo_db["events"]
@@ -412,6 +407,7 @@ async def get_all_sessions(
                             "as": "events",
                         }
                     },
+                    {"$match": {"events.removed": {"$ne": True}}},
                     # If events is None, set to empty list
                     {"$addFields": {"events": {"$ifNull": ["$events", []]}}},
                     # Deduplicate events names. We want the unique event_names of the session

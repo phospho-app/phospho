@@ -41,3 +41,5 @@ from .metadata import MetadataValueResponse, MetadataPivotResponse, MetadataPivo
 from .projects import OnboardingSurvey, AddEventsQuery, OnboardingSurveyResponse
 
 from app.db.models import EventDefinition
+
+from .tasks import AddEventRequest, RemoveEventRequest

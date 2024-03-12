@@ -27,6 +27,7 @@ interface TaskProps {
 const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
   const { user, loading, accessToken } = useUser();
   const [task, setTask] = useState<TaskWithEvents | null>(null);
+  const [refresh, setRefresh] = useState(false);
 
   const router = useRouter();
   const tasksWithoutHumanLabel = dataStateStore(
@@ -84,6 +85,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
   const flag = task.flag;
   const setFlag = (flag: string) => {
     setTask({ ...task, flag: flag });
+    setRefresh(!refresh);
   };
 
   const goToNextTask = () => {
@@ -169,6 +171,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
               setTask(task as TaskWithEvents);
             }}
             setFlag={setFlag}
+            refresh={refresh}
           ></TaskBox>
         </CardContent>
         <CardFooter className="flex justify-around ">

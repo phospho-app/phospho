@@ -2,7 +2,7 @@ from typing import Literal, Optional, cast
 from phospho.utils import filter_nonjsonable_keys
 
 import pydantic
-from app.db.models import Eval, Task
+from app.db.models import Eval, EventDefinition, Task, Event
 from app.db.mongo import get_mongo_db
 from fastapi import HTTPException
 
@@ -161,3 +161,63 @@ async def update_task(
         )
 
     return task_model
+
+
+async def add_event_to_task(
+    task: Task, event: EventDefinition, event_source: str = "owner"
+) -> Task:
+    """
+    Adds an event to a task
+    """
+    mongo_db = await get_mongo_db()
+    # Check if the event is already in the task
+    if task.events is not None and event.event_name in [
+        e.event_name for e in task.events
+    ]:
+        return task
+
+    # Add the event to the events collection and to the task
+    detected_event_data = Event(
+        event_name=event.event_name,
+        task_id=task.id,
+        session_id=task.session_id,
+        project_id=task.project_id,
+        source=event_source,
+        webhook=event.webhook,
+        org_id=task.org_id,
+    )
+    event_insert = await mongo_db["events"].insert_one(detected_event_data.model_dump())
+
+    if task.events is None:
+        task.events = []
+    task.events.append(detected_event_data)
+
+    # Update the task object
+    task_ref = await mongo_db["tasks"].update_many(
+        {"id": task.id, "project_id": task.project_id}, {"$set": task.model_dump()}
+    )
+
+    return task
+
+
+async def remove_event_from_task(task: Task, event_name: str) -> Task:
+    """
+    Removes an event from a task
+    """
+    mongo_db = await get_mongo_db()
+    # Check if the event is in the task
+    if task.events is not None and event_name in [e.event_name for e in task.events]:
+        # Mark the event as removed in the events database
+        event_ref = await mongo_db["events"].update_many(
+            {"task_id": task.id, "event_name": event_name},
+            {"$set": {"removed": True}},
+        )
+        # Remove the event from the task
+        task.events = [e for e in task.events if e.event_name != event_name]
+
+        # Update the task object
+        task_ref = await mongo_db["tasks"].update_one(
+            {"id": task.id, "project_id": task.project_id}, {"$set": task.model_dump()}
+        )
+
+    return task

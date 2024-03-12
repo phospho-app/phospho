@@ -235,23 +235,27 @@ async def fetch_user_metadata(
                 "avg_success_rate": {"$avg": {"$toInt": "$is_success"}},
                 "tasks": {"$push": "$$ROOT"},
                 "total_tokens": {"$sum": "$metadata.total_tokens"},
+                "events": {"$push": "$events"},
             }
         },
         {"$sort": {"_id": 1}},
-        {
-            "$lookup": {
-                "from": "events",
-                "localField": "tasks.id",
-                "foreignField": "task_id",
-                "as": "events",
-            }
-        },
         {
             "$lookup": {
                 "from": "sessions",
                 "localField": "tasks.session_id",
                 "foreignField": "id",
                 "as": "sessions",
+            }
+        },
+        {
+            "$set": {
+                "events": {
+                    "$reduce": {
+                        "input": "$events",
+                        "initialValue": [],
+                        "in": {"$setUnion": ["$$value", "$$this"]},
+                    }
+                }
             }
         },
         # If events or sessions are None, set to empty list
@@ -334,6 +338,7 @@ async def fetch_user_metadata(
         raise HTTPException(status_code=404, detail="User not found")
 
     users = [UserMetadata.model_validate(data) for data in users]
+    # logger.debug(f"User metadata: {users}")
 
     return users
 
@@ -427,14 +432,6 @@ async def breakdown_by_sum_of_metadata_field(
 
     if breakdown_by == "event_name":
         pipeline += [
-            {
-                "$lookup": {
-                    "from": "events",
-                    "localField": "id",
-                    "foreignField": "task_id",
-                    "as": "events",
-                },
-            },
             # Deduplicate the event by event_name and task_id
             {
                 "$addFields": {
