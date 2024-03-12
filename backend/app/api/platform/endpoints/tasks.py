@@ -5,7 +5,8 @@ from app.api.platform.models import (
     Task,
     TaskFlagRequest,
     TaskUpdateRequest,
-    EventDefinition,
+    AddEventRequest,
+    RemoveEventRequest,
 )
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
@@ -90,7 +91,7 @@ async def post_update_task(
 )
 async def post_add_event_to_task(
     task_id: str,
-    event: EventDefinition,
+    add_event: AddEventRequest,
     user: User = Depends(propelauth.require_user),
 ) -> Task:
     """
@@ -99,18 +100,18 @@ async def post_add_event_to_task(
     task = await get_task_by_id(task_id)
     await verify_if_propelauth_user_can_access_project(user, task.project_id)
 
-    updated_task = await add_event_to_task(task=task, event=event)
+    updated_task = await add_event_to_task(task=task, event=add_event.event)
     return updated_task
 
 
 @router.post(
-    "/tasks/{task_id}/delete-event",
+    "/tasks/{task_id}/remove-event",
     response_model=Task,
     description="Remove an event from a task",
 )
 async def post_remove_event_from_task(
     task_id: str,
-    event_name: str,
+    remove_event: RemoveEventRequest,
     user: User = Depends(propelauth.require_user),
 ) -> Task:
     """
@@ -121,6 +122,6 @@ async def post_remove_event_from_task(
 
     updated_task = await remove_event_from_task(
         task=task,
-        event_name=event_name,
+        event_name=remove_event.event_name,
     )
     return updated_task

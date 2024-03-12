@@ -25,17 +25,14 @@ const KPIs: React.FC<{}> = ({}) => {
   useEffect(() => {
     // Fetch aggregated metrics from the API
     (async () => {
-      const authorization_header = "Bearer " + accessToken;
-
-      const headers = {
-        Authorization: authorization_header, // Use an empty string if authorization_header is null
-        "Content-Type": "application/json",
-      };
       const response = await fetch(
         `/api/explore/${project_id}/nb_items_with_a_metadata_field/tasks/user_id`,
         {
           method: "GET",
-          headers: headers,
+          headers: {
+            Authorization: "Bearer " + accessToken,
+            "Content-Type": "application/json",
+          },
         },
       );
       const response_json = await response.json();
