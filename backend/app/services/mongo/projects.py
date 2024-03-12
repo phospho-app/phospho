@@ -187,14 +187,6 @@ async def get_all_tasks(
         pipeline = [
             {"$match": main_filter},
             {"$sort": {"created_at": -1}},
-            {
-                "$lookup": {
-                    "from": "events",
-                    "localField": "id",
-                    "foreignField": "task_id",
-                    "as": "events",
-                }
-            },
             # Deduplicate events names. We want the unique event_names of the task
             {
                 "$addFields": {

@@ -127,7 +127,6 @@ const AddEvent = ({
   const selectedProject = navigationStateStore(
     (state) => state.selectedProject,
   );
-  const project_id = selectedProject?.id;
 
   // Project events is an object : {event_name: EventDefinition}
   const projectEvents: Record<string, EventDefinition> =
