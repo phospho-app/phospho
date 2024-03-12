@@ -407,6 +407,7 @@ async def get_all_sessions(
                             "as": "events",
                         }
                     },
+                    {"$match": {"events.removed": {"$ne": True}}},
                     # If events is None, set to empty list
                     {"$addFields": {"events": {"$ifNull": ["$events", []]}}},
                     # Deduplicate events names. We want the unique event_names of the session
