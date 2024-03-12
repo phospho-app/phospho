@@ -23,6 +23,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Event, EventDefinition } from "@/models/events";
 import { Task, TaskWithEvents } from "@/models/tasks";
 import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { Check, Trash } from "lucide-react";
 import React from "react";
 import ReactMarkdown from "react-markdown";
@@ -36,6 +37,8 @@ const InteractiveEventBadge = ({
   task: TaskWithEvents;
   setTask: (task: TaskWithEvents) => void;
 }) => {
+  const { accessToken } = useUser();
+
   const selectedProject = navigationStateStore(
     (state) => state.selectedProject,
   );
@@ -76,17 +79,29 @@ const InteractiveEventBadge = ({
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-red-500"
-          onClick={() => {
+          onClick={async () => {
             setTask({
               ...task,
               events: task.events.filter(
                 (e) => e.event_name !== event.event_name,
               ),
             });
-            toast({
-              title: "Coming soon 🛠️",
-              description:
-                "This feature is still being developed. Your changes were not be saved.",
+            // toast({
+            //   title: "Coming soon 🛠️",
+            //   description:
+            //     "This feature is still being developed. Your changes were not be saved.",
+            // });
+
+            // Call the API to remove the event from the task
+            const response = await fetch(`/api/tasks/${task.id}/remove-event`, {
+              method: "POST",
+              headers: {
+                Authorization: "Bearer " + accessToken,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                event_name: event.event_name,
+              }),
             });
           }}
         >
@@ -107,15 +122,14 @@ const AddEvent = ({
   if (!task) {
     return <></>;
   }
-  const { toast } = useToast();
+  const { accessToken } = useUser();
   const events = task.events;
   const selectedProject = navigationStateStore(
     (state) => state.selectedProject,
   );
-  // Project events is an object : {event_name: EventDefinition}
+  const project_id = selectedProject?.id;
 
-  // const projectEvents: Map<string, EventDefinition> =
-  //   selectedProject?.settings?.events || null;
+  // Project events is an object : {event_name: EventDefinition}
   const projectEvents: Record<string, EventDefinition> =
     selectedProject?.settings?.events || null;
 
@@ -152,7 +166,7 @@ const AddEvent = ({
               <HoverCardTrigger>
                 <DropdownMenuItem
                   key={event_name}
-                  onClick={() => {
+                  onClick={async () => {
                     // Adds the event to the task and updates the task
                     setTask({
                       ...task,
@@ -169,11 +183,22 @@ const AddEvent = ({
                         },
                       ],
                     });
-                    toast({
-                      title: "Coming soon 🛠️",
-                      description:
-                        "This feature is still being developed. Your changes were not be saved.",
-                    });
+                    // Call the API to ad the event to the task
+                    const response = await fetch(
+                      `/api/tasks/${task.id}/add-event`,
+                      {
+                        method: "POST",
+                        headers: {
+                          Authorization: "Bearer " + accessToken,
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          event: event,
+                        }),
+                      },
+                    );
+
+                    // TODO : Use the response to update the task
                   }}
                 >
                   {event_name}
