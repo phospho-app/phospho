@@ -567,6 +567,7 @@ async def get_top_event_names_and_count(
         main_filter["event_name"] = {"$in": event_name_filter}
     # Event is not removed
     main_filter["removed"] = {"$ne": True}
+    # Either the remove filed doesn't exist, either it's not True
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
         {
