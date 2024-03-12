@@ -326,6 +326,7 @@ async def get_all_events(
     project_id: str,
     limit: Optional[int] = None,
     events_filter: Optional[ProjectEventsFilters] = None,
+    include_removed: bool = False,
 ) -> List[Event]:
     mongo_db = await get_mongo_db()
     additional_event_filters: Dict[str, object] = {}
@@ -350,6 +351,8 @@ async def get_all_events(
                     events_filter.created_at_end
                 ),
             }
+    if not include_removed:
+        additional_event_filters["removed"] = False
 
     events = (
         await mongo_db["events"]
