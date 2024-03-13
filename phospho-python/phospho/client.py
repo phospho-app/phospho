@@ -7,7 +7,7 @@ TODO
 - Add support for AsyncIO -> be non blocking in the background
 """
 import os
-from typing import Dict, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
 import requests
 
@@ -15,7 +15,7 @@ import phospho.config as config
 
 from phospho.sessions import SessionCollection
 from phospho.tasks import TaskCollection, Task
-from phospho.models import Comparison, Test
+from phospho.models import Comparison, Test, FlattenedTask
 
 
 class Client:
@@ -207,3 +207,16 @@ class Client:
             },
         )
         return response.json()
+
+    def update_tasks_flat(self, flattened_tasks: List[FlattenedTask]) -> None:
+        """
+        Update the tasks of a project using a flattened format.
+        """
+
+        self._post(
+            f"/projects/{self._project_id()}/tasks/flat-update",
+            payload={
+                "flattened_tasks": [task.model_dump() for task in flattened_tasks]
+            },
+        )
+        return None

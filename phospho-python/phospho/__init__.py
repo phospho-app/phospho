@@ -859,7 +859,6 @@ try:
         Get the tasks of a project in a pandas DataFrame.
         """
         global client
-
         if client is None:
             raise ValueError("Call phospho.init() before calling phospho.tasks_df()")
 
@@ -893,6 +892,32 @@ try:
 
         return tasks_df
 
+    def push_tasks_df(tasks_df: pd.DataFrame) -> None:
+        """
+        Update the tasks of a project from a pandas DataFrame.
+
+        The format of the input DataFrame must be the same as the one returned by `phospho.tasks_df()`.
+        """
+        global client
+        if client is None:
+            raise ValueError(
+                "Call phospho.init() before calling phospho.push_tasks_df()"
+            )
+
+        # Convert date to timestamp
+        tasks_df["task_created_at"] = tasks_df["task_created_at"].astype(int) / 10**9
+        tasks_df["task_eval_at"] = tasks_df["task_eval_at"].astype(int) / 10**9
+        if "event_created_at" in tasks_df.columns:
+            tasks_df["event_created_at"] = (
+                tasks_df["event_created_at"].astype(int) / 10**9
+            )
+
+        # TODO : split the dataframe in chunks if too big
+        flat_tasks_dict = tasks_df.to_dict(orient="records")
+        flattened_tasks = [
+            models.FlattenedTask.model_validate(task) for task in flat_tasks_dict
+        ]
+        client.update_tasks_flat(flattened_tasks)
 
 except ImportError:
     pass

@@ -101,7 +101,7 @@ async def get_flattened_tasks(
 
 
 @router.post(
-    "/projects/{project_id}/tasks/flat",
+    "/projects/{project_id}/tasks/flat-update",
     description="Update the tasks of a project using a flattened format",
 )
 async def post_flattened_tasks(
