@@ -23,6 +23,8 @@
   -
 * - {py:obj}`Comparison <phospho.models.Comparison>`
   -
+* - {py:obj}`FlattenedTask <phospho.models.FlattenedTask>`
+  -
 ````
 
 ### Data
@@ -489,6 +491,145 @@ Bases: {py:obj}`pydantic.BaseModel`
    None
 
 ```{autodoc2-docstring} phospho.models.Comparison.source
+```
+
+````
+
+`````
+
+`````{py:class} FlattenedTask(/, **data: typing.Any)
+:canonical: phospho.models.FlattenedTask
+
+Bases: {py:obj}`pydantic.BaseModel`
+
+````{py:attribute} task_id
+:canonical: phospho.models.FlattenedTask.task_id
+:type: str
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.task_id
+```
+
+````
+
+````{py:attribute} task_input
+:canonical: phospho.models.FlattenedTask.task_input
+:type: typing.Optional[str]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.task_input
+```
+
+````
+
+````{py:attribute} task_output
+:canonical: phospho.models.FlattenedTask.task_output
+:type: typing.Optional[str]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.task_output
+```
+
+````
+
+````{py:attribute} task_metadata
+:canonical: phospho.models.FlattenedTask.task_metadata
+:type: typing.Optional[dict]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.task_metadata
+```
+
+````
+
+````{py:attribute} task_eval
+:canonical: phospho.models.FlattenedTask.task_eval
+:type: typing.Optional[typing.Literal[success, failure]]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.task_eval
+```
+
+````
+
+````{py:attribute} task_eval_source
+:canonical: phospho.models.FlattenedTask.task_eval_source
+:type: typing.Optional[str]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.task_eval_source
+```
+
+````
+
+````{py:attribute} task_eval_at
+:canonical: phospho.models.FlattenedTask.task_eval_at
+:type: typing.Optional[int]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.task_eval_at
+```
+
+````
+
+````{py:attribute} task_created_at
+:canonical: phospho.models.FlattenedTask.task_created_at
+:type: typing.Optional[int]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.task_created_at
+```
+
+````
+
+````{py:attribute} session_id
+:canonical: phospho.models.FlattenedTask.session_id
+:type: typing.Optional[str]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.session_id
+```
+
+````
+
+````{py:attribute} session_length
+:canonical: phospho.models.FlattenedTask.session_length
+:type: typing.Optional[int]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.session_length
+```
+
+````
+
+````{py:attribute} event_name
+:canonical: phospho.models.FlattenedTask.event_name
+:type: typing.Optional[str]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.event_name
+```
+
+````
+
+````{py:attribute} event_created_at
+:canonical: phospho.models.FlattenedTask.event_created_at
+:type: typing.Optional[int]
+:value: >
+   None
+
+```{autodoc2-docstring} phospho.models.FlattenedTask.event_created_at
 ```
 
 ````
