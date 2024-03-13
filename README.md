@@ -5,7 +5,10 @@
 <a href="https://www.npmjs.com/package/phospho"><img src="https://img.shields.io/npm/v/phospho?style=flat-square&label=npm+phospho" alt="phospho npm package"></a>
 <a href="https://pypi.python.org/pypi/phospho"><img src="https://img.shields.io/pypi/v/phospho?style=flat-square&label=pypi+phospho" alt="phospho Python package on PyPi"></a>
 <a href="https://www.ycombinator.com/companies/phospho"><img src="https://img.shields.io/badge/Y%20Combinator-W24-orange?style=flat-square" alt="Y Combinator W24"></a>
-<a href="https://discord.gg/MXqBJ9pBsx"><img alt="Discord" src="https://img.shields.io/discord/1106594252043071509"></a>
+</div>
+
+<div align="center">
+<a href="https://discord.gg/m8wzBGQA55"><img src="https://dcbadge.vercel.app/api/server/m8wzBGQA55" alt="Join Discord"></a>
 </div>
 
 Phospho is the text analytics platform for LLM apps. Detect issues and extract insights from text messages of your users or your app. Gather user feedback and measure success. Iterate on your app to create the best conversational experience for your users.
