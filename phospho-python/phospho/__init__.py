@@ -852,27 +852,102 @@ def flush() -> None:
 try:
     import pandas as pd
 
-    def tasks_df(limit: int = 1000) -> pd.DataFrame:
+    def tasks_df(
+        limit: int = 1000, with_events: bool = True, with_sessions: bool = True
+    ) -> pd.DataFrame:
         """
-        Get all the tasks of a project in a pandas DataFrame.
+        Get the tasks of a project in a pandas DataFrame.
+
+        The granularity of the DataFrame can be set to include events and/or sessions.
+
+        If `with_events=True`, the DataFrame will have one row per (task, event).
+        If `with_events=False`, the DataFrame will have one row per task.
+
+        :param limit: The maximum number of tasks to return.
+        :param with_events: Whether to include events in the DataFrame. If True, the
+            DataFrame will have one row per (task, event). If False, the DataFrame will
+            have one row per task.
+        :param with_sessions: Whether to include sessions in the DataFrame.
         """
         global client
-
         if client is None:
             raise ValueError("Call phospho.init() before calling phospho.tasks_df()")
 
-        flattened_tasks = client.tasks_flat(limit=limit).get("flattened_tasks", [])
+        # Call the client
+        # TODO : Pagination when too many tasks
+        # TODO : Other formats than pandas
+        flattened_tasks = client.tasks_flat(
+            limit=limit,
+            with_events=with_events,
+            with_sessions=with_sessions,
+        ).get("flattened_tasks", [])
         tasks_df = pd.DataFrame(flattened_tasks)
-        # Convert task_created_at and event_created_at to a datetime
-        tasks_df["task_created_at"] = pd.to_datetime(
-            tasks_df["task_created_at"], unit="s"
-        )
-        tasks_df["task_eval_at"] = pd.to_datetime(tasks_df["task_eval_at"], unit="s")
-        tasks_df["event_created_at"] = pd.to_datetime(
-            tasks_df["event_created_at"], unit="s"
-        )
+
+        # Convert timestamps to datetime
+        for col in [
+            "task_created_at",
+            "task_eval_at",
+            "event_created_at",
+        ]:
+            if col in tasks_df.columns:
+                tasks_df[col] = pd.to_datetime(tasks_df[col], unit="s")
+
+        if not with_events:
+            # Drop columns starting with "event_"
+            tasks_df = tasks_df.loc[:, ~tasks_df.columns.str.startswith("event_")]
+
+        if not with_sessions:
+            # Drop columns starting with "session_"
+            tasks_df = tasks_df.loc[:, ~tasks_df.columns.str.startswith("session_")]
+
         return tasks_df
 
+    def push_tasks_df(tasks_df: pd.DataFrame) -> None:
+        """
+        Update the tasks of a project from a pandas DataFrame. Warning! This will overwrite the tasks.
+
+        The format of the input DataFrame must be the same as the one returned by `phospho.tasks_df()`.
+
+        Supported columns:
+        - task_id
+        - task_metadata
+        - task_eval
+        - task_eval_source
+        - task_eval_at
+
+        To update only some fields, send a dataframe with only the fields to update.
+
+        Example: The following will label the first 3 tasks as "success".
+
+        ```
+        tasks_df = phospho.tasks_df().head(3)
+        tasks_df["task_eval"] = "success"
+        phospho.push_tasks_df(tasks_df[["task_id", "task_eval"]])
+        ```
+        """
+        global client
+        if client is None:
+            raise ValueError(
+                "Call phospho.init() before calling phospho.push_tasks_df()"
+            )
+
+        formatted_tasks_df = tasks_df
+
+        # Convert date to timestamp
+        for col in [
+            "task_created_at",
+            "task_eval_at",
+            "event_created_at",
+        ]:
+            if col in formatted_tasks_df.columns:
+                formatted_tasks_df[col] = formatted_tasks_df[col].astype(int) / 10**9
+
+        # TODO : split the dataframe in chunks if too big
+        flat_tasks_dict = formatted_tasks_df.to_dict(orient="records")
+        flattened_tasks = [
+            models.FlattenedTask.model_validate(task) for task in flat_tasks_dict
+        ]
+        client.update_tasks_flat(flattened_tasks)
 
 except ImportError:
     pass

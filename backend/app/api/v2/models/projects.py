@@ -68,3 +68,9 @@ class UserMetadata(BaseModel):
 
 class Users(BaseModel):
     users: List[UserMetadata]
+
+
+class FlattenedTasksRequest(BaseModel):
+    limit: int = 1000
+    with_events: bool = True
+    with_sessions: bool = True
