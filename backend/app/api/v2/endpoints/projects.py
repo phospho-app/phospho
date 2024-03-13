@@ -113,8 +113,10 @@ async def post_flattened_tasks(
     Update the tasks of a project using a flattened format.
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
+    org_id = org["org"].get("org_id")
 
     await update_from_flattened_tasks(
+        org_id=org_id,
         project_id=project_id,
         flattened_tasks=flattened_tasks.flattened_tasks,
     )

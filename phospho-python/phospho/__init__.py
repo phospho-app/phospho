@@ -857,6 +857,17 @@ try:
     ) -> pd.DataFrame:
         """
         Get the tasks of a project in a pandas DataFrame.
+
+        The granularity of the DataFrame can be set to include events and/or sessions.
+
+        If `with_events=True`, the DataFrame will have one row per (task, event).
+        If `with_events=False`, the DataFrame will have one row per task.
+
+        :param limit: The maximum number of tasks to return.
+        :param with_events: Whether to include events in the DataFrame. If True, the
+            DataFrame will have one row per (task, event). If False, the DataFrame will
+            have one row per task.
+        :param with_sessions: Whether to include sessions in the DataFrame.
         """
         global client
         if client is None:
@@ -873,16 +884,15 @@ try:
         tasks_df = pd.DataFrame(flattened_tasks)
 
         # Convert timestamps to datetime
-        tasks_df["task_created_at"] = pd.to_datetime(
-            tasks_df["task_created_at"], unit="s"
-        )
-        tasks_df["task_eval_at"] = pd.to_datetime(tasks_df["task_eval_at"], unit="s")
+        for col in [
+            "task_created_at",
+            "task_eval_at",
+            "event_created_at",
+        ]:
+            if col in tasks_df.columns:
+                tasks_df[col] = pd.to_datetime(tasks_df[col], unit="s")
 
-        if with_events:
-            tasks_df["event_created_at"] = pd.to_datetime(
-                tasks_df["event_created_at"], unit="s"
-            )
-        else:
+        if not with_events:
             # Drop columns starting with "event_"
             tasks_df = tasks_df.loc[:, ~tasks_df.columns.str.startswith("event_")]
 
@@ -894,9 +904,26 @@ try:
 
     def push_tasks_df(tasks_df: pd.DataFrame) -> None:
         """
-        Update the tasks of a project from a pandas DataFrame.
+        Update the tasks of a project from a pandas DataFrame. Warning! This will overwrite the tasks.
 
         The format of the input DataFrame must be the same as the one returned by `phospho.tasks_df()`.
+
+        Supported columns:
+        - task_id
+        - task_metadata
+        - task_eval
+        - task_eval_source
+        - task_eval_at
+
+        To update only some fields, send a dataframe with only the fields to update.
+
+        Example: The following will label the first 3 tasks as "success".
+
+        ```
+        tasks_df = phospho.tasks_df().head(3)
+        tasks_df["task_eval"] = "success"
+        phospho.push_tasks_df(tasks_df[["task_id", "task_eval"]])
+        ```
         """
         global client
         if client is None:
@@ -907,16 +934,13 @@ try:
         formatted_tasks_df = tasks_df
 
         # Convert date to timestamp
-        formatted_tasks_df["task_created_at"] = (
-            formatted_tasks_df["task_created_at"].astype(int) / 10**9
-        )
-        formatted_tasks_df["task_eval_at"] = (
-            formatted_tasks_df["task_eval_at"].astype(int) / 10**9
-        )
-        if "event_created_at" in formatted_tasks_df.columns:
-            formatted_tasks_df["event_created_at"] = (
-                formatted_tasks_df["event_created_at"].astype(int) / 10**9
-            )
+        for col in [
+            "task_created_at",
+            "task_eval_at",
+            "event_created_at",
+        ]:
+            if col in formatted_tasks_df.columns:
+                formatted_tasks_df[col] = formatted_tasks_df[col].astype(int) / 10**9
 
         # TODO : split the dataframe in chunks if too big
         flat_tasks_dict = formatted_tasks_df.to_dict(orient="records")

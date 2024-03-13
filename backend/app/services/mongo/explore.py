@@ -2,6 +2,7 @@
 Explore metrics service
 """
 import datetime
+from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import pandas as pd
@@ -10,6 +11,7 @@ import pydantic
 # Models
 from app.api.platform.models import ABTest, ProjectEventsFilters, Topics
 from app.api.v2.models import FlattenedTask, ProjectTasksFilter
+from app.db.models import Eval
 from app.db.mongo import get_mongo_db
 from app.services.mongo.projects import (
     get_all_events,
@@ -19,7 +21,7 @@ from app.services.mongo.sessions import compute_session_length
 from app.utils import generate_timestamp, get_last_week_timestamps
 from fastapi import HTTPException
 from loguru import logger
-from pymongo import UpdateOne
+from pymongo import InsertOne, UpdateOne
 
 
 async def project_has_tasks(project_id: str) -> bool:
@@ -1895,7 +1897,9 @@ async def fetch_flattened_tasks(
 
 
 async def update_from_flattened_tasks(
-    project_id: str, flattened_tasks: List[FlattenedTask]
+    org_id: str,
+    project_id: str,
+    flattened_tasks: List[FlattenedTask],
 ) -> bool:
     """
     Update the tasks of a project from a flattened representation.
@@ -1905,6 +1909,11 @@ async def update_from_flattened_tasks(
 
     task_id
     task_metadata
+    task_eval
+    task_eval_source
+    task_eval_at
+
+    TODO: Add support for updating the events
     """
 
     # Verify that all the task_id belong to the project_id
@@ -1933,27 +1942,46 @@ async def update_from_flattened_tasks(
     # A single row is a combination of task x event x eval
     # TODO : Infer the granularity from the available non-None columns
 
-    # Reformat the list into a list of UpdateMany or DeleteMany
-    task_update = {}
+    task_update: Dict[str, Dict[str, object]] = defaultdict(dict)
+    eval_create_statements = []
     for task in flattened_tasks:
-        if task.task_metadata:
-            task_update[task.task_id] = {
-                "$set": {
-                    "metadata": task.task_metadata,
-                }
-            }
+        if task.task_metadata is not None:
+            task_update[task.task_id]["metadata"] = task.task_metadata
+        if task.task_eval is not None and task.task_eval in ["success", "failure"]:
+            task_update[task.task_id]["flag"] = task.task_eval
+            last_eval = Eval(
+                org_id=org_id,
+                project_id=project_id,
+                value=task.task_eval,
+                session_id=task.session_id,
+                task_id=task.task_id,
+                source="owner",
+            )
+            # Override source and created_at if provided
+            if task.task_eval_source is not None:
+                last_eval.source = task.task_eval_source
+            if task.task_eval_at is not None:
+                last_eval.created_at = task.task_eval_at
+            task_update[task.task_id]["last_eval"] = last_eval.model_dump()
+            eval_create_statements.append(
+                InsertOne(
+                    last_eval.model_dump(),
+                )
+            )
 
-    update_statements = [
+    # Reformat the list into a list of UpdateOne or DeleteOne
+    tasks_update_statements = [
         UpdateOne(
             {"id": task_id, "project_id": project_id},
-            values_to_update,
+            {"$set": values_to_update},
         )
         for task_id, values_to_update in task_update.items()
     ]
 
     # Execute the update
-    if update_statements:
-        results = await mongo_db["tasks"].bulk_write(update_statements)
-        return results.modified_count > 0
+    if tasks_update_statements:
+        tasks_results = await mongo_db["tasks"].bulk_write(tasks_update_statements)
+    if eval_create_statements:
+        eval_results = await mongo_db["evals"].bulk_write(eval_create_statements)
 
-    return False
+    return tasks_results.modified_count > 0 or eval_results.inserted_count > 0
