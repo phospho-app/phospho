@@ -188,13 +188,22 @@ class Client:
         )
         return Test(**response.json())
 
-    def tasks_flat(self, limit: int = 1000) -> dict:
+    def tasks_flat(
+        self,
+        limit: int = 1000,
+        with_events: bool = True,
+        with_sessions: bool = True,
+    ) -> dict:
         """
-        Get all the tasks of a project in a flattened format.
+        Get the tasks of a project in a flattened format.
         """
 
-        response = self._get(
+        response = self._post(
             f"/projects/{self._project_id()}/tasks/flat",
-            params={"limit": limit},
+            payload={
+                "limit": limit,
+                "with_events": with_events,
+                "with_sessions": with_sessions,
+            },
         )
         return response.json()

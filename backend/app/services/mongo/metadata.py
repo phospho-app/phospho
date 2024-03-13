@@ -1,7 +1,8 @@
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional
 from app.api.v2.models.projects import UserMetadata
 from fastapi import HTTPException
 from loguru import logger
+from app.services.mongo.sessions import compute_session_length
 
 from app.db.mongo import get_mongo_db
 
@@ -180,41 +181,7 @@ async def fetch_user_metadata(
         ]
 
     # First, we update the relevant sessions collection with the session_length
-    session_pipeline = [
-        {
-            "$match": {"project_id": project_id},
-        },
-        {
-            "$lookup": {
-                "from": "tasks",
-                "localField": "id",
-                "foreignField": "session_id",
-                "as": "tasks",
-            }
-        },
-        {
-            "$match": {
-                "$and": [
-                    {"tasks": {"$ne": None}},
-                    {"tasks": {"$ne": []}},
-                    {
-                        "tasks.metadata.user_id": {"$ne": None},
-                    },
-                ]
-            }
-        },
-        {"$set": {"session_length": {"$size": "$tasks"}}},
-        {"$unset": "tasks"},
-        {
-            "$merge": {
-                "into": "sessions",
-                "on": "_id",
-                "whenMatched": "merge",
-                "whenNotMatched": "discard",
-            }
-        },
-    ]
-    await mongo_db["sessions"].aggregate(session_pipeline).to_list(length=None)
+    await compute_session_length(project_id)
 
     # Then, we fetch the user metadata
     metadata_pipeline = match_pipeline + [
@@ -494,36 +461,7 @@ async def breakdown_by_sum_of_metadata_field(
         ]
 
     if metric.lower() == "avg session length":
-        session_pipeline = [
-            {"$match": {"project_id": project_id}},
-            {
-                "$lookup": {
-                    "from": "tasks",
-                    "localField": "id",
-                    "foreignField": "session_id",
-                    "as": "tasks",
-                }
-            },
-            {
-                "$match": {
-                    "$and": [
-                        {"tasks": {"$ne": None}},
-                        {"tasks": {"$ne": []}},
-                    ]
-                }
-            },
-            {"$set": {"session_length": {"$size": "$tasks"}}},
-            {"$unset": "tasks"},
-            {
-                "$merge": {
-                    "into": "sessions",
-                    "on": "_id",
-                    "whenMatched": "merge",
-                    "whenNotMatched": "discard",
-                }
-            },
-        ]
-        await mongo_db["sessions"].aggregate(session_pipeline).to_list(length=None)
+        await compute_session_length(project_id)
         pipeline += [
             {
                 "$lookup": {

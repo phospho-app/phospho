@@ -852,25 +852,45 @@ def flush() -> None:
 try:
     import pandas as pd
 
-    def tasks_df(limit: int = 1000) -> pd.DataFrame:
+    def tasks_df(
+        limit: int = 1000, with_events: bool = True, with_sessions: bool = True
+    ) -> pd.DataFrame:
         """
-        Get all the tasks of a project in a pandas DataFrame.
+        Get the tasks of a project in a pandas DataFrame.
         """
         global client
 
         if client is None:
             raise ValueError("Call phospho.init() before calling phospho.tasks_df()")
 
-        flattened_tasks = client.tasks_flat(limit=limit).get("flattened_tasks", [])
+        # Call the client
+        # TODO : Pagination when too many tasks
+        # TODO : Other formats than pandas
+        flattened_tasks = client.tasks_flat(
+            limit=limit,
+            with_events=with_events,
+            with_sessions=with_sessions,
+        ).get("flattened_tasks", [])
         tasks_df = pd.DataFrame(flattened_tasks)
-        # Convert task_created_at and event_created_at to a datetime
+
+        # Convert timestamps to datetime
         tasks_df["task_created_at"] = pd.to_datetime(
             tasks_df["task_created_at"], unit="s"
         )
         tasks_df["task_eval_at"] = pd.to_datetime(tasks_df["task_eval_at"], unit="s")
-        tasks_df["event_created_at"] = pd.to_datetime(
-            tasks_df["event_created_at"], unit="s"
-        )
+
+        if with_events:
+            tasks_df["event_created_at"] = pd.to_datetime(
+                tasks_df["event_created_at"], unit="s"
+            )
+        else:
+            # Drop columns starting with "event_"
+            tasks_df = tasks_df.loc[:, ~tasks_df.columns.str.startswith("event_")]
+
+        if not with_sessions:
+            # Drop columns starting with "session_"
+            tasks_df = tasks_df.loc[:, ~tasks_df.columns.str.startswith("session_")]
+
         return tasks_df
 
 
