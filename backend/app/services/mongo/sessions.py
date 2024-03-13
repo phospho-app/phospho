@@ -37,6 +37,13 @@ async def get_session_by_id(session_id: str) -> Session:
 
 
 async def format_session_transcript(session: Session) -> str:
+    """
+    Format the transcript of a session into a human-readable string.
+
+    Eg:
+    User: Hello
+    Assistant: Hi there!
+    """
     transcript = ""
     mongo_db = await get_mongo_db()
 
@@ -56,6 +63,9 @@ async def format_session_transcript(session: Session) -> str:
 
 
 async def fetch_session_tasks(session_id: str, limit: int = 1000) -> List[Task]:
+    """
+    Fetch all tasks for a given session id.
+    """
     mongo_db = await get_mongo_db()
     tasks = (
         await mongo_db["tasks"]
@@ -68,6 +78,9 @@ async def fetch_session_tasks(session_id: str, limit: int = 1000) -> List[Task]:
 
 
 async def edit_session_metadata(session_data: Session, **kwargs) -> Session:
+    """
+    Updates the metadata of a session.
+    """
     mongo_db = await get_mongo_db()
     for key, value in kwargs.items():
         if value is not None:
@@ -82,3 +95,46 @@ async def edit_session_metadata(session_data: Session, **kwargs) -> Session:
     )
     updated_session = await get_session_by_id(session_data.id)
     return updated_session
+
+
+async def compute_session_length(project_id: str):
+    """
+    Executes an aggregation pipeline to compute the length of each session for a given project.
+
+    This can be made smarter by:
+    1. Storing the latest update time of a session
+    2. Fetching the session_id in the tasks collection that were created_at after the latest update time
+    3. Updating the session length only for those sessions
+    """
+    mongo_db = await get_mongo_db()
+    session_pipeline = [
+        {"$match": {"project_id": project_id}},
+        {
+            "$lookup": {
+                "from": "tasks",
+                "localField": "id",
+                "foreignField": "session_id",
+                "as": "tasks",
+            }
+        },
+        {
+            "$match": {
+                "$and": [
+                    {"tasks": {"$ne": None}},
+                    {"tasks": {"$ne": []}},
+                ]
+            }
+        },
+        {"$set": {"session_length": {"$size": "$tasks"}}},
+        {"$unset": "tasks"},
+        {
+            "$merge": {
+                "into": "sessions",
+                "on": "_id",
+                "whenMatched": "merge",
+                "whenNotMatched": "discard",
+            }
+        },
+    ]
+
+    await mongo_db["sessions"].aggregate(session_pipeline).to_list(length=None)
