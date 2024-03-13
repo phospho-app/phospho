@@ -72,23 +72,19 @@ git clone git@github.com:phospho-app/phospho.git && cd phospho
 - [Cohere](https://cohere.com) (the free developer tier is enough for testing purposes)
 - [Propelauth](https://www.propelauth.com) (the free tier is enough for testing purposes)
 
-3. Copy the `.env.example` files into `.env.docker` files
+3. Create a copy of the `.env.example` files as a `.env.docker` files
 
 ```bash
-cp backend/.env.example backend/.env.docker
-cp platform/.env.example platform/.env.docker
-cp extractor/.env.example extractor/.env.docker
+cp .env.example .env.docker
 ```
 
-4. Update the `.env.docker` files
+4. Complete the `.env.docker` files with secret variables
 
 ```bash
-vim backend/.env.docker # or emacs or vscode or nano
-vim platform/.env.docker
-vim extractor/.env.docker
+vim .env.docker # or emacs or vscode or nano
 ```
 
-5. Launch the project.
+5. Launch the project
 
 ```bash
 docker-compose up
