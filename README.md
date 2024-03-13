@@ -94,7 +94,7 @@ docker-compose up
 6. Start using phospho
 
 Go the platform at `http://localhost:3000` to grab your project id and api key.
-Logged your first message :
+Log your first message :
 
 ```bash
 export PHOSPHO_PROJECT_ID="your_project_id"
