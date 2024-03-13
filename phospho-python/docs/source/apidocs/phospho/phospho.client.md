@@ -125,4 +125,20 @@
 
 ````
 
+````{py:method} tasks_flat(limit: int = 1000, with_events: bool = True, with_sessions: bool = True) -> dict
+:canonical: phospho.client.Client.tasks_flat
+
+```{autodoc2-docstring} phospho.client.Client.tasks_flat
+```
+
+````
+
+````{py:method} update_tasks_flat(flattened_tasks: typing.List[phospho.models.FlattenedTask]) -> None
+:canonical: phospho.client.Client.update_tasks_flat
+
+```{autodoc2-docstring} phospho.client.Client.update_tasks_flat
+```
+
+````
+
 `````

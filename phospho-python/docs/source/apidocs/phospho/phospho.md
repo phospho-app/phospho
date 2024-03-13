@@ -220,7 +220,7 @@ phospho.integrations
 ```
 ````
 
-````{py:function} user_feedback(task_id: str, flag: typing.Optional[typing.Literal[success, failure]] = None, notes: typing.Optional[str] = None, source: str = 'user', raw_flag: typing.Optional[str] = None, raw_flag_to_flag: typing.Optional[typing.Callable[[typing.Any], typing.Literal[success, failure]]] = None) -> phospho.tasks.Task
+````{py:function} user_feedback(task_id: str, flag: typing.Optional[typing.Literal[success, failure]] = None, notes: typing.Optional[str] = None, source: str = 'user', raw_flag: typing.Optional[str] = None, raw_flag_to_flag: typing.Optional[typing.Callable[[typing.Any], typing.Literal[success, failure]]] = None) -> typing.Optional[phospho.tasks.Task]
 :canonical: phospho.user_feedback
 
 ```{autodoc2-docstring} phospho.user_feedback
