@@ -4,7 +4,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./platform/.env.docker
+      - ./.env.docker
     networks:
       - app_network
     depends_on:
@@ -14,7 +14,7 @@ services:
     ports:
       - "80:80"
     env_file:
-      - ./backend/.env.docker
+      - ./.env.docker
     networks:
       - app_network
     depends_on:
@@ -25,7 +25,7 @@ services:
     ports:
       - "7605:7605"
     env_file:
-      - ./extractor/.env.docker
+      - ./.env.docker
     networks:
       - app_network
     depends_on:
