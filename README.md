@@ -15,6 +15,8 @@ Phospho is the text analytics platform for LLM apps. Detect issues and extract i
 
 Ship your LLM app in production with confidence, and iterate on it with insights from your users.
 
+Learn more in the full [documentation](https://docs.phospho.ai/welcome).
+
 ## Key Features
 
 - Flexible logging
