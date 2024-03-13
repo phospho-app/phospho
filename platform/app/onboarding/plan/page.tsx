@@ -4,6 +4,7 @@ import Pricing from "@/components/settings/pricing";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import FullPageLoader from "@/components/full-page-loader";
 
 export default function Page({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -22,7 +23,11 @@ export default function Page({ params }: { params: { id: string } }) {
   // It is disbaled in preview mode
   // In this case, users are redirected to the root page
   if (process.env.NEXT_PUBLIC_APP_ENV === "preview") {
-    router.push("org/transcripts/tasks");
+    router.push("/org/transcripts/tasks");
+  }
+
+  if (process.env.NEXT_PUBLIC_APP_ENV === "preview") {
+    return <FullPageLoader/>;
   }
 
   const searchParams = useSearchParams();
