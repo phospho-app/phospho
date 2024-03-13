@@ -81,7 +81,7 @@ cp .env.example .env.docker
 4. Complete the `.env.docker` file with secret variables
 
 ```bash
-nano .env.docker # or emacs or vscode or nano
+nano .env.docker # or emacs or vscode or vim
 ```
 
 5. Launch the project
