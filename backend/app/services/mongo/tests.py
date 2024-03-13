@@ -172,7 +172,6 @@ async def compare_answers(
 
     openai_client = openai_client = AsyncOpenAI(
         api_key=config.OPENAI_API_KEY,
-        organization=config.OPENAI_ORGANIZATION,
     )
 
     if instructions is not None and instructions != "":

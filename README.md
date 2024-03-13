@@ -28,69 +28,15 @@ Ship your LLM app in production with confidence, and iterate on it with insights
 
 https://github.com/phospho-app/phospho/assets/78322686/fb1379bf-32f1-492e-be86-d29879056dc3
 
-## Quickstart: Discover the phospho lab
+## Quickstart: Discover the phospho lab in pure python
 
 The phospho lab is the core analytics component of phospho. The phospho lab helps you run batched evaluations and event detections on your messages.
 
-### Step 1 - Install the phospho lab:
-
-```
+```bash
 pip install "phospho[lab]"
 ```
 
-We will run a simple Event detection job that use OpenAI to read a message and figure out whether an Event happened or not.
-
-```bash
-export OPENAI_API_KEY=your_openai_api_key
-```
-
-### Step 2 - Run the event detection job:
-
-Phospho helps you define a bunch of jobs to efficiently run in a workload on users messages.
-
-```python
-from phospho import lab
-
-# A workload is a set of jobs to run on messages
-# A job is a Python function that leverages LLM and ML models to extract insights from text
-workload = lab.Workload()
-workload.add_job(
-   lab.Job(
-         id="question_answering",
-         job_function=lab.job_library.event_detection,
-         config=lab.EventConfig(
-            event_name="question_answering",
-            event_description="The user asks a question to the assistant",
-         ),
-   )
-)
-
-# The workload runs the jobs in parallel on all the messages to perform analytics
-await workload.async_run(
-   messages=[
-      lab.Message(
-            id="my_message_id",
-            role="User",
-            content="What is the weather today in Paris?",
-         )
-   ],
-)
-
-message_results = workload.results["my_message_id"]
-print(f"The event question_answering was detected: {message_results['question_answering'].value}")
-```
-
-### Step 3 - Check the results:
-
-```
-The event question_answering was detected: True
-```
-
-This event detection pipeline can then be linked back to your product or alerting solution (eg. Slack) through webhooks or used to notice patterns in the user data.
-
-You can use other jobs from the phospho library or create your own jobs to run on your messages.
-
-See more examples of what you can do with phospho in the [examples folder](./examples).
+Follow the quickstart [here](https://docs.phospho.ai/local/quickstart).
 
 ## Self deploy
 
@@ -102,26 +48,61 @@ This repository contains the implementation of the platform frontend, the API ba
 - `platform`: NextJS frontend
 - `internal-tools`: Platform management tools
 
+### Prerequisites
+
+Ensure you have the following installed:
+
+- Docker
+- Docker Compose
+
+### 60 seconds deploy
+
 1. Clone the repo:
 
 ```bash
-git clone git@github.com:phospho-app/phospho.git
+git clone git@github.com:phospho-app/phospho.git && cd phospho
 ```
 
 2. Register to the core external services:
-   - OpenAI (or another OpenAI-compatible model provider)
-   - Cohere
-   - MongoDB Atlas (Alternative: self host a MongoDB)
-3. (Optional) Extend the platform capabilities by registering to additional services:
 
-   - Resend (emails)
-   - Sentry (performance analytics)
-   - Propelauth (authentication)
-   - Stripe (payment)
+- [OpenAI](https://platform.openai.com) (or another OpenAI-compatible model provider)
+- [Cohere](https://cohere.com) (the free developer tier is enough for testing purposes)
+- [Propelauth](https://www.propelauth.com) (the free tier is enough for testing purposes)
 
-4. Follow the deployment instructions in backend/README.md and platform/README.md
+3. Copy the `.env.example` files into `.env.docker` files
 
-5. Enjoy !
+```bash
+cp backend/.env.example backend/.env.docker
+cp platform/.env.example platform/.env.docker
+cp extractor/.env.example extractor/.env.docker
+```
+
+4. Update the `.env.docker` files
+
+```bash
+vim backend/.env.docker # or emacs or vscode or nano
+vim platform/.env.docker
+vim extractor/.env.docker
+```
+
+5. Launch the project.
+
+```bash
+docker-compose up
+```
+
+6. Start using phospho
+
+Go the platform at `http://localhost:3000` to grab your project id and api key.
+Log your first message :
+
+```bash
+export PHOSPHO_PROJECT_ID="your_project_id"
+export PHOSPHO_API_KEY="your_api_key"
+curl -X POST "http://localhost:80/v2/log/$PHOSPHO_PROJECT_ID" -H "Authorization: Bearer $PHOSPHO_API_KEY" -H "Content-Type: application/json" -d '{"batched_log_events": [{"input": Hi, I just logged my first task to phospho!","output": "Congrats! Keep pushing!"}]}'
+```
+
+Don't forget to specify your backend url when you use the client libraries in your app. By default it's `http://localhost:80`
 
 ## Access the hosted version
 

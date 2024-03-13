@@ -17,4 +17,4 @@ RUN poetry config virtualenvs.create false && poetry install --no-interaction --
 COPY ./app /src/app
 
 # Run the server on port 80
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7605"]
