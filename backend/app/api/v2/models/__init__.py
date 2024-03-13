@@ -11,6 +11,7 @@ from .projects import (
     ProjectUpdateRequest,
     UserMetadata,
     Users,
+    FlattenedTasksRequest,
 )
 from .search import SearchQuery, SearchResponse
 from .sessions import Session, SessionCreationRequest, Sessions, SessionUpdateRequest
