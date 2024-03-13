@@ -2,7 +2,13 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends
 
-from app.api.v2.models import ProjectTasksFilter, Sessions, Tasks, FlattenedTasks
+from app.api.v2.models import (
+    ProjectTasksFilter,
+    Sessions,
+    Tasks,
+    FlattenedTasks,
+    FlattenedTasksRequest,
+)
 
 # from app.db.client import firestore_db as firestore_db
 from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
@@ -66,14 +72,14 @@ async def get_tasks(
     return Tasks(tasks=tasks)
 
 
-@router.get(
+@router.post(
     "/projects/{project_id}/tasks/flat",
     response_model=FlattenedTasks,
     description="Get all the tasks of a project",
 )
 async def get_flattened_tasks(
     project_id: str,
-    limit: int = 1000,
+    flattened_tasks_request: FlattenedTasksRequest,
     org: dict = Depends(authenticate_org_key),
 ) -> FlattenedTasks:
     """
@@ -87,7 +93,9 @@ async def get_flattened_tasks(
 
     flattened_tasks = await fetch_flattened_tasks(
         project_id=project_id,
-        limit=limit,
+        limit=flattened_tasks_request.limit,
+        with_events=flattened_tasks_request.with_events,
+        with_sessions=flattened_tasks_request.with_sessions,
     )
     return FlattenedTasks(flattened_tasks=flattened_tasks)
 

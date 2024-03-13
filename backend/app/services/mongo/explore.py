@@ -9,12 +9,13 @@ import pydantic
 
 # Models
 from app.api.platform.models import ABTest, ProjectEventsFilters, Topics
-from app.api.v2.models import ProjectTasksFilter, FlattenedTask
+from app.api.v2.models import FlattenedTask, ProjectTasksFilter
 from app.db.mongo import get_mongo_db
 from app.services.mongo.projects import (
     get_all_events,
     get_all_tasks,
 )
+from app.services.mongo.sessions import compute_session_length
 from app.utils import generate_timestamp, get_last_week_timestamps
 from fastapi import HTTPException
 from loguru import logger
@@ -1785,7 +1786,10 @@ async def get_dashboard_aggregated_metrics(
 
 
 async def fetch_flattened_tasks(
-    project_id: str, limit: int = 1000
+    project_id: str,
+    limit: int = 1000,
+    with_events: bool = True,
+    with_sessions: bool = True,
 ) -> List[FlattenedTask]:
     """
     Get a flattened representation of the tasks of a project for analytics
@@ -1794,59 +1798,90 @@ async def fetch_flattened_tasks(
     mongo_db = await get_mongo_db()
 
     # Aggregation pipeline
-    pipeline = [
+    pipeline: List[Dict[str, object]] = [
         {"$match": {"project_id": project_id}},
-        # Deduplicate events based on event_name
-        {
-            "$set": {
-                "events": {
-                    "$reduce": {
-                        "input": "$events",
-                        "initialValue": [],
-                        "in": {
-                            "$concatArrays": [
-                                "$$value",
-                                {
-                                    "$cond": [
+    ]
+    return_columns = {
+        "task_id": "$id",
+        "task_input": "$input",
+        "task_output": "$output",
+        "task_metadata": "$metadata",
+        "task_eval": "$flag",
+        "task_eval_source": "$last_eval.source",
+        "task_eval_at": "$last_eval.created_at",
+        "task_created_at": "$created_at",
+        "session_id": "$session_id",
+    }
+    if with_events:
+        pipeline.extend(
+            [
+                # Deduplicate events based on event_name
+                {
+                    "$set": {
+                        "events": {
+                            "$reduce": {
+                                "input": "$events",
+                                "initialValue": [],
+                                "in": {
+                                    "$concatArrays": [
+                                        "$$value",
                                         {
-                                            "$in": [
-                                                "$$this.event_name",
-                                                "$$value.event_name",
+                                            "$cond": [
+                                                {
+                                                    "$in": [
+                                                        "$$this.event_name",
+                                                        "$$value.event_name",
+                                                    ]
+                                                },
+                                                [],
+                                                ["$$this"],
                                             ]
                                         },
-                                        [],
-                                        ["$$this"],
                                     ]
                                 },
-                            ]
+                            }
                         },
                     }
                 },
-            }
-        },
-        {
-            "$unwind": {
-                "path": "$events",
-                "preserveNullAndEmptyArrays": True,
-            }
-        },
-        {
-            "$project": {
-                "task_id": "$id",
-                "task_input": "$input",
-                "task_output": "$output",
-                "task_metadata": "$metadata",
-                "task_eval": "$flag",
-                "task_eval_source": "$last_eval.source",
-                "task_eval_at": "$last_eval.created_at",
-                "task_created_at": "$created_at",
-                "session_id": "$session_id",
-                "event_name": "$events.event_name",
-                "event_created_at": "$events.created_at",
-            }
-        },
-        {"$sort": {"task_created_at": -1}},
-    ]
+                {
+                    "$unwind": {
+                        "path": "$events",
+                        "preserveNullAndEmptyArrays": True,
+                    }
+                },
+            ]
+        )
+        return_columns = {
+            **return_columns,
+            "event_name": "$event_name",
+            "event_created_at": "$event_created_at",
+        }
+    if with_sessions:
+        await compute_session_length(project_id)
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "sessions",
+                        "localField": "session_id",
+                        "foreignField": "id",
+                        "as": "session",
+                    }
+                },
+                {"$unwind": {"path": "$session", "preserveNullAndEmptyArrays": True}},
+            ]
+        )
+        return_columns = {
+            **return_columns,
+            "session_length": "$session.session_length",
+        }
+
+    pipeline.extend(
+        [
+            {"$project": return_columns},
+            {"$sort": {"task_created_at": -1}},
+        ]
+    )
     # Query Mongo
     flattened_tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
     # Ignore _id field
@@ -1896,6 +1931,7 @@ async def update_from_flattened_tasks(
         )
 
     # A single row is a combination of task x event x eval
+    # TODO : Infer the granularity from the available non-None columns
 
     # Reformat the list into a list of UpdateMany or DeleteMany
     task_update = {}
