@@ -1,8 +1,9 @@
 """
-This agent is called by the CICD after deploying to staging. 
-This is part of integration testing. 
+This agent is called by the CICD after deploying to staging.
+This is part of integration testing.
 We check that the onboarding and logging flow works as expected.
 """
+
 import os
 import time
 import phospho

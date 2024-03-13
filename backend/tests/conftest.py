@@ -2,6 +2,7 @@
 Configuration test file of the project
 Major pytest fixtures (app, db,...) are defined here
 """
+
 import logging
 import os
 
@@ -68,7 +69,7 @@ def init_db():
 @pytest.fixture
 def backend_url():
     # The url to the deployed backend
-    return os.environ["PHOSPHO_BACKEND_URL"]
+    return os.getenv("PHOSPHO_BACKEND_URL", "http://127.0.0.1:8000")
 
 
 # Propelauth fixtures
