@@ -100,7 +100,7 @@ Log your first message :
 ```bash
 export PHOSPHO_PROJECT_ID="your_project_id"
 export PHOSPHO_API_KEY="your_api_key"
-curl -X POST "http://localhost:80/v2/log/$PHOSPHO_PROJECT_ID" -H "Authorization: Bearer $PHOSPHO_API_KEY" -H "Content-Type: application/json" -d '{"batched_log_events": [{"input": Hi, I just logged my first task to phospho!","output": "Congrats! Keep pushing!"}]}'
+curl -X POST "http://localhost:80/v2/log/$PHOSPHO_PROJECT_ID" -H "Authorization: Bearer $PHOSPHO_API_KEY" -H "Content-Type: application/json" -d '{"batched_log_events": [{"input": "Hi, I just logged my first task to phospho!","output": "Congrats! Keep pushing!"}]}'
 ```
 
 Don't forget to specify your backend url when you use the client libraries in your app. By default it's `http://localhost:80`
