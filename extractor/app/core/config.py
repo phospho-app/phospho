@@ -11,8 +11,8 @@ logger.info("Loading environment variables from .env file")
 
 ### ENVIRONMENT ###
 # To check if we are in production or `test` environment.
-# ENV can be test, staging or production. Default: test
-ENVIRONMENT = os.getenv("ENVIRONMENT", "test")
+# ENV can be test, staging or production. Default: preview
+ENVIRONMENT = os.getenv("ENVIRONMENT", "preview")
 logger.info(f"ENVIRONMENT: {ENVIRONMENT}")
 
 ### MONGODB ###
@@ -35,7 +35,6 @@ if not EXTRACTOR_SECRET_KEY:
 API_KEY_WAITING_TIME = 0.1  # in seconds
 
 ### OPENAI ###
-OPENAI_ORGANIZATION = "org-kH8tMbx6wJGWWUb3qQiLk73Z"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 ### WATCHERS ###
