@@ -1938,7 +1938,9 @@ async def update_from_flattened_tasks(
     for task in flattened_tasks:
         if task.task_metadata:
             task_update[task.task_id] = {
-                "metadata": task.task_metadata,
+                "$set": {
+                    "metadata": task.task_metadata,
+                }
             }
 
     update_statements = [
