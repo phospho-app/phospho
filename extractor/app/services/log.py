@@ -3,6 +3,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import openai
 from loguru import logger
 
+from app.core import config
+
 # DB
 from app.api.v1.models import LogEvent
 from app.db.models import Session, Task
@@ -185,6 +187,10 @@ async def add_vectorized_tasks(
     """
     Compute the vector representation of the tasks and add them to Qdrant database
     """
+    if config.ENVIRONMENT == "preview":
+        logger.info("Disabled in preview")
+        return
+
     logger.info(f"Vectorizing {len(tasks_id)} tasks and adding them to Qdrant")
     mongo_db = await get_mongo_db()
     qdrant_db = await get_qdrant()
