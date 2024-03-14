@@ -22,17 +22,10 @@ pytest-asyncio = "^0.23.5"
 sentry-sdk = { extras = ["fastapi"], version = "^1.40.5" }
 qdrant-client = "^1.7.3"
 
-# In dev, the phospho package is at the root
 [tool.poetry.group.dev]
 optional = true
 [tool.poetry.group.dev.dependencies]
-phospho = { path = "../phospho-python", develop = true, extras = ["lab"] }
-
-# For deployment, we copy the phospho package to the app package
-[tool.poetry.group.deploy]
-optional = true
-[tool.poetry.group.deploy.dependencies]
-phospho = { path = "./phospho-python", develop = false, extras = ["lab"] }
+phospho = { path = "../phospho-python", develop = false, extras = ["lab"] }
 
 
 [build-system]
