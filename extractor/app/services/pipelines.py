@@ -41,7 +41,9 @@ async def event_detection_pipeline(task: Task) -> None:
     if project.settings is None:
         logger.warning(f"Project with id {project_id} has no settings")
         return
-    # Convert to the type
+    # Convert to the proper lab project object
+    # TODO : Normalize the project definition by storing all db models in the phospho module
+    # and importing models from the phospho module
     project_lab = lab.models.Project(**project.model_dump())
     workload = lab.Workload.from_phospho_project_config(project_lab)
 
@@ -115,9 +117,9 @@ async def event_detection_pipeline(task: Task) -> None:
         # When the event is detected, result is True
         if result.value:
             logger.info(f"Event {event_name} detected for task {task_data.id}")
-            # Get the event definition
-            event = valid_project_events[event_name]
-            # Push to db
+            # Get the event definition, stored in the job metadata
+            event = EventDefinition(**workload.jobs[result.job_id].metadata)
+            # Push event to db
             detected_event_data = Event(
                 event_name=event_name,
                 task_id=task_data.id,
@@ -136,7 +138,7 @@ async def event_detection_pipeline(task: Task) -> None:
             )
             # Trigger the webhook if it exists
             if event.webhook is not None:
-                trigger_webhook(
+                await trigger_webhook(
                     url=event.webhook,
                     json=detected_event_data.model_dump(),
                     headers=event.webhook_headers,
