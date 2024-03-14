@@ -42,8 +42,7 @@ jobs:
         run: |
           cp -r phospho-python extractor/phospho-python
           cd extractor
-          gcloud builds submit \
-            --config extractor/cloudbuild-production.yaml
+          gcloud builds submit --config cloudbuild-production.yaml
 
       - name: Deploy to Cloud Run in Production Env
         env:
@@ -100,8 +99,7 @@ jobs:
         run: |
           cp -r phospho-python backend/phospho-python
           cd backend
-          gcloud builds submit \
-            --config cloudbuild-production.yaml
+          gcloud builds submit --config cloudbuild-production.yaml
 
       - name: Deploy to Cloud Run in Production Env
         # skip during local actions testing (this is what staging is for)

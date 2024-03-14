@@ -43,8 +43,7 @@ jobs:
         run: |
           cp -r phospho-python extractor/phospho-python
           cd extractor
-          gcloud builds submit \
-            --config cloudbuild-staging.yaml
+          gcloud builds submit --config cloudbuild-staging.yaml
 
       - name: Deploy to Cloud Run in Staging Env
         env:
@@ -99,8 +98,7 @@ jobs:
         run: |
           cp -r phospho-python backend/phospho-python
           cd backend
-          gcloud builds submit \
-            --config cloudbuild-staging.yaml
+          gcloud builds submit --config cloudbuild-staging.yaml
 
       - name: Deploy to Cloud Run in Staging Env
         env:
