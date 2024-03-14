@@ -1,6 +1,8 @@
 import os
 from typing import Tuple
 
+import phospho.config as config
+
 try:
     from openai import AsyncOpenAI, OpenAI
 except ImportError:
@@ -18,6 +20,13 @@ def get_provider_and_model(model: str) -> Tuple[str, str]:
     Returns:
         tuple: A tuple with the provider and model
     """
+    # Check if we are in the local Ollama mode
+    if config.USE_OLLAMA:
+        assert (
+            config.OLLAMA_MODEL is not None
+        ), "OLLAMA_MODEL env variable must be set to a valid Ollama model name."
+        return "ollama", config.OLLAMA_MODEL
+
     split_result = model.split(":")
     if len(split_result) == 1:
         return "openai", split_result[0]
