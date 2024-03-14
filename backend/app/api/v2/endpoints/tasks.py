@@ -99,6 +99,8 @@ async def post_flag_task(
             status_code=400,
             detail="Please pass the project_id in the request body to flag the task.",
         )
+    # TODO : Make this optional so we can flag tasks that were not
+    # stored in the database yet
     task_model = await get_task_by_id(task_id)
     if org is not None:
         # Old behavior: verify that the org owns the project

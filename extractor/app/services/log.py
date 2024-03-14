@@ -152,7 +152,9 @@ def collect_metadata(log_event: LogEvent) -> Optional[dict]:
     metadata = filter_nonjsonable_keys(metadata)
 
     # Compute token count
-    model: Optional[str] = metadata.get("model", None)
+    model = metadata.get("model", None)
+    if not isinstance(model, str):
+        model = None
     tokenizer = None
 
     if "prompt_tokens" not in metadata.keys():
@@ -174,9 +176,13 @@ def collect_metadata(log_event: LogEvent) -> Optional[dict]:
         ):
             metadata["total_tokens"] = None
         else:
-            metadata["total_tokens"] = metadata.get("prompt_tokens", 0) + metadata.get(
-                "completion_tokens", 0
-            )
+            prompt_tokens = metadata.get("prompt_tokens", 0)
+            completion_tokens = metadata.get("completion_tokens", 0)
+            if not isinstance(prompt_tokens, int):
+                prompt_tokens = 0
+            if not isinstance(completion_tokens, int):
+                completion_tokens = 0
+            metadata["total_tokens"] = prompt_tokens + completion_tokens
 
     return metadata
 
@@ -188,7 +194,7 @@ async def add_vectorized_tasks(
     Compute the vector representation of the tasks and add them to Qdrant database
     """
     if config.ENVIRONMENT == "preview":
-        logger.info("Disabled in preview")
+        logger.info("Vectorization is disabled in preview")
         return
 
     logger.info(f"Vectorizing {len(tasks_id)} tasks and adding them to Qdrant")
