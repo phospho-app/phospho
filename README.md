@@ -70,8 +70,8 @@ git clone git@github.com:phospho-app/phospho.git && cd phospho
 
 2. Register to the core external services:
 
-- [OpenAI](https://platform.openai.com) (or another OpenAI-compatible model provider)
-- [Cohere](https://cohere.com) (the free developer tier is enough for testing purposes)
+- [OpenAI](https://platform.openai.com) if you do no twant to use Ollama
+- [Cohere](https://cohere.com) optional (the free developer tier is enough for testing purposes)
 - [Propelauth](https://www.propelauth.com) (the free tier is enough for testing purposes)
 
 3. Create a copy of the `.env.example` file as a `.env.docker` files
@@ -86,7 +86,8 @@ cp .env.example .env.docker
 nano .env.docker # or emacs or vscode or vim
 ```
 
-By default, phospho uses OpenAI as it's main LLM provider. If you want to use another provider, you can specify it in the `.env.docker` by setting the `OPENAI_BASE_URL` and `MODEL_ID` variables to point to your provider (Ollama, Mistral, etc). Learn more [here](https://docs.phospho.ai/). Don't forget to update the `OPENAI_API_KEY` variable with your provider's API key.
+By default, phospho uses OpenAI as it's main LLM provider.
+If you want to use Ollama locally, you can specify it in the `.env.docker` by setting `USE_OLLAMA=True` and setting the `OLLAMA_MODEL` to the model you are running. In this case, the `OPENAI_API_KEY` variable will not be used.
 
 5. Launch the project
 

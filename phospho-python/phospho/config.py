@@ -11,5 +11,5 @@ COHERE_API_KEY = os.environ.get("COHERE_API_KEY")
 MISTRAL_API_KEY = os.environ.get("MISTRAL_API_KEY")
 
 # Custom LLM provider setup
-OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", None)
-MODEL_ID = os.environ.get("MODEL_ID", None)
+USE_OLLAMA = os.environ.get("USE_OLLAMA", False)
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", None)
