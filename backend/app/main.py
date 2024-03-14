@@ -7,10 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import phospho
 from app.core import config
 from app.db.mongo import close_mongo_db, connect_and_init_db
+from app.db.qdrant import close_qdrant, init_qdrant
 from app.services.mongo.extractor import check_health
 
-if config.ENVIRONMENT != "preview":
-    from app.db.qdrant import close_qdrant, init_qdrant
+logging.info(f"ENVIRONMENT : {config.ENVIRONMENT}")
+
 
 # Setup the Sentry SDK
 
@@ -83,14 +84,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Database
 
 app.add_event_handler("startup", connect_and_init_db)
+app.add_event_handler("shutdown", close_mongo_db)
+
 if config.ENVIRONMENT != "preview":
     app.add_event_handler("startup", init_qdrant)
-app.add_event_handler("shutdown", close_mongo_db)
-if config.ENVIRONMENT != "preview":
     app.add_event_handler("shutdown", close_qdrant)
+else:
+    logging.info("Not initializing Qdrant in preview mode.")
 
 
 # Other services
@@ -105,7 +109,6 @@ def check_health():
 
 ### V0 API DELETED ###
 
-logging.info(f"ENVIRONMENT : {config.ENVIRONMENT}")
 
 ### V2 API ###
 # Following PropelAuth

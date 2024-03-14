@@ -35,16 +35,8 @@ def prompt_to_bool(
     Runs a prompt on a message and returns a boolean result.
     """
     # Check if some Env variables override the default model and LLM provider
-    if config.MODEL_ID is not None and config.OPENAI_BASE_URL is not None:
-        model_name = config.MODEL_ID
-        openai_client = OpenAI(
-            base_url=config.OPENAI_BASE_URL,
-            api_key=config.OPENAI_API_KEY,
-        )
-        logger.debug(f"Using model {model_name} from env variables")
-    else:
-        provider, model_name = get_provider_and_model(model)
-        openai_client = get_sync_client(provider)
+    provider, model_name = get_provider_and_model(model)
+    openai_client = get_sync_client(provider)
 
     if format_kwargs is None:
         format_kwargs = {}
@@ -91,17 +83,8 @@ def prompt_to_literal(
     """
     Runs a prompt on a message and returns a str from the list ouput_literal.
     """
-    # Check if some Env variables override the default model and LLM provider
-    if config.MODEL_ID is not None and config.OPENAI_BASE_URL is not None:
-        model_name = config.MODEL_ID
-        openai_client = OpenAI(
-            base_url=config.OPENAI_BASE_URL,
-            api_key=config.OPENAI_API_KEY,
-        )
-        logger.debug(f"Using model {model_name} from env variables")
-    else:
-        provider, model_name = get_provider_and_model(model)
-        openai_client = get_sync_client(provider)
+    provider, model_name = get_provider_and_model(model)
+    openai_client = get_sync_client(provider)
 
     if format_kwargs is None:
         format_kwargs = {}
@@ -167,16 +150,8 @@ async def event_detection(
     """
 
     # Check if some Env variables override the default model and LLM provider
-    if config.MODEL_ID is not None and config.OPENAI_BASE_URL is not None:
-        model_name = config.MODEL_ID
-        async_openai_client = AsyncOpenAI(
-            base_url=config.OPENAI_BASE_URL,
-            api_key=config.OPENAI_API_KEY,
-        )
-        logger.debug(f"Using model {model_name} from env variables")
-    else:
-        provider, model_name = get_provider_and_model(model)
-        async_openai_client = get_async_client(provider)
+    provider, model_name = get_provider_and_model(model)
+    async_openai_client = get_async_client(provider)
 
     # Build the prompt
     if len(message.previous_messages) > 0:
@@ -302,17 +277,8 @@ async def evaluate_task(
     from phospho.utils import fits_in_context_window
 
     # Check if some Env variables override the default model and LLM provider
-    if config.MODEL_ID is not None and config.OPENAI_BASE_URL is not None:
-        model_name = config.MODEL_ID
-        async_openai_client = AsyncOpenAI(
-            base_url=config.OPENAI_BASE_URL,
-            api_key=config.OPENAI_API_KEY,
-        )
-        logger.debug(f"Using model {model_name} from env variables")
-
-    else:
-        provider, model_name = get_provider_and_model(model)
-        async_openai_client = get_async_client(provider)
+    provider, model_name = get_provider_and_model(model)
+    async_openai_client = get_async_client(provider)
 
     successful_examples = message.metadata.get("successful_examples", [])
     unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
