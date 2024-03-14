@@ -110,7 +110,7 @@ async def event_detection_pipeline(task: Task) -> None:
                 **llm_call,
                 org_id=task_data.org_id,
                 task_id=task.id,
-                job_id="event_name",
+                job_id=result.job_id,
             )
             mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
 
@@ -118,7 +118,11 @@ async def event_detection_pipeline(task: Task) -> None:
         if result.value:
             logger.info(f"Event {event_name} detected for task {task_data.id}")
             # Get the event definition, stored in the job metadata
-            event = EventDefinition(**workload.jobs[result.job_id].metadata)
+            # logger.debug(f"Workload jobs: {workload.jobs}")
+            # logger.debug(f"Workload results: {workload._results}")
+            # logger.debug(f"Result metadata: {result}")
+            metadata = workload.jobs[result.job_id].metadata
+            event = EventDefinition(**metadata)
             # Push event to db
             detected_event_data = Event(
                 event_name=event_name,

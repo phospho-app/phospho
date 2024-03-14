@@ -30,7 +30,8 @@ async def trigger_webhook(
             ) as response:
                 response.raise_for_status()
                 logger.info(f"Webhook triggered successfully: {response.status}")
-                return await response.text()
+                response_txt = await response.text()
+        return response_txt
     except aiohttp.ClientError as e:
         logger.error(f"Error sending webhook to {url}: {e}")
         return None

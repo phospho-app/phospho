@@ -153,6 +153,8 @@ class Job:
                 value=None,
             )
 
+        # Add the job_id to the result
+        result.job_id = self.id
         # Store the result
         self.results[message.id] = result
 
@@ -166,7 +168,9 @@ class Job:
         Results are appended to the job_predictions attribute.
         """
         if len(self.alternative_configs) == 0:
-            logger.warning("No alternative configuarations found. Skipping.")
+            logger.warning(
+                f"Job {self.id}: No alternative configurations found. Skipping."
+            )
             return [{}]
 
         for alternative_config_index in range(0, len(self.alternative_configs)):
@@ -185,7 +189,8 @@ class Job:
                     result_type=ResultType.error,
                     value=None,
                 )
-
+            # Add the job_id to the result
+            prediction.job_id = self.id
             # Add the prediction to the alternative_results
             self.alternative_results[alternative_config_index][message.id] = prediction
 
@@ -265,7 +270,13 @@ class Job:
                 break
 
     def __repr__(self):
-        return f"Job(\n  job_id={self.id},\n  job_name={self.job_function.__name__},\n  config={{\n{self.config}\n  }}\n)"
+        return f"""Job(
+    job_id={self.id},
+    job_name={self.job_function.__name__},
+    config={{\n{self.config}\n  }},
+    metadata={self.metadata}
+)
+"""
 
 
 class Workload:
@@ -404,9 +415,6 @@ class Workload:
                     metadata=event.model_dump(),
                 )
             )
-
-        # TODO : Put all the needed data about eventDefinition in jobs
-        workload._valid_project_events = valid_project_events
 
         return workload
 
