@@ -55,7 +55,7 @@ jobs:
           source .venv/bin/activate
           cd docs
           make clean
-          make html
+          sphinx-build source _build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -63,5 +63,5 @@ jobs:
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: build/html/
+          publish_dir: _build/
           force_orphan: true

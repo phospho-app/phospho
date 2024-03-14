@@ -31,6 +31,10 @@
   - ```{autodoc2-docstring} phospho.lab.job_library.evaluate_task
     :summary:
     ```
+* - {py:obj}`get_nb_tokens <phospho.lab.job_library.get_nb_tokens>`
+  - ```{autodoc2-docstring} phospho.lab.job_library.get_nb_tokens
+    :summary:
+    ```
 ````
 
 ### Data
@@ -84,5 +88,12 @@
 :async:
 
 ```{autodoc2-docstring} phospho.lab.job_library.evaluate_task
+```
+````
+
+````{py:function} get_nb_tokens(message: phospho.lab.models.Message, model: typing.Optional[str] = 'openai:gpt-3.5-turbo-0613', tokenizer=None) -> phospho.lab.models.JobResult
+:canonical: phospho.lab.job_library.get_nb_tokens
+
+```{autodoc2-docstring} phospho.lab.job_library.get_nb_tokens
 ```
 ````

@@ -5,12 +5,17 @@
 <a href="https://www.npmjs.com/package/phospho"><img src="https://img.shields.io/npm/v/phospho?style=flat-square&label=npm+phospho" alt="phospho npm package"></a>
 <a href="https://pypi.python.org/pypi/phospho"><img src="https://img.shields.io/pypi/v/phospho?style=flat-square&label=pypi+phospho" alt="phospho Python package on PyPi"></a>
 <a href="https://www.ycombinator.com/companies/phospho"><img src="https://img.shields.io/badge/Y%20Combinator-W24-orange?style=flat-square" alt="Y Combinator W24"></a>
-<a href="https://discord.gg/MXqBJ9pBsx"><img alt="Discord" src="https://img.shields.io/discord/1106594252043071509"></a>
+</div>
+
+<div align="center">
+<a href="https://discord.gg/m8wzBGQA55"><img src="https://dcbadge.vercel.app/api/server/m8wzBGQA55" alt="Join Discord"></a>
 </div>
 
 Phospho is the text analytics platform for LLM apps. Detect issues and extract insights from text messages of your users or your app. Gather user feedback and measure success. Iterate on your app to create the best conversational experience for your users.
 
 Ship your LLM app in production with confidence, and iterate on it with insights from your users.
+
+Learn more in the full [documentation](https://docs.phospho.ai/welcome).
 
 ## Key Features
 
@@ -65,27 +70,27 @@ git clone git@github.com:phospho-app/phospho.git && cd phospho
 
 2. Register to the core external services:
 
-- [OpenAI](https://platform.openai.com) (or another OpenAI-compatible model provider)
-- [Cohere](https://cohere.com) (the free developer tier is enough for testing purposes)
+- [OpenAI](https://platform.openai.com) if you do no twant to use Ollama
+- [Cohere](https://cohere.com) optional (the free developer tier is enough for testing purposes)
 - [Propelauth](https://www.propelauth.com) (the free tier is enough for testing purposes)
 
-3. Copy the `.env.example` files into `.env.docker` files
+3. Create a copy of the `.env.example` file as a `.env.docker` files
 
 ```bash
-cp backend/.env.example backend/.env.docker
-cp platform/.env.example platform/.env.docker
-cp extractor/.env.example extractor/.env.docker
+cp .env.example .env.docker
 ```
 
-4. Update the `.env.docker` files
+4. Complete the `.env.docker` file with secret variables
 
 ```bash
-vim backend/.env.docker # or emacs or vscode or nano
-vim platform/.env.docker
-vim extractor/.env.docker
+nano .env.docker # or emacs or vscode or vim
 ```
 
-5. Launch the project.
+By default, phospho analytics pipeline use OpenAI as their main LLM provider.
+
+To use Ollama, set `OVERRIDE_WITH_OLLAMA_MODEL=mistral` (or any model) in `.env.docker`. In this case, the`OPENAI_API_KEY` variable is not used. You do need to have an Ollama instance set up and running.
+
+5. Launch the project
 
 ```bash
 docker-compose up
@@ -99,7 +104,7 @@ Log your first message :
 ```bash
 export PHOSPHO_PROJECT_ID="your_project_id"
 export PHOSPHO_API_KEY="your_api_key"
-curl -X POST "http://localhost:80/v2/log/$PHOSPHO_PROJECT_ID" -H "Authorization: Bearer $PHOSPHO_API_KEY" -H "Content-Type: application/json" -d '{"batched_log_events": [{"input": Hi, I just logged my first task to phospho!","output": "Congrats! Keep pushing!"}]}'
+curl -X POST "http://localhost:80/v2/log/$PHOSPHO_PROJECT_ID" -H "Authorization: Bearer $PHOSPHO_API_KEY" -H "Content-Type: application/json" -d '{"batched_log_events": [{"input": "Hi, I just logged my first task to phospho!","output": "Congrats! Keep pushing!"}]}'
 ```
 
 Don't forget to specify your backend url when you use the client libraries in your app. By default it's `http://localhost:80`

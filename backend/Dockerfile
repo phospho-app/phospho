@@ -13,6 +13,10 @@ COPY ./poetry.lock /src/poetry.lock
 # Install dependencies
 RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
 
+# Copy phospho package
+COPY ./phospho-python /phospho-python
+RUN poetry install --with dev --no-interaction --no-ansi
+
 # Copy source code
 COPY ./app /src/app
 
