@@ -385,7 +385,8 @@ class Workload:
         """
         project_events = project_config.settings.get("events", None)
         if project_events is None:
-            raise ValueError(f"Project with id {project_config.id} has no events setup")
+            logger.error(f"Project with id {project_config.id} has no event setup")
+            return cls()
 
         valid_project_events = {}
         for k, v in project_events.items():
@@ -397,7 +398,7 @@ class Workload:
                 valid_project_events[k] = EventDefinition.model_validate(v)
             except Exception as e:
                 logger.error(
-                    f"Event {k} in project {project_config.id} is not valid: {e}"
+                    f"Event {k} in project {project_config.id} is not valid and will be ignored: {e}"
                 )
 
         workload = cls()
