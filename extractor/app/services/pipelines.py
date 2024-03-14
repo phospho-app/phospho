@@ -324,7 +324,7 @@ async def task_scoring_pipeline(task: Task) -> None:
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
 
     # Update the task object if the flag is None (no previous evaluation)
-    task_in_db = mongo_db["tasks"].find_one({"id": task.id})
+    task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
     if task_in_db.get("flag") is None:
         mongo_db["tasks"].update_one(
             {"id": task.id},
@@ -395,7 +395,7 @@ async def main_pipeline(task: Task) -> None:
 
     # Do the session scoring -> success, failure
     mongo_db = await get_mongo_db()
-    task_in_db = mongo_db["tasks"].find_one({"id": task.id})
+    task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
     if task_in_db.get("flag") is None:
         await task_scoring_pipeline(task)
 
