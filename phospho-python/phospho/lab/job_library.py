@@ -4,13 +4,11 @@ Each job is a function that takes a message and a set of parameters and returns 
 The result is a JobResult object.
 """
 
-import os
 import logging
+import os
 import random
 import time
 from typing import List, Literal, Optional, cast
-
-import phospho.config as config
 
 try:
     from openai import AsyncOpenAI, OpenAI
@@ -66,7 +64,6 @@ def prompt_to_bool(
         bool_response = llm_response.lower() == "true"
 
     return JobResult(
-        job_id="prompt_to_bool",
         result_type=ResultType.bool,
         value=bool_response,
         logs=[formated_prompt, llm_response],
@@ -116,7 +113,6 @@ def prompt_to_literal(
         # Best scenario: Check if the response is in the output_literal
         if response_content in output_literal:
             return JobResult(
-                job_id="prompt_to_literal",
                 result_type=ResultType.literal,
                 value=response_content,
                 logs=[formated_prompt, response.choices[0].message.content],
@@ -125,14 +121,12 @@ def prompt_to_literal(
         for literal in output_literal:
             if literal in response_content:
                 return JobResult(
-                    job_id="prompt_to_literal",
                     result_type=ResultType.literal,
                     value=response_content,
                     logs=[formated_prompt, response.choices[0].message.content],
                 )
 
     return JobResult(
-        job_id="prompt_to_literal",
         result_type=ResultType.literal,
         value=literal_response,
         logs=[formated_prompt, response.choices[0].message.content],
@@ -206,7 +200,6 @@ You have to say if the event is present in the transcript or not. Respond with o
     except Exception as e:
         logger.error(f"event_detection call to OpenAI API failed : {e}")
         return JobResult(
-            job_id="event_detection",
             result_type=ResultType.error,
             value=None,
             logs=[prompt, str(e)],
@@ -240,7 +233,6 @@ You have to say if the event is present in the transcript or not. Respond with o
     logger.debug(f"event_detection detected event {event_name} : {detected_event}")
     # Return the result
     return JobResult(
-        job_id="event_detection",
         result_type=result_type,
         value=detected_event,
         logs=[prompt, llm_response],
@@ -531,7 +523,6 @@ async def evaluate_task(
                 flag = None  # TODO: Fallback to a bigger model
 
     return JobResult(
-        job_id="evaluate_task",
         result_type=ResultType.literal,
         value=flag,
         logs=[prompt, flag],
@@ -554,7 +545,6 @@ def get_nb_tokens(
         provider, model = get_provider_and_model(model)
 
     return JobResult(
-        job_id="get_nb_tokens",
         result_type=ResultType.literal,
         value=num_tokens_from_messages([message.model_dump()], model, tokenizer),
     )

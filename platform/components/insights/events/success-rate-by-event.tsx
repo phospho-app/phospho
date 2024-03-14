@@ -52,7 +52,7 @@ function SuccessRateByEvent({ project_id }: { project_id: string }) {
           {successRateByEvent === null || successRateByEvent === undefined ? (
             <Skeleton className="h-[250px]" />
           ) : (
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={150}>
               <BarChart data={successRateByEvent}>
                 <XAxis
                   dataKey="event_name"

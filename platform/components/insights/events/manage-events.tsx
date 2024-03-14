@@ -320,8 +320,13 @@ export default function Events() {
     <>
       <FetchOrgProject />
       <div>
+        <EventsList
+          events={events}
+          handleDeleteEvent={handleDeleteEvent}
+          refresh={refresh}
+        />
         <div>
-          <span className="flex flex-row justify-between">
+          <span className="flex flex-row justify-between mt-8">
             <div>
               <h2 className="text-2xl font-bold tracking-tight">
                 Add a new event
@@ -425,11 +430,7 @@ export default function Events() {
             )}
           </CardFooter>
         </Card>
-        <EventsList
-          events={events}
-          handleDeleteEvent={handleDeleteEvent}
-          refresh={refresh}
-        />
+
         <div className="h-20"></div>
       </div>
     </>

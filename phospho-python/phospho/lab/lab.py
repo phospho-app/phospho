@@ -2,6 +2,7 @@ import asyncio
 import concurrent.futures
 import logging
 from typing import (
+    Any,
     Awaitable,
     Callable,
     Dict,
@@ -10,13 +11,20 @@ from typing import (
     Literal,
     Optional,
     Union,
-    Any,
 )
 
-
+import phospho.client as client
 import phospho.lab.job_library as job_library
 
-from .models import JobConfig, JobResult, Message, ResultType
+from .models import (
+    JobConfig,
+    JobResult,
+    Message,
+    ResultType,
+    EventConfig,
+    EventDefinition,
+    Project,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -38,6 +46,8 @@ class Job:
     # Stores all the possible config from the model
     alternative_configs: List[JobConfig]
 
+    metadata: Optional[Dict[str, Any]] = None
+
     def __init__(
         self,
         id: Optional[str] = None,
@@ -49,10 +59,41 @@ class Job:
         ] = None,
         name: Optional[str] = None,
         config: Optional[JobConfig] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
         It stores the result.
+
+        If the job_function is not provided, it will be fetched from the job_library with the name.
+
+        A job is meant to be run on a Message, inside a Workload. Example:
+
+        ```python
+        from phospho import lab
+
+        job = lab.Job(
+            id="job_id",
+            job_function=lab.job_library.event_detection,
+            config=lab.EventConfig(event_name="event_name", event_description="event_description"),
+        )
+
+        workload = lab.Workload()
+        workload.add_job(job)
+
+        messages = [lab.Message(content="Hello world!")]
+
+        await workload.async_run(messages)
+        ```
+
+        Args:
+        :param id: The id of the job. If not provided, it will be the name of the job_function. This
+        id should be unique to the job.
+        :param job_function: The function to run on the message. Can be a sync or async function.
+        :param name: If the job_function is not provided, it will be fetched from the job_library using this name.
+        This is useful to specify the job_function in config files. If the name is None, it will be equal to the job_id.
+        :param config: The configuration of the job. If not provided, the job will run with an empty config.
+        :param metadata: Extra metadata to store with the job.
         """
 
         if job_function is None and name is None:
@@ -90,9 +131,11 @@ class Job:
         for c in self.alternative_configs:
             self.alternative_results.append({})
 
+        self.metadata = metadata
+
     async def async_run(self, message: Message) -> JobResult:
         """
-        Asynchronously run the job on the message.
+        Asynchronously run the job on a single message.
         """
         logger.debug(f"Running job {self.id} on message {message.id}.")
         params = self.config.model_dump()
@@ -110,7 +153,11 @@ class Job:
                 value=None,
             )
 
+        # Add the job_id to the result
+        result.job_id = self.id
+        # Store the result
         self.results[message.id] = result
+
         return result
 
     async def async_run_on_alternative_configurations(
@@ -121,7 +168,9 @@ class Job:
         Results are appended to the job_predictions attribute.
         """
         if len(self.alternative_configs) == 0:
-            logger.warning("No alternative configuarations found. Skipping.")
+            logger.warning(
+                f"Job {self.id}: No alternative configurations found. Skipping."
+            )
             return [{}]
 
         for alternative_config_index in range(0, len(self.alternative_configs)):
@@ -140,7 +189,8 @@ class Job:
                     result_type=ResultType.error,
                     value=None,
                 )
-
+            # Add the job_id to the result
+            prediction.job_id = self.id
             # Add the prediction to the alternative_results
             self.alternative_results[alternative_config_index][message.id] = prediction
 
@@ -220,26 +270,56 @@ class Job:
                 break
 
     def __repr__(self):
-        return f"Job(\n  job_id={self.id},\n  job_name={self.job_function.__name__},\n  config={{\n{self.config}\n  }}\n)"
+        return f"""Job(
+    job_id={self.id},
+    job_name={self.job_function.__name__},
+    config={{\n{self.config}\n  }},
+    metadata={self.metadata}
+)
+"""
 
 
 class Workload:
-    jobs: List[Job]
+    # Jobs is a mapping of job_id -> Job
+    jobs: Dict[str, Job]
     # Result is a mapping of message.id -> job_id -> JobResult
     _results: Optional[Dict[str, Dict[str, JobResult]]]
 
-    def __init__(self):
+    _valid_project_events: Optional[Dict[str, EventDefinition]] = None
+
+    def __init__(self, jobs: Optional[List[Job]] = None):
         """
-        A Workload is a set of jobs to be performed on a message.
+        A Workload is a set of jobs to be performed on messages.
+
+        ```python
+        from phospho import lab
+
+        job = lab.Job(
+            id="job_id",
+            job_function=lab.job_library.event_detection,
+            config=lab.EventConfig(event_name="event_name", event_description="event_description"),
+        )
+
+        workload = lab.Workload()
+        workload.add_job(job)
+
+        messages = [lab.Message(content="Hello world!")]
+
+        await workload.async_run(messages)
+        ```
         """
-        self.jobs = []
+        self.jobs = {}
         self._results = None
+
+        if jobs is not None:
+            for job in jobs:
+                self.add_job(job)
 
     def add_job(self, job: Job):
         """
         Add a job to the workload.
         """
-        self.jobs.append(job)
+        self.jobs[job.id] = job
 
     @classmethod
     def from_config(cls, config: dict) -> "Workload":
@@ -264,8 +344,24 @@ class Workload:
     @classmethod
     def from_file(cls, config_filename: str = "phospho-config.yaml") -> "Workload":
         """
-        Create a Workload from a configuration file.
+        Create a Workload from a configuration file. Supported file extensions are .yaml and .yml.
+
+        Example of a configuration file to detect user asking for price:
+        ```yaml
+        jobs:
+            detect_user_asking_for_price:  # job id
+                name: event_detection      # The name of the job in the job_library
+                config:                    # The configuration of the job
+                    event_name: user_asking_for_price
+                    event_description: User is asking for the price of a product
+            detect_user_asking_for_discount:
+                name: event_detection
+                config:
+                    event_name: user_asking_for_discount
+                    event_description: User is asking for a discount on a product
+        ```
         """
+        # TODO: Add support .json
         if config_filename.endswith(".yaml") or config_filename.endswith(".yml"):
             import yaml
 
@@ -276,6 +372,72 @@ class Workload:
                 f"File extension {config_filename.split('.')[-1]} is not supported. Use .from_config() instead."
             )
         return cls.from_config(config)
+
+    @classmethod
+    def from_phospho_project_config(
+        cls,
+        project_config: Project,
+    ):
+        """
+        Create a workload from a phospho project configuration.
+
+        To fetch the project configuration, look at `Workload.from_phospho()`
+        """
+        project_events = project_config.settings.get("events", None)
+        if project_events is None:
+            raise ValueError(f"Project with id {project_config.id} has no events setup")
+
+        valid_project_events = {}
+        for k, v in project_events.items():
+            try:
+                event_name = v.get("event_name")
+                if event_name is None:
+                    event_name = k
+                v["event_name"] = event_name
+                valid_project_events[k] = EventDefinition.model_validate(v)
+            except Exception as e:
+                logger.error(
+                    f"Event {k} in project {project_config.id} is not valid: {e}"
+                )
+
+        workload = cls()
+        # Create the jobs from the configuration
+        for event_name, event in valid_project_events.items():
+            logger.debug(f"Add event detection job for event {event_name}")
+            workload.add_job(
+                Job(
+                    id=event_name,
+                    job_function=job_library.event_detection,
+                    config=EventConfig(
+                        event_name=event_name,
+                        event_description=event.description,
+                    ),
+                    metadata=event.model_dump(),
+                )
+            )
+
+        return workload
+
+    @classmethod
+    def from_phospho(
+        cls,
+        api_key: Optional[str] = None,
+        project_id: Optional[str] = None,
+        base_url: Optional[str] = None,
+    ):
+        """
+        Connects to the phospho backend and loads the project configuration as a workload.
+
+        If the `api_key` or the `project_id` are not provided, load the `PHOSPHO_API_KEY` and
+        `PHOSPHO_PROJECT_ID` env variables.
+        """
+        phospho_client = client.Client(
+            api_key=api_key, project_id=project_id, base_url=base_url
+        )
+
+        # Load the project configuration
+        project_config = phospho_client.project_config()
+        return cls.from_phospho_project_config(project_config)
 
     async def async_run(
         self,
@@ -290,8 +452,9 @@ class Workload:
         """
 
         # Run the jobs sequentially on every message
-        # TODO : Run the jobs in parallel on every message
-        for job in self.jobs:
+        # TODO : Run the jobs in parallel on every message?
+        # TODO : For Jobs, implement a batched_run method that takes a list of messages
+        for job_id, job in self.jobs.items():
             if executor_type == "parallel":
                 # Await all the results
                 semaphore = asyncio.Semaphore(max_parallelism)
@@ -318,7 +481,7 @@ class Workload:
         results: Dict[str, Dict[str, JobResult]] = {}
         for one_message in messages:
             results[one_message.id] = {}
-            for job in self.jobs:
+            for job_id, job in self.jobs.items():
                 results[one_message.id][job.id] = job.results[one_message.id]
 
         self._results = results
@@ -337,7 +500,7 @@ class Workload:
 
         # Run the jobs sequentially on every message
         # TODO : Run the jobs in parallel on every message
-        for job in self.jobs:
+        for job_id, job in self.jobs.items():
             if executor_type == "parallel":
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
@@ -368,7 +531,7 @@ class Workload:
 
         For now, we just check if the accuracy is above the threshold.
         """
-        for job in self.jobs:
+        for job_id, job in self.jobs.items():
             job.optimize(accuracy_threshold=accuracy_threshold, min_count=min_count)
 
     def __repr__(self):

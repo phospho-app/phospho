@@ -80,3 +80,19 @@ class FlattenedTask(BaseModel, extra="allow"):
     session_length: Optional[int] = None
     event_name: Optional[str] = None
     event_created_at: Optional[int] = None
+
+
+class Project(BaseModel):
+    id: str = Field(default_factory=generate_uuid)
+    created_at: int = Field(default_factory=generate_timestamp)
+    project_name: str
+    org_id: str
+    settings: dict = Field(default_factory=dict)
+    user_id: Optional[str] = None
+
+
+class EventDefinition(BaseModel):
+    event_name: str
+    description: str
+    webhook: Optional[str] = None
+    webhook_headers: Optional[dict] = None
