@@ -88,6 +88,7 @@ nano .env.docker # or emacs or vscode or vim
 
 By default, phospho uses OpenAI as it's main LLM provider.
 If you want to use Ollama locally, you can specify it in the `.env.docker` by setting `USE_OLLAMA=True` and setting the `OLLAMA_MODEL` to the model you are running. In this case, the `OPENAI_API_KEY` variable will not be used.
+DOn't forget to have your Ollama instance running with the corect model.
 
 5. Launch the project
 
