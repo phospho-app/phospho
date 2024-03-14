@@ -44,7 +44,7 @@ sphinx-autodoc2 = "^0.5.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-exclude = ["tests/", ".github/", ".pytest_cache/", "docs/", "local/"]
+# exclude = ["tests/", ".github/", ".pytest_cache/", "docs/", "local/"]
 
 [tool.poetry.extras]
 lab = ["openai", "tiktoken", "cohere", "pandas"]
