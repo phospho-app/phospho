@@ -14,10 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
 
-    defaults:
-      run:
-        working-directory: extractor
-
     permissions:
       contents: "read"
       id-token: "write"
@@ -45,6 +41,8 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         run: |
+          cp -r phospho-python extractor/phospho-python
+          cd extractor
           gcloud builds submit \
             --config cloudbuild-staging.yaml
 
@@ -72,10 +70,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
 
-    defaults:
-      run:
-        working-directory: backend
-
     permissions:
       contents: "read"
       id-token: "write"
@@ -103,6 +97,8 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         run: |
+          cp -r phospho-python backend/phospho-python
+          cd backend
           gcloud builds submit \
             --config cloudbuild-staging.yaml
 
@@ -140,12 +136,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
 
+    permissions:
+      contents: "read"
+
     defaults:
       run:
         working-directory: backend
-
-    permissions:
-      contents: "read"
 
     steps:
       - name: Checkout code
@@ -167,7 +163,7 @@ jobs:
       # Install dependencies if cache does not exist
       - name: Install dependencies
         run: |
-          poetry install --no-interaction --no-root
+          poetry install --with dev --no-interaction --no-root
 
       - name: Test with pytest
         env:

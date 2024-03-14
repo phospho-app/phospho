@@ -20,13 +20,10 @@ def get_provider_and_model(model: str) -> Tuple[str, str]:
     Returns:
         tuple: A tuple with the provider and model
     """
-    # Check if we are in the local Ollama mode
-    use_ollama = os.getenv("USE_OLLAMA", "false").lower() == "true"
-    if use_ollama:
-        ollama_model = os.getenv("OLLAMA_MODEL", None)
-        assert (
-            ollama_model is not None
-        ), "OLLAMA_MODEL env variable must be set to a valid Ollama model name."
+    # If the OVERRIDE_WITH_OLLAMA_MODEL environment variable is set, use the Ollama model
+    # in all cases. This is used in the preview mode or for tests.
+    if config.OVERRIDE_WITH_OLLAMA_MODEL is not None:
+        ollama_model = config.OVERRIDE_WITH_OLLAMA_MODEL
         return "ollama", ollama_model
 
     split_result = model.split(":")
