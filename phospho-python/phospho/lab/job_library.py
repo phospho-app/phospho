@@ -4,10 +4,18 @@ Each job is a function that takes a message and a set of parameters and returns 
 The result is a JobResult object.
 """
 
+import os
 import logging
 import random
 import time
 from typing import List, Literal, Optional, cast
+
+import phospho.config as config
+
+try:
+    from openai import AsyncOpenAI, OpenAI
+except ImportError:
+    pass
 
 from phospho import config
 
@@ -26,7 +34,8 @@ def prompt_to_bool(
     """
     Runs a prompt on a message and returns a boolean result.
     """
-    provider, model = get_provider_and_model(model)
+    # Check if some Env variables override the default model and LLM provider
+    provider, model_name = get_provider_and_model(model)
     openai_client = get_sync_client(provider)
 
     if format_kwargs is None:
@@ -38,7 +47,7 @@ def prompt_to_bool(
         **format_kwargs,
     )
     response = openai_client.chat.completions.create(
-        model=model,
+        model=model_name,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {
@@ -74,7 +83,7 @@ def prompt_to_literal(
     """
     Runs a prompt on a message and returns a str from the list ouput_literal.
     """
-    provider, model = get_provider_and_model(model)
+    provider, model_name = get_provider_and_model(model)
     openai_client = get_sync_client(provider)
 
     if format_kwargs is None:
@@ -88,7 +97,7 @@ def prompt_to_literal(
         **format_kwargs,
     )
     response = openai_client.chat.completions.create(
-        model=model,
+        model=model_name,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {
@@ -140,6 +149,7 @@ async def event_detection(
     Detects if an event is present in a message.
     """
 
+    # Check if some Env variables override the default model and LLM provider
     provider, model_name = get_provider_and_model(model)
     async_openai_client = get_async_client(provider)
 
@@ -266,6 +276,7 @@ async def evaluate_task(
     """
     from phospho.utils import fits_in_context_window
 
+    # Check if some Env variables override the default model and LLM provider
     provider, model_name = get_provider_and_model(model)
     async_openai_client = get_async_client(provider)
 
@@ -296,7 +307,7 @@ async def evaluate_task(
 
     async def zero_shot_evaluation(
         prompt: str,
-        model_name: str = "gpt-4-1106-preview",
+        model_name: str = os.getenv("MODEL_ID", "gpt-4-1106-preview"),
     ) -> Optional[Literal["success", "failure"]]:
         """
         Call the LLM API to get a zero shot classification of a task
@@ -304,6 +315,8 @@ async def evaluate_task(
         """
         nonlocal api_call_time
         nonlocal llm_call
+
+        logger.debug(f"Running zero shot evaluation with model {model_name}")
 
         start_time = time.time()
         response = await async_openai_client.chat.completions.create(
