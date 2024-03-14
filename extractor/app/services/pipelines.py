@@ -37,42 +37,15 @@ async def event_detection_pipeline(task: Task) -> None:
     # Get the project settings
     project_id = task_data.project_id
     project = await get_project_by_id(project_id)
-    logger.debug(f"project_settings {project.settings}")
     if project.settings is None:
         logger.warning(f"Project with id {project_id} has no settings")
         return
-    if project.settings.get("events", None) is None:
-        logger.warning(f"Project with id {project_id} has no events")
-        return
+    # Convert to the proper lab project object
+    # TODO : Normalize the project definition by storing all db models in the phospho module
+    # and importing models from the phospho module
+    project_lab = lab.models.Project(**project.model_dump())
+    workload = lab.Workload.from_phospho_project_config(project_lab)
 
-    project_events: Dict[str, dict] = project.settings["events"]
-    # Validate the events
-    valid_project_events = {}
-    for k, v in project_events.items():
-        try:
-            event_name = v.get("event_name")
-            if event_name is None:
-                event_name = k
-            v["event_name"] = event_name
-            valid_project_events[k] = EventDefinition.model_validate(v)
-        except Exception as e:
-            logger.error(f"Event {k} in project {project_id} is not valid: {e}")
-
-    # Create the phospho workload
-    workload = lab.Workload()
-    # Add the event detection jobs to the workload
-    for event_name, event in valid_project_events.items():
-        logger.debug(f"Add event detection job for event {event_name}")
-        workload.add_job(
-            lab.Job(
-                id=event_name,
-                job_function=lab.job_library.event_detection,
-                config=EventConfig(
-                    event_name=event_name,
-                    event_description=event.description,
-                ),
-            )
-        )
     # Convert the tasks into a list of messages
     previous_messages = []
     for i, previous_task in enumerate(task_context):
@@ -126,7 +99,6 @@ async def event_detection_pipeline(task: Task) -> None:
 
     # Check the results of the workload
     message_results = workload.results[latest_message_id]
-    logger.debug(f"Results of the event detection pipeline: {message_results}")
     for event_name, result in message_results.items():
         # Store the LLM call in the database
         metadata = result.metadata
@@ -136,16 +108,17 @@ async def event_detection_pipeline(task: Task) -> None:
                 **llm_call,
                 org_id=task_data.org_id,
                 task_id=task.id,
-                job_id="event_name",
+                job_id=result.job_id,
             )
             mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
 
         # When the event is detected, result is True
         if result.value:
             logger.info(f"Event {event_name} detected for task {task_data.id}")
-            # Get the event definition
-            event = valid_project_events[event_name]
-            # Push to db
+            # Get back the event definition from the job metadata
+            metadata = workload.jobs[result.job_id].metadata
+            event = EventDefinition(**metadata)
+            # Push event to db
             detected_event_data = Event(
                 event_name=event_name,
                 task_id=task_data.id,
@@ -164,7 +137,7 @@ async def event_detection_pipeline(task: Task) -> None:
             )
             # Trigger the webhook if it exists
             if event.webhook is not None:
-                trigger_webhook(
+                await trigger_webhook(
                     url=event.webhook,
                     json=detected_event_data.model_dump(),
                     headers=event.webhook_headers,

@@ -55,7 +55,7 @@ print("Logged some test data to the test database.")
 # Boost it up.
 if True:
     print("Logging 1000 tasks to the test database...")
-    for i in tqdm(range(50)):
+    for i in tqdm(range(4)):
         # Create a random date in the last week
         random_date = datetime.datetime.now() - datetime.timedelta(days=7)
         random_date = random_date + datetime.timedelta(days=random.randint(0, 7))

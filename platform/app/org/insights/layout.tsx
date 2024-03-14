@@ -14,15 +14,15 @@ const Insights = ({ children }: { children: React.ReactNode }) => {
           <Link href="/org/insights/events">
             <TabsTrigger value="events">Events</TabsTrigger>
           </Link>
-          <Link href="/org/insights/topics">
-            <TabsTrigger value="topics">Topics</TabsTrigger>
-          </Link>
           <Link href="/org/insights/metadata">
             <TabsTrigger value="metadata">Metadata</TabsTrigger>
           </Link>
-          <Link href="/org/insights/kpis">
-            <TabsTrigger value="kpis">KPIs</TabsTrigger>
+          <Link href="/org/insights/topics">
+            <TabsTrigger value="topics">Topics</TabsTrigger>
           </Link>
+          {/* <Link href="/org/insights/kpis">
+            <TabsTrigger value="kpis">KPIs</TabsTrigger>
+          </Link> */}
         </TabsList>
       </Tabs>
       <div className="pb-10 space-y-4">{children}</div>
