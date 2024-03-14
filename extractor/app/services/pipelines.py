@@ -41,38 +41,10 @@ async def event_detection_pipeline(task: Task) -> None:
     if project.settings is None:
         logger.warning(f"Project with id {project_id} has no settings")
         return
-    if project.settings.get("events", None) is None:
-        logger.warning(f"Project with id {project_id} has no events")
-        return
+    # Convert to the type
+    project_lab = lab.models.Project(**project.model_dump())
+    workload = lab.Workload.from_phospho_project_config(project_lab)
 
-    project_events: Dict[str, dict] = project.settings["events"]
-    # Validate the events
-    valid_project_events = {}
-    for k, v in project_events.items():
-        try:
-            event_name = v.get("event_name")
-            if event_name is None:
-                event_name = k
-            v["event_name"] = event_name
-            valid_project_events[k] = EventDefinition.model_validate(v)
-        except Exception as e:
-            logger.error(f"Event {k} in project {project_id} is not valid: {e}")
-
-    # Create the phospho workload
-    workload = lab.Workload()
-    # Add the event detection jobs to the workload
-    for event_name, event in valid_project_events.items():
-        logger.debug(f"Add event detection job for event {event_name}")
-        workload.add_job(
-            lab.Job(
-                id=event_name,
-                job_function=lab.job_library.event_detection,
-                config=EventConfig(
-                    event_name=event_name,
-                    event_description=event.description,
-                ),
-            )
-        )
     # Convert the tasks into a list of messages
     previous_messages = []
     for i, previous_task in enumerate(task_context):

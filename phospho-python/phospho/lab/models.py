@@ -6,6 +6,7 @@ from typing import Any, List, Literal, Optional
 from pydantic import BaseModel, Field
 
 from phospho.utils import generate_timestamp, generate_uuid
+from phospho.models import Project, EventDefinition
 
 from .utils import get_literal_values
 
