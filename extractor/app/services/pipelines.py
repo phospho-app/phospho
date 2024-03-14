@@ -323,11 +323,19 @@ async def task_scoring_pipeline(task: Task) -> None:
     )
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
 
-    # Update the task object
-    mongo_db["tasks"].update_one(
-        {"id": task.id},
-        {"$set": {"flag": flag, "last_eval": evaluation_data.model_dump()}},
-    )
+    # Update the task object if the flag is None (no previous evaluation)
+    task_in_db = await get_mongo_db()["tasks"].find_one({"id": task.id})
+    if task_in_db.get("flag") is None:
+        mongo_db["tasks"].update_one(
+            {"id": task.id},
+            {
+                "$set": {
+                    "flag": flag,
+                    "last_eval": evaluation_data.model_dump(),
+                    "evaluation_source": config.EVALUATION_SOURCE,
+                }
+            },
+        )
 
 
 # async def topic_extraction_pipeline(task_id: str) -> None:
@@ -386,16 +394,11 @@ async def main_pipeline(task: Task) -> None:
         await event_detection_pipeline(task)
 
     # Do the session scoring -> success, failure
-    if task.flag is None:
-        mongo_db = await get_mongo_db()
-
+    task_in_db = await get_mongo_db()["tasks"].find_one({"id": task.id})
+    if task_in_db.get("flag") is None:
         await task_scoring_pipeline(task)
-        # Optional: later add the moderation pipeline on input and outputs
 
-        # Update the task with the prediction source that was used
-        await mongo_db["tasks"].update_one(
-            {"id": task.id}, {"$set": {"evaluation_source": config.EVALUATION_SOURCE}}
-        )
+    # Optional: later add the moderation pipeline on input and outputs
 
     # Do the topic extraction
     # await topic_extraction_pipeline(task_id)
