@@ -24,6 +24,7 @@ async def trigger_webhook(
         return
 
     try:
+        logger.info(f"Triggering webhook: {url}")
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 url, json=json, timeout=timeout, headers=headers

@@ -37,7 +37,6 @@ async def event_detection_pipeline(task: Task) -> None:
     # Get the project settings
     project_id = task_data.project_id
     project = await get_project_by_id(project_id)
-    logger.debug(f"project_settings {project.settings}")
     if project.settings is None:
         logger.warning(f"Project with id {project_id} has no settings")
         return
@@ -100,7 +99,6 @@ async def event_detection_pipeline(task: Task) -> None:
 
     # Check the results of the workload
     message_results = workload.results[latest_message_id]
-    logger.debug(f"Results of the event detection pipeline: {message_results}")
     for event_name, result in message_results.items():
         # Store the LLM call in the database
         metadata = result.metadata
@@ -117,10 +115,7 @@ async def event_detection_pipeline(task: Task) -> None:
         # When the event is detected, result is True
         if result.value:
             logger.info(f"Event {event_name} detected for task {task_data.id}")
-            # Get the event definition, stored in the job metadata
-            # logger.debug(f"Workload jobs: {workload.jobs}")
-            # logger.debug(f"Workload results: {workload._results}")
-            # logger.debug(f"Result metadata: {result}")
+            # Get back the event definition from the job metadata
             metadata = workload.jobs[result.job_id].metadata
             event = EventDefinition(**metadata)
             # Push event to db
