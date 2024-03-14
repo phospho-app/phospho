@@ -13,10 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
 
-    defaults:
-      run:
-        working-directory: extractor
-
     permissions:
       contents: "read"
       id-token: "write"
@@ -44,8 +40,10 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         run: |
+          cp -r phospho-python extractor/phospho-python
+          cd extractor
           gcloud builds submit \
-            --config cloudbuild-production.yaml
+            --config extractor/cloudbuild-production.yaml
 
       - name: Deploy to Cloud Run in Production Env
         env:
@@ -71,10 +69,6 @@ jobs:
   deploy_backend_production:
     runs-on: ubuntu-latest
     environment: production
-
-    defaults:
-      run:
-        working-directory: backend
 
     permissions:
       contents: "read"
@@ -104,6 +98,8 @@ jobs:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         # https://cloud.google.com/sdk/gcloud/reference/builds/submit
         run: |
+          cp -r phospho-python backend/phospho-python
+          cd backend
           gcloud builds submit \
             --config cloudbuild-production.yaml
 

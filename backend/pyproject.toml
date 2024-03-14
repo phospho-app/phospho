@@ -17,7 +17,6 @@ numpy = ">=1.26.3"
 openai = ">=1.7.2"
 openpyxl = ">=3.1.2"
 pandas = "2.1.4"
-phospho = ">=0.2.19"
 propelauth-fastapi = ">=2.1.8"
 propelauth-py = ">=3.1.9"
 protobuf = "4.25.2"
@@ -35,6 +34,18 @@ qdrant-client = "^1.7.1"
 resend = "^0.7.2"
 cohere = "^4.45"
 stripe = "^8.2.0"
+
+# In dev, the phospho package is at the root
+[tool.poetry.group.dev]
+optional = true
+[tool.poetry.group.dev.dependencies]
+phospho = { path = "../phospho-python", develop = true, extras = ["lab"] }
+
+# For deployment, we copy the phospho package to the app package
+[tool.poetry.group.deploy]
+optional = true
+[tool.poetry.group.deploy.dependencies]
+phospho = { path = "./phospho-python", develop = false, extras = ["lab"] }
 
 
 [build-system]
