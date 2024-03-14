@@ -86,6 +86,8 @@ cp .env.example .env.docker
 nano .env.docker # or emacs or vscode or vim
 ```
 
+By default, phospho uses OpenAI as it's main LLM provider. If you want to use another provider, you can specify it in the `.env.docker` by setting the `OPENAI_BASE_URL` and `MODEL_ID` variables to point to your provider (Ollama, Mistral, etc). Learn more [here](https://docs.phospho.ai/). Don't forget to update the `OPENAI_API_KEY` variable with your provider's API key.
+
 5. Launch the project
 
 ```bash
