@@ -2,6 +2,7 @@ import asyncio
 import concurrent.futures
 import logging
 from typing import (
+    Any,
     Awaitable,
     Callable,
     Dict,
@@ -10,13 +11,20 @@ from typing import (
     Literal,
     Optional,
     Union,
-    Any,
 )
 
-
+import phospho.client as client
 import phospho.lab.job_library as job_library
 
-from .models import JobConfig, JobResult, Message, ResultType
+from .models import (
+    JobConfig,
+    JobResult,
+    Message,
+    ResultType,
+    EventConfig,
+    EventDefinition,
+    Project,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -276,6 +284,70 @@ class Workload:
                 f"File extension {config_filename.split('.')[-1]} is not supported. Use .from_config() instead."
             )
         return cls.from_config(config)
+
+    @classmethod
+    def from_phospho_project_config(
+        cls,
+        project_config: Project,
+    ):
+        """
+        Create a workload from a phospho project configuration.
+
+        To fetch the project configuration, look at `Workload.from_phospho()`
+        """
+        project_events = project_config.settings.get("events", None)
+        if project_events is None:
+            raise ValueError(f"Project with id {project_config.id} has no events setup")
+
+        valid_project_events = {}
+        for k, v in project_events.items():
+            try:
+                event_name = v.get("event_name")
+                if event_name is None:
+                    event_name = k
+                v["event_name"] = event_name
+                valid_project_events[k] = EventDefinition.model_validate(v)
+            except Exception as e:
+                logger.error(
+                    f"Event {k} in project {project_config.id} is not valid: {e}"
+                )
+
+        workload = cls()
+        # Create the jobs from the configuration
+        for event_name, event in valid_project_events.items():
+            logger.debug(f"Add event detection job for event {event_name}")
+            workload.add_job(
+                Job(
+                    id=event_name,
+                    job_function=job_library.event_detection,
+                    config=EventConfig(
+                        event_name=event_name,
+                        event_description=event.description,
+                    ),
+                )
+            )
+        return workload
+
+    @classmethod
+    def from_phospho(
+        cls,
+        api_key: Optional[str] = None,
+        project_id: Optional[str] = None,
+        base_url: Optional[str] = None,
+    ):
+        """
+        Connects to the phospho backend and loads the project configuration as a workload.
+
+        If the `api_key` or the `project_id` are not provided, load the `PHOSPHO_API_KEY` and
+        `PHOSPHO_PROJECT_ID` env variables.
+        """
+        phospho_client = client.Client(
+            api_key=api_key, project_id=project_id, base_url=base_url
+        )
+
+        # Load the project configuration
+        project_config = phospho_client.project_config()
+        return cls.from_phospho_project_config(project_config)
 
     async def async_run(
         self,
