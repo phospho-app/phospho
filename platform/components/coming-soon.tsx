@@ -7,7 +7,7 @@ function ComingSoonAlert({ customMessage }: { customMessage?: string }) {
       <>
         <Alert>
           <TrafficCone className="h-4 w-4" />
-          <AlertTitle>Work in progress!</AlertTitle>
+          <AlertTitle>Coming soon!</AlertTitle>
           <AlertDescription>
             We'll be shipping this feature shortly.{" "}
             <span className="italic">We're about to blow your mind.</span>
@@ -21,7 +21,7 @@ function ComingSoonAlert({ customMessage }: { customMessage?: string }) {
     <>
       <Alert>
         <TrafficCone className="h-4 w-4" />
-        <AlertTitle>Coming soon!</AlertTitle>
+        <AlertTitle>Work in progress!</AlertTitle>
         <AlertDescription>{customMessage}</AlertDescription>
       </Alert>
     </>
