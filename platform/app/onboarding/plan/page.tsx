@@ -1,10 +1,13 @@
 "use client";
 
+import FullPageLoader from "@/components/full-page-loader";
 import Pricing from "@/components/settings/pricing";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { navigationStateStore } from "@/store/store";
+import { useLogoutFunction } from "@propelauth/nextjs/client";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import FullPageLoader from "@/components/full-page-loader";
 
 export default function Page({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -14,7 +17,6 @@ export default function Page({ params }: { params: { id: string } }) {
 
   // It is disbaled in preview mode
   // In this case, users are redirected to the root page
-  
 
   // This page is used during the onboarding for the user to pick a plan.
   // It is also used as a paywall when the user tries to access a page that
@@ -27,8 +29,17 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   if (process.env.NEXT_PUBLIC_APP_ENV === "preview") {
-    return <FullPageLoader/>;
+    return <FullPageLoader />;
   }
+
+  const logoutFn = useLogoutFunction();
+
+  const setSelectedOrgId = navigationStateStore(
+    (state) => state.setSelectedOrgId,
+  );
+  const setSelectedProject = navigationStateStore(
+    (state) => state.setSelectedProject,
+  );
 
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
@@ -55,6 +66,20 @@ export default function Page({ params }: { params: { id: string } }) {
         proPlanTagline="Try for free"
         displayHobbyCTA={true}
       />
+      <div>
+        <Button
+          variant="link"
+          className="text-gray-500"
+          onClick={async () => {
+            // Reset the navigation store
+            setSelectedOrgId(null);
+            setSelectedProject(null);
+            await logoutFn().then(() => router.push("/authenticate"));
+          }}
+        >
+          Log out
+        </Button>
+      </div>
     </>
   );
 }
