@@ -45,6 +45,7 @@ async def event_detection_pipeline(task: Task) -> None:
     # and importing models from the phospho module
     project_lab = lab.models.Project(**project.model_dump())
     workload = lab.Workload.from_phospho_project_config(project_lab)
+    logger.debug(f"Workload for project {project_id} : {workload}")
 
     # Convert the tasks into a list of messages
     previous_messages = []

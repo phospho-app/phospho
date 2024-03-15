@@ -148,39 +148,32 @@ async def event_detection(
     async_openai_client = get_async_client(provider)
 
     # Build the prompt
-    if len(message.previous_messages) > 0:
-        prompt = f"""
-You are classifying an interaction between an end user and an assistant. The assistant is a chatbot that can perform tasks for the end user and answer his questions. 
+    prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
+and you are trying to say if the event '{event_name}' occurred during the interaction.
+The assistant is a chatbot that can perform tasks for the end user and answer his questions. 
 The assistant might make some mistakes or not be useful.
-The event you are looking for is: {event_description}
-The name of the event is: {event_name}
-
-Here is the transcript of the interaction:
-[START INTERACTION]
-{message.latest_interaction()}
-[END INTERACTION]
-
-You have to say if the event is present in the transcript or not. Respond with only one word, True or False.
-    """
+"""
+    if event_description is not None and len(event_description) > 0:
+        prompt += (
+            f"The description of the event is the following: '{event_description}'"
+        )
     else:
-        prompt = f"""
-You are classifying an interaction between an end user and an assistant. The assistant is a chatbot that can perform tasks for the end user and answer his questions. 
-The assistant might make some mistakes or not be useful.
-The event you are looking for is: {event_description} 
-The name of the event is: {event_name}
+        prompt += f"You don't have any description of the event {event_name}."
 
-Here are the previous messages of the conversation before the interaction to help you better understand the extract:
+    if len(message.previous_messages) > 0:
+        prompt += f"""
+To help you label the interaction, here are the previous messages leading to the interaction:
 [START CONTEXT]
 {message.latest_interaction_context()}
 [END CONTEXT]
-
-Here is the transcript of the interaction:
+"""
+    prompt += f"""
+Now, the interaction you have to label is the following:
 [START INTERACTION]
 {message.latest_interaction()}
 [END INTERACTION]
-
-You have to say if the event is present in the transcript or not. Respond with only one word, True or False.
-    """
+"""
+    prompt += f"""Did the event '{event_name}' occur during the latest interaction? Respond with only one word: Yes or No."""
 
     logger.debug(f"event_detection prompt : {prompt}")
 
@@ -194,7 +187,7 @@ You have to say if the event is present in the transcript or not. Respond with o
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt},
             ],
-            max_tokens=1,
+            max_tokens=5,
             temperature=0,
         )
     except Exception as e:
@@ -219,11 +212,11 @@ You have to say if the event is present in the transcript or not. Respond with o
     result_type = ResultType.error
     detected_event = None
     if llm_response is not None:
-        llm_response = llm_response[:4].lower()
-        if llm_response == "true":
+        llm_response = llm_response.lower().strip()
+        if "yes" in llm_response:
             result_type = ResultType.bool
             detected_event = True
-        elif llm_response == "fals":
+        elif "no" in llm_response:
             result_type = ResultType.bool
             detected_event = False
 
