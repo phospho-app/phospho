@@ -6,6 +6,7 @@ from typing import Any, List, Literal, Optional
 from pydantic import BaseModel, Field
 
 from phospho.utils import generate_timestamp, generate_uuid
+from phospho.models import Project, EventDefinition
 
 from .utils import get_literal_values
 
@@ -98,12 +99,12 @@ class ResultType(Enum):
 
 
 class JobResult(BaseModel, extra="allow"):
-    created_at: int = Field(default_factory=generate_timestamp)
-    job_id: str
-    result_type: ResultType
     value: Any
+    result_type: ResultType
     logs: List[Any] = Field(default_factory=list)
     metadata: dict = Field(default_factory=dict)
+    created_at: int = Field(default_factory=generate_timestamp)
+    job_id: Optional[str] = None
 
 
 class JobConfig(BaseModel, extra="allow"):
