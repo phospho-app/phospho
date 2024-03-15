@@ -231,6 +231,9 @@ async def task_scoring_pipeline(task: Task) -> None:
     )
     logger.debug(f"Nb of failure examples: {len(unsuccessful_examples_tasks)}")
 
+    # Get the Task's system prompt
+    system_prompt = task.metadata.get("system_prompt", None)
+
     # Call the eval function
     # Create the phospho workload
     workload = lab.Workload()
@@ -257,6 +260,7 @@ async def task_scoring_pipeline(task: Task) -> None:
                 metadata={
                     "successful_examples": successful_examples_tasks,
                     "unsuccessful_examples": unsuccessful_examples_tasks,
+                    "system_prompt": system_prompt,
                 },
             )
         ]
@@ -269,6 +273,7 @@ async def task_scoring_pipeline(task: Task) -> None:
                 metadata={
                     "successful_examples": successful_examples_tasks,
                     "unsuccessful_examples": unsuccessful_examples_tasks,
+                    "system_prompt": system_prompt,
                 },
             )
         ]
