@@ -178,6 +178,25 @@ def detect_usage_from_input_output(
     return None
 
 
+def detect_system_prompt_from_input_output(input: Any, output: Any) -> Optional[str]:
+    """
+    Returns the system prompt used to generate the output.
+    """
+    if isinstance(input, dict):
+        # OpenAI API has a messages list and the first message is the system prompt
+        # if the 'role' is 'system'
+        if "messages" in input.keys():
+            messages = input["messages"]
+            if isinstance(messages, list) and len(messages) > 0:
+                if messages[0].get("role", None) == "system":
+                    return messages[0].get("content", None)
+        # Claude-like API
+        if "system" in input.keys():
+            return input["system"]
+
+    return None
+
+
 def detect_model_from_input_output(input: Any, output: Any) -> Optional[str]:
     """
     Returns the model used to generate the output.
@@ -333,7 +352,6 @@ def extract_metadata_from_input_output(
 
     if input_output_to_usage_function is None:
         usage = detect_usage_from_input_output(input, output)
-
     else:
         usage = input_output_to_usage_function(input, output)
     if usage is not None:
@@ -342,5 +360,9 @@ def extract_metadata_from_input_output(
     model = detect_model_from_input_output(input, output)
     if model is not None:
         metadata.update({"model": model})
+
+    system_prompt = detect_system_prompt_from_input_output(input, output)
+    if system_prompt is not None:
+        metadata.update({"system_prompt": system_prompt})
 
     return metadata

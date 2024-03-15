@@ -264,6 +264,7 @@ async def evaluate_task(
     Message.metadata = {
         "successful_examples": [{input, output, flag}],
         "unsuccessful_examples": [{input, output, flag}],
+        "system_prompt": str,
     }
     """
     from phospho.utils import fits_in_context_window
@@ -274,6 +275,7 @@ async def evaluate_task(
 
     successful_examples = message.metadata.get("successful_examples", [])
     unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
+    system_prompt = message.metadata.get("system_prompt", None)
 
     assert isinstance(successful_examples, list), "successful_examples is not a list"
     assert isinstance(
@@ -308,6 +310,11 @@ async def evaluate_task(
         nonlocal api_call_time
         nonlocal llm_call
 
+        if not fits_in_context_window(prompt, max_tokens_input_lenght):
+            logger.error("The prompt does not fit in the context window")
+            # TODO : Fall back to a bigger model
+            return None
+
         logger.debug(f"Running zero shot evaluation with model {model_name}")
 
         start_time = time.time()
@@ -318,6 +325,7 @@ async def evaluate_task(
                 {"role": "user", "content": prompt},
             ],
             temperature=0,
+            max_tokens=5,  # We only need a small output
         )
 
         llm_response = response.choices[0].message.content
@@ -402,76 +410,84 @@ async def evaluate_task(
         text_prompt_to_classify = message.transcript(with_role=True)
         inputs = [text_prompt_to_classify]  # TODO : batching later?
 
-        response = await co.classify(
-            model="large",
-            inputs=inputs,
-            examples=examples,
-        )
-        await co.close()  # the AsyncClient client should be closed when done
+        try:
+            response = await co.classify(
+                model="large",
+                inputs=inputs,
+                examples=examples,
+            )
+        except Exception as e:
+            await co.close()  # Close the connection before raising the exception
+            raise e
 
-        flag = response.classifications[0].prediction
-        confidence = response.classifications[0].confidence
-
+        # Close the connection
+        await co.close()
+        flag = response.classifications[0].predictions[0]
+        confidence = response.classifications[0].confidences[0]
         # TODO : add check on confidence ?
-
         logger.debug(f"few_shot_eval flag : {flag}, confidence : {confidence}")
-
         if flag in ["success", "failure"]:
             return flag
         else:
             raise Exception("The flag is not success or failure")
 
-    if len(merged_examples) < few_shot_min_number_of_examples:
+    def build_zero_shot_prompt(
+        message: Message, system_prompt: Optional[str] = None
+    ) -> str:
+        """
+        Builds a zero shot prompt for the evaluation of a task.
+        """
         # Zero shot mode
         logger.debug("Running eval in zero shot mode")
 
         # Build zero shot prompt
+        prompt = """You are an impartial judge evaluating an interaction between a user and an assistant. \
+        Your goal is to say if the assistant response to the user was good or bad."""
+
+        if system_prompt:
+            prompt += f"""An assistant behaviour is guided by its system prompt. A good assistant response follows \
+                its system prompt. A bad assistant response disregards its system prompt. The system prompt of the assistant \
+                is the following:
+                [START SYSTEM PROMPT]
+                {system_prompt}
+                [END SYSTEM PROMPT]
+            """
+        else:
+            # Assume a generic system prompt
+            # TODO : Use the project settings and events suggestions to infer a system prompt
+            prompt += """A good assistant is helpful, concise, precise, entertaining, sharp, to the point, direct, agreeable.
+            A bad assistant is pointless, verbose, boring, off-topic, inaccurate, unhelpful, misleading, confusing.
+            """
 
         # If there is a previous task, add it to the prompt
         if len(message.previous_messages) > 0:
-            prompt = f"""
-            You are evaluating an interaction between a user and an assistant. 
-            Your goal is to determine if the assistant was helpful or not to the user.
-
-            Here is the previous interaction between the user and the assistant:
+            prompt += f"""A good assistant remembers previous interactions and gives in context answers.
+            A bad assistant ignores the context of the conversation and responds out of touch. 
+            The previous interaction between the user and the assistant was the following:
             [START PREVIOUS INTERACTION]
             {message.previous_messages_transcript(with_role=True)}
             [END PREVIOUS INTERACTION]
-
-            Here is the interaction between the user and the assistant you need to evaluate:
-            [START INTERACTION]
-            {message.transcript(with_role=True)}
-            [END INTERACTION]
-
-            Respond with only one word, success if the assistant was helpful, failure if not.
-            """
-        else:
-            prompt = f"""
-            You are an impartial judge evaluating an interaction between a user and an assistant. 
-            Your goal is to determine if the assistant was helpful or not to the user.
-
-            Here is the interaction between the user and the assistant:
-            [START INTERACTION]
-            {message.transcript(with_role=True)}
-            [END INTERACTION]
-
-            Respond with only one word, success if the assistant was helpful, failure if not.
             """
 
-        # Check the context window size
-        if fits_in_context_window(prompt, max_tokens_input_lenght):
-            flag = await zero_shot_evaluation(prompt, model_name=model_name)
-        else:
-            logger.error("The prompt does not fit in the context window")
-            flag = None  # TODO: Fallback to a bigger model
+        prompt += f"""Given the best of your knowledge, evaluate the following interaction between the user and the assistant:
+        [START INTERACTION]
+        {message.transcript(with_role=True)}
+        [END INTERACTION]
 
+        Respond with only one word: success if the assistant response was good, failure if the assistant response was bad.
+        """
+        return prompt
+
+    if len(merged_examples) < few_shot_min_number_of_examples:
+        # Zero shot mode
+        prompt = build_zero_shot_prompt(message, system_prompt)
+        flag = await zero_shot_evaluation(prompt, model_name=model_name)
     else:
-        # Few shot mode, we have enough examples to use them
-        prompt = None
+        # Few shot mode
         logger.debug(
             f"Running eval in few shot mode with Cohere classifier and {len(merged_examples)} examples"
         )
-        # We add a try with a fallback to zero shot if the function returns an error
+        prompt = None
         try:
             flag = await few_shot_evaluation(
                 message=message,
@@ -482,45 +498,8 @@ async def evaluate_task(
             logger.error(
                 f"Error in few shot evaluation (falling back to zero shot mode) : {e}"
             )
-            # Build zero shot prompt
-
-            # If there is a previous task, add it to the prompt
-            if len(message.previous_messages) > 0:
-                prompt = f"""
-                You are evaluating an interaction between a user and an assistant. 
-                Your goal is to determine if the assistant was helpful or not to the user.
-
-                Here is the previous interaction between the user and the assistant:
-                [START PREVIOUS INTERACTION]
-                {message.previous_messages_transcript(with_role=True)}
-                [END PREVIOUS INTERACTION]
-
-                Here is the interaction between the user and the assistant you need to evaluate:
-                [START INTERACTION]
-                {message.transcript(with_role=True)}
-                [END INTERACTION]
-
-                Respond with only one word, success if the assistant was helpful, failure if not.
-                """
-            else:
-                prompt = f"""
-                You are an impartial judge evaluating an interaction between a user and an assistant. 
-                Your goal is to determine if the assistant was helpful or not to the user.
-
-                Here is the interaction between the user and the assistant:
-                [START INTERACTION]
-                {message.transcript(with_role=True)}
-                [END INTERACTION]
-
-                Respond with only one word, success if the assistant was helpful, failure if not.
-                """
-
-            # Check the context window size
-            if fits_in_context_window(prompt, max_tokens_input_lenght):
-                flag = await zero_shot_evaluation(prompt, model_name=model_name)
-            else:
-                logger.error("The prompt does not fit in the context window")
-                flag = None  # TODO: Fallback to a bigger model
+            prompt = build_zero_shot_prompt(message, system_prompt)
+            flag = await zero_shot_evaluation(prompt, model_name=model_name)
 
     return JobResult(
         result_type=ResultType.literal,
