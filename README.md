@@ -30,8 +30,7 @@ Learn more in the full [documentation](https://docs.phospho.ai/welcome).
 </div>
 
 ## Demo
-
-https://github.com/phospho-app/phospho/assets/78322686/fb1379bf-32f1-492e-be86-d29879056dc3
+https://github.com/phospho-app/phospho/assets/49514012/1c61ccfd-40ca-4ebd-ac27-58530085b8fe
 
 ## Quickstart: Discover the phospho lab in pure python
 
