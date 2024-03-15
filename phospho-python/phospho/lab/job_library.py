@@ -422,8 +422,8 @@ async def evaluate_task(
 
         # Close the connection
         await co.close()
-        flag = response.classifications[0].prediction
-        confidence = response.classifications[0].confidence
+        flag = response.classifications[0].predictions[0]
+        confidence = response.classifications[0].confidences[0]
         # TODO : add check on confidence ?
         logger.debug(f"few_shot_eval flag : {flag}, confidence : {confidence}")
         if flag in ["success", "failure"]:
@@ -487,7 +487,7 @@ async def evaluate_task(
         logger.debug(
             f"Running eval in few shot mode with Cohere classifier and {len(merged_examples)} examples"
         )
-        # We add a try with a fallback to zero shot if the function returns an error
+        prompt = None
         try:
             flag = await few_shot_evaluation(
                 message=message,
