@@ -1,11 +1,10 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { navigationStateStore } from "@/store/store";
 import { useLogoutFunction } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
 import React from "react";
-
-import { Button } from "./ui/button";
 
 const LogoutButton: React.FC = () => {
   const logoutFn = useLogoutFunction();
