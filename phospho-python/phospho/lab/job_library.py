@@ -27,7 +27,7 @@ def prompt_to_bool(
     message: Message,
     prompt: str,
     format_kwargs: Optional[dict] = None,
-    model: str = "openai:gpt-3.5-turbo",
+    model: str = "openai:gpt-4-1106-preview",
 ) -> JobResult:
     """
     Runs a prompt on a message and returns a boolean result.
@@ -137,7 +137,7 @@ async def event_detection(
     message: Message,
     event_name: str,
     event_description: str,
-    model: str = "openai:gpt-3.5-turbo",
+    model: str = "openai:gpt-4-1106-preview",
 ) -> JobResult:
     """
     Detects if an event is present in a message.
