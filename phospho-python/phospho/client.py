@@ -15,11 +15,11 @@ import phospho.config as config
 
 from phospho.sessions import SessionCollection
 from phospho.tasks import TaskCollection, Task
-from phospho.models import Comparison, Test, FlattenedTask
+from phospho.models import Comparison, Test, FlattenedTask, Project
 
 
 class Client:
-    """This is a class to standardize calls to the phospho backend"""
+    """Standard client for calls to the phospho backend"""
 
     def __init__(
         self,
@@ -220,3 +220,11 @@ class Client:
             },
         )
         return None
+
+    def project_config(self) -> Project:
+        """
+        Get the project configuration and settings
+        """
+
+        response = self._get(f"/projects/{self._project_id()}")
+        return Project.model_validate(response.json())

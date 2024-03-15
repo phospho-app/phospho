@@ -15,10 +15,11 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { FilterX } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, FilterX } from "lucide-react";
 import React from "react";
 
 import { Button } from "../ui/button";
@@ -54,6 +55,7 @@ export function UsersTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setSessionsColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     state: {
       columnFilters: sessionsColumnsFilters,
       sorting,
@@ -73,9 +75,32 @@ export function UsersTable<TData, TValue>({
             if (!table) return;
             table.setColumnFilters([]);
           }}
+          disabled={sessionsColumnsFilters.length === 0}
         >
           <FilterX className="h-4 w-4 mr-1" />
-          Clear all filters
+          Clear
+        </Button>
+        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+          Page {table.getState().pagination.pageIndex + 1}/
+          {table.getPageCount()}
+        </div>
+        <Button
+          variant="outline"
+          className="w-8 p-0"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          <span className="sr-only">Go to previous page</span>
+          <ChevronLeftIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          className="w-8 p-0"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          <span className="sr-only">Go to next page</span>
+          <ChevronRightIcon className="h-4 w-4" />
         </Button>
       </div>
 
