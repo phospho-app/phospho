@@ -270,10 +270,16 @@ const TaskBox = ({
             .map(([key, value]) => {
               // console.log("key :", key);
               if (typeof value === "string" || typeof value === "number") {
+                // If it's a string larger than 50 characters, display only the
+                // first 50 characters
+                const shortValue =
+                  typeof value === "string" && value.length > 50
+                    ? value.substring(0, 50) + "..."
+                    : value;
                 return (
                   <Badge variant="outline" className="mx-2 text-xs font-normal">
                     <p key={key}>
-                      {key}: {value}
+                      {key}: {shortValue}
                     </p>
                   </Badge>
                 );
