@@ -11,6 +11,74 @@ from openai.types.chat import ChatCompletionChunk
 import phospho
 
 
+import hunter
+from hunter.actions import Action
+from hunter.actions import RETURN_VALUE
+from hunter.actions import ColorStreamAction
+
+
+class ProfileAction(ColorStreamAction):
+    # using ColorStreamAction brings this more in line with the other actions
+    # (stream option, coloring and such, see the other examples for colors)
+    def __init__(self, **kwargs):
+        self.timings = {}
+        self.parameters = {}
+        super(ProfileAction, self).__init__(**kwargs)
+
+    def __call__(self, event: hunter.Event):
+        current_time = time.time()
+        # include event.builtin in the id so we don't have problems
+        # with Python reusing frame objects from the previous call for builtin calls
+        frame_id = id(event.frame), str(event.builtin)
+
+        if event.kind == "call":
+            self.timings[frame_id] = current_time, None
+            self.parameters[frame_id] = event.arg
+        elif frame_id in self.timings:
+            start_time, exception = self.timings.pop(frame_id)
+            parameters = self.parameters.pop(frame_id, None)
+
+            # try to find a complete function name for display
+            function_object = event.function_object
+            if event.builtin:
+                function = "<builtin>.{}".format(event.arg.__name__)
+            elif function_object:
+                if hasattr(function_object, "__qualname__"):
+                    function = "{}.{}".format(
+                        function_object.__module__, function_object.__qualname__
+                    )
+                else:
+                    function = "{}.{}".format(
+                        function_object.__module__, function_object.__name__
+                    )
+            else:
+                function = event.function
+
+            if event.kind == "exception":
+                # store the exception
+                # (there will be a followup 'return' event in which we deal with it)
+                self.timings[frame_id] = start_time, event.arg
+            elif event.kind == "return":
+                delta = current_time - start_time
+                if event.instruction == RETURN_VALUE:
+                    # exception was discarded
+                    self.output(
+                        "{fore(BLUE)}{} arg={} returned: {}. Duration: {:.4f}s{RESET}\n",
+                        function,
+                        parameters,
+                        event.arg,
+                        delta,
+                    )
+                else:
+                    self.output(
+                        "{fore(RED)}{} arg={} raised exception: {}. Duration: {:.4f}s{RESET}\n",
+                        function,
+                        parameters,
+                        exception,
+                        delta,
+                    )
+
+
 class SantaClausAgent:
     """This agent talks with the end user. It uses an LLM to generate texts."""
 
@@ -137,4 +205,12 @@ phospho.init(
     project_id=st.secrets["PHOSPHO_PROJECT_ID"],
     # base_url="http://127.0.0.1:8000/v2",
     base_url=os.getenv("PHOSPHO_BASE_URL"),
+)
+
+hunter.trace(
+    module_sw="openai",
+    builtin=False,
+    action=ProfileAction(),
+    threading_support=True,
+    depth=10,
 )
