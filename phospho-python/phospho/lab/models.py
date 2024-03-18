@@ -158,16 +158,19 @@ class Message(BaseModel):
             if content and not pd.isnull(content):
                 values_to_create_message = {}
                 for attribute, col_name in col_mapping.items():
-                    if col_name is not None and attribute != "content":
+                    if col_name is not None:
                         values_to_create_message[attribute] = row[col_name]
                 if col_mapping["id"] is None:
                     # By default, the id is the index of the row
                     message_id = str(index)
                 else:
                     message_id = row[col_mapping["id"]]
-                messages.append(
-                    cls(id=message_id, content=content, **values_to_create_message)
-                )
+                message_dict = {
+                    **values_to_create_message,
+                    "id": message_id,
+                    "content": content,
+                }
+                messages.append(cls(**message_dict))
 
         return messages
 

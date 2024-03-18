@@ -590,4 +590,5 @@ class Workload:
             },
             orient="index",
         )
+
         return results_df
