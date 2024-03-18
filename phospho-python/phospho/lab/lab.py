@@ -13,17 +13,19 @@ from typing import (
     Union,
 )
 
+from tqdm import tqdm
+
 import phospho.client as client
 import phospho.lab.job_library as job_library
 
 from .models import (
+    EventConfig,
+    EventDefinition,
     JobConfig,
     JobResult,
     Message,
-    ResultType,
-    EventConfig,
-    EventDefinition,
     Project,
+    ResultType,
 )
 
 logger = logging.getLogger(__name__)
@@ -208,12 +210,9 @@ class Job:
         # Check that the alternative_results are not empty
         if len(self.alternative_results) == 0:
             logger.warning(
-                """
-                No alternative results found. 
-                This can be caused by not having alternative configs or if you didn't called the 
-                async_run_on_alternative_configurations on the jobs. 
-                Skipping.
-                """
+                "Can't run Workload.optimize(): No alternative results found. "
+                + "Make sure you called Workload.async_run_on_alternative_configurations() first. "
+                + "Skipping."
             )
             return
 
@@ -221,16 +220,15 @@ class Job:
         for alternative_result in self.alternative_results:
             if len(alternative_result) != len(self.results):
                 logger.error(
-                    """
-                    The alternative_results are not the same length as the results. 
-                    Skipping.
-                    """
+                    "Can't run Workload.optimize(): The alternative_results are not the same length as the results. Skipping."
                 )
                 return
 
         # Check that we have enough predictions to start the optimization
         if len(self.results) < min_count:
-            logger.info("Not enough results to start the optimization. Skipping.")
+            logger.info(
+                f"Can't run Workload.optimize(): {min_count} results are required, but only {len(self.results)} found. Skipping."
+            )
             return
 
         accuracies: List[float] = []
@@ -248,8 +246,7 @@ class Job:
             accuracy = sum(accuracy_vector) / len(accuracy_vector)
             accuracies.append(accuracy)
 
-        # DEBUG
-        print(f"accuracies: {accuracies}")
+        logger.info(f"Accuracies: {accuracies}")
 
         # The latest items are the most preferred ones
         # The instanciated config is the reference one (most truthful)
@@ -449,6 +446,12 @@ class Workload:
         """
         Runs all the jobs on the message.
 
+        Args:
+        :param messages: The messages to run the jobs on.
+        :param executor_type: The type of executor to use. Can be "parallel" or "sequential".
+        :param max_parallelism: The maximum number of parallel jobs to run per seconds.
+            Use this to adhere to rate limits. Only used if executor_type is "parallel".
+
         Returns: a mapping of message.id -> job_id -> job_result
         """
 
@@ -459,18 +462,29 @@ class Workload:
             if executor_type == "parallel":
                 # Await all the results
                 semaphore = asyncio.Semaphore(max_parallelism)
+                # Create a progress bar
+                if isinstance(messages, list):
+                    t = tqdm(total=len(messages))
+                else:
+                    t = tqdm()
 
                 async def job_limit_wrap(url):
+                    # Account for the semaphore (rate limit, max_parallelism)
                     async with semaphore:
-                        return await job.async_run(url)
+                        result = await job.async_run(url)
+                        # Update the progress bar
+                        t.update()
+                        return result
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
                     executor_results = executor.map(job_limit_wrap, messages)
 
+                t.display()
                 await asyncio.gather(*executor_results)
+                t.close()
             elif executor_type == "sequential":
-                for one_message in messages:
+                for one_message in tqdm(messages):
                     await job.async_run(one_message)
             else:
                 raise NotImplementedError(
