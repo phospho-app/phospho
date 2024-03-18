@@ -1,12 +1,12 @@
 import itertools
 import logging
 from enum import Enum
-from typing import Any, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from phospho.models import EventDefinition, Project
 from phospho.utils import generate_timestamp, generate_uuid
-from phospho.models import Project, EventDefinition
 
 from .utils import get_literal_values
 
@@ -91,11 +91,85 @@ class Message(BaseModel):
                 ]
             )
 
+    @classmethod
+    def from_df(cls, df, **kwargs) -> List["Message"]:
+        """
+        Create a list of Message objects from a pandas DataFrame.
+
+        :param df: The DataFrame to convert to a list of Message objects
+        :param kwargs: The mapping from the Message fields to the column names of the DataFrame.
+            Supported fields are: id, created_at, role, content, previous_messages, metadata.
+            - Optional Message fields can be omitted.
+            - If not provided, the default mapping is used.
+            - If the mapping refers to an unknown column name, a ValueError is raised.
+            - Pass None to a field to skip it and use a default value.
+
+        :return: A list of Message objects
+        """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("Pandas is required to use the from_df method")
+
+        # The keyword arguments are understood as mapping from the Message
+        # fields to the column names of the DataFrame
+        # If not provided, the default mapping is used
+        default_mapping: Dict[str, object] = {
+            "id": None,
+            "created_at": "created_at",
+            "role": "role",
+            "content": "content",
+            "previous_messages": "previous_messages",
+            "metadata": "metadata",
+        }
+        # If a default mapping value is not found in the DataFrame, it is skipped
+        for key, value in default_mapping.items():
+            if value not in df.columns:
+                default_mapping[key] = None
+        # If a kwargs refers to an unknwon column name, raise a ValueError
+        for key, value in kwargs.items():
+            if value not in df.columns and value is not None:
+                raise ValueError(f"Column {value} not found in the DataFrame")
+
+        col_mapping = {**default_mapping, **kwargs}
+
+        # Verify that mandatory field are present. If not, raise a ValueError
+        if col_mapping["content"] is None:
+            raise ValueError(
+                f'Column "content" not found in the DataFrame. '
+                + 'Please provide a keyword argument with the column to use: `Message.from_df(df, content="message_content")`.'
+            )
+
+        # Convert every row of the df into a lab.Message
+        messages = []
+        for index, row in df.iterrows():
+            content = row[col_mapping["content"]]
+            if content and not pd.isnull(content):
+                values_to_create_message = {}
+                for attribute, col_name in col_mapping.items():
+                    if col_name is not None and attribute != "content":
+                        values_to_create_message[attribute] = row[col_name]
+                if col_mapping["id"] is None:
+                    # By default, the id is the index of the row
+                    message_id = str(index)
+                else:
+                    message_id = row[col_mapping["id"]]
+                messages.append(
+                    cls(id=message_id, content=content, **values_to_create_message)
+                )
+
+        return messages
+
 
 class ResultType(Enum):
     error = "error"
     bool = "bool"
     literal = "literal"
+    list = "list"
+    dict = "dict"
+    string = "string"
+    number = "number"
+    object = "object"
 
 
 class JobResult(BaseModel, extra="allow"):

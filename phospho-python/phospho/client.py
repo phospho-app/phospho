@@ -29,6 +29,13 @@ class Client:
     ) -> None:
         self.api_key = api_key
         self.project_id = project_id
+        # If no api_key is provided, verify that there is an environment variable
+        if not api_key:
+            self._api_key()
+        # If no project_id is provided, verify that there is an environment variable
+        if not project_id:
+            self._project_id()
+
         if not base_url:
             self.base_url = config.BASE_URL
         else:
@@ -42,7 +49,7 @@ class Client:
         if not token:
             raise ValueError(
                 "No API key provided. You need to set the PHOSPHO_API_KEY environment variable or init phospho with"
-                + " `phospho.init(api_key=...)`.\n\nFind your API key on https://phospho.ai"
+                + " `phospho.init(api_key=...)`.\n\nFind your API key on https://platform.phospho.ai in Settings"
             )
         return token
 
@@ -54,7 +61,8 @@ class Client:
         if not project_id:
             raise ValueError(
                 "No project id provided. You need to set the PHOSPHO_PROJECT_ID environment"
-                + " variable or init phospho with `phospho.init(project_id=...)`."
+                + " variable or init phospho with `phospho.init(project_id=...)`.\n\n"
+                + "Find your project id on https://platform.phospho.ai in Settings"
             )
         return project_id
 
