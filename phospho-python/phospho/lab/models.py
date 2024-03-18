@@ -96,11 +96,22 @@ class Message(BaseModel):
         """
         Create a list of Message objects from a pandas DataFrame.
 
+        ```python
+        import pandas as pd
+
+        df = pd.DataFrame({
+            "content": ["Hello", "How are you?"],
+            "context_role": ["user", "assistant"],
+        })
+
+        messages = Message.from_df(df, role="context_role)
+        ```
+
         :param df: The DataFrame to convert to a list of Message objects
         :param kwargs: The mapping from the Message fields to the column names of the DataFrame.
             Supported fields are: id, created_at, role, content, previous_messages, metadata.
-            - Optional Message fields can be omitted.
-            - If not provided, the default mapping is used.
+            - The only required field is "content". Other fields are optional.
+            - If not provided, a default mapping is used, where the field name is the same as the column name.
             - If the mapping refers to an unknown column name, a ValueError is raised.
             - Pass None to a field to skip it and use a default value.
 
