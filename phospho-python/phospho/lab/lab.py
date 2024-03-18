@@ -1,6 +1,7 @@
 import asyncio
 import concurrent.futures
 import logging
+import random
 from typing import (
     Any,
     Awaitable,
@@ -49,6 +50,8 @@ class Job:
     alternative_configs: List[JobConfig]
 
     metadata: Optional[Dict[str, Any]] = None
+    workload: Optional["Workload"] = None
+    sample: float = 1.0
 
     def __init__(
         self,
@@ -62,6 +65,8 @@ class Job:
         name: Optional[str] = None,
         config: Optional[JobConfig] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        workload: Optional["Workload"] = None,
+        sample: float = 1.0,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
@@ -96,6 +101,8 @@ class Job:
         This is useful to specify the job_function in config files. If the name is None, it will be equal to the job_id.
         :param config: The configuration of the job. If not provided, the job will run with an empty config.
         :param metadata: Extra metadata to store with the job.
+        :param workload: The workload to which the job belongs. This is useful to access the results of other jobs.
+        :param sample: The sample rate of the job. If the sample rate is 0.5, the job will run on 50% of the messages.
         """
 
         if job_function is None and name is None:
@@ -134,6 +141,8 @@ class Job:
             self.alternative_results.append({})
 
         self.metadata = metadata
+        self.workload = workload
+        self.sample = sample
 
     async def async_run(self, message: Message) -> JobResult:
         """
@@ -141,6 +150,16 @@ class Job:
         """
         logger.debug(f"Running job {self.id} on message {message.id}.")
         params = self.config.model_dump()
+
+        # if 'job' is in the job_function signature, we pass the self object
+        # Don't override the job parameter if it's already in the params
+        if "job" in self.job_function.__code__.co_varnames and "job" not in params:
+            params["job"] = self
+        if (
+            "workload" in self.job_function.__code__.co_varnames
+            and "workload" not in params
+        ):
+            params["workload"] = self.workload
 
         if asyncio.iscoroutinefunction(self.job_function):
             result = await self.job_function(message, **params)
@@ -316,6 +335,8 @@ class Workload:
         """
         Add a job to the workload.
         """
+        # Add a reference to the workload to the job
+        job.workload = self
         self.jobs[job.id] = job
 
     @classmethod
@@ -468,13 +489,15 @@ class Workload:
                 else:
                     t = tqdm()
 
-                async def job_limit_wrap(url):
+                async def job_limit_wrap(message: Message):
                     # Account for the semaphore (rate limit, max_parallelism)
                     async with semaphore:
-                        result = await job.async_run(url)
+                        if random.random() < job.sample:
+                            await job.async_run(message)
+                        else:
+                            job.results[message.id] = None
                         # Update the progress bar
                         t.update()
-                        return result
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
@@ -485,7 +508,10 @@ class Workload:
                 t.close()
             elif executor_type == "sequential":
                 for one_message in tqdm(messages):
-                    await job.async_run(one_message)
+                    if random.random() < job.sample:
+                        await job.async_run(one_message)
+                    else:
+                        job.results[one_message.id] = None
             else:
                 raise NotImplementedError(
                     f"Executor type {executor_type} is not implemented"
@@ -584,7 +610,9 @@ class Workload:
         results_df = pd.DataFrame.from_dict(
             {
                 message_id: {
-                    job_id: result.value for job_id, result in job_results.items()
+                    job_id: result.value
+                    for job_id, result in job_results.items()
+                    if result is not None
                 }
                 for message_id, job_results in results.items()
             },
