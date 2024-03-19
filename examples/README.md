@@ -8,6 +8,7 @@ The phospho lab is the local version of phospho analytics.
 
 - [Quickstart](./lab/quickstart.ipynb) How to run the Event detection pipeline on a dataset and optimize the pipeline
 - [Create a Custom Job](./lab/custom-job.ipynb) How to create a custom job and run it with phospho lab
+- [Parallel calls to OpenAI on a dataset](./lab/parallel-calls.ipynb) How to run parallel calls to OpenAI on a dataset with parallelization, while respecting rate limits
 
 ## Agent examples
 
