@@ -51,7 +51,7 @@ class Job:
 
     metadata: Optional[Dict[str, Any]] = None
     workload: Optional["Workload"] = None
-    sample: float = 1.0
+    sample: float = 1
 
     def __init__(
         self,
@@ -291,8 +291,7 @@ class Job:
     job_name={self.job_function.__name__},
     config={{\n{self.config}\n  }},
     metadata={self.metadata}
-)
-"""
+)"""
 
 
 class Workload:
@@ -492,7 +491,7 @@ class Workload:
                 async def job_limit_wrap(message: Message):
                     # Account for the semaphore (rate limit, max_parallelism)
                     async with semaphore:
-                        if random.random() < job.sample:
+                        if job.sample >= 1 or random.random() < job.sample:
                             await job.async_run(message)
                         else:
                             job.results[message.id] = None
@@ -508,7 +507,7 @@ class Workload:
                 t.close()
             elif executor_type == "sequential":
                 for one_message in tqdm(messages):
-                    if random.random() < job.sample:
+                    if job.sample >= 1 or random.random() < job.sample:
                         await job.async_run(one_message)
                     else:
                         job.results[one_message.id] = None
