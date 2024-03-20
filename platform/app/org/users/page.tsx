@@ -37,10 +37,7 @@ import useSWR from "swr";
 
 const Users = () => {
   const { accessToken } = useUser();
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
   const setUniqueEventNamesInData = dataStateStore(
     (state) => state.setUniqueEventNamesInData,
   );

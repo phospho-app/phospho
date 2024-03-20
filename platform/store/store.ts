@@ -14,8 +14,8 @@ import { Task, TaskWithEvents } from "../models/tasks";
 interface navigationState {
   selectedOrgId: string | null | undefined;
   setSelectedOrgId: (orgId: string | null) => void;
-  selectedProject: Project | null | undefined;
-  setSelectedProject: (project: Project | null) => void;
+  project_id: string | null | undefined;
+  setproject_id: (projectId: string | null) => void;
 
   tasksColumnsFilters: ColumnFiltersState;
   setTasksColumnsFilters: (
@@ -34,9 +34,9 @@ export const navigationStateStore = create(
       setSelectedOrgId: (orgId: string | null) =>
         set((state) => ({ selectedOrgId: orgId })),
 
-      selectedProject: undefined,
-      setSelectedProject: (project: Project | null) =>
-        set((state) => ({ selectedProject: project })),
+      project_id: null,
+      setproject_id: (projectId: string | null) =>
+        set((state) => ({ project_id: projectId })),
 
       tasksColumnsFilters: [],
       setTasksColumnsFilters: (updaterOrValue: Updater<ColumnFiltersState>) =>
@@ -83,6 +83,8 @@ interface dataState {
 
   projects: Project[] | null;
   setProjects: (projects: Project[]) => void;
+  selectedProject: Project | null;
+  setSelectedProject: (project: Project | null) => void;
 
   hasTasks: boolean | null;
   setHasTasks: (hasTasks: boolean | null) => void;
@@ -117,6 +119,9 @@ export const dataStateStore = create<dataState>((set) => ({
   projects: null,
   setProjects: (projects: Project[]) =>
     set((state) => ({ projects: projects })),
+  selectedProject: null,
+  setSelectedProject: (project: Project | null) =>
+    set((state) => ({ selectedProject: project })),
 
   hasTasks: null,
   setHasTasks: (hasTasks: boolean | null) =>

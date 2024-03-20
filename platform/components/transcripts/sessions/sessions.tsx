@@ -1,31 +1,23 @@
 "use client";
 
-// Comp
 import SessionsDataviz from "@/components/transcripts/sessions/session-dataviz";
-// Models
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SessionWithEvents } from "@/models/sessions";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import Link from "next/link";
 import React, { useEffect } from "react";
 
-// PropelAuth
-import { Button } from "../../ui/button";
-import { Card, CardContent, CardHeader } from "../../ui/card";
 import { SessionsTable } from "./sessions-table";
 
 const Sessions: React.FC = () => {
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
+  const project_id = navigationStateStore((state) => state.project_id);
   const setUniqueEventNamesInData = dataStateStore(
     (state) => state.setUniqueEventNamesInData,
   );
   const sessionsWithEvents = dataStateStore(
     (state) => state.sessionsWithEvents,
   );
-
-  const project_id = selectedProject?.id;
-
   const hasSessions = dataStateStore((state) => state.hasSessions);
 
   useEffect(() => {

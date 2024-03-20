@@ -143,10 +143,9 @@ export default function Events() {
   const router = useRouter();
 
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const setSelectedProject = navigationStateStore(
+  const project_id = navigationStateStore((state) => state.project_id);
+  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const setSelectedProject = dataStateStore(
     (state) => state.setSelectedProject,
   );
   const setUniqueEventNames = dataStateStore(
@@ -157,7 +156,6 @@ export default function Events() {
 
   const project_settings = selectedProject?.settings ?? {};
   const init_events = project_settings.events ?? null;
-  const project_id = selectedProject?.id;
 
   const [newEventName, setNewEventName] = useState("");
   const [newEventDescription, setNewEventDescription] = useState("");

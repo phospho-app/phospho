@@ -10,11 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 export const NoDataDashboard = () => {
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
 
   const LINK_TO_COLAB =
     "https://colab.research.google.com/drive/1Wv9KHffpfHlQCxK1VGvP_ofnMiOGK83Q";

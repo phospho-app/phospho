@@ -15,10 +15,7 @@ import useSWR from "swr";
 import { DataTable } from "./tests-table";
 
 const Tests: React.FC = () => {
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
 
   // Fetch tests

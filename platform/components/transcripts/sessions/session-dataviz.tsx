@@ -60,10 +60,7 @@ interface SessionMetrics {
 const SessionsDataviz: React.FC = () => {
   const { accessToken } = useUser();
 
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
 
   const sessionsColumnsFilters = navigationStateStore(
     (state) => state.sessionsColumnsFilters,

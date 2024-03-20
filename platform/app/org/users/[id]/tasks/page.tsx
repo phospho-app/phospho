@@ -10,10 +10,7 @@ import useSWR from "swr";
 
 const User = ({ params }: { params: { id: string } }) => {
   const user_id = decodeURIComponent(params.id);
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
 
   const {

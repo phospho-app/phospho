@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,12 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import Link from "next/link";
 import React from "react";
-import { useEffect, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -24,9 +25,6 @@ import {
   YAxis,
 } from "recharts";
 import useSWR from "swr";
-
-import { Button } from "../../ui/button";
-import { Skeleton } from "../../ui/skeleton";
 
 interface NbDailyTasks {
   day: string;
@@ -66,13 +64,8 @@ const TasksDataviz: React.FC = () => {
   const tasksColumnsFilters = navigationStateStore(
     (state) => state.tasksColumnsFilters,
   );
-
   const hasSessions = dataStateStore((state) => state.hasSessions);
-
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
 
   let flagFilter: string | null = null;
   let eventFilter: string | null = null;

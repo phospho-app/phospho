@@ -26,10 +26,7 @@ import useSWR from "swr";
 
 const ABTesting: React.FC = () => {
   const { accessToken } = useUser();
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
 
   // Fetch ABTests
   const { data: abTests } = useSWR(

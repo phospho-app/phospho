@@ -37,7 +37,8 @@ const CreateNewProjectForm = ({ setOpen }: CreateNewProjectFormProps) => {
   const { user, loading, accessToken } = useUser();
 
   // Zustand state management
-  const setSelectedProject = navigationStateStore(
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
+  const setSelectedProject = dataStateStore(
     (state) => state.setSelectedProject,
   );
   const projects = dataStateStore((state) => state.projects);
@@ -91,6 +92,7 @@ const CreateNewProjectForm = ({ setOpen }: CreateNewProjectFormProps) => {
 
         // Change the selected project
         setSelectedProject(responseBody);
+        setproject_id(responseBody.id);
         // Add the project to the list of projects
         if (projects) {
           setProjects([responseBody, ...projects]);
