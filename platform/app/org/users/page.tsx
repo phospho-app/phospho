@@ -142,7 +142,7 @@ const Users = () => {
         average={userAverage}
         top10={userTop10}
       />
-      <UsersTable project_id={project_id} usersMetadata={usersMetadata} />
+      <UsersTable usersMetadata={usersMetadata} />
     </>
   );
 };

@@ -35,7 +35,7 @@ const User = ({ params }: { params: { id: string } }) => {
     <>
       {(userMetadata === null && <SmallSpinner />) || (
         <div>
-          <SessionsTable project_id={project_id} />
+          <SessionsTable />
         </div>
       )}
     </>

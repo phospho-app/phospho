@@ -32,6 +32,14 @@ function FetchHasTasksSessions() {
   const setSessionsWithEvents = dataStateStore(
     (state) => state.setSessionsWithEvents,
   );
+  const setSelectedProject = dataStateStore(
+    (state) => state.setSelectedProject,
+  );
+  const setUniqueEventNames = dataStateStore(
+    (state) => state.setUniqueEventNames,
+  );
+
+  console.log("Rendering FetchHasTasksSessions");
 
   // Fetch the has session
   const { data: hasSessionData } = useSWR(
@@ -122,6 +130,23 @@ function FetchHasTasksSessions() {
       ),
     );
     setUniqueEventNamesInData(uniqueEventNames);
+  }
+
+  // Fetch the selected project from the server. This is useful when the user
+  // change the settings
+  const { data: fetchedProject } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+  );
+  if (fetchedProject) {
+    console.log("Updating fetchedProject:", fetchedProject);
+    setSelectedProject(fetchedProject);
+    // Set the unique event names
+    if (fetchedProject.settings?.events) {
+      setUniqueEventNames(Object.keys(fetchedProject.settings.events));
+    } else {
+      setUniqueEventNames([]);
+    }
   }
 
   return <></>;
