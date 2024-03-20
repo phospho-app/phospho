@@ -46,6 +46,9 @@ const Users = () => {
   const { data: usersData } = useSWR(
     project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
   const usersMetadata = usersData?.users;
 
