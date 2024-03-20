@@ -68,7 +68,7 @@ const Sessions: React.FC = () => {
 
           <div className="container px-0 space-y-2">
             <SessionsDataviz />
-            <SessionsTable project_id={project_id} />
+            <SessionsTable />
           </div>
 
           <div className="h-20"></div>
