@@ -38,10 +38,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
 
   const { accessToken, loading } = useUser();
   const hasTasks = dataStateStore((state) => state.hasTasks);
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
 
   const [selectedMetric, setSelectedMetric] = useState<string>("Nb tasks");
   const [selectedMetricMetadata, setSelectedMetricMetadata] = useState<

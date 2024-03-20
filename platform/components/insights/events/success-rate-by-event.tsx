@@ -1,5 +1,7 @@
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   Bar,
@@ -11,22 +13,23 @@ import {
 } from "recharts";
 import useSWR from "swr";
 
-import { Card, CardContent, CardHeader } from "../../ui/card";
-
 interface SuccessRate {
   event_name: string;
   success_rate: number;
 }
 
-function SuccessRateByEvent({ project_id }: { project_id: string }) {
+function SuccessRateByEvent() {
   const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
 
   const {
     data: successRateByEvent,
   }: {
     data: SuccessRate[] | null | undefined;
   } = useSWR(
-    [`/api/explore/${project_id}/aggregated/events`, accessToken],
+    project_id
+      ? [`/api/explore/${project_id}/aggregated/events`, accessToken]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["success_rate_by_event_name"],
