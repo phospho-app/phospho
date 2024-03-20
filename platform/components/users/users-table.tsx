@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { UserMetadata } from "@/models/metadata";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import {
   ColumnFiltersState,
@@ -27,15 +28,16 @@ import { getColumns } from "./users-table-columns";
 
 interface DataTableProps<TData, TValue> {
   project_id: string;
+  usersMetadata: UserMetadata[];
 }
 
 export function UsersTable<TData, TValue>({
   project_id,
+  usersMetadata,
 }: DataTableProps<TData, TValue>) {
   const selectedProject = navigationStateStore(
     (state) => state.selectedProject,
   );
-  const usersMetadata = dataStateStore((state) => state.usersMetadata);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const sessionsColumnsFilters = navigationStateStore(
@@ -63,6 +65,10 @@ export function UsersTable<TData, TValue>({
   });
 
   if (!selectedProject) {
+    return <></>;
+  }
+
+  if (usersMetadata === undefined) {
     return <></>;
   }
 
