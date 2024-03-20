@@ -1,13 +1,12 @@
 "use client";
 
-import { dataStateStore } from "@/store/store";
-import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import Link from "next/link";
-import React from "react";
-
-import { Button } from "../ui/button";
 // Shadcn ui
+import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   Table,
   TableBody,
@@ -15,10 +14,41 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from "@/components/ui/table";
+import { authFetcher } from "@/lib/fetcher";
+import { ABTest } from "@/models/abtests";
+import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
+import { QuestionMarkIcon } from "@radix-ui/react-icons";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import Link from "next/link";
+import React from "react";
+import useSWR from "swr";
 
 const ABTesting: React.FC = () => {
-  const abTests = dataStateStore((state) => state.abTests);
+  const { accessToken } = useUser();
+  const selectedProject = navigationStateStore(
+    (state) => state.selectedProject,
+  );
+  const project_id = selectedProject?.id;
+
+  // Fetch ABTests
+  const { data: abTests } = useSWR(
+    project_id ? [`/api/explore/${project_id}/ab-tests`, accessToken] : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken)?.then((res) => {
+        const abtests = res.abtests as ABTest[];
+        // Round the score and score_std to 2 decimal places
+        abtests.forEach((abtest) => {
+          abtest.score = Math.round(abtest.score * 10000) / 100;
+          abtest.score_std = Math.round(abtest.score_std * 10000) / 100;
+        });
+        return abtests;
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   // Handle the case abtests is null
   if (!abTests) {
@@ -49,7 +79,9 @@ const ABTesting: React.FC = () => {
     return (
       <>
         <h2 className="text-3xl font-bold tracking-tight mb-4">AB Testing</h2>
-
+        <Link href="https://docs.phospho.ai/guides/ab-test" target="_blank">
+          <Button variant="link">Read the documentation</Button>
+        </Link>
         <Table>
           <TableHeader>
             <TableRow>
@@ -58,46 +90,32 @@ const ABTesting: React.FC = () => {
               <TableHead>
                 <div className="md:flex items-center align-items ">
                   <div className="mr-1">Average Success Rate</div>
-                  <Tooltip.Provider>
-                    <Tooltip.Root>
-                      <Tooltip.Trigger asChild>
-                        <QuestionMarkIcon />
-                      </Tooltip.Trigger>
-                      <Tooltip.Portal>
-                        <Tooltip.Content
-                          className="TooltipContent"
-                          sideOffset={3}
-                        >
-                          The average success rate is the number of tasks marked
-                          as "Success" divided by the total number of tasks.
-                          Higher is better.
-                          <Tooltip.Arrow className="TooltipArrow" />
-                        </Tooltip.Content>
-                      </Tooltip.Portal>
-                    </Tooltip.Root>
-                  </Tooltip.Provider>
+                  <HoverCard openDelay={50} closeDelay={50}>
+                    <HoverCardTrigger>
+                      <QuestionMarkIcon />
+                    </HoverCardTrigger>
+                    <HoverCardContent>
+                      <div>
+                        The average success rate is (nb of "success"
+                        tasks)/(total nb of tasks).{" "}
+                      </div>
+                      <div>Higher is better.</div>
+                    </HoverCardContent>
+                  </HoverCard>
                 </div>
               </TableHead>
               <TableHead>
                 <div className="md:flex items-center align-items ">
                   <div className="mr-1">Succes Rate Std</div>
-                  <Tooltip.Provider>
-                    <Tooltip.Root>
-                      <Tooltip.Trigger asChild>
-                        <QuestionMarkIcon />
-                      </Tooltip.Trigger>
-                      <Tooltip.Portal>
-                        <Tooltip.Content
-                          className="TooltipContent"
-                          sideOffset={3}
-                        >
-                          The estimated standard deviation of the success rate.
-                          Lower is better.
-                          <Tooltip.Arrow className="TooltipArrow" />
-                        </Tooltip.Content>
-                      </Tooltip.Portal>
-                    </Tooltip.Root>
-                  </Tooltip.Provider>
+                  <HoverCard openDelay={50} closeDelay={50}>
+                    <HoverCardTrigger>
+                      <QuestionMarkIcon />
+                    </HoverCardTrigger>
+                    <HoverCardContent>
+                      The estimated standard deviation of the success rate.
+                      Lower is better.
+                    </HoverCardContent>
+                  </HoverCard>
                 </div>
               </TableHead>
             </TableRow>

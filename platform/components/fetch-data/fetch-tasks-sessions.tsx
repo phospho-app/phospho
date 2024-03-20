@@ -36,9 +36,7 @@ function FetchHasTasksSessions() {
   const setSessionsWithEvents = dataStateStore(
     (state) => state.setSessionsWithEvents,
   );
-  const setUsersMetadata = dataStateStore((state) => state.setUsersMetadata);
   const setTests = dataStateStore((state) => state.setTests);
-  const setABTests = dataStateStore((state) => state.setABTests);
 
   // Fetch the has session
   const { data: hasSessionData } = useSWR(
@@ -129,28 +127,6 @@ function FetchHasTasksSessions() {
       ),
     );
     setUniqueEventNamesInData(uniqueEventNames);
-  }
-
-  // Fetch all users
-  const { data: usersData } = useSWR(
-    project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-  );
-  if (
-    usersData &&
-    usersData?.users !== undefined &&
-    usersData?.users !== null
-  ) {
-    setUsersMetadata(usersData.users);
-  }
-
-  // Fetch ABTests
-  const { data: abTestsData } = useSWR(
-    project_id ? [`/api/explore/${project_id}/ab-tests`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken),
-  );
-  if (abTestsData?.abtests) {
-    setABTests(abTestsData?.abtests);
   }
 
   // Fetch tests

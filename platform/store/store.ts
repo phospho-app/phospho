@@ -1,16 +1,13 @@
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-
-import { Project, HasEnoughLabelledTasks } from "../models/project";
-import { Event } from "../models/events";
-import { Task, TaskWithEvents } from "../models/tasks";
-import { SessionWithEvents } from "../models/sessions";
-import { Test } from "@/models/tests";
 import { OrgMetadata } from "@/models/organizations";
-
+import { Test } from "@/models/tests";
 import { ColumnFiltersState, Updater } from "@tanstack/react-table";
-import { UserMetadata } from "@/models/metadata";
-import { ABTest } from "@/models/abtests";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+
+import { Event } from "../models/events";
+import { HasEnoughLabelledTasks, Project } from "../models/project";
+import { SessionWithEvents } from "../models/sessions";
+import { Task, TaskWithEvents } from "../models/tasks";
 
 // The navigation store stores local state, that are based
 // on what buttons were clicked or selected
@@ -23,11 +20,11 @@ interface navigationState {
 
   tasksColumnsFilters: ColumnFiltersState;
   setTasksColumnsFilters: (
-    tasksColumnsFilters: Updater<ColumnFiltersState>
+    tasksColumnsFilters: Updater<ColumnFiltersState>,
   ) => void;
   sessionsColumnsFilters: ColumnFiltersState;
   setSessionsColumnsFilters: (
-    sessionsColumnsFilters: Updater<ColumnFiltersState>
+    sessionsColumnsFilters: Updater<ColumnFiltersState>,
   ) => void;
 }
 
@@ -57,7 +54,7 @@ export const navigationStateStore = create(
         }),
       sessionsColumnsFilters: [],
       setSessionsColumnsFilters: (
-        updaterOrValue: Updater<ColumnFiltersState>
+        updaterOrValue: Updater<ColumnFiltersState>,
       ) =>
         set((state) => {
           if (typeof updaterOrValue === "function") {
@@ -74,8 +71,8 @@ export const navigationStateStore = create(
     {
       name: "navigation-storage",
       storage: createJSONStorage(() => sessionStorage),
-    }
-  )
+    },
+  ),
 );
 
 // The data state store share the data between the different components
@@ -94,7 +91,7 @@ interface dataState {
   setHasSessions: (hasSessions: boolean | null) => void;
   hasLabelledTasks: HasEnoughLabelledTasks | null;
   setHasLabelledTasks: (
-    hasLabelledTasks: HasEnoughLabelledTasks | null
+    hasLabelledTasks: HasEnoughLabelledTasks | null,
   ) => void;
 
   tasksWithEvents: TaskWithEvents[];
@@ -106,14 +103,9 @@ interface dataState {
 
   tests: Test[];
   setTests: (tests: Test[]) => void;
-  abTests: ABTest[];
-  setABTests: (abTests: ABTest[]) => void;
 
   tasksWithoutHumanLabel: Task[] | null;
   setTasksWithoutHumanLabel: (tasks: Task[]) => void;
-
-  usersMetadata: UserMetadata[];
-  setUsersMetadata: (usersMetadata: UserMetadata[]) => void;
 
   uniqueEventNames: string[];
   setUniqueEventNames: (uniqueEventNames: string[]) => void;
@@ -151,16 +143,10 @@ export const dataStateStore = create<dataState>((set) => ({
 
   tests: [],
   setTests: (tests: Test[]) => set((state) => ({ tests: tests })),
-  abTests: [],
-  setABTests: (abTests: ABTest[]) => set((state) => ({ abTests: abTests })),
 
   tasksWithoutHumanLabel: null,
   setTasksWithoutHumanLabel: (tasks: Task[]) =>
     set((state) => ({ tasksWithoutHumanLabel: tasks })),
-
-  usersMetadata: [],
-  setUsersMetadata: (usersMetadata: UserMetadata[]) =>
-    set((state) => ({ usersMetadata: usersMetadata })),
 
   uniqueEventNames: [],
   setUniqueEventNames: (uniqueEventNames: string[]) =>
