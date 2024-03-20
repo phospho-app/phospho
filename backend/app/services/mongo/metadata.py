@@ -148,7 +148,8 @@ async def calculate_bottom10_percent(
 
 
 async def fetch_user_metadata(
-    project_id: str, user_id: Optional[str] = None
+    project_id: str,
+    user_id: Optional[str] = None,
 ) -> List[UserMetadata]:
     """
     Get the user metadata for a specific user in a project
@@ -208,7 +209,6 @@ async def fetch_user_metadata(
                 "events": {"$push": "$events"},
             }
         },
-        {"$sort": {"_id": 1}},
         {
             "$lookup": {
                 "from": "sessions",
@@ -301,6 +301,8 @@ async def fetch_user_metadata(
                 "total_tokens": 1,
             }
         },
+        # Sort by user_id
+        {"$sort": {"user_id": 1}},
     ]
 
     users = await mongo_db["tasks"].aggregate(metadata_pipeline).to_list(length=None)
