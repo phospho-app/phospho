@@ -11,10 +11,7 @@ const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
   const { user, loading, accessToken } = useUser();
 
   const [isSent, setIsSent] = useState(false);
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const projectId = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
 
   // if no user
   if (!user) {
@@ -24,7 +21,7 @@ const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
   const handleButtonClick = async () => {
     const authorization_header = "Bearer " + accessToken;
     try {
-      const response = await fetch(`/api/projects/${projectId}/tasks/email`, {
+      const response = await fetch(`/api/projects/${project_id}/tasks/email`, {
         method: "GET",
         headers: {
           Authorization: authorization_header,

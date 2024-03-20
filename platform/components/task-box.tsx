@@ -22,7 +22,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Event, EventDefinition } from "@/models/events";
 import { Task, TaskWithEvents } from "@/models/tasks";
-import { navigationStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, Trash } from "lucide-react";
 import React from "react";
@@ -39,9 +39,7 @@ const InteractiveEventBadge = ({
 }) => {
   const { accessToken } = useUser();
 
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
+  const selectedProject = dataStateStore((state) => state.selectedProject);
   // Find the event definition in the project settings
   const eventDefinition: EventDefinition =
     selectedProject?.settings?.events[event.event_name];
@@ -114,9 +112,7 @@ const AddEvent = ({
   }
   const { accessToken } = useUser();
   const events = task.events;
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
+  const selectedProject = dataStateStore((state) => state.selectedProject);
 
   // Project events is an object : {event_name: EventDefinition}
   const projectEvents: Record<string, EventDefinition> =

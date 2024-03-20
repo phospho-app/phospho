@@ -27,17 +27,13 @@ import { Button } from "../ui/button";
 import { getColumns } from "./users-table-columns";
 
 interface DataTableProps<TData, TValue> {
-  project_id: string;
   usersMetadata: UserMetadata[];
 }
 
 export function UsersTable<TData, TValue>({
-  project_id,
   usersMetadata,
 }: DataTableProps<TData, TValue>) {
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
+  const project_id = navigationStateStore((state) => state.project_id);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const sessionsColumnsFilters = navigationStateStore(
@@ -64,7 +60,7 @@ export function UsersTable<TData, TValue>({
     },
   });
 
-  if (!selectedProject) {
+  if (!project_id) {
     return <></>;
   }
 

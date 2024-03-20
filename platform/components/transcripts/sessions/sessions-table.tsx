@@ -34,16 +34,13 @@ import React, { useState } from "react";
 
 import { getColumns } from "./sessions-table-columns";
 
-interface DataTableProps<TData, TValue> {
-  project_id: string;
-}
+interface DataTableProps<TData, TValue> {}
 
-export function SessionsTable<TData, TValue>({
-  project_id,
-}: DataTableProps<TData, TValue>) {
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
+export function SessionsTable<TData, TValue>({}: DataTableProps<
+  TData,
+  TValue
+>) {
+  const project_id = navigationStateStore((state) => state.project_id);
   const sessionsWithEvents = dataStateStore(
     (state) => state.sessionsWithEvents,
   );
@@ -64,7 +61,7 @@ export function SessionsTable<TData, TValue>({
     // Call the /search endpoint
     setIsLoading(true);
     const response = await fetch(
-      `/api/projects/${selectedProject?.id}/search/sessions`,
+      `/api/projects/${project_id}/search/sessions`,
       {
         method: "POST",
         headers: {
@@ -105,7 +102,7 @@ export function SessionsTable<TData, TValue>({
     autoResetPageIndex: false,
   });
 
-  if (!selectedProject) {
+  if (!project_id) {
     return <></>;
   }
 
