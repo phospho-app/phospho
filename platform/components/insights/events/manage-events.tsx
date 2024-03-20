@@ -28,8 +28,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import FetchOrgProject from "../../fetch-data/fetch-org-project";
-
 function CreateEventButton({
   current_nb_events,
   max_nb_events,
@@ -316,7 +314,6 @@ export default function Events() {
 
   return (
     <>
-      <FetchOrgProject />
       <div>
         <EventsList
           events={events}
