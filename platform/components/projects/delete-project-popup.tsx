@@ -16,17 +16,17 @@ import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSWRConfig } from "swr";
 
 const AlertDialogDeleteProject = () => {
-  const { user, loading, accessToken } = useUser();
+  const { accessToken } = useUser();
+  const { mutate } = useSWRConfig();
 
   const [clicked, setClicked] = useState(false);
 
-  // Zustand state management
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const selectedProject = dataStateStore((state) => state.selectedProject);
-  const setSelectedProject = dataStateStore(
-    (state) => state.setSelectedProject,
-  );
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
   const projects = dataStateStore((state) => state.projects);
   const setProjects = dataStateStore((state) => state.setProjects);
 
@@ -80,8 +80,18 @@ const AlertDialogDeleteProject = () => {
                     const filteredProjects = projects.filter(
                       (project) => project.id !== selectedProject.id,
                     );
+                    // Mutate the projects list
+                    mutate(
+                      [
+                        `/api/organizations/${selectedOrgId}/projects`,
+                        accessToken,
+                      ],
+                      async (data: any) => {
+                        return { projects: filteredProjects };
+                      },
+                    );
                     setProjects(filteredProjects);
-                    setSelectedProject(filteredProjects[0]);
+                    setproject_id(filteredProjects[0].id);
                     setClicked(false);
                     router.push("/org/transcripts/tasks");
                   } else {

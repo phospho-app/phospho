@@ -51,6 +51,10 @@ export function SelectProjectButton() {
     }
   };
 
+  if (!project_id) {
+    return <></>;
+  }
+
   return (
     <div className="px-3 py-2">
       <Select
@@ -61,7 +65,7 @@ export function SelectProjectButton() {
           <SelectValue
             asChild={true}
             children={<div>{selectedProjectName}</div>}
-            id={selectedProject?.id}
+            id={project_id}
           />
         </SelectTrigger>
         <SelectContent position="popper">
