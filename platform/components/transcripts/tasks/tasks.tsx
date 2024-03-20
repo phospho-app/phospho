@@ -134,7 +134,7 @@ const Tasks: React.FC = () => {
                   </CardContent>
                 </Card>
               )}
-            <TasksTable project_id={project_id} />
+            <TasksTable />
           </div>
 
           <div className="h-20"></div>
