@@ -33,7 +33,7 @@ export default function FetchOrgProject() {
     // This is called the first time the user logs in,
     // before onboarding
     (async () => {
-      if (!user) return;
+      if (!accessToken) return;
       if (!selectedOrgId) return;
       if (!projects) return;
 
@@ -60,7 +60,6 @@ export default function FetchOrgProject() {
               },
             },
           );
-          setProjects([]);
         }
       } catch (error) {
         console.error("Error fetching repositories:", error);
