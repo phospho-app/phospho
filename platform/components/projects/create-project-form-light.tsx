@@ -24,7 +24,8 @@ import { useUser } from "@propelauth/nextjs/client";
 import { Terminal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { set, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import { useSWRConfig } from "swr";
 import * as z from "zod";
 
 interface CreateNewProjectFormProps
@@ -34,15 +35,10 @@ interface CreateNewProjectFormProps
 
 const CreateNewProjectForm = ({ setOpen }: CreateNewProjectFormProps) => {
   // PropelAuth
-  const { user, loading, accessToken } = useUser();
+  const { user, accessToken } = useUser();
+  const { mutate } = useSWRConfig();
 
-  // Zustand state management
   const setproject_id = navigationStateStore((state) => state.setproject_id);
-  const setSelectedProject = dataStateStore(
-    (state) => state.setSelectedProject,
-  );
-  const projects = dataStateStore((state) => state.projects);
-  const setProjects = dataStateStore((state) => state.setProjects);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -91,14 +87,14 @@ const CreateNewProjectForm = ({ setOpen }: CreateNewProjectFormProps) => {
         console.log(creation_response);
 
         // Change the selected project
-        setSelectedProject(responseBody);
         setproject_id(responseBody.id);
-        // Add the project to the list of projects
-        if (projects) {
-          setProjects([responseBody, ...projects]);
-        } else {
-          setProjects([responseBody]);
-        }
+        // Mutate the projects list
+        mutate(
+          [`/api/organizations/${selectedOrgId}/projects`, accessToken],
+          async (data: any) => {
+            return { projects: [responseBody, data.projects] };
+          },
+        );
 
         // Close the dialog
         setIsCreated(true);
