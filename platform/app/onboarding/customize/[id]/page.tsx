@@ -21,7 +21,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
   const redirectTo =
-    redirect == "events" ? "/org/insights/events/manage" : "/onboarding/plan";
+    redirect == "events" ? "/org/insights/events" : "/onboarding/plan";
 
   return (
     <>
