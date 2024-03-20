@@ -16,13 +16,11 @@ export default function Page() {
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
+  const project_id = navigationStateStore((state) => state.project_id);
+  const selectedProject = dataStateStore((state) => state.selectedProject);
 
   const { accessToken } = useUser();
 
-  const project_id = selectedProject?.id;
   const plan = selectedOrgMetadata?.plan || "hobby";
 
   const { data: usage }: { data: UsageQuota | null | undefined } = useSWR(
@@ -34,8 +32,11 @@ export default function Page() {
   const maxUsage = usage?.max_usage;
   const maxUsageLabel = usage?.max_usage_label;
 
-  if (!project_id) {
-    return <>No project selected</>;
+  if (project_id === null || project_id === undefined) {
+    return <>No project_id selected</>;
+  }
+  if (selectedProject === null || selectedProject === undefined) {
+    return <>No selected project data</>;
   }
 
   return (

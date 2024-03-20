@@ -12,10 +12,7 @@ function FetchHasTasksSessions() {
   const { accessToken } = useUser();
   const { toast } = useToast();
 
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
   const hasLabelledTasks = dataStateStore((state) => state.hasLabelledTasks);
   const setHasSessions = dataStateStore((state) => state.setHasSessions);
   const setHasTasks = dataStateStore((state) => state.setHasTasks);
@@ -88,7 +85,7 @@ function FetchHasTasksSessions() {
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
   if (
-    selectedProject &&
+    project_id &&
     tasksData &&
     tasksData?.tasks !== undefined &&
     tasksData?.tasks !== null
@@ -109,7 +106,7 @@ function FetchHasTasksSessions() {
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
   if (
-    selectedProject &&
+    project_id &&
     sessionsData &&
     sessionsData?.sessions !== undefined &&
     sessionsData?.sessions !== null

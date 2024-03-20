@@ -23,10 +23,8 @@ const AlertDialogDeleteProject = () => {
   const [clicked, setClicked] = useState(false);
 
   // Zustand state management
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const setSelectedProject = navigationStateStore(
+  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const setSelectedProject = dataStateStore(
     (state) => state.setSelectedProject,
   );
   const projects = dataStateStore((state) => state.projects);

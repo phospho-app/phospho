@@ -10,12 +10,8 @@ import { dataStateStore, navigationStateStore } from "@/store/store";
 import React from "react";
 
 const Dashboard: React.FC = () => {
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
+  const project_id = navigationStateStore((state) => state.project_id);
   const hasTasks = dataStateStore((state) => state.hasTasks);
-
-  const project_id = selectedProject?.id;
 
   if (!project_id) {
     return <></>;
