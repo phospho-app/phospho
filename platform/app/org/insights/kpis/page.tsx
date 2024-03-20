@@ -12,11 +12,7 @@ const KPIs: React.FC<{}> = ({}) => {
   // PropelAuth
   const { accessToken } = useUser();
   // Store variables
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  // Const
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
 
   // Number of users
   const [userCountIsLoading, setUserCountIsLoading] = useState<boolean>(true);

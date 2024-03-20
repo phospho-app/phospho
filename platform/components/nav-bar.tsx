@@ -1,6 +1,5 @@
 "use client";
 
-import AlphaNotificationBar from "@/components/header-message";
 import { cn } from "@/lib/utils";
 import { useUser } from "@propelauth/nextjs/client";
 import { TrafficCone } from "lucide-react";

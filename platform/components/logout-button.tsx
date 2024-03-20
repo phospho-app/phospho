@@ -13,9 +13,7 @@ const LogoutButton: React.FC = () => {
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
-  const setSelectedProject = navigationStateStore(
-    (state) => state.setSelectedProject,
-  );
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
 
   return (
     <Button
@@ -24,7 +22,7 @@ const LogoutButton: React.FC = () => {
       onClick={async () => {
         // Reset the navigation store
         setSelectedOrgId(null);
-        setSelectedProject(null);
+        setproject_id(null);
         await logoutFn().then(() => router.push("/authenticate"));
       }}
     >

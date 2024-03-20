@@ -20,7 +20,8 @@ export function SelectOrgButton() {
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
-  const setSelectedProject = navigationStateStore(
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
+  const setSelectedProject = dataStateStore(
     (state) => state.setSelectedProject,
   );
 
@@ -36,6 +37,7 @@ export function SelectOrgButton() {
   const handleValueChange = (selectedOrgId: string) => {
     setSelectedOrgId(selectedOrgId);
     setSelectedProject(null);
+    setproject_id(null);
     // Additional logic here if needed
   };
 

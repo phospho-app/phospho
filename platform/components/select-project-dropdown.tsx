@@ -12,12 +12,9 @@ import { dataStateStore, navigationStateStore } from "@/store/store";
 
 export function SelectProjectButton() {
   // Zustand state management
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const setSelectedProject = navigationStateStore(
-    (state) => state.setSelectedProject,
-  );
+  const project_id = navigationStateStore((state) => state.project_id);
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
+  const selectedProject = dataStateStore((state) => state.selectedProject);
   const projects = dataStateStore((state) => state.projects);
 
   const selectedProjectName = selectedProject?.project_name ?? "loading...";
@@ -42,7 +39,7 @@ export function SelectProjectButton() {
       if (selectedProjectInForm.id != "project_id") {
         setHasTasks(null);
         setHasSessions(null);
-        setSelectedProject(selectedProjectInForm);
+        setproject_id(selectedProjectInForm.id);
         if (selectedProjectInForm.settings?.events) {
           setUniqueEventNames(
             Object.keys(selectedProjectInForm.settings.events),
@@ -54,6 +51,10 @@ export function SelectProjectButton() {
     }
   };
 
+  if (!project_id) {
+    return <></>;
+  }
+
   return (
     <div className="px-3 py-2">
       <Select
@@ -64,7 +65,7 @@ export function SelectProjectButton() {
           <SelectValue
             asChild={true}
             children={<div>{selectedProjectName}</div>}
-            id={selectedProject?.id}
+            id={project_id}
           />
         </SelectTrigger>
         <SelectContent position="popper">

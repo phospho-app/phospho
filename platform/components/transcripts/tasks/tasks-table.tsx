@@ -34,15 +34,10 @@ import { getColumns } from "./tasks-table-columns";
 
 interface DataTableProps<TData, TValue> {
   // columns: any[]; // ColumnDef<TData, TValue>[];
-  project_id: string;
 }
 
-export function TasksTable<TData, TValue>({
-  project_id,
-}: DataTableProps<TData, TValue>) {
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
+export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
+  const project_id = navigationStateStore((state) => state.project_id);
   const tasksWithEvents = dataStateStore((state) => state.tasksWithEvents);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -62,19 +57,16 @@ export function TasksTable<TData, TValue>({
   const query_tasks = async () => {
     // Call the /search endpoint
     setIsLoading(true);
-    const response = await fetch(
-      `/api/projects/${selectedProject?.id}/search/tasks`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + accessToken || "",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: query,
-        }),
+    const response = await fetch(`/api/projects/${project_id}/search/tasks`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + accessToken || "",
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        query: query,
+      }),
+    });
     const response_json = await response.json();
     console.log("Search response:", response_json);
     tasksColumnsFilters.push({
@@ -103,6 +95,10 @@ export function TasksTable<TData, TValue>({
     // pageCount: 10,
     autoResetPageIndex: false,
   });
+
+  if (!project_id) {
+    return <></>;
+  }
 
   return (
     <div>
