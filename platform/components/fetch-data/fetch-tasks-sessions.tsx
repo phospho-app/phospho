@@ -5,7 +5,6 @@ import { authFetcher } from "@/lib/fetcher";
 import { Task, TaskWithEvents } from "@/models/tasks";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { useEffect } from "react";
 import useSWR from "swr";
 
 function FetchHasTasksSessions() {
@@ -36,7 +35,6 @@ function FetchHasTasksSessions() {
   const setSessionsWithEvents = dataStateStore(
     (state) => state.setSessionsWithEvents,
   );
-  const setTests = dataStateStore((state) => state.setTests);
 
   // Fetch the has session
   const { data: hasSessionData } = useSWR(
@@ -127,15 +125,6 @@ function FetchHasTasksSessions() {
       ),
     );
     setUniqueEventNamesInData(uniqueEventNames);
-  }
-
-  // Fetch tests
-  const { data: testsData } = useSWR(
-    project_id ? [`/api/projects/${project_id}/tests`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken),
-  );
-  if (testsData?.tests) {
-    setTests(testsData?.tests);
   }
 
   return <></>;

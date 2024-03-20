@@ -1,5 +1,4 @@
 import { OrgMetadata } from "@/models/organizations";
-import { Test } from "@/models/tests";
 import { ColumnFiltersState, Updater } from "@tanstack/react-table";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -101,9 +100,6 @@ interface dataState {
   events: Event[];
   setEvents: (events: Event[]) => void;
 
-  tests: Test[];
-  setTests: (tests: Test[]) => void;
-
   tasksWithoutHumanLabel: Task[] | null;
   setTasksWithoutHumanLabel: (tasks: Task[]) => void;
 
@@ -140,9 +136,6 @@ export const dataStateStore = create<dataState>((set) => ({
     set((state) => ({ sessionsWithEvents: sessions })),
   events: [],
   setEvents: (events: Event[]) => set((state) => ({ events: events })),
-
-  tests: [],
-  setTests: (tests: Test[]) => set((state) => ({ tests: tests })),
 
   tasksWithoutHumanLabel: null,
   setTasksWithoutHumanLabel: (tasks: Task[]) =>

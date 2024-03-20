@@ -20,7 +20,6 @@ import { ABTest } from "@/models/abtests";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
