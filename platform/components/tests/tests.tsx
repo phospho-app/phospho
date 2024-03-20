@@ -2,17 +2,34 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Test } from "@/models/tests";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import React from "react";
+import useSWR from "swr";
 
 import { DataTable } from "./tests-table";
 
 const Tests: React.FC = () => {
-  const tests = dataStateStore((state) => state.tests);
+  const selectedProject = navigationStateStore(
+    (state) => state.selectedProject,
+  );
+  const project_id = selectedProject?.id;
+  const { accessToken } = useUser();
+
+  // Fetch tests
+  const { data: testsData } = useSWR(
+    project_id ? [`/api/projects/${project_id}/tests`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const tests = testsData?.tests as Test[];
 
   const getVariant = (status: string) => {
     switch (status) {
