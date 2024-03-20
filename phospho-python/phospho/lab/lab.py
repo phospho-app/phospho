@@ -1,6 +1,7 @@
 import asyncio
 import concurrent.futures
 import logging
+import random
 from typing import (
     Any,
     Awaitable,
@@ -13,17 +14,19 @@ from typing import (
     Union,
 )
 
+from tqdm import tqdm
+
 import phospho.client as client
 import phospho.lab.job_library as job_library
 
 from .models import (
+    EventConfig,
+    EventDefinition,
     JobConfig,
     JobResult,
     Message,
-    ResultType,
-    EventConfig,
-    EventDefinition,
     Project,
+    ResultType,
 )
 
 logger = logging.getLogger(__name__)
@@ -47,6 +50,8 @@ class Job:
     alternative_configs: List[JobConfig]
 
     metadata: Optional[Dict[str, Any]] = None
+    workload: Optional["Workload"] = None
+    sample: float = 1
 
     def __init__(
         self,
@@ -60,6 +65,8 @@ class Job:
         name: Optional[str] = None,
         config: Optional[JobConfig] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        workload: Optional["Workload"] = None,
+        sample: float = 1.0,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
@@ -94,6 +101,8 @@ class Job:
         This is useful to specify the job_function in config files. If the name is None, it will be equal to the job_id.
         :param config: The configuration of the job. If not provided, the job will run with an empty config.
         :param metadata: Extra metadata to store with the job.
+        :param workload: The workload to which the job belongs. This is useful to access the results of other jobs.
+        :param sample: The sample rate of the job. If the sample rate is 0.5, the job will run on 50% of the messages.
         """
 
         if job_function is None and name is None:
@@ -132,6 +141,8 @@ class Job:
             self.alternative_results.append({})
 
         self.metadata = metadata
+        self.workload = workload
+        self.sample = sample
 
     async def async_run(self, message: Message) -> JobResult:
         """
@@ -139,6 +150,16 @@ class Job:
         """
         logger.debug(f"Running job {self.id} on message {message.id}.")
         params = self.config.model_dump()
+
+        # if 'job' is in the job_function signature, we pass the self object
+        # Don't override the job parameter if it's already in the params
+        if "job" in self.job_function.__code__.co_varnames and "job" not in params:
+            params["job"] = self
+        if (
+            "workload" in self.job_function.__code__.co_varnames
+            and "workload" not in params
+        ):
+            params["workload"] = self.workload
 
         if asyncio.iscoroutinefunction(self.job_function):
             result = await self.job_function(message, **params)
@@ -208,12 +229,9 @@ class Job:
         # Check that the alternative_results are not empty
         if len(self.alternative_results) == 0:
             logger.warning(
-                """
-                No alternative results found. 
-                This can be caused by not having alternative configs or if you didn't called the 
-                async_run_on_alternative_configurations on the jobs. 
-                Skipping.
-                """
+                "Can't run Workload.optimize(): No alternative results found. "
+                + "Make sure you called Workload.async_run_on_alternative_configurations() first. "
+                + "Skipping."
             )
             return
 
@@ -221,16 +239,15 @@ class Job:
         for alternative_result in self.alternative_results:
             if len(alternative_result) != len(self.results):
                 logger.error(
-                    """
-                    The alternative_results are not the same length as the results. 
-                    Skipping.
-                    """
+                    "Can't run Workload.optimize(): The alternative_results are not the same length as the results. Skipping."
                 )
                 return
 
         # Check that we have enough predictions to start the optimization
         if len(self.results) < min_count:
-            logger.info("Not enough results to start the optimization. Skipping.")
+            logger.info(
+                f"Can't run Workload.optimize(): {min_count} results are required, but only {len(self.results)} found. Skipping."
+            )
             return
 
         accuracies: List[float] = []
@@ -248,8 +265,7 @@ class Job:
             accuracy = sum(accuracy_vector) / len(accuracy_vector)
             accuracies.append(accuracy)
 
-        # DEBUG
-        print(f"accuracies: {accuracies}")
+        logger.info(f"Accuracies: {accuracies}")
 
         # The latest items are the most preferred ones
         # The instanciated config is the reference one (most truthful)
@@ -275,8 +291,7 @@ class Job:
     job_name={self.job_function.__name__},
     config={{\n{self.config}\n  }},
     metadata={self.metadata}
-)
-"""
+)"""
 
 
 class Workload:
@@ -319,6 +334,8 @@ class Workload:
         """
         Add a job to the workload.
         """
+        # Add a reference to the workload to the job
+        job.workload = self
         self.jobs[job.id] = job
 
     @classmethod
@@ -449,6 +466,12 @@ class Workload:
         """
         Runs all the jobs on the message.
 
+        Args:
+        :param messages: The messages to run the jobs on.
+        :param executor_type: The type of executor to use. Can be "parallel" or "sequential".
+        :param max_parallelism: The maximum number of parallel jobs to run per seconds.
+            Use this to adhere to rate limits. Only used if executor_type is "parallel".
+
         Returns: a mapping of message.id -> job_id -> job_result
         """
 
@@ -459,19 +482,35 @@ class Workload:
             if executor_type == "parallel":
                 # Await all the results
                 semaphore = asyncio.Semaphore(max_parallelism)
+                # Create a progress bar
+                if isinstance(messages, list):
+                    t = tqdm(total=len(messages))
+                else:
+                    t = tqdm()
 
-                async def job_limit_wrap(url):
+                async def job_limit_wrap(message: Message):
+                    # Account for the semaphore (rate limit, max_parallelism)
                     async with semaphore:
-                        return await job.async_run(url)
+                        if job.sample >= 1 or random.random() < job.sample:
+                            await job.async_run(message)
+                        else:
+                            job.results[message.id] = None
+                        # Update the progress bar
+                        t.update()
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     # Submit tasks to the executor
                     executor_results = executor.map(job_limit_wrap, messages)
 
+                t.display()
                 await asyncio.gather(*executor_results)
+                t.close()
             elif executor_type == "sequential":
-                for one_message in messages:
-                    await job.async_run(one_message)
+                for one_message in tqdm(messages):
+                    if job.sample >= 1 or random.random() < job.sample:
+                        await job.async_run(one_message)
+                    else:
+                        job.results[one_message.id] = None
             else:
                 raise NotImplementedError(
                     f"Executor type {executor_type} is not implemented"
@@ -570,10 +609,13 @@ class Workload:
         results_df = pd.DataFrame.from_dict(
             {
                 message_id: {
-                    job_id: result.value for job_id, result in job_results.items()
+                    job_id: result.value
+                    for job_id, result in job_results.items()
+                    if result is not None
                 }
                 for message_id, job_results in results.items()
             },
             orient="index",
         )
+
         return results_df
