@@ -161,7 +161,7 @@ async def fetch_user_metadata(
         avg_session_length: float
         nb_tokens: int
         events: List[Event]
-        tasks: List[Task]
+        tasks_id: List[str]
         sessions: List[Session]
     """
     mongo_db = await get_mongo_db()
