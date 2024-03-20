@@ -30,6 +30,8 @@ export default function FetchOrgProject() {
 
   useEffect(() => {
     // Initialize the org if it has no project
+    // This is called the first time the user logs in,
+    // before onboarding
     (async () => {
       if (!user) return;
       if (!selectedOrgId) return;
@@ -37,7 +39,6 @@ export default function FetchOrgProject() {
 
       try {
         if (projects.length > 0) {
-          setProjects(projects);
           console.log("project_id:", project_id);
           if (
             (project_id === null || project_id === undefined) &&
@@ -48,7 +49,7 @@ export default function FetchOrgProject() {
             setproject_id(selected_project.id);
           }
         } else {
-          console.log("This org has no project yet");
+          console.log("This org has no project yet. Initializing...");
           const init_response = await fetch(
             `/api/organizations/${selectedOrgId}/init`,
             {
@@ -65,7 +66,7 @@ export default function FetchOrgProject() {
         console.error("Error fetching repositories:", error);
       }
     })();
-  }, [selectedOrgId, projects?.length, loading]);
+  }, [selectedOrgId, projects?.length, accessToken]);
 
   if (user && !loading && user.orgIdToOrgMemberInfo !== undefined) {
     const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
