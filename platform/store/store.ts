@@ -1,16 +1,12 @@
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-
-import { Project, HasEnoughLabelledTasks } from "../models/project";
-import { Event } from "../models/events";
-import { Task, TaskWithEvents } from "../models/tasks";
-import { SessionWithEvents } from "../models/sessions";
-import { Test } from "@/models/tests";
 import { OrgMetadata } from "@/models/organizations";
-
 import { ColumnFiltersState, Updater } from "@tanstack/react-table";
-import { UserMetadata } from "@/models/metadata";
-import { ABTest } from "@/models/abtests";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+
+import { Event } from "../models/events";
+import { HasEnoughLabelledTasks, Project } from "../models/project";
+import { SessionWithEvents } from "../models/sessions";
+import { Task, TaskWithEvents } from "../models/tasks";
 
 // The navigation store stores local state, that are based
 // on what buttons were clicked or selected
@@ -18,16 +14,16 @@ import { ABTest } from "@/models/abtests";
 interface navigationState {
   selectedOrgId: string | null | undefined;
   setSelectedOrgId: (orgId: string | null) => void;
-  selectedProject: Project | null | undefined;
-  setSelectedProject: (project: Project | null) => void;
+  project_id: string | null | undefined;
+  setproject_id: (projectId: string | null) => void;
 
   tasksColumnsFilters: ColumnFiltersState;
   setTasksColumnsFilters: (
-    tasksColumnsFilters: Updater<ColumnFiltersState>
+    tasksColumnsFilters: Updater<ColumnFiltersState>,
   ) => void;
   sessionsColumnsFilters: ColumnFiltersState;
   setSessionsColumnsFilters: (
-    sessionsColumnsFilters: Updater<ColumnFiltersState>
+    sessionsColumnsFilters: Updater<ColumnFiltersState>,
   ) => void;
 }
 
@@ -38,9 +34,9 @@ export const navigationStateStore = create(
       setSelectedOrgId: (orgId: string | null) =>
         set((state) => ({ selectedOrgId: orgId })),
 
-      selectedProject: undefined,
-      setSelectedProject: (project: Project | null) =>
-        set((state) => ({ selectedProject: project })),
+      project_id: null,
+      setproject_id: (projectId: string | null) =>
+        set((state) => ({ project_id: projectId })),
 
       tasksColumnsFilters: [],
       setTasksColumnsFilters: (updaterOrValue: Updater<ColumnFiltersState>) =>
@@ -57,7 +53,7 @@ export const navigationStateStore = create(
         }),
       sessionsColumnsFilters: [],
       setSessionsColumnsFilters: (
-        updaterOrValue: Updater<ColumnFiltersState>
+        updaterOrValue: Updater<ColumnFiltersState>,
       ) =>
         set((state) => {
           if (typeof updaterOrValue === "function") {
@@ -74,8 +70,8 @@ export const navigationStateStore = create(
     {
       name: "navigation-storage",
       storage: createJSONStorage(() => sessionStorage),
-    }
-  )
+    },
+  ),
 );
 
 // The data state store share the data between the different components
@@ -87,6 +83,8 @@ interface dataState {
 
   projects: Project[] | null;
   setProjects: (projects: Project[]) => void;
+  selectedProject: Project | null;
+  setSelectedProject: (project: Project | null) => void;
 
   hasTasks: boolean | null;
   setHasTasks: (hasTasks: boolean | null) => void;
@@ -94,7 +92,7 @@ interface dataState {
   setHasSessions: (hasSessions: boolean | null) => void;
   hasLabelledTasks: HasEnoughLabelledTasks | null;
   setHasLabelledTasks: (
-    hasLabelledTasks: HasEnoughLabelledTasks | null
+    hasLabelledTasks: HasEnoughLabelledTasks | null,
   ) => void;
 
   tasksWithEvents: TaskWithEvents[];
@@ -104,16 +102,8 @@ interface dataState {
   events: Event[];
   setEvents: (events: Event[]) => void;
 
-  tests: Test[];
-  setTests: (tests: Test[]) => void;
-  abTests: ABTest[];
-  setABTests: (abTests: ABTest[]) => void;
-
   tasksWithoutHumanLabel: Task[] | null;
   setTasksWithoutHumanLabel: (tasks: Task[]) => void;
-
-  usersMetadata: UserMetadata[];
-  setUsersMetadata: (usersMetadata: UserMetadata[]) => void;
 
   uniqueEventNames: string[];
   setUniqueEventNames: (uniqueEventNames: string[]) => void;
@@ -129,6 +119,9 @@ export const dataStateStore = create<dataState>((set) => ({
   projects: null,
   setProjects: (projects: Project[]) =>
     set((state) => ({ projects: projects })),
+  selectedProject: null,
+  setSelectedProject: (project: Project | null) =>
+    set((state) => ({ selectedProject: project })),
 
   hasTasks: null,
   setHasTasks: (hasTasks: boolean | null) =>
@@ -149,18 +142,9 @@ export const dataStateStore = create<dataState>((set) => ({
   events: [],
   setEvents: (events: Event[]) => set((state) => ({ events: events })),
 
-  tests: [],
-  setTests: (tests: Test[]) => set((state) => ({ tests: tests })),
-  abTests: [],
-  setABTests: (abTests: ABTest[]) => set((state) => ({ abTests: abTests })),
-
   tasksWithoutHumanLabel: null,
   setTasksWithoutHumanLabel: (tasks: Task[]) =>
     set((state) => ({ tasksWithoutHumanLabel: tasks })),
-
-  usersMetadata: [],
-  setUsersMetadata: (usersMetadata: UserMetadata[]) =>
-    set((state) => ({ usersMetadata: usersMetadata })),
 
   uniqueEventNames: [],
   setUniqueEventNames: (uniqueEventNames: string[]) =>

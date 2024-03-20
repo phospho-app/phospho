@@ -13,27 +13,25 @@ export default function FetchOrgProject() {
   const { user, loading, accessToken } = useUser();
   const { toast } = useToast();
 
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const setSelectedProject = navigationStateStore(
-    (state) => state.setSelectedProject,
-  );
+  const project_id = navigationStateStore((state) => state.project_id);
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
+
   const projects = dataStateStore((state) => state.projects);
   const setProjects = dataStateStore((state) => state.setProjects);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
-  const setUniqueEventNames = dataStateStore(
-    (state) => state.setUniqueEventNames,
-  );
   const setSelectOrgMetadata = dataStateStore(
     (state) => state.setSelectOrgMetadata,
   );
 
+  console.log("Rendering FetchOrgProject");
+
   useEffect(() => {
     // Initialize the org if it has no project
+    // This is called the first time the user logs in,
+    // before onboarding
     (async () => {
       if (!user) return;
       if (!selectedOrgId) return;
@@ -41,26 +39,17 @@ export default function FetchOrgProject() {
 
       try {
         if (projects.length > 0) {
-          setProjects(projects);
-          console.log("selectedProject:", selectedProject);
+          console.log("project_id:", project_id);
           if (
-            (selectedProject === null || selectedProject === undefined) &&
+            (project_id === null || project_id === undefined) &&
             projects?.length > 0
           ) {
             // Auto select the first project
             const selected_project = projects[0];
-            setSelectedProject(selected_project);
-            // Set the unique event names
-            if (selected_project.settings?.events) {
-              setUniqueEventNames(
-                Object.keys(selected_project.settings.events),
-              );
-            } else {
-              setUniqueEventNames([]);
-            }
+            setproject_id(selected_project.id);
           }
         } else {
-          console.log("This org has no project yet");
+          console.log("This org has no project yet. Initializing...");
           const init_response = await fetch(
             `/api/organizations/${selectedOrgId}/init`,
             {
@@ -77,7 +66,7 @@ export default function FetchOrgProject() {
         console.error("Error fetching repositories:", error);
       }
     })();
-  }, [selectedOrgId, projects?.length, loading]);
+  }, [selectedOrgId, projects?.length, accessToken]);
 
   if (user && !loading && user.orgIdToOrgMemberInfo !== undefined) {
     const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
@@ -139,47 +128,18 @@ export default function FetchOrgProject() {
   );
   if (
     // If selected project is not in the fetched projects, select the first project
-    (selectedProject &&
+    (project_id &&
       fetchedProjectsData?.projects !== undefined &&
       fetchedProjectIds !== undefined &&
       fetchedProjectIds?.length > 0 &&
-      !fetchedProjectIds.includes(selectedProject?.id)) ||
+      !fetchedProjectIds.includes(project_id)) ||
     // If no project is selected, select the first project
-    ((selectedProject === null || selectedProject === undefined) &&
+    ((project_id === null || project_id === undefined) &&
       fetchedProjectsData?.projects !== undefined &&
       fetchedProjectsData?.projects.length > 0)
   ) {
     const selected_project = fetchedProjectsData?.projects[0];
-    setSelectedProject(selected_project);
-    if (selected_project.settings?.events) {
-      setUniqueEventNames(Object.keys(selected_project.settings.events));
-    } else {
-      setUniqueEventNames([]);
-    }
-  }
-
-  // Fetch the selected project from the server. This is useful when the user
-  // change the settings
-  const { data: fetchedProject } = useSWR(
-    selectedProject?.id
-      ? [
-          `/api/projects/${selectedProject?.id}`,
-          accessToken,
-          selectedProject?.settings?.events?.length,
-        ]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-  );
-  if (
-    fetchedProject &&
-    (selectedProject === null ||
-      selectedProject === undefined ||
-      fetchedProject.id !== selectedProject.id ||
-      fetchedProject.settings?.events?.length !==
-        selectedProject.settings?.events?.length)
-  ) {
-    console.log("Updating fetchedProject:", fetchedProject);
-    setSelectedProject(fetchedProject);
+    setproject_id(selected_project.id);
   }
 
   return <></>;

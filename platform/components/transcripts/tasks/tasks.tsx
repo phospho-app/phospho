@@ -1,22 +1,20 @@
 "use client";
 
+import { NoDataDashboard } from "@/components/dashboard/no-data-dashboard";
 import { Button } from "@/components/ui/button";
-import { Task, TaskWithEvents } from "@/models/tasks";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { TaskWithEvents } from "@/models/tasks";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 
-import { NoDataDashboard } from "../../dashboard/no-data-dashboard";
-import { Card, CardContent, CardHeader } from "../../ui/card";
 import TasksDataviz from "./tasks-dataviz";
 import { TasksTable } from "./tasks-table";
 
 const Tasks: React.FC = () => {
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
+  const project_id = navigationStateStore((state) => state.project_id);
   const tasksWithEvents = dataStateStore((state) => state.tasksWithEvents);
   const setUniqueEventNamesInData = dataStateStore(
     (state) => state.setUniqueEventNamesInData,
@@ -25,7 +23,6 @@ const Tasks: React.FC = () => {
 
   const hasTasks = dataStateStore((state) => state.hasTasks);
   const hasLabelledTasks = dataStateStore((state) => state.hasLabelledTasks);
-  const project_id = selectedProject?.id;
 
   useEffect(() => {
     if (tasksWithEvents !== null && tasksWithEvents.length > 0) {
@@ -137,7 +134,7 @@ const Tasks: React.FC = () => {
                   </CardContent>
                 </Card>
               )}
-            <TasksTable project_id={project_id} />
+            <TasksTable />
           </div>
 
           <div className="h-20"></div>
