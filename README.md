@@ -67,7 +67,7 @@ git clone git@github.com:phospho-app/phospho.git && cd phospho
 
 2. Register to the core external services:
 
-- [OpenAI](https://platform.openai.com) if you do no twant to use Ollama
+- [OpenAI](https://platform.openai.com) if you do not want to use Ollama
 - [Cohere](https://cohere.com) optional (the free developer tier is enough for testing purposes)
 - [Propelauth](https://www.propelauth.com) (the free tier is enough for testing purposes)
 
