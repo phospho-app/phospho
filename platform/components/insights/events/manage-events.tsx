@@ -27,6 +27,7 @@ import { Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSWRConfig } from "swr";
 
 function CreateEventButton({
   current_nb_events,
@@ -138,14 +139,14 @@ const EventsList = ({
 
 export default function Events() {
   const { accessToken, loading } = useUser();
+  const { mutate } = useSWRConfig();
   const router = useRouter();
 
-  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
-  const setSelectedProject = dataStateStore(
-    (state) => state.setSelectedProject,
+  const selectedOrgMetadata = dataStateStore(
+    (state) => state.selectedOrgMetadata,
   );
+  const selectedProject = dataStateStore((state) => state.selectedProject);
   const setUniqueEventNames = dataStateStore(
     (state) => state.setUniqueEventNames,
   );
@@ -162,36 +163,13 @@ export default function Events() {
     useState<string>("");
 
   // Max number of events
-  const [plan, setPlan] = useState<string | null>(null);
+  const plan = selectedOrgMetadata?.plan;
   const max_nb_events = plan === "hobby" ? 10 : plan === "pro" ? 100 : null;
 
   useEffect(() => {
     setEvents(init_events);
     setRefresh(!refresh);
   }, [init_events, loading]);
-
-  useEffect(() => {
-    // Fetch the plan of the organization
-    (async () => {
-      if (!selectedOrgId) {
-        setPlan(null);
-        return;
-      }
-      const response = await fetch(
-        `/api/organizations/${selectedOrgId}/metadata`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: "Bearer " + accessToken,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-      const response_json = await response.json();
-      setPlan(response_json.plan);
-      console.log("plan", response_json.plan);
-    })();
-  }, [selectedOrgId, project_id, loading]);
 
   if (!selectedProject) {
     return <div>No selected project</div>;
@@ -256,10 +234,12 @@ export default function Events() {
       setEvents(updatedEvents);
       setRefresh(!refresh);
       setUniqueEventNames(Object.keys(updatedEvents));
-      setSelectedProject({
-        ...selectedProject,
-        settings: updatedSettings,
-      });
+      mutate(
+        [`/api/projects/${project_id}`, accessToken],
+        async (data: any) => {
+          return { project: { ...data.project, settings: updatedSettings } };
+        },
+      );
     } catch (error) {
       console.error("Error submitting event:", error);
       // Handle the error appropriately
@@ -300,10 +280,12 @@ export default function Events() {
       setEvents(updatedEvents);
       setRefresh(!refresh);
       setUniqueEventNames(Object.keys(updatedEvents));
-      setSelectedProject({
-        ...selectedProject,
-        settings: updatedSettings,
-      });
+      mutate(
+        [`/api/projects/${project_id}`, accessToken],
+        async (data: any) => {
+          return { project: { ...data.project, settings: updatedSettings } };
+        },
+      );
 
       // Optional: You might want to reset the form or give some feedback to the user here
     } catch (error) {
