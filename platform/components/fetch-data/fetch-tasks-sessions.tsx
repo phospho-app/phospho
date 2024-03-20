@@ -5,7 +5,6 @@ import { authFetcher } from "@/lib/fetcher";
 import { Task, TaskWithEvents } from "@/models/tasks";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { useEffect } from "react";
 import useSWR from "swr";
 
 function FetchHasTasksSessions() {
@@ -13,10 +12,7 @@ function FetchHasTasksSessions() {
   const { accessToken } = useUser();
   const { toast } = useToast();
 
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
   const hasLabelledTasks = dataStateStore((state) => state.hasLabelledTasks);
   const setHasSessions = dataStateStore((state) => state.setHasSessions);
   const setHasTasks = dataStateStore((state) => state.setHasTasks);
@@ -36,9 +32,14 @@ function FetchHasTasksSessions() {
   const setSessionsWithEvents = dataStateStore(
     (state) => state.setSessionsWithEvents,
   );
-  const setUsersMetadata = dataStateStore((state) => state.setUsersMetadata);
-  const setTests = dataStateStore((state) => state.setTests);
-  const setABTests = dataStateStore((state) => state.setABTests);
+  const setSelectedProject = dataStateStore(
+    (state) => state.setSelectedProject,
+  );
+  const setUniqueEventNames = dataStateStore(
+    (state) => state.setUniqueEventNames,
+  );
+
+  console.log("Rendering FetchHasTasksSessions");
 
   // Fetch the has session
   const { data: hasSessionData } = useSWR(
@@ -92,7 +93,7 @@ function FetchHasTasksSessions() {
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
   if (
-    selectedProject &&
+    project_id &&
     tasksData &&
     tasksData?.tasks !== undefined &&
     tasksData?.tasks !== null
@@ -113,7 +114,7 @@ function FetchHasTasksSessions() {
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
   if (
-    selectedProject &&
+    project_id &&
     sessionsData &&
     sessionsData?.sessions !== undefined &&
     sessionsData?.sessions !== null
@@ -131,35 +132,21 @@ function FetchHasTasksSessions() {
     setUniqueEventNamesInData(uniqueEventNames);
   }
 
-  // Fetch all users
-  const { data: usersData } = useSWR(
-    project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
+  // Fetch the selected project from the server. This is useful when the user
+  // change the settings
+  const { data: fetchedProject } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
-  if (
-    usersData &&
-    usersData?.users !== undefined &&
-    usersData?.users !== null
-  ) {
-    setUsersMetadata(usersData.users);
-  }
-
-  // Fetch ABTests
-  const { data: abTestsData } = useSWR(
-    project_id ? [`/api/explore/${project_id}/ab-tests`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken),
-  );
-  if (abTestsData?.abtests) {
-    setABTests(abTestsData?.abtests);
-  }
-
-  // Fetch tests
-  const { data: testsData } = useSWR(
-    project_id ? [`/api/projects/${project_id}/tests`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken),
-  );
-  if (testsData?.tests) {
-    setTests(testsData?.tests);
+  if (fetchedProject) {
+    console.log("Updating fetchedProject:", fetchedProject);
+    setSelectedProject(fetchedProject);
+    // Set the unique event names
+    if (fetchedProject.settings?.events) {
+      setUniqueEventNames(Object.keys(fetchedProject.settings.events));
+    } else {
+      setUniqueEventNames([]);
+    }
   }
 
   return <></>;

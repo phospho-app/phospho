@@ -5,15 +5,13 @@ import FullPageLoader from "@/components/full-page-loader";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 const Page: React.FC = () => {
   const { user, loading, accessToken } = useUser();
 
   // State Variables
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
+  const project_id = navigationStateStore((state) => state.project_id);
   const projects = dataStateStore((state) => state.projects);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
 
@@ -29,7 +27,7 @@ const Page: React.FC = () => {
   }
 
   // Once connected, redirect to the dashboard
-  if (projects && projects.length > 0 && selectedProject) {
+  if (projects && projects.length > 0 && project_id) {
     router.push("/org/transcripts/tasks", { scroll: false });
   }
 

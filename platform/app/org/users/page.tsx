@@ -37,18 +37,25 @@ import useSWR from "swr";
 
 const Users = () => {
   const { accessToken } = useUser();
-  const selectedProject = navigationStateStore(
-    (state) => state.selectedProject,
-  );
-  const project_id = selectedProject?.id;
-  const usersMetadata = dataStateStore((state) => state.usersMetadata);
+  const project_id = navigationStateStore((state) => state.project_id);
   const setUniqueEventNamesInData = dataStateStore(
     (state) => state.setUniqueEventNamesInData,
   );
 
+  // Fetch all users
+  const { data: usersData } = useSWR(
+    project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+  );
+  const usersMetadata = usersData?.users;
+
   // Set the unique event names in the data (for the filter in the table)
   useEffect(() => {
-    if (usersMetadata !== null && usersMetadata.length > 0) {
+    if (
+      usersMetadata !== undefined &&
+      usersMetadata !== null &&
+      usersMetadata.length > 0
+    ) {
       const uniqueEventNames: string[] = Array.from(
         new Set(
           usersMetadata
@@ -135,7 +142,7 @@ const Users = () => {
         average={userAverage}
         top10={userTop10}
       />
-      <UsersTable project_id={project_id} />
+      <UsersTable usersMetadata={usersMetadata} />
     </>
   );
 };
