@@ -65,7 +65,7 @@ function CtaButton({
   if (tierName === "hobby" && displayHobbyCTA === true) {
     return (
       <Link href="https://github.com/phospho-app/phospho" target="_blank">
-        <Button>Select plan</Button>
+        <Button>Self host</Button>
       </Link>
     );
   }
@@ -108,7 +108,7 @@ function CriteriaDisplay({ tierName, criteria }: any) {
 
   if (typeof tiers[tierName] === "string") {
     return (
-      <div>
+      <div className="font-light">
         {label}: {tiers[tierName]}
       </div>
     );
@@ -159,19 +159,19 @@ function PricingCard({
 
   return (
     <Card className={`${border} `}>
-      <CardHeader>
-        <h2 className="text-xl font-bold">{tier.title}</h2>
+      <CardHeader className="pb-2">
+        <h2 className="text-2xl font-bold mb-0">{tier.title}</h2>
         {selectedPlan === tierName && (
-          <p className="text-green-500">{tier.tagline}</p>
+          <p className="text-green-500 font-semibold text-xl">{tier.tagline}</p>
         )}
         {selectedPlan !== tierName && (
           <div>
-            <p>{tier.tagline}</p>
+            <p className="font-semibold">{tier.tagline}</p>
           </div>
         )}
-        <p> {tier.price}</p>
+        <p className="font-light text-gray-500"> {tier.price}</p>
       </CardHeader>
-      <CardContent className="mx-2 mt-0">
+      <CardContent className="mt-0">
         <div>
           {pricingData.criterias.map((criteria) => (
             <CriteriaDisplay

@@ -1,9 +1,8 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { useRedirectFunctions } from "@propelauth/nextjs/client";
 import React from "react";
-
-import { Button } from "./ui/button";
 
 const Authenticate: React.FC = () => {
   const { redirectToSignupPage, redirectToLoginPage } = useRedirectFunctions();
@@ -27,8 +26,10 @@ const Authenticate: React.FC = () => {
           </div>
           <div className="relative z-20 mt-auto">
             <blockquote className="space-y-2">
-              <p className="text-lg">The LLM App Monitoring Platform</p>
-              <footer className="text-sm">Monitor. Detect. Improve.</footer>
+              <p className="text-lg">Open source text analytics for LLM apps</p>
+              <footer className="text-sm">
+                Test, evaluate, guardrail and improve your LLM app
+              </footer>
             </blockquote>
           </div>
         </div>
@@ -36,7 +37,7 @@ const Authenticate: React.FC = () => {
           <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px] mt-24">
             <div className="flex flex-col space-y-2 text-center">
               <h1 className="text-2xl font-semibold tracking-tight text-green-500">
-                Access the platform
+                Let's get started with phospho.
               </h1>
               <Button
                 onClick={() => redirectToSignupPage()}
