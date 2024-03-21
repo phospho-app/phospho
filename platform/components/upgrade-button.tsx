@@ -92,7 +92,7 @@ const UpgradeButton = ({ tagline }: { tagline?: string }) => {
   return (
     <Button
       variant="outline"
-      className="bg-green-500"
+      className="bg-green-500 text-base"
       onClick={upgradeButtonClick}
     >
       {tagline}

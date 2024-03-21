@@ -108,7 +108,7 @@ function CriteriaDisplay({ tierName, criteria }: any) {
 
   if (typeof tiers[tierName] === "string") {
     return (
-      <div className="font-light">
+      <div>
         {label}: {tiers[tierName]}
       </div>
     );
