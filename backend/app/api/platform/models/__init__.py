@@ -18,28 +18,26 @@ from app.api.v2.models import (
     TaskUpdateRequest,
     Test,
     Tests,
-    Users,
     UserMetadata,
+    Users,
 )
 
+from .abtests import ABTest, ABTests
 from .explore import (
     AggregateMetricsRequest,
+    DashboardMetricsFilter,
+    EventsMetricsFilter,
     ProjectEventsFilters,
     ProjectSessionsFilters,
-    EventsMetricsFilter,
     SessionsMetricsFilter,
     TasksMetricsFilter,
-    DashboardMetricsFilter,
 )
-
-from .abtests import ABTests, ABTest
-
-from .topics import Topic, Topics
-
-from .metadata import MetadataValueResponse, MetadataPivotResponse, MetadataPivotQuery
-
-from .projects import OnboardingSurvey, AddEventsQuery, OnboardingSurveyResponse
-
-from app.db.models import EventDefinition
-
+from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
+from .projects import (
+    AddEventsQuery,
+    EventDefinition,
+    OnboardingSurvey,
+    OnboardingSurveyResponse,
+)
 from .tasks import AddEventRequest, RemoveEventRequest
+from .topics import Topic, Topics
