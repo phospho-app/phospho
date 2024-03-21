@@ -18,10 +18,6 @@ jobs:
     # This job will be canceled if it does not complete within 4 minutes
     timeout-minutes: 4
 
-    defaults:
-      run:
-        working-directory: backend
-
     steps:
       - uses: actions/checkout@v3
 
@@ -41,6 +37,7 @@ jobs:
       # Install dependencies if cache does not exist
       - name: Install dependencies
         run: |
+          cd backend
           poetry install --with dev --no-interaction --no-root
 
       - name: Test with pytest
