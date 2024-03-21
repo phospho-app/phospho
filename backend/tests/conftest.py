@@ -8,10 +8,11 @@ import os
 
 import pymongo
 import pytest
-from app.api.v2.models import Project, Task
 from app.core import config
 from app.db.mongo import close_mongo_db, connect_and_init_db, get_mongo_db
 from app.security.authentification import propelauth
+from app.api.v2.models import Project, Task
+
 from tests.utils import cleanup
 
 import phospho
