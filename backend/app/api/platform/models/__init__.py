@@ -1,6 +1,7 @@
 from app.api.v2.models import (
     Eval,
     Event,
+    EventDefinition,
     Events,
     Project,
     ProjectCreationRequest,
@@ -35,7 +36,6 @@ from .explore import (
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
 from .projects import (
     AddEventsQuery,
-    EventDefinition,
     OnboardingSurvey,
     OnboardingSurveyResponse,
 )
