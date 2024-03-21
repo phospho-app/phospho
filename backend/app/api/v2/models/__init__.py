@@ -2,6 +2,7 @@ from .evals import Comparison, ComparisonQuery, Eval
 from .events import Event, Events
 from .log import LogError, LogEvent, LogReply, LogRequest, MinimalLogEvent
 from .projects import (
+    EventDefinition,
     FlattenedTasksRequest,
     Project,
     ProjectCreationRequest,
