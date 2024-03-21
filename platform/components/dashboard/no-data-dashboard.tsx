@@ -160,7 +160,7 @@ phospho.log({input, output});`}
                 <Link href="https://cal.com/nicolas-oulianov" target="_blank">
                   <Button>Book session</Button>
                 </Link>
-                <Link href="https://discord.gg/kCJztJdH" target="_blank">
+                <Link href="https://discord.gg/MXqBJ9pBsx" target="_blank">
                   <Button variant="secondary">Chat on Discord</Button>
                 </Link>
               </div>
