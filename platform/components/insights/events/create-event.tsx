@@ -4,6 +4,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  AlertDialogCancel,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
@@ -39,7 +45,11 @@ const formSchema = z.object({
   webhook_auth_header: z.string().optional(),
 });
 
-export default function CreateEvent() {
+export default function CreateEvent({
+  setOpen,
+}: {
+  setOpen: (open: boolean) => void;
+}) {
   const project_id = navigationStateStore((state) => state.project_id);
   const selectedProject = dataStateStore((state) => state.selectedProject);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
@@ -107,140 +117,110 @@ export default function CreateEvent() {
 
   return (
     <>
-      <div>
-        <span className="flex flex-row justify-between mt-8">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">
-              Add a new event
-            </h2>
-          </div>
-        </span>
-      </div>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Add a new event</AlertDialogTitle>
+      </AlertDialogHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="font-normal">
-          <Card>
-            <CardContent className="space-y-8">
-              <FormField
-                control={form.control}
-                name="event_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event name</FormLabel>
-                    <FormControl>
-                      <Input
-                        spellCheck
-                        placeholder="e.g.: rude tone of voice, user frustration, user says 'I want to cancel'..."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="description">Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        id="description"
-                        placeholder="Describe how to know this event is happening, like you'd do to a 5 years old. Refer to speakers as 'the user' and 'the assistant'."
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Accordion type="single" collapsible>
-                <AccordionItem value="webhook">
-                  <AccordionTrigger>
-                    <span className="text-sm flex flex-row items-center text-gray-500">
-                      Advanced settings (Optional)
-                    </span>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="grid gap-2">
-                      <FormField
-                        control={form.control}
-                        name="webhook"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Webhook</FormLabel>
-                            <FormControl>
-                              <Input
-                                id="webhook"
-                                placeholder="https://your-api.com/webhook"
-                                {...field}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="webhook_auth_header"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel htmlFor="description">
-                              Authorization Header
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                id="webhook_headers"
-                                placeholder="Bearer sk-..."
-                                {...field}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-            <CardFooter className="justify-between space-x-2">
-              <Button
-                type="submit"
-                disabled={
-                  loading ||
-                  !form.formState.isValid ||
-                  // too many events
-                  (events &&
-                    max_nb_events &&
-                    Object.keys(events).length >= max_nb_events)
-                }
-              >
-                Create event
-              </Button>
-              {
+          <FormField
+            control={form.control}
+            name="event_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Event name</FormLabel>
+                <FormControl>
+                  <Input
+                    spellCheck
+                    placeholder="e.g.: rude tone of voice, user frustration, user says 'I want to cancel'..."
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="description">Description</FormLabel>
+                <FormControl>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe how to know this event is happening, like you'd do to a 5 years old. Refer to speakers as 'the user' and 'the assistant'."
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <Accordion type="single" collapsible className="mb-4">
+            <AccordionItem value="webhook">
+              <AccordionTrigger>
+                <span className="text-sm flex flex-row items-center text-gray-500">
+                  Advanced settings (Optional)
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-2">
+                  <FormField
+                    control={form.control}
+                    name="webhook"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Webhook</FormLabel>
+                        <FormControl>
+                          <Input
+                            id="webhook"
+                            placeholder="https://your-api.com/webhook"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="webhook_auth_header"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="description">
+                          Authorization Header
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            id="webhook_headers"
+                            placeholder="Bearer sk-..."
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Close</AlertDialogCancel>
+            <Button
+              type="submit"
+              disabled={
+                loading ||
+                !form.formState.isValid ||
                 // too many events
-                events &&
+                (events &&
                   max_nb_events &&
-                  Object.keys(events).length >= max_nb_events && (
-                    <p className="text-red-700">
-                      {max_nb_events}/{max_nb_events} events created.{" "}
-                      <Link href="/org/settings/billing" className="underline">
-                        Upgrade plan to create more.
-                      </Link>
-                    </p>
-                  )
+                  Object.keys(events).length >= max_nb_events)
               }
-              {
-                // current number of events
-                events &&
-                  max_nb_events &&
-                  Object.keys(events).length < max_nb_events && (
-                    <p>
-                      {Object.keys(events).length}/{max_nb_events} events
-                      created
-                    </p>
-                  )
-              }
-            </CardFooter>
-          </Card>
+              onClick={() => {
+                setOpen(false);
+              }}
+            >
+              Add event
+            </Button>
+          </AlertDialogFooter>
         </form>
       </Form>
     </>
