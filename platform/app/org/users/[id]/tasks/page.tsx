@@ -3,7 +3,7 @@
 import SmallSpinner from "@/components/small-spinner";
 import TaskOverview from "@/components/transcripts/tasks/task";
 import { authFetcher } from "@/lib/fetcher";
-import { UserMetadata } from "@/models/metadata";
+import { UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import useSWR from "swr";

@@ -11,9 +11,7 @@ import {
 } from "@/components/ui/collapsible";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Event } from "@/models/events";
-import { SessionWithEvents } from "@/models/sessions";
-import { Task, TaskWithEvents } from "@/models/tasks";
+import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";

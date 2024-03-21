@@ -8,8 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Event } from "@/models/events";
-import { TaskWithEvents } from "@/models/tasks";
+import { Event, TaskWithEvents } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { ColumnDef, filterFns } from "@tanstack/react-table";
 import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";

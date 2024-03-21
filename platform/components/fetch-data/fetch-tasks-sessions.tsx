@@ -2,7 +2,7 @@
 
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { Task, TaskWithEvents } from "@/models/tasks";
+import { Task, TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import useSWR from "swr";

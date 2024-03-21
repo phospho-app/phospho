@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { EventDefinition } from "@/models/events";
+import { EventDefinition } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
 import { sendUserFeedback } from "phospho";

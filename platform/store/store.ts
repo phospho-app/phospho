@@ -1,12 +1,15 @@
-import { OrgMetadata } from "@/models/organizations";
+import {
+  Event,
+  HasEnoughLabelledTasks,
+  OrgMetadata,
+  Project,
+  SessionWithEvents,
+  Task,
+  TaskWithEvents,
+} from "@/models/models";
 import { ColumnFiltersState, Updater } from "@tanstack/react-table";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-
-import { Event } from "../models/events";
-import { HasEnoughLabelledTasks, Project } from "../models/project";
-import { SessionWithEvents } from "../models/sessions";
-import { Task, TaskWithEvents } from "../models/tasks";
 
 // The navigation store stores local state, that are based
 // on what buttons were clicked or selected
