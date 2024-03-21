@@ -35,7 +35,8 @@ async def create_task(
         flag=flag,
     )
     # Filter non-jsonable values
-    task_data.metadata = filter_nonjsonable_keys(task_data.metadata)
+    if task_data.metadata is not None:
+        task_data.metadata = filter_nonjsonable_keys(task_data.metadata)
 
     # Create a new task
     doc_creation = await mongo_db["tasks"].insert_one(task_data.model_dump())

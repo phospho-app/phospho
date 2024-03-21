@@ -21,7 +21,6 @@ from .tasks import (
     TaskFlagRequest,
     Tasks,
     TaskUpdateRequest,
-    FlattenedTask,
     FlattenedTasks,
 )
 from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest
