@@ -173,7 +173,7 @@ class Comparison(BaseModel):
     test_id: Optional[str] = None
 
 
-class LlmCall(BaseModel):
+class LlmCall(BaseModel, extra="allow"):
     id: str = Field(default_factory=generate_uuid)
     org_id: Optional[str] = None
     created_at: int = Field(default_factory=generate_timestamp)
@@ -183,3 +183,6 @@ class LlmCall(BaseModel):
     api_call_time: float  # In seconds
     # Identifier of the source of the evaluation, with the version of the model if phospho
     evaluation_source: Optional[str] = None
+    task_id: Optional[str] = None
+    session_id: Optional[str] = None
+    job_id: Optional[str] = None
