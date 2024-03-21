@@ -133,7 +133,6 @@ export default function CreateEvent() {
                         {...field}
                       />
                     </FormControl>
-
                     <FormMessage />
                   </FormItem>
                 )}
