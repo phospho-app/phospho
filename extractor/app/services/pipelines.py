@@ -43,8 +43,7 @@ async def event_detection_pipeline(task: Task) -> None:
     # Convert to the proper lab project object
     # TODO : Normalize the project definition by storing all db models in the phospho module
     # and importing models from the phospho module
-    project_lab = lab.models.Project(**project.model_dump())
-    workload = lab.Workload.from_phospho_project_config(project_lab)
+    workload = lab.Workload.from_phospho_project_config(project)
     logger.debug(f"Workload for project {project_id} : {workload}")
 
     # Convert the tasks into a list of messages
