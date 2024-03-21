@@ -400,27 +400,14 @@ class Workload:
 
         To fetch the project configuration, look at `Workload.from_phospho()`
         """
-        project_events = project_config.settings.get("events", None)
+        project_events = project_config.settings.events
         if project_events is None:
-            logger.error(f"Project with id {project_config.id} has no event setup")
+            logger.warning(f"Project with id {project_config.id} has no event setup")
             return cls()
-
-        valid_project_events = {}
-        for k, v in project_events.items():
-            try:
-                event_name = v.get("event_name")
-                if event_name is None:
-                    event_name = k
-                v["event_name"] = event_name
-                valid_project_events[k] = EventDefinition.model_validate(v)
-            except Exception as e:
-                logger.error(
-                    f"Event {k} in project {project_config.id} is not valid and will be ignored: {e}"
-                )
 
         workload = cls()
         # Create the jobs from the configuration
-        for event_name, event in valid_project_events.items():
+        for event_name, event in project_events.items():
             logger.debug(f"Add event detection job for event {event_name}")
             workload.add_job(
                 Job(
@@ -493,8 +480,6 @@ class Workload:
                     async with semaphore:
                         if job.sample >= 1 or random.random() < job.sample:
                             await job.async_run(message)
-                        else:
-                            job.results[message.id] = None
                         # Update the progress bar
                         t.update()
 
@@ -509,8 +494,6 @@ class Workload:
                 for one_message in tqdm(messages):
                     if job.sample >= 1 or random.random() < job.sample:
                         await job.async_run(one_message)
-                    else:
-                        job.results[one_message.id] = None
             else:
                 raise NotImplementedError(
                     f"Executor type {executor_type} is not implemented"
@@ -522,7 +505,9 @@ class Workload:
         for one_message in messages:
             results[one_message.id] = {}
             for job_id, job in self.jobs.items():
-                results[one_message.id][job.id] = job.results[one_message.id]
+                job_result = job.results.get(one_message.id, None)
+                if job_result is not None:
+                    results[one_message.id][job.id] = job_result
 
         self._results = results
         return results
