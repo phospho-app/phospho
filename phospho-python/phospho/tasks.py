@@ -1,23 +1,14 @@
 from phospho.collection import Collection
 
-from typing import Dict, Literal, Optional, List, Union
-from phospho.models import TaskModel
+from typing import Dict, Literal, Optional, List
+from phospho.models import Task
 
 
-class Task:
-    def __init__(
-        self, client, task_id: str, _content: Union[Optional[dict], TaskModel] = None
-    ):
-        from phospho.client import Client
-
-        self._client: Client = client
-        self._task_id: str = task_id
-        if not isinstance(_content, TaskModel) and _content is not None:
-            try:
-                _content = TaskModel(**_content)
-            except TypeError:  # Keep dict
-                pass
-        self._content: Optional[TaskModel] = _content
+class TaskEntity:
+    def __init__(self, client, task_id: str, _content: Optional[dict] = None):
+        self._client = client
+        self._task_id = task_id
+        self._content = _content
 
     @property
     def id(self):
@@ -32,7 +23,7 @@ class Task:
             # Query the server
             response = self._client._get(f"/tasks/{self._task_id}")
             try:
-                self._content = TaskModel(**response.json())
+                self._content = Task(**response.json())
             except TypeError:  # Keep dict
                 self._content = response.json()
 
@@ -40,7 +31,7 @@ class Task:
 
     def content_as_dict(self) -> dict:
         content = self.content
-        if isinstance(content, TaskModel):
+        if isinstance(content, Task):
             return content.model_dump()
         else:
             return content
@@ -51,10 +42,7 @@ class Task:
         Done inplace
         """
         response = self._client._get(f"/tasks/{self._task_id}")
-        try:
-            self._content = TaskModel(**response.json())
-        except TypeError:  # Keep dict
-            self._content = response.json()
+        self._content = response.json()
 
     def update(
         self,
@@ -74,7 +62,7 @@ class Task:
                 "flag_source": flag_source,
             },
         )
-        return Task(
+        return TaskEntity(
             client=self._client, task_id=self._task_id, _content=response.json()
         )
 
@@ -86,7 +74,7 @@ class TaskCollection(Collection):
 
         response = self._client._get(f"/tasks/{task_id}")
 
-        return Task(self._client, response.json()["id"], _content=response.json())
+        return TaskEntity(self._client, response.json()["id"], _content=response.json())
 
     def create(
         self,
@@ -111,11 +99,11 @@ class TaskCollection(Collection):
             "data": data or {},
         }
 
-        response = self._client._post(f"/tasks", payload=payload)
+        response = self._client._post("/tasks", payload=payload)
 
-        return Task(self._client, response.json()["id"])
+        return TaskEntity(self._client, response.json()["id"])
 
-    def get_all(self) -> List[Task]:
+    def get_all(self) -> List[TaskEntity]:
         """Returns a list of all of the project tasks"""
         # TODO : Filters
         # TODO : Limit
@@ -124,6 +112,6 @@ class TaskCollection(Collection):
             f"/projects/{self._client._project_id()}/tasks",
         )
         return [
-            Task(client=self._client, task_id=task["id"], _content=task)
+            TaskEntity(client=self._client, task_id=task["id"], _content=task)
             for task in response.json()["tasks"]
         ]

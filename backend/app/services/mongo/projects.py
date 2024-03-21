@@ -64,10 +64,27 @@ async def get_project_by_id(project_id: str) -> Project:
             detail="Project has no org_id. Please reach out to the Phospho team contact@phospho.app",
         )
 
+    # If event_name not in project_data.settings.events.values(), add it based on the key
+    if (
+        "settings" in project_data.keys()
+        and "events" in project_data["settings"].keys()
+    ):
+        for event_name, event in project_data["settings"]["events"].items():
+            if "event_name" not in event.keys():
+                project_data["settings"]["events"][event_name][
+                    "event_name"
+                ] = event_name
+                mongo_db["projects"].update_one(
+                    {"_id": project_data["_id"]},
+                    {"$set": {"settings.events": project_data["settings"]["events"]}},
+                )
+
     try:
         project = Project(**project_data)
     except Exception as e:
-        logger.warning(f"Error validating model of project {project_data.id}: {e}")
+        logger.warning(
+            f"Error validating model of project {project_data.get('id', None)}: {e}"
+        )
         raise HTTPException(
             status_code=500, detail=f"Error validating project model: {e}"
         )
@@ -124,17 +141,24 @@ async def add_project_events(project_id: str, events: List[EventDefinition]) -> 
     logger.debug(f"Current project: {current_project}")
     if not current_project:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
-    if not current_project.settings:
-        current_project.settings = {}
-    current_events = current_project.settings.get("events", {})
+
+    current_events = current_project.settings.events
     logger.debug(f"Current events: {current_events}")
     # Add the new events
     for event in events:
-        current_events[event.event_name] = event.model_dump()
+        current_events[event.event_name] = event
     # Update the project
     logger.debug(f"New events: {current_events}")
     await mongo_db["projects"].update_one(
-        {"id": project_id}, {"$set": {"settings.events": current_events}}
+        {"id": project_id},
+        {
+            "$set": {
+                "settings.events": {
+                    event_name: event_definition.model_dump()
+                    for event_name, event_definition in current_events.items()
+                }
+            }
+        },
     )
     updated_project = await get_project_by_id(project_id)
     logger.debug(f"Updated project: {updated_project} {updated_project.settings}")

@@ -27,7 +27,7 @@ from .extractor import (
     extract_metadata_from_input_output,
 )
 from .log_queue import Event, LogQueue
-from .tasks import Task
+from .tasks import TaskEntity
 from .testing import PhosphoTest
 from .utils import (
     MutableAsyncGenerator,
@@ -787,7 +787,7 @@ def user_feedback(
     source: str = "user",
     raw_flag: Optional[str] = None,
     raw_flag_to_flag: Optional[Callable[[Any], Literal["success", "failure"]]] = None,
-) -> Optional[Task]:
+) -> Optional[TaskEntity]:
     """
     Flag a task already logged to phospho as a `success` or a `failure`. This is useful to collect human feedback.
 
@@ -805,6 +805,10 @@ def user_feedback(
 
     :returns: The updated task. If the task_id is not found, returns None.
     """
+    global client
+
+    if client is None:
+        client = Client()
 
     if flag is None:
         if raw_flag is None:
@@ -825,8 +829,9 @@ def user_feedback(
 
     # Call the client
     try:
-        current_task = Task(client=client, task_id=task_id, _content=None)
-        updated_task = current_task.update(flag=flag, flag_source=source, notes=notes)
+        updated_task = client.flag(
+            task_id=task_id, flag=flag, source=source, notes=notes
+        )
         return updated_task
     except Exception as e:
         logger.warning(

@@ -9,7 +9,7 @@ from typing import List, Dict, Optional, Callable, Any, Literal
 from pydantic import BaseModel
 
 from phospho.client import Client
-from phospho.tasks import Task
+from phospho.tasks import TaskEntity
 from phospho import extractor
 
 from random import sample
@@ -26,7 +26,7 @@ class TestInput(BaseModel, extra="allow"):
     task_id: Optional[str] = None
 
     @classmethod
-    def from_task(cls, task: Task) -> "TestInput":
+    def from_task(cls, task: TaskEntity) -> "TestInput":
         # Combine the input and additional_input
         if task.content.additional_input is not None:
             function_input = task.content.additional_input
@@ -98,7 +98,7 @@ def adapt_dict_to_agent_function(
 
 
 def adapt_task_to_agent_function(
-    task: Task, agent_function: Callable[[Any], Any]
+    task: TaskEntity, agent_function: Callable[[Any], Any]
 ) -> Optional[TestInput]:
     """This function adapts a task to match the signature of an agent function.
 
