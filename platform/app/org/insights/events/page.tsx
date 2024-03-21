@@ -3,17 +3,25 @@
 import CreateEvent from "@/components/insights/events/create-event";
 import EventsList from "@/components/insights/events/event-list";
 import SuccessRateByEvent from "@/components/insights/events/success-rate-by-event";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
-import { Wand2 } from "lucide-react";
+import { AlertCircle, PlusIcon, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function Page() {
   const router = useRouter();
   const project_id = navigationStateStore((state) => state.project_id);
   const selectedProject = dataStateStore((state) => state.selectedProject);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const [open, setOpen] = useState(false);
 
   if (!selectedProject) {
     return <></>;
@@ -43,22 +51,50 @@ export default function Page() {
         </AlertDescription>
       </Alert> */}
       <SuccessRateByEvent />
+      {
+        // too many events
+        events &&
+          max_nb_events &&
+          Object.keys(events).length >= max_nb_events && (
+            <Alert className="text-red-700">
+              <div className="flex space-x-4">
+                <AlertCircle className="h-16 w-16" />
+                <div>
+                  <AlertTitle className="font-bold">
+                    Max event quota reached
+                  </AlertTitle>
+                  <AlertDescription>
+                    <div className="flex-col space-y-4">
+                      <div className="pb-2">
+                        {max_nb_events}/{max_nb_events} events created. Upgrade
+                        plan to create more.
+                      </div>
+                      <Link href="/org/settings/billing">
+                        <Button>Upgrade plan</Button>
+                      </Link>
+                    </div>
+                  </AlertDescription>
+                </div>
+              </div>
+            </Alert>
+          )
+      }
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold tracking-tight pt-4">
-            Currently tracked events
+            Tracked events
           </h2>
           <span className="text-gray-500">
-            Events are automatically detected in logged tasks.{" "}
+            Set up events to be automatically detected in logs.{" "}
             <Link
               className="underline "
               href="https://docs.phospho.ai/guides/events"
             >
-              Learn more.
+              Learn more
             </Link>
           </span>
         </div>
-        <div>
+        <div className="space-x-2">
           <Button
             variant="secondary"
             onClick={() => {
@@ -70,13 +106,39 @@ export default function Page() {
               max_nb_events && Object.keys(events).length >= max_nb_events
             }
           >
-            <Wand2 className="w-4 h-4 mr-1" /> Events suggestions
+            <Wand2 className="w-4 h-4 mr-1" /> Event suggestions
           </Button>
+          <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                disabled={
+                  max_nb_events && Object.keys(events).length >= max_nb_events
+                }
+              >
+                <PlusIcon className="h-4 w-4 mr-1" />
+                Add Event
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="md:w-1/3">
+              <CreateEvent setOpen={setOpen} />
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
       <EventsList />
-      <CreateEvent />
+      <div className="flex justify-center text-gray-500">
+        {
+          // current number of events
+          events &&
+            max_nb_events &&
+            Object.keys(events).length < max_nb_events && (
+              <p>
+                {Object.keys(events).length}/{max_nb_events} events created
+              </p>
+            )
+        }
+      </div>
     </>
   );
 }
