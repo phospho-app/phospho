@@ -20,9 +20,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { useToast } from "@/components/ui/use-toast";
-import { Event, EventDefinition } from "@/models/events";
-import { Task, TaskWithEvents } from "@/models/tasks";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { Event, EventDefinition, Task, TaskWithEvents } from "@/models/models";
+import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, Trash } from "lucide-react";
 import React from "react";
@@ -40,10 +39,18 @@ const InteractiveEventBadge = ({
   const { accessToken } = useUser();
 
   const selectedProject = dataStateStore((state) => state.selectedProject);
+
+  if (!selectedProject) {
+    return <></>;
+  }
+
   // Find the event definition in the project settings
-  const eventDefinition: EventDefinition =
-    selectedProject?.settings?.events[event.event_name];
+  const eventDefinition = selectedProject.settings?.events[event.event_name];
   const { toast } = useToast();
+
+  if (!eventDefinition) {
+    return <></>;
+  }
 
   return (
     <DropdownMenu>
@@ -114,9 +121,12 @@ const AddEvent = ({
   const events = task.events;
   const selectedProject = dataStateStore((state) => state.selectedProject);
 
+  if (!selectedProject) {
+    return <></>;
+  }
+
   // Project events is an object : {event_name: EventDefinition}
-  const projectEvents: Record<string, EventDefinition> =
-    selectedProject?.settings?.events || null;
+  const projectEvents = selectedProject.settings?.events;
 
   if (!projectEvents) {
     return <></>;

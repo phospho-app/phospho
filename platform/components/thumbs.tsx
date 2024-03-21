@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { Task } from "@/models/tasks";
+import { Task } from "@/models/models";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
 import { PenSquare, ThumbsDown, ThumbsUp } from "lucide-react";

@@ -3,7 +3,7 @@
 import { NoDataDashboard } from "@/components/dashboard/no-data-dashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { TaskWithEvents } from "@/models/tasks";
+import { TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";

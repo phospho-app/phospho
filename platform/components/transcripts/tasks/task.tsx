@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Task, TaskWithEvents } from "@/models/tasks";
+import { Task, TaskWithEvents } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ThumbsDown, ThumbsUp } from "lucide-react";

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UsersTable } from "@/components/users/users-table";
 import { authFetcher } from "@/lib/fetcher";
-import { UserMetadata } from "@/models/metadata";
+import { UserMetadata } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { HeartHandshake } from "lucide-react";

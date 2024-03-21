@@ -4,7 +4,7 @@ import AlertDialogDeleteProject from "@/components/projects/delete-project-popup
 import TaskProgress from "@/components/settings/tasks-quota";
 import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
-import { UsageQuota } from "@/models/organizations";
+import { UsageQuota } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { CopyIcon } from "lucide-react";

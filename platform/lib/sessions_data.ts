@@ -1,8 +1,7 @@
-import { Session, SessionWithTasks } from "@/models/sessions";
-import { Task } from "@/models/tasks";
+import { Session, Task } from "@/models/models";
 
 export function getCountsPerDay(
-  sessions: Session[]
+  sessions: Session[],
 ): { name: string; total: number }[] {
   const currentDate = new Date();
   const countsPerDay: { name: string; total: number }[] = [];
@@ -36,7 +35,7 @@ export function getCountsPerDay(
 }
 
 export function getCountsPerMinute(
-  sessions: Session[]
+  sessions: Session[],
 ): { name: string; total: number }[] {
   const countsPerMinute: { name: string; total: number }[] = [];
   const currentTime = new Date(); // Current time in UTC
@@ -44,10 +43,10 @@ export function getCountsPerMinute(
 
   for (let i = 0; i < 30; i++) {
     const startTime = new Date(
-      currentTime.getTime() - (i + 1) * secondsPerMinute * 1000
+      currentTime.getTime() - (i + 1) * secondsPerMinute * 1000,
     );
     const endTime = new Date(
-      currentTime.getTime() - i * secondsPerMinute * 1000
+      currentTime.getTime() - i * secondsPerMinute * 1000,
     );
 
     const filteredSessions = sessions.filter((session) => {
@@ -69,7 +68,7 @@ export function getCountsPerMinute(
 }
 
 export function getTaskCountsPerMinute(
-  tasks: Task[]
+  tasks: Task[],
 ): { name: string; total: number }[] {
   const countsPerMinute: { name: string; total: number }[] = [];
   const currentTime = new Date(); // Current time in UTC
@@ -77,10 +76,10 @@ export function getTaskCountsPerMinute(
 
   for (let i = 0; i < 30; i++) {
     const startTime = new Date(
-      currentTime.getTime() - (i + 1) * secondsPerMinute * 1000
+      currentTime.getTime() - (i + 1) * secondsPerMinute * 1000,
     );
     const endTime = new Date(
-      currentTime.getTime() - i * secondsPerMinute * 1000
+      currentTime.getTime() - i * secondsPerMinute * 1000,
     );
 
     const filteredTasks = tasks.filter((task) => {
@@ -100,7 +99,7 @@ export function getTaskCountsPerMinute(
 
 export function getCountOfTasksByStatus(
   tasks: Task[],
-  days: number = 7
+  days: number = 7,
 ): { name: string; success: number; failure: number; undefined: number }[] {
   const currentDate = new Date();
   const results: {
@@ -132,7 +131,7 @@ export function getCountOfTasksByStatus(
       success: filteredTasks.filter((task) => task.flag === "success").length,
       failure: filteredTasks.filter((task) => task.flag === "failure").length,
       undefined: filteredTasks.filter(
-        (task) => !task.flag || task.flag === undefined
+        (task) => !task.flag || task.flag === undefined,
       ).length,
     };
 
@@ -144,7 +143,7 @@ export function getCountOfTasksByStatus(
 // Obsolete
 export function getCountOfSessionsByStatus(
   sessions: Session[],
-  days: number = 7
+  days: number = 7,
 ): { name: string; success: number; failure: number; undefined: number }[] {
   const currentDate = new Date();
   const results: {
@@ -174,10 +173,10 @@ export function getCountOfSessionsByStatus(
         month: "short",
       }),
       success: filteredSessions.filter(
-        (session) => session.metadata && session.metadata.flag === "success"
+        (session) => session.metadata && session.metadata.flag === "success",
       ).length,
       failure: filteredSessions.filter(
-        (session) => session.metadata && session.metadata.flag === "failure"
+        (session) => session.metadata && session.metadata.flag === "failure",
       ).length,
       undefined: filteredSessions.filter(
         (session) =>
@@ -185,7 +184,7 @@ export function getCountOfSessionsByStatus(
           !session.metadata.flag ||
           (session.metadata &&
             session.metadata.flag !== "success" &&
-            session.metadata.flag !== "failure")
+            session.metadata.flag !== "failure"),
       ).length,
     };
 
