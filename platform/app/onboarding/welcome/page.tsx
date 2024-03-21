@@ -122,7 +122,7 @@ function WhatAreEvents() {
               className="bg-green-500 text-2xl p-10"
               variant="outline"
             >
-              {">>"}Got it. Let's get started!{"<<"}
+              Got it. Let's get started!
             </Button>
           </div>
         </CardContent>

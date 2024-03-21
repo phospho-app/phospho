@@ -1,7 +1,11 @@
 "use client";
 
 import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
+import { Button } from "@/components/ui/button";
+import { navigationStateStore } from "@/store/store";
+import { useLogoutFunction } from "@propelauth/nextjs/client";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 import "../globals.css";
 
@@ -10,6 +14,14 @@ export default function OnboardingLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const logoutFn = useLogoutFunction();
+
+  const setSelectedOrgId = navigationStateStore(
+    (state) => state.setSelectedOrgId,
+  );
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
+  const router = useRouter();
+
   return (
     <>
       <FetchOrgProject />
@@ -45,6 +57,20 @@ export default function OnboardingLayout({
             >
               phospho
             </h2>
+          </div>
+          <div>
+            <Button
+              variant="link"
+              className="text-gray-500"
+              onClick={async () => {
+                // Reset the navigation store
+                setSelectedOrgId(null);
+                setproject_id(null);
+                await logoutFn().then(() => router.push("/authenticate"));
+              }}
+            >
+              Log out
+            </Button>
           </div>
         </div>
         <div className="max-w-screen overflow-hidden ">
