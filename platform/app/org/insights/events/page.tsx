@@ -120,7 +120,7 @@ export default function Page() {
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="md:w-1/2">
-              <CreateEvent setOpen={setOpen} />
+              <CreateEvent setOpen={setOpen} currentEvents={events} />
             </AlertDialogContent>
           </AlertDialog>
         </div>

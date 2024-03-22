@@ -9,6 +9,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components//ui/table";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +26,10 @@ import {
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Pencil, Trash } from "lucide-react";
+import { useState } from "react";
 import { useSWRConfig } from "swr";
+
+import CreateEvent from "./create-event";
 
 function EllipsisVertical() {
   return (
@@ -40,6 +48,65 @@ function EllipsisVertical() {
       <circle cx="12" cy="5" r="1" />
       <circle cx="12" cy="19" r="1" />
     </svg>
+  );
+}
+
+function EventRow({
+  eventName,
+  eventDefinition,
+  events,
+  handleDeleteEvent,
+}: {
+  eventName: string;
+  eventDefinition: any;
+  events: any;
+  handleDeleteEvent: (eventNameToDelete: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <TableRow>
+      <TableCell>{eventName}</TableCell>
+      <TableCell className="text-left">{eventDefinition.description}</TableCell>
+      <TableCell className="text-left">
+        {eventDefinition?.webhook && eventDefinition.webhook.length > 1 ? (
+          <Badge>active</Badge>
+        ) : (
+          <Badge variant="secondary">None</Badge>
+        )}
+      </TableCell>
+      <TableCell className="text-right">
+        <AlertDialog open={open} onOpenChange={setOpen} key={eventName}>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="hover:text-accent-foreground">
+              <EllipsisVertical />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem>
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+
+              <DropdownMenuItem
+                className=" text-red-500"
+                onClick={() => handleDeleteEvent(eventName)}
+              >
+                <Trash className="w-4 h-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <AlertDialogContent className="md:w-1/2">
+            <CreateEvent
+              setOpen={setOpen}
+              currentEvents={events}
+              eventNameToEdit={eventName}
+            />
+          </AlertDialogContent>
+        </AlertDialog>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -116,43 +183,15 @@ function EventsList() {
               </TableHeader>
               <TableBody>
                 {Object.entries(events).map(
-                  ([eventName, eventDefinition], index) => {
-                    return (
-                      <TableRow key={index}>
-                        <TableCell>{eventName}</TableCell>
-                        <TableCell className="text-left">
-                          {eventDefinition.description}
-                        </TableCell>
-                        <TableCell className="text-left">
-                          {eventDefinition?.webhook &&
-                          eventDefinition.webhook.length > 1 ? (
-                            <Badge>active</Badge>
-                          ) : (
-                            <Badge variant="secondary">None</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger>
-                              <EllipsisVertical />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className=" text-red-500"
-                                onClick={() => handleDeleteEvent(eventName)}
-                              >
-                                <Trash className="w-4 h-4 mr-2" /> Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  },
+                  ([eventName, eventDefinition], index) => (
+                    <EventRow
+                      key={index}
+                      eventName={eventName}
+                      eventDefinition={eventDefinition}
+                      events={events}
+                      handleDeleteEvent={handleDeleteEvent}
+                    />
+                  ),
                 )}
               </TableBody>
             </Table>
