@@ -29,19 +29,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { authFetcher } from "@/lib/fetcher";
-import {
-  DetectionEngine,
-  DetectionScope,
-  EventDefinition,
-  ProjectSettings,
-} from "@/models/models";
+import { DetectionEngine, DetectionScope } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { AlertDialogAction } from "@radix-ui/react-alert-dialog";
 import { useForm } from "react-hook-form";
-import useSWR, { useSWRConfig } from "swr";
+import { useSWRConfig } from "swr";
 import { z } from "zod";
 
 export default function CreateEvent({
@@ -65,10 +59,6 @@ export default function CreateEvent({
   // Max number of events depends on the plan
   const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
   const current_nb_events = Object.keys(currentEvents).length;
-
-  if (!selectedProject) {
-    return <></>;
-  }
 
   console.log("eventToEdit", eventToEdit);
 
@@ -106,10 +96,13 @@ export default function CreateEvent({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log("Submitting event:", values);
     if (!selectedProject) {
+      console.log("Submit: No selected project");
       return;
     }
     if (!selectedProject.settings) {
+      console.log("Submit: No selected project settings");
       return;
     }
     if (
@@ -132,6 +125,7 @@ export default function CreateEvent({
       detection_engine: values.detection_engine as DetectionEngine,
       detection_scope: values.detection_scope as DetectionScope,
     };
+    console.log("Updated selected project:", selectedProject);
 
     try {
       const creation_response = await fetch(`/api/projects/${project_id}`, {
