@@ -80,7 +80,7 @@ async def get_project_by_id(project_id: str) -> Project:
                 )
 
     try:
-        project = Project(**project_data)
+        project = Project.model_validate(project_data)
     except Exception as e:
         logger.warning(
             f"Error validating model of project {project_data.get('id', None)}: {e}"
