@@ -15,7 +15,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -98,11 +97,7 @@ function EventRow({
             </DropdownMenuContent>
           </DropdownMenu>
           <AlertDialogContent className="md:w-1/2">
-            <CreateEvent
-              setOpen={setOpen}
-              currentEvents={events}
-              eventNameToEdit={eventName}
-            />
+            <CreateEvent setOpen={setOpen} eventNameToEdit={eventName} />
           </AlertDialogContent>
         </AlertDialog>
       </TableCell>
@@ -117,25 +112,16 @@ function EventsList() {
   const { accessToken } = useUser();
 
   const events = selectedProject?.settings?.events || {};
-
-  if (!selectedProject) {
-    return <></>;
-  }
+  const eventArray = Object.entries(events);
 
   // Deletion event
   const handleDeleteEvent = async (eventNameToDelete: string) => {
-    console.log("Deleting event ", eventNameToDelete);
-    // Remove the event with name eventNameToDelete from the events object
-    const updatedEvents = { ...events };
-    delete updatedEvents[eventNameToDelete];
-
     // Prepare the updated project settings
-    const updatedSettings = {
-      ...selectedProject.settings,
-      events: updatedEvents,
-    };
-
-    console.log("updated settings", updatedSettings);
+    if (!selectedProject?.settings) {
+      return;
+    }
+    // Remove the event with name eventNameToDelete from the events object
+    delete selectedProject.settings.events[eventNameToDelete];
 
     try {
       const creation_response = await fetch(`/api/projects/${project_id}`, {
@@ -144,23 +130,14 @@ function EventsList() {
           Authorization: "Bearer " + accessToken,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          settings: updatedSettings,
-        }),
+        body: JSON.stringify(selectedProject),
       });
-
-      const responseData = await creation_response.json();
-      console.log("response", responseData);
-
-      // Mutate state variable
       mutate(
-        [`/api/projects/${project_id}`, accessToken],
+        project_id ? [`/api/projects/${project_id}`, accessToken] : null,
         async (data: any) => {
-          return { project: { ...data.project, settings: updatedSettings } };
+          return { project: selectedProject };
         },
       );
-
-      // Optional: You might want to reset the form or give some feedback to the user here
     } catch (error) {
       console.error("Error deleting event:", error);
     }
@@ -182,17 +159,15 @@ function EventsList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Object.entries(events).map(
-                  ([eventName, eventDefinition], index) => (
-                    <EventRow
-                      key={index}
-                      eventName={eventName}
-                      eventDefinition={eventDefinition}
-                      events={events}
-                      handleDeleteEvent={handleDeleteEvent}
-                    />
-                  ),
-                )}
+                {eventArray.map(([eventName, eventDefinition], index) => (
+                  <EventRow
+                    key={index}
+                    eventName={eventName}
+                    eventDefinition={eventDefinition}
+                    events={events}
+                    handleDeleteEvent={handleDeleteEvent}
+                  />
+                ))}
               </TableBody>
             </Table>
           )}
