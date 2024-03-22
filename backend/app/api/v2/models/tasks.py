@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional, Literal
 
-from app.db.models import Task
+from app.db.models import Task, FlattenedTask
 from pydantic.fields import Field
 
 from app.utils import generate_uuid
@@ -37,21 +37,6 @@ class TaskUpdateRequest(BaseModel):
     notes: Optional[str] = None
     flag: Optional[Literal["success", "failure"]] = None
     flag_source: Optional[str] = None
-
-
-class FlattenedTask(BaseModel, extra="allow"):
-    task_id: str
-    task_input: Optional[str] = None
-    task_output: Optional[str] = None
-    task_metadata: Optional[dict] = None
-    task_eval: Optional[Literal["success", "failure"]] = None
-    task_eval_source: Optional[str] = None
-    task_eval_at: Optional[int] = None
-    task_created_at: Optional[int] = None
-    session_id: Optional[str] = None
-    session_length: Optional[int] = None
-    event_name: Optional[str] = None
-    event_created_at: Optional[int] = None
 
 
 class FlattenedTasks(BaseModel):

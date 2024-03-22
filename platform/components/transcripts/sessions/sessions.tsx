@@ -3,7 +3,7 @@
 import SessionsDataviz from "@/components/transcripts/sessions/session-dataviz";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { SessionWithEvents } from "@/models/sessions";
+import { SessionWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import Link from "next/link";
 import React, { useEffect } from "react";

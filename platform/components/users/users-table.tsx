@@ -8,8 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserMetadata } from "@/models/metadata";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { UserMetadata } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import {
   ColumnFiltersState,
   SortingState,

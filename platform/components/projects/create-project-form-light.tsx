@@ -147,44 +147,46 @@ const CreateNewProjectForm = ({ setOpen }: CreateNewProjectFormProps) => {
 
         <AlertDialogFooter>
           <AlertDialogCancel>Close</AlertDialogCancel>
-          {!isCreating && !isCreated && (
-            <Button type="submit">Create project</Button>
-          )}
-          {isCreating && (
-            <>
-              <Button type="button" disabled>
-                Creating...
-              </Button>
-            </>
-          )}
-          {isCreated && (
-            <>
-              <Alert>
-                <Terminal className="h-4 w-4" />
-                <AlertTitle>Project created </AlertTitle>
+          <div>
+            {!isCreating && !isCreated && (
+              <Button type="submit">Create project</Button>
+            )}
+            {isCreating && (
+              <>
+                <Button type="button" disabled>
+                  Creating...
+                </Button>
+              </>
+            )}
+            {isCreated && (
+              <>
+                <Alert>
+                  <Terminal className="h-4 w-4" />
+                  <AlertTitle>Project created </AlertTitle>
 
-                {/* <AlertDialogContent> */}
+                  {/* <AlertDialogContent> */}
 
-                {/* <AlertDialogAction onClick={() => { setOpen(false); }}> Close</AlertDialogAction> */}
+                  {/* <AlertDialogAction onClick={() => { setOpen(false); }}> Close</AlertDialogAction> */}
 
-                {/* </AlertDialogContent> */}
-                {/* <AlertDescription>Refresh the page</AlertDescription> */}
-              </Alert>
-            </>
-          )}
-          {creationError && (
-            <>
-              <Alert>
-                <Terminal className="h-4 w-4" />
-                <AlertTitle className="text-red-500">
-                  Project creation failed{" "}
-                </AlertTitle>
-                <AlertDescription>
-                  Try using another name (see naming conventions)
-                </AlertDescription>
-              </Alert>
-            </>
-          )}
+                  {/* </AlertDialogContent> */}
+                  {/* <AlertDescription>Refresh the page</AlertDescription> */}
+                </Alert>
+              </>
+            )}
+            {creationError && (
+              <>
+                <Alert>
+                  <Terminal className="h-4 w-4" />
+                  <AlertTitle className="text-red-500">
+                    Project creation failed{" "}
+                  </AlertTitle>
+                  <AlertDescription>
+                    Try using another name (see naming conventions)
+                  </AlertDescription>
+                </Alert>
+              </>
+            )}
+          </div>
         </AlertDialogFooter>
       </form>
     </Form>
