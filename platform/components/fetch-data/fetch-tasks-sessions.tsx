@@ -137,6 +137,9 @@ function FetchHasTasksSessions() {
   const { data: fetchedProject } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
   if (fetchedProject) {
     console.log("Updating fetchedProject:", fetchedProject);
