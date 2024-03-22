@@ -53,12 +53,10 @@ function EllipsisVertical() {
 function EventRow({
   eventName,
   eventDefinition,
-  events,
   handleDeleteEvent,
 }: {
   eventName: string;
   eventDefinition: any;
-  events: any;
   handleDeleteEvent: (eventNameToDelete: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -97,7 +95,11 @@ function EventRow({
             </DropdownMenuContent>
           </DropdownMenu>
           <AlertDialogContent className="md:w-1/2">
-            <CreateEvent setOpen={setOpen} eventNameToEdit={eventName} />
+            <CreateEvent
+              setOpen={setOpen}
+              eventNameToEdit={eventName}
+              key={eventName}
+            />
           </AlertDialogContent>
         </AlertDialog>
       </TableCell>
@@ -133,7 +135,7 @@ function EventsList() {
         body: JSON.stringify(selectedProject),
       });
       mutate(
-        project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+        [`/api/projects/${project_id}`, accessToken],
         async (data: any) => {
           return { project: selectedProject };
         },
@@ -164,7 +166,6 @@ function EventsList() {
                     key={index}
                     eventName={eventName}
                     eventDefinition={eventDefinition}
-                    events={events}
                     handleDeleteEvent={handleDeleteEvent}
                   />
                 ))}

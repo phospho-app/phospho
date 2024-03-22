@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Accordion,
   AccordionContent,
@@ -136,9 +138,8 @@ export default function CreateEvent({
         },
         body: JSON.stringify(selectedProject),
       });
-
       mutate(
-        project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+        [`/api/projects/${project_id}`, accessToken],
         async (data: any) => {
           return { project: selectedProject };
         },
@@ -147,6 +148,8 @@ export default function CreateEvent({
       console.error("Error submitting event:", error);
     }
   }
+
+  console.log("form", form);
 
   return (
     <>
@@ -296,30 +299,28 @@ export default function CreateEvent({
           </Accordion>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                type="submit"
-                disabled={
-                  loading ||
-                  // !form.formState.isValid ||
-                  // too many events
-                  ((eventNameToEdit === null ||
-                    eventNameToEdit === undefined) &&
-                    currentEvents &&
-                    max_nb_events &&
-                    current_nb_events + 1 >= max_nb_events)
+            <Button
+              type="submit"
+              disabled={
+                loading ||
+                // !form.formState.isValid ||
+                // too many events
+                ((eventNameToEdit === null || eventNameToEdit === undefined) &&
+                  currentEvents &&
+                  max_nb_events &&
+                  current_nb_events + 1 >= max_nb_events)
+              }
+              onClick={() => {
+                if (form.formState.isValid) {
+                  // setOpen(false);
                 }
-                onClick={() => {
-                  if (form.formState.isValid) {
-                    setOpen(false);
-                  }
-                }}
-              >
-                {(eventNameToEdit === null ||
-                  eventNameToEdit === undefined) && <>Add event</>}
-                {eventNameToEdit && <>Save</>}
-              </Button>
-            </AlertDialogAction>
+              }}
+            >
+              {(eventNameToEdit === null || eventNameToEdit === undefined) && (
+                <>Add event</>
+              )}
+              {eventNameToEdit && <>Save</>}
+            </Button>
           </AlertDialogFooter>
         </form>
       </Form>
