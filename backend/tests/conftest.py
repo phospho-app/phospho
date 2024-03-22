@@ -113,9 +113,11 @@ def dummy_project(mongo_db, org_id):
         settings=ProjectSettings(
             events={
                 "question_answering": EventDefinition(
+                    event_name="question_answering",
                     description="The user asks a question to the assistant.",
                 ),
                 "webhook_trigger": EventDefinition(
+                    event_name="webhook_trigger",
                     description="The user asks the assistant to trigger the webhook.",
                     webhook="https://webhook.site/4a272604-b59c-4297-9272-e34428e90226",
                 ),
