@@ -101,7 +101,7 @@ export interface EventDefinition {
   event_name: string;
   description: string;
   webhook?: string;
-  webhook_headers?: Record<string, string>;
+  webhook_headers?: Record<string, string> | null;
   detection_engine: DetectionEngine;
   detection_scope: DetectionScope;
 }
