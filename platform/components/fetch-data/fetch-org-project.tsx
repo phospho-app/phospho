@@ -1,5 +1,5 @@
 import { authFetcher } from "@/lib/fetcher";
-import { Project } from "@/models/project";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { useEffect } from "react";

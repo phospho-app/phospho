@@ -3,7 +3,7 @@ import datetime
 from typing import Any, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel, Field
 
-from app.db.models import Project, Event, Task, Session
+from app.db.models import Project, Event, Task, Session, EventDefinition
 
 
 class Projects(BaseModel):
