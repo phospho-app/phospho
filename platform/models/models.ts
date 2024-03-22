@@ -86,11 +86,24 @@ export interface Event {
   source: string;
 }
 
+export enum DetectionEngine {
+  LLM = "llm_detection",
+}
+
+export enum DetectionScope {
+  Task = "task",
+  Session = "session",
+  TaskInputOnly = "task_input_only",
+  TaskOutputOnly = "task_output_only",
+}
+
 export interface EventDefinition {
   event_name: string;
   description: string;
   webhook?: string;
   webhook_headers?: Record<string, string>;
+  detection_engine: DetectionEngine;
+  detection_scope: DetectionScope;
 }
 
 export interface ABTest {

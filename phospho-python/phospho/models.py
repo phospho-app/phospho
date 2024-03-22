@@ -98,6 +98,9 @@ class EventDefinition(BaseModel):
     webhook: Optional[str] = None
     webhook_headers: Optional[dict] = None
     detection_engine: Literal["llm_detection"] = "llm_detection"
+    detection_scope: Literal[
+        "task", "session", "task_input_only", "task_output_only"
+    ] = "task"
 
 
 class ProjectSettings(BaseModel):
