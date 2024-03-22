@@ -42,7 +42,7 @@ async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Proje
                     )
 
     # Convert to a list of Project objects
-    projects = [Project(**project) for project in project_list]
+    projects = [Project.model_validate(project) for project in project_list]
     return projects
 
 
