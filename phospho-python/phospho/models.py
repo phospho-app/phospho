@@ -93,6 +93,8 @@ class Session(BaseModel):
 
 
 class EventDefinition(BaseModel):
+    id: str = Field(default_factory=generate_uuid)
+    created_at: int = Field(default_factory=generate_timestamp)
     event_name: str
     description: str
     webhook: Optional[str] = None
