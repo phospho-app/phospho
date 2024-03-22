@@ -11,7 +11,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -22,11 +21,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { useSWRConfig } from "swr";
 import { z } from "zod";
@@ -40,9 +45,19 @@ const formSchema = z.object({
     .max(30, {
       message: "Event name must be at most 30 characters.",
     }),
-  description: z.string(),
+  description: z
+    .string()
+    .min(10, "Description must be at least 10 characters long."),
   webhook: z.string().optional(),
   webhook_auth_header: z.string().optional(),
+  // detection_engine is llm_detection, or null
+  detection_engine: z.enum(["llm_detection"]),
+  detection_scope: z.enum([
+    "task",
+    "session",
+    "task_input_only",
+    "task_output_only",
+  ]),
 });
 
 export default function CreateEvent({
@@ -118,16 +133,19 @@ export default function CreateEvent({
   return (
     <>
       <AlertDialogHeader>
-        <AlertDialogTitle>Add a new event</AlertDialogTitle>
+        <AlertDialogTitle>Setup new event</AlertDialogTitle>
       </AlertDialogHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="font-normal">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="font-normal space-y-4"
+        >
           <FormField
             control={form.control}
             name="event_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Event name</FormLabel>
+                <FormLabel>Event name*</FormLabel>
                 <FormControl>
                   <Input
                     spellCheck
@@ -144,61 +162,111 @@ export default function CreateEvent({
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel htmlFor="description">Description</FormLabel>
+                <FormLabel>Description*</FormLabel>
                 <FormControl>
                   <Textarea
                     id="description"
-                    placeholder="Describe how to know this event is happening, like you'd do to a 5 years old. Refer to speakers as 'the user' and 'the assistant'."
+                    placeholder="Describe this event like you'd do to a 5 years old. Refer to speakers as 'the user' and 'the assistant'."
                     {...field}
                   />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
-          <Accordion type="single" collapsible className="mb-4">
+          <FormField
+            control={form.control}
+            name="detection_scope"
+            render={({ field }) => (
+              <FormItem className="w-1/2">
+                <FormLabel>Detection scope</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue="task">
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue defaultValue="task" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="task">Task</SelectItem>
+                    <SelectItem value="session">Session</SelectItem>
+                    <SelectItem value="task_input_only">
+                      Task input only
+                    </SelectItem>
+                    <SelectItem value="task_output_only">
+                      Task output only
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+          <Accordion type="single" collapsible className="mb-2">
             <AccordionItem value="webhook">
               <AccordionTrigger>
-                <span className="text-sm flex flex-row items-center text-gray-500">
-                  Advanced settings (Optional)
+                <span className="text-sm flex flex-row items-center text-gray-500 ">
+                  Advanced settings (optional)
                 </span>
               </AccordionTrigger>
-              <AccordionContent>
-                <div className="grid gap-2">
-                  <FormField
-                    control={form.control}
-                    name="webhook"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Webhook</FormLabel>
+              <AccordionContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="webhook"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Webhook (optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          id="webhook"
+                          placeholder="https://your-api.com/webhook"
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="webhook_auth_header"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Authorization Header</FormLabel>
+                      <FormControl>
+                        <Input
+                          id="webhook_headers"
+                          placeholder="Bearer sk-..."
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="detection_engine"
+                  render={({ field }) => (
+                    <FormItem className="w-1/2">
+                      <FormLabel>Engine</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue="llm_detection"
+                      >
                         <FormControl>
-                          <Input
-                            id="webhook"
-                            placeholder="https://your-api.com/webhook"
-                            {...field}
-                          />
+                          <SelectTrigger>
+                            <SelectValue defaultValue="llm_detection" />
+                          </SelectTrigger>
                         </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="webhook_auth_header"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="description">
-                          Authorization Header
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            id="webhook_headers"
-                            placeholder="Bearer sk-..."
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                        <SelectContent>
+                          <SelectItem value="llm_detection">
+                            LLM Detection
+                          </SelectItem>
+                          <SelectItem disabled value="other">
+                            More coming soon!
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -208,14 +276,16 @@ export default function CreateEvent({
               type="submit"
               disabled={
                 loading ||
-                !form.formState.isValid ||
+                // !form.formState.isValid ||
                 // too many events
                 (events &&
                   max_nb_events &&
                   Object.keys(events).length >= max_nb_events)
               }
               onClick={() => {
-                setOpen(false);
+                if (form.formState.isValid) {
+                  setOpen(false);
+                }
               }}
             >
               Add event
