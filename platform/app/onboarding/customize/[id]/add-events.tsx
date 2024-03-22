@@ -190,8 +190,8 @@ export default function AddEvents({
             )}
           </div>
           <div className="text-gray-500">
-            Did you know? You can configure events so that they trigger webhooks
-            (slack, email, etc.)
+            Did you know? You can later setup events to trigger webhooks (slack,
+            email, etc.)
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
