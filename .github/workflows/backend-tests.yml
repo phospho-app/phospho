@@ -65,6 +65,5 @@ jobs:
           EXTRACTOR_URL: ${{ vars.EXTRACTOR_URL }}
         # Specify here the tests you want to run after the -k flag
         run: |
-          source .venv/bin/activate
           poetry run pytest tests/api/ -vvv
           poetry run pytest tests/services/ -vvv

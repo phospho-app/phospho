@@ -102,7 +102,7 @@ export interface EventDefinition {
   description: string;
   webhook?: string;
   webhook_headers?: Record<string, string> | null;
-  detection_engine: DetectionEngine;
+  detection_engine?: DetectionEngine;
   detection_scope: DetectionScope;
 }
 
