@@ -29,47 +29,48 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { authFetcher } from "@/lib/fetcher";
 import {
   DetectionEngine,
   DetectionScope,
   EventDefinition,
+  ProjectSettings,
 } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { AlertDialogAction } from "@radix-ui/react-alert-dialog";
 import { useForm } from "react-hook-form";
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
 
 export default function CreateEvent({
   setOpen,
-  currentEvents,
   eventNameToEdit,
 }: {
   setOpen: (open: boolean) => void;
-  currentEvents: Record<string, EventDefinition>;
   eventNameToEdit?: string;
 }) {
   // Component to create an event or edit an existing event
 
   const project_id = navigationStateStore((state) => state.project_id);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const { mutate } = useSWRConfig();
+  const { loading, accessToken } = useUser();
+
+  const currentEvents = selectedProject?.settings?.events || {};
+  const eventToEdit = eventNameToEdit ? currentEvents[eventNameToEdit] : null;
 
   // Max number of events depends on the plan
   const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
-
-  const eventToEdit = eventNameToEdit ? currentEvents[eventNameToEdit] : null;
+  const current_nb_events = Object.keys(currentEvents).length;
 
   if (!selectedProject) {
     return <></>;
   }
 
   console.log("eventToEdit", eventToEdit);
-
-  const { mutate } = useSWRConfig();
-  const { loading, accessToken } = useUser();
 
   // If we are editing an event, we need to pre-fill the form
   const formSchema = z.object({
@@ -105,14 +106,23 @@ export default function CreateEvent({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    let updatedEvents = { ...currentEvents };
-    if (eventNameToEdit) {
+    if (!selectedProject) {
+      return;
+    }
+    if (!selectedProject.settings) {
+      return;
+    }
+    if (
+      eventNameToEdit !== null &&
+      eventNameToEdit !== undefined &&
+      eventNameToEdit !== values.event_name
+    ) {
       // Editing the event means that we remove the previous event and add the new one
       // This is in case the event name has changed
-      delete updatedEvents[eventNameToEdit];
+      delete selectedProject.settings.events[eventNameToEdit];
     }
 
-    updatedEvents[values.event_name] = {
+    selectedProject.settings.events[values.event_name] = {
       event_name: values.event_name,
       description: values.description,
       webhook: values.webhook,
@@ -123,14 +133,6 @@ export default function CreateEvent({
       detection_scope: values.detection_scope as DetectionScope,
     };
 
-    console.log("updatedEvents", updatedEvents);
-
-    // We then send back all the settings to be pushed back into the project
-    const updatedSettings = {
-      ...selectedProject?.settings,
-      events: updatedEvents,
-    };
-
     try {
       const creation_response = await fetch(`/api/projects/${project_id}`, {
         method: "POST",
@@ -138,18 +140,13 @@ export default function CreateEvent({
           Authorization: "Bearer " + accessToken,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          settings: updatedSettings,
-        }),
+        body: JSON.stringify(selectedProject),
       });
 
-      const responseData = await creation_response.json();
-      console.log("response", responseData);
-
       mutate(
-        [`/api/projects/${project_id}`, accessToken],
+        project_id ? [`/api/projects/${project_id}`, accessToken] : null,
         async (data: any) => {
-          return { project: { ...data.project, settings: updatedSettings } };
+          return { project: selectedProject };
         },
       );
     } catch (error) {
@@ -316,7 +313,7 @@ export default function CreateEvent({
                     eventNameToEdit === undefined) &&
                     currentEvents &&
                     max_nb_events &&
-                    Object.keys(currentEvents).length + 1 >= max_nb_events)
+                    current_nb_events + 1 >= max_nb_events)
                 }
                 onClick={() => {
                   if (form.formState.isValid) {

@@ -18,19 +18,17 @@ import { useState } from "react";
 
 export default function Page() {
   const router = useRouter();
+
   const project_id = navigationStateStore((state) => state.project_id);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const [open, setOpen] = useState(false);
+  const selectedProject = dataStateStore((state) => state.selectedProject);
 
-  if (!selectedProject) {
-    return <></>;
-  }
-
-  const events = selectedProject.settings?.events || {};
+  const events = selectedProject?.settings?.events || {};
 
   // Max number of events depends on the plan
   const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
+  const current_nb_events = Object.keys(events).length;
 
   return (
     <>
@@ -53,31 +51,29 @@ export default function Page() {
       <SuccessRateByEvent />
       {
         // too many events
-        events &&
-          max_nb_events &&
-          Object.keys(events).length >= max_nb_events && (
-            <Alert className="text-red-700">
-              <div className="flex space-x-4">
-                <AlertCircle className="h-16 w-16" />
-                <div>
-                  <AlertTitle className="font-bold">
-                    Max event quota reached
-                  </AlertTitle>
-                  <AlertDescription>
-                    <div className="flex-col space-y-4">
-                      <div className="pb-2">
-                        {max_nb_events}/{max_nb_events} events created. Upgrade
-                        plan to create more.
-                      </div>
-                      <Link href="/org/settings/billing">
-                        <Button>Upgrade plan</Button>
-                      </Link>
+        events && max_nb_events && current_nb_events >= max_nb_events && (
+          <Alert className="text-red-700">
+            <div className="flex space-x-4">
+              <AlertCircle className="h-16 w-16" />
+              <div>
+                <AlertTitle className="font-bold">
+                  Max event quota reached
+                </AlertTitle>
+                <AlertDescription>
+                  <div className="flex-col space-y-4">
+                    <div className="pb-2">
+                      {max_nb_events}/{max_nb_events} events created. Upgrade
+                      plan to create more.
                     </div>
-                  </AlertDescription>
-                </div>
+                    <Link href="/org/settings/billing">
+                      <Button>Upgrade plan</Button>
+                    </Link>
+                  </div>
+                </AlertDescription>
               </div>
-            </Alert>
-          )
+            </div>
+          </Alert>
+        )
       }
       <div className="flex justify-between items-end">
         <div>
@@ -111,16 +107,14 @@ export default function Page() {
           <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
               <Button
-                disabled={
-                  max_nb_events && Object.keys(events).length >= max_nb_events
-                }
+                disabled={max_nb_events && current_nb_events >= max_nb_events}
               >
                 <PlusIcon className="h-4 w-4 mr-1" />
                 Add Event
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="md:w-1/2">
-              <CreateEvent setOpen={setOpen} currentEvents={events} />
+              <CreateEvent setOpen={setOpen} />
             </AlertDialogContent>
           </AlertDialog>
         </div>
@@ -130,13 +124,11 @@ export default function Page() {
       <div className="flex justify-center text-gray-500">
         {
           // current number of events
-          events &&
-            max_nb_events &&
-            Object.keys(events).length < max_nb_events && (
-              <p>
-                {Object.keys(events).length}/{max_nb_events} events created
-              </p>
-            )
+          events && max_nb_events && current_nb_events < max_nb_events && (
+            <p>
+              {current_nb_events}/{max_nb_events} events created
+            </p>
+          )
         }
       </div>
     </>
