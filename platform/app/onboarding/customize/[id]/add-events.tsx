@@ -12,7 +12,11 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { EventDefinition } from "@/models/models";
+import {
+  DetectionEngine,
+  DetectionScope,
+  EventDefinition,
+} from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
 import { sendUserFeedback } from "phospho";
@@ -52,6 +56,8 @@ const dummyEventDefinitions: EventDefinition[] = [
   {
     event_name: "thank you",
     description: "The user said thank you to the assistant",
+    detection_scope: DetectionScope.Task,
+    detection_engine: DetectionEngine.LLM,
   },
 ];
 
