@@ -19,8 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { EventDefinition } from "@/models/events";
-import { Project } from "@/models/project";
+import { EventDefinition, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -121,7 +120,7 @@ export default function AboutYou({
       );
       const response_json = await response.json();
       console.log("plan", response_json);
-      console.log("events", project.settings.events);
+      console.log("events", project.settings?.events);
       if (response_json.plan === "hobby") {
         // Without events, skip
         if (!project.settings?.events) {

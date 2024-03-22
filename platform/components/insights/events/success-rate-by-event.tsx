@@ -47,12 +47,16 @@ function SuccessRateByEvent() {
     },
   );
 
+  if (successRateByEvent === null || successRateByEvent?.length === 0) {
+    return <></>;
+  }
+
   return (
     <div>
       <Card className="col-span-full lg:col-span-5">
         <CardHeader>Success Rate (%) by Event</CardHeader>
         <CardContent>
-          {successRateByEvent === null || successRateByEvent === undefined ? (
+          {successRateByEvent === undefined ? (
             <Skeleton className="h-[250px]" />
           ) : (
             <ResponsiveContainer width="100%" height={150}>

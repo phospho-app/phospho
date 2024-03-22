@@ -1,4 +1,4 @@
-import { Event } from "@/models/events";
+import { Event } from "@/models/models";
 
 interface DayCount {
   date: string;

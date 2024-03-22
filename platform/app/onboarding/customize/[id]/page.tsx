@@ -1,6 +1,6 @@
 "use client";
 
-import { EventDefinition } from "@/models/events";
+import { EventDefinition } from "@/models/models";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 

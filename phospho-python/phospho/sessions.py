@@ -4,9 +4,9 @@ Access sessions
 
 from phospho.collection import Collection
 
-from phospho.tasks import Task
+from phospho.tasks import TaskEntity
 
-from typing import Optional
+from typing import Optional, Dict
 
 
 class Session:
@@ -67,7 +67,7 @@ class Session:
 
         for task_content in response.json()["tasks"]:
             tasks_list.append(
-                Task(self._client, task_content["task_id"], _content=task_content)
+                TaskEntity(self._client, task_content["task_id"], _content=task_content)
             )
 
         return tasks_list
@@ -99,13 +99,13 @@ class SessionCollection(Collection):
 
     # Create a session
     # TODO : return a session object, like what replicates does for predictions
-    def create(self, data: Optional[dict] = None):
+    def create(self, data: Optional[Dict[str, object]] = None):
         payload = {
             "project_id": self._client._project_id(),
             "data": data or {},
         }
 
-        response = self._client._post(f"/sessions", payload=payload)
+        response = self._client._post("/sessions", payload=payload)
 
         if response.status_code == 200:
             print(response.json())

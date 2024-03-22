@@ -14,7 +14,7 @@ import requests
 import phospho.config as config
 
 from phospho.sessions import SessionCollection
-from phospho.tasks import TaskCollection, Task
+from phospho.tasks import TaskCollection, TaskEntity
 from phospho.models import Comparison, Test, FlattenedTask, Project
 
 
@@ -152,7 +152,7 @@ class Client:
         flag: Literal["success", "failure"],
         source: str = "user",
         notes: Optional[str] = None,
-    ) -> Task:
+    ) -> TaskEntity:
         """
         Flag a task as a success or a failure. Returns the task.
         """
@@ -165,7 +165,7 @@ class Client:
                 "notes": notes,
             },
         )
-        return Task(client=self, task_id=task_id, _content=response.json())
+        return TaskEntity(client=self, task_id=task_id, _content=response.json())
 
     def create_test(self, summary: Optional[dict] = None) -> Test:
         """
