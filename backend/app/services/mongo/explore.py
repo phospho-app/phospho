@@ -10,8 +10,8 @@ import pydantic
 
 # Models
 from app.api.platform.models import ABTest, ProjectEventsFilters, Topics
-from app.api.v2.models import FlattenedTask, ProjectTasksFilter
-from app.db.models import Eval
+from app.api.v2.models import ProjectTasksFilter
+from app.db.models import Eval, FlattenedTask
 from app.db.mongo import get_mongo_db
 from app.services.mongo.projects import (
     get_all_events,

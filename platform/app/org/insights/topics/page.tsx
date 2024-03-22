@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
-import { Topic } from "@/models/topics";
+import { Topic } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { MessageCircleIcon } from "lucide-react";

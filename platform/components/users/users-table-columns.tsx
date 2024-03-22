@@ -1,5 +1,4 @@
-import { Event } from "@/models/events";
-import { UserMetadata } from "@/models/metadata";
+import { Event, UserMetadata } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";

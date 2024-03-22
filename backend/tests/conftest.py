@@ -8,10 +8,11 @@ import os
 
 import pymongo
 import pytest
-from app.api.v2.models import Project, Task
 from app.core import config
 from app.db.mongo import close_mongo_db, connect_and_init_db, get_mongo_db
 from app.security.authentification import propelauth
+from phospho.models import Project, Task, ProjectSettings, EventDefinition
+
 from tests.utils import cleanup
 
 import phospho
@@ -109,18 +110,19 @@ def dummy_project(mongo_db, org_id):
     dummy_project = Project(
         project_name="dummy",
         org_id=org_id,
-        settings={
-            "events": {
-                "question_answering": {
-                    "description": "The user asks a question to the assistant.",
-                    "webhook": None,
-                },
-                "webhook_trigger": {
-                    "description": "The user asks the assistant to trigger the webhook.",
-                    "webhook": "https://webhook.site/4a272604-b59c-4297-9272-e34428e90226",
-                },
+        settings=ProjectSettings(
+            events={
+                "question_answering": EventDefinition(
+                    event_name="question_answering",
+                    description="The user asks a question to the assistant.",
+                ),
+                "webhook_trigger": EventDefinition(
+                    event_name="webhook_trigger",
+                    description="The user asks the assistant to trigger the webhook.",
+                    webhook="https://webhook.site/4a272604-b59c-4297-9272-e34428e90226",
+                ),
             }
-        },
+        ),
     )
     mongo_db["projects"].insert_one(dummy_project.model_dump())
     yield dummy_project
