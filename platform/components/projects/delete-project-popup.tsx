@@ -40,7 +40,7 @@ const AlertDialogDeleteProject = () => {
             Delete project
           </Button>
         </AlertDialogTrigger>
-        <AlertDialogContent>
+        <AlertDialogContent className="md:w-1/3">
           <AlertDialogHeader>
             <AlertDialogTitle>
               Delete the project "{selectedProject.project_name}"?
