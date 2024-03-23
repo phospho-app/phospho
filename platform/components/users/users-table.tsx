@@ -21,6 +21,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronLeftIcon, ChevronRightIcon, FilterX } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 import { Button } from "../ui/button";
@@ -42,6 +43,7 @@ export function UsersTable<TData, TValue>({
   const setSessionsColumnsFilters = navigationStateStore(
     (state) => state.setSessionsColumnsFilters,
   );
+  const router = useRouter();
 
   const columns = getColumns();
 
@@ -133,6 +135,12 @@ export function UsersTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={() => {
+                    router.push(
+                      `/org/users/${encodeURIComponent(row.original.user_id)}`,
+                    );
+                  }}
+                  className="cursor-pointer"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

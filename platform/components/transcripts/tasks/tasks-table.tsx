@@ -27,6 +27,7 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon, FilterX } from "lucide-react";
 import { Database, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 import { getColumns } from "./tasks-table-columns";
@@ -38,6 +39,7 @@ interface DataTableProps<TData, TValue> {
 export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
   const tasksWithEvents = dataStateStore((state) => state.tasksWithEvents);
+  const router = useRouter();
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const tasksColumnsFilters = navigationStateStore(
@@ -244,7 +246,11 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
               table?.getRowModel()?.rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
+                  // data-state={row.getIsSelected() && "selected"}
+                  onClick={() => {
+                    router.push(`/org/transcripts/tasks/${row.original.id}`);
+                  }}
+                  className="cursor-pointer"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
