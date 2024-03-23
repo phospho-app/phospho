@@ -180,20 +180,17 @@ export function getColumns() {
       ),
     },
     {
-      header: "View",
+      header: "",
+      accessorKey: "view",
       cell: ({ row }) => {
         const user_id = row.original.user_id;
         // Match the task object with this key
         // Handle undefined edge case
         if (!user_id) return <></>;
         return (
-          <span>
-            <Link href={`/org/users/${encodeURIComponent(user_id)}`}>
-              <Button variant="ghost">
-                <ChevronRight />
-              </Button>
-            </Link>
-          </span>
+          <Link href={`/org/users/${encodeURIComponent(user_id)}`}>
+            <ChevronRight />
+          </Link>
         );
       },
     },

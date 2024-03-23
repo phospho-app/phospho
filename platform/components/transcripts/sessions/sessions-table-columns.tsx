@@ -134,20 +134,17 @@ export function getColumns() {
       },
     },
     {
-      header: "View",
+      header: "",
+      accessorKey: "view",
       cell: ({ row }) => {
         const session = row.original;
         // Match the task object with this key
         // Handle undefined edge case
         if (!session) return <></>;
         return (
-          <span>
-            <Link href={`/org/transcripts/sessions/${session.id}`}>
-              <Button variant="ghost">
-                <ChevronRight />
-              </Button>
-            </Link>
-          </span>
+          <Link href={`/org/transcripts/sessions/${session.id}`}>
+            <ChevronRight />
+          </Link>
         );
       },
     },

@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -31,11 +32,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 import { DetectionEngine, DetectionScope } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
-import { AlertDialogAction } from "@radix-ui/react-alert-dialog";
 import { useForm } from "react-hook-form";
 import { useSWRConfig } from "swr";
 import { z } from "zod";
@@ -54,6 +55,7 @@ export default function CreateEvent({
   const selectedProject = dataStateStore((state) => state.selectedProject);
   const { mutate } = useSWRConfig();
   const { loading, accessToken } = useUser();
+  const { toast } = useToast();
 
   const currentEvents = selectedProject?.settings?.events || {};
   const eventToEdit = eventNameToEdit ? currentEvents[eventNameToEdit] : null;
@@ -71,12 +73,13 @@ export default function CreateEvent({
       .min(2, {
         message: "Event name must be at least 2 characters.",
       })
-      .max(30, {
-        message: "Event name must be at most 30 characters.",
+      .max(32, {
+        message: "Event name must be at most 32 characters.",
       }),
     description: z
       .string()
-      .min(10, "Description must be at least 10 characters long."),
+      .min(10, "Description must be at least 10 characters long.")
+      .max(1000, "Description must be at most 1000 characters long."),
     webhook: z.string().optional(),
     webhook_auth_header: z.string().optional(),
     detection_engine: z.enum(["llm_detection"]).default("llm_detection"),
@@ -137,15 +140,19 @@ export default function CreateEvent({
           "Content-Type": "application/json",
         },
         body: JSON.stringify(selectedProject),
+      }).then((response) => {
+        mutate(
+          [`/api/projects/${project_id}`, accessToken],
+          async (data: any) => {
+            return { project: selectedProject };
+          },
+        );
       });
-      mutate(
-        [`/api/projects/${project_id}`, accessToken],
-        async (data: any) => {
-          return { project: selectedProject };
-        },
-      );
     } catch (error) {
-      console.error("Error submitting event:", error);
+      toast({
+        title: "Error when creating event",
+        description: `${error}`,
+      });
     }
   }
 
@@ -299,7 +306,7 @@ export default function CreateEvent({
           </Accordion>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button
+            <AlertDialogAction
               type="submit"
               disabled={
                 loading ||
@@ -320,7 +327,7 @@ export default function CreateEvent({
                 <>Add event</>
               )}
               {eventNameToEdit && <>Save</>}
-            </Button>
+            </AlertDialogAction>
           </AlertDialogFooter>
         </form>
       </Form>

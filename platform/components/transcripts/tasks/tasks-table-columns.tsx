@@ -203,7 +203,8 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
       },
     },
     {
-      header: "View",
+      header: "",
+      accessorKey: "view",
       cell: ({ row }) => {
         const task = row.original;
         // Match the task object with this key
@@ -211,9 +212,7 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
         if (!task) return <></>;
         return (
           <Link href={`/org/transcripts/tasks/${task.id}`}>
-            <Button variant="ghost">
-              <ChevronRight />
-            </Button>
+            <ChevronRight />
           </Link>
         );
       },
