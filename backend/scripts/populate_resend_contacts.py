@@ -1,9 +1,8 @@
 import os
 
 import resend
-from app.core import config  # This triggers loading of the .env file
 from loguru import logger
-from propelauth_fastapi import User, init_auth
+from propelauth_fastapi import init_auth
 
 from dotenv import load_dotenv
 from tqdm import tqdm
@@ -18,6 +17,14 @@ assert (
 assert (
     os.getenv("PROPELAUTH_PRODUCTION_API_KEY") is not None
 ), "PROPELAUTH_PRODUCTION_API_KEY is missing from the environment variables"
+
+assert (
+    os.getenv("RESEND_API_KEY") is not None
+), "RESEND_API_KEY is missing from the environment variables"
+
+assert (
+    os.getenv("RESEND_AUDIENCE_ID") is not None
+), "RESEND_AUDIENCE_ID is missing from the environment variables"
 
 # Init the PropelAuth client with PRODUCTION values (Read only API key is enough)
 propelauth = init_auth(
@@ -77,16 +84,12 @@ for org in tqdm(organizations):
 logger.info(f"Number of users: {len(total_users)}")
 
 # Set the resend API key
-resend.api_key = config.RESEND_API_KEY
+resend.api_key = os.environ["RESEND_API_KEY"]
 
 # Add each user as a contact in resend
 for user in tqdm(total_users):
     if user["email"]:
         logger.info(f"Adding {user['email']} as a resend contact")
         resend.Contacts.create(
-            {
-                "email": user["email"],
-                "audience_id": config.RESEND_AUDIENCE_ID,
-            }
+            {"email": user["email"], "audience_id": os.environ["RESEND_AUDIENCE_ID"]}
         )
-        logger.info(f"Added as a resend contact: {user['email']}")
