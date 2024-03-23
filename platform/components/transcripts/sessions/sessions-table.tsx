@@ -30,6 +30,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 import { getColumns } from "./sessions-table-columns";
@@ -54,8 +55,9 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
   );
 
   const [query, setQuery] = useState("");
-  const { user, loading, accessToken } = useUser();
+  const { accessToken } = useUser();
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const query_tasks = async () => {
     // Call the /search endpoint
@@ -239,6 +241,10 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={() => {
+                    router.push(`/org/transcripts/sessions/${row.original.id}`);
+                  }}
+                  className="cursor-pointer"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
