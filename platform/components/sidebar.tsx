@@ -1,6 +1,6 @@
 "use client";
 
-import AlertDialogProject from "@/components/projects/create-project-popup";
+import CreateProjectButton from "@/components/projects/create-project-button";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { dataStateStore } from "@/store/store";
@@ -178,7 +178,7 @@ export function Sidebar() {
           </div>
         </div>
         <div className="flex justify-center max-w-100 w-full mt-1">
-          <AlertDialogProject></AlertDialogProject>
+          <CreateProjectButton></CreateProjectButton>
         </div>
         <div className="flex justify-center mx-2 mb-4 mt-4">
           {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
