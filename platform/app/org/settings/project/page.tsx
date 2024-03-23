@@ -1,14 +1,26 @@
 "use client";
 
+import CreateProjectButton from "@/components/projects/create-project-button";
+import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
 import TaskProgress from "@/components/settings/tasks-quota";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
 import { UsageQuota } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { CopyIcon } from "lucide-react";
+import { CopyIcon, Pencil } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import useSWR from "swr";
 
 export default function Page() {
@@ -18,6 +30,7 @@ export default function Page() {
   );
   const project_id = navigationStateStore((state) => state.project_id);
   const selectedProject = dataStateStore((state) => state.selectedProject);
+  const [open, setOpen] = useState(false);
 
   const { accessToken } = useUser();
 
@@ -42,7 +55,20 @@ export default function Page() {
   return (
     <div className="w-full">
       <h2 className="text-2xl font-bold tracking-tight mb-4">
-        Project '{selectedProject.project_name}'
+        <div className="flex items-baseline">
+          Project "{selectedProject.project_name}"
+          <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+              <Pencil className="h-4 w-4 ml-2 hover:text-accent-foreground cursor-pointer" />
+            </AlertDialogTrigger>
+            <AlertDialogContent className="md:w-1/3">
+              <CreateProjectDialog
+                setOpen={setOpen}
+                projectToEdit={selectedProject}
+              />
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </h2>
       <div className="mt-4 mb-4 flex-col space-y-8">
         <div className="md:flex flex-auto items-center mb-4">

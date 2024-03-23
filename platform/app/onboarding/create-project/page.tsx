@@ -36,7 +36,7 @@ const formSchema = z.object({
     .min(2, {
       message: "Project name must be at least 2 characters.",
     })
-    .max(30, {
+    .max(32, {
       message: "Project name must be at most 30 characters.",
     }),
 });
@@ -132,6 +132,7 @@ export default function Page() {
                         placeholder="My chatbot"
                         {...field}
                         className="font-normal"
+                        autoFocus
                       />
                     </FormControl>
                     <FormMessage />
@@ -145,7 +146,7 @@ export default function Page() {
                     loading || creatingProject || !form.formState.isValid
                   }
                 >
-                  {!creatingProject && <p>Create project</p>}
+                  {!creatingProject && <>Create project</>}
                   {creatingProject && (
                     <Icons.spinner className="w-4 h-4 animate-spin" />
                   )}

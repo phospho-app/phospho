@@ -1,4 +1,4 @@
-import CreateNewProjectForm from "@/components/projects/create-project-form-light";
+import CreateProjectDialog from "@/components/projects/create-project-form";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-export function AlertDialogProject() {
+export function CreateProjectButton() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -18,10 +18,10 @@ export function AlertDialogProject() {
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="md:w-1/3">
-        <CreateNewProjectForm setOpen={setOpen}></CreateNewProjectForm>
+        <CreateProjectDialog setOpen={setOpen}></CreateProjectDialog>
       </AlertDialogContent>
     </AlertDialog>
   );
 }
 
-export default AlertDialogProject;
+export default CreateProjectButton;
