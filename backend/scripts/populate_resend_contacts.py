@@ -1,9 +1,15 @@
 import os
-from loguru import logger
+
 import resend
+from app.core import config  # This triggers loading of the .env file
+from loguru import logger
 from propelauth_fastapi import User, init_auth
 
-from app.core import config  # This triggers loading of the .env file
+from dotenv import load_dotenv
+from tqdm import tqdm
+
+load_dotenv()
+
 
 # Check that the two env variables are set
 assert (
@@ -34,11 +40,11 @@ organizations = first_org_response.get("orgs")
 
 if number_of_orgs > 99:
     # Get all the organizations
-    for page_number in range(1, number_of_orgs // 99 + 1):
+    for page_number in tqdm(range(1, number_of_orgs // 99 + 1)):
         organizations += propelauth.fetch_org_by_query(
             page_size=99,
             page_number=page_number,
-        ).orgs
+        ).get("orgs")
 
 assert len(organizations) == number_of_orgs
 logger.info(f"Number of organizations: {number_of_orgs}")
@@ -46,7 +52,7 @@ logger.info(f"Number of organizations: {number_of_orgs}")
 # For each organization, get all the users
 total_users = []
 
-for org in organizations:
+for org in tqdm(organizations):
     org_id = org["org_id"]
     users = propelauth.fetch_users_in_org(org_id=org_id, page_size=99, page_number=0)
 
@@ -62,7 +68,7 @@ for org in organizations:
                 org_id=org_id,
                 page_size=99,
                 page_number=page_number,
-            ).users
+            ).get("users")
 
     assert len(org_users) == number_of_users
 
@@ -74,8 +80,9 @@ logger.info(f"Number of users: {len(total_users)}")
 resend.api_key = config.RESEND_API_KEY
 
 # Add each user as a contact in resend
-for user in total_users:
+for user in tqdm(total_users):
     if user["email"]:
+        logger.info(f"Adding {user['email']} as a resend contact")
         resend.Contacts.create(
             {
                 "email": user["email"],
