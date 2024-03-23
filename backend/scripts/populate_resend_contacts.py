@@ -33,53 +33,23 @@ propelauth = init_auth(
 
 logger.warning("Reading from Production")
 
-# Get all the organizations
-# Max number of orgs is 99
-first_org_response = propelauth.fetch_org_by_query(
-    page_size=99,
-    page_number=0,
-)
 
-# Get the number of organizations
-number_of_orgs = first_org_response.get("total_orgs")
-
-organizations = first_org_response.get("orgs")
-
-if number_of_orgs > 99:
-    # Get all the organizations
-    for page_number in tqdm(range(1, number_of_orgs // 99 + 1)):
-        organizations += propelauth.fetch_org_by_query(
-            page_size=99,
-            page_number=page_number,
-        ).get("orgs")
-
-assert len(organizations) == number_of_orgs
-logger.info(f"Number of organizations: {number_of_orgs}")
-
-# For each organization, get all the users
 total_users = []
+page_number = 0
+response = propelauth.fetch_users_by_query(
+    page_size=99,
+    page_number=page_number,
+)
+total_users.extend(response.get("users"))
 
-for org in tqdm(organizations):
-    org_id = org["org_id"]
-    users = propelauth.fetch_users_in_org(org_id=org_id, page_size=99, page_number=0)
+while response.get("has_more_results"):
+    total_users.extend(response.get("users"))
+    page_number += 1
+    response = propelauth.fetch_users_by_query(
+        page_size=99,
+        page_number=page_number,
+    )
 
-    # Get the number of users
-    number_of_users = users.get("total_users")
-
-    org_users = users.get("users")
-
-    if number_of_users > 99:
-        # Get all the users
-        for page_number in range(1, number_of_users // 99 + 1):
-            org_users += propelauth.fetch_users_in_org(
-                org_id=org_id,
-                page_size=99,
-                page_number=page_number,
-            ).get("users")
-
-    assert len(org_users) == number_of_users
-
-    total_users += org_users
 
 logger.info(f"Number of users: {len(total_users)}")
 
