@@ -4,8 +4,9 @@ All the models stored in database.
 
 from typing import Dict, List, Literal, Optional
 
-from phospho.utils import generate_timestamp, generate_uuid
 from pydantic import BaseModel, Field
+
+from phospho.utils import generate_timestamp, generate_uuid
 
 
 class Eval(BaseModel):
@@ -23,6 +24,25 @@ class Eval(BaseModel):
     notes: Optional[str] = None
 
 
+DetectionScope = Literal[
+    "task",
+    "session",
+    "task_input_only",
+    "task_output_only",
+]
+
+
+class EventDefinition(BaseModel):
+    id: str = Field(default_factory=generate_uuid)
+    created_at: int = Field(default_factory=generate_timestamp)
+    event_name: str
+    description: str
+    webhook: Optional[str] = None
+    webhook_headers: Optional[dict] = None
+    detection_engine: Literal["llm_detection"] = "llm_detection"
+    detection_scope: DetectionScope = "task"
+
+
 class Event(BaseModel):
     id: str = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
@@ -36,6 +56,7 @@ class Event(BaseModel):
     webhook: Optional[str] = None
     # The source of the event (either "user" or "phospho-{id}")
     source: str
+    event_definition: Optional[EventDefinition] = None
 
 
 class Task(BaseModel):
@@ -90,19 +111,6 @@ class Session(BaseModel):
     tasks: Optional[List[Task]] = None
     # Session length is computed dynamically. It may be None if not computed
     session_length: Optional[int] = None
-
-
-class EventDefinition(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
-    event_name: str
-    description: str
-    webhook: Optional[str] = None
-    webhook_headers: Optional[dict] = None
-    detection_engine: Literal["llm_detection"] = "llm_detection"
-    detection_scope: Literal[
-        "task", "session", "task_input_only", "task_output_only"
-    ] = "task"
 
 
 class ProjectSettings(BaseModel):

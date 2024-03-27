@@ -28,10 +28,10 @@ async def event_detection_pipeline(task: Task) -> None:
     # Get the data of all the task before the task[task_id]
     previous_tasks = await fetch_previous_tasks(task.id)
     task_data = previous_tasks[-1]
-    task_context = previous_tasks[:-1]
-    # Crop the task context to the last 2 tasks
-    if len(task_context) > 2:
-        task_context = task_context[-2:]
+    if len(previous_tasks) > 1:
+        task_context = previous_tasks[:-1]
+    else:
+        task_context = []
 
     # Get the project settings
     project_id = task_data.project_id
@@ -187,7 +187,10 @@ async def task_scoring_pipeline(task: Task) -> None:
     logger.debug(f"Nb of failure examples: {len(unsuccessful_examples_tasks)}")
 
     # Get the Task's system prompt
-    system_prompt = task.metadata.get("system_prompt", None)
+    if task.metadata is not None:
+        system_prompt = task.metadata.get("system_prompt", None)
+    else:
+        system_prompt = None
 
     # Call the eval function
     # Create the phospho workload
@@ -199,44 +202,28 @@ async def task_scoring_pipeline(task: Task) -> None:
         )
     )
     # Convert to a list of messages
-    if task.output is not None:
-        messages = [
-            lab.Message(
-                id="output_" + task.id,
-                role="Assistant",
-                content=task.output,
-                previous_messages=[
-                    lab.Message(
-                        id="input_" + task.id,
-                        role="User",
-                        content=task.input,
-                    )
-                ],
-                metadata={
-                    "successful_examples": successful_examples_tasks,
-                    "unsuccessful_examples": unsuccessful_examples_tasks,
-                    "system_prompt": system_prompt,
-                },
-            )
-        ]
-    else:
-        messages = [
-            lab.Message(
-                id="input_" + task.id,
-                role="User",
-                content=task.input,
-                metadata={
-                    "successful_examples": successful_examples_tasks,
-                    "unsuccessful_examples": unsuccessful_examples_tasks,
-                    "system_prompt": system_prompt,
-                },
-            )
-        ]
-    await workload.async_run(messages=messages, executor_type="sequential")
+    message = lab.Message.from_task(
+        task=task,
+        metadata={
+            "successful_examples": successful_examples_tasks,
+            "unsuccessful_examples": unsuccessful_examples_tasks,
+            "system_prompt": system_prompt,
+        },
+    )
+
+    await workload.async_run(messages=[message], executor_type="sequential")
     # Check the results of the workload
-    flag = workload.results["output_" + task.id]["evaluate_task"].value
-    metadata = workload.results["output_" + task.id]["evaluate_task"].metadata
-    llm_call = metadata.get("llm_call", None)
+    if workload.results is None:
+        logger.error("Worlkload.results is None")
+        return
+
+    job_result = workload.results.get(message.id, {}).get("evaluate_task", None)
+    if job_result is None:
+        logger.error("Job result in workload is None")
+        return
+
+    flag = job_result.value
+    llm_call = job_result.metadata.get("llm_call", None)
     if llm_call is not None:
         llm_call_obj = LlmCall(
             **llm_call, org_id=task.org_id, task_id=task.id, job_id="evaluate_task"
