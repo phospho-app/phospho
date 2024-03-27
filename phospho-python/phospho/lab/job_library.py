@@ -150,39 +150,29 @@ async def event_detection(
 
     # Build the prompt
     prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
-and you are trying to say if the event '{event_name}' occurred during the interaction.
-The assistant is a chatbot that can perform tasks for the end user and answer his questions. 
-The assistant might make some mistakes or not be useful.
+and you want to say if the event '{event_name}' happened during the latest interaction.
+This conversation is between a User and a Assistant.
 """
     if event_description is not None and len(event_description) > 0:
-        prompt += (
-            f"The description of the event is the following: '{event_description}'"
-        )
+        prompt += f"The description of the event to detect is: '{event_description}'"
     else:
         prompt += f"You don't have any description of the event {event_name}."
 
-    if event_scope == "task":
-        if len(message.previous_messages) > 0:
-            prompt += f"""
+    if len(message.previous_messages) > 1 and "task" in event_scope:
+        prompt += f"""
 To help you label the interaction, here are the previous messages leading to the interaction:
 [START CONTEXT]
 {message.latest_interaction_context()}
 [END CONTEXT]
 """
-        prompt += f"""
-Now, the interaction you have to label is the following:
+
+    if event_scope == "task":
+        prompt += f"""Now, the interaction you have to label is the following:
 [START INTERACTION]
 {message.latest_interaction()}
 [END INTERACTION]
 """
     elif event_scope == "task_input_only":
-        if len(message.previous_messages) > 0:
-            prompt += f"""
-To help you label the interaction, here are the previous messages leading to the interaction:
-[START CONTEXT]
-{message.latest_interaction_context()}
-[END CONTEXT]
-"""
         message_list = message.as_list()
         # Filter to keep only the user messages
         message_list = [m for m in message_list if m["role"] == "User"]
@@ -200,13 +190,6 @@ User: {message_list[-1].content}
 [END INTERACTION]
 """
     elif event_scope == "task_output_only":
-        if len(message.previous_messages) > 0:
-            prompt += f"""
-To help you label the interaction, here are the previous messages leading to the interaction:
-[START CONTEXT]
-{message.latest_interaction_context()}
-[END CONTEXT]
-"""
         message_list = message.as_list()
         # Filter to keep only the assistant messages
         message_list = [m for m in message_list if m["role"] == "Assistant"]
@@ -224,7 +207,7 @@ Assistant: {message_list[-1].content}
 """
     elif event_scope == "session":
         prompt += f"""
-The interaction you have to label is the following:
+Now, you have the full conversation to label. If the event '{event_name}' at any point during the conversation, respond with 'Yes'.
 [START INTERACTION]
 {message.transcript(with_role=True, with_previous_messages=True)}
 [END INTERACTION]
@@ -234,7 +217,8 @@ The interaction you have to label is the following:
             f"Unknown event_scope : {event_scope}. Valid values are: {DetectionScope.__args__}"
         )
 
-    prompt += f"""Did the event '{event_name}' occur during the latest interaction? Respond with only one word: Yes or No."""
+    prompt += f"""
+Did the event '{event_name}' happen during the interaction? Respond with only one word: Yes or No."""
     logger.debug(f"event_detection prompt : {prompt}")
 
     # Call the API
