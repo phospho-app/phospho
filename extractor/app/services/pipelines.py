@@ -66,6 +66,8 @@ async def event_detection_pipeline(task: Task) -> None:
                 job_id=result.job_id,
             )
             mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+        else:
+            logger.warning(f"No LLM call detected for event {event_name}")
 
         # When the event is detected, result is True
         if result.value:
@@ -77,7 +79,7 @@ async def event_detection_pipeline(task: Task) -> None:
             detected_event_data = Event(
                 event_name=event_name,
                 # Events detected at the session scope are not linked to a task
-                task_id=task_data.id if "task" in event.detection_scope else None,
+                task_id=task_data.id,
                 session_id=task_data.session_id,
                 project_id=project_id,
                 source=result.metadata.get("source", "phospho-unknown"),
