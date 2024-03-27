@@ -130,9 +130,9 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
     <>
       <Card className="mt-4">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold tracking-tight">
+          <CardTitle className="text-xl font-bold tracking-tight">
             <div className="flex justify-between">
-              Task transcript
+              Task
               {task.session_id && (
                 <Link href={`/org/transcripts/sessions/${task.session_id}`}>
                   <Button variant="secondary">Go to Session</Button>
@@ -178,8 +178,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
           {tasksWithoutHumanLabel && tasksWithoutHumanLabel.length > 0 && (
             <div className="flex-col justify-items-center">
               <div className="text-gray-500 mb-1">
-                Override this task evaluation and show next task without human
-                label
+                Override evaluation and show next task
               </div>
               <div className="flex space-x-4 justify-center">
                 <Button

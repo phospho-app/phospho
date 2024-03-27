@@ -18,7 +18,7 @@ except ImportError:
 from phospho import config
 
 from .language_models import get_async_client, get_provider_and_model, get_sync_client
-from .models import JobResult, Message, ResultType
+from .models import JobResult, Message, ResultType, DetectionScope
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +137,7 @@ async def event_detection(
     message: Message,
     event_name: str,
     event_description: str,
+    event_scope: DetectionScope = "task",
     model: str = "openai:gpt-4-1106-preview",
 ) -> JobResult:
     """
@@ -160,21 +161,80 @@ The assistant might make some mistakes or not be useful.
     else:
         prompt += f"You don't have any description of the event {event_name}."
 
-    if len(message.previous_messages) > 0:
-        prompt += f"""
+    if event_scope == "task":
+        if len(message.previous_messages) > 0:
+            prompt += f"""
 To help you label the interaction, here are the previous messages leading to the interaction:
 [START CONTEXT]
 {message.latest_interaction_context()}
 [END CONTEXT]
 """
-    prompt += f"""
+        prompt += f"""
 Now, the interaction you have to label is the following:
 [START INTERACTION]
 {message.latest_interaction()}
 [END INTERACTION]
 """
-    prompt += f"""Did the event '{event_name}' occur during the latest interaction? Respond with only one word: Yes or No."""
+    elif event_scope == "task_input_only":
+        if len(message.previous_messages) > 0:
+            prompt += f"""
+To help you label the interaction, here are the previous messages leading to the interaction:
+[START CONTEXT]
+{message.latest_interaction_context()}
+[END CONTEXT]
+"""
+        message_list = message.as_list()
+        # Filter to keep only the user messages
+        message_list = [m for m in message_list if m["role"] == "User"]
+        if len(message_list) == 0:
+            return JobResult(
+                result_type=ResultType.bool,
+                value=False,
+                logs=["No user message in the interaction"],
+            )
 
+        prompt += f"""
+Now, you have to label the following interaction, which only contains the user message:
+[START INTERACTION]
+User: {message_list[-1].content}
+[END INTERACTION]
+"""
+    elif event_scope == "task_output_only":
+        if len(message.previous_messages) > 0:
+            prompt += f"""
+To help you label the interaction, here are the previous messages leading to the interaction:
+[START CONTEXT]
+{message.latest_interaction_context()}
+[END CONTEXT]
+"""
+        message_list = message.as_list()
+        # Filter to keep only the assistant messages
+        message_list = [m for m in message_list if m["role"] == "Assistant"]
+        if len(message_list) == 0:
+            return JobResult(
+                result_type=ResultType.bool,
+                value=False,
+                logs=["No assistant message in the interaction"],
+            )
+        prompt += f"""
+Now, you have to label the following interaction, which only contains the assistant message:
+[START INTERACTION]
+Assistant: {message_list[-1].content}
+[END INTERACTION]
+"""
+    elif event_scope == "session":
+        prompt += f"""
+The interaction you have to label is the following:
+[START INTERACTION]
+{message.transcript(with_role=True)}
+[END INTERACTION]
+"""
+    else:
+        raise ValueError(
+            f"Unknown event_scope : {event_scope}. Valid values are: {DetectionScope.__args__}"
+        )
+
+    prompt += f"""Did the event '{event_name}' occur during the latest interaction? Respond with only one word: Yes or No."""
     logger.debug(f"event_detection prompt : {prompt}")
 
     # Call the API
