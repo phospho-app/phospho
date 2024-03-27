@@ -250,7 +250,7 @@ const TaskBox = ({
       </div>
       <Collapsible>
         <CollapsibleTrigger>
-          <Button variant="link">{">"} View Raw Task Data</Button>
+          <Button variant="link">{">"}Raw Task Data</Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <pre className="whitespace-pre-wrap mx-2">
