@@ -76,7 +76,8 @@ async def event_detection_pipeline(task: Task) -> None:
             # Push event to db
             detected_event_data = Event(
                 event_name=event_name,
-                task_id=task_data.id,
+                # Events detected at the session scope are not linked to a task
+                task_id=task_data.id if "task" in event.detection_scope else None,
                 session_id=task_data.session_id,
                 project_id=project_id,
                 source=result.metadata.get("source", "phospho-unknown"),
