@@ -226,7 +226,7 @@ Assistant: {message_list[-1].content}
         prompt += f"""
 The interaction you have to label is the following:
 [START INTERACTION]
-{message.transcript(with_role=True)}
+{message.transcript(with_role=True, with_previous_messages=True)}
 [END INTERACTION]
 """
     else:
