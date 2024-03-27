@@ -48,7 +48,7 @@ class Event(BaseModel):
     created_at: int = Field(default_factory=generate_timestamp)
     # The name of the event (as defined in the project settings)
     event_name: str
-    task_id: str
+    task_id: Optional[str] = None
     session_id: Optional[str] = None
     project_id: str
     org_id: Optional[str] = None
