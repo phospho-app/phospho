@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from phospho.models import EventDefinition, Project, Task, Session
+from phospho.models import EventDefinition, Project, Task, Session, DetectionScope
 from phospho.utils import generate_timestamp, generate_uuid
 
 from .utils import get_literal_values
@@ -20,6 +20,15 @@ class Message(BaseModel):
     content: str
     previous_messages: List["Message"] = Field(default_factory=list)
     metadata: dict = Field(default_factory=dict)
+
+    def as_list(self):
+        """
+        Return the message and its previous messages as a list of Message objects.
+        """
+        if self.previous_messages:
+            return [self.previous_messages, self]
+        else:
+            return [self]
 
     def transcript(
         self,
@@ -175,7 +184,12 @@ class Message(BaseModel):
         return messages
 
     @classmethod
-    def from_task(cls, task: Task, previous_tasks: List[Task]) -> "Message":
+    def from_task(
+        cls,
+        task: Task,
+        previous_tasks: Optional[List[Task]] = None,
+        metadata: Optional[dict] = None,
+    ) -> "Message":
         """
         Create a Message from a Task object.
 
@@ -185,6 +199,11 @@ class Message(BaseModel):
 
         :return: A list of Message objects
         """
+        if metadata is None:
+            metadata = {}
+        if previous_tasks is None:
+            previous_tasks = []
+
         previous_messages: List["Message"] = []
         for i, previous_task in enumerate(previous_tasks):
             previous_messages.append(
@@ -216,6 +235,7 @@ class Message(BaseModel):
                 role="Assistant",
                 content=task.output,
                 previous_messages=previous_messages,
+                metadata=metadata,
             )
         else:
             message = cls(
@@ -223,12 +243,15 @@ class Message(BaseModel):
                 role="User",
                 content=task.input,
                 previous_messages=previous_messages,
+                metadata=metadata,
             )
 
         return message
 
     @classmethod
-    def from_session(cls, session: Session) -> "Message":
+    def from_session(
+        cls, session: Session, metadata: Optional[dict] = None
+    ) -> "Message":
         """
         Create a list of Message objects from a Session object.
 
@@ -243,7 +266,9 @@ class Message(BaseModel):
             previous_tasks = []
         else:
             previous_tasks = session.tasks[:-1]
-        return cls.from_task(task=task, previous_tasks=previous_tasks)
+        return cls.from_task(
+            task=task, previous_tasks=previous_tasks, metadata=metadata
+        )
 
 
 class ResultType(Enum):
