@@ -45,59 +45,15 @@ async def event_detection_pipeline(task: Task) -> None:
     workload = lab.Workload.from_phospho_project_config(project)
     logger.debug(f"Workload for project {project_id} : {workload}")
 
-    # Convert the tasks into a list of messages
-    previous_messages = []
-    for i, previous_task in enumerate(task_context):
-        previous_messages.append(
-            lab.Message(
-                id="input_" + previous_task.id,
-                role="User",
-                content=previous_task.input,
-            )
-        )
-        if previous_task.output is not None:
-            previous_messages.append(
-                lab.Message(
-                    id="output_" + previous_task.id,
-                    role="Assistant",
-                    content=previous_task.output,
-                )
-            )
-    if task_data.output is not None:
-        previous_messages.append(
-            lab.Message(
-                id="input_" + task_data.id,
-                role="User",
-                content=task_data.input,
-            )
-        )
-        latest_message_id = "output_" + task_data.id
-        await workload.async_run(
-            messages=[
-                lab.Message(
-                    id=latest_message_id,
-                    content=task_data.output,
-                    previous_messages=previous_messages,
-                )
-            ],
-            executor_type="sequential",
-        )
-    else:
-        latest_message_id = "input_" + task_data.id
-        await workload.async_run(
-            messages=[
-                lab.Message(
-                    id=latest_message_id,
-                    role="User",
-                    content=task_data.input,
-                    previous_messages=previous_messages,
-                )
-            ],
-            executor_type="sequential",
-        )
+    message = lab.Message.from_task(task=task_data, previous_tasks=task_context)
+    latest_message_id = message.id
+    await workload.async_run(
+        messages=[message],
+        executor_type="sequential",
+    )
 
     # Check the results of the workload
-    message_results = workload.results[latest_message_id]
+    message_results = workload.results.get(latest_message_id, [])
     for event_name, result in message_results.items():
         # Store the LLM call in the database
         metadata = result.metadata
