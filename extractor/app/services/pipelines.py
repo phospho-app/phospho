@@ -82,6 +82,7 @@ async def event_detection_pipeline(task: Task) -> None:
                 source=result.metadata.get("source", "phospho-unknown"),
                 webhook=event.webhook,
                 org_id=task_data.org_id,
+                event_definition=event,
             )
             mongo_db["events"].insert_one(detected_event_data.model_dump())
             # Update the task object with the event
