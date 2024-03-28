@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from phospho.models import EventDefinition, Project
+from phospho.models import EventDefinition, Project, Task, Session, DetectionScope
 from phospho.utils import generate_timestamp, generate_uuid
 
 from .utils import get_literal_values
@@ -20,6 +20,15 @@ class Message(BaseModel):
     content: str
     previous_messages: List["Message"] = Field(default_factory=list)
     metadata: dict = Field(default_factory=dict)
+
+    def as_list(self):
+        """
+        Return the message and its previous messages as a list of Message objects.
+        """
+        if self.previous_messages:
+            return [self.previous_messages, self]
+        else:
+            return [self]
 
     def transcript(
         self,
@@ -174,6 +183,93 @@ class Message(BaseModel):
 
         return messages
 
+    @classmethod
+    def from_task(
+        cls,
+        task: Task,
+        previous_tasks: Optional[List[Task]] = None,
+        metadata: Optional[dict] = None,
+    ) -> "Message":
+        """
+        Create a Message from a Task object.
+
+        The Message object is created from the input and output of the Task object.
+        If the Task object has previous tasks, the Message object will contain
+        the input and output of the previous tasks as well.
+
+        :return: A list of Message objects
+        """
+        if metadata is None:
+            metadata = {}
+        if previous_tasks is None:
+            previous_tasks = []
+
+        previous_messages: List["Message"] = []
+        for i, previous_task in enumerate(previous_tasks):
+            previous_messages.append(
+                cls(
+                    id="input_" + previous_task.id,
+                    role="User",
+                    content=previous_task.input,
+                )
+            )
+            if previous_task.output is not None:
+                previous_messages.append(
+                    cls(
+                        id="output_" + previous_task.id,
+                        role="Assistant",
+                        content=previous_task.output,
+                    )
+                )
+
+        if task.output is not None:
+            previous_messages.append(
+                cls(
+                    id="input_" + task.id,
+                    role="User",
+                    content=task.input,
+                )
+            )
+            message = cls(
+                id="output_" + task.id,
+                role="Assistant",
+                content=task.output,
+                previous_messages=previous_messages,
+                metadata=metadata,
+            )
+        else:
+            message = cls(
+                id="input_" + task.id,
+                role="User",
+                content=task.input,
+                previous_messages=previous_messages,
+                metadata=metadata,
+            )
+
+        return message
+
+    @classmethod
+    def from_session(
+        cls, session: Session, metadata: Optional[dict] = None
+    ) -> "Message":
+        """
+        Create a list of Message objects from a Session object.
+
+        :param session: The Session object to convert to a list of Message objects
+
+        :return: A list of Message objects
+        """
+        if session.tasks is None or len(session.tasks) == 0:
+            raise ValueError("The session does not contain any task")
+        task = session.tasks[-1]
+        if len(session.tasks) == 1:
+            previous_tasks = []
+        else:
+            previous_tasks = session.tasks[:-1]
+        return cls.from_task(
+            task=task, previous_tasks=previous_tasks, metadata=metadata
+        )
+
 
 class ResultType(Enum):
     error = "error"
@@ -253,3 +349,4 @@ class EvalConfig(JobConfig):
 class EventConfig(JobConfig):
     event_name: str
     event_description: str
+    event_scope: DetectionScope

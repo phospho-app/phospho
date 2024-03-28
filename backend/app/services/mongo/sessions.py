@@ -22,7 +22,27 @@ async def create_session(
 
 async def get_session_by_id(session_id: str) -> Session:
     mongo_db = await get_mongo_db()
-    session = await mongo_db["sessions"].find_one({"id": session_id})
+    # session = await mongo_db["sessions"].find_one({"id": session_id})
+    # Merge events from the session
+    found_session = (
+        await mongo_db["sessions"]
+        .aggregate(
+            [
+                {"$match": {"id": session_id}},
+                {
+                    "$lookup": {
+                        "from": "events",
+                        "localField": "id",
+                        "foreignField": "session_id",
+                        "as": "events",
+                    }
+                },
+            ]
+        )
+        .to_list(length=1)
+    )
+    session = found_session[0] if found_session else None
+
     if session is None:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
     try:
