@@ -18,7 +18,7 @@ except ImportError:
 from phospho import config
 
 from .language_models import get_async_client, get_provider_and_model, get_sync_client
-from .models import JobResult, Message, ResultType
+from .models import JobResult, Message, ResultType, DetectionScope
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +137,7 @@ async def event_detection(
     message: Message,
     event_name: str,
     event_description: str,
+    event_scope: DetectionScope = "task",
     model: str = "openai:gpt-4-1106-preview",
 ) -> JobResult:
     """
@@ -149,32 +150,77 @@ async def event_detection(
 
     # Build the prompt
     prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
-and you are trying to say if the event '{event_name}' occurred during the interaction.
-The assistant is a chatbot that can perform tasks for the end user and answer his questions. 
-The assistant might make some mistakes or not be useful.
+and you want to say if the event '{event_name}' happened during the latest interaction.
+This conversation is between a User and a Assistant.
 """
     if event_description is not None and len(event_description) > 0:
         prompt += (
-            f"The description of the event is the following: '{event_description}'"
+            f"The description of the event '{event_name}' is: '{event_description}'\n"
         )
     else:
-        prompt += f"You don't have any description of the event {event_name}."
+        prompt += f"You don't have any description of the event '{event_name}'.\n"
 
-    if len(message.previous_messages) > 0:
+    if len(message.previous_messages) > 1 and "task" in event_scope:
         prompt += f"""
 To help you label the interaction, here are the previous messages leading to the interaction:
 [START CONTEXT]
 {message.latest_interaction_context()}
 [END CONTEXT]
 """
-    prompt += f"""
-Now, the interaction you have to label is the following:
+
+    if event_scope == "task":
+        prompt += f"""Now, the interaction you have to label is the following:
 [START INTERACTION]
 {message.latest_interaction()}
 [END INTERACTION]
 """
-    prompt += f"""Did the event '{event_name}' occur during the latest interaction? Respond with only one word: Yes or No."""
+    elif event_scope == "task_input_only":
+        message_list = message.as_list()
+        # Filter to keep only the user messages
+        message_list = [m for m in message_list if m["role"] == "User"]
+        if len(message_list) == 0:
+            return JobResult(
+                result_type=ResultType.bool,
+                value=False,
+                logs=["No user message in the interaction"],
+            )
 
+        prompt += f"""
+Now, you have to label the following interaction, which only contains the user message:
+[START INTERACTION]
+User: {message_list[-1].content}
+[END INTERACTION]
+"""
+    elif event_scope == "task_output_only":
+        message_list = message.as_list()
+        # Filter to keep only the assistant messages
+        message_list = [m for m in message_list if m["role"] == "Assistant"]
+        if len(message_list) == 0:
+            return JobResult(
+                result_type=ResultType.bool,
+                value=False,
+                logs=["No assistant message in the interaction"],
+            )
+        prompt += f"""
+Now, you have to label the following interaction, which only contains the assistant message:
+[START INTERACTION]
+Assistant: {message_list[-1].content}
+[END INTERACTION]
+"""
+    elif event_scope == "session":
+        prompt += f"""
+Now, you have the full conversation to label. If the event '{event_name}' at any point during the conversation, respond with 'Yes'.
+[START INTERACTION]
+{message.transcript(with_role=True, with_previous_messages=True)}
+[END INTERACTION]
+"""
+    else:
+        raise ValueError(
+            f"Unknown event_scope : {event_scope}. Valid values are: {DetectionScope.__args__}"
+        )
+
+    prompt += f"""
+Did the event '{event_name}' happen during the interaction? Respond with only one word: Yes or No."""
     logger.debug(f"event_detection prompt : {prompt}")
 
     # Call the API

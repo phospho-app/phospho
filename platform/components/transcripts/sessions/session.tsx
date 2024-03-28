@@ -3,7 +3,13 @@
 import TaskBox from "@/components/task-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
@@ -18,7 +24,6 @@ import useSWR from "swr";
 
 const SessionOverview = ({ session_id }: { session_id: string }) => {
   const { accessToken } = useUser();
-  let unique_events: Event[] = [];
   const [sessionTasks, setSessionTasks] = useState<TaskWithEvents[]>([]);
   const [refresh, setRefresh] = useState(false);
 
@@ -54,16 +59,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
 
   const { data: sessionData }: { data: SessionWithEvents } = useSWR(
     [`/api/sessions/${session_id}`, accessToken],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "GET").then((response) => {
-        // Set the unique events
-        unique_events = response.events?.filter(
-          (event: Event, index: number, self: Event[]) =>
-            index ===
-            self.findIndex((e: Event) => e.event_name === event.event_name),
-        );
-        return response;
-      }),
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       revalidateIfStale: false,
       revalidateOnFocus: false,
@@ -72,6 +68,10 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
     },
   );
   const session_with_events = sessionData;
+  const uniqueEvents = session_with_events?.events?.filter(
+    (event: Event, index: number, self: Event[]) =>
+      index === self.findIndex((e: Event) => e.event_name === event.event_name),
+  );
 
   const setTask = (task: TaskWithEvents) => {
     console.log("SET TASK", task);
@@ -97,45 +97,46 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
   }
 
   return (
-    <div>
-      <Card>
+    <>
+      <Card className="mt-4">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold tracking-tight">
-            Session Overview
+          <CardTitle className="text-xl font-bold tracking-tight">
+            <div className="flex justify-between">Session</div>
           </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>
-            <strong className="text-xl font-semibold">Events:</strong>{" "}
-            {unique_events &&
-              unique_events?.map((event: Event) => (
-                <Badge className="mx-2">
-                  <p key={event.id}>{event.event_name}</p>
-                </Badge>
-              ))}
-          </p>
-          <p className="mt-2 mb-2">
-            <strong className="text-xl font-semibold">Created at:</strong>{" "}
+          <CardDescription>
+            {uniqueEvents && (
+              <div className="flex">
+                <span className="font-bold mr-2">Events:</span>
+                <div className="space-x-2">
+                  {uniqueEvents?.map((event: Event) => (
+                    <Badge variant="outline" key={event.id}>
+                      {event.event_name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <span className="font-bold">Created at:</span>{" "}
             {formatUnixTimestampToLiteralDatetime(
               session_with_events.created_at,
             )}
-          </p>
-          <Collapsible>
-            <CollapsibleTrigger>
-              <Button variant="link">{">"} View Raw Session Data</Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <pre className="whitespace-pre-wrap mx-2">
-                {JSON.stringify(session_with_events, null, 2)}
-              </pre>
-            </CollapsibleContent>
-          </Collapsible>
-        </CardContent>
+            <Collapsible>
+              <CollapsibleTrigger>
+                <Button variant="link">{">"}Raw Session Data</Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <pre className="whitespace-pre-wrap mx-2">
+                  {JSON.stringify(session_with_events, null, 2)}
+                </pre>
+              </CollapsibleContent>
+            </Collapsible>
+          </CardDescription>
+        </CardHeader>
       </Card>
 
       <Card className="mt-4">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold tracking-tight">
+          <CardTitle className="text-xl font-bold tracking-tight">
             Transcript
           </CardTitle>
         </CardHeader>
@@ -151,7 +152,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
           ))}
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 };
 
