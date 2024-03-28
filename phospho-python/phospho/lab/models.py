@@ -349,3 +349,4 @@ class EvalConfig(JobConfig):
 class EventConfig(JobConfig):
     event_name: str
     event_description: str
+    event_scope: DetectionScope

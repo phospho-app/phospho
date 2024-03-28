@@ -416,6 +416,7 @@ class Workload:
                     config=EventConfig(
                         event_name=event_name,
                         event_description=event.description,
+                        event_scope=event.detection_scope,
                     ),
                     metadata=event.model_dump(),
                 )
