@@ -154,9 +154,11 @@ and you want to say if the event '{event_name}' happened during the latest inter
 This conversation is between a User and a Assistant.
 """
     if event_description is not None and len(event_description) > 0:
-        prompt += f"The description of the event to detect is: '{event_description}'"
+        prompt += (
+            f"The description of the event '{event_name}' is: '{event_description}'\n"
+        )
     else:
-        prompt += f"You don't have any description of the event {event_name}."
+        prompt += f"You don't have any description of the event '{event_name}'.\n"
 
     if len(message.previous_messages) > 1 and "task" in event_scope:
         prompt += f"""
