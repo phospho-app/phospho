@@ -115,6 +115,7 @@ def check_health():
 
 from app.api.v2.endpoints import (
     evals,
+    files,
     health,
     log,
     me,
@@ -138,6 +139,7 @@ api_v2 = FastAPI(
 
 api_v2.include_router(me.router)
 api_v2.include_router(evals.router)
+api_v2.include_router(files.router)
 api_v2.include_router(log.router)
 api_v2.include_router(tasks.router)
 api_v2.include_router(tests.router)
