@@ -1,9 +1,10 @@
 from .evals import Comparison, ComparisonQuery, Eval
 from .events import (
+    DetectEventInMessagesRequest,
+    DetectEventsInTaskRequest,
     Event,
-    Events,
     EventDetectionReply,
-    EventDetectionRequest,
+    Events,
     PipelineResults,
 )
 from .log import LogError, LogEvent, LogReply, LogRequest, MinimalLogEvent
