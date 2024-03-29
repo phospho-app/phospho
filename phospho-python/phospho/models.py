@@ -22,6 +22,7 @@ class Eval(BaseModel):
     source: str
     test_id: Optional[str] = None
     notes: Optional[str] = None
+    task: Optional["Task"] = None
 
 
 DetectionScope = Literal[
@@ -57,6 +58,7 @@ class Event(BaseModel):
     # The source of the event (either "user" or "phospho-{id}")
     source: str
     event_definition: Optional[EventDefinition] = None
+    task: Optional["Task"] = None
 
 
 class Task(BaseModel):

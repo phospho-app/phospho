@@ -90,6 +90,7 @@ async def event_detection_pipeline(task: Task, save_task: bool = True) -> List[E
                 webhook=event.webhook,
                 org_id=task_data.org_id,
                 event_definition=event,
+                task=task_data if not save_task else None,
             )
             detected_events.append(detected_event_data)
             # Update the task object with the event
@@ -252,6 +253,7 @@ async def task_scoring_pipeline(
         source=config.EVALUATION_SOURCE,
         test_id=task.test_id,
         org_id=task.org_id,
+        task=task if not save_task else None,
     )
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
 
