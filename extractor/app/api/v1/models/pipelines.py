@@ -10,6 +10,7 @@ class RunMainPipelineOnTaskRequest(BaseModel):
 
 
 class RunMainPipelineOnMessagesRequest(BaseModel):
+    project_id: str
     messages: List[Message]
 
 

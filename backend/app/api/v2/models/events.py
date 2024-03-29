@@ -19,7 +19,6 @@ class DetectEventInMessagesRequest(BaseModel):
 
 class EventDetectionReply(BaseModel, extra="allow"):
     events: List[Event]
-    flag: Optional[Literal["success", "failure"]]
 
 
 class PipelineResults(BaseModel):
