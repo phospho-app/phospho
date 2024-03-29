@@ -34,6 +34,7 @@ qdrant-client = "^1.7.1"
 resend = "^0.7.2"
 cohere = "^4.45"
 stripe = "^8.2.0"
+python-multipart = "^0.0.9"
 
 [tool.poetry.group.dev]
 optional = true
