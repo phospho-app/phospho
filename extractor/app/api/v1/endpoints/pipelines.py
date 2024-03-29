@@ -9,7 +9,7 @@ from app.services.pipelines import main_pipeline
 from app.services.log import process_log
 
 # Models
-from app.api.v1.models import MainPipelineRequest, LogProcessRequest
+from app.api.v1.models import MainPipelineRequest, LogProcessRequest, PipelineResults
 
 router = APIRouter()
 
@@ -17,16 +17,15 @@ router = APIRouter()
 @router.post(
     "/pipelines/main",
     description="Main extractor pipeline",
+    response_model=PipelineResults,
 )
 async def post_main_pipeline(
     request_body: MainPipelineRequest,
-    background_tasks: BackgroundTasks,
     is_request_authenticated: bool = Depends(authenticate_key),
-):
+) -> PipelineResults:
     logger.debug(f"task: {request_body.task}")
-    if is_request_authenticated:
-        background_tasks.add_task(main_pipeline, request_body.task)
-    return {"status": "ok"}
+    pipeline_results = await main_pipeline(request_body.task)
+    return pipeline_results
 
 
 @router.post(
