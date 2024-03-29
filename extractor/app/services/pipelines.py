@@ -21,7 +21,9 @@ class EventConfig(lab.JobConfig):
     event_description: str
 
 
-async def event_detection_pipeline(task: Task, save_task: bool = True) -> List[Event]:
+async def task_event_detection_pipeline(
+    task: Task, save_task: bool = True
+) -> List[Event]:
     """
     Run the event detection pipeline for a given task
     """
@@ -313,9 +315,9 @@ async def task_scoring_pipeline(
 #         logger.info(f"Detected topics for task {task_id} saved in the database")
 
 
-async def main_pipeline(task: Task, save_task: bool = True) -> PipelineResults:
+async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResults:
     """
-    Main pipeline for the extractor:
+    Main pipeline to run on a task.
     - Event detection
     - Evaluate task success/failure
     """
@@ -328,7 +330,7 @@ async def main_pipeline(task: Task, save_task: bool = True) -> PipelineResults:
 
     # Do the event detection
     if task.test_id is None:
-        events = await event_detection_pipeline(task, save_task=save_task)
+        events = await task_event_detection_pipeline(task, save_task=save_task)
 
     # Do the session scoring -> success, failure
     mongo_db = await get_mongo_db()
@@ -350,6 +352,22 @@ async def main_pipeline(task: Task, save_task: bool = True) -> PipelineResults:
     logger.info(
         f"Main pipeline completed in {time.time() - start_time:.2f} seconds for task {task.id}"
     )
+
+    return PipelineResults(
+        events=events,
+        flag=flag,
+    )
+
+
+async def main_pipeline_on_messages(messages: List[lab.Message]) -> PipelineResults:
+    """
+    Main pipeline to run on a list of messages.
+    - Event detection
+    - Evaluate task success/failure
+    """
+    # Dummy implementation
+    events: List[Event] = []
+    flag = None
 
     return PipelineResults(
         events=events,

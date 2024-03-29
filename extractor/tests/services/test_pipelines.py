@@ -2,7 +2,7 @@ import pytest
 import time
 from loguru import logger
 
-from app.services.pipelines import main_pipeline
+from app.services.pipelines import task_main_pipeline
 
 from app.core import config
 from app.db.models import Task
@@ -29,7 +29,7 @@ async def test_main_pipeline(db, org_id, dummy_project):
         logger.debug("Running main pipeline on dummy task")
 
         logger.info("Running main pipeline")
-        await main_pipeline(dummy_task)
+        await task_main_pipeline(dummy_task)
         logger.info("Main pipeline finished")
 
         # Check there is a flag
