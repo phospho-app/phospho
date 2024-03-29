@@ -37,10 +37,14 @@ def get_async_client(provider: str) -> AsyncOpenAI:
         return AsyncOpenAI()
     if provider == "mistral":
         return AsyncOpenAI(
-            base_url="https://api.mistral.ai/v1/", api_key=os.getenv("MISTRAL_API_KEY")
+            base_url="https://api.mistral.ai/v1/",
+            api_key=os.getenv("MISTRAL_API_KEY"),
         )
     if provider == "ollama":
-        return AsyncOpenAI(base_url="http://localhost:11434/v1/")
+        return AsyncOpenAI(
+            base_url="http://localhost:11434/v1/",
+            api_key="ollama",
+        )
     if provider == "solar":
         return AsyncOpenAI(
             base_url="https://api.upstage.ai/v1/solar",
@@ -54,10 +58,14 @@ def get_sync_client(provider: str) -> OpenAI:
         return OpenAI()
     if provider == "mistral":
         return OpenAI(
-            base_url="https://api.mistral.ai/v1/", api_key=os.getenv("MISTRAL_API_KEY")
+            base_url="https://api.mistral.ai/v1/",
+            api_key=os.getenv("MISTRAL_API_KEY"),
         )
     if provider == "ollama":
-        return OpenAI(base_url="http://localhost:11434/v1/")
+        return OpenAI(
+            base_url="http://localhost:11434/v1/",
+            api_key="ollama",
+        )
     if provider == "solar":
         return OpenAI(
             base_url="https://api.upstage.ai/v1/solar",
