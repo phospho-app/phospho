@@ -24,7 +24,7 @@ async def post_main_pipeline(
     is_request_authenticated: bool = Depends(authenticate_key),
 ) -> PipelineResults:
     logger.debug(f"task: {request_body.task}")
-    pipeline_results = await main_pipeline(request_body.task)
+    pipeline_results = await main_pipeline(request_body.task, save_task=False)
     return pipeline_results
 
 

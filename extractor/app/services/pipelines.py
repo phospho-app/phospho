@@ -21,7 +21,7 @@ class EventConfig(lab.JobConfig):
     event_description: str
 
 
-async def event_detection_pipeline(task: Task) -> List[Event]:
+async def event_detection_pipeline(task: Task, save_task: bool = True) -> List[Event]:
     """
     Run the event detection pipeline for a given task
     """
@@ -92,13 +92,13 @@ async def event_detection_pipeline(task: Task) -> List[Event]:
                 event_definition=event,
             )
             detected_events.append(detected_event_data)
-            mongo_db["events"].insert_one(detected_event_data.model_dump())
             # Update the task object with the event
-            mongo_db["tasks"].update_many(
-                {"id": task.id, "project_id": task.project_id},
-                # Add the event to the list of events
-                {"$push": {"events": detected_event_data.model_dump()}},
-            )
+            if save_task:
+                mongo_db["tasks"].update_many(
+                    {"id": task.id, "project_id": task.project_id},
+                    # Add the event to the list of events
+                    {"$push": {"events": detected_event_data.model_dump()}},
+                )
             # Trigger the webhook if it exists
             if event.webhook is not None:
                 await trigger_webhook(
@@ -106,10 +106,13 @@ async def event_detection_pipeline(task: Task) -> List[Event]:
                     json=detected_event_data.model_dump(),
                     headers=event.webhook_headers,
                 )
+    mongo_db["events"].insert_many([event.model_dump() for event in detected_events])
     return detected_events
 
 
-async def task_scoring_pipeline(task: Task) -> Optional[Literal["success", "failure"]]:
+async def task_scoring_pipeline(
+    task: Task, save_task: bool = True
+) -> Optional[Literal["success", "failure"]]:
     """
     Run the task scoring pipeline for a given task
     """
@@ -220,7 +223,6 @@ async def task_scoring_pipeline(task: Task) -> Optional[Literal["success", "fail
             "system_prompt": system_prompt,
         },
     )
-
     await workload.async_run(messages=[message], executor_type="sequential")
     # Check the results of the workload
     if workload.results is None:
@@ -254,18 +256,19 @@ async def task_scoring_pipeline(task: Task) -> Optional[Literal["success", "fail
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
 
     # Update the task object if the flag is None (no previous evaluation)
-    task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
-    if task_in_db.get("flag") is None:
-        mongo_db["tasks"].update_one(
-            {"id": task.id},
-            {
-                "$set": {
-                    "flag": flag,
-                    "last_eval": evaluation_data.model_dump(),
-                    "evaluation_source": config.EVALUATION_SOURCE,
-                }
-            },
-        )
+    if save_task:
+        task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
+        if task_in_db.get("flag") is None:
+            mongo_db["tasks"].update_one(
+                {"id": task.id},
+                {
+                    "$set": {
+                        "flag": flag,
+                        "last_eval": evaluation_data.model_dump(),
+                        "evaluation_source": config.EVALUATION_SOURCE,
+                    }
+                },
+            )
     return flag
 
 
@@ -308,10 +311,11 @@ async def task_scoring_pipeline(task: Task) -> Optional[Literal["success", "fail
 #         logger.info(f"Detected topics for task {task_id} saved in the database")
 
 
-async def main_pipeline(task: Task) -> PipelineResults:
+async def main_pipeline(task: Task, save_task: bool = True) -> PipelineResults:
     """
-    Main interface with the watcher service
-    TODO : a call to the pipeline create a Prediction object in the database to keep track of the pipeline activity
+    Main pipeline for the extractor:
+    - Event detection
+    - Evaluate task success/failure
     """
 
     # Get the starting time of the pipeline
@@ -322,15 +326,18 @@ async def main_pipeline(task: Task) -> PipelineResults:
 
     # Do the event detection
     if task.test_id is None:
-        events = await event_detection_pipeline(task)
+        events = await event_detection_pipeline(task, save_task=save_task)
 
     # Do the session scoring -> success, failure
     mongo_db = await get_mongo_db()
-    task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
-    if task_in_db.get("flag") is None:
-        flag = await task_scoring_pipeline(task)
+    if save_task:
+        task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
+        if task_in_db.get("flag") is None:
+            flag = await task_scoring_pipeline(task, save_task=save_task)
+        else:
+            flag = task_in_db.get("flag")
     else:
-        flag = task_in_db.get("flag")
+        flag = await task_scoring_pipeline(task, save_task=save_task)
 
     # Optional: later add the moderation pipeline on input and outputs
 
