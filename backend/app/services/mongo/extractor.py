@@ -6,7 +6,7 @@ import traceback
 from typing import List, Optional
 
 import httpx
-from app.api.v2.models import LogEvent
+from app.api.v2.models import LogEvent, PipelineResults
 from app.core import config
 from app.db.models import Task
 from app.services.slack import slack_notification
@@ -95,7 +95,7 @@ async def run_log_process(
                 await slack_notification(slack_message)
 
 
-async def run_main_pipeline(task: Task):
+async def run_main_pipeline(task: Task) -> PipelineResults:
     """
     Run the log procesing pipeline on a task asynchronously
     """
@@ -124,6 +124,9 @@ async def run_main_pipeline(task: Task):
                     await slack_notification(
                         f"Error returned when calling main pipeline (status code: {response.status_code}): {response.text}"
                     )
+            # Validate to Events
+            pipeline_results = PipelineResults.model_validate(response.json())
+            return pipeline_results
         except Exception as e:
             errror_id = generate_uuid()
             error_message = f"Caught error while calling main pipeline (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
@@ -136,3 +139,4 @@ async def run_main_pipeline(task: Task):
                 else:
                     slack_message = error_message
                 await slack_notification(slack_message)
+            return PipelineResults(events=[], flag=None)

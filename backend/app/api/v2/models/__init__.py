@@ -1,5 +1,11 @@
 from .evals import Comparison, ComparisonQuery, Eval
-from .events import Event, Events
+from .events import (
+    Event,
+    Events,
+    EventDetectionReply,
+    EventDetectionRequest,
+    PipelineResults,
+)
 from .log import LogError, LogEvent, LogReply, LogRequest, MinimalLogEvent
 from .projects import (
     EventDefinition,
