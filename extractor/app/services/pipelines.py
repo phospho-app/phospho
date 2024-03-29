@@ -365,7 +365,6 @@ async def messages_main_pipeline(
     """
     Main pipeline to run on a list of messages.
     - Event detection
-    - Evaluate task success/failure
     """
     project = await get_project_by_id(project_id)
     if project.settings is None:
