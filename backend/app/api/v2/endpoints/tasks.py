@@ -15,7 +15,7 @@ from app.security.authentification import (
     authenticate_org_key_no_exception,
     verify_propelauth_org_owns_project_id,
 )
-from app.services.mongo.extractor import run_main_pipeline
+from app.services.mongo.extractor import run_main_pipeline_on_task
 from app.services.mongo.sessions import get_session_by_id
 from app.services.mongo.tasks import create_task, flag_task, get_task_by_id, update_task
 
@@ -55,7 +55,7 @@ async def post_create_task(
         if config.ENVIRONMENT == "test" or config.MONGODB_NAME == "test":
             return task_data
         # Trigger the event detection pipeline asynchronously
-        background_tasks.add_task(run_main_pipeline, task=task_data)
+        background_tasks.add_task(run_main_pipeline_on_task, task=task_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create task: {e}")
     return task_data

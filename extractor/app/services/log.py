@@ -10,7 +10,7 @@ from app.api.v1.models import LogEvent
 from app.db.models import Session, Task
 from app.db.mongo import get_mongo_db
 from app.db.qdrant import get_qdrant, models
-from app.services.pipelines import main_pipeline
+from app.services.pipelines import task_main_pipeline
 
 # Service
 from app.services.tasks import get_task_by_id
@@ -351,7 +351,7 @@ async def process_log_without_session_id(
             # For now it's a double call to the database, but it's not a big deal
             task_data = await get_task_by_id(task_id)
             logger.info(f"Project {project_id}: pipeline triggered for task {task_id}")
-            await main_pipeline(task_data)
+            await task_main_pipeline(task_data)
 
     return None
 
@@ -499,7 +499,7 @@ async def process_log_with_session_id(
             # Fetch the task data from the database
             # For now it's a double call to the database, but it's not a big deal
             task_data = await get_task_by_id(task_id)
-            await main_pipeline(task_data)
+            await task_main_pipeline(task_data)
 
 
 async def process_log(
