@@ -22,6 +22,7 @@ class Eval(BaseModel):
     source: str
     test_id: Optional[str] = None
     notes: Optional[str] = None
+    task: Optional["Task"] = None
 
 
 DetectionScope = Literal[
@@ -43,7 +44,7 @@ class EventDefinition(BaseModel):
     detection_scope: DetectionScope = "task"
 
 
-class Event(BaseModel):
+class Event(BaseModel, extra="allow"):
     id: str = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
     # The name of the event (as defined in the project settings)
@@ -57,6 +58,7 @@ class Event(BaseModel):
     # The source of the event (either "user" or "phospho-{id}")
     source: str
     event_definition: Optional[EventDefinition] = None
+    task: Optional["Task"] = None
 
 
 class Task(BaseModel):
