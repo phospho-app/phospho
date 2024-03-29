@@ -5,7 +5,7 @@ from loguru import logger
 from app.security.authentication import authenticate_key
 
 # Services
-from app.services.pipelines import task_main_pipeline
+from app.services.pipelines import task_main_pipeline, messages_main_pipeline
 from app.services.log import process_log
 
 # Models
@@ -29,7 +29,10 @@ async def post_main_pipeline_on_task(
     is_request_authenticated: bool = Depends(authenticate_key),
 ) -> PipelineResults:
     logger.debug(f"task: {request_body.task}")
-    pipeline_results = await task_main_pipeline(request_body.task, save_task=False)
+    pipeline_results = await task_main_pipeline(
+        task=request_body.task,
+        save_task=False,
+    )
     return pipeline_results
 
 
@@ -38,11 +41,15 @@ async def post_main_pipeline_on_task(
     description="Main extractor pipeline on messages",
     response_model=PipelineResults,
 )
-def post_main_pipeline_on_messages(
+async def post_main_pipeline_on_messages(
     request_body: RunMainPipelineOnMessagesRequest,
     is_request_authenticated: bool = Depends(authenticate_key),
 ) -> PipelineResults:
-    return PipelineResults(events=[], flag="success")
+    pipeline_results = await messages_main_pipeline(
+        project_id=request_body.project_id,
+        messages=request_body.messages,
+    )
+    return pipeline_results
 
 
 @router.post(

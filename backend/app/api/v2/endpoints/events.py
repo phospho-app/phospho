@@ -40,8 +40,7 @@ async def post_detect_events_in_task(
 
     return EventDetectionReply(
         **event_detection_request.model_dump(),
-        events=pipeline_results.events,
-        flag=pipeline_results.flag,
+        **pipeline_results.model_dump(),
     )
 
 
@@ -56,7 +55,9 @@ async def post_detect_events_in_messages_list(
     org: dict = Depends(authenticate_org_key),
 ) -> EventDetectionReply:
     """
-    Detect events in a list of messages
+    Detect events in a list of messages.
+    We expected the list of messages to be in chronological order.
+    The list of message is a continuous list of messages from a conversation.
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
     raise_error_if_not_in_pro_tier(org, enforce=True)
@@ -67,5 +68,4 @@ async def post_detect_events_in_messages_list(
     return EventDetectionReply(
         **event_detection_request.model_dump(),
         events=pipeline_results.events,
-        flag=pipeline_results.flag,
     )

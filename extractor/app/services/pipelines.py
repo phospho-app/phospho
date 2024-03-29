@@ -359,17 +359,50 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
     )
 
 
-async def main_pipeline_on_messages(messages: List[lab.Message]) -> PipelineResults:
+async def messages_main_pipeline(
+    project_id: str, messages: List[lab.Message]
+) -> PipelineResults:
     """
     Main pipeline to run on a list of messages.
     - Event detection
     - Evaluate task success/failure
     """
-    # Dummy implementation
+    project = await get_project_by_id(project_id)
+    if project.settings is None:
+        logger.warning(f"Project with id {project_id} has no settings")
+        return []
+    workload = lab.Workload.from_phospho_project_config(project)
+    message = lab.Message(
+        role=messages[-1].role,
+        content=messages[-1].content,
+        metadata=messages[-1].metadata,
+        previous_messages=messages[:-1],
+    )
+    await workload.async_run(messages=[message], executor_type="sequential")
     events: List[Event] = []
-    flag = None
+    for event_name, result in workload.results.items():
+        metadata = result.metadata
+        event = EventDefinition(**metadata)
+        detected_event_data = Event(
+            event_name=event_name,
+            project_id=project_id,
+            source=result.metadata.get("source", "phospho-unknown"),
+            webhook=event.webhook,
+            event_definition=event,
+            messages=messages,
+        )
+        events.append(detected_event_data)
+        if event.webhook is not None:
+            await trigger_webhook(
+                url=event.webhook,
+                json=detected_event_data.model_dump(),
+                headers=event.webhook_headers,
+            )
+    # Push the events to the database
+    mongo_db = await get_mongo_db()
+    mongo_db["events"].insert_many([event.model_dump() for event in events])
 
     return PipelineResults(
         events=events,
-        flag=flag,
+        flag=None,
     )
