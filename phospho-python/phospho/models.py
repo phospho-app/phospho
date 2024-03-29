@@ -7,7 +7,6 @@ from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel, Field
 
 from phospho.utils import generate_timestamp, generate_uuid
-from phospho.lab import Message
 
 
 class Eval(BaseModel):
@@ -45,7 +44,7 @@ class EventDefinition(BaseModel):
     detection_scope: DetectionScope = "task"
 
 
-class Event(BaseModel):
+class Event(BaseModel, extra="allow"):
     id: str = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
     # The name of the event (as defined in the project settings)
@@ -60,7 +59,6 @@ class Event(BaseModel):
     source: str
     event_definition: Optional[EventDefinition] = None
     task: Optional["Task"] = None
-    messages: Optional[List["Message"]] = None
 
 
 class Task(BaseModel):
