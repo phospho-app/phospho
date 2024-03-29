@@ -128,3 +128,5 @@ EXTRACTOR_URL = os.getenv("EXTRACTOR_URL")
 assert (
     EXTRACTOR_URL is not None
 ), "EXTRACTOR_URL is missing from the environment variables"
+
+CSV_UPLOAD_MAX_ROWS = 100000
