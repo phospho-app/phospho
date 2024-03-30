@@ -129,7 +129,7 @@ async def verify_if_propelauth_user_can_access_project(
     return
 
 
-def raise_error_if_not_in_pro_tier(org: dict) -> None:
+def raise_error_if_not_in_pro_tier(org: dict, enforce: bool = False) -> None:
     """Raise an HTTPException if the org is not in the pro tier."""
     if not config.ENVIRONMENT == "production":
         return
@@ -150,9 +150,9 @@ def raise_error_if_not_in_pro_tier(org: dict) -> None:
         return
 
     org_metadata = org.get("metadata", {"plan": "hobby"})
-    # if org_metadata is None or org_metadata.get("plan") != "pro":
-    #     raise HTTPException(
-    #         status_code=403,
-    #         detail="This feature is only available for pro tier phospho orgs. Upgrade plan on https://platform.phospho.ai/",
-    #     )
+    if org_metadata is None or org_metadata.get("plan") != "pro":
+        raise HTTPException(
+            status_code=403,
+            detail="This feature is only available for pro tier phospho orgs. Upgrade plan on https://platform.phospho.ai/",
+        )
     return

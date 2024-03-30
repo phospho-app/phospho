@@ -5,28 +5,51 @@ from loguru import logger
 from app.security.authentication import authenticate_key
 
 # Services
-from app.services.pipelines import main_pipeline
+from app.services.pipelines import task_main_pipeline, messages_main_pipeline
 from app.services.log import process_log
 
 # Models
-from app.api.v1.models import MainPipelineRequest, LogProcessRequest
+from app.api.v1.models import (
+    RunMainPipelineOnTaskRequest,
+    LogProcessRequest,
+    PipelineResults,
+    RunMainPipelineOnMessagesRequest,
+)
 
 router = APIRouter()
 
 
 @router.post(
-    "/pipelines/main",
+    "/pipelines/main/task",
     description="Main extractor pipeline",
+    response_model=PipelineResults,
 )
-async def post_main_pipeline(
-    request_body: MainPipelineRequest,
-    background_tasks: BackgroundTasks,
+async def post_main_pipeline_on_task(
+    request_body: RunMainPipelineOnTaskRequest,
     is_request_authenticated: bool = Depends(authenticate_key),
-):
+) -> PipelineResults:
     logger.debug(f"task: {request_body.task}")
-    if is_request_authenticated:
-        background_tasks.add_task(main_pipeline, request_body.task)
-    return {"status": "ok"}
+    pipeline_results = await task_main_pipeline(
+        task=request_body.task,
+        save_task=False,
+    )
+    return pipeline_results
+
+
+@router.post(
+    "/pipelines/main/messages",
+    description="Main extractor pipeline on messages",
+    response_model=PipelineResults,
+)
+async def post_main_pipeline_on_messages(
+    request_body: RunMainPipelineOnMessagesRequest,
+    is_request_authenticated: bool = Depends(authenticate_key),
+) -> PipelineResults:
+    pipeline_results = await messages_main_pipeline(
+        project_id=request_body.project_id,
+        messages=request_body.messages,
+    )
+    return pipeline_results
 
 
 @router.post(
