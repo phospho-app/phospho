@@ -12,7 +12,7 @@ except ImportError:
 def get_provider_and_model(model: str) -> Tuple[str, str]:
     """
     Get the provider and model from a string in the format "provider:model"
-    If no provider is specified, it defaults to "openai"
+    If no provider is specified, it defaults to "openai".
 
     Args:
         model (str): The model string in the format "provider:model"
@@ -28,8 +28,18 @@ def get_provider_and_model(model: str) -> Tuple[str, str]:
 
     split_result = model.split(":")
     if len(split_result) == 1:
-        return "openai", split_result[0]
-    return split_result[0], split_result[1]
+        # Assume default provider to be openai
+        provider = "openai"
+        model_name = split_result[0]
+    elif len(split_result) > 2:
+        # Some model names have :, so we need to join the rest of the string
+        provider = split_result[0]
+        model_name = ":".join(split_result[1:])
+    else:
+        provider = split_result[0]
+        model_name = split_result[1]
+
+    return provider, model_name
 
 
 def get_async_client(provider: str) -> AsyncOpenAI:
@@ -37,10 +47,14 @@ def get_async_client(provider: str) -> AsyncOpenAI:
         return AsyncOpenAI()
     if provider == "mistral":
         return AsyncOpenAI(
-            base_url="https://api.mistral.ai/v1/", api_key=os.getenv("MISTRAL_API_KEY")
+            base_url="https://api.mistral.ai/v1/",
+            api_key=os.getenv("MISTRAL_API_KEY"),
         )
     if provider == "ollama":
-        return AsyncOpenAI(base_url="http://localhost:11434/v1/")
+        return AsyncOpenAI(
+            base_url="http://localhost:11434/v1/",
+            api_key="ollama",
+        )
     if provider == "solar":
         return AsyncOpenAI(
             base_url="https://api.upstage.ai/v1/solar",
@@ -54,10 +68,14 @@ def get_sync_client(provider: str) -> OpenAI:
         return OpenAI()
     if provider == "mistral":
         return OpenAI(
-            base_url="https://api.mistral.ai/v1/", api_key=os.getenv("MISTRAL_API_KEY")
+            base_url="https://api.mistral.ai/v1/",
+            api_key=os.getenv("MISTRAL_API_KEY"),
         )
     if provider == "ollama":
-        return OpenAI(base_url="http://localhost:11434/v1/")
+        return OpenAI(
+            base_url="http://localhost:11434/v1/",
+            api_key="ollama",
+        )
     if provider == "solar":
         return OpenAI(
             base_url="https://api.upstage.ai/v1/solar",
