@@ -96,7 +96,7 @@ class Task(BaseModel):
             return self.input
 
 
-class Session(BaseModel, extra="ignore"):
+class Session(BaseModel):
     id: str = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
     project_id: str
