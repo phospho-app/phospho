@@ -61,10 +61,6 @@ class Event(BaseModel, extra="allow"):
     event_definition: Optional[EventDefinition] = None
     task: Optional["Task"] = None
 
-    @field_serializer("_id")
-    def serialize_id(self, _id: Any, _info):
-        return json.loads(json.dumps(_id, default=str))
-
 
 class Task(BaseModel):
     id: str = Field(default_factory=generate_uuid)
