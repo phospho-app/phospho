@@ -1,6 +1,10 @@
 import pandas as pd
 from fastapi import UploadFile
 from loguru import logger
+from typing import List
+from pydantic import ValidationError
+
+from app.db.models import DatasetRow
 
 from app.db.mongo import get_mongo_db
 from app.core.config import CSV_UPLOAD_MAX_ROWS
@@ -40,9 +44,24 @@ async def process_csv_file_as_df(
     df["file_name"] = file_name
     df["org_id"] = org_id
 
-    print(df.head())
+    # Convert dataframe to list of dict
+    records = df.to_dict(orient="records")
 
-    # mongo_db = await get_mongo_db()
+    # Validate each record with DatasetRow model
+    valid_records: List[dict] = []
+    for record in records:
+        try:
+            valid_record = DatasetRow(**record).model_dump()
+            valid_records.append(valid_record)
+        except ValidationError as e:
+            logger.warning(f"Validation error for record {record}: {e}")
+            continue
 
-    # # Insert the dataframe in the database collection datasets
-    # await mongo_db.datasets.insert_many(df.to_dict(orient="records"))
+    mongo_db = await get_mongo_db()
+
+    # Insert the valid records in the database collection datasets
+    await mongo_db.datasets.insert_many(valid_records)
+
+    logger.info(
+        f"File {file_id} processed successfully, added {len(valid_records)} records."
+    )

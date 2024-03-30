@@ -199,3 +199,16 @@ class FlattenedTask(BaseModel, extra="allow"):
     session_length: Optional[int] = None
     event_name: Optional[str] = None
     event_created_at: Optional[int] = None
+
+
+class DatasetRow(BaseModel, extra="allow"):
+    id: str = Field(default_factory=generate_uuid)
+    created_at: int = Field(default_factory=generate_timestamp)
+    detection_scope: DetectionScope
+    task_input: str
+    task_output: str
+    event_description: str
+    label: bool
+    file_id: str  # Generated on the fly when the file is uploaded to the API
+    file_name: str
+    org_id: str
