@@ -2,7 +2,7 @@
 All the models stored in database.
 """
 
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Literal, Optional, Any
 
 from pydantic import BaseModel, Field, field_serializer
 
@@ -60,6 +60,10 @@ class Event(BaseModel, extra="allow"):
     source: str
     event_definition: Optional[EventDefinition] = None
     task: Optional["Task"] = None
+
+    @field_serializer("_id")
+    def serialize_id(self, _id: Any, _info):
+        return json.loads(json.dumps(_id, default=str))
 
 
 class Task(BaseModel):
