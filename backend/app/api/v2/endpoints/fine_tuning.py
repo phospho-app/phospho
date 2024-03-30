@@ -12,6 +12,7 @@ from app.security import (
 )
 from app.db.models import FineTuningJob
 from app.api.v2.models.fine_tuning import FineTuningJobCreationRequest
+from app.services.mongo.fine_tuning import start_fine_tuning_job
 
 
 router = APIRouter(tags=["Fine-tuning"])
@@ -48,8 +49,7 @@ async def create_fine_tuning_job(
         status="started",
     )
 
-    # Store the fine-tuning job in the database
-
-    # Start the fine-tuning job
+    # Start the fine-tuning job, pass it the fine_tuning_job object
+    background_tasks.add_task(start_fine_tuning_job, fine_tuning_job)
 
     return fine_tuning_job
