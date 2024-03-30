@@ -37,6 +37,21 @@ async def get_session_by_id(session_id: str) -> Session:
                         "as": "events",
                     }
                 },
+                {
+                    "$project": {
+                        "id": 1,
+                        "created_at": 1,
+                        "project_id": 1,
+                        "org_id": 1,
+                        "data": 1,
+                        "notes": 1,
+                        "preview": 1,
+                        "environment": 1,
+                        "events": 1,
+                        "tasks": 1,
+                        "session_length": 1,
+                    }
+                },
             ]
         )
         .to_list(length=1)
