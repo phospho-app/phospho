@@ -226,7 +226,7 @@ class Message(BaseModel):
         Return the message and its previous messages as a list of Message objects.
         """
         if self.previous_messages:
-            return [self.previous_messages, self]
+            return self.previous_messages + [self]
         else:
             return [self]
 
