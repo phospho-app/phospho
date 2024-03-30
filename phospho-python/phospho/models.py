@@ -45,7 +45,7 @@ class EventDefinition(BaseModel):
     detection_scope: DetectionScope = "task"
 
 
-class Event(BaseModel, extra="allow"):
+class Event(BaseModel):
     id: str = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
     # The name of the event (as defined in the project settings)
