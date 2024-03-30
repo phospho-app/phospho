@@ -22,7 +22,8 @@ async def process_csv_file_as_df(
         logger.error(
             f"The file {file_id} of org_id {org_id} has more than {max_rows} rows. It won't be processed."
         )
-        return
+        # Only get the first max_rows
+        df = df.head(max_rows)
 
     correct_columns = [
         "detection_scope",
@@ -38,6 +39,9 @@ async def process_csv_file_as_df(
             f"The file {file_id} of org_id {org_id} does not have the correct columns. It won't be processed."
         )
         return
+
+    # only keep the correct columns
+    df = df[correct_columns]
 
     # Add the file_id to the dataframe
     df["file_id"] = file_id

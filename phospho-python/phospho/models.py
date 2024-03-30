@@ -214,7 +214,7 @@ class DatasetRow(BaseModel, extra="allow"):
     file_name: str
 
 
-class FineTuningJob(BaseModel):
+class FineTuningJob(BaseModel, extra="allow"):
     id: str = Field(default_factory=lambda: generate_uuid("ftjob_"))
     created_at: int = Field(default_factory=generate_timestamp)
     org_id: str
