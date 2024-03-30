@@ -109,7 +109,10 @@ async def task_event_detection_pipeline(
                     json=detected_event_data.model_dump(),
                     headers=event.webhook_headers,
                 )
-    mongo_db["events"].insert_many([event.model_dump() for event in detected_events])
+    if len(detected_events) > 0:
+        mongo_db["events"].insert_many(
+            [event.model_dump() for event in detected_events]
+        )
     return detected_events
 
 
@@ -398,8 +401,9 @@ async def messages_main_pipeline(
                 headers=event.webhook_headers,
             )
     # Push the events to the database
-    mongo_db = await get_mongo_db()
-    mongo_db["events"].insert_many([event.model_dump() for event in events])
+    if len(events) > 0:
+        mongo_db = await get_mongo_db()
+        mongo_db["events"].insert_many([event.model_dump() for event in events])
 
     return PipelineResults(
         events=events,
