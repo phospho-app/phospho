@@ -388,7 +388,6 @@ async def messages_main_pipeline(
             source=result.metadata.get("source", "phospho-unknown"),
             webhook=event.webhook,
             event_definition=event,
-            messages=messages,
         )
         events.append(detected_event_data)
         if event.webhook is not None:
