@@ -29,7 +29,7 @@ async def create_upload_file(
         )
 
     # Create a file id and store the file in the database
-    file_id = "file_" + generate_uuid()
+    file_id = generate_uuid(prefix="file_")
     file_name = file.filename
     org_id = org["org"].get("org_id")
 

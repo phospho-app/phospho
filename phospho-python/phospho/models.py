@@ -204,6 +204,7 @@ class FlattenedTask(BaseModel, extra="allow"):
 class DatasetRow(BaseModel, extra="allow"):
     id: str = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
+    org_id: str
     detection_scope: DetectionScope
     task_input: str
     task_output: str
@@ -211,4 +212,19 @@ class DatasetRow(BaseModel, extra="allow"):
     label: bool
     file_id: str  # Generated on the fly when the file is uploaded to the API
     file_name: str
+
+
+class FineTuningJob(BaseModel):
+    id: str = Field(default_factory=lambda: generate_uuid("ftjob_"))
+    created_at: int = Field(default_factory=generate_timestamp)
     org_id: str
+    file_id: str  # File id used for the fine-tuning (will be splitted in train and validation sets)
+    fine_tuned_model: Optional[str] = (
+        None  # The name of the fine-tuned model that is being created. Null if the fine-tuning job is still running.
+    )
+    finished_at: Optional[int] = None
+    parameters: Optional[
+        dict
+    ] = {}  # Storing parameters for the fine-tuning job, also detection_scope, event_description
+    model: str  # The base model that is being fine-tuned.
+    status: Literal["started", "finished", "failed", "canceled"]
