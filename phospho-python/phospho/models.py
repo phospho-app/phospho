@@ -4,9 +4,10 @@ All the models stored in database.
 
 from typing import Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 from phospho.utils import generate_timestamp, generate_uuid
+import json
 
 
 class Eval(BaseModel):
@@ -95,6 +96,10 @@ class Task(BaseModel):
         else:
             return self.input
 
+    @field_serializer("metadata")
+    def serialize_metadata(self, metadata: dict, _info):
+        return json.loads(json.dumps(metadata, default=str))
+
 
 class Session(BaseModel):
     id: str = Field(default_factory=generate_uuid)
@@ -113,6 +118,10 @@ class Session(BaseModel):
     tasks: Optional[List[Task]] = None
     # Session length is computed dynamically. It may be None if not computed
     session_length: Optional[int] = None
+
+    @field_serializer("metadata")
+    def serialize_metadata(self, metadata: dict, _info):
+        return json.loads(json.dumps(metadata, default=str))
 
 
 class ProjectSettings(BaseModel):
