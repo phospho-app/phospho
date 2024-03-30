@@ -20,7 +20,7 @@ router = APIRouter(tags=["Events"])
 
 
 @router.post(
-    "/events/{project_id}/",
+    "/events/{project_id}/log",
     response_model=EventDetectionReply,
     description="Detect events in a log",
 )
@@ -45,7 +45,7 @@ async def post_detect_events_in_task(
 
 
 @router.post(
-    "/events/{project_id}/",
+    "/events/{project_id}/messages",
     response_model=EventDetectionReply,
     description="Detect events in a list of messages",
 )
