@@ -65,9 +65,9 @@ async def start_fine_tuning_job(fine_tuning_job: FineTuningJob):
         logger.error(
             f"Missing parameters for the fine-tuning job: detection_scope: {detection_scope}, event_description: {event_description}. Aborting job."
         )
-        # Update the fine-tuning job status to canceled
+        # Update the fine-tuning job status to cancelled
         await mongo_db["fine_tuning_jobs"].update_one(
-            {"id": fine_tuning_job.id}, {"$set": {"status": "canceled"}}
+            {"id": fine_tuning_job.id}, {"$set": {"status": "cancelled"}}
         )
         return
 
@@ -83,9 +83,9 @@ async def start_fine_tuning_job(fine_tuning_job: FineTuningJob):
         logger.error(
             f"Detection scope {detection_scope} is not supported. Aborting job."
         )
-        # Update the fine-tuning job status to canceled
+        # Update the fine-tuning job status to cancelled
         await mongo_db["fine_tuning_jobs"].update_one(
-            {"id": fine_tuning_job.id}, {"$set": {"status": "canceled"}}
+            {"id": fine_tuning_job.id}, {"$set": {"status": "cancelled"}}
         )
         return
 
@@ -98,9 +98,9 @@ async def start_fine_tuning_job(fine_tuning_job: FineTuningJob):
         logger.warning(
             f"Found {len(df)} documents for the fine-tuning job. We need at least {config.FINE_TUNING_MINIMUM_DOCUMENTS}. Aborting job."
         )
-        # Update the fine-tuning job status to canceled
+        # Update the fine-tuning job status to cancelled
         await mongo_db["fine_tuning_jobs"].update_one(
-            {"id": fine_tuning_job.id}, {"$set": {"status": "canceled"}}
+            {"id": fine_tuning_job.id}, {"$set": {"status": "cancelled"}}
         )
         return
 
@@ -176,3 +176,94 @@ async def start_fine_tuning_job(fine_tuning_job: FineTuningJob):
         {"id": fine_tuning_job.id},
         {"$set": {"anyscale_finetuning_job_id": anyscale_finetuning_job_id}},
     )
+
+
+async def fetch_fine_tuning_job(fine_tuning_job_id: str) -> FineTuningJob:
+    mongo_db = await get_mongo_db()
+    fine_tuning_job = await mongo_db["fine_tuning_jobs"].find_one(
+        {"id": fine_tuning_job_id}
+    )
+
+    if not fine_tuning_job:
+        raise ValueError(f"Fine-tuning job with id {fine_tuning_job_id} not found.")
+
+    # Remove the _id key, which is not serializable
+    if "_id" in fine_tuning_job:
+        del fine_tuning_job["_id"]
+
+    # Valdiate the fine_tuning_job object
+    fine_tuning_job = FineTuningJob(**fine_tuning_job)
+
+    # Convert the model to a dictionary
+    fine_tuning_job_dict = fine_tuning_job.model_dump()
+
+    # Check if there is a field for the Anyscale job id
+    # Check if the key anyscale_finetuning_job_id exists
+    if (
+        fine_tuning_job_dict.get("anyscale_finetuning_job_id")
+        and fine_tuning_job.status == "started"
+    ):
+        logger.debug(
+            f"Fine-tuning job {fine_tuning_job_id} has a anyscale_finetuning_job_id."
+        )
+        # Fetch the status of the anyscale job
+        anyscale_job_obj = anyscale_client.fine_tuning.jobs.retrieve(
+            fine_tuning_job_dict["anyscale_finetuning_job_id"]
+        )
+        logger.debug(f"Anyscale job: {anyscale_job_obj}")
+
+        # Check the status
+        if anyscale_job_obj.status == "succeeded":
+            # Update the phospho fine tuning job object in the db
+            await mongo_db["fine_tuning_jobs"].update_one(
+                {"id": fine_tuning_job_id},
+                {
+                    "$set": {
+                        "status": "finished",
+                        "fine_tuned_model": anyscale_job_obj.fine_tuned_model,
+                    }
+                },
+            )
+
+            # Update the object in memory
+            fine_tuning_job.status = "finished"
+            fine_tuning_job.fine_tuned_model = anyscale_job_obj.fine_tuned_model
+            # TODO: finished at time
+
+        elif anyscale_job_obj.status == "failed":
+            logger.warning(
+                f"Anyscale job {fine_tuning_job_dict['anyscale_finetuning_job_id']} with phospho id {fine_tuning_job.id} failed."
+            )
+            # Update the phospho fine tuning job object in the db
+            await mongo_db["fine_tuning_jobs"].update_one(
+                {"id": fine_tuning_job_id},
+                {
+                    "$set": {
+                        "status": "failed",
+                    }
+                },
+            )
+
+            # Update the object in memory
+            fine_tuning_job.status = "failed"
+
+        elif anyscale_job_obj.status == "cancelled":
+            # Update the phospho fine tuning job object in the db
+            await mongo_db["fine_tuning_jobs"].update_one(
+                {"id": fine_tuning_job_id},
+                {
+                    "$set": {
+                        "status": "cancelled",
+                    }
+                },
+            )
+
+            # Update the object in memory
+            fine_tuning_job.status = "cancelled"
+
+        else:
+            logger.debug(
+                f"Anyscale job {fine_tuning_job_dict['anyscale_finetuning_job_id']} with phospho id {fine_tuning_job.id} has status: {anyscale_job_obj.status}."
+            )
+
+    return fine_tuning_job
