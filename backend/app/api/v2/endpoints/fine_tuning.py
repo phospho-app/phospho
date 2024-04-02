@@ -12,7 +12,7 @@ from app.security import (
 )
 from app.db.models import FineTuningJob
 from app.api.v2.models.fine_tuning import FineTuningJobCreationRequest
-from app.services.mongo.fine_tuning import start_fine_tuning_job
+from app.services.mongo.fine_tuning import start_fine_tuning_job, fetch_fine_tuning_job
 
 
 router = APIRouter(tags=["Fine-tuning"])
@@ -51,5 +51,24 @@ async def create_fine_tuning_job(
 
     # Start the fine-tuning job, pass it the fine_tuning_job object
     background_tasks.add_task(start_fine_tuning_job, fine_tuning_job)
+
+    return fine_tuning_job
+
+
+@router.get(
+    "/fine_tuning/jobs/{job_id}",
+    description="Get the status of a fine-tuning job.",
+)
+async def get_fine_tuning_job(
+    job_id: str,
+    org: dict = Depends(authenticate_org_key),
+) -> FineTuningJob:
+    fine_tuning_job = await fetch_fine_tuning_job(job_id)
+
+    # Check the org owns the job
+    if fine_tuning_job.org_id != org["org"].get("org_id"):
+        raise HTTPException(
+            status_code=403, detail="You are not authorized to view this job."
+        )
 
     return fine_tuning_job

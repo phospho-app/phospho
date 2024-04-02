@@ -213,7 +213,6 @@ class FlattenedTask(BaseModel, extra="allow"):
     event_created_at: Optional[int] = None
 
 
-
 class DatasetRow(BaseModel, extra="allow"):
     id: str = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
@@ -240,7 +239,8 @@ class FineTuningJob(BaseModel, extra="allow"):
         dict
     ] = {}  # Storing parameters for the fine-tuning job, also detection_scope, event_description
     model: str  # The base model that is being fine-tuned.
-    status: Literal["started", "finished", "failed", "canceled"]
+    status: Literal["started", "finished", "failed", "cancelled"]
+
 
 class Message(BaseModel):
     id: str = Field(default_factory=generate_uuid)
