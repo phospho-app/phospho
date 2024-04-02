@@ -367,6 +367,10 @@ async def messages_main_pipeline(
 ) -> PipelineResults:
     """
     Main pipeline to run on a list of messages.
+    We expect the messages to be in chronological order.
+    Only the last message will be used for the event detection.
+    The previous messages will be used as context.
+
     - Event detection
     """
     project = await get_project_by_id(project_id)
@@ -375,6 +379,7 @@ async def messages_main_pipeline(
         return []
     workload = lab.Workload.from_phospho_project_config(project)
     message = lab.Message(
+        id="single_message",
         role=messages[-1].role,
         content=messages[-1].content,
         metadata=messages[-1].metadata,
@@ -382,24 +387,28 @@ async def messages_main_pipeline(
     )
     await workload.async_run(messages=[message], executor_type="sequential")
     events: List[Event] = []
-    for event_name, result in workload.results.items():
-        metadata = result.metadata
-        event = EventDefinition(**metadata)
-        detected_event_data = Event(
-            event_name=event_name,
-            project_id=project_id,
-            source=result.metadata.get("source", "phospho-unknown"),
-            webhook=event.webhook,
-            event_definition=event,
-            messages=messages,
-        )
-        events.append(detected_event_data)
-        if event.webhook is not None:
-            await trigger_webhook(
-                url=event.webhook,
-                json=detected_event_data.model_dump(),
-                headers=event.webhook_headers,
+    for event_name, result in workload.results["single_message"].items():
+        # We actually ran the pipeline on a single message, with
+        # the previous messages as context
+        logger.debug(f"Result for {event_name}: {result}")
+        if result.value is True:
+            metadata = workload.jobs[result.job_id].metadata
+            event = EventDefinition(**metadata)
+            detected_event_data = Event(
+                event_name=event_name,
+                project_id=project_id,
+                source=result.metadata.get("source", "phospho-unknown"),
+                webhook=event.webhook,
+                event_definition=event,
+                messages=messages,
             )
+            events.append(detected_event_data)
+            if event.webhook is not None:
+                await trigger_webhook(
+                    url=event.webhook,
+                    json=detected_event_data.model_dump(),
+                    headers=event.webhook_headers,
+                )
     # Push the events to the database
     if len(events) > 0:
         mongo_db = await get_mongo_db()
