@@ -485,6 +485,9 @@ async def get_all_sessions(
             )
         sessions = await mongo_db["sessions"].aggregate(pipeline).to_list(length=limit)
 
+    # Filter the _id field from the Sessions
+    for session in sessions:
+        session.pop("_id", None)
     sessions = [Session.model_validate(data) for data in sessions]
     return sessions
 
