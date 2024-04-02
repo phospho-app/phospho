@@ -14,8 +14,13 @@ def generate_timestamp() -> int:
     return int(time.time())
 
 
-def generate_uuid() -> str:
-    return uuid.uuid4().hex
+def generate_uuid(prefix: str = "") -> str:
+    """
+    Add a prefiw if needed to the uuid
+    Example: generate_uuid("file_") to have a file_id
+    """
+    value = uuid.uuid4().hex
+    return f"{prefix}{value}"
 
 
 def is_jsonable(x: Any) -> bool:
@@ -45,7 +50,7 @@ def filter_nonjsonable_keys(arg_dict: dict, verbose: bool = False) -> Dict[str, 
 
 
 def convert_content_to_loggable_content(
-    content: Any
+    content: Any,
 ) -> Union[Dict[str, object], str, None]:
     """
     Convert objects to json serializable content. Notably, nested dicts and lists are converted.
