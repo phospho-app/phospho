@@ -1,4 +1,5 @@
 import time
+from typing import List, Literal, Optional
 
 from loguru import logger
 
@@ -12,13 +13,17 @@ from app.services.projects import get_project_by_id
 from app.services.webhook import trigger_webhook
 from phospho import lab
 
+from app.api.v1.models.pipelines import PipelineResults
+
 
 class EventConfig(lab.JobConfig):
     event_name: str
     event_description: str
 
 
-async def event_detection_pipeline(task: Task) -> None:
+async def task_event_detection_pipeline(
+    task: Task, save_task: bool = True
+) -> List[Event]:
     """
     Run the event detection pipeline for a given task
     """
@@ -38,7 +43,7 @@ async def event_detection_pipeline(task: Task) -> None:
     project = await get_project_by_id(project_id)
     if project.settings is None:
         logger.warning(f"Project with id {project_id} has no settings")
-        return
+        return []
     # Convert to the proper lab project object
     # TODO : Normalize the project definition by storing all db models in the phospho module
     # and importing models from the phospho module
@@ -54,6 +59,7 @@ async def event_detection_pipeline(task: Task) -> None:
 
     # Check the results of the workload
     message_results = workload.results.get(latest_message_id, [])
+    detected_events = []
     for event_name, result in message_results.items():
         # Store the LLM call in the database
         metadata = result.metadata
@@ -86,14 +92,16 @@ async def event_detection_pipeline(task: Task) -> None:
                 webhook=event.webhook,
                 org_id=task_data.org_id,
                 event_definition=event,
+                task=task_data if not save_task else None,
             )
-            mongo_db["events"].insert_one(detected_event_data.model_dump())
+            detected_events.append(detected_event_data)
             # Update the task object with the event
-            mongo_db["tasks"].update_many(
-                {"id": task.id, "project_id": task.project_id},
-                # Add the event to the list of events
-                {"$push": {"events": detected_event_data.model_dump()}},
-            )
+            if save_task:
+                mongo_db["tasks"].update_many(
+                    {"id": task.id, "project_id": task.project_id},
+                    # Add the event to the list of events
+                    {"$push": {"events": detected_event_data.model_dump()}},
+                )
             # Trigger the webhook if it exists
             if event.webhook is not None:
                 await trigger_webhook(
@@ -101,9 +109,16 @@ async def event_detection_pipeline(task: Task) -> None:
                     json=detected_event_data.model_dump(),
                     headers=event.webhook_headers,
                 )
+    if len(detected_events) > 0:
+        mongo_db["events"].insert_many(
+            [event.model_dump() for event in detected_events]
+        )
+    return detected_events
 
 
-async def task_scoring_pipeline(task: Task) -> None:
+async def task_scoring_pipeline(
+    task: Task, save_task: bool = True
+) -> Optional[Literal["success", "failure"]]:
     """
     Run the task scoring pipeline for a given task
     """
@@ -214,17 +229,16 @@ async def task_scoring_pipeline(task: Task) -> None:
             "system_prompt": system_prompt,
         },
     )
-
     await workload.async_run(messages=[message], executor_type="sequential")
     # Check the results of the workload
     if workload.results is None:
         logger.error("Worlkload.results is None")
-        return
+        return None
 
     job_result = workload.results.get(message.id, {}).get("evaluate_task", None)
     if job_result is None:
         logger.error("Job result in workload is None")
-        return
+        return None
 
     flag = job_result.value
     llm_call = job_result.metadata.get("llm_call", None)
@@ -244,22 +258,25 @@ async def task_scoring_pipeline(task: Task) -> None:
         source=config.EVALUATION_SOURCE,
         test_id=task.test_id,
         org_id=task.org_id,
+        task=task if not save_task else None,
     )
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
 
     # Update the task object if the flag is None (no previous evaluation)
-    task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
-    if task_in_db.get("flag") is None:
-        mongo_db["tasks"].update_one(
-            {"id": task.id},
-            {
-                "$set": {
-                    "flag": flag,
-                    "last_eval": evaluation_data.model_dump(),
-                    "evaluation_source": config.EVALUATION_SOURCE,
-                }
-            },
-        )
+    if save_task:
+        task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
+        if task_in_db.get("flag") is None:
+            mongo_db["tasks"].update_one(
+                {"id": task.id},
+                {
+                    "$set": {
+                        "flag": flag,
+                        "last_eval": evaluation_data.model_dump(),
+                        "evaluation_source": config.EVALUATION_SOURCE,
+                    }
+                },
+            )
+    return flag
 
 
 # async def topic_extraction_pipeline(task_id: str) -> None:
@@ -301,10 +318,11 @@ async def task_scoring_pipeline(task: Task) -> None:
 #         logger.info(f"Detected topics for task {task_id} saved in the database")
 
 
-async def main_pipeline(task: Task) -> None:
+async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResults:
     """
-    Main interface with the watcher service
-    TODO : a call to the pipeline create a Prediction object in the database to keep track of the pipeline activity
+    Main pipeline to run on a task.
+    - Event detection
+    - Evaluate task success/failure
     """
 
     # Get the starting time of the pipeline
@@ -315,13 +333,18 @@ async def main_pipeline(task: Task) -> None:
 
     # Do the event detection
     if task.test_id is None:
-        await event_detection_pipeline(task)
+        events = await task_event_detection_pipeline(task, save_task=save_task)
 
     # Do the session scoring -> success, failure
     mongo_db = await get_mongo_db()
-    task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
-    if task_in_db.get("flag") is None:
-        await task_scoring_pipeline(task)
+    if save_task:
+        task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
+        if task_in_db.get("flag") is None:
+            flag = await task_scoring_pipeline(task, save_task=save_task)
+        else:
+            flag = task_in_db.get("flag")
+    else:
+        flag = await task_scoring_pipeline(task, save_task=save_task)
 
     # Optional: later add the moderation pipeline on input and outputs
 
@@ -331,4 +354,58 @@ async def main_pipeline(task: Task) -> None:
     # Log the completion of the pipeline and the time it took
     logger.info(
         f"Main pipeline completed in {time.time() - start_time:.2f} seconds for task {task.id}"
+    )
+
+    return PipelineResults(
+        events=events,
+        flag=flag,
+    )
+
+
+async def messages_main_pipeline(
+    project_id: str, messages: List[lab.Message]
+) -> PipelineResults:
+    """
+    Main pipeline to run on a list of messages.
+    - Event detection
+    """
+    project = await get_project_by_id(project_id)
+    if project.settings is None:
+        logger.warning(f"Project with id {project_id} has no settings")
+        return []
+    workload = lab.Workload.from_phospho_project_config(project)
+    message = lab.Message(
+        role=messages[-1].role,
+        content=messages[-1].content,
+        metadata=messages[-1].metadata,
+        previous_messages=messages[:-1],
+    )
+    await workload.async_run(messages=[message], executor_type="sequential")
+    events: List[Event] = []
+    for event_name, result in workload.results.items():
+        metadata = result.metadata
+        event = EventDefinition(**metadata)
+        detected_event_data = Event(
+            event_name=event_name,
+            project_id=project_id,
+            source=result.metadata.get("source", "phospho-unknown"),
+            webhook=event.webhook,
+            event_definition=event,
+            messages=messages,
+        )
+        events.append(detected_event_data)
+        if event.webhook is not None:
+            await trigger_webhook(
+                url=event.webhook,
+                json=detected_event_data.model_dump(),
+                headers=event.webhook_headers,
+            )
+    # Push the events to the database
+    if len(events) > 0:
+        mongo_db = await get_mongo_db()
+        mongo_db["events"].insert_many([event.model_dump() for event in events])
+
+    return PipelineResults(
+        events=events,
+        flag=None,
     )

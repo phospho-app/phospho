@@ -12,17 +12,7 @@ module.exports = {
   },
   publicRuntimeConfig: {
     "version": version,
-  }
-}
-
-// Verify if NEXT_PUBLIC_API_URL is set
-if (!process.env.NEXT_PUBLIC_API_URL) {
-  throw new Error(
-    "Please define the NEXT_PUBLIC_API_URL environment variable inside .env.local"
-  );
-}
-
-const nextConfig = {
+  },
   reactStrictMode: true,
   async rewrites() {
     return [
@@ -41,7 +31,13 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+// Verify if NEXT_PUBLIC_API_URL is set
+if (!process.env.NEXT_PUBLIC_API_URL) {
+  throw new Error(
+    "Please define the NEXT_PUBLIC_API_URL environment variable inside .env.local"
+  );
+}
+
 
 // Injected content via Sentry wizard below
 
