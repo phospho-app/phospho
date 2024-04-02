@@ -146,7 +146,9 @@ async def run_main_pipeline_on_task(task: Task) -> PipelineResults:
             return PipelineResults(events=[], flag=None)
 
 
-async def run_main_pipeline_on_messages(messages: List[Message]) -> PipelineResults:
+async def run_main_pipeline_on_messages(
+    messages: List[Message], project_id: str
+) -> PipelineResults:
     """
     Run the log procesing pipeline on messages asynchronously
     """
@@ -159,6 +161,7 @@ async def run_main_pipeline_on_messages(messages: List[Message]) -> PipelineResu
                 f"{config.EXTRACTOR_URL}/v1/pipelines/main/messages",  # WARNING: hardcoded API version
                 json={
                     "messages": [message.model_dump() for message in messages],
+                    "project_id": project_id,
                 },
                 headers={
                     "Authorization": f"Bearer {config.EXTRACTOR_SECRET_KEY}",

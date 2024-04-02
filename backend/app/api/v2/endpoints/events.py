@@ -63,7 +63,8 @@ async def post_detect_events_in_messages_list(
     raise_error_if_not_in_pro_tier(org, enforce=True)
 
     pipeline_results = await run_main_pipeline_on_messages(
-        event_detection_request.messages
+        event_detection_request.messages,
+        project_id,
     )
     return EventDetectionReply(
         **event_detection_request.model_dump(),
