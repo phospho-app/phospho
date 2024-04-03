@@ -6,8 +6,13 @@ import tiktoken
 import datetime
 
 
-def generate_uuid() -> str:
-    return uuid.uuid4().hex
+def generate_uuid(prefix: str = "") -> str:
+    """
+    Add a prefiw if needed to the uuid
+    Example: generate_uuid("file_") to have a file_id
+    """
+    value = uuid.uuid4().hex
+    return f"{prefix}{value}"
 
 
 def generate_timestamp() -> int:

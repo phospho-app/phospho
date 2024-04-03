@@ -1,5 +1,6 @@
 import asyncio
 import concurrent.futures
+import itertools
 import logging
 import random
 from typing import (
@@ -11,6 +12,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Tuple,
     Union,
 )
 
@@ -448,7 +450,7 @@ class Workload:
     async def async_run(
         self,
         messages: Iterable[Message],
-        executor_type: Literal["parallel", "sequential"] = "parallel",
+        executor_type: Literal["parallel", "sequential", "parallel_jobs"] = "parallel",
         max_parallelism: int = 10,
     ) -> Dict[str, Dict[str, JobResult]]:
         """
@@ -464,10 +466,9 @@ class Workload:
         """
 
         # Run the jobs sequentially on every message
-        # TODO : Run the jobs in parallel on every message?
         # TODO : For Jobs, implement a batched_run method that takes a list of messages
-        for job_id, job in self.jobs.items():
-            if executor_type == "parallel":
+        if executor_type == "parallel":
+            for job_id, job in self.jobs.items():
                 # Await all the results
                 semaphore = asyncio.Semaphore(max_parallelism)
                 # Create a progress bar
@@ -491,14 +492,43 @@ class Workload:
                 t.display()
                 await asyncio.gather(*executor_results)
                 t.close()
-            elif executor_type == "sequential":
+        elif executor_type == "parallel_jobs":
+            # Create a progress bar
+            if isinstance(messages, list):
+                t = tqdm(total=len(messages) * len(self.jobs))
+            else:
+                t = tqdm()
+
+            messages_and_jobs = itertools.product(messages, self.jobs.values())
+            semaphore = asyncio.Semaphore(max_parallelism)
+
+            async def message_job_limit_wrap(message_and_job: Tuple[Message, Job]):
+                message, job = message_and_job
+                if job.sample >= 1 or random.random() < job.sample:
+                    await job.async_run(message)
+                # Update the progress bar
+                t.update()
+
+            async with semaphore:
+                # Account for the semaphore (rate limit, max_parallelism)
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    # Submit tasks to the executor
+                    executor_results = executor.map(
+                        message_job_limit_wrap, messages_and_jobs
+                    )
+
+            t.display()
+            await asyncio.gather(*executor_results)
+            t.close()
+        elif executor_type == "sequential":
+            for job_id, job in self.jobs.items():
                 for one_message in tqdm(messages):
                     if job.sample >= 1 or random.random() < job.sample:
                         await job.async_run(one_message)
-            else:
-                raise NotImplementedError(
-                    f"Executor type {executor_type} is not implemented"
-                )
+        else:
+            raise NotImplementedError(
+                f"Executor type {executor_type} is not implemented"
+            )
 
         # Collect the results:
         # Result is a mapping of message.id -> job_id -> job_result

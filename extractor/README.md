@@ -18,6 +18,12 @@ OPENAI_API_KEY=""
 TEST_PROPELAUTH_ORG_ID=""
 ```
 
+Install the dependencies if you are running loccaly in dev mode:
+
+```bash
+poetry install --with dev
+```
+
 # Running the server
 
 ```bash

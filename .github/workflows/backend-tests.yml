@@ -63,6 +63,7 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }} # Note: this is a dummy variable in test environment
           EXTRACTOR_URL: ${{ vars.EXTRACTOR_URL }}
+          ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
         # Specify here the tests you want to run after the -k flag
         run: |
           cd backend

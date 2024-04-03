@@ -128,3 +128,13 @@ EXTRACTOR_URL = os.getenv("EXTRACTOR_URL")
 assert (
     EXTRACTOR_URL is not None
 ), "EXTRACTOR_URL is missing from the environment variables"
+
+### ANYSCALE ###
+ANYSCALE_BASE_URL = "https://api.endpoints.anyscale.com/v1"
+ANYSCALE_API_KEY = os.getenv("ANYSCALE_API_KEY")
+if ENVIRONMENT != "preview":
+    if ANYSCALE_API_KEY is None:
+        logger.warning("ANYSCALE_API_KEY is missing from the environment variables")
+
+CSV_UPLOAD_MAX_ROWS = 100000
+FINE_TUNING_MINIMUM_DOCUMENTS = 20
