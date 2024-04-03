@@ -54,7 +54,7 @@ async def task_event_detection_pipeline(
     latest_message_id = message.id
     await workload.async_run(
         messages=[message],
-        executor_type="sequential",
+        executor_type="parallel_jobs",
     )
 
     # Check the results of the workload
@@ -385,12 +385,12 @@ async def messages_main_pipeline(
         metadata=messages[-1].metadata,
         previous_messages=messages[:-1],
     )
-    await workload.async_run(messages=[message], executor_type="sequential")
+    await workload.async_run(messages=[message], executor_type="parallel_jobs")
     events: List[Event] = []
     for event_name, result in workload.results["single_message"].items():
         # We actually ran the pipeline on a single message, with
         # the previous messages as context
-        logger.debug(f"Result for {event_name}: {result}")
+        logger.debug(f"Result for {event_name}: {result.value}")
         if result.value is True:
             metadata = workload.jobs[result.job_id].metadata
             event = EventDefinition(**metadata)
