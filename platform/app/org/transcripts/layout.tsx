@@ -20,11 +20,12 @@ const HobbyPlanWarning = () => {
       <CardContent>
         <div className="flex font-semibold  items-center">
           <X className="h-6 w-6 text-red-500" />
-          Automatic evaluation and event detection require a payment method
+          Automatic evaluation and event detection require a payment method to
+          run.
         </div>
         <div className="text-gray-500">
-          We temporarily enabled them for you to try out. You can still use
-          phospho for labeling. No data will be lost.
+          We temporarily enabled them for you to try out. Your data won't be
+          lost and you can still label tasks.
         </div>
         <div className="flex flex-col justify-center items-center m-2">
           <UpgradeButton tagline="Add payment method" enlarge={false} />
