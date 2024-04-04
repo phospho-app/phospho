@@ -11,6 +11,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { SelectProjectButton } from "./select-project-dropdown";
 // zustand state management
 import { Card, CardContent, CardHeader } from "./ui/card";
+import UpgradeButton from "./upgrade-button";
 
 export function Sidebar() {
   const selectedOrgMetadata = dataStateStore(
@@ -197,9 +198,11 @@ export function Sidebar() {
                       Enable automatic evaluation and event detection
                     </p>
                     <div className="flex justify-center">
-                      <Link href="/org/settings/billing">
-                        <Button>Add payment method</Button>
-                      </Link>
+                      <UpgradeButton
+                        tagline="Add payment method"
+                        enlarge={false}
+                        green={false}
+                      />
                     </div>
                   </div>
                 </CardContent>
