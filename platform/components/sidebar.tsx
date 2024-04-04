@@ -4,20 +4,21 @@ import CreateProjectButton from "@/components/projects/create-project-button";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { dataStateStore } from "@/store/store";
-import { Star, Users } from "lucide-react";
+import { Sparkles, Star, Users } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { SelectProjectButton } from "./select-project-dropdown";
 // zustand state management
 import { Card, CardContent, CardHeader } from "./ui/card";
+import UpgradeButton from "./upgrade-button";
 
 export function Sidebar() {
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
+  const hasTasks = dataStateStore((state) => state.hasTasks);
 
-  const router = useRouter();
   const pathname = usePathname();
 
   return (
@@ -181,23 +182,32 @@ export function Sidebar() {
           <CreateProjectButton></CreateProjectButton>
         </div>
         <div className="flex justify-center mx-2 mb-4 mt-4">
-          {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
-            <Card>
-              <CardContent className="flex justify-center mb-0">
-                <div>
-                  <h2 className="font-semibold mt-4 mb-2">
-                    Level up your insights.
-                  </h2>
-                  <p className="mb-2">
-                    Finally, real product analytics for LLM apps.
-                  </p>
-                  <Link href="/org/settings/billing">
-                    <Button>Upgrade plan</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {selectedOrgMetadata &&
+            selectedOrgMetadata?.plan === "hobby" &&
+            hasTasks && (
+              <Card>
+                <CardContent className="flex justify-center mb-0">
+                  <div>
+                    <div className="flex items-baseline">
+                      <Sparkles className="h-4 w-4 text-green-500 mr-1" />
+                      <h2 className="font-semibold mt-4 mb-2">
+                        Complete setup now
+                      </h2>
+                    </div>
+                    <p className="mb-2">
+                      Enable automatic evaluation and event detection
+                    </p>
+                    <div className="flex justify-center">
+                      <UpgradeButton
+                        tagline="Add payment method"
+                        enlarge={false}
+                        green={false}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           {selectedOrgMetadata && selectedOrgMetadata?.plan === "pro" && (
             <Card>
               <CardContent className="flex justify-center items-center mt-6">
