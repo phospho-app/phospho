@@ -27,7 +27,7 @@ const HobbyPlanWarning = () => {
           phospho for labeling. No data will be lost.
         </div>
         <div className="flex flex-col justify-center items-center m-2">
-          <UpgradeButton tagline="Complete setup" enlarge={false} />
+          <UpgradeButton tagline="Add payment method" enlarge={false} />
         </div>
       </CardContent>
     </Card>
