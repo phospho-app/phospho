@@ -1,10 +1,14 @@
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import UpgradeButton from "@/components/upgrade-button";
 import { Separator } from "@radix-ui/react-separator";
 import { Check } from "lucide-react";
 import Link from "next/link";
-
-import { Button } from "../ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import UpgradeButton from "../upgrade-button";
 
 interface PricingData {
   tiers: {

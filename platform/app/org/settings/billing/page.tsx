@@ -43,7 +43,15 @@ export default function Page() {
     <>
       <div className="flex-col">
         <div className="mb-4">
-          <Pricing currentPlan={plan} />
+          {plan === "hobby" && (
+            <Pricing
+              currentPlan={null}
+              selectedPlan="pro"
+              proPlanTagline="Add payment method"
+              displayHobbyCTA={true}
+            />
+          )}
+          {plan === "pro" && <Pricing currentPlan="pro" />}
           {plan && plan !== "hobby" && (
             <Button variant="secondary" onClick={onBillingPortalClick}>
               Manage subscription
