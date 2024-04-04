@@ -23,8 +23,7 @@ export const NoDataDashboard = () => {
     <Card>
       <CardHeader>
         <CardTitle className="text-3xl font-bold tracking-tight">
-          You're <span className="italic">this</span> close to unique product
-          insights.
+          Almost there! Let's setup logging in your app.
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -40,7 +39,7 @@ export const NoDataDashboard = () => {
           </a>{" "}
         </div>
         <div className="mt-2">
-          2. Your Project id: {project_id}
+          2. Copy your Project id: {project_id}
           <Button
             variant="outline"
             className="ml-2 p-3"
