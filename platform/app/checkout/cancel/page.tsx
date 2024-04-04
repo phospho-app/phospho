@@ -22,15 +22,13 @@ export default function Page() {
     <>
       <Card className="w-96">
         <CardHeader>
-          <CardTitle className="font-bold">Hey, no sweat.</CardTitle>
-          <CardDescription className="text-xl">
-            We know that's a huge commitment.
-          </CardDescription>
+          <CardTitle className="font-bold">Second thoughts?</CardTitle>
+          <CardDescription className="text-xl">That's ok.</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
           <p>
-            Let's chat more about your project to make sure phospho is the right
-            fit for you.
+            We'd be happy to learn more about your project and see what we can
+            do to help.
           </p>
         </CardContent>
         <CardFooter className="flex justify-between">
@@ -48,8 +46,8 @@ export default function Page() {
             No, leave me alone
           </Button>
           <Link href="https://calendly.com/paul-louis-phospho">
-            <Button variant="secondary" className="bg-green-600">
-              Book a demo
+            <Button variant="default" className="bg-green-600">
+              Let's chat
             </Button>
           </Link>
         </CardFooter>

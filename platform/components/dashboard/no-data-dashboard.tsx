@@ -1,6 +1,12 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { navigationStateStore } from "@/store/store";
 import { CopyIcon, HelpCircleIcon, TestTube2 } from "lucide-react";
 import Link from "next/link";
@@ -22,9 +28,14 @@ export const NoDataDashboard = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-3xl font-bold tracking-tight">
-          You're <span className="italic">this</span> close to unique product
-          insights.
+        <CardTitle>
+          <div className="text-3xl font-bold tracking-tight mb-1">
+            Almost there! Let's link phospho to your app.
+          </div>
+          <div className="text-xl font-normal text-gray-500">
+            You log tasks to phospho. We evaluate their success and detect the
+            events you set up.
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -40,7 +51,7 @@ export const NoDataDashboard = () => {
           </a>{" "}
         </div>
         <div className="mt-2">
-          2. Your Project id: {project_id}
+          2. Copy your Project id: {project_id}
           <Button
             variant="outline"
             className="ml-2 p-3"
@@ -153,12 +164,14 @@ phospho.log({input, output});`}
         <div className="flex flex-row space-x-4 mt-4">
           <Alert>
             <HelpCircleIcon className="h-4 w-4" />
-            <AlertTitle>Something wrong?</AlertTitle>
+            <AlertTitle>We're here to help.</AlertTitle>
             <AlertDescription>
-              Book a free 30 min session with our dev team.
+              <div className="mb-1">
+                Book a free onboarding session with the dev team.
+              </div>
               <div className="flex flex-row space-x-2">
                 <Link href="https://cal.com/nicolas-oulianov" target="_blank">
-                  <Button>Book session</Button>
+                  <Button>Book free call</Button>
                 </Link>
                 <Link href="https://discord.gg/MXqBJ9pBsx" target="_blank">
                   <Button variant="secondary">Chat on Discord</Button>

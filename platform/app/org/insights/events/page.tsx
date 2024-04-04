@@ -62,11 +62,11 @@ export default function Page() {
                 <AlertDescription>
                   <div className="flex-col space-y-4">
                     <div className="pb-2">
-                      {max_nb_events}/{max_nb_events} events created. Upgrade
-                      plan to create more.
+                      {max_nb_events}/{max_nb_events} events created. Add a
+                      payment method to add more.
                     </div>
                     <Link href="/org/settings/billing">
-                      <Button>Upgrade plan</Button>
+                      <Button>Add payment method</Button>
                     </Link>
                   </div>
                 </AlertDescription>
