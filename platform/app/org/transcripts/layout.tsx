@@ -1,17 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
 import UpgradeButton from "@/components/upgrade-button";
-import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
-import { useUser } from "@propelauth/nextjs/client";
+import { dataStateStore } from "@/store/store";
 import { Sparkles, X } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import useSWR from "swr";
+import { usePathname } from "next/navigation";
 
 const HobbyPlanWarning = () => {
   return (
