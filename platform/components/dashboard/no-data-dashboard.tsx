@@ -23,7 +23,7 @@ export const NoDataDashboard = () => {
     <Card>
       <CardHeader>
         <CardTitle className="text-3xl font-bold tracking-tight">
-          Almost there! Let's setup logging in your app.
+          Almost there! Let's set up logging in your app.
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -152,7 +152,7 @@ phospho.log({input, output});`}
         <div className="flex flex-row space-x-4 mt-4">
           <Alert>
             <HelpCircleIcon className="h-4 w-4" />
-            <AlertTitle>Something wrong?</AlertTitle>
+            <AlertTitle>We're here to help.</AlertTitle>
             <AlertDescription>
               Book a free onboarding session with the dev team.
               <div className="flex flex-row space-x-2">
