@@ -1,6 +1,12 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { navigationStateStore } from "@/store/store";
 import { CopyIcon, HelpCircleIcon, TestTube2 } from "lucide-react";
 import Link from "next/link";
@@ -22,8 +28,14 @@ export const NoDataDashboard = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-3xl font-bold tracking-tight">
-          Almost there! Let's set up logging in your app.
+        <CardTitle>
+          <div className="text-3xl font-bold tracking-tight mb-1">
+            Almost there! Let's link phospho to your app.
+          </div>
+          <div className="text-xl font-normal text-gray-500">
+            You log tasks to phospho. We evaluate their success and detect the
+            events you set up.
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
