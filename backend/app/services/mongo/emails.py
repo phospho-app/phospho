@@ -99,7 +99,7 @@ async def send_quota_exceeded_email(org_id: str):
                         <li>Click on the "Add payment method" button</li>
                         <li>Automatic analytics will be enabled. Enjoy <a href="https://platform.phospho.ai/org/settings/billing">advanced features!</a></li>
                     </ul>
-                    <p>Feel free to reach me out at <a href="mailto:paul-louis@phospho.app">paul-louis@phospho.app</a> if anything.</p>
+                    <p>Feel free to reach out at <a href="mailto:paul-louis@phospho.app">paul-louis@phospho.app</a> if anything.</p>
                     <p>Best,</p>
                     <p>Paul, CEO of phospho</p>
                 </body>
