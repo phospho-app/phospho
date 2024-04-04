@@ -4,10 +4,16 @@ import FullPageLoader from "@/components/full-page-loader";
 import Pricing from "@/components/settings/pricing";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 
 export default function Page({ params }: { params: { id: string } }) {
+  // This page is no longer used
+
+  redirect("/");
+  return;
+
   const router = useRouter();
+
   // This page is used during the onboarding for the user to pick a plan.
   // It is also used as a paywall when the user tries to access a page that
   // requires a plan.
@@ -30,11 +36,11 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect");
+  const redirectParam = searchParams.get("redirect");
   // if redirect=true, then the user is trying to access a page that requires a plan
   // The tagline will be different in this case
   const tagline =
-    redirect === "true"
+    redirectParam === "true"
       ? "phospho billing is evolving. Please pick a plan to continue."
       : "You're almost there! Please pick a plan to get started with phospho.";
 

@@ -7,7 +7,6 @@ import { TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 
 import TasksDataviz from "./tasks-dataviz";
@@ -19,10 +18,12 @@ const Tasks: React.FC = () => {
   const setUniqueEventNamesInData = dataStateStore(
     (state) => state.setUniqueEventNamesInData,
   );
-  const router = useRouter();
 
   const hasTasks = dataStateStore((state) => state.hasTasks);
   const hasLabelledTasks = dataStateStore((state) => state.hasLabelledTasks);
+  const selectedOrgMetadata = dataStateStore(
+    (state) => state.selectedOrgMetadata,
+  );
 
   useEffect(() => {
     if (tasksWithEvents !== null && tasksWithEvents.length > 0) {
@@ -86,6 +87,7 @@ const Tasks: React.FC = () => {
             <TasksDataviz />
             {hasTasks === true &&
               hasLabelledTasks !== null &&
+              selectedOrgMetadata?.plan === "pro" &&
               hasLabelledTasks?.has_enough_labelled_tasks === false && (
                 <Card className="mb-4">
                   <CardHeader className="text-2xl font-bold tracking-tight mb-0">

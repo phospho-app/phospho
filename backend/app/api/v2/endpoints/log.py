@@ -32,7 +32,7 @@ async def store_batch_of_log_events(
     """Store the log_content in the logs database"""
 
     await verify_propelauth_org_owns_project_id(org, project_id)
-    raise_error_if_not_in_pro_tier(org)
+    # raise_error_if_not_in_pro_tier(org)
 
     # We return the valid log events
     logged_events: List[Union[LogEvent, LogError]] = []
@@ -42,6 +42,7 @@ async def store_batch_of_log_events(
     org_plan = await get_quota(project_id)
     current_usage = org_plan.get("current_usage", 0)
     max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_TASKS)
+    current_plan = org_plan.get("plan", "hobby")
 
     for log_event_model in log_request.batched_log_events:
         # Validate the log in a second time, using the pydantic model
@@ -59,7 +60,12 @@ async def store_batch_of_log_events(
             )
             logged_events.append(valid_log_event)
             # Process this log only if the usage quota is not reached
-            if max_usage is None or (
+
+            if current_plan == "hobby":
+                # In the hobby plan, we don't process the logs
+                extra_logs_to_save.append(valid_log_event)
+                current_usage += 1
+            elif max_usage is None or (
                 max_usage is not None and current_usage < max_usage
             ):
                 logs_to_process.append(valid_log_event)

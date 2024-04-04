@@ -24,7 +24,6 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
     selectedOrgId &&
     process.env.NEXT_PUBLIC_APP_ENV === "production"
   ) {
-    // Uncomment this to enable the blockwall
     // Some orgs are not subject to the blockwall
     const EXEMPTED_ORG_IDS = [
       "13b5f728-21a5-481d-82fa-0241ca0e07b9", // phospho
@@ -38,7 +37,8 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
       "7e8f6db2-3b6b-4bf6-84ee-3f226b81e43d", // di
     ];
     if (!EXEMPTED_ORG_IDS.includes(selectedOrgId)) {
-      router.push("/onboarding/plan?redirect=true");
+      // Uncomment this to enable the blockwall
+      // router.push("/onboarding/plan?redirect=true");
     }
   }
 
