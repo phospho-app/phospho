@@ -115,7 +115,7 @@ export function Navbar({
                   })
                 }
               >
-                Need help?
+                Book free call
               </Button>
             </Link>
             <ModeToggle />
