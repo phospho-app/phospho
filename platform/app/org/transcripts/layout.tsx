@@ -14,7 +14,7 @@ const HobbyPlanWarning = () => {
       <CardHeader className="text-2xl font-bold tracking-tight">
         <div className="flex items-center">
           <Sparkles className="h-8 w-8 text-green-500 mr-2" />
-          Your completed the tech setup! Now, one last thing...
+          You completed the tech setup! Now, one last thing...
         </div>
       </CardHeader>
       <CardContent>
