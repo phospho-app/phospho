@@ -22,7 +22,7 @@ const UpgradeButton = ({
   It redirects the user to the Stripe Checkout page.
   */
   if (!tagline) {
-    tagline = "Upgrade plan";
+    tagline = "Add payment method";
   }
   if (enlarge === undefined) {
     enlarge = true;

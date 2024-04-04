@@ -110,7 +110,7 @@ export default function Page() {
                 Your usage quota is {currentUsage ?? "..."} logs out of{" "}
                 {maxUsageLabel ?? "..."}.{" "}
                 <Link href="/org/settings/billing" className="underline">
-                  Upgrade plan to increase quota
+                  Add a payment method to increase your quota
                 </Link>
               </p>
             </>
