@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
@@ -11,13 +12,27 @@ import React, { useMemo, useState } from "react";
 
 import { useToast } from "./ui/use-toast";
 
-const UpgradeButton = ({ tagline }: { tagline?: string }) => {
+const UpgradeButton = ({
+  tagline,
+  enlarge,
+  green,
+}: {
+  tagline?: string;
+  enlarge?: boolean;
+  green?: boolean;
+}) => {
   /*
   This is the buy button. It is used to upgrade the user's plan.
   It redirects the user to the Stripe Checkout page.
   */
   if (!tagline) {
     tagline = "Upgrade plan";
+  }
+  if (enlarge === undefined) {
+    enlarge = true;
+  }
+  if (green === undefined) {
+    green = true;
   }
 
   //posthog
@@ -89,10 +104,19 @@ const UpgradeButton = ({ tagline }: { tagline?: string }) => {
     }
   };
 
+  let buttonClass = cn();
+  if (enlarge) {
+    buttonClass += " text-base";
+  }
+  if (green) {
+    buttonClass += " bg-green-500 hover:bg-green-400";
+  }
+
   return (
     <Button
-      variant="outline"
-      className="bg-green-500 text-base"
+      variant="default"
+      // className="bg-green-500 hover:bg-green-400 text-base"
+      className={buttonClass}
       onClick={upgradeButtonClick}
     >
       {tagline}

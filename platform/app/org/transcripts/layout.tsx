@@ -3,10 +3,15 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { dataStateStore } from "@/store/store";
-import { Sparkles } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import UpgradeButton from "@/components/upgrade-button";
+import { authFetcher } from "@/lib/fetcher";
+import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
+import { Sparkles, X } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import useSWR from "swr";
 
 const HobbyPlanWarning = () => {
   return (
@@ -14,21 +19,20 @@ const HobbyPlanWarning = () => {
       <CardHeader className="text-2xl font-bold tracking-tight">
         <div className="flex items-center">
           <Sparkles className="h-8 w-8 text-green-500 mr-2" />
-          You're all set! Now, one last thing...
+          You successfully logged tasks! Now, one last thing...
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-500">
-          To enable automatic evaluation and event detection, you need to
-          provide a payment method.
-        </p>
-        <p className="text-gray-500 font-semibold">
-          Add a payment method to complete setup.
-        </p>
+        <div className="flex font-semibold  items-center">
+          <X className="h-6 w-6 text-red-500" />
+          Automatic evaluation and event detection are currently{" "}
+          <div className=" ml-1">disabled.</div>
+        </div>
+        <div className="text-gray-500">
+          To enable these features, please update your payment method.
+        </div>
         <div className="flex flex-col justify-center items-center m-2">
-          <Link href="/org/settings/billing">
-            <Button variant="default">Add payment method</Button>
-          </Link>
+          <UpgradeButton tagline="Complete setup" enlarge={false} />
         </div>
       </CardContent>
     </Card>
