@@ -166,7 +166,9 @@ phospho.log({input, output});`}
             <HelpCircleIcon className="h-4 w-4" />
             <AlertTitle>We're here to help.</AlertTitle>
             <AlertDescription>
-              Book a free onboarding session with the dev team.
+              <div className="mb-1">
+                Book a free onboarding session with the dev team.
+              </div>
               <div className="flex flex-row space-x-2">
                 <Link href="https://cal.com/nicolas-oulianov" target="_blank">
                   <Button>Book free call</Button>

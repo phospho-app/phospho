@@ -24,7 +24,7 @@ const HobbyPlanWarning = () => {
         </div>
         <div className="text-gray-500">
           We temporarily enabled them for you to try out. You can still use
-          phospho for manual labeling and data collection.
+          phospho for labeling. No data will be lost.
         </div>
         <div className="flex flex-col justify-center items-center m-2">
           <UpgradeButton tagline="Complete setup" enlarge={false} />
