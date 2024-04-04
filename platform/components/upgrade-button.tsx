@@ -1,14 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
-// PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
-import { set } from "date-fns";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-// PostHog
 import { usePostHog } from "posthog-js/react";
-import React, { useMemo, useState } from "react";
+import React from "react";
 
 import { useToast } from "./ui/use-toast";
 
