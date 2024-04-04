@@ -14,17 +14,17 @@ const HobbyPlanWarning = () => {
       <CardHeader className="text-2xl font-bold tracking-tight">
         <div className="flex items-center">
           <Sparkles className="h-8 w-8 text-green-500 mr-2" />
-          You successfully logged tasks! Now, one last thing...
+          Your completed the tech setup! Now, one last thing...
         </div>
       </CardHeader>
       <CardContent>
         <div className="flex font-semibold  items-center">
           <X className="h-6 w-6 text-red-500" />
-          Automatic evaluation and event detection are currently{" "}
-          <div className=" ml-1">disabled.</div>
+          Automatic evaluation and event detection require a payment method
         </div>
         <div className="text-gray-500">
-          To enable these features, please update your payment method.
+          We temporarily enabled them for you to try out. You can still use
+          phospho for manual labeling and data collection.
         </div>
         <div className="flex flex-col justify-center items-center m-2">
           <UpgradeButton tagline="Complete setup" enlarge={false} />

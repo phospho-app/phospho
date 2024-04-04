@@ -86,22 +86,22 @@ async def send_quota_exceeded_email(org_id: str):
             # Get all the users of the organization
             users = fetch_users_from_org(org_id)
 
-            email_subject = "Action required: max quota exceeded"
+            email_subject = "Action required: Add payment method"
             email_content = """
             <html>
                 <body>
                     <p>Hello,</p>
-                    <p>We're sorry to inform you that your organization has exceeded its quota on phospho. The tasks you log are <b>not</b> analyzed anymore.</p>
-                    <p>We're very happy that you use phospho, and we want to help you continue enjoy it. To unlock phospho full potential, you need to upgrade your plan.</p>
+                    <p>We're very happy that you use phospho, and we want to help you continue enjoy it.</p>
+                    <p>However, it seems that your organization has exceeded its max quota. Your tasks are not analyzed</p>
+                    <p>To unlock phospho full potential, you need to add a payment method.</p>
                     <ul>
                         <li>Go to <a href="https://platform.phospho.ai/org/settings/billing">your Billing settings</a></li>
-                        <li>Click on the "Upgrade Plan" button</li>
-                        <li>You'll be upgraded to a Pro plan. Enjoy increased quotas and <a href="https://platform.phospho.ai/org/settings/billing">advanced features.</a></li>
+                        <li>Click on the "Add payment method" button</li>
+                        <li>Automatic analytics will be enabled. Enjoy <a href="https://platform.phospho.ai/org/settings/billing">advanced features!</a></li>
                     </ul>
-                    <p>Feel free to reach me out to me at <a href="mailto:paul-louis@phospho.app">paul-louis@phospho.app</a> if anything.</p>
+                    <p>Feel free to reach me out at <a href="mailto:paul-louis@phospho.app">paul-louis@phospho.app</a> if anything.</p>
                     <p>Best,</p>
                     <p>Paul, CEO of phospho</p>
-                    <p>PS: Once initiated, full upgrade can take up to 24 hours. Your data won't be lost.</p>
                 </body>
             </html>
             """

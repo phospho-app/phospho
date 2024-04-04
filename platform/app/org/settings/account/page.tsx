@@ -70,13 +70,9 @@ export default function Page() {
           <>
             <UpgradeButton />
             <div className="mt-4">
-              <p>
-                With the Hobby plan, you are limited to 1 collaborator per
-                organization.
-              </p>
               <div>
                 <Link href="/org/settings/billing" className="underline">
-                  Upgrade plan
+                  Add a payment method
                 </Link>{" "}
                 to invite more members to your organization.
               </div>
@@ -84,10 +80,7 @@ export default function Page() {
           </>
         )}
         {plan === "pro" && (
-          <div>
-            With the Pro plan, you can invite up to 15 collaborators per
-            organization.
-          </div>
+          <div>You can invite up to 15 collaborators per organization.</div>
         )}
       </div>
     </div>
