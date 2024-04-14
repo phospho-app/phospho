@@ -834,9 +834,7 @@ def user_feedback(
         )
         return updated_task
     except Exception as e:
-        logger.warning(
-            f"Failed to flag task {task_id} as {flag}. The task_id was not found. Error: {e}"
-        )
+        logger.warning(f"Failed to flag task {task_id} as {flag}. Error: {e}")
         return None
 
 
