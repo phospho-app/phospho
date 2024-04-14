@@ -18,6 +18,7 @@ from app.security.authentification import (
 from app.services.mongo.extractor import run_main_pipeline_on_task
 from app.services.mongo.sessions import get_session_by_id
 from app.services.mongo.tasks import create_task, flag_task, get_task_by_id, update_task
+from loguru import logger
 
 router = APIRouter(tags=["Tasks"])
 
@@ -99,11 +100,24 @@ async def post_flag_task(
             status_code=400,
             detail="Please pass the project_id in the request body to flag the task.",
         )
-    # TODO : Make this optional so we can flag tasks that were not
-    # stored in the database yet
-    task_model = await get_task_by_id(task_id)
+
+    # The task may not exist yet, so we try to fetch it multiple times with exponential backoff
+    delay = 0.1
+    for _ in range(5):
+        try:
+            task_model = await get_task_by_id(task_id)
+            break
+        except Exception:
+            logger.warning(f"Task {task_id} not found, retrying in {delay} seconds")
+            await asyncio.sleep(delay)
+            delay *= 2
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task {task_id} not found after multiple retries",
+        )
+
     if org is not None:
-        # Old behavior: verify that the org owns the project
         await verify_propelauth_org_owns_project_id(org, task_model.project_id)
     elif task_model.project_id != taskFlagRequest.project_id:
         await asyncio.sleep(0.1)
