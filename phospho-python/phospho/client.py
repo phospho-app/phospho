@@ -1,10 +1,5 @@
 """
 phospho client to interact with the phospho API
-
-TODO
-- Add support for pagination and filters
-- Add support for retrying requests and handling rate limits
-- Add support for AsyncIO -> be non blocking in the background
 """
 import os
 from typing import Dict, List, Literal, Optional
@@ -134,7 +129,7 @@ class Client:
         Compare the old and new answers to the context_input with an LLM
         """
         comparison_result = self._post(
-            "/evals/compare/",
+            "/evals/compare",
             payload={
                 "project_id": self._project_id(),
                 "context_input": context_input,
@@ -158,7 +153,7 @@ class Client:
         """
 
         response = self._post(
-            f"/tasks/{task_id}/flag/",
+            f"/tasks/{task_id}/flag",
             payload={
                 "flag": flag,
                 "source": source,
