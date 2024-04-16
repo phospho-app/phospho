@@ -18,9 +18,6 @@ export const NoDataDashboard = () => {
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const LINK_TO_COLAB =
-    "https://colab.research.google.com/drive/1Wv9KHffpfHlQCxK1VGvP_ofnMiOGK83Q";
-
   if (!project_id) {
     return <></>;
   }
@@ -30,7 +27,7 @@ export const NoDataDashboard = () => {
       <CardHeader>
         <CardTitle>
           <div className="text-3xl font-bold tracking-tight mb-1">
-            Almost there! Let's link phospho to your app.
+            Send data to phospho
           </div>
           <div className="text-xl font-normal text-gray-500">
             You log tasks to phospho. We evaluate their success and detect the
@@ -160,35 +157,6 @@ phospho.log({input, output});`}
             </div>
           </TabsContent>
         </Tabs>
-
-        <div className="flex flex-row space-x-4 mt-4">
-          <Alert>
-            <HelpCircleIcon className="h-4 w-4" />
-            <AlertTitle>We're here to help.</AlertTitle>
-            <AlertDescription>
-              <div className="mb-1">
-                Book a free onboarding session with the dev team.
-              </div>
-              <div className="flex flex-row space-x-2">
-                <Link href="https://cal.com/nicolas-oulianov" target="_blank">
-                  <Button>Book free call</Button>
-                </Link>
-                <Link href="https://discord.gg/MXqBJ9pBsx" target="_blank">
-                  <Button variant="secondary">Chat on Discord</Button>
-                </Link>
-              </div>
-            </AlertDescription>
-          </Alert>
-          <Alert>
-            <TestTube2 className="h-4 w-4" />
-            <AlertTitle>No app?</AlertTitle>
-            <AlertDescription>
-              <a className="underline" href={LINK_TO_COLAB} target="_blank">
-                Checkout this Colab notebook
-              </a>
-            </AlertDescription>
-          </Alert>
-        </div>
       </CardContent>
     </Card>
   );

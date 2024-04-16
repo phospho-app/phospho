@@ -1,10 +1,4 @@
-import { useUser } from "@propelauth/nextjs/client";
-import { Circle, Dot, HelpCircle, LifeBuoy } from "lucide-react";
-import Link from "next/link";
-import { usePostHog } from "posthog-js/react";
-import React from "react";
-
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +10,13 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
+import { useUser } from "@propelauth/nextjs/client";
+import { DiscordLogoIcon } from "@radix-ui/react-icons";
+import { Dot, HelpCircle, LifeBuoy, MailIcon } from "lucide-react";
+import Link from "next/link";
+import { usePostHog } from "posthog-js/react";
+import React from "react";
 
 export function NavBarHelp() {
   const { user } = useUser();
@@ -30,10 +30,16 @@ export function NavBarHelp() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setHasClicked(true)}
           className="text-muted-foreground hover:text-primary"
+          onClick={() => {
+            setHasClicked(true);
+          }}
         >
-          <HelpCircle className="z-0" />
+          {/* // Add a red dot on the top right of the help icon */}
+          <div className="relative h-6 w-6">
+            <Dot className="absolute text-red-500 z-10 -top-4 -right-4 w-10 h-10" />
+            <HelpCircle className="z-0 w-6 h-6" />
+          </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -49,14 +55,48 @@ export function NavBarHelp() {
             }
           >
             <div className="flex items-center">
-              <LifeBuoy className="w-4 h-4 mr-1" />
+              <LifeBuoy className="w-6 h-6 mr-2" />
               <span> Documentation</span>
             </div>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger>Contact us</DropdownMenuSubTrigger>
+          <DropdownMenuSubTrigger>Get started</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem>
+              <Link
+                href="https://docs.phospho.ai/getting-started"
+                target="_blank"
+              >
+                Quickstart
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link
+                href="https://colab.research.google.com/drive/1Wv9KHffpfHlQCxK1VGvP_ofnMiOGK83Q"
+                target="_blank"
+              >
+                Example Colab notebook
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+          <Link href="https://discord.gg/MXqBJ9pBsx" target="_blank">
+            <div className="flex items-center">
+              <DiscordLogoIcon className="w-6 h-6 mr-2" />
+              Join Discord
+            </div>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <div className="flex items-center">
+              <MailIcon className="w-6 h-6 mr-2" />
+              Contact us
+            </div>
+          </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             <DropdownMenuItem>
               <Link

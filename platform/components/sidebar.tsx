@@ -1,6 +1,5 @@
 "use client";
 
-import CreateProjectButton from "@/components/navbar/create-project-button";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { dataStateStore } from "@/store/store";
@@ -8,8 +7,6 @@ import { Sparkles, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { SelectProjectButton } from "./navbar/select-project-dropdown";
-// zustand state management
 import { Card, CardContent, CardHeader } from "./ui/card";
 import UpgradeButton from "./upgrade-button";
 
@@ -18,7 +15,6 @@ export function Sidebar() {
     (state) => state.selectedOrgMetadata,
   );
   const hasTasks = dataStateStore((state) => state.hasTasks);
-
   const pathname = usePathname();
 
   return (
@@ -184,11 +180,11 @@ export function Sidebar() {
                   <div>
                     <div className="flex items-baseline">
                       <Sparkles className="h-4 w-4 text-green-500 mr-1" />
-                      <h2 className="font-semibold mt-4 mb-2">
-                        Complete setup now
+                      <h2 className="font-semibold mt-4 mb-1">
+                        Complete setup
                       </h2>
                     </div>
-                    <p className="mb-2">
+                    <p className="mb-2 text-sm">
                       Enable automatic evaluation and event detection
                     </p>
                     <div className="flex justify-center">
