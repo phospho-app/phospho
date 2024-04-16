@@ -98,8 +98,8 @@ export const SendDataAlertDialog = ({
             </AlertDialogTitle>
             <AlertDialogDescription>
               <p>
-                phospho detects events in the text data of your LLM app. Start
-                sending data to phospho to get insights.
+                phospho detects events in the text data of your LLM app. We'll
+                show you how to get started depending on where you are.
               </p>
             </AlertDialogDescription>
           </div>
@@ -112,9 +112,6 @@ export const SendDataAlertDialog = ({
       <div className="grid grid-cols-5 gap-2 w-full h-full overflow-auto">
         <SidebarSendData setOpen={setOpen} />
         <div className="col-span-4 overflow-auto overflow-y-auto space-y-4 flex flex-col justify-between">
-          <div className="text-lg font-semibold">
-            What's the situation of your LLM app?
-          </div>
           <Card>
             <CardHeader>
               <CardTitle>Option 1: I need to start storing logs.</CardTitle>
@@ -148,11 +145,10 @@ export const SendDataAlertDialog = ({
                   <CopyBlock
                     text={`import phospho
               
-phospho.init(api_key="YOUR_API_KEY", project_id="${project_id}") 
+phospho.init(api_key="YOUR_API_KEY", project_id="${project_id}")
 
 input_str = "Hello! This is what the user asked to the system"
 output_str = "This is the response showed to the user by the app."
-
 phospho.log(input=input_str, output=output_str)`}
                     language={"python"}
                     showLineNumbers={false}
@@ -181,7 +177,6 @@ phospho.init({apiKey: "YOUR_API_KEY", projectId: "${project_id}"});
 
 const input = "Hello! This is what the user asked to the system";
 const output = "This is the response showed to the user by the app.";
-
 phospho.log({input, output});`}
                     language={"javascript"}
                     showLineNumbers={false}
@@ -201,14 +196,9 @@ phospho.log({input, output});`}
                     text={`curl -X POST https://api.phospho.ai/v2/log/${project_id} \\
 -H "Authorization: Bearer $PHOSPHO_API_KEY" \\
 -H "Content-Type: application/json" \\
--d '{
-    "batched_log_events": [
-        {
-            "input": "your_input",
-            "output": "your_output"
-        }
-    ]
-}'`}
+-d '{"batched_log_events": [
+      {"input": "your_input", "output": "your_output"}
+]}'`}
                     language={"bash"}
                     showLineNumbers={false}
                     theme={dracula}
@@ -242,6 +232,9 @@ phospho.log({input, output});`}
               <CardDescription>
                 Coming soon: connect your database to phospho.
               </CardDescription>
+              <Link href="mailto:contact@phospho.app" target="_blank">
+                <Button variant="outline">Get early access</Button>
+              </Link>
             </CardHeader>
           </Card>
           <Card>
@@ -251,17 +244,17 @@ phospho.log({input, output});`}
                 Discover what's possible with phospho.
               </CardDescription>
               <div className="flex space-x-2">
-                <Link
-                  href="https://colab.research.google.com/drive/1Wv9KHffpfHlQCxK1VGvP_ofnMiOGK83Q"
-                  target="_blank"
-                >
-                  <Button variant="outline">Example Colab notebook</Button>
-                </Link>
                 <Link href="https://www.youtube.com/watch?v=yQrRULUEiYM">
                   <Button variant="outline">
                     <MonitorPlay className="h-4 w-4 mr-2" />
                     Watch demo
                   </Button>
+                </Link>
+                <Link
+                  href="https://colab.research.google.com/drive/1Wv9KHffpfHlQCxK1VGvP_ofnMiOGK83Q"
+                  target="_blank"
+                >
+                  <Button variant="outline">Example Colab notebook</Button>
                 </Link>
               </div>
             </CardHeader>
