@@ -56,7 +56,7 @@ function WhatAreTasks() {
       <Card>
         <CardContent className={CARD_STYLE}>
           <div>Your Users interact with an Assistant.</div>
-          <div className="pb-10">
+          <div className="pb-4">
             We call "task" every meaningful interaction.
           </div>
           <div className="flex flex-col justify-center text-sm font-normal space-y-2">

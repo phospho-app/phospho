@@ -46,7 +46,7 @@ const APIKeyAndProjectId = () => {
   }
 
   return (
-    <div className="flex flex-grow items-center space-x-4">
+    <div className="flex items-center space-x-4">
       <Link
         href={`${process.env.NEXT_PUBLIC_AUTH_URL}/org/api_keys/${selectedOrgId}`}
         target="_blank"
@@ -54,7 +54,7 @@ const APIKeyAndProjectId = () => {
         <Button className="w-96">Create phospho API key</Button>
       </Link>
 
-      <div className="flex flex-grow items-center">
+      <div className="flex items-center">
         <span className="w-32">Project id:</span>
         <Input value={project_id}></Input>
         <Button
@@ -69,6 +69,10 @@ const APIKeyAndProjectId = () => {
       </div>
     </div>
   );
+};
+
+const ToggleButton = ({ children }: { children: React.ReactNode }) => {
+  return <div className="text-xl">{children}</div>;
 };
 
 export const SendDataAlertDialog = ({
@@ -89,7 +93,7 @@ export const SendDataAlertDialog = ({
   }
 
   return (
-    <AlertDialogContent className="w-3/4 h-3/4">
+    <AlertDialogContent className="h-3/4 max-w-3/4">
       <AlertDialogHeader>
         <div className="flex justify-between">
           <div>
@@ -109,12 +113,12 @@ export const SendDataAlertDialog = ({
           />
         </div>
       </AlertDialogHeader>
-      <div className="grid grid-cols-5 gap-2 w-full h-full overflow-auto">
+      <div className="grid grid-cols-5 gap-2 overflow-y-auto">
         <SidebarSendData setOpen={setOpen} />
-        <div className="col-span-4 overflow-auto overflow-y-auto space-y-4 flex flex-col justify-between">
+        <div className="col-span-4 overflow-y-auto space-y-4 flex flex-col justify-between">
           <Card>
             <CardHeader>
-              <CardTitle>Option 1: I need to start storing logs.</CardTitle>
+              <CardTitle>I need to store logs.</CardTitle>
               <CardDescription>
                 What's the programming language of your app?
               </CardDescription>
@@ -124,10 +128,18 @@ export const SendDataAlertDialog = ({
                 onValueChange={(value) => setSelectedTab(value)}
                 className="justify-start"
               >
-                <ToggleGroupItem value="python">Python</ToggleGroupItem>
-                <ToggleGroupItem value="javascript">JavaScript</ToggleGroupItem>
-                <ToggleGroupItem value="api">API</ToggleGroupItem>
-                <ToggleGroupItem value="other">Other</ToggleGroupItem>
+                <ToggleGroupItem value="python">
+                  <ToggleButton>Python</ToggleButton>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="javascript">
+                  <ToggleButton>JavaScript</ToggleButton>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="api">
+                  <ToggleButton>API</ToggleButton>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="other">
+                  <ToggleButton>Other</ToggleButton>
+                </ToggleGroupItem>
               </ToggleGroup>
 
               {selectedTab == "python" && (
@@ -228,7 +240,7 @@ phospho.log({input, output});`}
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Option 2: I'm already storing logs.</CardTitle>
+              <CardTitle>I already store logs.</CardTitle>
               <CardDescription>
                 Coming soon: connect your database to phospho.
               </CardDescription>
@@ -239,7 +251,7 @@ phospho.log({input, output});`}
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Option 3: I don't have an LLM app.</CardTitle>
+              <CardTitle>I don't have an LLM app.</CardTitle>
               <CardDescription>
                 Discover what's possible with phospho.
               </CardDescription>
