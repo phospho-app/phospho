@@ -412,9 +412,8 @@ class Workload:
         # Create the jobs from the configuration
         for event_name, event in project_events.items():
             logger.debug(f"Add event detection job for event {event_name}")
-
-            # We stick to LLM evaluation
-            if event.regex_pattern is None:
+            if event.detection_engine == "llm_detection":
+                # LLM self eval
                 workload.add_job(
                     Job(
                         id=event_name,
@@ -427,9 +426,11 @@ class Workload:
                         metadata=event.model_dump(),
                     )
                 )
-
-            # We use a regex pattern to detect the event
-            else:
+            elif (
+                event.detection_engine == "regex_detection"
+                and event.regex_pattern is not None
+            ):
+                # Regex pattern to detect the event
                 workload.add_job(
                     Job(
                         id=event_name,
@@ -441,6 +442,10 @@ class Workload:
                         ),
                         metadata=event.model_dump(),
                     )
+                )
+            else:
+                logger.warning(
+                    f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}, project {project_config.id}"
                 )
 
         return workload
