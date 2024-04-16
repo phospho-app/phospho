@@ -65,7 +65,7 @@ export function SelectProjectButton() {
       defaultValue={selectedProjectName}
     >
       <SelectTrigger>
-        Project
+        <span className="mr-1">Project</span>
         <SelectValue
           asChild={true}
           children={<div>{selectedProjectName}</div>}
