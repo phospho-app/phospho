@@ -2,7 +2,7 @@
 
 ## Local install and setup
 
-This project use Poetry and Python 3.11
+This project uses Poetry and Python 3.11
 
 ```bash
 cd backend

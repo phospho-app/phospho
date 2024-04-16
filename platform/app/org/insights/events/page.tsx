@@ -80,7 +80,7 @@ export default function Page() {
           <h2 className="text-2xl font-bold tracking-tight pt-4">
             Tracked events
           </h2>
-          <span className="text-gray-500">
+          <span className="text-gray-500 text-sm">
             Set up events to be automatically detected in logs.{" "}
             <Link
               className="underline "

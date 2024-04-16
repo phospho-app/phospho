@@ -23,6 +23,7 @@ import phospho.lab.job_library as job_library
 
 from .models import (
     EventConfig,
+    EvenConfigDeterminist,
     EventDefinition,
     JobConfig,
     JobResult,
@@ -411,18 +412,41 @@ class Workload:
         # Create the jobs from the configuration
         for event_name, event in project_events.items():
             logger.debug(f"Add event detection job for event {event_name}")
-            workload.add_job(
-                Job(
-                    id=event_name,
-                    job_function=job_library.event_detection,
-                    config=EventConfig(
-                        event_name=event_name,
-                        event_description=event.description,
-                        event_scope=event.detection_scope,
-                    ),
-                    metadata=event.model_dump(),
+            if event.detection_engine == "llm_detection":
+                # LLM self eval
+                workload.add_job(
+                    Job(
+                        id=event_name,
+                        job_function=job_library.event_detection,
+                        config=EventConfig(
+                            event_name=event_name,
+                            event_description=event.description,
+                            event_scope=event.detection_scope,
+                        ),
+                        metadata=event.model_dump(),
+                    )
                 )
-            )
+            elif (
+                event.detection_engine == "regex_detection"
+                and event.regex_pattern is not None
+            ):
+                # Regex pattern to detect the event
+                workload.add_job(
+                    Job(
+                        id=event_name,
+                        job_function=job_library.regex_event_detection,
+                        config=EvenConfigDeterminist(
+                            event_name=event_name,
+                            regex_pattern=event.regex_pattern,
+                            event_scope=event.detection_scope,
+                        ),
+                        metadata=event.model_dump(),
+                    )
+                )
+            else:
+                logger.warning(
+                    f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}, project {project_config.id}"
+                )
 
         return workload
 

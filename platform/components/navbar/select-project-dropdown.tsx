@@ -3,12 +3,16 @@
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// zustand state management
 import { dataStateStore, navigationStateStore } from "@/store/store";
+
+import CreateProjectButton from "./create-project-button";
 
 export function SelectProjectButton() {
   // Zustand state management
@@ -56,19 +60,26 @@ export function SelectProjectButton() {
   }
 
   return (
-    <div className="px-3 py-2">
-      <Select
-        onValueChange={handleValueChange}
-        defaultValue={selectedProjectName}
+    <Select
+      onValueChange={handleValueChange}
+      defaultValue={selectedProjectName}
+    >
+      <SelectTrigger>
+        <span className="mr-1">Project</span>
+        <SelectValue
+          asChild={true}
+          children={<div>{selectedProjectName}</div>}
+          id={project_id}
+        />
+      </SelectTrigger>
+      <SelectContent
+        position="popper"
+        className="overflow-y-auto max-h-[40rem]"
       >
-        <SelectTrigger>
-          <SelectValue
-            asChild={true}
-            children={<div>{selectedProjectName}</div>}
-            id={project_id}
-          />
-        </SelectTrigger>
-        <SelectContent position="popper">
+        <SelectGroup>
+          <CreateProjectButton />
+          <SelectSeparator />
+          <SelectLabel>Projects ({`${projects?.length}`})</SelectLabel>
           {projects.map((project) => (
             <SelectItem
               key={project.id}
@@ -78,8 +89,8 @@ export function SelectProjectButton() {
               {project.project_name}
             </SelectItem>
           ))}
-        </SelectContent>
-      </Select>
-    </div>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   );
 }
