@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { dataStateStore } from "@/store/store";
-import { Sparkles, Star, Users } from "lucide-react";
+import { Plug, Sparkles, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 

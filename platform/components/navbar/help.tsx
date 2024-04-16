@@ -18,6 +18,12 @@ import Link from "next/link";
 import { usePostHog } from "posthog-js/react";
 import React from "react";
 
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
+
 export function NavBarHelp() {
   const { user } = useUser();
   const posthog = usePostHog();
@@ -27,20 +33,31 @@ export function NavBarHelp() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:text-primary"
-          onClick={() => {
-            setHasClicked(true);
-          }}
-        >
-          {/* // Add a red dot on the top right of the help icon */}
-          <div className="relative h-6 w-6">
-            <Dot className="absolute text-red-500 z-10 -top-4 -right-4 w-10 h-10" />
-            <HelpCircle className="z-0 w-6 h-6" />
-          </div>
-        </Button>
+        <HoverCard openDelay={50} closeDelay={50}>
+          <HoverCardTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-primary"
+              onClick={() => {
+                setHasClicked(true);
+              }}
+            >
+              {/* // Add a red dot on the top right of the help icon */}
+              <div className="relative h-6 w-6">
+                <Dot className="absolute text-red-500 z-10 -top-4 -right-4 w-10 h-10" />
+                <HelpCircle className="z-0 w-6 h-6" />
+              </div>
+            </Button>
+          </HoverCardTrigger>
+          <HoverCardContent
+            className="m-0 text-xs text-background bg-foreground"
+            align="center"
+            avoidCollisions={false}
+          >
+            <span>Help</span>
+          </HoverCardContent>
+        </HoverCard>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem>
