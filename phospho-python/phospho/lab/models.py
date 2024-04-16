@@ -99,3 +99,9 @@ class EventConfig(JobConfig):
     event_name: str
     event_description: str
     event_scope: DetectionScope
+
+
+class EvenConfigDeterminist(JobConfig):
+    event_name: str
+    regex_pattern: str
+    event_scope: DetectionScope

@@ -37,6 +37,7 @@ import { DetectionEngine, DetectionScope } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { useSWRConfig } from "swr";
 import { z } from "zod";
@@ -82,10 +83,13 @@ export default function CreateEvent({
       .max(1000, "Description must be at most 1000 characters long."),
     webhook: z.string().optional(),
     webhook_auth_header: z.string().optional(),
-    detection_engine: z.enum(["llm_detection"]).default("llm_detection"),
+    detection_engine: z
+      .enum(["llm_detection", "regex_detection"])
+      .default("llm_detection"),
     detection_scope: z
       .enum(["task", "session", "task_input_only", "task_output_only"])
       .default("task"),
+    regex_pattern: z.string().optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -97,6 +101,7 @@ export default function CreateEvent({
       webhook_auth_header: eventToEdit?.webhook_headers?.Authorization ?? "",
       detection_engine: eventToEdit?.detection_engine ?? "llm_detection",
       detection_scope: eventToEdit?.detection_scope ?? "task",
+      regex_pattern: eventToEdit?.regex_pattern ?? "",
     },
   });
 
@@ -129,6 +134,7 @@ export default function CreateEvent({
         : null,
       detection_engine: values.detection_engine as DetectionEngine,
       detection_scope: values.detection_scope as DetectionScope,
+      regex_pattern: values.regex_pattern,
     };
     console.log("Updated selected project:", selectedProject);
 
@@ -240,19 +246,20 @@ export default function CreateEvent({
           <Accordion type="single" collapsible className="mb-2">
             <AccordionItem value="webhook">
               <AccordionTrigger>
-                <span className="text-sm flex flex-row items-center text-gray-500 ">
+                <span className="text-sm flex flex-row items-center text-gray-500 pl-2">
                   Advanced settings (optional)
                 </span>
               </AccordionTrigger>
-              <AccordionContent className="space-y-4">
+              <AccordionContent className="space-y-5">
                 <FormField
                   control={form.control}
                   name="webhook"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Webhook (optional)</FormLabel>
+                      <FormLabel className="ml-4">Webhook (optional)</FormLabel>
                       <FormControl>
                         <Input
+                          className="ml-4 w-4/5"
                           placeholder="https://your-api.com/webhook"
                           {...field}
                         />
@@ -265,9 +272,15 @@ export default function CreateEvent({
                   name="webhook_auth_header"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Authorization Header</FormLabel>
+                      <FormLabel className="ml-4">
+                        Authorization Header
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="Bearer sk-..." {...field} />
+                        <Input
+                          className="ml-4 w-4/5"
+                          placeholder="Bearer sk-..."
+                          {...field}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -276,7 +289,7 @@ export default function CreateEvent({
                   control={form.control}
                   name="detection_engine"
                   render={({ field }) => (
-                    <FormItem className="w-1/2">
+                    <FormItem className="w-4/5 ml-4">
                       <FormLabel>Engine</FormLabel>
                       <Select
                         onValueChange={field.onChange}
@@ -293,6 +306,9 @@ export default function CreateEvent({
                           <SelectItem value="llm_detection">
                             LLM Detection
                           </SelectItem>
+                          <SelectItem value="regex_detection">
+                            Regex Detection
+                          </SelectItem>
                           <SelectItem disabled value="other">
                             More coming soon!
                           </SelectItem>
@@ -301,6 +317,37 @@ export default function CreateEvent({
                     </FormItem>
                   )}
                 />
+                {form.watch("detection_engine") === "regex_detection" && (
+                  <FormField
+                    control={form.control}
+                    name="regex_pattern"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="ml-4">
+                          Regex pattern to match -{" "}
+                        </FormLabel>
+                        <Link
+                          className="hover:underline hover:text-blue-500"
+                          href="https://regexr.com/"
+                        >
+                          {" "}
+                          Test your regex pattern here
+                        </Link>{" "}
+                        <FormMessage className="ml-4">
+                          Be careful, "happy" will also match "unhappy" unless
+                          you add whitespaces like so: " happy "
+                        </FormMessage>
+                        <FormControl>
+                          <Input
+                            className="ml-4 w-4/5"
+                            placeholder="Enter your regex pattern to positively identify tasks e.g.: ' happy | joyful | excited ' or '^[0-9]{5}$'"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )}
               </AccordionContent>
             </AccordionItem>
           </Accordion>
