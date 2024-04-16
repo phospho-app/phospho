@@ -1,6 +1,6 @@
 "use client";
 
-import CreateProjectButton from "@/components/projects/create-project-button";
+import CreateProjectButton from "@/components/navbar/create-project-button";
 import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
 import TaskProgress from "@/components/settings/tasks-quota";

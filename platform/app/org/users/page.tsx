@@ -2,7 +2,13 @@
 
 import TopRowKpis from "@/components/insights/top-row";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { UsersTable } from "@/components/users/users-table";
 import { authFetcher } from "@/lib/fetcher";
 import { UserMetadata } from "@/models/models";
@@ -116,25 +122,26 @@ const Users = () => {
   return (
     <>
       {userCount === 0 && (
-        <Card>
+        <Card className="bg-secondary">
           <CardHeader>
-            <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-              Get to meet your users <HeartHandshake className="ml-2 h-6 w-6" />
-            </CardTitle>
-            <CardContent>
-              <p className="text-gray-500">
-                Discover who your users are and what they do in your app. Pass a
-                user_id when logging metadata to get started.
-              </p>
-              <div className="flex flex-col justify-center items-center m-2">
-                <Link
-                  href="https://docs.phospho.ai/guides/sessions-and-users#users"
-                  target="_blank"
-                >
-                  <Button variant="default">Read the guide</Button>
-                </Link>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
+                  Breakdown tasks and sessions by user{" "}
+                  <HeartHandshake className="ml-2 h-6 w-6" />
+                </CardTitle>
+                <CardDescription>
+                  Add a user_id in metadata when logging tasks to group them by
+                  user.
+                </CardDescription>
               </div>
-            </CardContent>
+              <Link
+                href="https://docs.phospho.ai/guides/sessions-and-users#users"
+                target="_blank"
+              >
+                <Button variant="default">Set up user tracking</Button>
+              </Link>
+            </div>
           </CardHeader>
         </Card>
       )}

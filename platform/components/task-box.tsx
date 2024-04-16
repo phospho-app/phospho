@@ -61,7 +61,7 @@ const InteractiveEventBadge = ({
               {event.event_name}
             </Badge>
           </HoverCardTrigger>
-          <HoverCardContent side="top" className="text-sm text-left">
+          <HoverCardContent side="top" className="text-sm text-left w-64">
             <h2 className="font-bold">{event.event_name}</h2>
             <p>Source: {event.source}</p>
             <p>{eventDefinition.description}</p>
@@ -183,7 +183,7 @@ const AddEvent = ({
                   {event_name}
                 </DropdownMenuItem>
               </HoverCardTrigger>
-              <HoverCardContent side="right" className="text-sm">
+              <HoverCardContent side="right" className="text-sm w-64">
                 <h2 className="font-bold">{event_name}</h2>
                 <p>{event.description}</p>
               </HoverCardContent>
