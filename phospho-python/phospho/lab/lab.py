@@ -23,6 +23,7 @@ import phospho.lab.job_library as job_library
 
 from .models import (
     EventConfig,
+    EvenConfigDeterminist,
     EventDefinition,
     JobConfig,
     JobResult,
@@ -411,18 +412,36 @@ class Workload:
         # Create the jobs from the configuration
         for event_name, event in project_events.items():
             logger.debug(f"Add event detection job for event {event_name}")
-            workload.add_job(
-                Job(
-                    id=event_name,
-                    job_function=job_library.event_detection,
-                    config=EventConfig(
-                        event_name=event_name,
-                        event_description=event.description,
-                        event_scope=event.detection_scope,
-                    ),
-                    metadata=event.model_dump(),
+
+            # We stick to LLM evaluation
+            if event.regex_pattern is None:
+                workload.add_job(
+                    Job(
+                        id=event_name,
+                        job_function=job_library.event_detection,
+                        config=EventConfig(
+                            event_name=event_name,
+                            event_description=event.description,
+                            event_scope=event.detection_scope,
+                        ),
+                        metadata=event.model_dump(),
+                    )
                 )
-            )
+
+            # We use a regex pattern to detect the event
+            else:
+                workload.add_job(
+                    Job(
+                        id=event_name,
+                        job_function=job_library.regex_event_detection,
+                        config=EvenConfigDeterminist(
+                            event_name=event_name,
+                            regex_pattern=event.regex_pattern,
+                            event_scope=event.detection_scope,
+                        ),
+                        metadata=event.model_dump(),
+                    )
+                )
 
         return workload
 
