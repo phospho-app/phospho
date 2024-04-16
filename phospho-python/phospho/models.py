@@ -33,6 +33,11 @@ DetectionScope = Literal[
     "task_output_only",
 ]
 
+DetectionEngine = Literal[
+    "llm_detection",
+    "regex_detection",
+]
+
 
 class EventDefinition(BaseModel):
     id: str = Field(default_factory=generate_uuid)
@@ -41,8 +46,9 @@ class EventDefinition(BaseModel):
     description: str
     webhook: Optional[str] = None
     webhook_headers: Optional[dict] = None
-    detection_engine: Literal["llm_detection"] = "llm_detection"
+    detection_engine: DetectionEngine = "llm_detection"
     detection_scope: DetectionScope = "task"
+    regex_pattern: Optional[str] = None
 
 
 class Event(BaseModel):

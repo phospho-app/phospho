@@ -566,3 +566,56 @@ def get_nb_tokens(
         result_type=ResultType.literal,
         value=num_tokens_from_messages([message.model_dump()], model, tokenizer),
     )
+
+
+async def regex_event_detection(
+    message: Message,
+    event_name: str,
+    regex_pattern: str,
+    event_scope: DetectionScope = "task",
+) -> JobResult:
+    """
+    Uses regexes to detect if an event is present in a message.
+    """
+    from re import search
+
+    listExchangeToSearch = []
+    if event_scope == "task":
+        listExchangeToSearch = message.latest_interaction()
+
+    elif event_scope == "task_input_only":
+        message_list = message.as_list()
+        # Filter to keep only the user messages
+        listExchangeToSearch = [m.content for m in message_list if m.role == "User"]
+
+    elif event_scope == "task_output_only":
+        message_list = message.as_list()
+        # Filter to keep only the assistant messages
+        listExchangeToSearch = [
+            m.content for m in message_list if m.role == "Assistant"
+        ]
+        print(listExchangeToSearch)
+
+    elif event_scope == "session":
+        listExchangeToSearch = [
+            message.transcript(with_role=True, with_previous_messages=True)
+        ]
+
+    text = " ".join(listExchangeToSearch)
+
+    try:
+        result = search(regex_pattern, text)
+        found = result is not None
+
+        return JobResult(
+            result_type=ResultType.bool,
+            value=found,
+            logs=[text, regex_pattern],
+        )
+
+    except Exception as e:
+        return JobResult(
+            result_type=ResultType.error,
+            value=None,
+            logs=[str(e)],
+        )
