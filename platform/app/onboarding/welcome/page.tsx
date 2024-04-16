@@ -63,6 +63,8 @@ function WhatAreTasks() {
 }
 
 function WhatIsEvaluation() {
+  const [thumbs, set_thumbs] = useState<"up" | "down" | null>(null);
+
   return (
     <div className="p-1">
       <Card>
@@ -76,9 +78,24 @@ function WhatIsEvaluation() {
             You control this by giving examples to phospho. Label tasks, collect
             user feedback, do your thing...
           </div>
-          <div className="flex flex-row items-bottom p-2 space-x-2">
-            <ThumbsDown className="w-8 h-8" />
-            <ThumbsUp className="w-8 h-8" />
+          <div className="flex justify-center flex-grow">
+            <div>
+              <div className="flex flex-row items-center p-2 space-x-4">
+                <ThumbsDown
+                  className={`w-16 h-16 hover:text-red-500 cursor-pointer rounded-sm p-1
+                  ${thumbs === "down" ? "text-white bg-red-500 hover:text-white" : ""}`}
+                  onClick={() => set_thumbs("down")}
+                />
+                <ThumbsUp
+                  className={`w-16 h-16 hover:text-green-500 cursor-pointer rounded-sm p-1
+                  ${thumbs === "up" ? "text-white bg-green-500 hover:text-white" : ""}`}
+                  onClick={() => set_thumbs("up")}
+                />
+              </div>
+              <div className="text-gray-500 font-normal text-sm italic">
+                Click on the thumbs!
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
