@@ -94,7 +94,7 @@ async def delete_project(
 @router.post(
     "/projects/{project_id}",
     response_model=Project,
-    description="Update a project. Only the fields that are specified in the request will be updated. Filed specified will be overwritten (WARNING for nested fields like settings))",
+    description="Update a project. Only the fields that are specified in the request will be updated. Specified fields will be overwritten (WARNING for nested fields like settings))",
 )
 async def post_update_project(
     project_id: str,

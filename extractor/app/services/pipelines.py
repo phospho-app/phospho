@@ -30,7 +30,7 @@ async def task_event_detection_pipeline(
     logger.info(f"Run the event detection pipeline for task {task.id}")
     mongo_db = await get_mongo_db()
 
-    # Get the data of all the task before the task[task_id]
+    # Get the data of all the tasks before task[task_id]
     previous_tasks = await fetch_previous_tasks(task.id)
     task_data = previous_tasks[-1]
     if len(previous_tasks) > 1:
