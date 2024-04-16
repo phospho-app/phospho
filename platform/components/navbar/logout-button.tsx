@@ -16,9 +16,7 @@ const LogoutButton: React.FC = () => {
   const setproject_id = navigationStateStore((state) => state.setproject_id);
 
   return (
-    <Button
-      className="text-muted-foreground hover:text-primary"
-      variant="ghost"
+    <div
       onClick={async () => {
         // Reset the navigation store
         setSelectedOrgId(null);
@@ -27,7 +25,7 @@ const LogoutButton: React.FC = () => {
       }}
     >
       Log Out
-    </Button>
+    </div>
   );
 };
 
