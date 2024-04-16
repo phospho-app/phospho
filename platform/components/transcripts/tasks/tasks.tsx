@@ -1,11 +1,23 @@
 "use client";
 
-import { NoDataDashboard } from "@/components/dashboard/no-data-dashboard";
+import { SendDataAlertDialog } from "@/components/dashboard/no-data-dashboard";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
-import { ThumbsDown, ThumbsUp } from "lucide-react";
+import { Plug, ThumbsDown, ThumbsUp, Unplug } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect } from "react";
 
@@ -24,6 +36,8 @@ const Tasks: React.FC = () => {
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
+
+  const [open, setOpen] = React.useState(false);
 
   useEffect(() => {
     if (tasksWithEvents !== null && tasksWithEvents.length > 0) {
@@ -45,100 +59,81 @@ const Tasks: React.FC = () => {
 
   return (
     <>
-      <div className="hidden h-full flex-1 flex-col space-y-8 p-2 md:flex mx-2 relative">
-        <div>
-          {/* {hasTasks === false && (
-            <Card className="mb-4">
-              <CardHeader className="text-2xl font-bold tracking-tight">
-                A bit empty in here...
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-500">
-                  Tasks are the key user interactions in your app. Get a bird's
-                  eye view of your user's activity by logging tasks to phospho.
-                </p>
-                <div className="flex flex-col justify-center items-center m-2">
-                  <Link
-                    href="https://docs.phospho.ai/getting-started"
-                    target="_blank"
-                  >
-                    <Button variant="default">
-                      Setup task logging in your app
-                    </Button>
-                  </Link>
+      {hasTasks === true &&
+        hasLabelledTasks !== null &&
+        selectedOrgMetadata?.plan === "pro" &&
+        hasLabelledTasks?.has_enough_labelled_tasks === false && (
+          <Card className="bg-secondary">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+                <div className="flex flex-row place-items-center">
+                  <span className="mr-2">
+                    Label{" "}
+                    {hasLabelledTasks.enough_labelled_tasks -
+                      hasLabelledTasks.currently_labelled_tasks}{" "}
+                    tasks to improve automatic task evaluation
+                  </span>
+                  <ThumbsDown size={24} /> <ThumbsUp size={24} />
                 </div>
-              </CardContent>
-            </Card>
-          )} */}
-          {hasTasks === false && (
-            <>
-              <div className="absolute z-10 w-10/12 m-auto left-0 right-0 top-0 bottom-0">
-                <NoDataDashboard />
+              </CardTitle>
+              <CardDescription className="flex justify-between">
+                <div className="flex-col text-gray-500 space-y-0.5">
+                  <p>
+                    Automatic evaluations are made with your labels. We only
+                    found {hasLabelledTasks.currently_labelled_tasks}/
+                    {hasLabelledTasks.enough_labelled_tasks} labels.
+                  </p>
+                  <p>
+                    Go to a task to label it or automate the process with the
+                    API.
+                  </p>
+                </div>
+                <Link
+                  href="https://docs.phospho.ai/guides/evaluation"
+                  target="_blank"
+                >
+                  <Button variant="default">Learn more</Button>
+                </Link>
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+      {hasTasks === false && (
+        <Card className="bg-secondary">
+          <CardHeader>
+            <div className="flex">
+              <Unplug className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+              <div className="flex flex-grow justify-between items-center">
+                <div>
+                  <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+                    Start sending data to phospho
+                  </CardTitle>
+                  <CardDescription className="flex justify-between">
+                    <div>We'll show you how to get started</div>
+                  </CardDescription>
+                </div>
+                <AlertDialog open={open}>
+                  <AlertDialogTrigger>
+                    <Button
+                      variant="default"
+                      onClick={() => {
+                        setOpen(true);
+                      }}
+                    >
+                      Start sending data
+                    </Button>
+                  </AlertDialogTrigger>
+                  <SendDataAlertDialog setOpen={setOpen} />
+                </AlertDialog>
               </div>
-            </>
-          )}
-          <div
-            className={
-              hasTasks === true
-                ? "container px-0 space-y-2"
-                : "container px-0 space-y-2 blur-sm"
-            }
-          >
-            <TasksDataviz />
-            {hasTasks === true &&
-              hasLabelledTasks !== null &&
-              selectedOrgMetadata?.plan === "pro" &&
-              hasLabelledTasks?.has_enough_labelled_tasks === false && (
-                <Card className="mb-4">
-                  <CardHeader className="text-2xl font-bold tracking-tight mb-0">
-                    <div className="flex flex-row place-items-center">
-                      <span className="mr-2">
-                        Label{" "}
-                        {hasLabelledTasks.enough_labelled_tasks -
-                          hasLabelledTasks.currently_labelled_tasks}{" "}
-                        tasks to improve automatic task evaluation
-                      </span>
-                      <ThumbsDown size={24} /> <ThumbsUp size={24} />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-500 space-y-0.5">
-                      <p>
-                        Phospho is connected and is automatically evaluating
-                        your tasks.
-                      </p>
-                      <p>
-                        Evaluations are made based on the labels you provide.
-                        However, we only found{" "}
-                        {hasLabelledTasks.currently_labelled_tasks}/
-                        {hasLabelledTasks.enough_labelled_tasks} tasks labelled
-                        by a human.
-                      </p>
-                      <p>
-                        We recommend you label at least{" "}
-                        {hasLabelledTasks.enough_labelled_tasks} tasks.
-                      </p>
-                      <p className="font-bold">
-                        To label tasks, click on the "View" button to label or
-                        automate the process with our API.
-                      </p>
-                    </div>
-                    <div className="flex flex-col justify-center items-center m-2">
-                      <Link
-                        href="https://docs.phospho.ai/guides/evaluation"
-                        target="_blank"
-                      >
-                        <Button variant="default">
-                          Discover evaluation best practices
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            <TasksTable />
-          </div>
-
+            </div>
+          </CardHeader>
+        </Card>
+      )}
+      <div className="hidden h-full flex-1 flex-col space-y-8 p-2 md:flex mx-2 relative">
+        <div className="container px-0 space-y-2">
+          <TasksDataviz />
+          <TasksTable />
           <div className="h-20"></div>
         </div>
       </div>
