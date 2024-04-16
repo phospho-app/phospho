@@ -53,29 +53,6 @@ const Tasks: React.FC = () => {
     <>
       <div className="hidden h-full flex-1 flex-col space-y-8 p-2 md:flex mx-2 relative">
         <div>
-          {/* {hasTasks === false && (
-            <Card className="mb-4">
-              <CardHeader className="text-2xl font-bold tracking-tight">
-                A bit empty in here...
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-500">
-                  Tasks are the key user interactions in your app. Get a bird's
-                  eye view of your user's activity by logging tasks to phospho.
-                </p>
-                <div className="flex flex-col justify-center items-center m-2">
-                  <Link
-                    href="https://docs.phospho.ai/getting-started"
-                    target="_blank"
-                  >
-                    <Button variant="default">
-                      Setup task logging in your app
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          )} */}
           {hasTasks === false && (
             <>
               <div className="absolute z-10 w-10/12 m-auto left-0 right-0 top-0 bottom-0">
