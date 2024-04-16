@@ -2,7 +2,7 @@
 
 import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
 import FetchHasTasksSessions from "@/components/fetch-data/fetch-tasks-sessions";
-import Navbar from "@/components/nav-bar";
+import Navbar from "@/components/navbar/nav-bar";
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
 import { dataStateStore, navigationStateStore } from "@/store/store";

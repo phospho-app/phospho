@@ -1,6 +1,6 @@
 "use client";
 
-import CreateProjectButton from "@/components/projects/create-project-button";
+import CreateProjectButton from "@/components/navbar/create-project-button";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { dataStateStore } from "@/store/store";
@@ -8,7 +8,7 @@ import { Sparkles, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { SelectProjectButton } from "./select-project-dropdown";
+import { SelectProjectButton } from "./navbar/select-project-dropdown";
 // zustand state management
 import { Card, CardContent, CardHeader } from "./ui/card";
 import UpgradeButton from "./upgrade-button";
@@ -23,12 +23,8 @@ export function Sidebar() {
 
   return (
     <>
-      <div className="relative flex-grow max-h-[calc(100vh-6rem)] flex flex-col border-r border-gray-800 py-4 overflow-y-auto">
-        <div className="px-3">
-          <p className=" px-4 font-semibold tracking-tight">Select a project</p>
-          <SelectProjectButton />
-        </div>
-        <div className="px-3">
+      <div className="relative flex-grow max-h-[calc(100vh-6rem)] flex flex-col border-r border-gray-200 py-4 overflow-y-auto">
+        <div>
           <div className="space-y-1">
             <Link href="/org/transcripts/tasks">
               <Button
@@ -178,9 +174,7 @@ export function Sidebar() {
             </Link>
           </div>
         </div>
-        <div className="flex justify-center max-w-100 w-full mt-1">
-          <CreateProjectButton></CreateProjectButton>
-        </div>
+
         <div className="flex justify-center mx-2 mb-4 mt-4">
           {selectedOrgMetadata &&
             selectedOrgMetadata?.plan === "hobby" &&

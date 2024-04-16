@@ -13,8 +13,8 @@ export function CreateProjectButton() {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" className="justify-start">
-          Create a new project
+        <Button variant="default" className="w-full bg-primary">
+          Create new project
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="md:w-1/3">
