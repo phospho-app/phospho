@@ -49,22 +49,25 @@ const Sessions: React.FC = () => {
       {!hasSessions && (
         <Card className="bg-secondary">
           <CardHeader>
-            <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-              Group tasks into sessions
-            </CardTitle>
-            <CardDescription className="flex justify-between">
-              <p className="text-gray-500">
-                Add a session_id when logging tasks to group them into sessions.
-              </p>
-              <div className="flex flex-col justify-center items-center m-2">
-                <Link
-                  href="https://docs.phospho.ai/guides/sessions-and-users#sessions"
-                  target="_blank"
-                >
-                  <Button variant="default">Setup session tracking</Button>
-                </Link>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
+                  Group tasks into sessions
+                </CardTitle>
+                <CardDescription>
+                  <p className="text-gray-500">
+                    Add a session_id when logging tasks to group them into
+                    sessions.
+                  </p>
+                </CardDescription>
               </div>
-            </CardDescription>
+              <Link
+                href="https://docs.phospho.ai/guides/sessions-and-users#sessions"
+                target="_blank"
+              >
+                <Button variant="default">Setup session tracking</Button>
+              </Link>
+            </div>
           </CardHeader>
         </Card>
       )}
