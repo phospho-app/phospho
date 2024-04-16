@@ -35,6 +35,7 @@ resend = "^0.7.2"
 cohere = "^4.45"
 stripe = "^8.2.0"
 python-multipart = "^0.0.9"
+mypy = "^1.9.0"
 
 [tool.poetry.group.dev]
 optional = true

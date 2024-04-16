@@ -88,6 +88,7 @@ export interface Event {
 
 export enum DetectionEngine {
   LLM = "llm_detection",
+  REGEX = "regex_detection",
 }
 
 export enum DetectionScope {
@@ -104,6 +105,7 @@ export interface EventDefinition {
   webhook_headers?: Record<string, string> | null;
   detection_engine?: DetectionEngine;
   detection_scope: DetectionScope;
+  regex_pattern?: string;
 }
 
 export interface ABTest {

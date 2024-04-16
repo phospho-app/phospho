@@ -1,15 +1,12 @@
 "use client";
 
-import CreateProjectButton from "@/components/projects/create-project-button";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { dataStateStore } from "@/store/store";
-import { Sparkles, Star, Users } from "lucide-react";
+import { Plug, Sparkles, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { SelectProjectButton } from "./select-project-dropdown";
-// zustand state management
 import { Card, CardContent, CardHeader } from "./ui/card";
 import UpgradeButton from "./upgrade-button";
 
@@ -18,17 +15,12 @@ export function Sidebar() {
     (state) => state.selectedOrgMetadata,
   );
   const hasTasks = dataStateStore((state) => state.hasTasks);
-
   const pathname = usePathname();
 
   return (
     <>
-      <div className="relative flex-grow max-h-[calc(100vh-6rem)] flex flex-col border-r border-gray-800 py-4 overflow-y-auto">
-        <div className="px-3">
-          <p className=" px-4 font-semibold tracking-tight">Select a project</p>
-          <SelectProjectButton />
-        </div>
-        <div className="px-3">
+      <div className="relative flex-grow max-h-[calc(100vh-6rem)] flex flex-col border-r border-gray-200 py-4 overflow-y-auto">
+        <div>
           <div className="space-y-1">
             <Link href="/org/transcripts/tasks">
               <Button
@@ -178,9 +170,7 @@ export function Sidebar() {
             </Link>
           </div>
         </div>
-        <div className="flex justify-center max-w-100 w-full mt-1">
-          <CreateProjectButton></CreateProjectButton>
-        </div>
+
         <div className="flex justify-center mx-2 mb-4 mt-4">
           {selectedOrgMetadata &&
             selectedOrgMetadata?.plan === "hobby" &&
@@ -190,11 +180,11 @@ export function Sidebar() {
                   <div>
                     <div className="flex items-baseline">
                       <Sparkles className="h-4 w-4 text-green-500 mr-1" />
-                      <h2 className="font-semibold mt-4 mb-2">
-                        Complete setup now
+                      <h2 className="font-semibold mt-4 mb-1">
+                        Complete setup
                       </h2>
                     </div>
-                    <p className="mb-2">
+                    <p className="mb-2 text-sm">
                       Enable automatic evaluation and event detection
                     </p>
                     <div className="flex justify-center">
