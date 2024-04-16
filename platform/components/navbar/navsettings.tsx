@@ -15,7 +15,6 @@ import {
 import { useUser } from "@propelauth/nextjs/client";
 import { Moon, Settings, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
