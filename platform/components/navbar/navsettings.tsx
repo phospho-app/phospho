@@ -18,6 +18,11 @@ import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
 import LogoutButton from "./logout-button";
 
 export function NavBarSettings() {
@@ -29,13 +34,24 @@ export function NavBarSettings() {
     <div className="flex items-center space-x-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-primary"
-          >
-            <Settings />
-          </Button>
+          <HoverCard openDelay={50} closeDelay={50}>
+            <HoverCardTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-primary"
+              >
+                <Settings />
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent
+              className="m-0 text-xs text-background bg-foreground"
+              align="center"
+              avoidCollisions={false}
+            >
+              <span>Settings</span>
+            </HoverCardContent>
+          </HoverCard>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>

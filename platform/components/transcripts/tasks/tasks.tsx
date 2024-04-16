@@ -1,6 +1,6 @@
 "use client";
 
-import { NoDataDashboard } from "@/components/dashboard/no-data-dashboard";
+import { SendDataAlertDialog } from "@/components/dashboard/no-data-dashboard";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import { TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
-import { ThumbsDown, ThumbsUp } from "lucide-react";
+import { Plug, ThumbsDown, ThumbsUp, Unplug } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect } from "react";
 
@@ -36,6 +36,8 @@ const Tasks: React.FC = () => {
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
+
+  const [open, setOpen] = React.useState(false);
 
   useEffect(() => {
     if (tasksWithEvents !== null && tasksWithEvents.length > 0) {
@@ -99,24 +101,31 @@ const Tasks: React.FC = () => {
       {hasTasks === false && (
         <Card className="bg-secondary">
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-2xl font-bold tracking-tight mb-0">
-                  Start sending data to phospho
-                </CardTitle>
-                <CardDescription className="flex justify-between">
-                  <div>We'll show you how to get started</div>
-                </CardDescription>
+            <div className="flex">
+              <Unplug className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+              <div className="flex flex-grow justify-between items-center">
+                <div>
+                  <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+                    Start sending data to phospho
+                  </CardTitle>
+                  <CardDescription className="flex justify-between">
+                    <div>We'll show you how to get started</div>
+                  </CardDescription>
+                </div>
+                <AlertDialog open={open}>
+                  <AlertDialogTrigger>
+                    <Button
+                      variant="default"
+                      onClick={() => {
+                        setOpen(true);
+                      }}
+                    >
+                      Start sending data
+                    </Button>
+                  </AlertDialogTrigger>
+                  <SendDataAlertDialog setOpen={setOpen} />
+                </AlertDialog>
               </div>
-              <AlertDialog>
-                <AlertDialogTrigger>
-                  <Button variant="default">Start sending data</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <NoDataDashboard />
-                  <AlertDialogCancel>Done</AlertDialogCancel>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           </CardHeader>
         </Card>
