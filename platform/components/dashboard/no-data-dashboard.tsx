@@ -5,6 +5,7 @@ import Link from "next/link";
 import React from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import {
   AlertDialogAction,
   AlertDialogCancel,
@@ -62,9 +63,9 @@ const SidebarSendData = ({ setOpen }: { setOpen: (open: boolean) => void }) => {
   return (
     <>
       <div className="flex flex-col col-span-1 justify-end">
-        <Button variant="link" className="flex" onClick={() => setOpen(false)}>
+        {/* <Button variant="link" className="flex" onClick={() => setOpen(false)}>
           Skip and continue later <ArrowRight className="h-4 w-4 ml-1" />
-        </Button>
+        </Button> */}
       </div>
     </>
   );
@@ -148,9 +149,9 @@ export const SendDataAlertDialog = ({
         <div className="col-span-4 overflow-y-auto space-y-2 flex flex-col justify-between">
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">I need to store logs.</CardTitle>
+              <CardTitle className="text-xl">I need to log messages.</CardTitle>
               <CardDescription>
-                What's the programming language of your app?
+                What's your app's backend language?
               </CardDescription>
               <ToggleGroup
                 type="single"
@@ -276,7 +277,9 @@ phospho.log({input, output});`}
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">I already store logs.</CardTitle>
+              <CardTitle className="text-xl">
+                I already store messages.
+              </CardTitle>
               <CardDescription>
                 Coming soon: connect your database to phospho.
               </CardDescription>
@@ -285,30 +288,25 @@ phospho.log({input, output});`}
               </Link>
             </CardHeader>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">
-                I don't have an LLM app.
-              </CardTitle>
-              <CardDescription>
-                Discover what's possible with phospho.
-              </CardDescription>
-              <div className="flex space-x-2">
-                <Link href="https://www.youtube.com/watch?v=yQrRULUEiYM">
-                  <Button variant="outline">
-                    <MonitorPlay className="h-4 w-4 mr-2" />
-                    Watch demo
-                  </Button>
-                </Link>
-                <Link
-                  href="https://colab.research.google.com/drive/1Wv9KHffpfHlQCxK1VGvP_ofnMiOGK83Q"
-                  target="_blank"
-                >
-                  <Button variant="outline">Example Colab notebook</Button>
-                </Link>
-              </div>
-            </CardHeader>
-          </Card>
+          <Alert>
+            <AlertTitle className="text-sm">I don't have an LLM app</AlertTitle>
+            <AlertDescription className="flex flex-row items-center">
+              <Link href="https://www.youtube.com/watch?v=yQrRULUEiYM">
+                <Button variant="ghost" className="text-xs">
+                  <MonitorPlay className="h-4 w-4 mr-2" />
+                  Watch demo
+                </Button>
+              </Link>
+              <Link
+                href="https://colab.research.google.com/drive/1Wv9KHffpfHlQCxK1VGvP_ofnMiOGK83Q"
+                target="_blank"
+              >
+                <Button variant="ghost" className="text-xs">
+                  Example Colab notebook
+                </Button>
+              </Link>
+            </AlertDescription>
+          </Alert>
         </div>
         <AlertDialogFooter className="col-span-5 justify-end">
           <AlertDialogAction onClick={() => setOpen(false)}>
