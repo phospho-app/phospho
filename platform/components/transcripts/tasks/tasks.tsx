@@ -2,7 +2,13 @@
 
 import { NoDataDashboard } from "@/components/dashboard/no-data-dashboard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
@@ -89,51 +95,39 @@ const Tasks: React.FC = () => {
               hasLabelledTasks !== null &&
               selectedOrgMetadata?.plan === "pro" &&
               hasLabelledTasks?.has_enough_labelled_tasks === false && (
-                <Card className="mb-4">
-                  <CardHeader className="text-2xl font-bold tracking-tight mb-0">
-                    <div className="flex flex-row place-items-center">
-                      <span className="mr-2">
-                        Label{" "}
-                        {hasLabelledTasks.enough_labelled_tasks -
-                          hasLabelledTasks.currently_labelled_tasks}{" "}
-                        tasks to improve automatic task evaluation
-                      </span>
-                      <ThumbsDown size={24} /> <ThumbsUp size={24} />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-gray-500 space-y-0.5">
-                      <p>
-                        Phospho is connected and is automatically evaluating
-                        your tasks.
-                      </p>
-                      <p>
-                        Evaluations are made based on the labels you provide.
-                        However, we only found{" "}
-                        {hasLabelledTasks.currently_labelled_tasks}/
-                        {hasLabelledTasks.enough_labelled_tasks} tasks labelled
-                        by a human.
-                      </p>
-                      <p>
-                        We recommend you label at least{" "}
-                        {hasLabelledTasks.enough_labelled_tasks} tasks.
-                      </p>
-                      <p className="font-bold">
-                        To label tasks, click on the "View" button to label or
-                        automate the process with our API.
-                      </p>
-                    </div>
-                    <div className="flex flex-col justify-center items-center m-2">
+                <Card className="bg-secondary">
+                  <CardHeader>
+                    <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+                      <div className="flex flex-row place-items-center">
+                        <span className="mr-2">
+                          Label{" "}
+                          {hasLabelledTasks.enough_labelled_tasks -
+                            hasLabelledTasks.currently_labelled_tasks}{" "}
+                          tasks to improve automatic task evaluation
+                        </span>
+                        <ThumbsDown size={24} /> <ThumbsUp size={24} />
+                      </div>
+                    </CardTitle>
+                    <CardDescription className="flex justify-between">
+                      <div className="flex-col text-gray-500 space-y-0.5">
+                        <p>
+                          Automatic evaluations are made with your labels. We
+                          only found {hasLabelledTasks.currently_labelled_tasks}
+                          /{hasLabelledTasks.enough_labelled_tasks} labels.
+                        </p>
+                        <p>
+                          Go to a task to label it or automate the process with
+                          the API.
+                        </p>
+                      </div>
                       <Link
                         href="https://docs.phospho.ai/guides/evaluation"
                         target="_blank"
                       >
-                        <Button variant="default">
-                          Discover evaluation best practices
-                        </Button>
+                        <Button variant="default">Learn more</Button>
                       </Link>
-                    </div>
-                  </CardContent>
+                    </CardDescription>
+                  </CardHeader>
                 </Card>
               )}
             <TasksTable />
