@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import UpgradeButton from "@/components/upgrade-button";
 import { dataStateStore } from "@/store/store";
@@ -10,27 +16,30 @@ import { usePathname } from "next/navigation";
 
 const HobbyPlanWarning = () => {
   return (
-    <Card className="mb-4">
-      <CardHeader className="text-2xl font-bold tracking-tight">
-        <div className="flex items-center">
-          <Sparkles className="h-8 w-8 text-green-500 mr-2" />
-          You completed the tech setup! Now, one last thing...
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex font-semibold  items-center">
-          <X className="h-6 w-6 text-red-500" />
-          Automatic evaluation and event detection require a payment method to
-          run.
-        </div>
-        <div className="text-gray-500">
-          We temporarily enabled them for you to try out. Your data won't be
-          lost and you can still label tasks.
-        </div>
-        <div className="flex flex-col justify-center items-center m-2">
+    <Card className="bg-secondary">
+      <CardHeader>
+        <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
+          <div className="flex items-center">
+            Finish setup by adding a payment method
+          </div>
+        </CardTitle>
+        <CardDescription className="flex justify-between">
+          <div>
+            <div className="flex font-semibold  items-center">
+              <X className="h-6 w-6 text-red-500" />
+              Automatic evaluation and event detection are currently disabled
+            </div>
+            <div className="text-gray-500">
+              Your tasks are saved and we temporarily enabled event detection to
+              help you get started.
+            </div>
+            <div>
+              To continue using this feature, please provide a payment method.
+            </div>
+          </div>
           <UpgradeButton tagline="Add payment method" enlarge={false} />
-        </div>
-      </CardContent>
+        </CardDescription>
+      </CardHeader>
     </Card>
   );
 };
