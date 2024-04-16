@@ -15,6 +15,11 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { ArrowBigDown, Bot, ThumbsDown, ThumbsUp, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -30,7 +35,7 @@ function WhatIsPhospho() {
         <CardContent className={CARD_STYLE}>
           <div className="pt-10">Welcome to phospho.</div>
           <div>
-            phospho helps you understand your Users behaviour on your LLM app.
+            phospho helps you understand your Users' behavior on your LLM app.
           </div>
           <div className="flex justify-center pt-10">
             <ArrowBigDown
@@ -83,7 +88,7 @@ function WhatAreTasks() {
             </div>
           </div>
           <div className="flex flex-grow justify-center text-gray-500 font-normal text-sm italic text-center">
-            This a task! It can be anything, no just a question or a
+            This a task! It can be anything, not just a question or a
             conversation.
           </div>
         </CardContent>
@@ -107,33 +112,42 @@ function WhatIsEvaluation() {
             <span className="text-red-500">bad</span>.
           </div>
           <div className="flex items-center font-normal text-gray-500">
-            You control this by giving examples to phospho. Label tasks, collect
-            user feedback, or use the API.
+            Improve automatic evaluation by collecting user feedback, using the
+            API, and adding labels.
           </div>
           <div className="flex justify-center flex-grow">
-            <div>
-              <div className="flex flex-row items-center p-2 space-x-4">
-                <ThumbsDown
-                  className={`w-16 h-16 hover:text-red-500 cursor-pointer rounded-sm p-1
+            <div className="flex flex-row items-center p-2 space-x-4">
+              <HoverCard openDelay={50} closeDelay={50}>
+                <HoverCardTrigger>
+                  <ThumbsDown
+                    className={`w-16 h-16 hover:text-red-500 cursor-pointer rounded-sm p-1
                   ${thumbs === "down" ? "text-white bg-red-500 hover:text-white" : ""}`}
-                  onClick={() => {
-                    if (thumbs === "down") set_thumbs(null);
-                    else set_thumbs("down");
-                  }}
-                />
-                <ThumbsUp
-                  className={`w-16 h-16 hover:text-green-500 cursor-pointer rounded-sm p-1
+                    onClick={() => {
+                      if (thumbs === "down") set_thumbs(null);
+                      else set_thumbs("down");
+                    }}
+                  />
+                </HoverCardTrigger>
+                <HoverCardContent side="top">Click me!</HoverCardContent>
+              </HoverCard>
+
+              <HoverCard openDelay={50} closeDelay={50}>
+                <HoverCardTrigger>
+                  <ThumbsUp
+                    className={`w-16 h-16 hover:text-green-500 cursor-pointer rounded-sm p-1
                   ${thumbs === "up" ? "text-white bg-green-500 hover:text-white" : ""}`}
-                  onClick={() => {
-                    if (thumbs === "up") set_thumbs(null);
-                    else set_thumbs("up");
-                  }}
-                />
-              </div>
-              <div className="text-gray-500 font-normal text-sm italic">
-                Click on the thumbs!
-              </div>
+                    onClick={() => {
+                      if (thumbs === "up") set_thumbs(null);
+                      else set_thumbs("up");
+                    }}
+                  />
+                </HoverCardTrigger>
+                <HoverCardContent side="top">Click me!</HoverCardContent>
+              </HoverCard>
             </div>
+          </div>
+          <div className="flex justify-center flex-grow text-gray-500 font-normal text-sm italic">
+            Add labels to improve automatic evaluation.
           </div>
         </CardContent>
       </Card>
