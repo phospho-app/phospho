@@ -33,31 +33,32 @@ export function NavBarHelp() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <HoverCard openDelay={50} closeDelay={50}>
-          <HoverCardTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-primary"
-              onClick={() => {
-                setHasClicked(true);
-              }}
+        <div>
+          <HoverCard openDelay={50} closeDelay={50}>
+            <HoverCardTrigger>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-primary"
+                // onClick={() => {
+                //   setHasClicked(true);
+                // }}
+              >
+                {/* // Add a red dot on the top right of the help icon */}
+                <div className="relative h-6 w-6">
+                  <Dot className="absolute text-red-500 z-10 -top-4 -right-4 w-10 h-10" />
+                  <HelpCircle className="z-0 w-6 h-6" />
+                </div>
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent
+              className="m-0 text-xs text-background bg-foreground"
+              align="center"
             >
-              {/* // Add a red dot on the top right of the help icon */}
-              <div className="relative h-6 w-6">
-                <Dot className="absolute text-red-500 z-10 -top-4 -right-4 w-10 h-10" />
-                <HelpCircle className="z-0 w-6 h-6" />
-              </div>
-            </Button>
-          </HoverCardTrigger>
-          <HoverCardContent
-            className="m-0 text-xs text-background bg-foreground"
-            align="center"
-            avoidCollisions={false}
-          >
-            <span>Help</span>
-          </HoverCardContent>
-        </HoverCard>
+              <span>Help</span>
+            </HoverCardContent>
+          </HoverCard>
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem>

@@ -34,24 +34,26 @@ export function NavBarSettings() {
     <div className="flex items-center space-x-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <HoverCard openDelay={50} closeDelay={50}>
-            <HoverCardTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-primary"
+          <div>
+            <HoverCard openDelay={50} closeDelay={50}>
+              <HoverCardTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  <Settings />
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent
+                className="m-0 text-xs text-background bg-foreground"
+                align="center"
+                avoidCollisions={false}
               >
-                <Settings />
-              </Button>
-            </HoverCardTrigger>
-            <HoverCardContent
-              className="m-0 text-xs text-background bg-foreground"
-              align="center"
-              avoidCollisions={false}
-            >
-              <span>Settings</span>
-            </HoverCardContent>
-          </HoverCard>
+                <span>Settings</span>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>
