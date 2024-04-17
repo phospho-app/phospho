@@ -335,7 +335,7 @@ export default function CreateEvent({
                         <FormControl>
                           <Input
                             className="ml-4 w-4/5"
-                            placeholder="Enter words to positively detect: e.g.: 'happy, joyful, excited'"
+                            placeholder="happy, joyful, excited"
                             {...field}
                           />
                         </FormControl>
@@ -365,7 +365,7 @@ export default function CreateEvent({
                         <FormControl>
                           <Input
                             className="ml-4 w-4/5"
-                            placeholder="Enter your regex pattern to positively identify tasks e.g.: '^[0-9]{5}$' or ' happy | joyful | excited '"
+                            placeholder="^[0-9]{5}$ or happy | joyful | excited"
                             {...field}
                           />
                         </FormControl>
