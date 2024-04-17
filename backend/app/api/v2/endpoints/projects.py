@@ -10,7 +10,6 @@ from app.api.v2.models import (
     FlattenedTasksRequest,
 )
 
-# from app.db.client import firestore_db as firestore_db
 from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
 from app.services.mongo.projects import get_all_sessions, get_all_tasks
 from app.services.mongo.explore import (
