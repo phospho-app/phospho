@@ -1,6 +1,7 @@
 """
 phospho client to interact with the phospho API
 """
+
 import os
 from typing import Dict, List, Literal, Optional
 
@@ -10,7 +11,7 @@ import phospho.config as config
 
 from phospho.sessions import SessionCollection
 from phospho.tasks import TaskCollection, TaskEntity
-from phospho.models import Comparison, Test, FlattenedTask, Project
+from phospho.models import Comparison, Task, Test, FlattenedTask, Project
 
 
 class Client:
@@ -231,3 +232,22 @@ class Client:
 
         response = self._get(f"/projects/{self._project_id()}")
         return Project.model_validate(response.json())
+
+    def backfill(self, tasks: List[Task]) -> None:
+        """
+        Upload historical data in batch to phospho to backfill the logs.
+        For now, this doesn't send the task in the main_pipeline()
+        """
+        # Assert that all tasks have a created_at timestamp, otherwise the backend won't store them
+        for task in tasks:
+            if task.created_at is None:
+                raise ValueError(
+                    f"Task {task.id} has no created_at timestamp. All tasks must have a created_at timestamp when backfilling data"
+                )
+
+        self._post(
+            f"/backfill/{self._project_id()}",
+            payload={"tasks": [task.model_dump() for task in tasks]},
+        )
+
+        return None
