@@ -88,6 +88,7 @@ export interface Event {
 
 export enum DetectionEngine {
   LLM = "llm_detection",
+  KEYWORD = "keyword_detection",
   REGEX = "regex_detection",
 }
 
@@ -105,6 +106,7 @@ export interface EventDefinition {
   webhook_headers?: Record<string, string> | null;
   detection_engine?: DetectionEngine;
   detection_scope: DetectionScope;
+  keywords?: string;
   regex_pattern?: string;
 }
 

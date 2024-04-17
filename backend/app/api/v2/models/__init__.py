@@ -1,3 +1,5 @@
+from .batckfill import BackfillBatchRequest
+
 from .evals import Comparison, ComparisonQuery, Eval
 from .events import (
     DetectEventInMessagesRequest,

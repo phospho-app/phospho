@@ -84,11 +84,12 @@ export default function CreateEvent({
     webhook: z.string().optional(),
     webhook_auth_header: z.string().optional(),
     detection_engine: z
-      .enum(["llm_detection", "regex_detection"])
+      .enum(["llm_detection", "regex_detection", "keyword_detection"])
       .default("llm_detection"),
     detection_scope: z
       .enum(["task", "session", "task_input_only", "task_output_only"])
       .default("task"),
+    keywords: z.string().optional(),
     regex_pattern: z.string().optional(),
   });
 
@@ -101,6 +102,7 @@ export default function CreateEvent({
       webhook_auth_header: eventToEdit?.webhook_headers?.Authorization ?? "",
       detection_engine: eventToEdit?.detection_engine ?? "llm_detection",
       detection_scope: eventToEdit?.detection_scope ?? "task",
+      keywords: eventToEdit?.keywords ?? "",
       regex_pattern: eventToEdit?.regex_pattern ?? "",
     },
   });
@@ -134,6 +136,7 @@ export default function CreateEvent({
         : null,
       detection_engine: values.detection_engine as DetectionEngine,
       detection_scope: values.detection_scope as DetectionScope,
+      keywords: values.keywords,
       regex_pattern: values.regex_pattern,
     };
     console.log("Updated selected project:", selectedProject);
@@ -306,6 +309,9 @@ export default function CreateEvent({
                           <SelectItem value="llm_detection">
                             LLM Detection
                           </SelectItem>
+                          <SelectItem value="keyword_detection">
+                            Keyword Detection
+                          </SelectItem>
                           <SelectItem value="regex_detection">
                             Regex Detection
                           </SelectItem>
@@ -317,6 +323,26 @@ export default function CreateEvent({
                     </FormItem>
                   )}
                 />
+                {form.watch("detection_engine") === "keyword_detection" && (
+                  <FormField
+                    control={form.control}
+                    name="keywords"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="ml-4">
+                          List of words to detect, separated by a comma
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            className="ml-4 w-4/5"
+                            placeholder="happy, joyful, excited"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )}
                 {form.watch("detection_engine") === "regex_detection" && (
                   <FormField
                     control={form.control}
@@ -330,7 +356,6 @@ export default function CreateEvent({
                           className="hover:underline hover:text-blue-500"
                           href="https://regexr.com/"
                         >
-                          {" "}
                           Test your regex pattern here
                         </Link>{" "}
                         <FormMessage className="ml-4">
@@ -340,7 +365,7 @@ export default function CreateEvent({
                         <FormControl>
                           <Input
                             className="ml-4 w-4/5"
-                            placeholder="Enter your regex pattern to positively identify tasks e.g.: ' happy | joyful | excited ' or '^[0-9]{5}$'"
+                            placeholder="^[0-9]{5}$ or happy | joyful | excited"
                             {...field}
                           />
                         </FormControl>

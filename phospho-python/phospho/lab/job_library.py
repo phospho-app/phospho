@@ -568,6 +568,78 @@ def get_nb_tokens(
     )
 
 
+async def keyword_event_detection(
+    message: Message,
+    event_name: str,
+    keywords: str,
+    event_scope: DetectionScope = "task",
+) -> JobResult:
+    """
+    Uses regexes to detect if an event is present in a message.
+    """
+    from re import search
+
+    listExchangeToSearch = []
+    if event_scope == "task":
+        listExchangeToSearch = message.latest_interaction()
+
+    elif event_scope == "task_input_only":
+        message_list = message.as_list()
+        # Filter to keep only the user messages
+        listExchangeToSearch = [
+            " " + m.content + " " for m in message_list if m.role == "User"
+        ]
+
+    elif event_scope == "task_output_only":
+        message_list = message.as_list()
+        # Filter to keep only the assistant messages
+        listExchangeToSearch = [
+            " " + m.content + " " for m in message_list if m.role == "Assistant"
+        ]
+        print(listExchangeToSearch)
+
+    elif event_scope == "session":
+        listExchangeToSearch = [
+            message.transcript(with_role=True, with_previous_messages=True)
+        ]
+
+    # text to look into for the keywords
+    text = " ".join(listExchangeToSearch).lower()
+
+    # [ ,.:'/\n\r\t+=]{1} is used to match the keyword only if it is a separate word, because we don't want to match substrings
+    keywordlist = [
+        "[ ,.:'/\n\r\t+=]{1}"
+        + keyword.strip().lower()  # we match the keyword in the middle of the text
+        + "[ ,.:'/\n\r\t+=]{1}|^"
+        + keyword.strip().lower()  # we match the keyword at the beginning of the text
+        + "[ ,:'/.\n\r\t]{1}"
+        + "|[ ,:'/.\n\r\t]{1}"
+        + keyword.strip().lower()  # we match the keyword at the end of the text
+        + "$"
+        for keyword in keywords.split(",")
+    ]
+
+    # we use a regex pattern to match the keywords in the text
+    regex_pattern = "|".join(keywordlist)
+
+    try:
+        result = search(regex_pattern, text)
+        found = result is not None
+
+        return JobResult(
+            result_type=ResultType.bool,
+            value=found,
+            logs=[text, regex_pattern],
+        )
+
+    except Exception as e:
+        return JobResult(
+            result_type=ResultType.error,
+            value=None,
+            logs=[str(e)],
+        )
+
+
 async def regex_event_detection(
     message: Message,
     event_name: str,
@@ -586,15 +658,16 @@ async def regex_event_detection(
     elif event_scope == "task_input_only":
         message_list = message.as_list()
         # Filter to keep only the user messages
-        listExchangeToSearch = [m.content for m in message_list if m.role == "User"]
+        listExchangeToSearch = [
+            " " + m.content + " " for m in message_list if m.role == "User"
+        ]
 
     elif event_scope == "task_output_only":
         message_list = message.as_list()
         # Filter to keep only the assistant messages
         listExchangeToSearch = [
-            m.content for m in message_list if m.role == "Assistant"
+            " " + m.content + " " for m in message_list if m.role == "Assistant"
         ]
-        print(listExchangeToSearch)
 
     elif event_scope == "session":
         listExchangeToSearch = [
