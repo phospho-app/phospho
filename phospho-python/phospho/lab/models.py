@@ -101,7 +101,13 @@ class EventConfig(JobConfig):
     event_scope: DetectionScope
 
 
-class EvenConfigDeterminist(JobConfig):
+class EventConfigForKeywords(JobConfig):
+    event_name: str
+    keywords: str
+    event_scope: DetectionScope
+
+
+class EvenConfigForRegex(JobConfig):
     event_name: str
     regex_pattern: str
     event_scope: DetectionScope

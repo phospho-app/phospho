@@ -35,6 +35,7 @@ DetectionScope = Literal[
 
 DetectionEngine = Literal[
     "llm_detection",
+    "keyword_detection",
     "regex_detection",
 ]
 
@@ -48,6 +49,7 @@ class EventDefinition(BaseModel):
     webhook_headers: Optional[dict] = None
     detection_engine: DetectionEngine = "llm_detection"
     detection_scope: DetectionScope = "task"
+    keywords: Optional[str] = None
     regex_pattern: Optional[str] = None
 
 
