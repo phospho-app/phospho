@@ -23,7 +23,8 @@ import phospho.lab.job_library as job_library
 
 from .models import (
     EventConfig,
-    EvenConfigDeterminist,
+    EventConfigForKeywords,
+    EvenConfigForRegex,
     EventDefinition,
     JobConfig,
     JobResult,
@@ -412,8 +413,9 @@ class Workload:
         # Create the jobs from the configuration
         for event_name, event in project_events.items():
             logger.debug(f"Add event detection job for event {event_name}")
+
+            # We stick to the LLM detection engine
             if event.detection_engine == "llm_detection":
-                # LLM self eval
                 workload.add_job(
                     Job(
                         id=event_name,
@@ -426,16 +428,29 @@ class Workload:
                         metadata=event.model_dump(),
                     )
                 )
-            elif (
-                event.detection_engine == "regex_detection"
-                and event.regex_pattern is not None
-            ):
-                # Regex pattern to detect the event
+
+            # We use a keyword detection engine
+            elif event.detection_engine == "keyword_detection":
+                workload.add_job(
+                    Job(
+                        id=event_name,
+                        job_function=job_library.keyword_event_detection,
+                        config=EventConfigForKeywords(
+                            event_name=event_name,
+                            keywords=event.keywords,
+                            event_scope=event.detection_scope,
+                        ),
+                        metadata=event.model_dump(),
+                    )
+                )
+
+            # We use a regex pattern to detect the event
+            elif event.detection_engine == "regex_detection":
                 workload.add_job(
                     Job(
                         id=event_name,
                         job_function=job_library.regex_event_detection,
-                        config=EvenConfigDeterminist(
+                        config=EvenConfigForRegex(
                             event_name=event_name,
                             regex_pattern=event.regex_pattern,
                             event_scope=event.detection_scope,
@@ -443,6 +458,7 @@ class Workload:
                         metadata=event.model_dump(),
                     )
                 )
+
             else:
                 logger.warning(
                     f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}, project {project_config.id}"
