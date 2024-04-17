@@ -5,8 +5,9 @@ import phospho.config as config
 
 try:
     from openai import AsyncOpenAI, OpenAI
+
 except ImportError:
-    pass
+    AsyncOpenAI = OpenAI = object
 
 
 def get_provider_and_model(model: str) -> Tuple[str, str]:
