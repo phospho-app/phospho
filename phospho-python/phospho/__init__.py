@@ -9,6 +9,7 @@ from typing import (
     Dict,
     Generator,
     Iterable,
+    List,
     Literal,
     Optional,
     Union,
@@ -16,7 +17,7 @@ from typing import (
 
 import pydantic
 
-from . import config, integrations, lab, models, utils
+from . import config, integrations, models, utils
 from ._version import __version__ as __version__
 from .client import Client as Client
 from .consumer import Consumer as Consumer
@@ -38,6 +39,11 @@ from .utils import (
     generate_uuid,
     is_jsonable,
 )
+
+try:
+    from . import lab
+except ImportError:
+    pass
 
 client = None
 log_queue = None
@@ -295,7 +301,7 @@ def _log_single_event(
 
 
 def _wrap_iterable(
-    output: Union[Iterable[RawDataType], AsyncIterable[RawDataType]]
+    output: Union[Iterable[RawDataType], AsyncIterable[RawDataType]],
 ) -> None:
     """Wrap the class of a passed output so that it nows log its generated
     content to phospho.
@@ -851,6 +857,16 @@ def flush() -> None:
     else:
         consumer.send_batch()
 
+
+def backfill(tasks: List[models.Task]) -> None:
+    """
+    Upload historical data in batch to phospho to backfill the logs.
+    For now, this doesn't send the task in the main_pipeline()
+    """
+    client.backfill(tasks)
+
+
+### Requires phospho lab extras ###
 
 try:
     import pandas as pd
