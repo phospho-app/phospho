@@ -77,8 +77,6 @@ export function SelectProjectButton() {
         className="overflow-y-auto max-h-[40rem]"
       >
         <SelectGroup>
-          <CreateProjectButton />
-          <SelectSeparator />
           <SelectLabel>Projects ({`${projects?.length}`})</SelectLabel>
           {projects.map((project) => (
             <SelectItem
