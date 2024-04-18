@@ -51,6 +51,7 @@ class EventDefinition(BaseModel):
     detection_scope: DetectionScope = "task"
     keywords: Optional[str] = None
     regex_pattern: Optional[str] = None
+    job_id: Optional[str] = None  # Associated job id
 
 
 class Event(BaseModel):
