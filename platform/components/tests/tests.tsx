@@ -12,6 +12,7 @@ import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
 
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { DataTable } from "./tests-table";
 
 const Tests: React.FC = () => {
@@ -80,34 +81,32 @@ const Tests: React.FC = () => {
 
   return (
     <>
-      <div className="hidden h-full flex-1 flex-col space-y-8 p-2 md:flex mx-2">
-        {tests && tests.length > 0 ? (
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight mb-6">Tests</h2>
-
-            <div className="container py-10 px-0">
-              <DataTable columns={columns} data={tests} />
+      {(tests === undefined || tests.length == 0) && (
+        <Card className="bg-secondary">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
+                  Test your app before deploying
+                </CardTitle>
+                <CardDescription>
+                  <p className="text-gray-500">
+                    Run offline tests to measure the success rate of your app.
+                  </p>
+                </CardDescription>
+              </div>
+              <Link
+                href="https://docs.phospho.ai/integrations/python/testing"
+                target="_blank"
+              >
+                <Button>Run tests</Button>
+              </Link>
             </div>
-          </div>
-        ) : (
-          <></>
-        )}
-        {tests === undefined || tests.length == 0 ? (
-          <div className="flex flex-col justify-center items-center h-full">
-            <p className="text-gray-500 mb-4">No tests (yet?)</p>
-            <Link
-              href="https://docs.phospho.ai/integrations/python/testing"
-              target="_blank"
-            >
-              <Button variant="outline">
-                Learn how to run tests with Python
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <></>
-        )}
-      </div>
+          </CardHeader>
+        </Card>
+      )}
+
+      <DataTable columns={columns} data={tests} />
     </>
   );
 };
