@@ -76,7 +76,13 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
     )?.value as string;
   }
   const { data: sessionsData } = useSWR(
-    project_id ? [`/api/projects/${project_id}/sessions`, accessToken] : null,
+    project_id
+      ? [
+          `/api/projects/${project_id}/sessions`,
+          accessToken,
+          sessionPagination.pageIndex,
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         filters: {
@@ -139,7 +145,7 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
       sorting,
       pagination: sessionPagination,
     },
-    // pageCount: ,
+    pageCount: -1,
     autoResetPageIndex: false,
     manualPagination: true,
   });
