@@ -22,6 +22,7 @@ from app.db.models import (
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
 from app.services.mongo.metadata import fetch_user_metadata
+from app.services.mongo.jobs import create_job
 from app.services.slack import slack_notification
 from app.utils import generate_timestamp
 from fastapi import HTTPException
@@ -71,9 +72,9 @@ async def get_project_by_id(project_id: str) -> Project:
     ):
         for event_name, event in project_data["settings"]["events"].items():
             if "event_name" not in event.keys():
-                project_data["settings"]["events"][event_name][
-                    "event_name"
-                ] = event_name
+                project_data["settings"]["events"][event_name]["event_name"] = (
+                    event_name
+                )
                 mongo_db["projects"].update_one(
                     {"_id": project_data["_id"]},
                     {"$set": {"settings.events": project_data["settings"]["events"]}},
@@ -126,10 +127,28 @@ async def update_project(project: Project, **kwargs) -> Project:
     }
 
     if payload:
+        # Check if there is some events in the payload without a job_id
+        if "settings" in payload.keys() and "events" in payload["settings"].keys():
+            for event_name, event in payload["settings"]["events"].items():
+                logger.debug(f"Event: {event}")
+                if "job_id" not in event.keys():
+                    # Create the corresponding jobs based on the project settings
+                    job = await create_job(
+                        org_id=project.org_id,
+                        project_id=project.id,
+                        job_type="event_detection",
+                        parameters=event,
+                    )
+                    # Update the settings with the job_id
+                    payload["settings"]["events"][event_name]["job_id"] = job.id
+
+        logger.debug(f"Update project {project.id} with payload {payload}")
+
         # Update the database
         update_result = await mongo_db["projects"].update_one(
             {"id": project.id}, {"$set": payload}
         )
+
     updated_project = await get_project_by_id(project.id)
     return updated_project
 
