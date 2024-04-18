@@ -1,13 +1,10 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
-import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Test } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
@@ -29,59 +26,9 @@ const Tests: React.FC = () => {
   );
   const tests = testsData?.tests as Test[];
 
-  const getVariant = (status: string) => {
-    switch (status) {
-      case "started":
-        return "secondary";
-      case "completed":
-        return "default";
-      case "canceled":
-        return "destructive";
-      default:
-        return "secondary";
-    }
-  };
-
-  // Create the columns for the data table
-  const columns: ColumnDef<Test>[] = [
-    {
-      header: "Date",
-      accessorKey: "created_at",
-      cell: ({ row }) => (
-        <span>
-          {formatUnixTimestampToLiteralDatetime(
-            Number(row.original.created_at),
-          )}
-        </span>
-      ),
-    },
-    {
-      header: "Status",
-      accessorKey: "status",
-      cell: (row) => (
-        <span>
-          <Badge variant={getVariant(row.getValue() as string)}>
-            {row.getValue() as string}
-          </Badge>
-        </span>
-      ),
-    },
-    {
-      header: "Score",
-      accessorKey: "summary",
-      cell: ({ row }) => (
-        <span>
-          {row.original?.summary?.overall_score != null
-            ? row.original.summary.overall_score.toFixed(2)
-            : ""}
-        </span>
-      ),
-    },
-  ];
-
   return (
     <>
-      {(tests === undefined || tests.length == 0) && (
+      {(tests === null || tests === undefined || tests?.length == 0) && (
         <Card className="bg-secondary">
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -105,8 +52,7 @@ const Tests: React.FC = () => {
           </CardHeader>
         </Card>
       )}
-
-      <DataTable columns={columns} data={tests} />
+      <DataTable />
     </>
   );
 };
