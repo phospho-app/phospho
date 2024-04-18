@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -8,6 +9,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { authFetcher } from "@/lib/fetcher";
+import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
+import { Test } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -17,21 +23,79 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import * as React from "react";
+import useSWR from "swr";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-}
+interface DataTableProps<TData, TValue> {}
 
-export function DataTable<TData, TValue>({
-  columns,
-  data,
-}: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
+
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { accessToken } = useUser();
+
+  const { data: testsData } = useSWR(
+    project_id ? [`/api/projects/${project_id}/tests`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const tests = (testsData?.tests ?? []) as Test[];
+
+  // Create the columns for the data table
+  const getVariant = (status: string) => {
+    switch (status) {
+      case "started":
+        return "secondary";
+      case "completed":
+        return "default";
+      case "canceled":
+        return "destructive";
+      default:
+        return "secondary";
+    }
+  };
+
+  const columns: ColumnDef<Test>[] = [
+    {
+      header: "Date",
+      accessorKey: "created_at",
+      cell: ({ row }) => (
+        <span>
+          {formatUnixTimestampToLiteralDatetime(
+            Number(row.original.created_at),
+          )}
+        </span>
+      ),
+    },
+    {
+      header: "Status",
+      accessorKey: "status",
+      cell: (row) => (
+        <span>
+          <Badge variant={getVariant(row.getValue() as string)}>
+            {row.getValue() as string}
+          </Badge>
+        </span>
+      ),
+    },
+    {
+      header: "Score",
+      accessorKey: "summary",
+      cell: ({ row }) => (
+        <span>
+          {row.original?.summary?.overall_score != null
+            ? row.original.summary.overall_score.toFixed(2)
+            : ""}
+        </span>
+      ),
+    },
+  ];
+
   const table = useReactTable({
-    data,
+    data: tests,
     columns,
     getCoreRowModel: getCoreRowModel(),
     onColumnFiltersChange: setColumnFilters,
@@ -64,7 +128,7 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table?.getRowModel().rows?.length ? (
+            {table?.getRowModel()?.rows?.length ? (
               table?.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
