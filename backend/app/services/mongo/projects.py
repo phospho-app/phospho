@@ -3,10 +3,10 @@ import io
 import time
 from typing import Dict, List, Optional, Tuple, Union
 
+from app.api.platform.models.explore import ProjectDataFilters
 import pandas as pd
 import resend
 from app.api.platform.models import (
-    ProjectEventsFilters,
     ProjectSessionsFilters,
     UserMetadata,
 )
@@ -345,11 +345,13 @@ async def email_project_tasks(
 async def get_all_events(
     project_id: str,
     limit: Optional[int] = None,
-    events_filter: Optional[ProjectEventsFilters] = None,
+    events_filter: Optional[ProjectDataFilters] = None,
     include_removed: bool = False,
+    unique: bool = False,
 ) -> List[Event]:
     mongo_db = await get_mongo_db()
     additional_event_filters: Dict[str, object] = {}
+    pipeline: List[Dict[str, object]] = []
     if events_filter is not None:
         if events_filter.event_name is not None:
             if isinstance(events_filter.event_name, str):
@@ -374,12 +376,33 @@ async def get_all_events(
     if not include_removed:
         additional_event_filters["removed"] = {"$ne": True}
 
-    events = (
-        await mongo_db["events"]
-        .find({"project_id": project_id, **additional_event_filters})
-        .sort("created_at", -1)
-        .to_list(length=limit)
+    pipeline.append(
+        {
+            "$match": {
+                "project_id": project_id,
+                **additional_event_filters,
+            }
+        }
     )
+
+    if unique:
+        # Deduplicate the events based on event name
+        pipeline.extend(
+            [
+                {
+                    "$group": {
+                        "_id": "$event_name",
+                        "doc": {"$first": "$$ROOT"},
+                    }
+                },
+                {"$replaceRoot": {"newRoot": "$doc"}},
+            ]
+        )
+
+    pipeline.append({"$sort": {"created_at": -1}})
+
+    events = await mongo_db["events"].aggregate(pipeline).to_list(length=limit)
+
     # Cast to model
     events = [Event.model_validate(data) for data in events]
     return events
@@ -388,7 +411,7 @@ async def get_all_events(
 async def get_all_sessions(
     project_id: str,
     limit: int = 1000,
-    sessions_filter: Optional[ProjectSessionsFilters] = None,
+    sessions_filter: Optional[ProjectDataFilters] = None,
     get_events: bool = True,
     get_tasks: bool = False,
 ) -> List[Session]:
@@ -406,6 +429,12 @@ async def get_all_sessions(
                 **additional_sessions_filter.get("created_at", {}),
                 "$lte": sessions_filter.created_at_end,
             }
+        if sessions_filter.event_name is not None:
+            additional_sessions_filter["events.event_name"] = {
+                "$in": sessions_filter.event_name
+            }
+        if sessions_filter.flag is not None:
+            additional_sessions_filter["flag"] = sessions_filter.flag
 
     if not get_events and not get_tasks:
         sessions = (

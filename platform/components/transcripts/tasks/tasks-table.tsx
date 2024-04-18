@@ -67,7 +67,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     project_id
       ? [`/api/projects/${project_id}/tasks?limit=200`, accessToken]
       : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
   );
   if (
     project_id &&

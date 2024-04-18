@@ -69,30 +69,32 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
   const router = useRouter();
 
   // Fetch all sessions
-  const { data: sessionsData } = useSWR(
-    project_id
-      ? [`/api/projects/${project_id}/sessions?limit=200`, accessToken]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-  );
-  if (
-    project_id &&
-    sessionsData &&
-    sessionsData?.sessions !== undefined &&
-    sessionsData?.sessions !== null
-  ) {
-    sessionsWithEvents = sessionsData.sessions;
-    // Deduplicate events and set them in the store
-    const uniqueEventNames: string[] = Array.from(
-      new Set(
-        sessionsData.sessions
-          .map((session: TaskWithEvents) => session.events)
-          .flat()
-          .map((event: any) => event.event_name as string),
-      ),
-    );
-    // setUniqueEventNamesInData(uniqueEventNames);
+  let eventFilter: string | null = null;
+  if (sessionsColumnsFilters.length > 0) {
+    eventFilter = sessionsColumnsFilters.find(
+      (filter) => filter.id === "events",
+    )?.value as string;
   }
+  const { data: sessionsData } = useSWR(
+    project_id ? [`/api/projects/${project_id}/sessions`, accessToken] : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        filters: {
+          events: eventFilter,
+        },
+        pagination: {
+          page: sessionPagination.pageIndex,
+          page_size: sessionPagination.pageSize,
+        },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  if (sessionsData?.sessions) {
+    sessionsWithEvents = sessionsData.sessions;
+  }
+  console.log("Sessions with events:", sessionsWithEvents);
 
   const query_tasks = async () => {
     // Call the /search endpoint
