@@ -23,25 +23,16 @@ export function getColumns() {
   const { accessToken } = useUser();
 
   // Fetch all sessions
-  const { data: sessionsData } = useSWR(
+  const { data: uniqueEvents } = useSWR(
     project_id
-      ? [`/api/projects/${project_id}/sessions?limit=200`, accessToken]
+      ? [`/api/projects/${project_id}/unique-events`, accessToken]
       : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
-  if (
-    project_id &&
-    sessionsData &&
-    sessionsData?.sessions !== undefined &&
-    sessionsData?.sessions !== null
-  ) {
-    // Deduplicate events and set them in the store
+  if (project_id && uniqueEvents?.events) {
     uniqueEventNamesInData = Array.from(
       new Set(
-        sessionsData.sessions
-          .map((session: TaskWithEvents) => session.events)
-          .flat()
-          .map((event: any) => event.event_name as string),
+        uniqueEvents.events.map((event: Event) => event.event_name as string),
       ),
     );
   }

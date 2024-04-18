@@ -32,6 +32,9 @@ from .explore import (
     ProjectSessionsFilters,
     SessionsMetricsFilter,
     TasksMetricsFilter,
+    ProjectDataFilters,
+    Pagination,
+    QuerySessionsRequest,
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
 from .projects import (

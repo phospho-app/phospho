@@ -17,6 +17,8 @@ from app.api.platform.models import (
     OnboardingSurvey,
     Users,
     OnboardingSurveyResponse,
+    ProjectDataFilters,
+    QuerySessionsRequest,
 )
 from app.security.authentification import (
     propelauth,
@@ -109,20 +111,23 @@ async def post_update_project(
     return updated_project
 
 
-@router.get(
+@router.post(
     "/projects/{project_id}/sessions",
     response_model=Sessions,
     description="Get all the sessions of a project",
 )
 async def get_sessions(
     project_id: str,
-    limit: int = 1000,
+    query: QuerySessionsRequest,
     user: User = Depends(propelauth.require_user),
 ) -> Sessions:
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
     sessions = await get_all_sessions(
-        project_id=project_id, limit=limit, get_events=True, get_tasks=False
+        project_id=project_id,
+        get_events=True,
+        get_tasks=False,
+        sessions_filter=query.filters,
     )
     return Sessions(sessions=sessions)
 
@@ -196,14 +201,14 @@ async def post_search_sessions(
     )
 
 
-@router.get(
+@router.post(
     "/projects/{project_id}/tasks",
     response_model=Tasks,
     description="Get all the tasks of a project",
 )
 async def get_tasks(
     project_id: str,
-    limit: int = 1000,
+    filter: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ):
     """
@@ -215,8 +220,14 @@ async def get_tasks(
     """
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
+    if filter is None:
+        filter = ProjectDataFilters()
     tasks = await get_all_tasks(
-        project_id=project_id, limit=limit, validate_metadata=True
+        project_id=project_id,
+        limit=None,
+        validate_metadata=True,
+        flag_filter=filter.flag,
+        event_name_filter=filter.event_name,
     )
     return Tasks(tasks=tasks)
 
@@ -321,3 +332,26 @@ async def get_users(
     await verify_if_propelauth_user_can_access_project(user, project_id)
     users = await get_all_users_metadata(project_id)
     return Users(users=users)
+
+
+@router.get(
+    "/projects/{project_id}/unique-events",
+    response_model=Events,
+)
+async def get_project_unique_events(
+    project_id: str,
+    events_filter: Optional[ProjectDataFilters] = None,
+    user: User = Depends(propelauth.require_user),
+) -> Events:
+    """
+    Get the unique observed events in a project
+    """
+    project = await get_project_by_id(project_id)
+    propelauth.require_org_member(user, project.org_id)
+    events = await get_all_events(
+        project_id=project_id,
+        events_filter=events_filter,
+        include_removed=True,
+        unique=True,
+    )
+    return Events(events=events)

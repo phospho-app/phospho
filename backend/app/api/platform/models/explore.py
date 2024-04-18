@@ -5,6 +5,13 @@ from typing import List, Literal, Optional, Union
 from app.api.v2.models.projects import ProjectTasksFilter
 
 
+class ProjectDataFilters(BaseModel):
+    created_at_start: Optional[Union[int, datetime.datetime]] = None
+    created_at_end: Optional[Union[int, datetime.datetime]] = None
+    event_name: Optional[Union[List[str]]] = None
+    flag: Optional[str] = None
+
+
 class ProjectEventsFilters(BaseModel):
     event_name: Optional[Union[str, List[str]]] = Field(
         None,
@@ -65,3 +72,13 @@ class EventsMetricsFilter(BaseModel):
 
 class DashboardMetricsFilter(BaseModel):
     graph_name: Optional[List[str]] = None
+
+
+class Pagination(BaseModel):
+    page: int = 1
+    per_page: int = 10
+
+
+class QuerySessionsRequest(BaseModel):
+    filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
+    pagination: Pagination = Field(default_factory=Pagination)
