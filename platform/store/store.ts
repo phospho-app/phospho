@@ -7,7 +7,12 @@ import {
   Task,
   TaskWithEvents,
 } from "@/models/models";
-import { ColumnFiltersState, Updater } from "@tanstack/react-table";
+import {
+  ColumnFiltersState,
+  PaginationState,
+  PaginationTableState,
+  Updater,
+} from "@tanstack/react-table";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -28,6 +33,9 @@ interface navigationState {
   setSessionsColumnsFilters: (
     sessionsColumnsFilters: Updater<ColumnFiltersState>,
   ) => void;
+
+  sessionsPagination: PaginationState;
+  setSessionsPagination: (sessionsPagination: Updater<PaginationState>) => void;
 }
 
 export const navigationStateStore = create(
@@ -69,6 +77,23 @@ export const navigationStateStore = create(
             sessionsColumnsFilters: updaterOrValue,
           };
         }),
+
+      sessionsPagination: {
+        pageSize: 10,
+        pageIndex: 0,
+      } as PaginationState,
+      setSessionsPagination: (sessionsPagination: Updater<PaginationState>) =>
+        set((state) => {
+          if (typeof sessionsPagination === "function") {
+            const update = sessionsPagination(state.sessionsPagination);
+            return {
+              sessionsPagination: update,
+            };
+          }
+          return {
+            sessionsPagination: sessionsPagination,
+          };
+        }),
     }),
     {
       name: "navigation-storage",
@@ -100,8 +125,6 @@ interface dataState {
 
   tasksWithEvents: TaskWithEvents[];
   setTasksWithEvents: (tasks: TaskWithEvents[]) => void;
-  sessionsWithEvents: SessionWithEvents[];
-  setSessionsWithEvents: (sessions: SessionWithEvents[]) => void;
   events: Event[];
   setEvents: (events: Event[]) => void;
 
@@ -139,9 +162,7 @@ export const dataStateStore = create<dataState>((set) => ({
   tasksWithEvents: [],
   setTasksWithEvents: (tasks: TaskWithEvents[]) =>
     set((state) => ({ tasksWithEvents: tasks })),
-  sessionsWithEvents: [],
-  setSessionsWithEvents: (sessions: SessionWithEvents[]) =>
-    set((state) => ({ sessionsWithEvents: sessions })),
+
   events: [],
   setEvents: (events: Event[]) => set((state) => ({ events: events })),
 

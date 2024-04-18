@@ -7,17 +7,44 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Event, SessionWithEvents } from "@/models/models";
-import { dataStateStore } from "@/store/store";
+import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
+import useSWR from "swr";
 
 export function getColumns() {
-  const uniqueEventNamesInData = dataStateStore(
-    (state) => state.uniqueEventNamesInData,
+  let uniqueEventNamesInData: string[] = [];
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { accessToken } = useUser();
+
+  // Fetch all sessions
+  const { data: sessionsData } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/sessions?limit=200`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
+  if (
+    project_id &&
+    sessionsData &&
+    sessionsData?.sessions !== undefined &&
+    sessionsData?.sessions !== null
+  ) {
+    // Deduplicate events and set them in the store
+    uniqueEventNamesInData = Array.from(
+      new Set(
+        sessionsData.sessions
+          .map((session: TaskWithEvents) => session.events)
+          .flat()
+          .map((event: any) => event.event_name as string),
+      ),
+    );
+  }
 
   // Create the columns for the data table
   const columns: ColumnDef<SessionWithEvents>[] = [

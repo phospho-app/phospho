@@ -11,6 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { authFetcher } from "@/lib/fetcher";
+import { SessionWithEvents, TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -22,6 +24,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { set } from "date-fns";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -32,6 +35,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import useSWR from "swr";
 
 import { getColumns } from "./sessions-table-columns";
 
@@ -41,10 +45,9 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
   TData,
   TValue
 >) {
+  console.log("Rendering SessionsTable");
   const project_id = navigationStateStore((state) => state.project_id);
-  const sessionsWithEvents = dataStateStore(
-    (state) => state.sessionsWithEvents,
-  );
+  let sessionsWithEvents: SessionWithEvents[] = [];
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const sessionsColumnsFilters = navigationStateStore(
@@ -53,11 +56,43 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
   const setSessionsColumnsFilters = navigationStateStore(
     (state) => state.setSessionsColumnsFilters,
   );
+  const sessionPagination = navigationStateStore(
+    (state) => state.sessionsPagination,
+  );
+  const setSessionsPagination = navigationStateStore(
+    (state) => state.setSessionsPagination,
+  );
 
   const [query, setQuery] = useState("");
   const { accessToken } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Fetch all sessions
+  const { data: sessionsData } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/sessions?limit=200`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+  );
+  if (
+    project_id &&
+    sessionsData &&
+    sessionsData?.sessions !== undefined &&
+    sessionsData?.sessions !== null
+  ) {
+    sessionsWithEvents = sessionsData.sessions;
+    // Deduplicate events and set them in the store
+    const uniqueEventNames: string[] = Array.from(
+      new Set(
+        sessionsData.sessions
+          .map((session: TaskWithEvents) => session.events)
+          .flat()
+          .map((event: any) => event.event_name as string),
+      ),
+    );
+    // setUniqueEventNamesInData(uniqueEventNames);
+  }
 
   const query_tasks = async () => {
     // Call the /search endpoint
@@ -96,12 +131,15 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
     onColumnFiltersChange: setSessionsColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setSessionsPagination,
     state: {
       columnFilters: sessionsColumnsFilters,
       sorting,
+      pagination: sessionPagination,
     },
-    // pageCount: -1,
+    // pageCount: ,
     autoResetPageIndex: false,
+    manualPagination: true,
   });
 
   if (!project_id) {
