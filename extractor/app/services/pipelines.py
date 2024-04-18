@@ -8,6 +8,7 @@ from app.db.models import Eval, Event, EventDefinition, LlmCall, Task
 from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
+from app.services.predictions import create_prediction
 
 # from app.services.topics import extract_topics  # TODO
 from app.services.webhook import trigger_webhook
@@ -403,6 +404,15 @@ async def messages_main_pipeline(
                 messages=messages,
             )
             events.append(detected_event_data)
+
+            # Save the prediction
+            # TODO: get the job id from the event settings
+
+            job_id = None
+            prediction = create_prediction(
+                project.org_id, project_id, job_id, True, "event_detection"
+            )
+
             if event.webhook is not None:
                 await trigger_webhook(
                     url=event.webhook,
