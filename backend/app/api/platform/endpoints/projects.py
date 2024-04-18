@@ -128,6 +128,7 @@ async def get_sessions(
         get_events=True,
         get_tasks=False,
         sessions_filter=query.filters,
+        pagination=query.pagination,
     )
     return Sessions(sessions=sessions)
 
