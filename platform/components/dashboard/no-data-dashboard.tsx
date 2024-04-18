@@ -281,10 +281,13 @@ phospho.log({input, output});`}
                 I already store messages.
               </CardTitle>
               <CardDescription>
-                Coming soon: connect your database to phospho.
+                Push your historical data to phospho
               </CardDescription>
-              <Link href="mailto:contact@phospho.app" target="_blank">
-                <Button variant="outline">Get early access</Button>
+              <Link
+                href="https://docs.phospho.ai/guides/backfill"
+                target="_blank"
+              >
+                <Button variant="outline">Send data</Button>
               </Link>
             </CardHeader>
           </Card>

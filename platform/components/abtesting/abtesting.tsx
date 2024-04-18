@@ -24,6 +24,8 @@ import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
 
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
+
 const ABTesting: React.FC = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
@@ -46,98 +48,92 @@ const ABTesting: React.FC = () => {
     },
   );
 
-  // Handle the case abtests is null
-  if (!abTests) {
-    return (
-      <>
-        <div className="flex flex-col justify-center items-center h-full">
-          <p className="text-gray-500 mb-4">No AB Tests (yet?)</p>
-          <Link href="https://docs.phospho.ai/guides/ab-test" target="_blank">
-            <Button variant="outline">Setup AB Testing for your project</Button>
-          </Link>
-        </div>
-      </>
-    );
-  }
-  // if we only have the default version (len = 1) we display this
-  if ((abTests?.length ?? 0) <= 1) {
-    return (
-      <>
-        <div className="flex flex-col justify-center items-center h-full">
-          <p className="text-gray-500 mb-4">No AB Tests (yet?)</p>
-          <Link href="https://docs.phospho.ai/guides/ab-test" target="_blank">
-            <Button variant="outline">Setup AB Testing for your project</Button>
-          </Link>
-        </div>
-      </>
-    );
-  } else {
-    return (
-      <>
-        <h2 className="text-3xl font-bold tracking-tight mb-4">AB Testing</h2>
-        <Link href="https://docs.phospho.ai/guides/ab-test" target="_blank">
-          <Button variant="link">Read the documentation</Button>
-        </Link>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Version id</TableHead>
-              <TableHead>Sample size</TableHead>
-              <TableHead>
-                <div className="md:flex items-center align-items ">
-                  <div className="mr-1">Average Success Rate</div>
-                  <HoverCard openDelay={50} closeDelay={50}>
-                    <HoverCardTrigger>
-                      <QuestionMarkIcon />
-                    </HoverCardTrigger>
-                    <HoverCardContent>
-                      <div>
-                        The average success rate is (nb of "success"
-                        tasks)/(total nb of tasks).{" "}
-                      </div>
-                      <div>Higher is better.</div>
-                    </HoverCardContent>
-                  </HoverCard>
-                </div>
-              </TableHead>
-              <TableHead>
-                <div className="md:flex items-center align-items ">
-                  <div className="mr-1">Succes Rate Std</div>
-                  <HoverCard openDelay={50} closeDelay={50}>
-                    <HoverCardTrigger>
-                      <QuestionMarkIcon />
-                    </HoverCardTrigger>
-                    <HoverCardContent>
-                      The estimated standard deviation of the success rate.
-                      Lower is better.
-                    </HoverCardContent>
-                  </HoverCard>
-                </div>
-              </TableHead>
+  return (
+    <>
+      {(!abTests || (abTests?.length ?? 0) <= 1) && (
+        <Card className="bg-secondary">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
+                  Compare versions with AB Testing
+                </CardTitle>
+                <CardDescription>
+                  <p className="text-gray-500">
+                    When logging tasks, add a version_id in metadata to compare
+                    their success rate.
+                  </p>
+                </CardDescription>
+              </div>
+              <Link
+                href="https://docs.phospho.ai/guides/ab-test"
+                target="_blank"
+              >
+                <Button>Setup AB Testing</Button>
+              </Link>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Version id</TableHead>
+            <TableHead>Sample size</TableHead>
+            <TableHead>
+              <div className="md:flex items-center align-items ">
+                <div className="mr-1">Average Success Rate</div>
+                <HoverCard openDelay={50} closeDelay={50}>
+                  <HoverCardTrigger>
+                    <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    <div>
+                      The average success rate is (nb of "success" tasks)/(total
+                      nb of tasks).{" "}
+                    </div>
+                    <div>Higher is better.</div>
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
+            </TableHead>
+            <TableHead>
+              <div className="md:flex items-center align-items ">
+                <div className="mr-1">Succes Rate Std</div>
+                <HoverCard openDelay={50} closeDelay={50}>
+                  <HoverCardTrigger>
+                    <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    The estimated standard deviation of the success rate. Lower
+                    is better.
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {abTests?.map((abttest) => (
+            <TableRow key={abttest.version_id}>
+              <TableCell>
+                <span className="ml-3">{abttest.version_id}</span>
+              </TableCell>
+              <TableCell>
+                <span className="ml-3">{abttest.nb_tasks}</span>
+              </TableCell>
+              <TableCell>
+                <span className="ml-3">{abttest.score} %</span>
+              </TableCell>
+              <TableCell>
+                <span className="ml-3">{abttest.score_std} %</span>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {abTests?.map((abttest) => (
-              <TableRow key={abttest.version_id}>
-                <TableCell>
-                  <span className="ml-3">{abttest.version_id}</span>
-                </TableCell>
-                <TableCell>
-                  <span className="ml-3">{abttest.nb_tasks}</span>
-                </TableCell>
-                <TableCell>
-                  <span className="ml-3">{abttest.score} %</span>
-                </TableCell>
-                <TableCell>
-                  <span className="ml-3">{abttest.score_std} %</span>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </>
-    );
-  }
+          ))}
+        </TableBody>
+      </Table>
+    </>
+  );
 };
 
 export default ABTesting;
