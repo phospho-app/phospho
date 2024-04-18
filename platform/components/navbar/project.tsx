@@ -5,6 +5,8 @@ export function NavBarProject() {
   return (
     <>
       <SelectProjectButton />
+
+      <CreateProjectButton />
     </>
   );
 }
