@@ -1,4 +1,5 @@
 from typing import Literal
+from loguru import logger
 
 from app.db.models import Job
 from app.db.mongo import get_mongo_db
@@ -27,5 +28,9 @@ async def create_job(
     )
 
     result = await mongo_db["jobs"].insert_one(job.model_dump())
+
+    logger.info(
+        f"Job {job.id} created for project {project_id} with parameters {parameters}"
+    )
 
     return job

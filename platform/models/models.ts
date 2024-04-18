@@ -108,6 +108,7 @@ export interface EventDefinition {
   detection_scope: DetectionScope;
   keywords?: string;
   regex_pattern?: string;
+  job_id?: string;
 }
 
 export interface ABTest {
