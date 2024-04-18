@@ -12,6 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { authFetcher } from "@/lib/fetcher";
+import { Task } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -29,6 +31,7 @@ import { Database, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import useSWR from "swr";
 
 import { getColumns } from "./tasks-table-columns";
 
@@ -39,6 +42,12 @@ interface DataTableProps<TData, TValue> {
 export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
   const tasksWithEvents = dataStateStore((state) => state.tasksWithEvents);
+  const setTasksWithEvents = dataStateStore(
+    (state) => state.setTasksWithEvents,
+  );
+  const setTasksWithoutHumanLabel = dataStateStore(
+    (state) => state.setTasksWithoutHumanLabel,
+  );
   const router = useRouter();
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -52,6 +61,27 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const [query, setQuery] = useState("");
   const { user, loading, accessToken } = useUser();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch all tasks
+  const { data: tasksData } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/tasks?limit=200`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+  );
+  if (
+    project_id &&
+    tasksData &&
+    tasksData?.tasks !== undefined &&
+    tasksData?.tasks !== null
+  ) {
+    setTasksWithEvents(tasksData.tasks);
+    setTasksWithoutHumanLabel(
+      tasksData.tasks?.filter((task: Task) => {
+        return task?.last_eval?.source !== "owner";
+      }),
+    );
+  }
 
   // console.log("taskscolumnsFilters", tasksColumnsFilters);
 

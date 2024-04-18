@@ -2,7 +2,6 @@
 
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { Task, TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import useSWR from "swr";
@@ -20,18 +19,6 @@ function FetchHasTasksSessions() {
     (state) => state.setHasLabelledTasks,
   );
 
-  const setTasksWithEvents = dataStateStore(
-    (state) => state.setTasksWithEvents,
-  );
-  const setUniqueEventNamesInData = dataStateStore(
-    (state) => state.setUniqueEventNamesInData,
-  );
-  const setTasksWithoutHumanLabel = dataStateStore(
-    (state) => state.setTasksWithoutHumanLabel,
-  );
-  const setSessionsWithEvents = dataStateStore(
-    (state) => state.setSessionsWithEvents,
-  );
   const setSelectedProject = dataStateStore(
     (state) => state.setSelectedProject,
   );
@@ -83,53 +70,6 @@ function FetchHasTasksSessions() {
         description: `Keep labelling to improve automatic evaluations.`,
       });
     }
-  }
-
-  // Fetch all tasks
-  const { data: tasksData } = useSWR(
-    project_id
-      ? [`/api/projects/${project_id}/tasks?limit=200`, accessToken]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-  );
-  if (
-    project_id &&
-    tasksData &&
-    tasksData?.tasks !== undefined &&
-    tasksData?.tasks !== null
-  ) {
-    setTasksWithEvents(tasksData.tasks);
-    setTasksWithoutHumanLabel(
-      tasksData.tasks?.filter((task: Task) => {
-        return task?.last_eval?.source !== "owner";
-      }),
-    );
-  }
-
-  // Fetch all sessions
-  const { data: sessionsData } = useSWR(
-    project_id
-      ? [`/api/projects/${project_id}/sessions?limit=200`, accessToken]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-  );
-  if (
-    project_id &&
-    sessionsData &&
-    sessionsData?.sessions !== undefined &&
-    sessionsData?.sessions !== null
-  ) {
-    setSessionsWithEvents(sessionsData.sessions);
-    // Deduplicate events and set them in the store
-    const uniqueEventNames: string[] = Array.from(
-      new Set(
-        sessionsData.sessions
-          .map((session: TaskWithEvents) => session.events)
-          .flat()
-          .map((event: any) => event.event_name as string),
-      ),
-    );
-    setUniqueEventNamesInData(uniqueEventNames);
   }
 
   // Fetch the selected project from the server. This is useful when the user
