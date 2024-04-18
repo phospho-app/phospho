@@ -28,9 +28,9 @@ async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Proje
         ):
             for event_name, event in project_data["settings"]["events"].items():
                 if "event_name" not in event.keys():
-                    project_data["settings"]["events"][event_name][
-                        "event_name"
-                    ] = event_name
+                    project_data["settings"]["events"][event_name]["event_name"] = (
+                        event_name
+                    )
                     # Update the project
                     mongo_db["projects"].update_one(
                         {"_id": project_data["_id"]},
@@ -63,8 +63,10 @@ async def create_project_by_org(org_id: str, user_id: str, **kwargs) -> Project:
         raise HTTPException(
             status_code=400, detail=f"Error while creating project: {e}"
         )
+    # Create the corresponding jobs based on the project settings
     mongo_db = await get_mongo_db()
     result = await mongo_db["projects"].insert_one(project.model_dump())
+
     return project
 
 
