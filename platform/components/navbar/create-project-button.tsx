@@ -5,6 +5,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 
 export function CreateProjectButton() {
@@ -13,9 +19,22 @@ export function CreateProjectButton() {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="default" className="w-full bg-primary">
-          Create new project
-        </Button>
+        <div>
+          <HoverCard openDelay={50} closeDelay={50}>
+            <HoverCardTrigger asChild>
+              <Button variant="outline" size="icon">
+                <PlusIcon className="h-4 w-4" />
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent
+              className="m-0 text-xs text-background bg-foreground"
+              align="center"
+              avoidCollisions={false}
+            >
+              <span>Create project</span>
+            </HoverCardContent>
+          </HoverCard>
+        </div>
       </AlertDialogTrigger>
       <AlertDialogContent className="md:w-1/3">
         <CreateProjectDialog setOpen={setOpen}></CreateProjectDialog>
