@@ -99,7 +99,7 @@ const Tests: React.FC = () => {
                 href="https://docs.phospho.ai/integrations/python/testing"
                 target="_blank"
               >
-                <Button>Run tests</Button>
+                <Button>Create test</Button>
               </Link>
             </div>
           </CardHeader>
