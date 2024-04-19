@@ -6,8 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
 import {
@@ -22,8 +23,6 @@ import {
   YAxis,
 } from "recharts";
 import useSWR from "swr";
-
-import { Skeleton } from "../../ui/skeleton";
 
 interface NbSessions {
   day: string;

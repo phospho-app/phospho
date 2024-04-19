@@ -3,13 +3,10 @@ import io
 import time
 from typing import Dict, List, Optional, Tuple, Union
 
+from app.api.platform.models.explore import ProjectDataFilters, Sorting
 import pandas as pd
 import resend
-from app.api.platform.models import (
-    ProjectEventsFilters,
-    ProjectSessionsFilters,
-    UserMetadata,
-)
+from app.api.platform.models import UserMetadata, Pagination
 from app.core import config
 from app.db.models import (
     Event,
@@ -195,7 +192,9 @@ async def get_all_tasks(
     get_events: bool = True,
     get_tests: bool = False,
     validate_metadata: bool = False,
-    limit: Optional[int] = 1000,
+    limit: Optional[int] = None,
+    pagination: Optional[Pagination] = None,
+    sorting: Optional[List[Sorting]] = None,
 ) -> List[Task]:
     """
     Get all the tasks of a project.
@@ -226,54 +225,64 @@ async def get_all_tasks(
     if not get_tests:
         main_filter["test_id"] = None
 
-    if get_events or event_name_filter is not None:
-        pipeline = [
-            {"$match": main_filter},
-            {"$sort": {"created_at": -1}},
-            # Deduplicate events names. We want the unique event_names of the task
-            {
-                "$addFields": {
-                    "events": {
-                        "$reduce": {
-                            "input": "$events",
-                            "initialValue": [],
-                            "in": {
-                                "$concatArrays": [
-                                    "$$value",
-                                    {
-                                        "$cond": [
-                                            {
-                                                "$in": [
-                                                    "$$this.event_name",
-                                                    "$$value.event_name",
-                                                ]
-                                            },
-                                            [],
-                                            ["$$this"],
-                                        ]
-                                    },
-                                ]
-                            },
-                        }
+    pipeline: List[Dict[str, object]] = [
+        {"$match": main_filter},
+    ]
+    if event_name_filter is not None:
+        pipeline.append({"$match": {"events.event_name": {"$in": event_name_filter}}})
+
+    if sorting is not None and len(sorting) > 0:
+        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+        pipeline.append({"$sort": sorting_dict})
+    else:
+        pipeline.append({"$sort": {"created_at": -1}})
+
+    # Add pagination
+    if pagination:
+        pipeline.extend(
+            [
+                {"$skip": pagination.page * pagination.per_page},
+                {"$limit": pagination.per_page},
+            ]
+        )
+        limit = None
+
+    # Deduplicate events names. We want the unique event_names of the task
+    pipeline.append(
+        {
+            "$addFields": {
+                "events": {
+                    "$reduce": {
+                        "input": "$events",
+                        "initialValue": [],
+                        "in": {
+                            "$concatArrays": [
+                                "$$value",
+                                {
+                                    "$cond": [
+                                        {
+                                            "$in": [
+                                                "$$this.event_name",
+                                                "$$value.event_name",
+                                            ]
+                                        },
+                                        [],
+                                        ["$$this"],
+                                    ]
+                                },
+                            ]
+                        },
                     }
                 }
-            },
-        ]
-        if event_name_filter is not None:
-            pipeline.append(
-                {"$match": {"events.event_name": {"$in": event_name_filter}}}
-            )
-        tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
-    else:
-        tasks = (
-            await mongo_db["tasks"]
-            .find(main_filter)
-            .sort("created_at", -1)
-            .to_list(length=limit)
-        )
+            }
+        },
+    )
+
+    tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
 
     # Cast to tasks
-    valid_tasks = [Task.model_validate(task) for task in tasks]
+    valid_tasks = [Task.model_validate(data) for data in tasks]
+
     if validate_metadata:
         for task in valid_tasks:
             # Remove the _id field from the task metadata
@@ -364,11 +373,13 @@ async def email_project_tasks(
 async def get_all_events(
     project_id: str,
     limit: Optional[int] = None,
-    events_filter: Optional[ProjectEventsFilters] = None,
+    events_filter: Optional[ProjectDataFilters] = None,
     include_removed: bool = False,
+    unique: bool = False,
 ) -> List[Event]:
     mongo_db = await get_mongo_db()
     additional_event_filters: Dict[str, object] = {}
+    pipeline: List[Dict[str, object]] = []
     if events_filter is not None:
         if events_filter.event_name is not None:
             if isinstance(events_filter.event_name, str):
@@ -393,12 +404,33 @@ async def get_all_events(
     if not include_removed:
         additional_event_filters["removed"] = {"$ne": True}
 
-    events = (
-        await mongo_db["events"]
-        .find({"project_id": project_id, **additional_event_filters})
-        .sort("created_at", -1)
-        .to_list(length=limit)
+    pipeline.append(
+        {
+            "$match": {
+                "project_id": project_id,
+                **additional_event_filters,
+            }
+        }
     )
+
+    if unique:
+        # Deduplicate the events based on event name
+        pipeline.extend(
+            [
+                {
+                    "$group": {
+                        "_id": "$event_name",
+                        "doc": {"$first": "$$ROOT"},
+                    }
+                },
+                {"$replaceRoot": {"newRoot": "$doc"}},
+            ]
+        )
+
+    pipeline.append({"$sort": {"created_at": -1}})
+
+    events = await mongo_db["events"].aggregate(pipeline).to_list(length=limit)
+
     # Cast to model
     events = [Event.model_validate(data) for data in events]
     return events
@@ -407,9 +439,11 @@ async def get_all_events(
 async def get_all_sessions(
     project_id: str,
     limit: int = 1000,
-    sessions_filter: Optional[ProjectSessionsFilters] = None,
+    sessions_filter: Optional[ProjectDataFilters] = None,
     get_events: bool = True,
     get_tasks: bool = False,
+    pagination: Optional[Pagination] = None,
+    sorting: Optional[List[Sorting]] = None,
 ) -> List[Session]:
     mongo_db = await get_mongo_db()
     additional_sessions_filter: Dict[str, object] = {}
@@ -425,84 +459,118 @@ async def get_all_sessions(
                 **additional_sessions_filter.get("created_at", {}),
                 "$lte": sessions_filter.created_at_end,
             }
+        if sessions_filter.event_name is not None:
+            additional_sessions_filter["events.event_name"] = {
+                "$in": sessions_filter.event_name
+            }
+        if sessions_filter.flag is not None:
+            additional_sessions_filter["flag"] = sessions_filter.flag
 
-    if not get_events and not get_tasks:
-        sessions = (
-            await mongo_db["sessions"]
-            .find({"project_id": project_id})
-            .sort("created_at", -1)
-            .to_list(length=limit)
+    pipeline = [
+        {
+            "$match": {
+                "project_id": project_id,
+                **additional_sessions_filter,
+            }
+        },
+        {"$sort": {"created_at": -1}},
+    ]
+    if get_events:
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "events",
+                        "localField": "id",
+                        "foreignField": "session_id",
+                        "as": "events",
+                    }
+                },
+                {"$match": {"events.removed": {"$ne": True}}},
+            ]
         )
-    else:
-        pipeline = [
-            {
-                "$match": {
-                    "project_id": project_id,
-                    **additional_sessions_filter,
-                }
-            },
-            {"$sort": {"created_at": -1}},
-        ]
-        if get_events:
+    if get_tasks or (
+        sessions_filter is not None and sessions_filter.user_id is not None
+    ):
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "tasks",
+                        "localField": "id",
+                        "foreignField": "session_id",
+                        "as": "tasks",
+                    }
+                },
+                # If tasks is None, set to empty list
+                {"$addFields": {"tasks": {"$ifNull": ["$tasks", []]}}},
+            ]
+        )
+        if sessions_filter is not None and sessions_filter.user_id is not None:
+            logger.debug(f"Filtering sessions by user_id: {sessions_filter.user_id}")
             pipeline.extend(
                 [
                     {
-                        "$lookup": {
-                            "from": "events",
-                            "localField": "id",
-                            "foreignField": "session_id",
-                            "as": "events",
+                        "$match": {
+                            # Filter the sessions to keep the ones where a tasks.metadata.user_id matches the filter
+                            "tasks.metadata.user_id": sessions_filter.user_id
                         }
                     },
-                    {"$match": {"events.removed": {"$ne": True}}},
-                    # If events is None, set to empty list
-                    {"$addFields": {"events": {"$ifNull": ["$events", []]}}},
-                    # Deduplicate events names. We want the unique event_names of the session
-                    {
-                        "$addFields": {
-                            "events": {
-                                "$reduce": {
-                                    "input": "$events",
-                                    "initialValue": [],
-                                    "in": {
-                                        "$concatArrays": [
-                                            "$$value",
-                                            {
-                                                "$cond": [
-                                                    {
-                                                        "$in": [
-                                                            "$$this.event_name",
-                                                            "$$value.event_name",
-                                                        ]
-                                                    },
-                                                    [],
-                                                    ["$$this"],
-                                                ]
-                                            },
-                                        ]
-                                    },
-                                }
+                ]
+            )
+
+    if sorting is not None and len(sorting) > 0:
+        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+        pipeline.append({"$sort": sorting_dict})
+    else:
+        pipeline.append({"$sort": {"created_at": -1}})
+
+    # Add pagination
+    if pagination:
+        pipeline.extend(
+            [
+                {"$skip": pagination.page * pagination.per_page},
+                {"$limit": pagination.per_page},
+            ]
+        )
+
+    if get_events:
+        pipeline.extend(
+            [
+                # If events is None, set to empty list
+                {"$addFields": {"events": {"$ifNull": ["$events", []]}}},
+                # Deduplicate events names. We want the unique event_names of the session
+                {
+                    "$addFields": {
+                        "events": {
+                            "$reduce": {
+                                "input": "$events",
+                                "initialValue": [],
+                                "in": {
+                                    "$concatArrays": [
+                                        "$$value",
+                                        {
+                                            "$cond": [
+                                                {
+                                                    "$in": [
+                                                        "$$this.event_name",
+                                                        "$$value.event_name",
+                                                    ]
+                                                },
+                                                [],
+                                                ["$$this"],
+                                            ]
+                                        },
+                                    ]
+                                },
                             }
                         }
-                    },
-                ]
-            )
-        if get_tasks:
-            pipeline.extend(
-                [
-                    {
-                        "$lookup": {
-                            "from": "tasks",
-                            "localField": "id",
-                            "foreignField": "session_id",
-                            "as": "tasks",
-                        }
-                    },
-                    # If tasks is None, set to empty list
-                    {"$addFields": {"tasks": {"$ifNull": ["$tasks", []]}}},
-                ]
-            )
-        sessions = await mongo_db["sessions"].aggregate(pipeline).to_list(length=limit)
+                    }
+                },
+            ]
+        )
+
+    sessions = await mongo_db["sessions"].aggregate(pipeline).to_list(length=limit)
 
     # Filter the _id field from the Sessions
     for session in sessions:

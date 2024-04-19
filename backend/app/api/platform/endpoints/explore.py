@@ -5,7 +5,7 @@ from propelauth_fastapi import User
 
 from app.api.platform.models import (
     AggregateMetricsRequest,
-    ProjectEventsFilters,
+    ProjectDataFilters,
     Events,
     ProjectTasksFilter,
     Tasks,
@@ -237,7 +237,7 @@ async def get_events_project_metrics(
 async def get_filtered_events(
     project_id: str,
     limit: int = 1000,
-    events_filter: Optional[ProjectEventsFilters] = None,
+    events_filter: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ) -> Events:
     await verify_if_propelauth_user_can_access_project(user, project_id)

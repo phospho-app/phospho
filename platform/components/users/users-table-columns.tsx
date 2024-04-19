@@ -1,9 +1,18 @@
+import { authFetcher } from "@/lib/fetcher";
 import { Event, UserMetadata } from "@/models/models";
-import { dataStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronRight,
+  FilterX,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -16,10 +25,28 @@ import {
 } from "../ui/dropdown-menu";
 
 export function getColumns() {
-  const uniqueEventNamesInData = dataStateStore(
-    (state) => state.uniqueEventNamesInData,
-  );
   const router = useRouter();
+
+  let uniqueEventNamesInData: string[] = [];
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { accessToken } = useUser();
+
+  const { data: uniqueEvents } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/unique-events`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  if (project_id && uniqueEvents?.events) {
+    uniqueEventNamesInData = Array.from(
+      new Set(
+        uniqueEvents.events.map((event: Event) => event.event_name as string),
+      ),
+    );
+  }
 
   // Create the columns for the data table
   const columns: ColumnDef<UserMetadata>[] = [
@@ -46,6 +73,9 @@ export function getColumns() {
         return row.original.user_id;
       },
       // enableHiding: true,
+      size: 0,
+      minSize: 0,
+      maxSize: 0,
     },
     {
       header: ({ column }) => {
@@ -157,6 +187,7 @@ export function getColumns() {
                 key="event_clear"
                 onClick={() => column.setFilterValue(null)}
               >
+                <FilterX className="h-4 w-4 mr-1" />
                 Clear
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -193,6 +224,9 @@ export function getColumns() {
           </Link>
         );
       },
+      size: 10,
+      minSize: 10,
+      maxSize: 10,
     },
   ];
 

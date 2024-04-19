@@ -7,17 +7,50 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, SessionWithEvents } from "@/models/models";
-import { dataStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronRight,
+  FilterX,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
+import useSWR from "swr";
 
 export function getColumns() {
-  const uniqueEventNamesInData = dataStateStore(
-    (state) => state.uniqueEventNamesInData,
+  const project_id = navigationStateStore((state) => state.project_id);
+  const sessionsPagination = navigationStateStore(
+    (state) => state.sessionsPagination,
   );
+  const setSessionsPagination = navigationStateStore(
+    (state) => state.setSessionsPagination,
+  );
+
+  const { accessToken } = useUser();
+  let uniqueEventNamesInData: string[] = [];
+
+  const { data: uniqueEvents } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/unique-events`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  if (project_id && uniqueEvents?.events) {
+    uniqueEventNamesInData = Array.from(
+      new Set(
+        uniqueEvents.events.map((event: Event) => event.event_name as string),
+      ),
+    );
+  }
 
   // Create the columns for the data table
   const columns: ColumnDef<SessionWithEvents>[] = [
@@ -34,6 +67,9 @@ export function getColumns() {
         row.original.id;
       },
       enableHiding: true,
+      size: 0,
+      minSize: 0,
+      maxSize: 0,
     },
     // Date
     {
@@ -85,7 +121,14 @@ export function getColumns() {
               {uniqueEventNamesInData.map((eventName) => (
                 <DropdownMenuItem
                   key={eventName}
-                  onClick={() => column.setFilterValue(eventName)}
+                  onClick={() => {
+                    column.setFilterValue(eventName);
+                    // reset the page to 0
+                    setSessionsPagination({
+                      ...sessionsPagination,
+                      pageIndex: 0,
+                    });
+                  }}
                 >
                   {eventName}
                 </DropdownMenuItem>
@@ -93,8 +136,15 @@ export function getColumns() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 key="event_clear"
-                onClick={() => column.setFilterValue(null)}
+                onClick={() => {
+                  column.setFilterValue(null);
+                  setSessionsPagination({
+                    ...sessionsPagination,
+                    pageIndex: 0,
+                  });
+                }}
               >
+                <FilterX className="h-4 w-4 mr-1" />
                 Clear
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -147,6 +197,9 @@ export function getColumns() {
           </Link>
         );
       },
+      size: 10,
+      minSize: 10,
+      maxSize: 10,
     },
   ];
 
