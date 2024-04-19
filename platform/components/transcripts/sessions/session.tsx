@@ -1,5 +1,6 @@
 "use client";
 
+import SuggestEvent from "@/components/insights/events/suggest-event";
 import TaskBox from "@/components/task-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
+import { EventDefinition } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
@@ -107,7 +109,11 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
             {uniqueEvents && (
               <div className="flex">
                 <span className="font-bold mr-2">Events:</span>
-                <div className="space-x-2">
+                <div className="space-x-2 flex items-center">
+                  <SuggestEvent
+                    sessionId={session_id}
+                    event={{} as EventDefinition}
+                  />
                   {uniqueEvents?.map((event: Event) => (
                     <Badge variant="outline" key={event.id}>
                       {event.event_name}
@@ -136,9 +142,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
 
       <Card className="mt-4">
         <CardHeader>
-          <CardTitle className="text-xl font-bold tracking-tight">
-            Transcript
-          </CardTitle>
+          <CardTitle className="text-xl font-bold ">Transcript</CardTitle>
         </CardHeader>
         <CardContent>
           {sessionTasks?.map((task: TaskWithEvents, index) => (
