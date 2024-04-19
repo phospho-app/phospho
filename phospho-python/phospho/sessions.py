@@ -61,7 +61,7 @@ class Session:
         Use a Generator? -> would enable streaming
         TODO : add filters, limits and pagination
         """
-        response = self._client._get(f"/sessions/{self._session_id}/tasks")
+        response = self._client._post(f"/sessions/{self._session_id}/tasks")
 
         tasks_list = []
 

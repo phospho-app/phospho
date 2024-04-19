@@ -18,7 +18,7 @@ from app.api.platform.models import (
     Users,
     OnboardingSurveyResponse,
     ProjectDataFilters,
-    QuerySessionsRequest,
+    QuerySessionsTasksRequest,
 )
 from app.security.authentification import (
     propelauth,
@@ -118,7 +118,7 @@ async def post_update_project(
 )
 async def get_sessions(
     project_id: str,
-    query: QuerySessionsRequest,
+    query: QuerySessionsTasksRequest,
     user: User = Depends(propelauth.require_user),
 ) -> Sessions:
     project = await get_project_by_id(project_id)
@@ -209,7 +209,7 @@ async def post_search_sessions(
 )
 async def get_tasks(
     project_id: str,
-    filter: Optional[ProjectDataFilters] = None,
+    query: QuerySessionsTasksRequest,
     user: User = Depends(propelauth.require_user),
 ):
     """
@@ -221,14 +221,13 @@ async def get_tasks(
     """
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
-    if filter is None:
-        filter = ProjectDataFilters()
     tasks = await get_all_tasks(
         project_id=project_id,
         limit=None,
         validate_metadata=True,
-        flag_filter=filter.flag,
-        event_name_filter=filter.event_name,
+        flag_filter=query.filters.flag,
+        event_name_filter=query.filters.event_name,
+        pagination=query.pagination,
     )
     return Tasks(tasks=tasks)
 

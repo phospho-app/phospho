@@ -12,8 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
-import { SessionWithEvents, TaskWithEvents } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { SessionWithEvents } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   SortingState,
@@ -24,7 +24,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { set } from "date-fns";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,

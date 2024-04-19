@@ -36,6 +36,9 @@ interface navigationState {
 
   sessionsPagination: PaginationState;
   setSessionsPagination: (sessionsPagination: Updater<PaginationState>) => void;
+
+  tasksPagination: PaginationState;
+  setTasksPagination: (taskPagination: Updater<PaginationState>) => void;
 }
 
 export const navigationStateStore = create(
@@ -94,7 +97,25 @@ export const navigationStateStore = create(
             sessionsPagination: sessionsPagination,
           };
         }),
+
+      tasksPagination: {
+        pageSize: 10,
+        pageIndex: 0,
+      } as PaginationState,
+      setTasksPagination: (taskPagination: Updater<PaginationState>) =>
+        set((state) => {
+          if (typeof taskPagination === "function") {
+            const update = taskPagination(state.tasksPagination);
+            return {
+              tasksPagination: update,
+            };
+          }
+          return {
+            tasksPagination: taskPagination,
+          };
+        }),
     }),
+
     {
       name: "navigation-storage",
       storage: createJSONStorage(() => sessionStorage),

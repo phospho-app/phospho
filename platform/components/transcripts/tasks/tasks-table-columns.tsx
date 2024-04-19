@@ -10,7 +10,7 @@ import {
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, TaskWithEvents } from "@/models/models";
 import { dataStateStore } from "@/store/store";
-import { ColumnDef, filterFns } from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 

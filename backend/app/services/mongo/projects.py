@@ -174,6 +174,7 @@ async def get_all_tasks(
     get_tests: bool = False,
     validate_metadata: bool = False,
     limit: Optional[int] = 1000,
+    pagination: Optional[Pagination] = None,
 ) -> List[Task]:
     """
     Get all the tasks of a project.
@@ -204,51 +205,51 @@ async def get_all_tasks(
     if not get_tests:
         main_filter["test_id"] = None
 
-    if get_events or event_name_filter is not None:
-        pipeline = [
-            {"$match": main_filter},
-            {"$sort": {"created_at": -1}},
-            # Deduplicate events names. We want the unique event_names of the task
-            {
-                "$addFields": {
-                    "events": {
-                        "$reduce": {
-                            "input": "$events",
-                            "initialValue": [],
-                            "in": {
-                                "$concatArrays": [
-                                    "$$value",
-                                    {
-                                        "$cond": [
-                                            {
-                                                "$in": [
-                                                    "$$this.event_name",
-                                                    "$$value.event_name",
-                                                ]
-                                            },
-                                            [],
-                                            ["$$this"],
-                                        ]
-                                    },
-                                ]
-                            },
-                        }
+    pipeline = [
+        {"$match": main_filter},
+        {"$sort": {"created_at": -1}},
+        # Deduplicate events names. We want the unique event_names of the task
+        {
+            "$addFields": {
+                "events": {
+                    "$reduce": {
+                        "input": "$events",
+                        "initialValue": [],
+                        "in": {
+                            "$concatArrays": [
+                                "$$value",
+                                {
+                                    "$cond": [
+                                        {
+                                            "$in": [
+                                                "$$this.event_name",
+                                                "$$value.event_name",
+                                            ]
+                                        },
+                                        [],
+                                        ["$$this"],
+                                    ]
+                                },
+                            ]
+                        },
                     }
                 }
-            },
-        ]
-        if event_name_filter is not None:
-            pipeline.append(
-                {"$match": {"events.event_name": {"$in": event_name_filter}}}
-            )
-        tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
-    else:
-        tasks = (
-            await mongo_db["tasks"]
-            .find(main_filter)
-            .sort("created_at", -1)
-            .to_list(length=limit)
+            }
+        },
+    ]
+    if event_name_filter is not None:
+        pipeline.append({"$match": {"events.event_name": {"$in": event_name_filter}}})
+
+    # Add pagination
+    if pagination:
+        pipeline.extend(
+            [
+                {"$skip": pagination.page * pagination.per_page},
+                {"$limit": pagination.per_page},
+            ]
         )
+
+    tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
 
     # Cast to tasks
     valid_tasks = [Task.model_validate(task) for task in tasks]

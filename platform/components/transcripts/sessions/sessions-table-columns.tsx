@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
+import { Event, SessionWithEvents } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
