@@ -118,11 +118,13 @@ async def post_update_project(
 )
 async def post_sessions(
     project_id: str,
-    query: QuerySessionsTasksRequest,
+    query: Optional[QuerySessionsTasksRequest] = None,
     user: User = Depends(propelauth.require_user),
 ) -> Sessions:
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
+    if query is None:
+        query = QuerySessionsTasksRequest()
     logger.debug(f"Sorting: {query.sorting}")
     sessions = await get_all_sessions(
         project_id=project_id,
@@ -211,7 +213,7 @@ async def post_search_sessions(
 )
 async def post_tasks(
     project_id: str,
-    query: QuerySessionsTasksRequest,
+    query: Optional[QuerySessionsTasksRequest] = None,
     user: User = Depends(propelauth.require_user),
 ):
     """
@@ -224,6 +226,8 @@ async def post_tasks(
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
     metadata_filter: Optional[Dict[str, object]] = None
+    if query is None:
+        query = QuerySessionsTasksRequest()
     if query.filters.user_id is not None:
         metadata_filter = {
             "user_id": query.filters.user_id,
