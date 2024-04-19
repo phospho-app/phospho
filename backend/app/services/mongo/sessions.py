@@ -1,5 +1,5 @@
 from typing import List, Optional
-from app.db.models import Session, Task
+from app.db.models import Session, Project, Task
 from app.db.mongo import get_mongo_db
 
 from loguru import logger
@@ -71,32 +71,6 @@ async def get_session_by_id(session_id: str) -> Session:
     return session_model
 
 
-async def format_session_transcript(session: Session) -> str:
-    """
-    Format the transcript of a session into a human-readable string.
-
-    Eg:
-    User: Hello
-    Assistant: Hi there!
-    """
-    transcript = ""
-    mongo_db = await get_mongo_db()
-
-    def append_to_transcript(task_data, error):
-        if task_data:
-            transcript += f"User: {task_data['input']}\n "
-            transcript += f"Assistant: {task_data.get('output', '')}\n "
-
-    await (
-        mongo_db["tasks"]
-        .find({"session_id": session.id})
-        .sort("created_at", 1)
-        .each(append_to_transcript)
-    )
-
-    return transcript
-
-
 async def fetch_session_tasks(session_id: str, limit: int = 1000) -> List[Task]:
     """
     Fetch all tasks for a given session id.
@@ -110,6 +84,25 @@ async def fetch_session_tasks(session_id: str, limit: int = 1000) -> List[Task]:
     )
     tasks = [Task.model_validate(data) for data in tasks]
     return tasks
+
+
+async def format_session_transcript(session: Session) -> str:
+    """
+    Format the transcript of a session into a human-readable string.
+
+    Eg:
+    User: Hello
+    Assistant: Hi there!
+    """
+
+    tasks = await fetch_session_tasks(session.id)
+
+    transcript = ""
+    for task in tasks:
+        transcript += f"User: {task.input}\n"
+        transcript += f"Assistant: {task.output}\n"
+
+    return transcript
 
 
 async def edit_session_metadata(session_data: Session, **kwargs) -> Session:
@@ -173,3 +166,100 @@ async def compute_session_length(project_id: str):
     ]
 
     await mongo_db["sessions"].aggregate(session_pipeline).to_list(length=None)
+
+
+async def get_project_id_from_session(session_id: str) -> str:
+    """
+    Fetches the project_id from a session_id.
+    """
+    mongo_db = await get_mongo_db()
+    session = await mongo_db["sessions"].find_one({"id": session_id})
+    if session is None:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+    return session["project_id"]
+
+
+async def get_event_descriptions(project_id: str) -> List[str]:
+    """
+    Fetches the event descriptions for a given session.
+    """
+
+    mongo_db = await get_mongo_db()
+    project = await mongo_db["projects"].find_one({"id": project_id})
+    project_items = Project.model_validate(project)
+
+    event_descriptions = []
+    for _, event in project_items.settings.events.items():
+        event_descriptions.append(event.description)
+
+    return event_descriptions
+
+
+async def event_suggestion(
+    session_id: str,
+    model: str = "openai:gpt-4-1106-preview",
+) -> list[str]:
+    """
+    Fetches the messages from a session ID and sends them to the LLM model to get an event suggestion.
+    This will suggest an event that is most likely to have happened during the session.
+    """
+    from phospho.utils import shorten_text
+    from phospho.lab.language_models import get_provider_and_model, get_sync_client
+    from re import search
+
+    session = await get_session_by_id(session_id)
+    transcript = await format_session_transcript(session)
+    project_id = await get_project_id_from_session(session_id)
+    event_descriptions = await get_event_descriptions(project_id)
+
+    provider, model_name = get_provider_and_model(model)
+    openai_client = get_sync_client(provider)
+
+    # We look at the full session
+    system_prompt = (
+        "Here is an exchange between a user and an assistant, your job is to suggest possible events in this exchange and to come up with a name for them, \
+        if you don't find anything answer like so: None, otherwise suggest a name and a description for a possible event to detect in this exchange like so: Name: The event name Possible event: Your suggestion here. \
+        \nHere are the existing events:\n- "
+        + "\n- ".join(event_descriptions)
+    )
+    messages = "DISCUSSION START\n" + transcript
+
+    max_tokens_input_lenght = 128 * 1000 - 2000  # We remove 1k for safety
+    prompt = shorten_text(messages, max_tokens_input_lenght) + "DISCUSSION END"
+
+    try:
+        response = openai_client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            max_tokens=25,
+        )
+
+        llm_response = response.choices[0].message.content
+
+        regexName = r"Name: (.*)(?= Possible event:)"
+        regexDescription = r"Possible event: (.*)"
+
+        name = search(regexName, llm_response)
+        description = search(regexDescription, llm_response)
+
+        if name is not None and description is not None:
+            logger.info(f"Event detected in the session: {name} - {description}")
+            return [name.group(1), description.group(1)]
+
+        else:
+            logger.info("No event detected in the session.")
+            return [
+                "No significant event",
+                "We couldn't detect any relevant event in this session.",
+            ]
+
+    except Exception as e:
+        logger.error(f"event_detection call to OpenAI API failed : {e}")
+
+        return ["Error", "An error occured while trying to suggest an event."]

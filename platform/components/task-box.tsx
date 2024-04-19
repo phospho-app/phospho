@@ -20,7 +20,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { useToast } from "@/components/ui/use-toast";
-import { Event, EventDefinition, Task, TaskWithEvents } from "@/models/models";
+import { Event, Task, TaskWithEvents } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, Trash } from "lucide-react";
@@ -209,7 +209,7 @@ const TaskBox = ({
   return (
     <div className="mb-2 p-1 border border-gray-800 rounded">
       <div className="flex justify-between align-top">
-        <div className="space-x-2">
+        <div className="space-x-2 flex justify-between items-center">
           {task?.events?.map((event) => {
             return (
               <InteractiveEventBadge

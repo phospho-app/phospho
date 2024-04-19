@@ -15,6 +15,8 @@ import { useUser } from "@propelauth/nextjs/client";
 import { PenSquare, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useState } from "react";
 
+import { CardHeader } from "./ui/card";
+
 interface ThumbsUpAndDownProps {
   task: Task;
   setTask: (task: Task) => void;
@@ -44,7 +46,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
 
   const noteButtonColor =
     notes === null || notes === undefined || notes === ""
-      ? "bg-gray-500"
+      ? "bg-secondary"
       : "bg-green-500";
 
   // Function to flag a task as succes or failure
@@ -130,7 +132,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         variant="outline"
         size="icon"
         onClick={() => flagTask("failure")}
-        className="bg-gray-500 mr-1"
+        className="bg-secondary mr-1"
       >
         <ThumbsDown className="h-4 w-4" />
       </Button>
@@ -159,7 +161,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         variant="outline"
         size="icon"
         onClick={() => flagTask("success")}
-        className="bg-gray-500 mr-1"
+        className="bg-secondary mr-1"
       >
         <ThumbsUp className="h-4 w-4" />
       </Button>
@@ -172,7 +174,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         variant="outline"
         size="icon"
         onClick={() => flagTask("failure")}
-        className="bg-gray-500 mr-1"
+        className="bg-secondary mr-1"
       >
         <ThumbsDown className="h-4 w-4" />
       </Button>
@@ -180,7 +182,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         variant="outline"
         size="icon"
         onClick={() => flagTask("success")}
-        className="bg-gray-500 mr-1"
+        className="bg-secondary mr-1"
       >
         <ThumbsUp className="h-4 w-4" fill="#4ade80" />
       </Button>
@@ -193,7 +195,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         variant="outline"
         size="icon"
         onClick={() => flagTask("failure")}
-        className="bg-gray-500 mr-1"
+        className="bg-secondary mr-1"
       >
         <ThumbsDown className="h-4 w-4" fill="red" />
       </Button>
@@ -201,7 +203,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         variant="outline"
         size="icon"
         onClick={() => flagTask("success")}
-        className="bg-gray-500 mr-1"
+        className="bg-secondary mr-1"
       >
         <ThumbsUp className="h-4 w-4" />
       </Button>
@@ -214,7 +216,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         variant="outline"
         size="icon"
         onClick={() => flagTask("failure")}
-        className="bg-gray-500 mr-1"
+        className="bg-secondary mr-1"
       >
         <ThumbsDown className="h-4 w-4" />
       </Button>
@@ -222,7 +224,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         variant="outline"
         size="icon"
         onClick={() => flagTask("success")}
-        className="bg-gray-500 mr-1"
+        className="bg-secondary mr-1"
       >
         <ThumbsUp className="h-4 w-4" />
       </Button>
@@ -262,27 +264,23 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-96 h-120">
-          <div>
-            <Textarea
-              id="description"
-              placeholder={`Write a custom note for this task.\nWhen your users give you feedback, you see it here.`}
-              value={currentNotes}
-              onChange={handleNoteEdit}
-            />
-          </div>
-          <div className="flex justify-end mt-2">
+          <CardHeader>
+            <div>
+              <Textarea
+                id="description"
+                placeholder={`Write a custom note for this task.\nWhen your users give you feedback, you see it here.`}
+                value={currentNotes}
+                onChange={handleNoteEdit}
+              />
+            </div>
             {saveNoteButtonClicked ? (
               <Icons.spinner className="mr-1 h-4 w-4 animate-spin" />
             ) : (
-              <Button
-                variant="default"
-                className="mr-1"
-                onClick={handleSaveButton}
-              >
+              <Button className="hover:bg-green-600" onClick={handleSaveButton}>
                 Save
               </Button>
             )}
-          </div>
+          </CardHeader>
         </PopoverContent>
       </Popover>
     </div>
