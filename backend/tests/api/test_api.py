@@ -74,7 +74,7 @@ def test_tasks_and_sessions(
         assert response.json()["project_id"] == task["project_id"]
 
         # Get tasks
-        response = client.get(
+        response = client.post(
             f"/api/projects/{dummy_project.id}/tasks",
             headers={"Authorization": f"Bearer {access_token}"},
         )
@@ -94,7 +94,7 @@ def test_tasks_and_sessions(
         )
 
         # Get sessions
-        response = client.get(
+        response = client.post(
             f"/api/projects/{dummy_project.id}/sessions",
             headers={"Authorization": f"Bearer {access_token}"},
         )
