@@ -68,11 +68,12 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
   const router = useRouter();
 
   // Fetch all sessions
-  let eventFilter: string | null = null;
+  let eventFilter: string[] | null = null;
   if (sessionsColumnsFilters.length > 0) {
-    eventFilter = sessionsColumnsFilters.find(
-      (filter) => filter.id === "events",
-    )?.value as string;
+    eventFilter = [
+      sessionsColumnsFilters.find((filter) => filter.id === "events")
+        ?.value as string,
+    ];
   }
   const { data: sessionsData } = useSWR(
     project_id
@@ -85,7 +86,7 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         filters: {
-          events: eventFilter,
+          event_name: eventFilter,
         },
         pagination: {
           page: sessionPagination.pageIndex,
