@@ -1,4 +1,5 @@
 from typing import Literal, Any
+from loguru import logger
 
 from app.db.models import Prediction
 from app.db.mongo import get_mongo_db
@@ -24,4 +25,8 @@ async def create_prediction(
 
     result = await mongo_db["predictions"].insert_one(prediction.model_dump())
 
-    return Prediction()
+    logger.info(
+        f"Prediction created for project {project_id} and job_id {job_id} with value {value}"
+    )
+
+    return prediction
