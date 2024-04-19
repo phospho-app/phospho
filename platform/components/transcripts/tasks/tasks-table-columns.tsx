@@ -7,17 +7,52 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, TaskWithEvents } from "@/models/models";
-import { dataStateStore } from "@/store/store";
-import { ColumnDef, filterFns } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
+import { ColumnDef } from "@tanstack/react-table";
+import { set } from "date-fns";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronRight,
+  FilterX,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
+import useSWR from "swr";
 
 export function getColumns(): ColumnDef<TaskWithEvents>[] {
-  const uniqueEventNamesInData = dataStateStore(
-    (state) => state.uniqueEventNamesInData,
+  const project_id = navigationStateStore((state) => state.project_id);
+  const tasksPagination = navigationStateStore(
+    (state) => state.tasksPagination,
   );
+  const setTasksPagination = navigationStateStore(
+    (state) => state.setTasksPagination,
+  );
+
+  const { accessToken } = useUser();
+
+  let uniqueEventNamesInData: string[] = [];
+
+  const { data: uniqueEvents } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/unique-events`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  if (project_id && uniqueEvents?.events) {
+    uniqueEventNamesInData = Array.from(
+      new Set(
+        uniqueEvents.events.map((event: Event) => event.event_name as string),
+      ),
+    );
+  }
 
   const columns: ColumnDef<TaskWithEvents>[] = [
     // id
@@ -33,6 +68,9 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
         row.original.id;
       },
       enableHiding: true,
+      size: 0,
+      minSize: 0,
+      maxSize: 0,
     },
     // Date
     {
@@ -62,12 +100,7 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === "asc")
-                }
-              >
+              <Button variant="ghost">
                 <Sparkles className="h-4 w-4 mr-1 text-green-500" />
                 Eval
                 <ChevronDown className="ml-2 h-4 w-4" />
@@ -75,17 +108,38 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
-                onClick={() => column.setFilterValue("success")}
+                onClick={() => {
+                  column.setFilterValue("success");
+                  setTasksPagination({
+                    ...tasksPagination,
+                    pageIndex: 0,
+                  });
+                }}
               >
                 Success
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => column.setFilterValue("failure")}
+                onClick={() => {
+                  column.setFilterValue("failure");
+                  setTasksPagination({
+                    ...tasksPagination,
+                    pageIndex: 0,
+                  });
+                }}
               >
                 Failure
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => column.setFilterValue(null)}>
+              <DropdownMenuItem
+                onClick={() => {
+                  column.setFilterValue(null);
+                  setTasksPagination({
+                    ...tasksPagination,
+                    pageIndex: 0,
+                  });
+                }}
+              >
+                <FilterX className="h-4 w-4 mr-1" />
                 Clear
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -138,7 +192,13 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
               {uniqueEventNamesInData.map((eventName) => (
                 <DropdownMenuItem
                   key={eventName}
-                  onClick={() => column.setFilterValue(eventName)}
+                  onClick={() => {
+                    column.setFilterValue(eventName);
+                    setTasksPagination({
+                      ...tasksPagination,
+                      pageIndex: 0,
+                    });
+                  }}
                 >
                   {eventName}
                 </DropdownMenuItem>
@@ -146,8 +206,15 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 key="event_clear"
-                onClick={() => column.setFilterValue(null)}
+                onClick={() => {
+                  column.setFilterValue(null);
+                  setTasksPagination({
+                    ...tasksPagination,
+                    pageIndex: 0,
+                  });
+                }}
               >
+                <FilterX className="h-4 w-4 mr-1" />
                 Clear
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -216,6 +283,9 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
           </Link>
         );
       },
+      size: 10,
+      minSize: 10,
+      maxSize: 10,
     },
   ];
   return columns;

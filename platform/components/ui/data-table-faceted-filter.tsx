@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { CheckIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { Column } from "@tanstack/react-table";
+import { FilterX } from "lucide-react";
 import * as React from "react";
 
 import { Badge } from "./badge";
@@ -130,6 +131,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     onSelect={() => column?.setFilterValue(undefined)}
                     className="justify-center text-center"
                   >
+                    <FilterX className="h-4 w-4 mr-1" />
                     Clear filters
                   </CommandItem>
                 </CommandGroup>

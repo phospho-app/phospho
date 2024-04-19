@@ -1,5 +1,6 @@
 "use client";
 
+import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { authFetcher } from "@/lib/fetcher";
+import { SessionWithEvents } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   SortingState,
@@ -23,6 +26,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import {
+  ChevronFirstIcon,
+  ChevronLastIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   Database,
@@ -32,32 +37,110 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import useSWR from "swr";
 
 import { getColumns } from "./sessions-table-columns";
 
-interface DataTableProps<TData, TValue> {}
+interface DataTableProps<TData, TValue> {
+  userFilter?: string | null;
+}
 
-export function SessionsTable<TData, TValue>({}: DataTableProps<
-  TData,
-  TValue
->) {
+export function SessionsTable<TData, TValue>({
+  userFilter = null,
+}: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
-  const sessionsWithEvents = dataStateStore(
-    (state) => state.sessionsWithEvents,
-  );
 
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const sessionsSorting = navigationStateStore(
+    (state) => state.sessionsSorting,
+  );
+  const setSessionsSorting = navigationStateStore(
+    (state) => state.setSessionsSorting,
+  );
   const sessionsColumnsFilters = navigationStateStore(
     (state) => state.sessionsColumnsFilters,
   );
   const setSessionsColumnsFilters = navigationStateStore(
     (state) => state.setSessionsColumnsFilters,
   );
+  const sessionPagination = navigationStateStore(
+    (state) => state.sessionsPagination,
+  );
+  const setSessionsPagination = navigationStateStore(
+    (state) => state.setSessionsPagination,
+  );
 
+  const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
   const { accessToken } = useUser();
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  let sessionsWithEvents: SessionWithEvents[] = [];
+
+  // Filtering
+  let eventFilter: string[] | null = null;
+  if (sessionsColumnsFilters.length > 0) {
+    console.log("tasksColumnsFilters", sessionsColumnsFilters);
+    for (let filter of sessionsColumnsFilters) {
+      if (filter.id === "events") {
+        if (typeof filter?.value === "string") {
+          eventFilter = [filter.value];
+        } else {
+          eventFilter = null;
+        }
+      }
+    }
+  }
+  console.log("Event filter:", eventFilter);
+  const { data: sessionsData } = useSWR(
+    project_id
+      ? [
+          `/api/projects/${project_id}/sessions`,
+          accessToken,
+          sessionPagination.pageIndex,
+          JSON.stringify(eventFilter),
+          JSON.stringify(userFilter),
+          JSON.stringify(sessionsSorting),
+        ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        filters: {
+          event_name: eventFilter,
+          user_id: userFilter,
+        },
+        pagination: {
+          page: sessionPagination.pageIndex,
+          page_size: sessionPagination.pageSize,
+        },
+        sorting: sessionsSorting,
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  if (sessionsData?.sessions) {
+    sessionsWithEvents = sessionsData.sessions;
+  }
+
+  const { data: totalNbSessionsData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/sessions`,
+      accessToken,
+      eventFilter,
+      "total_nb_sessions",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_sessions"],
+        sessions_filter: {
+          event_name: eventFilter,
+        },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const totalNbSessions = totalNbSessionsData?.total_nb_sessions;
 
   const query_tasks = async () => {
     // Call the /search endpoint
@@ -91,17 +174,23 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
     data: sessionsWithEvents,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: setSessionsSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setSessionsColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setSessionsPagination,
     state: {
       columnFilters: sessionsColumnsFilters,
-      sorting,
+      sorting: sessionsSorting,
+      pagination: sessionPagination,
     },
-    // pageCount: -1,
+    pageCount: totalNbSessions
+      ? Math.ceil(totalNbSessions / sessionPagination.pageSize)
+      : 0,
     autoResetPageIndex: false,
+    manualPagination: true,
+    manualSorting: true,
   });
 
   if (!project_id) {
@@ -110,8 +199,8 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
 
   return (
     <div>
-      <div className="flex flex-row gap-x-4">
-        <div className="flex flex-col mb-2 flex-grow">
+      <div className="flex flex-row gap-x-2 items-center mb-2">
+        <div className="flex-grow">
           <Input
             placeholder="Search for a topic"
             value={
@@ -162,59 +251,16 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
           onClick={() => {
             table.setColumnFilters([]);
             setQuery("");
+            eventFilter = null;
           }}
           disabled={sessionsColumnsFilters.length === 0}
         >
           <FilterX className="h-4 w-4 mr-1" />
           Clear
         </Button>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1}/
-          {table.getPageCount()}
-        </div>
-        <Button
-          variant="outline"
-          className="w-8 p-0"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          <span className="sr-only">Go to previous page</span>
-          <ChevronLeftIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          className="w-8 p-0"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          <span className="sr-only">Go to next page</span>
-          <ChevronRightIcon className="h-4 w-4" />
-        </Button>
+        <TableNavigation table={table} />
       </div>
-      {table.getState().pagination.pageIndex + 1 > 5 && (
-        <Alert className="mb-2 ">
-          <div className="flex justify-between">
-            <div></div>
-            <div className="flex space-x-4">
-              <Database className="w-8 h-8" />
 
-              <div>
-                <AlertTitle>Only the latest sessions are displayed</AlertTitle>
-                <AlertDescription>
-                  <div>Scale your insights with the phospho Python SDK</div>
-                </AlertDescription>
-              </div>
-              <Link
-                href="https://docs.phospho.ai/integrations/python/analytics"
-                target="_blank"
-              >
-                <Button>Learn more</Button>
-              </Link>
-            </div>
-            <div></div>
-          </div>
-        </Alert>
-      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -222,7 +268,13 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{
+                        width: header.getSize(),
+                      }}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -269,6 +321,30 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
           </TableBody>
         </Table>
       </div>
+      {table.getState().pagination.pageIndex + 1 > 5 && (
+        <Alert className="mt-2 ">
+          <div className="flex justify-between">
+            <div></div>
+            <div className="flex space-x-4">
+              <Database className="w-8 h-8" />
+
+              <div>
+                <AlertTitle>Fetch tasks in a pandas Dataframe</AlertTitle>
+                <AlertDescription>
+                  <div>Load tasks with the phospho Python SDK</div>
+                </AlertDescription>
+              </div>
+              <Link
+                href="https://docs.phospho.ai/integrations/python/analytics"
+                target="_blank"
+              >
+                <Button>Learn more</Button>
+              </Link>
+            </div>
+            <div></div>
+          </div>
+        </Alert>
+      )}
     </div>
   );
 }
