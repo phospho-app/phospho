@@ -38,13 +38,17 @@ import useSWR from "swr";
 
 import { getColumns } from "./sessions-table-columns";
 
-interface DataTableProps<TData, TValue> {}
+interface DataTableProps<TData, TValue> {
+  userFilter: string | null;
+}
 
-export function SessionsTable<TData, TValue>({}: DataTableProps<
-  TData,
-  TValue
->) {
-  console.log("Rendering SessionsTable");
+export function SessionsTable<TData, TValue>({
+  userFilter,
+}: DataTableProps<TData, TValue>) {
+  if (userFilter === undefined) {
+    userFilter = null;
+  }
+
   const project_id = navigationStateStore((state) => state.project_id);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -82,6 +86,7 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
       }
     }
   }
+  console.log("Event filter:", eventFilter);
   const { data: sessionsData } = useSWR(
     project_id
       ? [
@@ -89,12 +94,14 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
           accessToken,
           sessionPagination.pageIndex,
           JSON.stringify(eventFilter),
+          JSON.stringify(userFilter),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         filters: {
           event_name: eventFilter,
+          user_id: userFilter,
         },
         pagination: {
           page: sessionPagination.pageIndex,

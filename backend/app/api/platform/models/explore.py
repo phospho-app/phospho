@@ -10,6 +10,7 @@ class ProjectDataFilters(BaseModel):
     created_at_end: Optional[Union[int, datetime.datetime]] = None
     event_name: Optional[List[str]] = None
     flag: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 class ProjectEventsFilters(BaseModel):
