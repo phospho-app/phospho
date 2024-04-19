@@ -692,3 +692,57 @@ async def regex_event_detection(
             value=None,
             logs=[str(e)],
         )
+
+
+async def get_topic_of_conversation(
+    message: Message,
+    model: str = "openai:gpt-4-1106-preview",
+) -> JobResult:
+    """
+    Uses an LLM to get the topic of the session
+    The goal is to get the LLM to respond with one word that describes the topic of the conversation
+    """
+    from phospho.utils import shorten_text
+
+    provider, model_name = get_provider_and_model(model)
+    openai_client = get_sync_client(provider)
+
+    # We look at the full session
+    messages = message.transcript(with_role=True, with_previous_messages=True)
+    max_tokens_input_lenght = (
+        128 * 1000 - 1000
+    )  # We remove 1k to accomodate for the system prompt
+    messages = shorten_text(messages, max_tokens_input_lenght)
+
+    system_prompt = "You must tell me the topic of this conversation, respond with one simple word that is the topic of this conversation."
+    prompt = "DISCUSSION START" + messages + "DISCUSSION END"
+
+    try:
+        response = openai_client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            temperature=0,
+            max_tokens=2,
+        )
+
+        llm_response = response.choices[0].message.content.lower()
+
+        return JobResult(
+            result_type=ResultType.bool,
+            value=llm_response,
+            logs=[prompt, llm_response],
+        )
+
+    except Exception as e:
+        logger.error(f"event_detection call to OpenAI API failed : {e}")
+        return JobResult(
+            result_type=ResultType.error,
+            value=None,
+            logs=[prompt, str(e)],
+        )
