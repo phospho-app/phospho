@@ -10,7 +10,7 @@ import { Button } from "./ui/button";
 
 export function TableNavigation({ table }: { table: Table<any> }) {
   return (
-    <div className="flex space-x-1 items-center">
+    <div className="flex space-x-1 items-center align-middle">
       <Button
         variant="outline"
         className="w-8 p-0"

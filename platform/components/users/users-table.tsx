@@ -73,7 +73,7 @@ export function UsersTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex flex-row gap-x-4 justify-end mb-2">
+      <div className="flex flex-row gap-x-2 items-center mb-2">
         <Button
           variant="secondary"
           onClick={() => {
