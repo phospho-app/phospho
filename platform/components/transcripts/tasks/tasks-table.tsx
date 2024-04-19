@@ -54,7 +54,10 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   );
   const router = useRouter();
 
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const tasksSorting = navigationStateStore((state) => state.tasksSorting);
+  const setTasksSorting = navigationStateStore(
+    (state) => state.setTasksSorting,
+  );
   const tasksColumnsFilters = navigationStateStore(
     (state) => state.tasksColumnsFilters,
   );
@@ -104,6 +107,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           tasksPagination.pageIndex,
           JSON.stringify(eventFilter),
           JSON.stringify(flagFilter),
+          JSON.stringify(tasksSorting),
         ]
       : null,
     ([url, accessToken]) =>
@@ -116,6 +120,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           page: tasksPagination.pageIndex,
           page_size: tasksPagination.pageSize,
         },
+        sorting: tasksSorting,
       }),
     { keepPreviousData: true },
   );
@@ -190,7 +195,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     data: tasksWithEvents,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: setTasksSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setTasksColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
@@ -198,11 +203,11 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     onPaginationChange: setTasksPagination,
     state: {
       columnFilters: tasksColumnsFilters,
-      sorting,
+      sorting: tasksSorting,
       pagination: tasksPagination,
     },
     pageCount: maxNbPages,
-    // autoResetPageIndex: false,
+    autoResetPageIndex: false,
     manualPagination: true,
   });
 

@@ -80,6 +80,12 @@ class Pagination(BaseModel):
     per_page: int = 10
 
 
+class Sorting(BaseModel):
+    id: str
+    desc: bool
+
+
 class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     pagination: Pagination = Field(default_factory=Pagination)
+    sorting: Optional[List[Sorting]] = None
