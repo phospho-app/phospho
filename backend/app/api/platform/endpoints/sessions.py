@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends
 from propelauth_fastapi import User
 
-from app.api.platform.models import Session, SessionUpdateRequest, Tasks
+from app.api.platform.models import (
+    Session,
+    SessionUpdateRequest,
+    Tasks,
+)
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
 from app.services.mongo.sessions import (
@@ -9,6 +13,7 @@ from app.services.mongo.sessions import (
     fetch_session_tasks,
     format_session_transcript,
     get_session_by_id,
+    event_suggestion,
 )
 
 router = APIRouter(tags=["Sessions"])
@@ -72,3 +77,16 @@ async def update_session_metadata(
         session_data, **sessions_update_metadata_request.model_dump()
     )
     return session_data
+
+
+@router.get(
+    "/sessions/{session_id}/suggestion",
+    description="Get an event suggestion based on a session",
+)
+async def get_session_suggestion(
+    session_id: str, user: User = Depends(propelauth.require_user)
+) -> list[str]:
+    session = await get_session_by_id(session_id)
+    await verify_if_propelauth_user_can_access_project(user, session.project_id)
+    event_description = await event_suggestion(session_id)
+    return event_description
