@@ -279,6 +279,11 @@ async def task_scoring_pipeline(
     )
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
 
+    # Save the prediction
+    prediction = await create_prediction(
+        task.org_id, task.project_id, config.TASK_EVALUATION_JOB_ID, flag, "evaluation"
+    )
+
     # Update the task object if the flag is None (no previous evaluation)
     if save_task:
         task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
