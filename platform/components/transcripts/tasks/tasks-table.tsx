@@ -15,7 +15,6 @@ import {
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
-  ColumnFiltersState,
   SortingState,
   flexRender,
   getCoreRowModel,

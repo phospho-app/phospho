@@ -8,6 +8,7 @@ from app.db.models import Eval, Event, EventDefinition, LlmCall, Task
 from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
+from app.services.predictions import create_prediction
 
 # from app.services.topics import extract_topics  # TODO
 from app.services.webhook import trigger_webhook
@@ -109,6 +110,22 @@ async def task_event_detection_pipeline(
                     json=detected_event_data.model_dump(),
                     headers=event.webhook_headers,
                 )
+
+        # Save the prediction
+        # Get the event object from the settings
+        event_settings = project.settings.events[event_name]
+
+        # Get the job_id from the event
+        job_id = event_settings.job_id
+
+        if job_id is None:
+            logger.error(f"No job_id found for event {event_name}")
+
+        else:
+            prediction = await create_prediction(
+                project.org_id, project_id, job_id, result.value, "event_detection"
+            )
+
     if len(detected_events) > 0:
         mongo_db["events"].insert_many(
             [event.model_dump() for event in detected_events]
@@ -262,6 +279,11 @@ async def task_scoring_pipeline(
     )
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
 
+    # Save the prediction
+    prediction = await create_prediction(
+        task.org_id, task.project_id, config.TASK_EVALUATION_JOB_ID, flag, "evaluation"
+    )
+
     # Update the task object if the flag is None (no previous evaluation)
     if save_task:
         task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
@@ -403,12 +425,28 @@ async def messages_main_pipeline(
                 messages=messages,
             )
             events.append(detected_event_data)
+
             if event.webhook is not None:
                 await trigger_webhook(
                     url=event.webhook,
                     json=detected_event_data.model_dump(),
                     headers=event.webhook_headers,
                 )
+
+        # Save the prediction
+        # Get the event object from the settings
+        event_settings = project.settings.events.get(event_name)
+
+        # Get the job_id from the event
+        job_id = event_settings.job_id
+
+        if job_id is None:
+            logger.error(f"No job_id found for event {event_name}")
+
+        else:
+            prediction = await create_prediction(
+                project.org_id, project_id, job_id, result.value, "event_detection"
+            )
     # Push the events to the database
     if len(events) > 0:
         mongo_db = await get_mongo_db()
