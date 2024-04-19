@@ -22,7 +22,6 @@ export function getColumns() {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
 
-  // Fetch all sessions
   const { data: uniqueEvents } = useSWR(
     project_id
       ? [`/api/projects/${project_id}/unique-events`, accessToken]

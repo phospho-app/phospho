@@ -154,8 +154,6 @@ interface dataState {
 
   uniqueEventNames: string[];
   setUniqueEventNames: (uniqueEventNames: string[]) => void;
-  uniqueEventNamesInData: string[];
-  setUniqueEventNamesInData: (uniqueEventNamesInData: string[]) => void;
 }
 
 export const dataStateStore = create<dataState>((set) => ({
@@ -194,7 +192,4 @@ export const dataStateStore = create<dataState>((set) => ({
   uniqueEventNames: [],
   setUniqueEventNames: (uniqueEventNames: string[]) =>
     set((state) => ({ uniqueEventNames: uniqueEventNames })),
-  uniqueEventNamesInData: [],
-  setUniqueEventNamesInData: (uniqueEventNamesInData: string[]) =>
-    set((state) => ({ uniqueEventNamesInData: uniqueEventNamesInData })),
 }));
