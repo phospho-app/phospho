@@ -11,6 +11,7 @@ from phospho.models import (
     FlattenedTask,
     LlmCall,
     Organization,
+    Prediction,
     Project,
     Session,
     Task,
