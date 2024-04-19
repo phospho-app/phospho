@@ -9,36 +9,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { SessionWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import Link from "next/link";
-import React, { useEffect } from "react";
+import React from "react";
 
 import { SessionsTable } from "./sessions-table";
 
 const Sessions: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
-  const setUniqueEventNamesInData = dataStateStore(
-    (state) => state.setUniqueEventNamesInData,
-  );
-  const sessionsWithEvents = dataStateStore(
-    (state) => state.sessionsWithEvents,
-  );
   const hasSessions = dataStateStore((state) => state.hasSessions);
-
-  useEffect(() => {
-    if (sessionsWithEvents !== null && sessionsWithEvents.length > 0) {
-      const uniqueEventNames: string[] = Array.from(
-        new Set(
-          sessionsWithEvents
-            .map((task: SessionWithEvents) => task.events)
-            .flat()
-            .map((event: any) => event.event_name as string),
-        ),
-      );
-      setUniqueEventNamesInData(uniqueEventNames);
-    }
-  }, [project_id, sessionsWithEvents?.length]);
 
   if (!project_id) {
     return <></>;

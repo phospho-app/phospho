@@ -3,7 +3,7 @@
 import SmallSpinner from "@/components/small-spinner";
 import { SessionsTable } from "@/components/transcripts/sessions/sessions-table";
 import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import useSWR from "swr";
 
@@ -11,9 +11,6 @@ const User = ({ params }: { params: { id: string } }) => {
   const user_id = decodeURIComponent(params.id);
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
-  const setSessionsWithEvents = dataStateStore(
-    (state) => state.setSessionsWithEvents,
-  );
 
   const { data } = useSWR(
     [`/api/metadata/${project_id}/user/${user_id}`, accessToken],
@@ -23,9 +20,6 @@ const User = ({ params }: { params: { id: string } }) => {
     },
   );
   const userMetadata = data;
-  if (data?.sessions) {
-    setSessionsWithEvents(data.sessions);
-  }
 
   if (!project_id) {
     return <div>No project selected</div>;
@@ -35,7 +29,7 @@ const User = ({ params }: { params: { id: string } }) => {
     <>
       {(userMetadata === null && <SmallSpinner />) || (
         <div>
-          <SessionsTable />
+          <SessionsTable userFilter={user_id} />
         </div>
       )}
     </>

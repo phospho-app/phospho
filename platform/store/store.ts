@@ -7,7 +7,12 @@ import {
   Task,
   TaskWithEvents,
 } from "@/models/models";
-import { ColumnFiltersState, Updater } from "@tanstack/react-table";
+import {
+  ColumnFiltersState,
+  PaginationState,
+  SortingState,
+  Updater,
+} from "@tanstack/react-table";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -24,10 +29,19 @@ interface navigationState {
   setTasksColumnsFilters: (
     tasksColumnsFilters: Updater<ColumnFiltersState>,
   ) => void;
+  tasksPagination: PaginationState;
+  setTasksPagination: (taskPagination: Updater<PaginationState>) => void;
+  tasksSorting: SortingState;
+  setTasksSorting: (taskSorting: Updater<SortingState>) => void;
+
   sessionsColumnsFilters: ColumnFiltersState;
   setSessionsColumnsFilters: (
     sessionsColumnsFilters: Updater<ColumnFiltersState>,
   ) => void;
+  sessionsPagination: PaginationState;
+  setSessionsPagination: (sessionsPagination: Updater<PaginationState>) => void;
+  sessionsSorting: SortingState;
+  setSessionsSorting: (sessionsSorting: Updater<SortingState>) => void;
 }
 
 export const navigationStateStore = create(
@@ -54,6 +68,41 @@ export const navigationStateStore = create(
             tasksColumnsFilters: updaterOrValue,
           };
         }),
+      tasksPagination: {
+        pageSize: 10,
+        pageIndex: 0,
+      } as PaginationState,
+      setTasksPagination: (taskPagination: Updater<PaginationState>) =>
+        set((state) => {
+          if (typeof taskPagination === "function") {
+            const update = taskPagination(state.tasksPagination);
+            return {
+              tasksPagination: update,
+            };
+          }
+          return {
+            tasksPagination: taskPagination,
+          };
+        }),
+      tasksSorting: [
+        {
+          id: "created_at",
+          desc: false,
+        },
+      ],
+      setTasksSorting: (updaterOrValue: Updater<SortingState>) =>
+        set((state) => {
+          if (typeof updaterOrValue === "function") {
+            const update = updaterOrValue(state.tasksSorting);
+            return {
+              tasksSorting: update,
+            };
+          }
+          return {
+            tasksSorting: updaterOrValue,
+          };
+        }),
+
       sessionsColumnsFilters: [],
       setSessionsColumnsFilters: (
         updaterOrValue: Updater<ColumnFiltersState>,
@@ -69,7 +118,44 @@ export const navigationStateStore = create(
             sessionsColumnsFilters: updaterOrValue,
           };
         }),
+      sessionsPagination: {
+        pageSize: 10,
+        pageIndex: 0,
+      } as PaginationState,
+      setSessionsPagination: (sessionsPagination: Updater<PaginationState>) =>
+        set((state) => {
+          if (typeof sessionsPagination === "function") {
+            const update = sessionsPagination(state.sessionsPagination);
+            return {
+              sessionsPagination: update,
+            };
+          }
+          return {
+            sessionsPagination: sessionsPagination,
+          };
+        }),
+      sessionsSorting: [
+        {
+          id: "created_at",
+          desc: false,
+        },
+      ],
+      setSessionsSorting: (updaterOrValue: Updater<SortingState>) =>
+        set((state) => {
+          console.log("sorting updaterOrValue");
+          console.log(updaterOrValue);
+          if (typeof updaterOrValue === "function") {
+            const update = updaterOrValue(state.sessionsSorting);
+            return {
+              sessionsSorting: update,
+            };
+          }
+          return {
+            sessionsSorting: updaterOrValue,
+          };
+        }),
     }),
+
     {
       name: "navigation-storage",
       storage: createJSONStorage(() => sessionStorage),
@@ -100,8 +186,6 @@ interface dataState {
 
   tasksWithEvents: TaskWithEvents[];
   setTasksWithEvents: (tasks: TaskWithEvents[]) => void;
-  sessionsWithEvents: SessionWithEvents[];
-  setSessionsWithEvents: (sessions: SessionWithEvents[]) => void;
   events: Event[];
   setEvents: (events: Event[]) => void;
 
@@ -110,8 +194,6 @@ interface dataState {
 
   uniqueEventNames: string[];
   setUniqueEventNames: (uniqueEventNames: string[]) => void;
-  uniqueEventNamesInData: string[];
-  setUniqueEventNamesInData: (uniqueEventNamesInData: string[]) => void;
 }
 
 export const dataStateStore = create<dataState>((set) => ({
@@ -139,9 +221,7 @@ export const dataStateStore = create<dataState>((set) => ({
   tasksWithEvents: [],
   setTasksWithEvents: (tasks: TaskWithEvents[]) =>
     set((state) => ({ tasksWithEvents: tasks })),
-  sessionsWithEvents: [],
-  setSessionsWithEvents: (sessions: SessionWithEvents[]) =>
-    set((state) => ({ sessionsWithEvents: sessions })),
+
   events: [],
   setEvents: (events: Event[]) => set((state) => ({ events: events })),
 
@@ -152,7 +232,4 @@ export const dataStateStore = create<dataState>((set) => ({
   uniqueEventNames: [],
   setUniqueEventNames: (uniqueEventNames: string[]) =>
     set((state) => ({ uniqueEventNames: uniqueEventNames })),
-  uniqueEventNamesInData: [],
-  setUniqueEventNamesInData: (uniqueEventNamesInData: string[]) =>
-    set((state) => ({ uniqueEventNamesInData: uniqueEventNamesInData })),
 }));

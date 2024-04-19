@@ -1,5 +1,7 @@
 "use client";
 
+import { TableNavigation } from "@/components/table-navigation";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -20,11 +22,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeftIcon, ChevronRightIcon, FilterX } from "lucide-react";
+import { FilterX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-import { Button } from "../ui/button";
 import { getColumns } from "./users-table-columns";
 
 interface DataTableProps<TData, TValue> {
@@ -72,7 +73,7 @@ export function UsersTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex flex-row gap-x-4 justify-end mb-2">
+      <div className="flex flex-row gap-x-2 items-center mb-2 justify-end">
         <Button
           variant="secondary"
           onClick={() => {
@@ -84,28 +85,7 @@ export function UsersTable<TData, TValue>({
           <FilterX className="h-4 w-4 mr-1" />
           Clear
         </Button>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1}/
-          {table.getPageCount()}
-        </div>
-        <Button
-          variant="outline"
-          className="w-8 p-0"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          <span className="sr-only">Go to previous page</span>
-          <ChevronLeftIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          className="w-8 p-0"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          <span className="sr-only">Go to next page</span>
-          <ChevronRightIcon className="h-4 w-4" />
-        </Button>
+        <TableNavigation table={table} />
       </div>
 
       <div className="rounded-md border">
@@ -116,7 +96,13 @@ export function UsersTable<TData, TValue>({
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        style={{
+                          width: header.getSize(),
+                        }}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
