@@ -43,12 +43,8 @@ interface DataTableProps<TData, TValue> {
 }
 
 export function SessionsTable<TData, TValue>({
-  userFilter,
+  userFilter = null,
 }: DataTableProps<TData, TValue>) {
-  if (userFilter === undefined) {
-    userFilter = null;
-  }
-
   const project_id = navigationStateStore((state) => state.project_id);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
