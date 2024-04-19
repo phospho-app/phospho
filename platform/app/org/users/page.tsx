@@ -44,9 +44,6 @@ import useSWR from "swr";
 const Users = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-  const setUniqueEventNamesInData = dataStateStore(
-    (state) => state.setUniqueEventNamesInData,
-  );
 
   // Fetch all users
   const { data: usersData } = useSWR(
@@ -58,27 +55,7 @@ const Users = () => {
   );
   const usersMetadata = usersData?.users;
 
-  // Set the unique event names in the data (for the filter in the table)
-  useEffect(() => {
-    if (
-      usersMetadata !== undefined &&
-      usersMetadata !== null &&
-      usersMetadata.length > 0
-    ) {
-      const uniqueEventNames: string[] = Array.from(
-        new Set(
-          usersMetadata
-            .map((task: UserMetadata) => task.events)
-            .flat()
-            .map((event: any) => event.event_name as string),
-        ),
-      );
-      setUniqueEventNamesInData(uniqueEventNames);
-    }
-  }, [project_id, usersMetadata?.length]);
-
   // Fetch graph data
-
   const { data: userCountData, error: fetchUserCountError } = useSWR(
     [`/api/metadata/${project_id}/count/tasks/user_id`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),

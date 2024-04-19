@@ -42,9 +42,7 @@ interface DataTableProps<TData, TValue> {
 export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
   let tasksWithEvents: TaskWithEvents[] = [];
-  const setTasksWithEvents = dataStateStore(
-    (state) => state.setTasksWithEvents,
-  );
+
   const setTasksWithoutHumanLabel = dataStateStore(
     (state) => state.setTasksWithoutHumanLabel,
   );
@@ -73,12 +71,22 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
   if (tasksColumnsFilters.length > 0) {
-    eventFilter = [
-      tasksColumnsFilters.find((filter) => filter.id === "events")
-        ?.value as string,
-    ];
-    flagFilter = tasksColumnsFilters.find((filter) => filter.id === "flag")
-      ?.value as string;
+    console.log("tasksColumnsFilters", tasksColumnsFilters);
+    for (let filter of tasksColumnsFilters) {
+      if (
+        filter.id === "flag" &&
+        (typeof filter?.value === "string" || filter?.value === null)
+      ) {
+        flagFilter = filter?.value;
+      }
+      if (filter.id === "events") {
+        if (typeof filter?.value === "string") {
+          eventFilter = [filter.value];
+        } else {
+          eventFilter = null;
+        }
+      }
+    }
   }
   const { data: tasksData } = useSWR(
     project_id
@@ -86,6 +94,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           `/api/projects/${project_id}/tasks`,
           accessToken,
           tasksPagination.pageIndex,
+          eventFilter?.toString(),
+          flagFilter?.toString(),
         ]
       : null,
     ([url, accessToken]) =>
@@ -99,7 +109,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           page_size: tasksPagination.pageSize,
         },
       }),
-    // { keepPreviousData: true },
+    { keepPreviousData: true },
   );
   if (
     project_id &&
@@ -271,7 +281,13 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{
+                        width: header.getSize(),
+                      }}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(

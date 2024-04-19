@@ -13,7 +13,13 @@ import { Event, SessionWithEvents } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronRight,
+  FilterX,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 import useSWR from "swr";
 
@@ -51,6 +57,9 @@ export function getColumns() {
         row.original.id;
       },
       enableHiding: true,
+      size: 0,
+      minSize: 0,
+      maxSize: 0,
     },
     // Date
     {
@@ -112,6 +121,7 @@ export function getColumns() {
                 key="event_clear"
                 onClick={() => column.setFilterValue(null)}
               >
+                <FilterX className="h-4 w-4 mr-1" />
                 Clear
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -164,6 +174,9 @@ export function getColumns() {
           </Link>
         );
       },
+      size: 10,
+      minSize: 10,
+      maxSize: 10,
     },
   ];
 
