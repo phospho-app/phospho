@@ -42,7 +42,7 @@ import useSWR from "swr";
 import { getColumns } from "./sessions-table-columns";
 
 interface DataTableProps<TData, TValue> {
-  userFilter: string | null;
+  userFilter?: string | null;
 }
 
 export function SessionsTable<TData, TValue>({
