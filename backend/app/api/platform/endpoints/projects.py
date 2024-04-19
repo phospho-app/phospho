@@ -116,7 +116,7 @@ async def post_update_project(
     response_model=Sessions,
     description="Get all the sessions of a project",
 )
-async def get_sessions(
+async def post_sessions(
     project_id: str,
     query: QuerySessionsTasksRequest,
     user: User = Depends(propelauth.require_user),
@@ -131,6 +131,18 @@ async def get_sessions(
         pagination=query.pagination,
     )
     return Sessions(sessions=sessions)
+
+
+@router.get(
+    "/projects/{project_id}/sessions",
+    response_model=Sessions,
+    description="Get all the sessions of a project",
+)
+async def get_sessions(
+    project_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> Sessions:
+    return await post_sessions(project_id, QuerySessionsTasksRequest(), user)
 
 
 @router.get(
@@ -207,7 +219,7 @@ async def post_search_sessions(
     response_model=Tasks,
     description="Get all the tasks of a project",
 )
-async def get_tasks(
+async def post_tasks(
     project_id: str,
     query: QuerySessionsTasksRequest,
     user: User = Depends(propelauth.require_user),
@@ -237,6 +249,18 @@ async def get_tasks(
         metadata_filter=metadata_filter,
     )
     return Tasks(tasks=tasks)
+
+
+@router.get(
+    "/projects/{project_id}/tasks",
+    response_model=Tasks,
+    description="Get all the tasks of a project",
+)
+async def get_tasks(
+    project_id: str,
+    user: User = Depends(propelauth.require_user),
+):
+    return await post_tasks(project_id, QuerySessionsTasksRequest(), user)
 
 
 @router.get(
