@@ -42,6 +42,9 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
       ? [`/api/projects/${project_id}/unique-events`, accessToken]
       : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
   if (project_id && uniqueEvents?.events) {
     uniqueEventNamesInData = Array.from(
