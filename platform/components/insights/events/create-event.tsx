@@ -13,11 +13,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -127,6 +125,7 @@ export default function CreateEvent({
       delete selectedProject.settings.events[eventNameToEdit];
     }
 
+    // On purpose, we do not pass the job_id, so a new job object will be created for this event
     selectedProject.settings.events[values.event_name] = {
       event_name: values.event_name,
       description: values.description,
