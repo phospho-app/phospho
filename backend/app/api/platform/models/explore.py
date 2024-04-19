@@ -8,7 +8,7 @@ from app.api.v2.models.projects import ProjectTasksFilter
 class ProjectDataFilters(BaseModel):
     created_at_start: Optional[Union[int, datetime.datetime]] = None
     created_at_end: Optional[Union[int, datetime.datetime]] = None
-    event_name: Optional[Union[List[str]]] = None
+    event_name: Optional[List[str]] = None
     flag: Optional[str] = None
 
 

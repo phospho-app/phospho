@@ -70,11 +70,13 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   );
 
   // Fetch all tasks
-  let eventFilter: string | null = null;
+  let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
   if (tasksColumnsFilters.length > 0) {
-    eventFilter = tasksColumnsFilters.find((filter) => filter.id === "events")
-      ?.value as string;
+    eventFilter = [
+      tasksColumnsFilters.find((filter) => filter.id === "events")
+        ?.value as string,
+    ];
     flagFilter = tasksColumnsFilters.find((filter) => filter.id === "flag")
       ?.value as string;
   }
@@ -89,7 +91,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         filters: {
-          events: eventFilter,
+          event_name: eventFilter,
           flag: flagFilter,
         },
         pagination: {
@@ -97,7 +99,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           page_size: tasksPagination.pageSize,
         },
       }),
-    { keepPreviousData: true },
+    // { keepPreviousData: true },
   );
   if (
     project_id &&
@@ -231,6 +233,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           onClick={() => {
             table.setColumnFilters([]);
             setQuery("");
+            eventFilter = null;
+            flagFilter = null;
           }}
           disabled={tasksColumnsFilters.length === 0}
         >

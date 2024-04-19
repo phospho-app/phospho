@@ -173,7 +173,7 @@ async def get_all_tasks(
     get_events: bool = True,
     get_tests: bool = False,
     validate_metadata: bool = False,
-    limit: Optional[int] = 1000,
+    limit: Optional[int] = None,
     pagination: Optional[Pagination] = None,
 ) -> List[Task]:
     """
@@ -205,10 +205,28 @@ async def get_all_tasks(
     if not get_tests:
         main_filter["test_id"] = None
 
-    pipeline = [
+    pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
+    ]
+    if event_name_filter is not None:
+        pipeline.append({"$match": {"events.event_name": {"$in": event_name_filter}}})
+
+    pipeline.append(
         {"$sort": {"created_at": -1}},
-        # Deduplicate events names. We want the unique event_names of the task
+    )
+
+    # Add pagination
+    if pagination:
+        pipeline.extend(
+            [
+                {"$skip": pagination.page * pagination.per_page},
+                {"$limit": pagination.per_page},
+            ]
+        )
+        limit = None
+
+    # Deduplicate events names. We want the unique event_names of the task
+    pipeline.append(
         {
             "$addFields": {
                 "events": {
@@ -236,23 +254,13 @@ async def get_all_tasks(
                 }
             }
         },
-    ]
-    if event_name_filter is not None:
-        pipeline.append({"$match": {"events.event_name": {"$in": event_name_filter}}})
-
-    # Add pagination
-    if pagination:
-        pipeline.extend(
-            [
-                {"$skip": pagination.page * pagination.per_page},
-                {"$limit": pagination.per_page},
-            ]
-        )
+    )
 
     tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
 
     # Cast to tasks
-    valid_tasks = [Task.model_validate(task) for task in tasks]
+    valid_tasks = [Task.model_validate(data) for data in tasks]
+
     if validate_metadata:
         for task in valid_tasks:
             # Remove the _id field from the task metadata
@@ -456,6 +464,36 @@ async def get_all_sessions(
                     }
                 },
                 {"$match": {"events.removed": {"$ne": True}}},
+            ]
+        )
+    if get_tasks:
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "tasks",
+                        "localField": "id",
+                        "foreignField": "session_id",
+                        "as": "tasks",
+                    }
+                },
+                # If tasks is None, set to empty list
+                {"$addFields": {"tasks": {"$ifNull": ["$tasks", []]}}},
+            ]
+        )
+    pipeline.append({"$sort": {"created_at": -1}})
+    # Add pagination
+    if pagination:
+        pipeline.extend(
+            [
+                {"$skip": pagination.page * pagination.per_page},
+                {"$limit": pagination.per_page},
+            ]
+        )
+
+    if get_events:
+        pipeline.extend(
+            [
                 # If events is None, set to empty list
                 {"$addFields": {"events": {"$ifNull": ["$events", []]}}},
                 # Deduplicate events names. We want the unique event_names of the session
@@ -488,30 +526,7 @@ async def get_all_sessions(
                 },
             ]
         )
-    if get_tasks:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "tasks",
-                        "localField": "id",
-                        "foreignField": "session_id",
-                        "as": "tasks",
-                    }
-                },
-                # If tasks is None, set to empty list
-                {"$addFields": {"tasks": {"$ifNull": ["$tasks", []]}}},
-            ]
-        )
-    pipeline.append({"$sort": {"created_at": -1}})
-    # Add pagination
-    if pagination:
-        pipeline.extend(
-            [
-                {"$skip": pagination.page * pagination.per_page},
-                {"$limit": pagination.per_page},
-            ]
-        )
+
     sessions = await mongo_db["sessions"].aggregate(pipeline).to_list(length=limit)
 
     # Filter the _id field from the Sessions
