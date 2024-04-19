@@ -58,3 +58,8 @@ if QDRANT_URL is None:
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 if QDRANT_API_KEY is None:
     raise Exception("QDRANT_API_KEY is missing from the environment variables")
+
+### Hardcoded Jobs object ###
+
+# Evaluation job
+TASK_EVALUATION_JOB_ID = "task_evaluation"

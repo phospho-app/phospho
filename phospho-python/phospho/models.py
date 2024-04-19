@@ -51,6 +51,7 @@ class EventDefinition(BaseModel):
     detection_scope: DetectionScope = "task"
     keywords: Optional[str] = None
     regex_pattern: Optional[str] = None
+    job_id: Optional[str] = None  # Associated job id
 
 
 class Event(BaseModel):
@@ -506,3 +507,31 @@ class Message(BaseModel):
         return cls.from_task(
             task=task, previous_tasks=previous_tasks, metadata=metadata
         )
+
+
+JobType = Literal["evaluation", "event_detection"]  # Add other job types here
+
+
+class Job(BaseModel):
+    id: str = Field(default_factory=generate_uuid)
+    created_at: int = Field(default_factory=generate_timestamp)
+    org_id: str
+    project_id: str
+    status: Literal["enabled", "deleted"]
+    job_type: JobType
+    parameters: dict = Field(
+        default_factory=dict
+    )  # Parameters for the job, for instance it was the event object in the settings
+
+
+class Prediction(BaseModel):
+    # Represents a prediction made by phospho, the user or else
+    # For instance, a user feedback as "Failure" is a prediction
+    # For instance, the output of an event detection is a prediction
+    id: str = Field(default_factory=generate_uuid)
+    created_at: int = Field(default_factory=generate_timestamp)
+    org_id: str
+    project_id: str
+    job_type: JobType
+    job_id: str  # The id of the job that generated the prediction
+    value: Any  # The value of the prediction
