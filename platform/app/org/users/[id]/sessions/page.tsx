@@ -3,7 +3,7 @@
 import SmallSpinner from "@/components/small-spinner";
 import { SessionsTable } from "@/components/transcripts/sessions/sessions-table";
 import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import useSWR from "swr";
 

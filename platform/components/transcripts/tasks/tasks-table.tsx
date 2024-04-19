@@ -1,6 +1,7 @@
 "use client";
 
 import DownloadButton from "@/components/download-csv";
+import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,13 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeftIcon, ChevronRightIcon, FilterX } from "lucide-react";
+import {
+  ChevronFirstIcon,
+  ChevronLastIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  FilterX,
+} from "lucide-react";
 import { Database, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -126,6 +133,32 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     );
   }
 
+  const { data: totalNbTasksData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/tasks`,
+      accessToken,
+      JSON.stringify(eventFilter),
+      JSON.stringify(flagFilter),
+      "total_nb_tasks",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_tasks"],
+        tasks_filter: {
+          flag: flagFilter,
+          event_name: eventFilter,
+        },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const totalNbTasks: number | null | undefined =
+    totalNbTasksData?.total_nb_tasks;
+  const maxNbPages = totalNbTasks
+    ? Math.ceil(totalNbTasks / tasksPagination.pageSize)
+    : -1;
+
   // console.log("taskscolumnsFilters", tasksColumnsFilters);
 
   const query_tasks = async () => {
@@ -168,7 +201,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       sorting,
       pagination: tasksPagination,
     },
-    pageCount: -1,
+    pageCount: maxNbPages,
     // autoResetPageIndex: false,
     manualPagination: true,
   });
@@ -254,27 +287,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           <FilterX className="h-4 w-4 mr-1" />
           Clear
         </Button>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1}
-        </div>
-        <Button
-          variant="outline"
-          className="w-8 p-0"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          <span className="sr-only">Go to previous page</span>
-          <ChevronLeftIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          className="w-8 p-0"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          <span className="sr-only">Go to next page</span>
-          <ChevronRightIcon className="h-4 w-4" />
-        </Button>
+        <TableNavigation table={table} />
       </div>
 
       <div className="rounded-md border">

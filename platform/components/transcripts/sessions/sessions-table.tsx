@@ -1,5 +1,6 @@
 "use client";
 
+import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import {
+  ChevronFirstIcon,
+  ChevronLastIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   Database,
@@ -111,7 +114,26 @@ export function SessionsTable<TData, TValue>({
   if (sessionsData?.sessions) {
     sessionsWithEvents = sessionsData.sessions;
   }
-  console.log("Sessions with events:", sessionsWithEvents);
+
+  const { data: totalNbSessionsData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/sessions`,
+      accessToken,
+      eventFilter,
+      "total_nb_sessions",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_sessions"],
+        sessions_filter: {
+          event_name: eventFilter,
+        },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const totalNbSessions = totalNbSessionsData?.total_nb_sessions;
 
   const query_tasks = async () => {
     // Call the /search endpoint
@@ -156,7 +178,9 @@ export function SessionsTable<TData, TValue>({
       sorting,
       pagination: sessionPagination,
     },
-    pageCount: -1,
+    pageCount: totalNbSessions
+      ? Math.ceil(totalNbSessions / sessionPagination.pageSize)
+      : 0,
     autoResetPageIndex: false,
     manualPagination: true,
   });
@@ -219,58 +243,16 @@ export function SessionsTable<TData, TValue>({
           onClick={() => {
             table.setColumnFilters([]);
             setQuery("");
+            eventFilter = null;
           }}
           disabled={sessionsColumnsFilters.length === 0}
         >
           <FilterX className="h-4 w-4 mr-1" />
           Clear
         </Button>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1}
-        </div>
-        <Button
-          variant="outline"
-          className="w-8 p-0"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          <span className="sr-only">Go to previous page</span>
-          <ChevronLeftIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          className="w-8 p-0"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          <span className="sr-only">Go to next page</span>
-          <ChevronRightIcon className="h-4 w-4" />
-        </Button>
+        <TableNavigation table={table} />
       </div>
-      {table.getState().pagination.pageIndex + 1 > 5 && (
-        <Alert className="mb-2 ">
-          <div className="flex justify-between">
-            <div></div>
-            <div className="flex space-x-4">
-              <Database className="w-8 h-8" />
 
-              <div>
-                <AlertTitle>Only the latest sessions are displayed</AlertTitle>
-                <AlertDescription>
-                  <div>Scale your insights with the phospho Python SDK</div>
-                </AlertDescription>
-              </div>
-              <Link
-                href="https://docs.phospho.ai/integrations/python/analytics"
-                target="_blank"
-              >
-                <Button>Learn more</Button>
-              </Link>
-            </div>
-            <div></div>
-          </div>
-        </Alert>
-      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -331,6 +313,30 @@ export function SessionsTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
+      {table.getState().pagination.pageIndex + 1 > 5 && (
+        <Alert className="mt-2 ">
+          <div className="flex justify-between">
+            <div></div>
+            <div className="flex space-x-4">
+              <Database className="w-8 h-8" />
+
+              <div>
+                <AlertTitle>Fetch tasks in a pandas Dataframe</AlertTitle>
+                <AlertDescription>
+                  <div>Load tasks with the phospho Python SDK</div>
+                </AlertDescription>
+              </div>
+              <Link
+                href="https://docs.phospho.ai/integrations/python/analytics"
+                target="_blank"
+              >
+                <Button>Learn more</Button>
+              </Link>
+            </div>
+            <div></div>
+          </div>
+        </Alert>
+      )}
     </div>
   );
 }
