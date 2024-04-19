@@ -1,6 +1,7 @@
 "use client";
 
 import DownloadButton from "@/components/download-csv";
+import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { authFetcher } from "@/lib/fetcher";
+import { Task, TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -23,11 +26,18 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeftIcon, ChevronRightIcon, FilterX } from "lucide-react";
+import {
+  ChevronFirstIcon,
+  ChevronLastIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  FilterX,
+} from "lucide-react";
 import { Database, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import useSWR from "swr";
 
 import { getColumns } from "./tasks-table-columns";
 
@@ -37,10 +47,16 @@ interface DataTableProps<TData, TValue> {
 
 export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
-  const tasksWithEvents = dataStateStore((state) => state.tasksWithEvents);
+
+  const setTasksWithoutHumanLabel = dataStateStore(
+    (state) => state.setTasksWithoutHumanLabel,
+  );
   const router = useRouter();
 
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const tasksSorting = navigationStateStore((state) => state.tasksSorting);
+  const setTasksSorting = navigationStateStore(
+    (state) => state.setTasksSorting,
+  );
   const tasksColumnsFilters = navigationStateStore(
     (state) => state.tasksColumnsFilters,
   );
@@ -51,6 +67,101 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const [query, setQuery] = useState("");
   const { user, loading, accessToken } = useUser();
   const [isLoading, setIsLoading] = useState(false);
+
+  const tasksPagination = navigationStateStore(
+    (state) => state.tasksPagination,
+  );
+  const setTasksPagination = navigationStateStore(
+    (state) => state.setTasksPagination,
+  );
+
+  let tasksWithEvents: TaskWithEvents[] = [];
+
+  // Fetch all tasks
+  let eventFilter: string[] | null = null;
+  let flagFilter: string | null = null;
+  if (tasksColumnsFilters.length > 0) {
+    console.log("tasksColumnsFilters", tasksColumnsFilters);
+    for (let filter of tasksColumnsFilters) {
+      if (
+        filter.id === "flag" &&
+        (typeof filter?.value === "string" || filter?.value === null)
+      ) {
+        flagFilter = filter?.value;
+      }
+      if (filter.id === "events") {
+        if (typeof filter?.value === "string") {
+          eventFilter = [filter.value];
+        } else {
+          eventFilter = null;
+        }
+      }
+    }
+  }
+  const { data: tasksData } = useSWR(
+    project_id
+      ? [
+          `/api/projects/${project_id}/tasks`,
+          accessToken,
+          tasksPagination.pageIndex,
+          JSON.stringify(eventFilter),
+          JSON.stringify(flagFilter),
+          JSON.stringify(tasksSorting),
+        ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        filters: {
+          event_name: eventFilter,
+          flag: flagFilter,
+        },
+        pagination: {
+          page: tasksPagination.pageIndex,
+          page_size: tasksPagination.pageSize,
+        },
+        sorting: tasksSorting,
+      }),
+    { keepPreviousData: true },
+  );
+  if (
+    project_id &&
+    tasksData &&
+    tasksData?.tasks !== undefined &&
+    tasksData?.tasks !== null
+  ) {
+    tasksWithEvents = tasksData.tasks;
+    setTasksWithoutHumanLabel(
+      tasksData.tasks?.filter((task: Task) => {
+        return task?.last_eval?.source !== "owner";
+      }),
+    );
+  }
+
+  const { data: totalNbTasksData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/tasks`,
+      accessToken,
+      JSON.stringify(eventFilter),
+      JSON.stringify(flagFilter),
+      "total_nb_tasks",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_tasks"],
+        tasks_filter: {
+          flag: flagFilter,
+          event_name: eventFilter,
+        },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const totalNbTasks: number | null | undefined =
+    totalNbTasksData?.total_nb_tasks;
+  const maxNbPages = totalNbTasks
+    ? Math.ceil(totalNbTasks / tasksPagination.pageSize)
+    : -1;
 
   // console.log("taskscolumnsFilters", tasksColumnsFilters);
 
@@ -83,27 +194,32 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     data: tasksWithEvents,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: setTasksSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setTasksColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setTasksPagination,
     state: {
       columnFilters: tasksColumnsFilters,
-      sorting,
+      sorting: tasksSorting,
+      pagination: tasksPagination,
     },
-    // pageCount: 10,
+    pageCount: maxNbPages,
     autoResetPageIndex: false,
+    manualPagination: true,
   });
 
   if (!project_id) {
     return <></>;
   }
 
+  console.log("Rendering tasks table", tasksWithEvents.length, table);
+
   return (
     <div>
-      <div className="flex flex-row gap-x-2">
-        <div className="flex flex-col mb-2 flex-grow">
+      <div className="flex flex-row gap-x-2 items-center mb-2">
+        <div className="flex-grow">
           <Input
             placeholder="Search for a topic"
             value={
@@ -167,59 +283,17 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           onClick={() => {
             table.setColumnFilters([]);
             setQuery("");
+            eventFilter = null;
+            flagFilter = null;
           }}
           disabled={tasksColumnsFilters.length === 0}
         >
           <FilterX className="h-4 w-4 mr-1" />
           Clear
         </Button>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1}/{" "}
-          {table.getPageCount()}
-        </div>
-        <Button
-          variant="outline"
-          className="w-8 p-0"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          <span className="sr-only">Go to previous page</span>
-          <ChevronLeftIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          className="w-8 p-0"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          <span className="sr-only">Go to next page</span>
-          <ChevronRightIcon className="h-4 w-4" />
-        </Button>
+        <TableNavigation table={table} />
       </div>
-      {table.getState().pagination.pageIndex + 1 > 5 && (
-        <Alert className="mb-2 ">
-          <div className="flex justify-between">
-            <div></div>
-            <div className="flex space-x-4">
-              <Database className="w-8 h-8" />
 
-              <div>
-                <AlertTitle>Only the latest tasks are displayed</AlertTitle>
-                <AlertDescription>
-                  <div>Scale your insights with the phospho Python SDK</div>
-                </AlertDescription>
-              </div>
-              <Link
-                href="https://docs.phospho.ai/integrations/python/analytics"
-                target="_blank"
-              >
-                <Button>Learn more</Button>
-              </Link>
-            </div>
-            <div></div>
-          </div>
-        </Alert>
-      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -227,7 +301,13 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{
+                        width: header.getSize(),
+                      }}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -274,6 +354,30 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           </TableBody>
         </Table>
       </div>
+      {table.getState().pagination.pageIndex + 1 > 5 && (
+        <Alert className="mt-2 ">
+          <div className="flex justify-between">
+            <div></div>
+            <div className="flex space-x-4">
+              <Database className="w-8 h-8" />
+
+              <div>
+                <AlertTitle>Fetch tasks in a pandas Dataframe</AlertTitle>
+                <AlertDescription>
+                  <div>Load tasks with the phospho Python SDK</div>
+                </AlertDescription>
+              </div>
+              <Link
+                href="https://docs.phospho.ai/integrations/python/analytics"
+                target="_blank"
+              >
+                <Button>Learn more</Button>
+              </Link>
+            </div>
+            <div></div>
+          </div>
+        </Alert>
+      )}
     </div>
   );
 }

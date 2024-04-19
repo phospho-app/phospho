@@ -5,11 +5,12 @@ import datetime
 from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
+from app.api.platform.models.explore import ProjectDataFilters
 import pandas as pd
 import pydantic
 
 # Models
-from app.api.platform.models import ABTest, ProjectEventsFilters, Topics
+from app.api.platform.models import ABTest, Topics
 from app.api.v2.models import ProjectTasksFilter
 from app.db.models import Eval, FlattenedTask
 from app.db.mongo import get_mongo_db
@@ -78,7 +79,7 @@ async def deprecated_get_dashboard_aggregated_metrics(
     count_of: Optional[Literal["tasks", "events"]] = "tasks",
     timerange: Optional[Literal["last_7_days", "last_30_minutes"]] = "last_7_days",
     tasks_filter: Optional[ProjectTasksFilter] = None,
-    events_filter: Optional[ProjectEventsFilters] = None,
+    events_filter: Optional[ProjectDataFilters] = None,
     limit: Optional[int] = None,
 ) -> List[Dict[str, object]]:
     """
@@ -123,7 +124,7 @@ async def deprecated_get_dashboard_aggregated_metrics(
             events_filter.created_at_start = timerange_start
             events_filter.created_at_end = timerange_end
         else:
-            events_filter = ProjectEventsFilters(
+            events_filter = ProjectDataFilters(
                 created_at_start=timerange_start,
                 created_at_end=timerange_end,
                 event_name=None,
@@ -366,9 +367,14 @@ async def get_total_nb_of_tasks(
         )
     elif event_name_filter is not None:
         # Do an aggregate query
-        first_filter = {"project_id": project_id}
+        first_filter: Dict[str, object] = {"project_id": project_id}
         if flag_filter is not None:
             first_filter["flag"] = flag_filter
+        first_filter["$and"] = [
+            {"events": {"$ne": []}},
+            {"events": {"$elemMatch": {"event_name": {"$in": event_name_filter}}}},
+        ]
+
         query_result = (
             await mongo_db["tasks"]
             .aggregate(
