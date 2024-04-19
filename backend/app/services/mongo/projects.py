@@ -3,7 +3,7 @@ import io
 import time
 from typing import Dict, List, Optional, Tuple, Union
 
-from app.api.platform.models.explore import ProjectDataFilters
+from app.api.platform.models.explore import ProjectDataFilters, Sorting
 import pandas as pd
 import resend
 from app.api.platform.models import UserMetadata, Pagination
@@ -175,6 +175,7 @@ async def get_all_tasks(
     validate_metadata: bool = False,
     limit: Optional[int] = None,
     pagination: Optional[Pagination] = None,
+    sorting: Optional[List[Sorting]] = None,
 ) -> List[Task]:
     """
     Get all the tasks of a project.
@@ -211,9 +212,11 @@ async def get_all_tasks(
     if event_name_filter is not None:
         pipeline.append({"$match": {"events.event_name": {"$in": event_name_filter}}})
 
-    pipeline.append(
-        {"$sort": {"created_at": -1}},
-    )
+    if sorting is not None and len(sorting) > 0:
+        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+        pipeline.append({"$sort": sorting_dict})
+    else:
+        pipeline.append({"$sort": {"created_at": -1}})
 
     # Add pagination
     if pagination:
@@ -421,6 +424,7 @@ async def get_all_sessions(
     get_events: bool = True,
     get_tasks: bool = False,
     pagination: Optional[Pagination] = None,
+    sorting: Optional[List[Sorting]] = None,
 ) -> List[Session]:
     mongo_db = await get_mongo_db()
     additional_sessions_filter: Dict[str, object] = {}
@@ -496,7 +500,12 @@ async def get_all_sessions(
                 ]
             )
 
-    pipeline.append({"$sort": {"created_at": -1}})
+    if sorting is not None and len(sorting) > 0:
+        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+        pipeline.append({"$sort": sorting_dict})
+    else:
+        pipeline.append({"$sort": {"created_at": -1}})
+
     # Add pagination
     if pagination:
         pipeline.extend(

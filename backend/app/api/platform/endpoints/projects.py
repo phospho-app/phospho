@@ -123,12 +123,14 @@ async def post_sessions(
 ) -> Sessions:
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
+    logger.debug(f"Sorting: {query.sorting}")
     sessions = await get_all_sessions(
         project_id=project_id,
         get_events=True,
         get_tasks=False,
         sessions_filter=query.filters,
         pagination=query.pagination,
+        sorting=query.sorting,
     )
     return Sessions(sessions=sessions)
 
@@ -247,6 +249,7 @@ async def post_tasks(
         event_name_filter=query.filters.event_name,
         pagination=query.pagination,
         metadata_filter=metadata_filter,
+        sorting=query.sorting,
     )
     return Tasks(tasks=tasks)
 

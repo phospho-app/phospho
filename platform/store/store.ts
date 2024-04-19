@@ -10,7 +10,7 @@ import {
 import {
   ColumnFiltersState,
   PaginationState,
-  PaginationTableState,
+  SortingState,
   Updater,
 } from "@tanstack/react-table";
 import { create } from "zustand";
@@ -29,16 +29,19 @@ interface navigationState {
   setTasksColumnsFilters: (
     tasksColumnsFilters: Updater<ColumnFiltersState>,
   ) => void;
+  tasksPagination: PaginationState;
+  setTasksPagination: (taskPagination: Updater<PaginationState>) => void;
+  tasksSorting: SortingState;
+  setTasksSorting: (taskSorting: Updater<SortingState>) => void;
+
   sessionsColumnsFilters: ColumnFiltersState;
   setSessionsColumnsFilters: (
     sessionsColumnsFilters: Updater<ColumnFiltersState>,
   ) => void;
-
   sessionsPagination: PaginationState;
   setSessionsPagination: (sessionsPagination: Updater<PaginationState>) => void;
-
-  tasksPagination: PaginationState;
-  setTasksPagination: (taskPagination: Updater<PaginationState>) => void;
+  sessionsSorting: SortingState;
+  setSessionsSorting: (sessionsSorting: Updater<SortingState>) => void;
 }
 
 export const navigationStateStore = create(
@@ -65,6 +68,41 @@ export const navigationStateStore = create(
             tasksColumnsFilters: updaterOrValue,
           };
         }),
+      tasksPagination: {
+        pageSize: 10,
+        pageIndex: 0,
+      } as PaginationState,
+      setTasksPagination: (taskPagination: Updater<PaginationState>) =>
+        set((state) => {
+          if (typeof taskPagination === "function") {
+            const update = taskPagination(state.tasksPagination);
+            return {
+              tasksPagination: update,
+            };
+          }
+          return {
+            tasksPagination: taskPagination,
+          };
+        }),
+      tasksSorting: [
+        {
+          id: "created_at",
+          desc: false,
+        },
+      ],
+      setTasksSorting: (updaterOrValue: Updater<SortingState>) =>
+        set((state) => {
+          if (typeof updaterOrValue === "function") {
+            const update = updaterOrValue(state.tasksSorting);
+            return {
+              tasksSorting: update,
+            };
+          }
+          return {
+            tasksSorting: updaterOrValue,
+          };
+        }),
+
       sessionsColumnsFilters: [],
       setSessionsColumnsFilters: (
         updaterOrValue: Updater<ColumnFiltersState>,
@@ -80,7 +118,6 @@ export const navigationStateStore = create(
             sessionsColumnsFilters: updaterOrValue,
           };
         }),
-
       sessionsPagination: {
         pageSize: 10,
         pageIndex: 0,
@@ -97,21 +134,24 @@ export const navigationStateStore = create(
             sessionsPagination: sessionsPagination,
           };
         }),
-
-      tasksPagination: {
-        pageSize: 10,
-        pageIndex: 0,
-      } as PaginationState,
-      setTasksPagination: (taskPagination: Updater<PaginationState>) =>
+      sessionsSorting: [
+        {
+          id: "created_at",
+          desc: false,
+        },
+      ],
+      setSessionsSorting: (updaterOrValue: Updater<SortingState>) =>
         set((state) => {
-          if (typeof taskPagination === "function") {
-            const update = taskPagination(state.tasksPagination);
+          console.log("sorting updaterOrValue");
+          console.log(updaterOrValue);
+          if (typeof updaterOrValue === "function") {
+            const update = updaterOrValue(state.sessionsSorting);
             return {
-              tasksPagination: update,
+              sessionsSorting: update,
             };
           }
           return {
-            tasksPagination: taskPagination,
+            sessionsSorting: updaterOrValue,
           };
         }),
     }),

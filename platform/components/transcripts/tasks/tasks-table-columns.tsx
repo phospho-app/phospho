@@ -100,12 +100,7 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === "asc")
-                }
-              >
+              <Button variant="ghost">
                 <Sparkles className="h-4 w-4 mr-1 text-green-500" />
                 Eval
                 <ChevronDown className="ml-2 h-4 w-4" />

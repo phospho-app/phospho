@@ -50,7 +50,12 @@ export function SessionsTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const sessionsSorting = navigationStateStore(
+    (state) => state.sessionsSorting,
+  );
+  const setSessionsSorting = navigationStateStore(
+    (state) => state.setSessionsSorting,
+  );
   const sessionsColumnsFilters = navigationStateStore(
     (state) => state.sessionsColumnsFilters,
   );
@@ -94,6 +99,7 @@ export function SessionsTable<TData, TValue>({
           sessionPagination.pageIndex,
           JSON.stringify(eventFilter),
           JSON.stringify(userFilter),
+          JSON.stringify(sessionsSorting),
         ]
       : null,
     ([url, accessToken]) =>
@@ -106,6 +112,7 @@ export function SessionsTable<TData, TValue>({
           page: sessionPagination.pageIndex,
           page_size: sessionPagination.pageSize,
         },
+        sorting: sessionsSorting,
       }),
     {
       keepPreviousData: true,
@@ -167,7 +174,7 @@ export function SessionsTable<TData, TValue>({
     data: sessionsWithEvents,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: setSessionsSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setSessionsColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
@@ -175,7 +182,7 @@ export function SessionsTable<TData, TValue>({
     onPaginationChange: setSessionsPagination,
     state: {
       columnFilters: sessionsColumnsFilters,
-      sorting,
+      sorting: sessionsSorting,
       pagination: sessionPagination,
     },
     pageCount: totalNbSessions
@@ -183,6 +190,7 @@ export function SessionsTable<TData, TValue>({
       : 0,
     autoResetPageIndex: false,
     manualPagination: true,
+    manualSorting: true,
   });
 
   if (!project_id) {
