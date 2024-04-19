@@ -7,17 +7,34 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, TaskWithEvents } from "@/models/models";
-import { dataStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
+import useSWR from "swr";
 
 export function getColumns(): ColumnDef<TaskWithEvents>[] {
-  const uniqueEventNamesInData = dataStateStore(
-    (state) => state.uniqueEventNamesInData,
+  let uniqueEventNamesInData: string[] = [];
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { accessToken } = useUser();
+
+  const { data: uniqueEvents } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/unique-events`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
+  if (project_id && uniqueEvents?.events) {
+    uniqueEventNamesInData = Array.from(
+      new Set(
+        uniqueEvents.events.map((event: Event) => event.event_name as string),
+      ),
+    );
+  }
 
   const columns: ColumnDef<TaskWithEvents>[] = [
     // id

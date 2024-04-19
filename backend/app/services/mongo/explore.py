@@ -367,9 +367,14 @@ async def get_total_nb_of_tasks(
         )
     elif event_name_filter is not None:
         # Do an aggregate query
-        first_filter = {"project_id": project_id}
+        first_filter: Dict[str, object] = {"project_id": project_id}
         if flag_filter is not None:
             first_filter["flag"] = flag_filter
+        first_filter["$and"] = [
+            {"events": {"$ne": []}},
+            {"events": {"$elemMatch": {"event_name": {"$in": event_name_filter}}}},
+        ]
+
         query_result = (
             await mongo_db["tasks"]
             .aggregate(

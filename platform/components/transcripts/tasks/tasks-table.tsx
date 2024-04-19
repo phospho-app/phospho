@@ -156,7 +156,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       pagination: tasksPagination,
     },
     pageCount: -1,
-    autoResetPageIndex: false,
+    // autoResetPageIndex: false,
     manualPagination: true,
   });
 
