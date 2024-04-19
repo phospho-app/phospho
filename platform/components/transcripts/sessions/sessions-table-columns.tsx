@@ -24,9 +24,16 @@ import Link from "next/link";
 import useSWR from "swr";
 
 export function getColumns() {
-  let uniqueEventNamesInData: string[] = [];
   const project_id = navigationStateStore((state) => state.project_id);
+  const sessionsPagination = navigationStateStore(
+    (state) => state.sessionsPagination,
+  );
+  const setSessionsPagination = navigationStateStore(
+    (state) => state.setSessionsPagination,
+  );
+
   const { accessToken } = useUser();
+  let uniqueEventNamesInData: string[] = [];
 
   const { data: uniqueEvents } = useSWR(
     project_id
@@ -111,7 +118,14 @@ export function getColumns() {
               {uniqueEventNamesInData.map((eventName) => (
                 <DropdownMenuItem
                   key={eventName}
-                  onClick={() => column.setFilterValue(eventName)}
+                  onClick={() => {
+                    column.setFilterValue(eventName);
+                    // reset the page to 0
+                    setSessionsPagination({
+                      ...sessionsPagination,
+                      pageIndex: 0,
+                    });
+                  }}
                 >
                   {eventName}
                 </DropdownMenuItem>
@@ -119,7 +133,13 @@ export function getColumns() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 key="event_clear"
-                onClick={() => column.setFilterValue(null)}
+                onClick={() => {
+                  column.setFilterValue(null);
+                  setSessionsPagination({
+                    ...sessionsPagination,
+                    pageIndex: 0,
+                  });
+                }}
               >
                 <FilterX className="h-4 w-4 mr-1" />
                 Clear

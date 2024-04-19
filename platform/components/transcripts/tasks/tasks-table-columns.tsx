@@ -13,6 +13,7 @@ import { Event, TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
+import { set } from "date-fns";
 import {
   ArrowUpDown,
   ChevronDown,
@@ -24,9 +25,17 @@ import Link from "next/link";
 import useSWR from "swr";
 
 export function getColumns(): ColumnDef<TaskWithEvents>[] {
-  let uniqueEventNamesInData: string[] = [];
   const project_id = navigationStateStore((state) => state.project_id);
+  const tasksPagination = navigationStateStore(
+    (state) => state.tasksPagination,
+  );
+  const setTasksPagination = navigationStateStore(
+    (state) => state.setTasksPagination,
+  );
+
   const { accessToken } = useUser();
+
+  let uniqueEventNamesInData: string[] = [];
 
   const { data: uniqueEvents } = useSWR(
     project_id
@@ -101,17 +110,37 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
-                onClick={() => column.setFilterValue("success")}
+                onClick={() => {
+                  column.setFilterValue("success");
+                  setTasksPagination({
+                    ...tasksPagination,
+                    pageIndex: 0,
+                  });
+                }}
               >
                 Success
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => column.setFilterValue("failure")}
+                onClick={() => {
+                  column.setFilterValue("failure");
+                  setTasksPagination({
+                    ...tasksPagination,
+                    pageIndex: 0,
+                  });
+                }}
               >
                 Failure
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => column.setFilterValue(null)}>
+              <DropdownMenuItem
+                onClick={() => {
+                  column.setFilterValue(null);
+                  setTasksPagination({
+                    ...tasksPagination,
+                    pageIndex: 0,
+                  });
+                }}
+              >
                 <FilterX className="h-4 w-4 mr-1" />
                 Clear
               </DropdownMenuItem>
@@ -165,7 +194,13 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
               {uniqueEventNamesInData.map((eventName) => (
                 <DropdownMenuItem
                   key={eventName}
-                  onClick={() => column.setFilterValue(eventName)}
+                  onClick={() => {
+                    column.setFilterValue(eventName);
+                    setTasksPagination({
+                      ...tasksPagination,
+                      pageIndex: 0,
+                    });
+                  }}
                 >
                   {eventName}
                 </DropdownMenuItem>
@@ -173,7 +208,13 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 key="event_clear"
-                onClick={() => column.setFilterValue(null)}
+                onClick={() => {
+                  column.setFilterValue(null);
+                  setTasksPagination({
+                    ...tasksPagination,
+                    pageIndex: 0,
+                  });
+                }}
               >
                 <FilterX className="h-4 w-4 mr-1" />
                 Clear

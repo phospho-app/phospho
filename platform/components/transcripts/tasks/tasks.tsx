@@ -21,10 +21,6 @@ import { TasksTable } from "./tasks-table";
 
 const Tasks: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
-  const tasksWithEvents = dataStateStore((state) => state.tasksWithEvents);
-  const setUniqueEventNamesInData = dataStateStore(
-    (state) => state.setUniqueEventNamesInData,
-  );
 
   const hasTasks = dataStateStore((state) => state.hasTasks);
   const hasLabelledTasks = dataStateStore((state) => state.hasLabelledTasks);
@@ -33,20 +29,6 @@ const Tasks: React.FC = () => {
   );
 
   const [open, setOpen] = React.useState(false);
-
-  useEffect(() => {
-    if (tasksWithEvents !== null && tasksWithEvents.length > 0) {
-      const uniqueEventNames: string[] = Array.from(
-        new Set(
-          tasksWithEvents
-            .map((task: TaskWithEvents) => task.events)
-            .flat()
-            .map((event: any) => event.event_name as string),
-        ),
-      );
-      setUniqueEventNamesInData(uniqueEventNames);
-    }
-  }, [project_id, tasksWithEvents?.length]);
 
   if (!project_id) {
     return <></>;
