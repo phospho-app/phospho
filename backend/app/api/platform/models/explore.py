@@ -87,5 +87,5 @@ class Sorting(BaseModel):
 
 class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
-    pagination: Pagination = Field(default_factory=Pagination)
+    pagination: Optional[Pagination] = None
     sorting: Optional[List[Sorting]] = None
