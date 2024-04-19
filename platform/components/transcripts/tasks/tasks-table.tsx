@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
-import { Task } from "@/models/models";
+import { Task, TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -41,7 +41,7 @@ interface DataTableProps<TData, TValue> {
 
 export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
-  const tasksWithEvents = dataStateStore((state) => state.tasksWithEvents);
+  let tasksWithEvents: TaskWithEvents[] = [];
   const setTasksWithEvents = dataStateStore(
     (state) => state.setTasksWithEvents,
   );
@@ -62,12 +62,42 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const { user, loading, accessToken } = useUser();
   const [isLoading, setIsLoading] = useState(false);
 
+  const tasksPagination = navigationStateStore(
+    (state) => state.tasksPagination,
+  );
+  const setTasksPagination = navigationStateStore(
+    (state) => state.setTasksPagination,
+  );
+
   // Fetch all tasks
+  let eventFilter: string | null = null;
+  let flagFilter: string | null = null;
+  if (tasksColumnsFilters.length > 0) {
+    eventFilter = tasksColumnsFilters.find((filter) => filter.id === "events")
+      ?.value as string;
+    flagFilter = tasksColumnsFilters.find((filter) => filter.id === "flag")
+      ?.value as string;
+  }
   const { data: tasksData } = useSWR(
     project_id
-      ? [`/api/projects/${project_id}/tasks?limit=200`, accessToken]
+      ? [
+          `/api/projects/${project_id}/tasks`,
+          accessToken,
+          tasksPagination.pageIndex,
+        ]
       : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        filters: {
+          events: eventFilter,
+          flag: flagFilter,
+        },
+        pagination: {
+          page: tasksPagination.pageIndex,
+          page_size: tasksPagination.pageSize,
+        },
+      }),
+    { keepPreviousData: true },
   );
   if (
     project_id &&
@@ -75,7 +105,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     tasksData?.tasks !== undefined &&
     tasksData?.tasks !== null
   ) {
-    setTasksWithEvents(tasksData.tasks);
+    tasksWithEvents = tasksData.tasks;
     setTasksWithoutHumanLabel(
       tasksData.tasks?.filter((task: Task) => {
         return task?.last_eval?.source !== "owner";
@@ -119,12 +149,15 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     onColumnFiltersChange: setTasksColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setTasksPagination,
     state: {
       columnFilters: tasksColumnsFilters,
       sorting,
+      pagination: tasksPagination,
     },
-    // pageCount: 10,
+    pageCount: -1,
     autoResetPageIndex: false,
+    manualPagination: true,
   });
 
   if (!project_id) {
@@ -205,8 +238,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           Clear
         </Button>
         <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1}/{" "}
-          {table.getPageCount()}
+          Page {table.getState().pagination.pageIndex + 1}
         </div>
         <Button
           variant="outline"
@@ -227,30 +259,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           <ChevronRightIcon className="h-4 w-4" />
         </Button>
       </div>
-      {table.getState().pagination.pageIndex + 1 > 5 && (
-        <Alert className="mb-2 ">
-          <div className="flex justify-between">
-            <div></div>
-            <div className="flex space-x-4">
-              <Database className="w-8 h-8" />
 
-              <div>
-                <AlertTitle>Only the latest tasks are displayed</AlertTitle>
-                <AlertDescription>
-                  <div>Scale your insights with the phospho Python SDK</div>
-                </AlertDescription>
-              </div>
-              <Link
-                href="https://docs.phospho.ai/integrations/python/analytics"
-                target="_blank"
-              >
-                <Button>Learn more</Button>
-              </Link>
-            </div>
-            <div></div>
-          </div>
-        </Alert>
-      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -305,6 +314,30 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           </TableBody>
         </Table>
       </div>
+      {table.getState().pagination.pageIndex + 1 > 5 && (
+        <Alert className="mt-2 ">
+          <div className="flex justify-between">
+            <div></div>
+            <div className="flex space-x-4">
+              <Database className="w-8 h-8" />
+
+              <div>
+                <AlertTitle>Fetch tasks in a pandas Dataframe</AlertTitle>
+                <AlertDescription>
+                  <div>Load tasks with the phospho Python SDK</div>
+                </AlertDescription>
+              </div>
+              <Link
+                href="https://docs.phospho.ai/integrations/python/analytics"
+                target="_blank"
+              >
+                <Button>Learn more</Button>
+              </Link>
+            </div>
+            <div></div>
+          </div>
+        </Alert>
+      )}
     </div>
   );
 }

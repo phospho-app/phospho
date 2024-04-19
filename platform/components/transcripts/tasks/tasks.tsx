@@ -1,12 +1,7 @@
 "use client";
 
 import { SendDataAlertDialog } from "@/components/dashboard/no-data-dashboard";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
-import { Plug, ThumbsDown, ThumbsUp, Unplug } from "lucide-react";
+import { ThumbsDown, ThumbsUp, Unplug } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect } from "react";
 

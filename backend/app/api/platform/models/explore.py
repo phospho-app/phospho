@@ -79,6 +79,6 @@ class Pagination(BaseModel):
     per_page: int = 10
 
 
-class QuerySessionsRequest(BaseModel):
+class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     pagination: Pagination = Field(default_factory=Pagination)

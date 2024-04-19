@@ -34,7 +34,7 @@ from .explore import (
     TasksMetricsFilter,
     ProjectDataFilters,
     Pagination,
-    QuerySessionsRequest,
+    QuerySessionsTasksRequest,
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
 from .projects import (

@@ -107,8 +107,9 @@ class TaskCollection(Collection):
         """Returns a list of all of the project tasks"""
         # TODO : Filters
         # TODO : Limit
+        # TODO : Pagination
 
-        response = self._client._get(
+        response = self._client._post(
             f"/projects/{self._client._project_id()}/tasks",
         )
         return [
