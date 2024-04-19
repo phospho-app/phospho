@@ -67,13 +67,19 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Fetch all sessions
+  // Filtering
   let eventFilter: string[] | null = null;
   if (sessionsColumnsFilters.length > 0) {
-    eventFilter = [
-      sessionsColumnsFilters.find((filter) => filter.id === "events")
-        ?.value as string,
-    ];
+    console.log("tasksColumnsFilters", sessionsColumnsFilters);
+    for (let filter of sessionsColumnsFilters) {
+      if (filter.id === "events") {
+        if (typeof filter?.value === "string") {
+          eventFilter = [filter.value];
+        } else {
+          eventFilter = null;
+        }
+      }
+    }
   }
   const { data: sessionsData } = useSWR(
     project_id
@@ -215,8 +221,7 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
           Clear
         </Button>
         <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1}/
-          {table.getPageCount()}
+          Page {table.getState().pagination.pageIndex + 1}
         </div>
         <Button
           variant="outline"
@@ -268,7 +273,13 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{
+                        width: header.getSize(),
+                      }}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
