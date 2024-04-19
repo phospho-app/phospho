@@ -46,7 +46,6 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
 >) {
   console.log("Rendering SessionsTable");
   const project_id = navigationStateStore((state) => state.project_id);
-  let sessionsWithEvents: SessionWithEvents[] = [];
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const sessionsColumnsFilters = navigationStateStore(
@@ -62,10 +61,12 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
     (state) => state.setSessionsPagination,
   );
 
+  const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
   const { accessToken } = useUser();
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  let sessionsWithEvents: SessionWithEvents[] = [];
 
   // Filtering
   let eventFilter: string[] | null = null;
@@ -87,6 +88,7 @@ export function SessionsTable<TData, TValue>({}: DataTableProps<
           `/api/projects/${project_id}/sessions`,
           accessToken,
           sessionPagination.pageIndex,
+          JSON.stringify(eventFilter),
         ]
       : null,
     ([url, accessToken]) =>

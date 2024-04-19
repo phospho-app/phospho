@@ -41,7 +41,6 @@ interface DataTableProps<TData, TValue> {
 
 export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
-  let tasksWithEvents: TaskWithEvents[] = [];
 
   const setTasksWithoutHumanLabel = dataStateStore(
     (state) => state.setTasksWithoutHumanLabel,
@@ -66,6 +65,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const setTasksPagination = navigationStateStore(
     (state) => state.setTasksPagination,
   );
+
+  let tasksWithEvents: TaskWithEvents[] = [];
 
   // Fetch all tasks
   let eventFilter: string[] | null = null;
@@ -94,8 +95,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           `/api/projects/${project_id}/tasks`,
           accessToken,
           tasksPagination.pageIndex,
-          eventFilter?.toString(),
-          flagFilter?.toString(),
+          JSON.stringify(eventFilter),
+          JSON.stringify(flagFilter),
         ]
       : null,
     ([url, accessToken]) =>
@@ -175,6 +176,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   if (!project_id) {
     return <></>;
   }
+
+  console.log("Rendering tasks table", tasksWithEvents.length, table);
 
   return (
     <div>
