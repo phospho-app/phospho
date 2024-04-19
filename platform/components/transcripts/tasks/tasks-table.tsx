@@ -214,8 +214,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
 
   return (
     <div>
-      <div className="flex flex-row gap-x-2">
-        <div className="flex flex-col mb-2 flex-grow">
+      <div className="flex flex-row gap-x-2 items-center mb-2">
+        <div className="flex-grow">
           <Input
             placeholder="Search for a topic"
             value={
