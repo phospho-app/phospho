@@ -40,7 +40,7 @@ def test_tasks_and_sessions(
 ):
     with TestClient(router) as client:
         # Get tasks
-        response = client.post(
+        response = client.get(
             f"/api/projects/{dummy_project.id}/tasks",
             headers={"Authorization": f"Bearer {access_token}"},
         )
@@ -49,7 +49,7 @@ def test_tasks_and_sessions(
         assert len(tasks) == 0
 
         # Get sessions
-        response = client.post(
+        response = client.get(
             f"/api/projects/{dummy_project.id}/sessions",
             headers={"Authorization": f"Bearer {access_token}"},
         )
@@ -74,7 +74,7 @@ def test_tasks_and_sessions(
         assert response.json()["project_id"] == task["project_id"]
 
         # Get tasks
-        response = client.post(
+        response = client.get(
             f"/api/projects/{dummy_project.id}/tasks",
             headers={"Authorization": f"Bearer {access_token}"},
         )
@@ -94,7 +94,7 @@ def test_tasks_and_sessions(
         )
 
         # Get sessions
-        response = client.post(
+        response = client.get(
             f"/api/projects/{dummy_project.id}/sessions",
             headers={"Authorization": f"Bearer {access_token}"},
         )
