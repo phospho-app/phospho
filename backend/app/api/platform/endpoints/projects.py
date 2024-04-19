@@ -136,18 +136,6 @@ async def post_sessions(
 
 
 @router.get(
-    "/projects/{project_id}/sessions",
-    response_model=Sessions,
-    description="Get all the sessions of a project",
-)
-async def get_sessions(
-    project_id: str,
-    user: User = Depends(propelauth.require_user),
-) -> Sessions:
-    return await post_sessions(project_id, QuerySessionsTasksRequest(), user)
-
-
-@router.get(
     "/projects/{project_id}/events",
     response_model=Events,
     description="Get all the events of a project",
@@ -252,18 +240,6 @@ async def post_tasks(
         sorting=query.sorting,
     )
     return Tasks(tasks=tasks)
-
-
-@router.get(
-    "/projects/{project_id}/tasks",
-    response_model=Tasks,
-    description="Get all the tasks of a project",
-)
-async def get_tasks(
-    project_id: str,
-    user: User = Depends(propelauth.require_user),
-):
-    return await post_tasks(project_id, QuerySessionsTasksRequest(), user)
 
 
 @router.get(
