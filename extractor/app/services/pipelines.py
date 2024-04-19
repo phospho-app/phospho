@@ -110,6 +110,22 @@ async def task_event_detection_pipeline(
                     json=detected_event_data.model_dump(),
                     headers=event.webhook_headers,
                 )
+
+        # Save the prediction
+        # Get the event object from the settings
+        event_settings = project.settings.events[event_name]
+
+        # Get the job_id from the event
+        job_id = event_settings.job_id
+
+        if job_id is None:
+            logger.error(f"No job_id found for event {event_name}")
+
+        else:
+            prediction = await create_prediction(
+                project.org_id, project_id, job_id, result.value, "event_detection"
+            )
+
     if len(detected_events) > 0:
         mongo_db["events"].insert_many(
             [event.model_dump() for event in detected_events]
@@ -405,20 +421,27 @@ async def messages_main_pipeline(
             )
             events.append(detected_event_data)
 
-            # Save the prediction
-            # TODO: get the job id from the event settings
-
-            job_id = None
-            prediction = create_prediction(
-                project.org_id, project_id, job_id, True, "event_detection"
-            )
-
             if event.webhook is not None:
                 await trigger_webhook(
                     url=event.webhook,
                     json=detected_event_data.model_dump(),
                     headers=event.webhook_headers,
                 )
+
+        # Save the prediction
+        # Get the event object from the settings
+        event_settings = project.settings.events.get(event_name)
+
+        # Get the job_id from the event
+        job_id = event_settings.job_id
+
+        if job_id is None:
+            logger.error(f"No job_id found for event {event_name}")
+
+        else:
+            prediction = await create_prediction(
+                project.org_id, project_id, job_id, result.value, "event_detection"
+            )
     # Push the events to the database
     if len(events) > 0:
         mongo_db = await get_mongo_db()

@@ -27,7 +27,7 @@ def prompt_to_bool(
     message: Message,
     prompt: str,
     format_kwargs: Optional[dict] = None,
-    model: str = "openai:gpt-4-1106-preview",
+    model: str = "openai:gpt-4-turbo",
 ) -> JobResult:
     """
     Runs a prompt on a message and returns a boolean result.
@@ -293,7 +293,7 @@ async def evaluate_task(
     message: Message,
     few_shot_min_number_of_examples: int = 5,
     few_shot_max_number_of_examples: int = 10,
-    model: str = "openai:gpt-4-1106-preview",
+    model: str = "openai:gpt-4-turbo",
 ) -> JobResult:
     """
     Evaluate a task:
