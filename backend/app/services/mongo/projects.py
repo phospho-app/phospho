@@ -466,7 +466,9 @@ async def get_all_sessions(
                 {"$match": {"events.removed": {"$ne": True}}},
             ]
         )
-    if get_tasks:
+    if get_tasks or (
+        sessions_filter is not None and sessions_filter.user_id is not None
+    ):
         pipeline.extend(
             [
                 {
@@ -481,6 +483,19 @@ async def get_all_sessions(
                 {"$addFields": {"tasks": {"$ifNull": ["$tasks", []]}}},
             ]
         )
+        if sessions_filter is not None and sessions_filter.user_id is not None:
+            logger.debug(f"Filtering sessions by user_id: {sessions_filter.user_id}")
+            pipeline.extend(
+                [
+                    {
+                        "$match": {
+                            # Filter the sessions to keep the ones where a tasks.metadata.user_id matches the filter
+                            "tasks.metadata.user_id": sessions_filter.user_id
+                        }
+                    },
+                ]
+            )
+
     pipeline.append({"$sort": {"created_at": -1}})
     # Add pagination
     if pagination:

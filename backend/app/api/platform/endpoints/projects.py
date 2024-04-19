@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends
 from loguru import logger
@@ -221,6 +221,12 @@ async def get_tasks(
     """
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
+    metadata_filter: Optional[Dict[str, object]] = None
+    if query.filters.user_id is not None:
+        metadata_filter = {
+            "user_id": query.filters.user_id,
+        }
+
     tasks = await get_all_tasks(
         project_id=project_id,
         limit=None,
@@ -228,6 +234,7 @@ async def get_tasks(
         flag_filter=query.filters.flag,
         event_name_filter=query.filters.event_name,
         pagination=query.pagination,
+        metadata_filter=metadata_filter,
     )
     return Tasks(tasks=tasks)
 
