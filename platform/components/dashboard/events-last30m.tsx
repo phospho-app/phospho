@@ -2,49 +2,67 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCountsPerEvent } from "@/lib/events_data";
+import { authFetcher } from "@/lib/fetcher";
+import { Event } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React, { useEffect, useState } from "react";
+import useSWR from "swr";
 
 interface EventsLast7DaysProps {
   project_id: string;
 }
 
 const EventsLast30m: React.FC<EventsLast7DaysProps> = ({ project_id }) => {
-  const uniqueEventNames = dataStateStore((state) => state.uniqueEventNames);
-
   const { accessToken } = useUser();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [eventLastMins, setEventLastMins] = useState<any[]>([]);
+
+  let uniqueEventNamesInData: string[] = [];
+  const { data: uniqueEvents } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/unique-events`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  if (project_id && uniqueEvents?.events) {
+    uniqueEventNamesInData = Array.from(
+      new Set(
+        uniqueEvents.events.map((event: Event) => event.event_name as string),
+      ),
+    );
+  }
 
   // Fetch events from the API
-  useEffect(() => {
-    (async () => {
-      const authorization_header = "Bearer " + accessToken;
-      const headers = {
-        Authorization: authorization_header || "", // Use an empty string if authorization_header is null
-        "Content-Type": "application/json",
-      };
-      const response = await fetch(`/api/explore/${project_id}/events`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify({
-          // Generate a UNIX timestamp for the last 30min
-          created_at_start: Math.floor(Date.now() / 1000) - 30 * 60,
-        }),
-      });
-      const response_json = await response.json();
-      console.log("fetched_events_30_min", response_json.events);
-      setEventLastMins(response_json.events);
-      setIsLoading(false);
-    })();
-  }, [project_id]);
+  const { data: eventsLast30mData } = useSWR(
+    project_id
+      ? [
+          `/api/explore/${project_id}/events`,
+          accessToken,
+          JSON.stringify({
+            created_at_start: Math.floor(Date.now() / 1000) - 30 * 60,
+          }),
+        ]
+      : null,
+    ([url, accessToken, body]) =>
+      authFetcher(url, accessToken, "POST", {
+        created_at_start: Math.floor(Date.now() / 1000) - 30 * 60,
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const eventsLast30m = eventsLast30mData?.events;
 
-  const countPerEvent = getCountsPerEvent(eventLastMins, uniqueEventNames);
+  const countPerEvent = getCountsPerEvent(
+    eventsLast30m,
+    uniqueEventNamesInData,
+  );
 
   return (
     <div>
-      {isLoading ? (
+      {eventsLast30m ? (
         <Skeleton className="h-[250px]" />
       ) : (
         <div>

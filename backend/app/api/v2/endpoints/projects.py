@@ -1,14 +1,15 @@
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends
 
 from app.api.v2.models import (
-    ProjectTasksFilter,
     Sessions,
     Tasks,
     FlattenedTasks,
     FlattenedTasksRequest,
 )
+
+from app.api.platform.models.explore import ProjectDataFilters
 
 from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
 from app.services.mongo.projects import get_all_sessions, get_all_tasks
@@ -43,7 +44,7 @@ async def get_sessions(
 async def get_tasks(
     project_id: str,
     limit: int = 1000,
-    task_filter: Optional[ProjectTasksFilter] = None,
+    task_filter: Optional[ProjectDataFilters] = None,
     org: dict = Depends(authenticate_org_key),
 ) -> Tasks:
     """
@@ -56,7 +57,7 @@ async def get_tasks(
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
     if task_filter is None:
-        task_filter = ProjectTasksFilter()
+        task_filter = ProjectDataFilters()
     if isinstance(task_filter.event_name, str):
         task_filter.event_name = [task_filter.event_name]
 

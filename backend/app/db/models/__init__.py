@@ -19,4 +19,5 @@ from phospho.models import (
     Session,
     Task,
     Test,
+    ProjectDataFilters,
 )

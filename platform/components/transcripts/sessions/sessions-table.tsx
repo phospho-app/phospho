@@ -1,5 +1,6 @@
 "use client";
 
+import { DatePickerWithRange } from "@/components/date-range";
 import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,7 @@ export function SessionsTable<TData, TValue>({
   const setSessionsPagination = navigationStateStore(
     (state) => state.setSessionsPagination,
   );
+  const dateRange = navigationStateStore((state) => state.dateRange);
 
   const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -99,6 +101,7 @@ export function SessionsTable<TData, TValue>({
           sessionPagination.pageIndex,
           JSON.stringify(eventFilter),
           JSON.stringify(userFilter),
+          JSON.stringify(dateRange),
           JSON.stringify(sessionsSorting),
         ]
       : null,
@@ -107,6 +110,8 @@ export function SessionsTable<TData, TValue>({
         filters: {
           event_name: eventFilter,
           user_id: userFilter,
+          created_at_start: dateRange?.created_at_start,
+          created_at_end: dateRange?.created_at_end,
         },
         pagination: {
           page: sessionPagination.pageIndex,
@@ -126,7 +131,8 @@ export function SessionsTable<TData, TValue>({
     [
       `/api/explore/${project_id}/aggregated/sessions`,
       accessToken,
-      eventFilter,
+      JSON.stringify(userFilter),
+      JSON.stringify(dateRange),
       "total_nb_sessions",
     ],
     ([url, accessToken]) =>
@@ -175,7 +181,7 @@ export function SessionsTable<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSessionsSorting,
-    getSortedRowModel: getSortedRowModel(),
+    // getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setSessionsColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -200,6 +206,7 @@ export function SessionsTable<TData, TValue>({
   return (
     <div>
       <div className="flex flex-row gap-x-2 items-center mb-2">
+        <DatePickerWithRange />
         <div className="flex-grow">
           <Input
             placeholder="Search for a topic"

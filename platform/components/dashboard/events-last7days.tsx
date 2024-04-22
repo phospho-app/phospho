@@ -1,6 +1,8 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { authFetcher } from "@/lib/fetcher";
+import { Event } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React, { useEffect, useState } from "react";
@@ -13,6 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import useSWR from "swr";
 
 interface EventColorMapping {
   [key: string]: string;
@@ -28,44 +31,52 @@ interface DailyEvents {
 
 const EventsLast7Days = ({ project_id }: { project_id: string }) => {
   const { loading, accessToken } = useUser();
-  const uniqueEventNames = dataStateStore((state) => state.uniqueEventNames);
-  const setUniqueEventNames = dataStateStore(
-    (state) => state.setUniqueEventNames,
+
+  let uniqueEventNames: string[] = [];
+  const { data: uniqueEvents } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}/unique-events`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
+  if (project_id && uniqueEvents?.events) {
+    uniqueEventNames = Array.from(
+      new Set(
+        uniqueEvents.events.map((event: Event) => event.event_name as string),
+      ),
+    );
+  }
 
-  const [eventLastSevenDays, setEventLastSevenDays] = useState<
-    DailyEvents[] | null
-  >(null);
-
-  useEffect(() => {
-    // Fetch aggregated metrics from the API
-    (async () => {
-      fetch(`/api/explore/${project_id}/dashboard`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + accessToken || "",
-        },
-        body: JSON.stringify({
-          graph_name: ["events_per_day"],
-        }),
-      }).then(async (response) => {
-        const response_json = await response.json();
-        console.log("events_per_day", response_json);
-        let events_per_day = response_json?.events_per_day;
-        // Format the "days" field from "2024-01-12" (UTC) to local time "Jan 12"
+  const { data: eventLastSevenDays } = useSWR(
+    project_id
+      ? [
+          `/api/explore/${project_id}/dashboard`,
+          accessToken,
+          JSON.stringify({
+            graph_name: ["events_per_day"],
+          }),
+        ]
+      : null,
+    ([url, accessToken, body]) =>
+      authFetcher(url, accessToken, "POST", {
+        graph_name: ["events_per_day"],
+      }).then((data) => {
+        let events_per_day = data?.events_per_day;
         events_per_day?.data.forEach((item: any) => {
           item.formated_date = new Date(item.date).toLocaleDateString([], {
             month: "short",
             day: "numeric",
           });
         });
-        const unique_event_names = events_per_day?.unique_event_names;
-        setEventLastSevenDays(events_per_day?.data);
-        setUniqueEventNames(unique_event_names);
-      });
-    })();
-  }, [project_id, loading]);
+        return events_per_day?.data;
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const predefinedColors = ["#00C389", "#00A376", "#008C6F", "#007A68"];
   let colorIndex = 0;
