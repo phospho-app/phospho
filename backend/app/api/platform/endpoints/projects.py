@@ -133,6 +133,8 @@ async def post_sessions(
         sessions_filter=query.filters,
         pagination=query.pagination,
         sorting=query.sorting,
+        created_at_start=query.filters.created_at_start,
+        created_at_end=query.filters.created_at_end,
     )
     return Sessions(sessions=sessions)
 
@@ -254,6 +256,8 @@ async def post_tasks(
         pagination=query.pagination,
         metadata_filter=metadata_filter,
         sorting=query.sorting,
+        created_at_start=query.filters.created_at_start,
+        created_at_end=query.filters.created_at_end,
     )
     return Tasks(tasks=tasks)
 
