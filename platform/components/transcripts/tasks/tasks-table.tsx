@@ -1,5 +1,6 @@
 "use client";
 
+import { DatePickerWithRange } from "@/components/date-range";
 import DownloadButton from "@/components/download-csv";
 import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -219,6 +220,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   return (
     <div>
       <div className="flex flex-row gap-x-2 items-center mb-2">
+        <DatePickerWithRange />
         <div className="flex-grow">
           <Input
             placeholder="Search for a topic"
