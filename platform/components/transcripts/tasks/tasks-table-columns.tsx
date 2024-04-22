@@ -145,7 +145,7 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
                 }}
               >
                 <FilterX className="h-4 w-4 mr-1" />
-                Clear
+                Clear filter
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -220,7 +220,7 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
                 }}
               >
                 <FilterX className="h-4 w-4 mr-1" />
-                Clear
+                Clear filter
               </DropdownMenuItem>
             </DropdownMenuContent>
             <DropdownMenu />

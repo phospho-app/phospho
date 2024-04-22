@@ -55,6 +55,7 @@ export interface Session {
   preview?: string;
   environment?: string;
   notes?: string;
+  session_length?: number;
 }
 
 export interface SessionWithEvents extends Session {
