@@ -138,7 +138,7 @@ async def event_detection(
     event_name: str,
     event_description: str,
     event_scope: DetectionScope = "task",
-    model: str = "openai:gpt-4-1106-preview",
+    model: str = "openai:gpt-4-turbo",
 ) -> JobResult:
     """
     Detects if an event is present in a message.
@@ -340,7 +340,7 @@ async def evaluate_task(
 
     async def zero_shot_evaluation(
         prompt: str,
-        model_name: str = os.getenv("MODEL_ID", "gpt-4-1106-preview"),
+        model_name: str = os.getenv("MODEL_ID", "gpt-4-turbo"),
     ) -> Optional[Literal["success", "failure"]]:
         """
         Call the LLM API to get a zero shot classification of a task
@@ -552,7 +552,7 @@ async def evaluate_task(
 
 
 def get_nb_tokens(
-    message: Message, model: Optional[str] = "openai:gpt-3.5-turbo-0613", tokenizer=None
+    message: Message, model: Optional[str] = "openai:gpt-4-turbo", tokenizer=None
 ) -> JobResult:
     """
     Get the number of tokens in a message.
@@ -696,7 +696,7 @@ async def regex_event_detection(
 
 async def get_topic_of_conversation(
     message: Message,
-    model: str = "openai:gpt-4-1106-preview",
+    model: str = "openai:gpt-4-turbo",
 ) -> JobResult:
     """
     Uses an LLM to get the topic of the session
