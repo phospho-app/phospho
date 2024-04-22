@@ -27,7 +27,11 @@ const UsageLast30m: React.FC<UsageLast7DaysProps> = ({ project_id }) => {
         ]
       : null,
     ([url, accessToken, body]) =>
-      authFetcher(url, accessToken, "POST", body)?.then((data) => {
+      authFetcher(url, accessToken, "POST", {
+        index: ["minutes"],
+        count_of: "tasks",
+        timerange: "last_30_minutes",
+      })?.then((data) => {
         return data?.forEach((item: any) => {
           item.name = new Date(item.minutes).toLocaleTimeString([], {
             hour: "2-digit",

@@ -45,7 +45,10 @@ const EventsLast30m: React.FC<EventsLast7DaysProps> = ({ project_id }) => {
           }),
         ]
       : null,
-    ([url, accessToken, body]) => authFetcher(url, accessToken, "POST", body),
+    ([url, accessToken, body]) =>
+      authFetcher(url, accessToken, "POST", {
+        created_at_start: Math.floor(Date.now() / 1000) - 30 * 60,
+      }),
     {
       keepPreviousData: true,
     },
