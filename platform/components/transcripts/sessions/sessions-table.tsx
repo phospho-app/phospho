@@ -301,7 +301,9 @@ export function SessionsTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   onClick={() => {
-                    router.push(`/org/transcripts/sessions/${row.original.id}`);
+                    router.push(
+                      `/org/transcripts/sessions/${encodeURIComponent(row.original.id)}`,
+                    );
                   }}
                   className="cursor-pointer"
                 >
