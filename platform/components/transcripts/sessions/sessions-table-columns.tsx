@@ -67,9 +67,9 @@ export function getColumns() {
         row.original.id;
       },
       enableHiding: true,
-      size: 0,
-      minSize: 0,
-      maxSize: 0,
+      size: 10,
+      minSize: 10,
+      maxSize: 10,
     },
     // Date
     {
