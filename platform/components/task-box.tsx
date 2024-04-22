@@ -207,7 +207,7 @@ const TaskBox = ({
   refresh: boolean;
 }) => {
   return (
-    <div className="mb-2 p-1 border border-gray-800 rounded">
+    <div className="flex flex-col space-y-1 p-1 border border-gray-800 rounded">
       <div className="flex justify-between align-top">
         <div className="space-x-2 flex justify-between items-center">
           {task?.events?.map((event) => {
@@ -232,20 +232,34 @@ const TaskBox = ({
           key={task.id}
         ></ThumbsUpAndDown>
       </div>
-      <div>
-        <div className="text-muted-foreground font-semibold mx-2">User:</div>
-        <div className="whitespace-pre-wrap">
-          {task.input && (
-            <ReactMarkdown className="mb-2 mx-2">{task.input}</ReactMarkdown>
-          )}
+      <div className="flex flex-col space-y-0.5 ">
+        <div className="flex justify-start">
+          <div className="bg-secondary min-w-[400px] rounded-lg p-1 ml-2 mr-2">
+            <div className="text-muted-foreground font-semibold mx-2 text-sm">
+              User:
+            </div>
+            <div className="whitespace-pre-wrap">
+              {task.input && (
+                <ReactMarkdown className="mb-2 mx-2">
+                  {task.input}
+                </ReactMarkdown>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="text-muted-foreground font-semibold mx-2">
-          Assistant:
-        </div>
-        <div className="whitespace-pre-wrap">
-          {task.output && (
-            <ReactMarkdown className="mb-2 mx-2">{task.output}</ReactMarkdown>
-          )}
+        <div className="flex justify-end">
+          <div className="bg-secondary min-w-[400px] rounded-lg p-1 ml-2 mr-2">
+            <div className="text-muted-foreground font-semibold mx-2 text-sm">
+              Assistant:
+            </div>
+            <div className="whitespace-pre-wrap">
+              {task.output && (
+                <ReactMarkdown className="mb-2 mx-2">
+                  {task.output}
+                </ReactMarkdown>
+              )}
+            </div>
+          </div>
         </div>
       </div>
       <Collapsible>
