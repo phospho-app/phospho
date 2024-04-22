@@ -128,9 +128,9 @@ async def post_sessions(
         query = QuerySessionsTasksRequest()
     # Convert to UNIX timestamp in seconds
     if isinstance(query.filters.created_at_start, datetime.datetime):
-        query.created_at_start = int(query.filters.created_at_start.timestamp())
+        query.filters.created_at_start = int(query.filters.created_at_start.timestamp())
     if isinstance(query.filters.created_at_end, datetime.datetime):
-        query.created_at_end = int(query.filters.created_at_end.timestamp())
+        query.filters.created_at_end = int(query.filters.created_at_end.timestamp())
 
     sessions = await get_all_sessions(
         project_id=project_id,
