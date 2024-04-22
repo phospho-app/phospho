@@ -208,6 +208,8 @@ async def get_success_rate_per_task_position(
     quantile_filter: Optional[float] = None,
     flag_filter: Optional[Literal["success", "failure"]] = None,
     event_name_filter: Optional[Union[str, List[str]]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> Optional[Dict[str, object]]:
     """
     Compute the success rate per message position. Used for the Tasks and the Sessions dashboard.
@@ -216,8 +218,13 @@ async def get_success_rate_per_task_position(
     Return None if there is no session_id in the tasks.
     """
     mongo_db = await get_mongo_db()
+    main_filter: Dict[str, object] = {"project_id": project_id}
+    if created_at_start is not None:
+        main_filter["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        main_filter["created_at"] = {"$lte": created_at_end}
     pipeline = [
-        {"$match": {"project_id": project_id}},
+        {"$match": main_filter},
         # Find tasks
         {
             "$lookup": {
@@ -390,6 +397,8 @@ async def get_total_success_rate(
     project_id: str,
     flag_filter: Optional[Literal["success", "failure"]] = None,
     event_name_filter: Optional[Union[str, List[str]]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> Optional[float]:
     """
     Get the total success rate of a project. This is the ratio of successful tasks over
@@ -401,6 +410,11 @@ async def get_total_success_rate(
     # Filter on the flag
     if flag_filter is not None:
         main_filter["flag"] = flag_filter
+    # Time range filter
+    if created_at_start is not None:
+        main_filter["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        main_filter["created_at"] = {"$lte": created_at_end}
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
@@ -448,6 +462,8 @@ async def get_most_detected_event_name(
     project_id: str,
     flag_filter: Optional[Literal["success", "failure"]] = None,
     event_name_filter: Optional[Union[str, List[str]]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> Optional[str]:
     """
     Get the most detected event name of a project.
@@ -457,6 +473,11 @@ async def get_most_detected_event_name(
     # Filter on the event name
     if event_name_filter is not None:
         main_filter["event_name"] = {"$in": event_name_filter}
+    # Time range filter
+    if created_at_start is not None:
+        main_filter["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        main_filter["created_at"] = {"$lte": created_at_end}
     # Event is not removed
     main_filter["removed"] = {"$ne": True}
     pipeline: List[Dict[str, object]] = [
@@ -734,12 +755,16 @@ async def get_tasks_aggregated_metrics(
             project_id=project_id,
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
         )
     if "most_detected_event" in metrics:
         output["most_detected_event"] = await get_most_detected_event_name(
             project_id=project_id,
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
         )
     if "nb_daily_tasks" in metrics:
         output["nb_daily_tasks"] = await get_nb_of_daily_tasks(
@@ -774,6 +799,8 @@ async def get_tasks_aggregated_metrics(
             quantile_filter=quantile_filter,
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
         )
 
     return output
@@ -782,22 +809,28 @@ async def get_tasks_aggregated_metrics(
 async def get_total_nb_of_sessions(
     project_id: str,
     event_name_filter: Optional[List[str]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> int:
     """
     Get the total number of sessions of a project.
     """
     mongo_db = await get_mongo_db()
+    main_filter: Dict[str, object] = {"project_id": project_id}
+    # Time range filter
+    if created_at_start is not None:
+        main_filter["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        main_filter["created_at"] = {"$lte": created_at_end}
     if event_name_filter is None:
-        total_nb_sessions = await mongo_db["sessions"].count_documents(
-            {"project_id": project_id}
-        )
+        total_nb_sessions = await mongo_db["sessions"].count_documents(main_filter)
     else:
         # Do an aggregate query
         query_result = (
             await mongo_db["sessions"]
             .aggregate(
                 [
-                    {"$match": {"project_id": project_id}},
+                    {"$match": main_filter},
                     {
                         "$match": {
                             "$and": [
@@ -827,15 +860,24 @@ async def get_total_nb_of_sessions(
 async def get_global_average_session_length(
     project_id: str,
     event_name_filter: Optional[List[str]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> float:
     """
     Get the global average session length of a project.
     """
     mongo_db = await get_mongo_db()
+    main_filter: Dict[str, object] = {
+        "project_id": project_id,
+        "session_id": {"$ne": None},
+    }
+    # Time range filter
+    if created_at_start is not None:
+        main_filter["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        main_filter["created_at"] = {"$lte": created_at_end}
     pipeline: List[Dict[str, object]] = [
-        {
-            "$match": {"project_id": project_id, "session_id": {"$ne": None}},
-        },
+        {"$match": main_filter},
     ]
     if event_name_filter is not None:
         pipeline.append(
@@ -878,14 +920,20 @@ async def get_global_average_session_length(
 async def get_last_message_success_rate(
     project_id: str,
     event_name_filter: Optional[List[str]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> float:
     """
     Get the success rate of the last message of a project.
     """
     mongo_db = await get_mongo_db()
-    pipeline: List[Dict[str, object]] = [
-        {"$match": {"project_id": project_id}},
-    ]
+    main_filter: Dict[str, object] = {"project_id": project_id}
+    # Time range filter
+    if created_at_start is not None:
+        main_filter["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        main_filter["created_at"] = {"$lte": created_at_end}
+    pipeline: List[Dict[str, object]] = [{"$match": main_filter}]
     if event_name_filter is not None:
         pipeline.extend(
             [
@@ -1041,14 +1089,19 @@ async def get_nb_sessions_per_day(
 async def get_nb_sessions_histogram(
     project_id: str,
     event_name_filter: Optional[List[str]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ):
     """
     Get the number of sessions per session length
     """
     mongo_db = await get_mongo_db()
-    pipeline: List[Dict[str, object]] = [
-        {"$match": {"project_id": project_id}},
-    ]
+    main_filter = {"project_id": project_id}
+    if created_at_start is not None:
+        main_filter["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        main_filter["created_at"] = {"$lte": created_at_end}
+    pipeline: List[Dict[str, object]] = [{"$match": main_filter}]
     if event_name_filter is not None:
         pipeline.extend(
             [
@@ -1155,16 +1208,22 @@ async def get_sessions_aggregated_metrics(
         output["total_nb_sessions"] = await get_total_nb_of_sessions(
             project_id=project_id,
             event_name_filter=event_name_filter,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
         )
     if "average_session_length" in metrics:
         output["average_session_length"] = await get_global_average_session_length(
             project_id=project_id,
             event_name_filter=event_name_filter,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
         )
     if "last_task_success_rate" in metrics:
         output["last_task_success_rate"] = await get_last_message_success_rate(
             project_id=project_id,
             event_name_filter=event_name_filter,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
         )
     if "nb_sessions_per_day" in metrics:
         output["nb_sessions_per_day"] = await get_nb_sessions_per_day(
@@ -1177,6 +1236,8 @@ async def get_sessions_aggregated_metrics(
         output["session_length_histogram"] = await get_nb_sessions_histogram(
             project_id=project_id,
             event_name_filter=event_name_filter,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
         )
     if "success_rate_per_task_position" in metrics:
         output[
@@ -1185,6 +1246,8 @@ async def get_sessions_aggregated_metrics(
             project_id=project_id,
             quantile_filter=quantile_filter,
             event_name_filter=event_name_filter,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
         )
 
     return output
