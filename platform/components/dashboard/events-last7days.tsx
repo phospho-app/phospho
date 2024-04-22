@@ -60,7 +60,17 @@ const EventsLast7Days = ({ project_id }: { project_id: string }) => {
           }),
         ]
       : null,
-    ([url, accessToken, body]) => authFetcher(url, accessToken, "POST", body),
+    ([url, accessToken, body]) =>
+      authFetcher(url, accessToken, "POST", body).then((data) => {
+        let events_per_day = data?.events_per_day;
+        events_per_day?.data.forEach((item: any) => {
+          item.formated_date = new Date(item.date).toLocaleDateString([], {
+            month: "short",
+            day: "numeric",
+          });
+        });
+        return events_per_day?.data;
+      }),
     {
       keepPreviousData: true,
     },
