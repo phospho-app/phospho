@@ -5,13 +5,12 @@ import datetime
 from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
-from app.api.platform.models.explore import ProjectDataFilters
 import pandas as pd
 import pydantic
 
 # Models
 from app.api.platform.models import ABTest, Topics
-from app.api.v2.models import ProjectTasksFilter
+from app.api.v2.models import ProjectDataFilters
 from app.db.models import Eval, FlattenedTask
 from app.db.mongo import get_mongo_db
 from app.services.mongo.projects import (
@@ -78,8 +77,7 @@ async def deprecated_get_dashboard_aggregated_metrics(
     columns: List[Literal["event_name", "flag"]],
     count_of: Optional[Literal["tasks", "events"]] = "tasks",
     timerange: Optional[Literal["last_7_days", "last_30_minutes"]] = "last_7_days",
-    tasks_filter: Optional[ProjectTasksFilter] = None,
-    events_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     limit: Optional[int] = None,
 ) -> List[Dict[str, object]]:
     """
@@ -108,11 +106,11 @@ async def deprecated_get_dashboard_aggregated_metrics(
     # Override the created_at_start and created_at_end parameters
     # of the tasks_filter and events_filter if the timerange is set
     if timerange is not None:
-        if tasks_filter is not None:
-            tasks_filter.created_at_start = timerange_start
-            tasks_filter.created_at_end = timerange_end
+        if filters is not None:
+            filters.created_at_start = timerange_start
+            filters.created_at_end = timerange_end
         else:
-            tasks_filter = ProjectTasksFilter(
+            filters = ProjectDataFilters(
                 created_at_start=timerange_start,
                 created_at_end=timerange_end,
                 event_name=None,
@@ -120,31 +118,22 @@ async def deprecated_get_dashboard_aggregated_metrics(
                 last_eval_source=None,
                 metadata=None,
             )
-        if events_filter is not None:
-            events_filter.created_at_start = timerange_start
-            events_filter.created_at_end = timerange_end
-        else:
-            events_filter = ProjectDataFilters(
-                created_at_start=timerange_start,
-                created_at_end=timerange_end,
-                event_name=None,
-            )
 
     # Fetch the data
     if count_of == "tasks":
-        if tasks_filter is None:
-            tasks_filter = ProjectTasksFilter()
-        if isinstance(tasks_filter.event_name, str):
-            tasks_filter.event_name = [tasks_filter.event_name]
+        if filters is None:
+            filters = ProjectDataFilters()
+        if isinstance(filters.event_name, str):
+            filters.event_name = [filters.event_name]
         tasks = await get_all_tasks(
             project_id=project_id,
             limit=limit,
-            flag_filter=tasks_filter.flag,
-            event_name_filter=tasks_filter.event_name,
-            last_eval_source_filter=tasks_filter.last_eval_source,
-            metadata_filter=tasks_filter.metadata,
-            created_at_start=tasks_filter.created_at_start,
-            created_at_end=tasks_filter.created_at_end,
+            flag_filter=filters.flag,
+            event_name_filter=filters.event_name,
+            last_eval_source_filter=filters.last_eval_source,
+            metadata_filter=filters.metadata,
+            created_at_start=filters.created_at_start,
+            created_at_end=filters.created_at_end,
             # tasks_filter=tasks_filter,
         )
         df = pd.DataFrame([task.model_dump() for task in tasks])
@@ -152,7 +141,7 @@ async def deprecated_get_dashboard_aggregated_metrics(
         events = await get_all_events(
             project_id=project_id,
             limit=limit,
-            events_filter=events_filter,
+            events_filter=filters,
         )
         df = pd.DataFrame([event.model_dump() for event in events])
 
