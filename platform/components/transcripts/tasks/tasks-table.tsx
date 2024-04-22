@@ -64,6 +64,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const setTasksColumnsFilters = navigationStateStore(
     (state) => state.setTasksColumnsFilters,
   );
+  const dateRange = navigationStateStore((state) => state.dateRange);
 
   const [query, setQuery] = useState("");
   const { user, loading, accessToken } = useUser();
@@ -107,6 +108,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           tasksPagination.pageIndex,
           JSON.stringify(eventFilter),
           JSON.stringify(flagFilter),
+          JSON.stringify(dateRange),
           JSON.stringify(tasksSorting),
         ]
       : null,
@@ -115,6 +117,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
         filters: {
           event_name: eventFilter,
           flag: flagFilter,
+          created_at_start: dateRange?.created_at_start,
+          created_at_end: dateRange?.created_at_end,
         },
         pagination: {
           page: tasksPagination.pageIndex,
@@ -144,6 +148,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       accessToken,
       JSON.stringify(eventFilter),
       JSON.stringify(flagFilter),
+      JSON.stringify(dateRange),
       "total_nb_tasks",
     ],
     ([url, accessToken]) =>
@@ -152,6 +157,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
         tasks_filter: {
           flag: flagFilter,
           event_name: eventFilter,
+          created_at_start: dateRange?.created_at_start,
+          created_at_end: dateRange?.created_at_end,
         },
       }),
     {
