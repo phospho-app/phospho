@@ -195,7 +195,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setTasksSorting,
-    getSortedRowModel: getSortedRowModel(),
+    // getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setTasksColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
