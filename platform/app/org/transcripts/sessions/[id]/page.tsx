@@ -6,6 +6,7 @@ import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function Page({ params }: { params: { id: string } }) {
+  const session_id = decodeURIComponent(params.id);
   const router = useRouter();
 
   return (
@@ -13,7 +14,7 @@ export default function Page({ params }: { params: { id: string } }) {
       <Button onClick={() => router.back()}>
         <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
-      <Session session_id={params.id} />
+      <Session session_id={session_id} />
     </>
   );
 }

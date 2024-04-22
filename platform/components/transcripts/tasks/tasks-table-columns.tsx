@@ -283,7 +283,7 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
         // Handle undefined edge case
         if (!task) return <></>;
         return (
-          <Link href={`/org/transcripts/tasks/${task.id}`}>
+          <Link href={`/org/transcripts/tasks/${encodeURIComponent(task.id)}`}>
             <ChevronRight />
           </Link>
         );

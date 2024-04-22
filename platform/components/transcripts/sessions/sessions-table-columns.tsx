@@ -220,7 +220,9 @@ export function getColumns() {
         // Handle undefined edge case
         if (!session) return <></>;
         return (
-          <Link href={`/org/transcripts/sessions/${session.id}`}>
+          <Link
+            href={`/org/transcripts/sessions/${encodeURIComponent(session.id)}`}
+          >
             <ChevronRight />
           </Link>
         );
