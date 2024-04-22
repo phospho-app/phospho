@@ -263,7 +263,7 @@ export function SessionsTable<TData, TValue>({
           disabled={sessionsColumnsFilters.length === 0}
         >
           <FilterX className="h-4 w-4 mr-1" />
-          Clear
+          Clear filters
         </Button>
         <TableNavigation table={table} />
       </div>

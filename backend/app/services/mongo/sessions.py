@@ -197,7 +197,7 @@ async def get_event_descriptions(project_id: str) -> List[str]:
 
 async def event_suggestion(
     session_id: str,
-    model: str = "openai:gpt-4-1106-preview",
+    model: str = "openai:gpt-4-turbo",
 ) -> list[str]:
     """
     Fetches the messages from a session ID and sends them to the LLM model to get an event suggestion.
@@ -219,6 +219,7 @@ async def event_suggestion(
     system_prompt = (
         "Here is an exchange between a user and an assistant, your job is to suggest possible events in this exchange and to come up with a name for them, \
         if you don't find anything answer like so: None, otherwise suggest a name and a description for a possible event to detect in this exchange like so: Name: The event name Possible event: Your suggestion here. \
+        The event name should be 2-3 words long and the description should be short, 10 to 15 words. \
         \nHere are the existing events:\n- "
         + "\n- ".join(event_descriptions)
     )
@@ -226,6 +227,9 @@ async def event_suggestion(
 
     max_tokens_input_lenght = 128 * 1000 - 2000  # We remove 1k for safety
     prompt = shorten_text(messages, max_tokens_input_lenght) + "DISCUSSION END"
+
+    logger.info(f"Event suggestion session: {system_prompt}")
+    logger.info(f"Event suggestion prompt: {prompt}")
 
     try:
         response = openai_client.chat.completions.create(
@@ -241,6 +245,7 @@ async def event_suggestion(
         )
 
         llm_response = response.choices[0].message.content
+        logger.info(f"Event suggestion response: {llm_response}")
 
         regexName = r"Name: (.*)(?=[ \n]Possible event:)"
         regexDescription = r"Possible event: (.*)"
