@@ -38,7 +38,6 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
   const { accessToken } = useUser();
 
   let uniqueEventNamesInData: string[] = [];
-
   const { data: uniqueEvents } = useSWR(
     project_id
       ? [`/api/projects/${project_id}/unique-events`, accessToken]
