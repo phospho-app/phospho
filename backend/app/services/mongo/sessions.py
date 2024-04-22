@@ -228,6 +228,9 @@ async def event_suggestion(
     max_tokens_input_lenght = 128 * 1000 - 2000  # We remove 1k for safety
     prompt = shorten_text(messages, max_tokens_input_lenght) + "DISCUSSION END"
 
+    logger.info(f"Event suggestion session: {system_prompt}")
+    logger.info(f"Event suggestion prompt: {prompt}")
+
     try:
         response = openai_client.chat.completions.create(
             model=model_name,
@@ -242,6 +245,7 @@ async def event_suggestion(
         )
 
         llm_response = response.choices[0].message.content
+        logger.info(f"Event suggestion response: {llm_response}")
 
         regexName = r"Name: (.*)(?=[ \n]Possible event:)"
         regexDescription = r"Possible event: (.*)"
