@@ -16,10 +16,10 @@ from .projects import (
     Project,
     ProjectCreationRequest,
     Projects,
-    ProjectTasksFilter,
     ProjectUpdateRequest,
     UserMetadata,
     Users,
+    ProjectDataFilters,
 )
 from .search import SearchQuery, SearchResponse
 from .sessions import Session, SessionCreationRequest, Sessions, SessionUpdateRequest

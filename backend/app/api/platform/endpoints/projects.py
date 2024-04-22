@@ -1,3 +1,4 @@
+import datetime
 from typing import Dict, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends
@@ -125,7 +126,12 @@ async def post_sessions(
     propelauth.require_org_member(user, project.org_id)
     if query is None:
         query = QuerySessionsTasksRequest()
-    logger.debug(f"Sorting: {query.sorting}")
+    # Convert to UNIX timestamp in seconds
+    if isinstance(query.filters.created_at_start, datetime.datetime):
+        query.created_at_start = int(query.filters.created_at_start.timestamp())
+    if isinstance(query.filters.created_at_end, datetime.datetime):
+        query.created_at_end = int(query.filters.created_at_end.timestamp())
+
     sessions = await get_all_sessions(
         project_id=project_id,
         get_events=True,
@@ -254,6 +260,8 @@ async def post_tasks(
         pagination=query.pagination,
         metadata_filter=metadata_filter,
         sorting=query.sorting,
+        created_at_start=query.filters.created_at_start,
+        created_at_end=query.filters.created_at_end,
     )
     return Tasks(tasks=tasks)
 

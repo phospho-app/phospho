@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { authFetcher } from "@/lib/fetcher";
 import { useUser } from "@propelauth/nextjs/client";
 // PostHog
 import { usePostHog } from "posthog-js/react";
@@ -14,6 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import useSWR from "swr";
 
 interface DailyDate {
   date: string;
@@ -24,50 +26,35 @@ interface DailyDate {
 }
 
 const OverviewLast7Days = ({ project_id }: { project_id: string }) => {
-  const { accessToken, loading } = useUser();
+  const { accessToken } = useUser();
 
-  const [sevenDaysData, setSevenDaysData] = useState<DailyDate[] | null>(null);
-
-  const posthog = usePostHog();
-
-  function overviewLast7DaysLoaded(time: number): void {
-    posthog.capture("overview_last7days_loaded", {
-      request_time: time,
-    });
-  }
-
-  useEffect(() => {
-    // Fetch aggregated metrics from the API
-    (async () => {
-      const start = performance.now();
-      fetch(`/api/explore/${project_id}/dashboard`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + accessToken || "",
-        },
-        body: JSON.stringify({
-          graph_name: ["number_of_daily_tasks"],
-        }),
-      }).then(async (response) => {
-        const response_json = await response.json();
-        const number_of_daily_tasks = response_json?.number_of_daily_tasks;
-        // Format the "days" field from "2024-01-12" (UTC) to local time "Jan 12"
+  const { data: sevenDaysData } = useSWR(
+    project_id
+      ? [
+          `/api/explore/${project_id}/dashboard`,
+          accessToken,
+          JSON.stringify({
+            graph_name: ["number_of_daily_tasks"],
+          }),
+        ]
+      : null,
+    ([url, accessToken, body]) =>
+      authFetcher(url, accessToken, "POST", {
+        graph_name: ["number_of_daily_tasks"],
+      }).then((data) => {
+        let number_of_daily_tasks = data?.number_of_daily_tasks;
         number_of_daily_tasks?.forEach((item: any) => {
           item.formated_date = new Date(item.date).toLocaleDateString([], {
             month: "short",
             day: "numeric",
           });
         });
-        setSevenDaysData(number_of_daily_tasks);
-        const end = performance.now();
-        const time = (end - start) / 1000;
-        console.log("overviewLast7Days API call took", time, "seconds");
-        // Log to PostHog
-        overviewLast7DaysLoaded(time);
-      });
-    })();
-  }, [project_id, loading]);
+        return number_of_daily_tasks;
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const CustomToolTip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
