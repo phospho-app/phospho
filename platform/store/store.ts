@@ -42,6 +42,9 @@ interface navigationState {
   setSessionsPagination: (sessionsPagination: Updater<PaginationState>) => void;
   sessionsSorting: SortingState;
   setSessionsSorting: (sessionsSorting: Updater<SortingState>) => void;
+
+  dateRangePreset: string | null;
+  setDateRangePreset: (dateRangePreset: string | null) => void;
 }
 
 export const navigationStateStore = create(
@@ -154,6 +157,10 @@ export const navigationStateStore = create(
             sessionsSorting: updaterOrValue,
           };
         }),
+
+      dateRangePreset: null,
+      setDateRangePreset: (dateRangePreset: string | null) =>
+        set((state) => ({ dateRangePreset: dateRangePreset })),
     }),
 
     {
