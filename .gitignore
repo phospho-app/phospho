@@ -7,3 +7,4 @@ secrets.toml
 .pytest_cache
 .env
 .env.docker
+.research
