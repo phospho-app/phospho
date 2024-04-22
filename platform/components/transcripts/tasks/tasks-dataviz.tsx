@@ -216,6 +216,21 @@ const TasksDataviz: React.FC = () => {
       },
     );
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-primary shadow-md p-2 rounded-md">
+          <p className="text-secondary font-semibold">{`${label}`}</p>
+          <p className="text-green-500">
+            {`${payload[0].value.toFixed(2)}% success rate`}
+          </p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const {
     data: successRatePerTaskPosition,
   }: {
@@ -315,7 +330,7 @@ const TasksDataviz: React.FC = () => {
                   >
                     <XAxis dataKey="day" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip content={CustomTooltip} />
                     <Bar
                       dataKey="nb_tasks"
                       fill="#22c55e"
@@ -347,11 +362,11 @@ const TasksDataviz: React.FC = () => {
                       overflow={"visible"}
                       // angle={-45} // Rotate the labels by 45 degrees
                     />
-                    <Tooltip />
+                    <Tooltip content={CustomTooltip} />
                     <Bar
                       dataKey="nb_events"
                       fill="#22c55e"
-                      radius={[0, 4, 4, 0]}
+                      radius={[4, 4, 0, 0]}
                       barSize={20}
                     />
                   </BarChart>
@@ -395,7 +410,7 @@ const TasksDataviz: React.FC = () => {
                   </defs>
                   <XAxis dataKey="task_position" className="text-slate-500" />
                   <YAxis unit="%" />
-                  <Tooltip />
+                  <Tooltip content={CustomTooltip} />
                   <Area
                     type="monotone"
                     dataKey="success_rate"
