@@ -336,7 +336,9 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
                   key={row.id}
                   // data-state={row.getIsSelected() && "selected"}
                   onClick={() => {
-                    router.push(`/org/transcripts/tasks/${row.original.id}`);
+                    router.push(
+                      `/org/transcripts/tasks/${encodeURIComponent(row.original.id)}`,
+                    );
                   }}
                   className="cursor-pointer"
                 >
