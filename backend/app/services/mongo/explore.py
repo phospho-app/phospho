@@ -341,34 +341,39 @@ async def get_total_nb_of_tasks(
     project_id: str,
     flag_filter: Optional[Literal["success", "failure"]] = None,
     event_name_filter: Optional[List[str]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> Optional[int]:
     """
     Get the total number of tasks of a project.
     """
     mongo_db = await get_mongo_db()
+    # Time range filter
+    global_filters: Dict[str, object] = {"project_id": project_id}
+    if created_at_start is not None:
+        global_filters["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        global_filters["created_at"] = {"$lte": created_at_end}
+
+    # Other filters
     if flag_filter is None and event_name_filter is None:
-        total_nb_tasks = await mongo_db["tasks"].count_documents(
-            {"project_id": project_id}
-        )
+        total_nb_tasks = await mongo_db["tasks"].count_documents(global_filters)
     elif flag_filter is not None and event_name_filter is None:
-        total_nb_tasks = await mongo_db["tasks"].count_documents(
-            {"project_id": project_id, "flag": flag_filter}
-        )
+        global_filters["flag"] = flag_filter
+        total_nb_tasks = await mongo_db["tasks"].count_documents(global_filters)
     elif event_name_filter is not None:
         # Do an aggregate query
-        first_filter: Dict[str, object] = {"project_id": project_id}
         if flag_filter is not None:
-            first_filter["flag"] = flag_filter
-        first_filter["$and"] = [
+            global_filters["flag"] = flag_filter
+        global_filters["$and"] = [
             {"events": {"$ne": []}},
             {"events": {"$elemMatch": {"event_name": {"$in": event_name_filter}}}},
         ]
-
         query_result = (
             await mongo_db["tasks"]
             .aggregate(
                 [
-                    {"$match": first_filter},
+                    {"$match": global_filters},
                     {"$count": "nb_tasks"},
                 ]
             )
@@ -681,10 +686,12 @@ async def get_daily_success_rate(
 
 async def get_tasks_aggregated_metrics(
     project_id: str,
-    flag_filter: Optional[Literal["success", "failure"]] = None,
+    flag_filter: Optional[str] = None,
     event_name_filter: Optional[List[str]] = None,
     metrics: Optional[List[str]] = None,
     quantile_filter: Optional[float] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> Dict[str, object]:
     """
     Compute aggregated metrics for the tasks of a project. Used for the Tasks dashboard.
@@ -719,6 +726,8 @@ async def get_tasks_aggregated_metrics(
             project_id=project_id,
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
         )
     if "global_success_rate" in metrics:
         output["global_success_rate"] = await get_total_success_rate(
@@ -1107,6 +1116,8 @@ async def get_sessions_aggregated_metrics(
     quantile_filter: Optional[float] = None,
     metrics: Optional[List[str]] = None,
     event_name_filter: Optional[List[str]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> Dict[str, object]:
     """
     Compute aggregated metrics for the sessions of a project. Used for the Sessions dashboard.

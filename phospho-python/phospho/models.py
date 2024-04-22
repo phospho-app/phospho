@@ -526,9 +526,12 @@ class Job(BaseModel):
 
 
 class Prediction(BaseModel):
-    # Represents a prediction made by phospho, the user or else
-    # For instance, a user feedback as "Failure" is a prediction
-    # For instance, the output of an event detection is a prediction
+    """
+    Represents a prediction made by phospho, the user or else
+    For instance, a user feedback as "Failure" is a prediction
+    For instance, the output of an event detection is a prediction
+    """
+
     id: str = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
     org_id: str
@@ -539,6 +542,11 @@ class Prediction(BaseModel):
 
 
 class ProjectDataFilters(BaseModel):
+    """
+    This is a model used to filter tasks, sessions or events in
+    different endpoints.
+    """
+
     created_at_start: Optional[Union[int, datetime.datetime]] = None
     created_at_end: Optional[Union[int, datetime.datetime]] = None
     event_name: Optional[List[str]] = None

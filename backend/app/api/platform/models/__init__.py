@@ -27,8 +27,6 @@ from .explore import (
     AggregateMetricsRequest,
     DashboardMetricsFilter,
     EventsMetricsFilter,
-    SessionsMetricsFilter,
-    TasksMetricsFilter,
     ProjectDataFilters,
     Pagination,
     QuerySessionsTasksRequest,
@@ -41,5 +39,3 @@ from .projects import (
 )
 from .tasks import AddEventRequest, RemoveEventRequest
 from .topics import Topic, Topics
-
-from phospho.models import ProjectDataFilters
