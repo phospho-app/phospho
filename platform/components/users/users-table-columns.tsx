@@ -73,9 +73,6 @@ export function getColumns() {
         return row.original.user_id;
       },
       // enableHiding: true,
-      size: 0,
-      minSize: 0,
-      maxSize: 0,
     },
     {
       header: ({ column }) => {
