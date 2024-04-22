@@ -186,7 +186,7 @@ export const navigationStateStore = create(
               from: addDays(new Date(), -1),
               to: new Date(),
               created_at_start: Date.now() / 1000 - 24 * 60 * 60,
-              created_at_end: Date.now(),
+              created_at_end: undefined,
             },
           ],
           [
