@@ -287,7 +287,9 @@ const TasksDataviz: React.FC = () => {
       <div className="container mx-auto mt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Nb of tasks per day</h3>
+            <h3 className="text-slate-500 mb-2">
+              Nb of tasks per day (last 7d)
+            </h3>
             {(!nbDailyTasks && <Skeleton className="w-[100%] h-[150px]" />) ||
               (nbDailyTasks && (
                 <ResponsiveContainer width="100%" height={150}>
