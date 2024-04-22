@@ -237,12 +237,12 @@ async def event_suggestion(
                     "content": prompt,
                 },
             ],
-            max_tokens=25,
+            max_tokens=50,
         )
 
         llm_response = response.choices[0].message.content
 
-        regexName = r"Name: (.*)(?= Possible event:)"
+        regexName = r"Name: (.*)(?=[ \n]Possible event:)"
         regexDescription = r"Possible event: (.*)"
 
         name = search(regexName, llm_response)
