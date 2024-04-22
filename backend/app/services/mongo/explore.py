@@ -1,6 +1,7 @@
 """
 Explore metrics service
 """
+
 import datetime
 from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Tuple, Union
