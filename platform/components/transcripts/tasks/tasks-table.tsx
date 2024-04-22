@@ -1,5 +1,6 @@
 "use client";
 
+import { DatePickerWithRange } from "@/components/date-range";
 import DownloadButton from "@/components/download-csv";
 import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -63,6 +64,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const setTasksColumnsFilters = navigationStateStore(
     (state) => state.setTasksColumnsFilters,
   );
+  const dateRange = navigationStateStore((state) => state.dateRange);
 
   const [query, setQuery] = useState("");
   const { user, loading, accessToken } = useUser();
@@ -106,6 +108,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           tasksPagination.pageIndex,
           JSON.stringify(eventFilter),
           JSON.stringify(flagFilter),
+          JSON.stringify(dateRange),
           JSON.stringify(tasksSorting),
         ]
       : null,
@@ -114,6 +117,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
         filters: {
           event_name: eventFilter,
           flag: flagFilter,
+          created_at_start: dateRange?.created_at_start,
+          created_at_end: dateRange?.created_at_end,
         },
         pagination: {
           page: tasksPagination.pageIndex,
@@ -143,6 +148,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       accessToken,
       JSON.stringify(eventFilter),
       JSON.stringify(flagFilter),
+      JSON.stringify(dateRange),
       "total_nb_tasks",
     ],
     ([url, accessToken]) =>
@@ -151,6 +157,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
         tasks_filter: {
           flag: flagFilter,
           event_name: eventFilter,
+          created_at_start: dateRange?.created_at_start,
+          created_at_end: dateRange?.created_at_end,
         },
       }),
     {
@@ -195,7 +203,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setTasksSorting,
-    getSortedRowModel: getSortedRowModel(),
+    // getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setTasksColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -219,6 +227,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   return (
     <div>
       <div className="flex flex-row gap-x-2 items-center mb-2">
+        <DatePickerWithRange />
         <div className="flex-grow">
           <Input
             placeholder="Search for a topic"

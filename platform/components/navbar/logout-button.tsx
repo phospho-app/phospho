@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { navigationStateStore } from "@/store/store";
 import { useLogoutFunction } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
