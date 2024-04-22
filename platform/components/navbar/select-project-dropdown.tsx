@@ -24,9 +24,6 @@ export function SelectProjectButton() {
   const selectedProjectName = selectedProject?.project_name ?? "loading...";
   const setHasTasks = dataStateStore((state) => state.setHasTasks);
   const setHasSessions = dataStateStore((state) => state.setHasSessions);
-  const setUniqueEventNames = dataStateStore(
-    (state) => state.setUniqueEventNames,
-  );
 
   if (projects === null) {
     return <></>;
@@ -44,13 +41,6 @@ export function SelectProjectButton() {
         setHasTasks(null);
         setHasSessions(null);
         setproject_id(selectedProjectInForm.id);
-        if (selectedProjectInForm.settings?.events) {
-          setUniqueEventNames(
-            Object.keys(selectedProjectInForm.settings.events),
-          );
-        } else {
-          setUniqueEventNames([]);
-        }
       }
     }
   };

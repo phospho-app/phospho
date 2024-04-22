@@ -1,4 +1,5 @@
 import {
+  CustomDateRange,
   Event,
   HasEnoughLabelledTasks,
   OrgMetadata,
@@ -46,7 +47,7 @@ interface navigationState {
   setSessionsSorting: (sessionsSorting: Updater<SortingState>) => void;
 
   dateRangePreset: string | null;
-  dateRange: DateRange | undefined;
+  dateRange: CustomDateRange | undefined;
   setDateRangePreset: (dateRangePreset: string | null) => void;
   setDateRange: (dateRange: DateRange) => void;
 }
@@ -166,6 +167,7 @@ export const navigationStateStore = create(
       dateRange: undefined,
       setDateRangePreset: (dateRangePreset: string | null) => {
         // The date range preset and the date range are linked
+        // We also store the timestamp. Note: the timestamp is in seconds
 
         // If the date range preset is null, we reset the date range
         if (dateRangePreset === null) {
@@ -177,11 +179,43 @@ export const navigationStateStore = create(
         }
 
         // Otherwise, we set the date range based on the date range preset
-        const dateRangePresetToRange = new Map<string, DateRange>([
-          ["last-24-hours", { from: addDays(new Date(), -1), to: new Date() }],
-          ["last-7-days", { from: addDays(new Date(), -7), to: undefined }],
-          ["last-30-days", { from: addDays(new Date(), -30), to: undefined }],
-          ["all-time", { from: undefined, to: undefined }],
+        const dateRangePresetToRange = new Map<string, CustomDateRange>([
+          [
+            "last-24-hours",
+            {
+              from: addDays(new Date(), -1),
+              to: new Date(),
+              created_at_start: Date.now() / 1000 - 24 * 60 * 60,
+              created_at_end: Date.now(),
+            },
+          ],
+          [
+            "last-7-days",
+            {
+              from: addDays(new Date(), -7),
+              to: undefined,
+              created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
+              created_at_end: undefined,
+            },
+          ],
+          [
+            "last-30-days",
+            {
+              from: addDays(new Date(), -30),
+              to: undefined,
+              created_at_start: Date.now() / 1000 - 30 * 24 * 60 * 60,
+              created_at_end: undefined,
+            },
+          ],
+          [
+            "all-time",
+            {
+              from: undefined,
+              to: undefined,
+              created_at_start: undefined,
+              created_at_end: undefined,
+            },
+          ],
         ]);
 
         set((state) => ({
@@ -193,7 +227,16 @@ export const navigationStateStore = create(
         // If the date range is directly set without a preset, we reset the date range preset
         set((state) => ({
           dateRangePreset: null,
-          dateRange: dateRange,
+          dateRange: {
+            from: dateRange.from,
+            to: dateRange.to,
+            created_at_start: dateRange.from
+              ? dateRange.from.getTime() / 1000
+              : undefined,
+            created_at_end: dateRange.to
+              ? dateRange.to.getTime() / 1000
+              : undefined,
+          },
         }));
       },
     }),
@@ -226,16 +269,8 @@ interface dataState {
     hasLabelledTasks: HasEnoughLabelledTasks | null,
   ) => void;
 
-  tasksWithEvents: TaskWithEvents[];
-  setTasksWithEvents: (tasks: TaskWithEvents[]) => void;
-  events: Event[];
-  setEvents: (events: Event[]) => void;
-
   tasksWithoutHumanLabel: Task[] | null;
   setTasksWithoutHumanLabel: (tasks: Task[]) => void;
-
-  uniqueEventNames: string[];
-  setUniqueEventNames: (uniqueEventNames: string[]) => void;
 }
 
 export const dataStateStore = create<dataState>((set) => ({
@@ -260,18 +295,7 @@ export const dataStateStore = create<dataState>((set) => ({
   setHasLabelledTasks: (hasLabelledTasks: HasEnoughLabelledTasks | null) =>
     set((state) => ({ hasLabelledTasks: hasLabelledTasks })),
 
-  tasksWithEvents: [],
-  setTasksWithEvents: (tasks: TaskWithEvents[]) =>
-    set((state) => ({ tasksWithEvents: tasks })),
-
-  events: [],
-  setEvents: (events: Event[]) => set((state) => ({ events: events })),
-
   tasksWithoutHumanLabel: null,
   setTasksWithoutHumanLabel: (tasks: Task[]) =>
     set((state) => ({ tasksWithoutHumanLabel: tasks })),
-
-  uniqueEventNames: [],
-  setUniqueEventNames: (uniqueEventNames: string[]) =>
-    set((state) => ({ uniqueEventNames: uniqueEventNames })),
 }));

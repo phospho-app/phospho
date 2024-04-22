@@ -1,3 +1,4 @@
+import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
@@ -11,8 +12,6 @@ from app.api.platform.models import (
     ABTests,
     Topics,
     EventsMetricsFilter,
-    SessionsMetricsFilter,
-    TasksMetricsFilter,
     DashboardMetricsFilter,
 )
 from app.security.authentification import propelauth
@@ -156,7 +155,7 @@ async def get_dashboard_project_metrics(
 async def get_tasks_project_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
-    tasks_filter: Optional[TasksMetricsFilter] = None,
+    tasks_filter: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
@@ -165,15 +164,22 @@ async def get_tasks_project_metrics(
     await verify_if_propelauth_user_can_access_project(user, project_id)
     logger.info(f"Tasks request: {tasks_filter}")
     if tasks_filter is None:
-        tasks_filter = TasksMetricsFilter(flag=None, event_name=None)
+        tasks_filter = ProjectDataFilters(flag=None, event_name=None)
     if isinstance(tasks_filter.event_name, str):
         tasks_filter.event_name = [tasks_filter.event_name]
+    # Convert to UNIX timestamp in seconds
+    if isinstance(tasks_filter.created_at_start, datetime.datetime):
+        tasks_filter.created_at_start = int(tasks_filter.created_at_start.timestamp())
+    if isinstance(tasks_filter.created_at_end, datetime.datetime):
+        tasks_filter.created_at_end = int(tasks_filter.created_at_end.timestamp())
 
     output = await get_tasks_aggregated_metrics(
         project_id=project_id,
         flag_filter=tasks_filter.flag,
         event_name_filter=tasks_filter.event_name,
         metrics=metrics,
+        created_at_start=tasks_filter.created_at_start,
+        created_at_end=tasks_filter.created_at_end,
     )
     return output
 
@@ -185,7 +191,7 @@ async def get_tasks_project_metrics(
 async def get_sessions_project_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
-    sessions_filter: Optional[SessionsMetricsFilter] = None,
+    sessions_filter: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
@@ -194,14 +200,23 @@ async def get_sessions_project_metrics(
     await verify_if_propelauth_user_can_access_project(user, project_id)
     logger.info(f"Sessions request: {sessions_filter}")
     if sessions_filter is None:
-        sessions_filter = SessionsMetricsFilter(event_name=None)
+        sessions_filter = ProjectDataFilters(event_name=None)
     if isinstance(sessions_filter.event_name, str):
         sessions_filter.event_name = [sessions_filter.event_name]
+    # Convert to UNIX timestamp in seconds
+    if isinstance(sessions_filter.created_at_start, datetime.datetime):
+        sessions_filter.created_at_start = int(
+            sessions_filter.created_at_start.timestamp()
+        )
+    if isinstance(sessions_filter.created_at_end, datetime.datetime):
+        sessions_filter.created_at_end = int(sessions_filter.created_at_end.timestamp())
 
     output = await get_sessions_aggregated_metrics(
         project_id=project_id,
         metrics=metrics,
         event_name_filter=sessions_filter.event_name,
+        created_at_start=sessions_filter.created_at_start,
+        created_at_end=sessions_filter.created_at_end,
     )
     return output
 

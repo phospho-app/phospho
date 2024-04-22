@@ -12,24 +12,6 @@ class AggregateMetricsRequest(BaseModel):
     limit: int = 1000
 
 
-class TasksMetricsFilter(BaseModel):
-    flag: Optional[Literal["success", "failure"]] = Field(
-        default=None,
-        description="The flag of the task. Will only return tasks that have this flag.",
-    )
-    event_name: Optional[Union[str, List[str]]] = Field(
-        default=None,
-        description="The name of the event. Can be a list of event names. Will only return tasks that have at least an event with this name.",
-    )
-
-
-class SessionsMetricsFilter(BaseModel):
-    event_name: Optional[Union[str, List[str]]] = Field(
-        default=None,
-        description="The name of the event. Can be a list of event names. Will only return tasks that have at least an event with this name.",
-    )
-
-
 class EventsMetricsFilter(BaseModel):
     pass
 
