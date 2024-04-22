@@ -175,7 +175,7 @@ export function SessionsTable<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSessionsSorting,
-    getSortedRowModel: getSortedRowModel(),
+    // getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setSessionsColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

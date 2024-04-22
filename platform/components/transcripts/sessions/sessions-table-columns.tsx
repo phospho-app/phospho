@@ -14,6 +14,8 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowUpDown,
   ChevronDown,
   ChevronRight,
@@ -67,9 +69,6 @@ export function getColumns() {
         row.original.id;
       },
       enableHiding: true,
-      size: 10,
-      minSize: 10,
-      maxSize: 10,
     },
     // Date
     {
@@ -80,7 +79,14 @@ export function getColumns() {
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
             Date
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            {
+              // Show the sorting icon based on the current sorting state
+              column.getIsSorted() === "desc" ? (
+                <ArrowUp className="ml-2 h-4 w-4" />
+              ) : (
+                <ArrowDown className="ml-2 h-4 w-4" />
+              )
+            }
           </Button>
         );
       },

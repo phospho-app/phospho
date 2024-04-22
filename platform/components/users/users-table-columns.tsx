@@ -4,6 +4,8 @@ import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowUpDown,
   ChevronDown,
   ChevronRight,
