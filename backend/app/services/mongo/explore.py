@@ -1096,7 +1096,7 @@ async def get_nb_sessions_histogram(
     Get the number of sessions per session length
     """
     mongo_db = await get_mongo_db()
-    main_filter = {"project_id": project_id}
+    main_filter: Dict[str, object] = {"project_id": project_id}
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
@@ -1152,16 +1152,21 @@ async def get_nb_sessions_histogram(
     )
 
     df = pd.DataFrame(result)
-
-    # Add missing session lengths
-    complete_session_lengths = pd.DataFrame(
-        {"session_length": range(1, df["session_length"].max() + 1)}
-    )
-    df = pd.merge(
-        complete_session_lengths, df, on="session_length", how="left", validate="m:1"
-    ).fillna(0)
-
-    return df[["session_length", "nb_sessions"]].to_dict(orient="records")
+    if df.empty:
+        return []
+    else:
+        # Add missing session lengths
+        complete_session_lengths = pd.DataFrame(
+            {"session_length": range(1, df["session_length"].max() + 1)}
+        )
+        df = pd.merge(
+            complete_session_lengths,
+            df,
+            on="session_length",
+            how="left",
+            validate="m:1",
+        ).fillna(0)
+        return df[["session_length", "nb_sessions"]].to_dict(orient="records")
 
 
 async def get_sessions_aggregated_metrics(
