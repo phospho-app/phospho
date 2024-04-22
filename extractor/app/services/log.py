@@ -421,9 +421,17 @@ async def process_log_with_session_id(
             # The sessions will be created later, once we know the earliest task creation time
             sessions_to_create[log_event.session_id] = session_data
         else:
-            logger.info(
-                f"Logevent: session with session_id {log_event.session_id} already exists (skipping session creation)"
-            )
+            if log_event.session_id is not None:
+                # Fetch the session data from the database and increment the session length
+                if log_event.session_id is not None:
+                    await mongo_db["sessions"].update_one(
+                        {"id": log_event.session_id},
+                        {"$inc": {"session_length": 1}},
+                    )
+            else:
+                logger.info(
+                    "Log event: session with no session_id, skipping session creation"
+                )
 
         task = create_task_from_logevent(
             org_id=org_id,
@@ -463,10 +471,12 @@ async def process_log_with_session_id(
             # Verify if the session already exists
             existing_session = session_id in sessions_id_already_in_db
             if existing_session:
-                logger.info(
-                    f"Logevent: session with session_id {session_id} already exists (skipping creation)"
+                # Fetch the session data from the database and increment the session length
+
+                await mongo_db["sessions"].update_one(
+                    {"id": session_id},
+                    {"$inc": {"session_length": 1}},
                 )
-                continue
             else:
                 session = Session(
                     id=session_id,
@@ -476,6 +486,7 @@ async def process_log_with_session_id(
                     metadata=session_data["metadata"],
                     data=session_data["data"],
                     preview=sessions_to_earliest_task[session_id].preview(),
+                    session_length=1,
                 )
                 sessions_to_create_dump.append(session.model_dump())
 
