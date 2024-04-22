@@ -13,6 +13,8 @@ import {
   SortingState,
   Updater,
 } from "@tanstack/react-table";
+import { addDays } from "date-fns";
+import { DateRange } from "react-day-picker";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -44,7 +46,9 @@ interface navigationState {
   setSessionsSorting: (sessionsSorting: Updater<SortingState>) => void;
 
   dateRangePreset: string | null;
+  dateRange: DateRange | undefined;
   setDateRangePreset: (dateRangePreset: string | null) => void;
+  setDateRange: (dateRange: DateRange) => void;
 }
 
 export const navigationStateStore = create(
@@ -159,8 +163,39 @@ export const navigationStateStore = create(
         }),
 
       dateRangePreset: null,
-      setDateRangePreset: (dateRangePreset: string | null) =>
-        set((state) => ({ dateRangePreset: dateRangePreset })),
+      dateRange: undefined,
+      setDateRangePreset: (dateRangePreset: string | null) => {
+        // The date range preset and the date range are linked
+
+        // If the date range preset is null, we reset the date range
+        if (dateRangePreset === null) {
+          set((state) => ({
+            dateRangePreset: null,
+            dateRange: undefined,
+          }));
+          return;
+        }
+
+        // Otherwise, we set the date range based on the date range preset
+        const dateRangePresetToRange = new Map<string, DateRange>([
+          ["last-24-hours", { from: addDays(new Date(), -1), to: new Date() }],
+          ["last-7-days", { from: addDays(new Date(), -7), to: undefined }],
+          ["last-30-days", { from: addDays(new Date(), -30), to: undefined }],
+          ["all-time", { from: undefined, to: undefined }],
+        ]);
+
+        set((state) => ({
+          dateRangePreset: dateRangePreset,
+          dateRange: dateRangePresetToRange.get(dateRangePreset),
+        }));
+      },
+      setDateRange: (dateRange: DateRange) => {
+        // If the date range is directly set without a preset, we reset the date range preset
+        set((state) => ({
+          dateRangePreset: null,
+          dateRange: dateRange,
+        }));
+      },
     }),
 
     {
