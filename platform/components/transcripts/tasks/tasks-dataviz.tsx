@@ -63,6 +63,7 @@ const TasksDataviz: React.FC = () => {
   );
   const hasSessions = dataStateStore((state) => state.hasSessions);
   const project_id = navigationStateStore((state) => state.project_id);
+  const dateRange = navigationStateStore((state) => state.dateRange);
 
   let flagFilter: string | null = null;
   let eventFilter: string | null = null;
@@ -81,21 +82,24 @@ const TasksDataviz: React.FC = () => {
     }
   }
 
+  const tasksFilters = {
+    flag: flagFilter,
+    event_name: eventFilter,
+    created_at_start: dateRange?.created_at_start,
+    created_at_end: dateRange?.created_at_end,
+  };
+
   const { data: totalNbTasksData } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
-      flagFilter,
-      eventFilter,
       "total_nb_tasks",
+      JSON.stringify(tasksFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        tasks_filter: {
-          flag: flagFilter,
-          event_name: eventFilter,
-        },
+        tasks_filter: tasksFilters,
       }),
     {
       keepPreviousData: true,
@@ -109,17 +113,13 @@ const TasksDataviz: React.FC = () => {
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
-      flagFilter,
-      eventFilter,
       "most_detected_event",
+      JSON.stringify(tasksFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["most_detected_event"],
-        tasks_filter: {
-          flag: flagFilter,
-          event_name: eventFilter,
-        },
+        tasks_filter: tasksFilters,
       }),
     {
       keepPreviousData: true,
@@ -133,17 +133,13 @@ const TasksDataviz: React.FC = () => {
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
-      flagFilter,
-      eventFilter,
       "global_success_rate",
+      JSON.stringify(tasksFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["global_success_rate"],
-        tasks_filter: {
-          flag: flagFilter,
-          event_name: eventFilter,
-        },
+        tasks_filter: tasksFilters,
       }),
     {
       keepPreviousData: true,
@@ -158,17 +154,14 @@ const TasksDataviz: React.FC = () => {
       [
         `/api/explore/${project_id}/aggregated/tasks`,
         accessToken,
-        flagFilter,
-        eventFilter,
+
         "nb_daily_tasks",
+        JSON.stringify(tasksFilters),
       ],
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["nb_daily_tasks"],
-          tasks_filter: {
-            flag: flagFilter,
-            event_name: eventFilter,
-          },
+          tasks_filter: tasksFilters,
         }).then((data) => {
           if (!data?.nb_daily_tasks) {
             return null;
@@ -191,17 +184,13 @@ const TasksDataviz: React.FC = () => {
       [
         `/api/explore/${project_id}/aggregated/tasks`,
         accessToken,
-        flagFilter,
-        eventFilter,
         "events_ranking",
+        JSON.stringify(tasksFilters),
       ],
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["events_ranking"],
-          tasks_filter: {
-            flag: flagFilter,
-            event_name: eventFilter,
-          },
+          tasks_filter: tasksFilters,
         }).then((data) => {
           if (!data?.events_ranking) {
             return null;
@@ -239,17 +228,13 @@ const TasksDataviz: React.FC = () => {
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
-      flagFilter,
-      eventFilter,
       "success_rate_per_task_position",
+      JSON.stringify(tasksFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["success_rate_per_task_position"],
-        tasks_filter: {
-          flag: flagFilter,
-          event_name: eventFilter,
-        },
+        tasks_filter: tasksFilters,
       }).then((data) => {
         if (!data?.success_rate_per_task_position) {
           return null;
@@ -317,7 +302,9 @@ const TasksDataviz: React.FC = () => {
       <div className="container mx-auto mt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Nb of tasks per day</h3>
+            <h3 className="text-slate-500 mb-2">
+              Nb of tasks per day (last 7d)
+            </h3>
             {(!nbDailyTasks && <Skeleton className="w-[100%] h-[150px]" />) ||
               (nbDailyTasks && (
                 <ResponsiveContainer width="100%" height={150}>

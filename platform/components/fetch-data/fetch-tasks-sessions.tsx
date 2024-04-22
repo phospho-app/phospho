@@ -22,9 +22,6 @@ function FetchHasTasksSessions() {
   const setSelectedProject = dataStateStore(
     (state) => state.setSelectedProject,
   );
-  const setUniqueEventNames = dataStateStore(
-    (state) => state.setUniqueEventNames,
-  );
 
   console.log("Rendering FetchHasTasksSessions");
 
@@ -84,12 +81,6 @@ function FetchHasTasksSessions() {
   if (fetchedProject) {
     console.log("Updating fetchedProject:", fetchedProject);
     setSelectedProject(fetchedProject);
-    // Set the unique event names
-    if (fetchedProject.settings?.events) {
-      setUniqueEventNames(Object.keys(fetchedProject.settings.events));
-    } else {
-      setUniqueEventNames([]);
-    }
   }
 
   return <></>;

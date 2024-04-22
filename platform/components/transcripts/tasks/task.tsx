@@ -36,10 +36,6 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
   const setTasksWithoutHumanLabel = dataStateStore(
     (state) => state.setTasksWithoutHumanLabel,
   );
-  const tasksWithEvents = dataStateStore((state) => state.tasksWithEvents);
-  const setTasksWithEvents = dataStateStore(
-    (state) => state.setTasksWithEvents,
-  );
 
   useEffect(() => {
     // Get Task
@@ -97,13 +93,6 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
       tasksWithoutHumanLabel.splice(index, 1);
     }
     setTasksWithoutHumanLabel(tasksWithoutHumanLabel);
-
-    // Update the tasksWithEvents in the store
-    const taskIndex = tasksWithEvents.findIndex((t) => t.id === task.id);
-    if (taskIndex !== -1) {
-      tasksWithEvents[taskIndex] = task;
-      setTasksWithEvents(tasksWithEvents);
-    }
 
     // Fetch the next task without label
     if (tasksWithoutHumanLabel.length === 0) {

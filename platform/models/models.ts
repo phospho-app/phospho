@@ -154,3 +154,10 @@ export interface Topic {
   topic_name: string;
   count: number;
 }
+
+export interface CustomDateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+  created_at_start: number | undefined;
+  created_at_end: number | undefined;
+}
