@@ -115,8 +115,13 @@ export function getCountsPerEvent(
 ): { event_name: string; total: number }[] {
   const countsPerEvent: { event_name: string; total: number }[] = [];
 
+  if (!events || !event_names) {
+    return countsPerEvent;
+  }
+
   // Counting occurrences of each event
   event_names?.forEach((eventName) => {
+    if (!events?.filter) return;
     const filteredEvents = events.filter(
       (event) => event.event_name === eventName,
     );
