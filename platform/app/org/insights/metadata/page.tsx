@@ -281,7 +281,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
               <Bar
                 dataKey={`${selectedMetric}${selectedMetricMetadata ?? ""}`}
                 fill="#22c55e"
-                // radius={[4, 4, 0, 0]}
+                radius={[0, 20, 20, 0]}
               />
               <Tooltip
                 formatter={(value) => {
