@@ -4,6 +4,7 @@ import time
 from typing import Dict, List, Optional, Tuple, Union
 
 from app.api.platform.models.explore import ProjectDataFilters, Sorting
+from app.services.mongo.sessions import compute_session_length
 import pandas as pd
 import resend
 from app.api.platform.models import UserMetadata, Pagination
@@ -446,6 +447,7 @@ async def get_all_sessions(
     sorting: Optional[List[Sorting]] = None,
 ) -> List[Session]:
     mongo_db = await get_mongo_db()
+    await compute_session_length(project_id)
     additional_sessions_filter: Dict[str, object] = {}
     if sessions_filter is not None:
         if sessions_filter.created_at_start is not None:
