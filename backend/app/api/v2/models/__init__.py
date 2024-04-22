@@ -31,5 +31,3 @@ from .tasks import (
     TaskUpdateRequest,
 )
 from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest
-
-from phospho.models import ProjectDataFilters

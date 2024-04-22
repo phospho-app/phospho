@@ -7,6 +7,7 @@ from app.db.models import (
     Task,
     Session,
     EventDefinition,
+    ProjectDataFilters,
 )
 
 
