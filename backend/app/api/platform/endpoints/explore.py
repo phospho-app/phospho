@@ -7,7 +7,6 @@ from app.api.platform.models import (
     AggregateMetricsRequest,
     ProjectDataFilters,
     Events,
-    ProjectTasksFilter,
     Tasks,
     ABTests,
     Topics,
@@ -145,8 +144,7 @@ async def get_dashboard_project_metrics(
         columns=request.columns,
         count_of=request.count_of,
         timerange=request.timerange,
-        tasks_filter=request.tasks_filter,
-        events_filter=request.events_filter,
+        filters=request.filters,
     )
     return output
 
@@ -246,45 +244,6 @@ async def get_filtered_events(
         project_id=project_id, limit=limit, events_filter=events_filter
     )
     return Events(events=events)
-
-
-@router.post(
-    "/projects/{project_id}/tasks",
-    response_model=Tasks,
-    description="Get tasks of a project that match the filter",
-)
-async def get_filtered_tasks(
-    project_id: str,
-    limit: int = 1000,
-    tasks_filter: Optional[ProjectTasksFilter] = None,
-    user: User = Depends(propelauth.require_user),
-) -> Tasks:
-    """
-    Get all the tasks of a project. If task_filter is specified, the tasks will be filtered according to the filter.
-
-    Args:
-        project_id: The id of the project
-        limit: The maximum number of tasks to return
-        task_filter: This model is used to filter tasks in the get_tasks endpoint. The filters are applied as AND filters.
-    """
-    await verify_if_propelauth_user_can_access_project(user, project_id)
-    if tasks_filter is None:
-        tasks_filter = ProjectTasksFilter()
-
-    if isinstance(tasks_filter.event_name, str):
-        tasks_filter.event_name = [tasks_filter.event_name]
-
-    tasks = await get_all_tasks(
-        project_id=project_id,
-        flag_filter=tasks_filter.flag,
-        event_name_filter=tasks_filter.event_name,
-        last_eval_source_filter=tasks_filter.last_eval_source,
-        metadata_filter=tasks_filter.metadata,
-        created_at_start=tasks_filter.created_at_start,
-        created_at_end=tasks_filter.created_at_end,
-        limit=limit,
-    )
-    return Tasks(tasks=tasks)
 
 
 @router.get(

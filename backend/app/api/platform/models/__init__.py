@@ -6,7 +6,6 @@ from app.api.v2.models import (
     Project,
     ProjectCreationRequest,
     Projects,
-    ProjectTasksFilter,
     ProjectUpdateRequest,
     SearchQuery,
     SearchResponse,
@@ -28,8 +27,6 @@ from .explore import (
     AggregateMetricsRequest,
     DashboardMetricsFilter,
     EventsMetricsFilter,
-    ProjectEventsFilters,
-    ProjectSessionsFilters,
     SessionsMetricsFilter,
     TasksMetricsFilter,
     ProjectDataFilters,
@@ -44,3 +41,5 @@ from .projects import (
 )
 from .tasks import AddEventRequest, RemoveEventRequest
 from .topics import Topic, Topics
+
+from phospho.models import ProjectDataFilters

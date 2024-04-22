@@ -2,7 +2,8 @@
 All the models stored in database.
 """
 
-from typing import Dict, List, Literal, Optional, Any
+import datetime
+from typing import Dict, List, Literal, Optional, Any, Union
 
 from pydantic import BaseModel, Field, field_serializer
 
@@ -240,9 +241,9 @@ class FineTuningJob(BaseModel, extra="allow"):
     created_at: int = Field(default_factory=generate_timestamp)
     org_id: str
     file_id: str  # File id used for the fine-tuning (will be splitted in train and validation sets)
-    fine_tuned_model: Optional[str] = (
-        None  # The name of the fine-tuned model that is being created. Null if the fine-tuning job is still running.
-    )
+    fine_tuned_model: Optional[
+        str
+    ] = None  # The name of the fine-tuned model that is being created. Null if the fine-tuning job is still running.
     finished_at: Optional[int] = None
     parameters: Optional[
         dict
@@ -535,3 +536,13 @@ class Prediction(BaseModel):
     job_type: JobType
     job_id: str  # The id of the job that generated the prediction
     value: Any  # The value of the prediction
+
+
+class ProjectDataFilters(BaseModel):
+    created_at_start: Optional[Union[int, datetime.datetime]] = None
+    created_at_end: Optional[Union[int, datetime.datetime]] = None
+    event_name: Optional[List[str]] = None
+    flag: Optional[str] = None
+    metadata: Optional[dict] = None
+    user_id: Optional[str] = None
+    last_eval_source: Optional[str] = None
