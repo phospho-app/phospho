@@ -35,7 +35,7 @@ const EventsLast30m: React.FC<EventsLast7DaysProps> = ({ project_id }) => {
   }
 
   // Fetch events from the API
-  const { data: eventsLast30m } = useSWR(
+  const { data: eventsLast30mData } = useSWR(
     project_id
       ? [
           `/api/explore/${project_id}/events`,
@@ -50,6 +50,7 @@ const EventsLast30m: React.FC<EventsLast7DaysProps> = ({ project_id }) => {
       keepPreviousData: true,
     },
   );
+  const eventsLast30m = eventsLast30mData?.events;
 
   const countPerEvent = getCountsPerEvent(
     eventsLast30m,
@@ -58,7 +59,7 @@ const EventsLast30m: React.FC<EventsLast7DaysProps> = ({ project_id }) => {
 
   return (
     <div>
-      {eventsLast30m === undefined ? (
+      {eventsLast30m ? (
         <Skeleton className="h-[250px]" />
       ) : (
         <div>
