@@ -47,6 +47,21 @@ function SuccessRateByEvent() {
     },
   );
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-primary shadow-md p-2 rounded-md">
+          <p className="text-secondary font-semibold">{`${label}`}</p>
+          <p className="text-green-500">
+            {`${payload[0].value.toFixed(2)}% success rate`}
+          </p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   if (successRateByEvent === null || successRateByEvent?.length === 0) {
     return <></>;
   }
@@ -76,7 +91,7 @@ function SuccessRateByEvent() {
                   axisLine={false}
                   tickFormatter={(value) => `${value}`}
                 />
-                <Tooltip />
+                <Tooltip content={CustomTooltip} />
                 <Bar
                   dataKey="success_rate"
                   fill="#22c55e"
