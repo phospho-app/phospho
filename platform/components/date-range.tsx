@@ -30,39 +30,33 @@ export function DatePickerWithRange({
   const setDateRangePreset = navigationStateStore(
     (state) => state.setDateRangePreset,
   );
+  const dateRange = navigationStateStore((state) => state.dateRange);
+  const setDateRange = navigationStateStore((state) => state.setDateRange);
 
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: undefined,
-    to: new Date(),
-  });
-
+  let dateRangeLabel = "";
   if (dateRangePreset === "last-24-hours") {
-    setDate({
-      from: addDays(new Date(), -1),
-      to: new Date(),
-    });
-    setDateRangePreset(null);
+    dateRangeLabel = "Last 24 hours";
   }
   if (dateRangePreset === "last-7-days") {
-    setDate({
-      from: addDays(new Date(), -7),
-      to: new Date(),
-    });
-    setDateRangePreset(null);
+    dateRangeLabel = "Last 7 days";
   }
   if (dateRangePreset === "last-30-days") {
-    setDate({
-      from: addDays(new Date(), -30),
-      to: new Date(),
-    });
-    setDateRangePreset(null);
+    dateRangeLabel = "Last 30 days";
   }
   if (dateRangePreset === "all-time") {
-    setDate({
-      from: undefined,
-      to: new Date(),
-    });
-    setDateRangePreset(null);
+    dateRangeLabel = "All time";
+  }
+  if (dateRangePreset === null) {
+    if (dateRange?.from && dateRange.to) {
+      dateRangeLabel = `${format(dateRange.from, "y-LLL-dd")} - ${format(
+        dateRange.to,
+        "y-LLL-dd",
+      )}`;
+    } else if (dateRange?.from && !dateRange.to) {
+      dateRangeLabel = `${format(dateRange.from, "y-LLL-dd")}`;
+    } else {
+      dateRangeLabel = "Pick a date";
+    }
   }
 
   return (
@@ -73,23 +67,14 @@ export function DatePickerWithRange({
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
-              !date && "text-muted-foreground",
+              "w-[300px] justify-between text-left font-normal flex",
+              !dateRange && "text-muted-foreground",
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "y-LLL-dd")} -{" "}
-                  {format(date.to, "y-LLL-dd")}
-                </>
-              ) : (
-                format(date.from, "y-LLL-dd")
-              )
-            ) : (
-              <span>Pick a date</span>
-            )}
+            <div className="flex flex-row">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateRangeLabel}
+            </div>
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -119,9 +104,13 @@ export function DatePickerWithRange({
               <Calendar
                 initialFocus
                 mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={setDate}
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={(selected) => {
+                  if (selected !== undefined) {
+                    setDateRange(selected);
+                  }
+                }}
                 numberOfMonths={2}
               />
             </DropdownMenuSubContent>
