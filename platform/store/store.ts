@@ -163,8 +163,13 @@ export const navigationStateStore = create(
           };
         }),
 
-      dateRangePreset: null,
-      dateRange: undefined,
+      dateRangePreset: "all-time",
+      dateRange: {
+        from: undefined,
+        to: undefined,
+        created_at_start: undefined,
+        created_at_end: undefined,
+      } as CustomDateRange,
       setDateRangePreset: (dateRangePreset: string | null) => {
         // The date range preset and the date range are linked
         // We also store the timestamp. Note: the timestamp is in seconds

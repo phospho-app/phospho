@@ -69,6 +69,7 @@ export function SessionsTable<TData, TValue>({
   const setSessionsPagination = navigationStateStore(
     (state) => state.setSessionsPagination,
   );
+  const dateRange = navigationStateStore((state) => state.dateRange);
 
   const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -100,6 +101,7 @@ export function SessionsTable<TData, TValue>({
           sessionPagination.pageIndex,
           JSON.stringify(eventFilter),
           JSON.stringify(userFilter),
+          JSON.stringify(dateRange),
           JSON.stringify(sessionsSorting),
         ]
       : null,
@@ -108,6 +110,8 @@ export function SessionsTable<TData, TValue>({
         filters: {
           event_name: eventFilter,
           user_id: userFilter,
+          created_at_start: dateRange?.created_at_start,
+          created_at_end: dateRange?.created_at_end,
         },
         pagination: {
           page: sessionPagination.pageIndex,
@@ -127,7 +131,8 @@ export function SessionsTable<TData, TValue>({
     [
       `/api/explore/${project_id}/aggregated/sessions`,
       accessToken,
-      eventFilter,
+      JSON.stringify(userFilter),
+      JSON.stringify(dateRange),
       "total_nb_sessions",
     ],
     ([url, accessToken]) =>
