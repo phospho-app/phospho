@@ -9,8 +9,7 @@ import pandas as pd
 import pydantic
 
 # Models
-from app.api.platform.models import ABTest, Topics
-from app.api.v2.models import ProjectDataFilters
+from app.api.platform.models import ABTest, Topics, ProjectDataFilters
 from app.db.models import Eval, FlattenedTask
 from app.db.mongo import get_mongo_db
 from app.services.mongo.projects import (

@@ -3,7 +3,7 @@ import io
 import time
 from typing import Dict, List, Optional, Tuple, Union
 
-from app.api.platform.models.explore import ProjectDataFilters, Sorting
+from app.api.platform.models.explore import Sorting
 import pandas as pd
 import resend
 from app.api.platform.models import UserMetadata, Pagination
@@ -15,6 +15,7 @@ from app.db.models import (
     Session,
     Task,
     Test,
+    ProjectDataFilters,
 )
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
