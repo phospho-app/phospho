@@ -93,6 +93,7 @@ export function getColumns() {
         </span>
       ),
     },
+    // Events
     {
       filterFn: (row, id, filterValue) => {
         if (filterValue === null) return true;
@@ -145,7 +146,7 @@ export function getColumns() {
                 }}
               >
                 <FilterX className="h-4 w-4 mr-1" />
-                Clear
+                Clear filter
               </DropdownMenuItem>
             </DropdownMenuContent>
             <DropdownMenu />
@@ -167,6 +168,27 @@ export function getColumns() {
         </span>
       ),
     },
+    // Session Length
+    {
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Session Length
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      accessorKey: "session_length",
+      cell: ({ row }) => (
+        <span className="flex justify-center">
+          {row.original.session_length}
+        </span>
+      ),
+    },
+    // Preview
     {
       header: "Preview",
       accessorKey: "preview",
