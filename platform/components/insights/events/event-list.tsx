@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -75,8 +76,10 @@ function EventRow({
       <TableCell className="text-right">
         <AlertDialog open={open} onOpenChange={setOpen} key={eventName}>
           <DropdownMenu>
-            <DropdownMenuTrigger className="hover:text-accent-foreground">
-              <EllipsisVertical />
+            <DropdownMenuTrigger>
+              <Button size="icon" variant="ghost">
+                <EllipsisVertical />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <AlertDialogTrigger asChild>
