@@ -196,16 +196,16 @@ async def run_main_pipeline_on_messages(
             return PipelineResults(events=[], flag=None)
 
 
-async def run_job_on_tasks(task: Task, job: Job):
+async def run_job_on_tasks(tasks: List[Task], job: Job):
     async with httpx.AsyncClient() as client:
         logger.debug(
-            f"Calling the extractor run_job_on_task API for job {job.id} on task {task.id} tasks at {config.EXTRACTOR_URL}/v1/pipelines/jobs"
+            f"Calling the extractor run_job_on_task API for job {job.id} on {len(tasks)} tasks at {config.EXTRACTOR_URL}/v1/pipelines/jobs"
         )
         try:
             response = await client.post(
                 f"{config.EXTRACTOR_URL}/v1/pipelines/jobs",  # WARNING: hardcoded API version
                 json={
-                    "task": task.model_dump(),
+                    "tasks": [task.model_dump() for task in tasks],
                     "job": job.model_dump(),
                 },
                 headers={

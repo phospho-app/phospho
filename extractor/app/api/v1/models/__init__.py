@@ -3,5 +3,5 @@ from .pipelines import (
     PipelineResults,
     RunMainPipelineOnMessagesRequest,
     RunMainPipelineOnTaskRequest,
-    RunJobOnTaskRequest,
+    RunJobOnTasksRequest,
 )
