@@ -59,10 +59,10 @@ const ABTesting: React.FC = () => {
                   Compare versions with AB Testing
                 </CardTitle>
                 <CardDescription>
-                  <p className="text-gray-500">
+                  <div className="text-gray-500">
                     When logging tasks, add a version_id in metadata to compare
                     their success rate.
-                  </p>
+                  </div>
                 </CardDescription>
               </div>
               <Link

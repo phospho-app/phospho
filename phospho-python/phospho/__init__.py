@@ -1,3 +1,4 @@
+import datetime
 import logging
 from copy import deepcopy
 from typing import (
@@ -50,6 +51,7 @@ log_queue = None
 consumer = None
 latest_task_id = None
 latest_session_id = None
+default_version_id = None
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +62,7 @@ def init(
     base_url: Optional[str] = None,
     tick: float = 0.5,
     raise_error_on_fail_to_send: bool = False,
+    version_id: Optional[str] = None,
 ) -> None:
     """
     Initialize the phospho logging module.
@@ -73,11 +76,19 @@ def init(
     :param base_url: URL to the phospho backend
     :param verbose: whether to display logs
     :param tick: how frequently the consumer tries to push logs to the backend (in seconds)
+    :param raise_error_on_fail_to_send: whether to raise an error if the consumer fails to send logs
+    :param version_id: the version of the code that generated the logs. If None, the version_id
+        will be set to the current date.
     """
     global client
     global log_queue
     global consumer
+    global default_version_id
 
+    if version_id is None:
+        version_id = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+
+    default_version_id = version_id
     client = Client(api_key=api_key, project_id=project_id, base_url=base_url)
     log_queue = LogQueue()
     consumer = Consumer(
@@ -149,6 +160,10 @@ def _log_single_event(
     global log_queue
     global latest_task_id
     global latest_session_id
+    global default_version_id
+
+    if "version_id" not in kwargs or kwargs["version_id"] is None:
+        kwargs["version_id"] = default_version_id
 
     input = convert_content_to_loggable_content(input)
     output = convert_content_to_loggable_content(output)
@@ -439,7 +454,8 @@ def log(
     This is useful to log user feedback on a specific task (see phospho.user_feedback).
 
     `version_id` is used for A/B testing. It is a string that identifies the version of the
-    code that generated the log. For example, "v1.0.0" or "test".
+    code that generated the log. For example, "v1.0.0" or "test". It can be set globally with
+    `phospho.init(version_id="v1.0.0")`.
 
     `user_id` is used to identify the user. For example, a user's email.
 
