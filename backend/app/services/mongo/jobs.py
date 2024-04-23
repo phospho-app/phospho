@@ -42,6 +42,7 @@ async def backcompute_job(
     project_id: str,
     job_id: str,
     limit: int = 10000,
+    timestamp_limit: int = 0,  # Unix timestamp limit, default to the implementation date of the feature: 1713885864
     wait_time: float = 10 / 10000,  # In seconds. We have a rate limit of 10k RPM
 ) -> Job:
     """
@@ -50,7 +51,13 @@ async def backcompute_job(
     mongo_db = await get_mongo_db()
 
     # Get all the tasks of the project
-    tasks = await mongo_db["tasks"].find({"project_id": project_id}).to_list(limit)
+    tasks = (
+        await mongo_db["tasks"]
+        .find({"project_id": project_id, "created_at": {"$gt": timestamp_limit}})
+        .sort("timestamp", -1)
+        .to_list(limit)
+    )
+
     # Make them Task objects
     tasks = [Task(**task) for task in tasks]
 
