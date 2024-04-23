@@ -100,7 +100,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       }
     }
   }
-  const { data: tasksData } = useSWR(
+  const { data: tasksData, mutate: mutateTasks } = useSWR(
     project_id
       ? [
           `/api/projects/${project_id}/tasks`,
@@ -196,7 +196,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     setIsLoading(false);
   };
 
-  const columns = getColumns();
+  const columns = getColumns({ mutateTasks: mutateTasks });
 
   const table = useReactTable({
     data: tasksWithEvents,
