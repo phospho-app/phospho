@@ -207,7 +207,7 @@ const TaskBox = ({
   refresh: boolean;
 }) => {
   return (
-    <div className="flex flex-col space-y-1 p-1 border border-gray-800 rounded">
+    <div className="flex flex-col space-y-1 p-1 border-2 border-secondary rounded-md mb-2">
       <div className="flex justify-between align-top">
         <div className="space-x-2 flex justify-between items-center">
           {task?.events?.map((event) => {
