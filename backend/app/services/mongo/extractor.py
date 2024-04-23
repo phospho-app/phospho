@@ -10,7 +10,7 @@ from typing import List, Optional
 import httpx
 from app.api.v2.models import LogEvent, PipelineResults
 from app.core import config
-from app.db.models import Task
+from app.db.models import Task, Job
 from app.services.slack import slack_notification
 from app.utils import generate_uuid
 from loguru import logger
@@ -194,3 +194,36 @@ async def run_main_pipeline_on_messages(
                     slack_message = error_message
                 await slack_notification(slack_message)
             return PipelineResults(events=[], flag=None)
+
+
+async def run_job_on_tasks(tasks: List[Task], job: Job):
+    async with httpx.AsyncClient() as client:
+        logger.debug(
+            f"Calling the extractor run_job_on_task API for job {job.id} with {len(tasks)} tasks at {config.EXTRACTOR_URL}/v1/pipelines/jobs"
+        )
+        try:
+            response = await client.post(
+                f"{config.EXTRACTOR_URL}/v1/pipelines/jobs",  # WARNING: hardcoded API version
+                json={
+                    "tasks": [task.model_dump() for task in tasks],
+                    "job": job.model_dump(),
+                },
+                headers={
+                    "Authorization": f"Bearer {config.EXTRACTOR_SECRET_KEY}",
+                    "Content-Type": "application/json",
+                },
+                timeout=60,
+            )
+            if response.status_code != 200:
+                logger.error(
+                    f"Error returned when calling run job on task (status code: {response.status_code}): {response.text}"
+                )
+                # If we are in production, send a Slack message
+                if config.ENVIRONMENT == "production":
+                    await slack_notification(
+                        f"Error returned when calling run job on task (status code: {response.status_code}): {response.text}"
+                    )
+        except Exception as e:
+            errror_id = generate_uuid()
+            error_message = f"Caught error while calling run job on task (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
+            logger.error(error_message)
