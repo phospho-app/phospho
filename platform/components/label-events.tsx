@@ -44,7 +44,7 @@ export const InteractiveEventBadge = ({
       <DropdownMenuTrigger>
         <HoverCard openDelay={80} closeDelay={30}>
           <HoverCardTrigger>
-            <Badge variant="outline" className=" hover:border-green-500">
+            <Badge variant="outline" className="border hover:border-green-500">
               {event.event_name}
             </Badge>
           </HoverCardTrigger>
@@ -58,18 +58,17 @@ export const InteractiveEventBadge = ({
         </HoverCard>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        <DropdownMenuItem>
-          <Check
-            className="w-4 h-4 mr-2"
-            onClick={(mouseEvent) => {
-              mouseEvent.stopPropagation();
-              toast({
-                title: "Coming soon 🛠️",
-                description:
-                  "This feature is still being developed. Your changes were not be saved.",
-              });
-            }}
-          />
+        <DropdownMenuItem
+          onClick={(mouseEvent) => {
+            mouseEvent.stopPropagation();
+            toast({
+              title: "Coming soon 🛠️",
+              description:
+                "This feature is still being developed. Your changes were not be saved.",
+            });
+          }}
+        >
+          <Check className="w-4 h-4 mr-2" />
           Confirm
         </DropdownMenuItem>
         <DropdownMenuItem
