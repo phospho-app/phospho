@@ -185,7 +185,7 @@ const AddEvent = ({
               </HoverCardTrigger>
               <HoverCardContent side="right" className="text-sm w-64">
                 <h2 className="font-bold">{event_name}</h2>
-                <p>{event.description}</p>
+                <div>{event.description}</div>
               </HoverCardContent>
             </HoverCard>
           );

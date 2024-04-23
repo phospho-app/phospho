@@ -10,23 +10,67 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, TaskWithEvents } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { set } from "date-fns";
 import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  Check,
   ChevronDown,
   ChevronRight,
   FilterX,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 
-export function getColumns(): ColumnDef<TaskWithEvents>[] {
+async function flagTask({
+  task_id,
+  flag,
+  accessToken,
+  project_id,
+  mutateTasks,
+}: {
+  task_id: string;
+  flag: string;
+  accessToken?: string;
+  project_id?: string | null;
+  mutateTasks: any;
+}) {
+  if (!accessToken) return;
+  if (!project_id) return;
+
+  const creation_response = await fetch(`/api/tasks/${task_id}/flag`, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + accessToken,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      flag: flag,
+    }),
+  });
+  mutateTasks((data: any) => {
+    // Edit the Task with the same task id
+    console.log("Updating task with id: ", task_id);
+    console.log("Flagging task with flag: ", flag);
+    data.tasks = data.tasks.map((task: TaskWithEvents) => {
+      if (task.id === task_id) {
+        task.flag = flag;
+      }
+      return task;
+    });
+    return data;
+  });
+}
+
+export function getColumns({
+  mutateTasks,
+}: {
+  mutateTasks: any;
+}): ColumnDef<TaskWithEvents>[] {
   const project_id = navigationStateStore((state) => state.project_id);
   const tasksPagination = navigationStateStore(
     (state) => state.tasksPagination,
@@ -63,10 +107,12 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
         if (filterValue === null) return true;
         return filterValue.includes(row.original.id);
       },
-      header: "",
+      header: ({ column }) => {
+        return <></>;
+      },
       accessorKey: "id",
       cell: ({ row }) => {
-        row.original.id;
+        return <></>;
       },
       enableHiding: true,
     },
@@ -153,19 +199,62 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
       },
       accessorKey: "flag",
       cell: (row) => (
-        <span>
-          <Badge
-            variant={
-              (row.getValue() as string) === "success"
-                ? "secondary"
-                : (row.getValue() as string) === "failure"
-                  ? "destructive"
-                  : "secondary"
-            }
-          >
-            {row.getValue() as string}
-          </Badge>
-        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <Badge
+              variant={
+                (row.getValue() as string) === "success"
+                  ? "secondary"
+                  : (row.getValue() as string) === "failure"
+                    ? "destructive"
+                    : "secondary"
+              }
+              className="hover:border-green-500"
+            >
+              {row.getValue() as string}
+            </Badge>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              onClick={(event) => {
+                // This is used to avoid clicking on the row as well
+                event.stopPropagation();
+                // Flag the task as success
+                flagTask({
+                  task_id: row.row.original.id,
+                  flag: "success",
+                  accessToken: accessToken,
+                  project_id: project_id,
+                  mutateTasks: mutateTasks,
+                });
+              }}
+            >
+              {(row.getValue() as string) === "success" && (
+                <Check className="h-4 w-4 mr-1" />
+              )}
+              Success
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(event) => {
+                // This is used to avoid clicking on the row as well
+                event.stopPropagation();
+                // Flag the task as failure
+                flagTask({
+                  task_id: row.row.original.id,
+                  flag: "failure",
+                  accessToken: accessToken,
+                  project_id: project_id,
+                  mutateTasks: mutateTasks,
+                });
+              }}
+            >
+              {(row.getValue() as string) === "failure" && (
+                <Check className="h-4 w-4 mr-1" />
+              )}
+              Failure
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
     // Events
@@ -229,17 +318,28 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
       },
       accessorKey: "events",
       cell: (row) => (
-        <span>
-          {(row.getValue() as Event[]).map((event: Event) => (
+        <div className="group flex items-center justify-start">
+          <div className="flex flex-wrap space-x-2 space-y-1">
+            {(row.getValue() as Event[]).map((event: Event) => (
+              <Badge
+                key={event.id}
+                variant="outline"
+                className="hover:outline-green-500"
+              >
+                {event.event_name as string}
+              </Badge>
+            ))}
+          </div>
+          <div className="flex flex-grow h-8 justify-end">
+            <div className="flex-grow"></div>
             <Badge
-              key={event.id}
-              variant="secondary"
-              className="ml-2 mt-1 mb-1"
+              className="hidden group-hover:block h-6 hover:outline-green-500"
+              variant="outline"
             >
-              {event.event_name as string}
+              +
             </Badge>
-          ))}
-        </span>
+          </div>
+        </div>
       ),
     },
     {
@@ -248,13 +348,13 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
       cell: (row) => {
         const input = row.getValue() as string; // asserting the type as string
         return (
-          <span>
+          <div>
             {input
               ? input.length > 50
                 ? input.substring(0, 50) + "..."
                 : input
               : "-"}
-          </span>
+          </div>
         );
       },
     },
@@ -264,13 +364,13 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
       cell: (row) => {
         const output = row.getValue() as string; // asserting the type as string
         return (
-          <span>
+          <div>
             {output
               ? output.length > 50
                 ? output.substring(0, 50) + "..."
                 : output
               : "-"}
-          </span>
+          </div>
         );
       },
     },
@@ -284,7 +384,9 @@ export function getColumns(): ColumnDef<TaskWithEvents>[] {
         if (!task) return <></>;
         return (
           <Link href={`/org/transcripts/tasks/${encodeURIComponent(task.id)}`}>
-            <ChevronRight />
+            <Button variant="ghost" size="icon">
+              <ChevronRight />
+            </Button>
           </Link>
         );
       },

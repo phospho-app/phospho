@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Table } from "@tanstack/react-table";
 import {
   ChevronFirstIcon,
@@ -5,8 +6,6 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "lucide-react";
-
-import { Button } from "./ui/button";
 
 export function TableNavigation({ table }: { table: Table<any> }) {
   return (

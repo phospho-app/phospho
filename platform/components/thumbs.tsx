@@ -54,7 +54,6 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
     if (user === null || user === undefined) return;
     if (task === null || task === undefined) return;
 
-    // Create a project object in the database with the URL
     const creation_response = await fetch(`/api/tasks/${task.id}/flag`, {
       method: "POST",
       headers: {
@@ -67,8 +66,6 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
     });
 
     const responseBody = await creation_response.json();
-
-    console.log("responseBody :", responseBody);
 
     // If no task, don't update
     if (responseBody === null || responseBody === undefined) {
