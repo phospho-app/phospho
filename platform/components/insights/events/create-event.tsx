@@ -1,18 +1,6 @@
 "use client";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -29,6 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import {
+  SheetClose,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { DetectionEngine, DetectionScope } from "@/models/models";
@@ -149,6 +144,7 @@ export default function CreateEvent({
         },
         body: JSON.stringify(selectedProject),
       }).then((response) => {
+        setOpen(false);
         mutate(
           [`/api/projects/${project_id}`, accessToken],
           async (data: any) => {
@@ -167,21 +163,22 @@ export default function CreateEvent({
   console.log("form", form);
 
   return (
-    <>
-      <AlertDialogHeader>
-        {(eventNameToEdit === null || eventNameToEdit === undefined) && (
-          <AlertDialogTitle>Setup new event</AlertDialogTitle>
-        )}
-        {eventNameToEdit && (
-          <AlertDialogTitle>Edit event "{eventNameToEdit}"</AlertDialogTitle>
-        )}
-      </AlertDialogHeader>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="font-normal space-y-4"
-          key={`createEventForm${eventToEdit?.event_name}`}
-        >
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="font-normal space-y-4"
+        key={`createEventForm${eventToEdit?.event_name}`}
+      >
+        <SheetHeader>
+          <SheetTitle className="text-xl">
+            {(eventNameToEdit === null || eventNameToEdit === undefined) && (
+              <div>Setup new event</div>
+            )}
+            {eventNameToEdit && <div>Edit event "{eventNameToEdit}"</div>}
+          </SheetTitle>
+        </SheetHeader>
+        <Separator />
+        <div className="flex-col space-y-2">
           <FormField
             control={form.control}
             name="event_name"
@@ -220,7 +217,7 @@ export default function CreateEvent({
             control={form.control}
             name="detection_scope"
             render={({ field }) => (
-              <FormItem className="w-1/2">
+              <FormItem>
                 <FormLabel>Detection scope</FormLabel>
                 <Select
                   onValueChange={field.onChange}
@@ -245,163 +242,144 @@ export default function CreateEvent({
               </FormItem>
             )}
           />
-          <Accordion type="single" collapsible className="mb-2">
-            <AccordionItem value="webhook">
-              <AccordionTrigger>
-                <span className="text-sm flex flex-row items-center text-gray-500 pl-2">
-                  Advanced settings (optional)
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="space-y-5">
-                <FormField
-                  control={form.control}
-                  name="webhook"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="ml-4">Webhook (optional)</FormLabel>
-                      <FormControl>
-                        <Input
-                          className="ml-4 w-4/5"
-                          placeholder="https://your-api.com/webhook"
-                          {...field}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="webhook_auth_header"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="ml-4">
-                        Authorization Header
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          className="ml-4 w-4/5"
-                          placeholder="Bearer sk-..."
-                          {...field}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="detection_engine"
-                  render={({ field }) => (
-                    <FormItem className="w-4/5 ml-4">
-                      <FormLabel>Engine</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
+          <h2 className="text-lg font-semibold pt-4">Advanced settings</h2>
+          <Separator />
+          <FormField
+            control={form.control}
+            name="webhook"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="ml-4">Webhook (optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    className="ml-4"
+                    placeholder="https://your-api.com/webhook"
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="webhook_auth_header"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="ml-4">Authorization Header</FormLabel>
+                <FormControl>
+                  <Input
+                    className="ml-4"
+                    placeholder="Bearer sk-..."
+                    {...field}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="detection_engine"
+            render={({ field }) => (
+              <FormItem className="ml-4">
+                <FormLabel>Engine</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value ?? "llm_detection"}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue
                         defaultValue={field.value ?? "llm_detection"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue
-                              defaultValue={field.value ?? "llm_detection"}
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent position="popper">
-                          <SelectItem value="llm_detection">
-                            LLM Detection
-                          </SelectItem>
-                          <SelectItem value="keyword_detection">
-                            Keyword Detection
-                          </SelectItem>
-                          <SelectItem value="regex_detection">
-                            Regex Detection
-                          </SelectItem>
-                          <SelectItem disabled value="other">
-                            More coming soon!
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-                {form.watch("detection_engine") === "keyword_detection" && (
-                  <FormField
-                    control={form.control}
-                    name="keywords"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="ml-4">
-                          List of words to detect, separated by a comma
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            className="ml-4 w-4/5"
-                            placeholder="happy, joyful, excited"
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                )}
-                {form.watch("detection_engine") === "regex_detection" && (
-                  <FormField
-                    control={form.control}
-                    name="regex_pattern"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="ml-4">
-                          Regex pattern to match -{" "}
-                        </FormLabel>
-                        <Link
-                          className="hover:underline hover:text-blue-500"
-                          href="https://regexr.com/"
-                        >
-                          Test your regex pattern here
-                        </Link>{" "}
-                        <FormMessage className="ml-4">
-                          Be careful, "happy" will also match "unhappy" unless
-                          you add whitespaces like so: " happy "
-                        </FormMessage>
-                        <FormControl>
-                          <Input
-                            className="ml-4 w-4/5"
-                            placeholder="^[0-9]{5}$ or happy | joyful | excited"
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              type="submit"
-              disabled={
-                loading ||
-                // !form.formState.isValid ||
-                // too many events
-                ((eventNameToEdit === null || eventNameToEdit === undefined) &&
-                  currentEvents &&
-                  max_nb_events &&
-                  current_nb_events + 1 >= max_nb_events)
-              }
-              onClick={() => {
-                if (form.formState.isValid) {
-                  // setOpen(false);
-                }
-              }}
-            >
-              {(eventNameToEdit === null || eventNameToEdit === undefined) && (
-                <>Add event</>
+                      />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent position="popper">
+                    <SelectItem value="llm_detection">LLM Detection</SelectItem>
+                    <SelectItem value="keyword_detection">
+                      Keyword Detection
+                    </SelectItem>
+                    <SelectItem value="regex_detection">
+                      Regex Detection
+                    </SelectItem>
+                    <SelectItem disabled value="other">
+                      More coming soon!
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+          {form.watch("detection_engine") === "keyword_detection" && (
+            <FormField
+              control={form.control}
+              name="keywords"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="ml-4">
+                    List of words to detect, separated by a comma
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      className="ml-4"
+                      placeholder="happy, joyful, excited"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
               )}
-              {eventNameToEdit && <>Save</>}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </form>
-      </Form>
-    </>
+            />
+          )}
+          {form.watch("detection_engine") === "regex_detection" && (
+            <FormField
+              control={form.control}
+              name="regex_pattern"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="ml-4">
+                    Regex pattern to match -{" "}
+                  </FormLabel>
+                  <Link
+                    className="hover:underline hover:text-blue-500"
+                    href="https://regexr.com/"
+                  >
+                    Test your regex pattern here
+                  </Link>{" "}
+                  <FormMessage className="ml-4">
+                    Be careful, "happy" will also match "unhappy" unless you add
+                    whitespaces like so: " happy "
+                  </FormMessage>
+                  <FormControl>
+                    <Input
+                      className="ml-4"
+                      placeholder="^[0-9]{5}$ or happy | joyful | excited"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
+        <SheetFooter>
+          <Button
+            type="submit"
+            disabled={
+              loading ||
+              // !form.formState.isValid ||
+              // too many events
+              ((eventNameToEdit === null || eventNameToEdit === undefined) &&
+                currentEvents &&
+                max_nb_events &&
+                current_nb_events + 1 >= max_nb_events)
+            }
+          >
+            {(eventNameToEdit === null || eventNameToEdit === undefined) && (
+              <div>Add event</div>
+            )}
+            {eventNameToEdit && <div>Save edits</div>}
+          </Button>
+        </SheetFooter>
+      </form>
+    </Form>
   );
 }
