@@ -4,12 +4,8 @@ import CreateEvent from "@/components/insights/events/create-event";
 import EventsList from "@/components/insights/events/event-list";
 import SuccessRateByEvent from "@/components/insights/events/success-rate-by-event";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { AlertCircle, PlusIcon, Wand2 } from "lucide-react";
 import Link from "next/link";
@@ -104,19 +100,19 @@ export default function Page() {
           >
             <Wand2 className="w-4 h-4 mr-1" /> Event suggestions
           </Button>
-          <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogTrigger asChild>
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
               <Button
                 disabled={max_nb_events && current_nb_events >= max_nb_events}
               >
                 <PlusIcon className="h-4 w-4 mr-1" />
                 Add Event
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="md:w-1/2">
+            </SheetTrigger>
+            <SheetContent className="md:w-1/2">
               <CreateEvent setOpen={setOpen} />
-            </AlertDialogContent>
-          </AlertDialog>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
