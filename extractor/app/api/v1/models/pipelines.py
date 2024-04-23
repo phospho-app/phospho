@@ -19,6 +19,6 @@ class PipelineResults(BaseModel):
     flag: Optional[Literal["success", "failure"]]
 
 
-class RunJobOnTasksRequest(BaseModel):
-    tasks: List[Task]
+class RunJobOnTaskRequest(BaseModel):
+    task: Task
     job: Job

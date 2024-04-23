@@ -80,7 +80,7 @@ async def backcompute_job(
         ):
             # If not, run the prediction
             logger.debug(f"Running prediction fo job {job_id} for task {task.id}")
-            await run_job_on_tasks([task], job)
+            await run_job_on_tasks(task, job)
             time.sleep(wait_time)
 
         else:
