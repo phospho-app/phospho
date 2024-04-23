@@ -128,7 +128,7 @@ class Session(BaseModel):
     events: Optional[List[Event]] = Field(default_factory=list)
     tasks: Optional[List[Task]] = None
     # Session length is computed dynamically. It may be None if not computed
-    session_length: Optional[int] = None
+    session_length: int = 0
 
     @field_serializer("metadata")
     def serialize_metadata(self, metadata: dict, _info):
