@@ -1,3 +1,7 @@
+import {
+  AddEventDropdown,
+  InteractiveEventBadge,
+} from "@/components/label-events";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +28,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import useSWR, { useSWRConfig } from "swr";
+import useSWR, { KeyedMutator, useSWRConfig } from "swr";
 
 async function flagTask({
   task_id,
@@ -37,7 +41,7 @@ async function flagTask({
   flag: string;
   accessToken?: string;
   project_id?: string | null;
-  mutateTasks: any;
+  mutateTasks: KeyedMutator<any>;
 }) {
   if (!accessToken) return;
   if (!project_id) return;
@@ -54,8 +58,6 @@ async function flagTask({
   });
   mutateTasks((data: any) => {
     // Edit the Task with the same task id
-    console.log("Updating task with id: ", task_id);
-    console.log("Flagging task with flag: ", flag);
     data.tasks = data.tasks.map((task: TaskWithEvents) => {
       if (task.id === task_id) {
         task.flag = flag;
@@ -69,7 +71,7 @@ async function flagTask({
 export function getColumns({
   mutateTasks,
 }: {
-  mutateTasks: any;
+  mutateTasks: KeyedMutator<any>;
 }): ColumnDef<TaskWithEvents>[] {
   const project_id = navigationStateStore((state) => state.project_id);
   const tasksPagination = navigationStateStore(
@@ -216,9 +218,9 @@ export function getColumns({
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem
-              onClick={(event) => {
+              onClick={(mouseEvent) => {
                 // This is used to avoid clicking on the row as well
-                event.stopPropagation();
+                mouseEvent.stopPropagation();
                 // Flag the task as success
                 flagTask({
                   task_id: row.row.original.id,
@@ -235,9 +237,9 @@ export function getColumns({
               Success
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={(event) => {
+              onClick={(mouseEvent) => {
                 // This is used to avoid clicking on the row as well
-                event.stopPropagation();
+                mouseEvent.stopPropagation();
                 // Flag the task as failure
                 flagTask({
                   task_id: row.row.original.id,
@@ -320,24 +322,54 @@ export function getColumns({
       cell: (row) => (
         <div className="group flex items-center justify-start">
           <div className="flex flex-wrap space-x-2 space-y-1">
-            {(row.getValue() as Event[]).map((event: Event) => (
-              <Badge
-                key={event.id}
-                variant="outline"
-                className="hover:outline-green-500"
-              >
-                {event.event_name as string}
-              </Badge>
-            ))}
+            {(row.getValue() as Event[]).map((event: Event) => {
+              return (
+                <>
+                  <InteractiveEventBadge
+                    key={event.event_name}
+                    event={event}
+                    task={row.row.original as TaskWithEvents}
+                    setTask={(task: TaskWithEvents) => {
+                      // Use mutateTasks
+                      mutateTasks((data: any) => {
+                        // Edit the Task with the same task id
+                        data.tasks = data.tasks.map(
+                          (existingTask: TaskWithEvents) => {
+                            if (existingTask.id === task.id) {
+                              return task;
+                            }
+                            return existingTask;
+                          },
+                        );
+                        return data;
+                      });
+                    }}
+                  />
+                </>
+              );
+            })}
           </div>
           <div className="flex flex-grow h-8 justify-end">
             <div className="flex-grow"></div>
-            <Badge
-              className="hidden group-hover:block h-6 hover:outline-green-500"
-              variant="outline"
-            >
-              +
-            </Badge>
+            <AddEventDropdown
+              task={row.row.original as TaskWithEvents}
+              className="hidden group-hover:block"
+              setTask={(task: TaskWithEvents) => {
+                // Use mutateTasks
+                mutateTasks((data: any) => {
+                  // Edit the Task with the same task id
+                  data.tasks = data.tasks.map(
+                    (existingTask: TaskWithEvents) => {
+                      if (existingTask.id === task.id) {
+                        return task;
+                      }
+                      return existingTask;
+                    },
+                  );
+                  return data;
+                });
+              }}
+            />
           </div>
         </div>
       ),
