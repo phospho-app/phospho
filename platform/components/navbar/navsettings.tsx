@@ -12,7 +12,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUser } from "@propelauth/nextjs/client";
+import { navigationStateStore } from "@/store/store";
+import { useLogoutFunction, useUser } from "@propelauth/nextjs/client";
 import { Moon, Settings, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -23,12 +24,17 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "../ui/hover-card";
-import LogoutButton from "./logout-button";
 
 export function NavBarSettings() {
   const { setTheme } = useTheme();
   const { user } = useUser();
   const router = useRouter();
+
+  const logoutFn = useLogoutFunction();
+  const setSelectedOrgId = navigationStateStore(
+    (state) => state.setSelectedOrgId,
+  );
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
 
   return (
     <div className="flex items-center space-x-2">
@@ -95,8 +101,17 @@ export function NavBarSettings() {
             </DropdownMenuSubContent>
           </DropdownMenuSub>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <LogoutButton />
+          <DropdownMenuItem
+            onClick={async () => {
+              // Reset the navigation store
+              await logoutFn().then(() => {
+                setSelectedOrgId(null);
+                setproject_id(null);
+                router.push("/authenticate");
+              });
+            }}
+          >
+            Log out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
