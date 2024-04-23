@@ -11,7 +11,11 @@ async def create_prediction(
     job_id: str,
     value: Any,
     job_type: str = Literal["evaluation", "event_detection"],
+    task_id: str = None,
 ) -> Prediction:
+    """
+    For now, task_id is an optional parameter
+    """
     mongo_db = await get_mongo_db()
 
     # build the prediction object
@@ -21,6 +25,7 @@ async def create_prediction(
         job_id=job_id,
         value=value,
         job_type=job_type,
+        task_id=task_id,
     )
 
     result = await mongo_db["predictions"].insert_one(prediction.model_dump())
