@@ -123,7 +123,12 @@ async def task_event_detection_pipeline(
 
         else:
             prediction = await create_prediction(
-                project.org_id, project_id, job_id, result.value, "event_detection"
+                project.org_id,
+                project_id,
+                job_id,
+                result.value,
+                "event_detection",
+                task_id=task.id,
             )
 
     if len(detected_events) > 0:
@@ -281,7 +286,12 @@ async def task_scoring_pipeline(
 
     # Save the prediction
     prediction = await create_prediction(
-        task.org_id, task.project_id, config.TASK_EVALUATION_JOB_ID, flag, "evaluation"
+        task.org_id,
+        task.project_id,
+        config.TASK_EVALUATION_JOB_ID,
+        flag,
+        "evaluation",
+        task_id=task.id,
     )
 
     # Update the task object if the flag is None (no previous evaluation)
@@ -444,6 +454,7 @@ async def messages_main_pipeline(
             logger.error(f"No job_id found for event {event_name}")
 
         else:
+            # WARNING: task_id is not available in this context
             prediction = await create_prediction(
                 project.org_id, project_id, job_id, result.value, "event_detection"
             )

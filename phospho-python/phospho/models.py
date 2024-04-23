@@ -241,9 +241,9 @@ class FineTuningJob(BaseModel, extra="allow"):
     created_at: int = Field(default_factory=generate_timestamp)
     org_id: str
     file_id: str  # File id used for the fine-tuning (will be splitted in train and validation sets)
-    fine_tuned_model: Optional[
-        str
-    ] = None  # The name of the fine-tuned model that is being created. Null if the fine-tuning job is still running.
+    fine_tuned_model: Optional[str] = (
+        None  # The name of the fine-tuned model that is being created. Null if the fine-tuning job is still running.
+    )
     finished_at: Optional[int] = None
     parameters: Optional[
         dict
@@ -536,6 +536,7 @@ class Prediction(BaseModel):
     created_at: int = Field(default_factory=generate_timestamp)
     org_id: str
     project_id: str
+    task_id: Optional[str] = None  # Task id if the prediction is related to a task
     job_type: JobType
     job_id: str  # The id of the job that generated the prediction
     value: Any  # The value of the prediction
