@@ -24,7 +24,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "../ui/hover-card";
-import LogoutButton from "./logout-button";
 
 export function NavBarSettings() {
   const { setTheme } = useTheme();
