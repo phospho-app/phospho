@@ -140,6 +140,9 @@ async def post_backcompute_job(
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
 
+    # Limit the number of tasks to process
+    limit = min(limit, 10000)
+
     background_tasks.add_task(backcompute_job, project_id, job_id, limit=limit)
 
     return {"message": "Backcompute job started"}

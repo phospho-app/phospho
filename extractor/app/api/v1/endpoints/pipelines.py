@@ -1,11 +1,15 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from loguru import logger
 
 # Security
 from app.security.authentication import authenticate_key
 
 # Services
-from app.services.pipelines import task_main_pipeline, messages_main_pipeline
+from app.services.pipelines import (
+    task_main_pipeline,
+    messages_main_pipeline,
+    task_event_detection_pipeline,
+)
 from app.services.log import process_log
 
 # Models
@@ -14,7 +18,7 @@ from app.api.v1.models import (
     LogProcessRequest,
     PipelineResults,
     RunMainPipelineOnMessagesRequest,
-    RunJobOnTasksRequest,
+    RunJobOnTaskRequest,
 )
 from app.db.models import Task
 
@@ -79,10 +83,18 @@ async def post_log(
 
 @router.post(
     "/pipelines/jobs",
-    description="Run a job on a batch of tasks",
+    description="Run a job on a task",
 )
 async def post_run_job_on_task(
-    request: RunJobOnTasksRequest,
+    background_tasks: BackgroundTasks,
+    request: RunJobOnTaskRequest,
     is_request_authenticated: bool = Depends(authenticate_key),
 ):
-    logger.info(f"Running job {request.job.id} on {len(request.tasks)} tasks")
+    if request.job.job_type == "event_detection":
+        logger.info(f"Running job {request.job.job_type} on task {request.task.id}")
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid job type. Only 'event_detection' is supported.",
+        )
