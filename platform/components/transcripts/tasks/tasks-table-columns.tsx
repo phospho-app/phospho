@@ -11,6 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, TaskWithEvents } from "@/models/models";
@@ -140,11 +145,11 @@ export function getColumns({
       },
       accessorKey: "created_at",
       cell: ({ row }) => (
-        <span>
+        <div>
           {formatUnixTimestampToLiteralDatetime(
             Number(row.original.created_at),
           )}
-        </span>
+        </div>
       ),
     },
     // Flag
@@ -320,7 +325,7 @@ export function getColumns({
       },
       accessorKey: "events",
       cell: (row) => (
-        <div className="group flex items-center justify-start">
+        <div className="group flex items-center justify-between space-x-2">
           <div className="flex flex-wrap space-x-2 space-y-1">
             {(row.getValue() as Event[]).map((event: Event) => {
               return (
@@ -349,8 +354,8 @@ export function getColumns({
               );
             })}
           </div>
-          <div className="flex flex-grow h-8 justify-end">
-            <div className="flex-grow"></div>
+          {/* <div className="flex-grow"></div> */}
+          <div className="w-10">
             <AddEventDropdown
               task={row.row.original as TaskWithEvents}
               className="hidden group-hover:block"
@@ -380,13 +385,21 @@ export function getColumns({
       cell: (row) => {
         const input = row.getValue() as string; // asserting the type as string
         return (
-          <div>
-            {input
-              ? input.length > 50
-                ? input.substring(0, 50) + "..."
-                : input
-              : "-"}
-          </div>
+          <Popover>
+            <PopoverTrigger
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+              }}
+              className="text-left"
+            >
+              {input
+                ? input.length > 50
+                  ? input.substring(0, 50) + "..."
+                  : input
+                : "-"}
+            </PopoverTrigger>
+            <PopoverContent className="text-sm">{input}</PopoverContent>
+          </Popover>
         );
       },
     },
@@ -396,13 +409,21 @@ export function getColumns({
       cell: (row) => {
         const output = row.getValue() as string; // asserting the type as string
         return (
-          <div>
-            {output
-              ? output.length > 50
-                ? output.substring(0, 50) + "..."
-                : output
-              : "-"}
-          </div>
+          <Popover>
+            <PopoverTrigger
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+              }}
+              className="text-left"
+            >
+              {output
+                ? output.length > 50
+                  ? output.substring(0, 50) + "..."
+                  : output
+                : "-"}
+            </PopoverTrigger>
+            <PopoverContent className="text-sm">{output}</PopoverContent>
+          </Popover>
         );
       },
     },
