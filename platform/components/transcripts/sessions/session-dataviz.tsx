@@ -137,6 +137,45 @@ const SessionsDataviz: React.FC = () => {
   const lastTaskSuccessRate =
     Math.round(lastTaskSuccessRateData?.last_task_success_rate * 10000) / 100;
 
+  const CustomTooltipNbrSessions = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-primary shadow-md p-2 rounded-md">
+          <p className="text-secondary font-semibold">{`${label}`}</p>
+          <p className="text-green-500">{`${payload[0].value === 1 ? payload[0].value + " session" : payload[0].value.toFixed(0) + " sessions"}`}</p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const CustomTooltipSessionLength = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-primary shadow-md p-2 rounded-md">
+          <p className="text-secondary font-semibold">{`Session length: ${label == 1 ? label + " task" : label + " tasks"}`}</p>
+          <p className="text-green-500">{`${payload[0].value === 1 ? payload[0].value + " session" : payload[0].value.toFixed(0) + " sessions"}`}</p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const CustomTooltipSuccessRate = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-primary shadow-md p-2 rounded-md">
+          <p className="text-secondary font-semibold">{`Success rate after ${label == 1 ? label + " task" : label + " tasks"}`}</p>
+          <p className="text-green-500">{`${payload[0].value.toFixed(2)}% success rate`}</p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const {
     data: nbSessionsPerDay,
   }: {
@@ -294,7 +333,7 @@ const SessionsDataviz: React.FC = () => {
                   >
                     <XAxis dataKey="day" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip content={CustomTooltipNbrSessions} />
                     <Bar
                       dataKey="nb_sessions"
                       fill="#22c55e"
@@ -323,7 +362,7 @@ const SessionsDataviz: React.FC = () => {
                   >
                     <XAxis dataKey="session_length" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip content={CustomTooltipSessionLength} />
                     <Bar
                       dataKey="nb_sessions"
                       fill="#22c55e"
@@ -365,7 +404,7 @@ const SessionsDataviz: React.FC = () => {
                     </defs>
                     <XAxis dataKey="task_position" />
                     <YAxis unit="%" />
-                    <Tooltip />
+                    <Tooltip content={CustomTooltipSuccessRate} />
                     <Area
                       type="monotone"
                       dataKey="success_rate"
