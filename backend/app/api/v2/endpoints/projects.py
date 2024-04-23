@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 
 from app.api.v2.models import (
     Sessions,
@@ -17,6 +17,7 @@ from app.services.mongo.explore import (
     fetch_flattened_tasks,
     update_from_flattened_tasks,
 )
+from app.services.mongo.jobs import backcompute_job
 
 router = APIRouter(tags=["Projects"])
 
@@ -121,3 +122,24 @@ async def post_flattened_tasks(
         flattened_tasks=flattened_tasks.flattened_tasks,
     )
     return None
+
+
+@router.post(
+    "/projects/{project_id}/jobs/{job_id}/backcompute",
+    description="Run predictions for a job on all the tasks of a project that have not been processed yet.",
+)
+async def post_backcompute_job(
+    background_tasks: BackgroundTasks,
+    project_id: str,
+    job_id: str,
+    limit: int = 10000,
+    org: dict = Depends(authenticate_org_key),
+) -> None:
+    """
+    Run predictions for a job on all the tasks of a project that have not been processed yet.
+    """
+    await verify_propelauth_org_owns_project_id(org, project_id)
+
+    background_tasks.add_task(backcompute_job, project_id, job_id, limit=limit)
+
+    return {"message": "Backcompute job started"}

@@ -14,7 +14,9 @@ from app.api.v1.models import (
     LogProcessRequest,
     PipelineResults,
     RunMainPipelineOnMessagesRequest,
+    RunJobOnTasksRequest,
 )
+from app.db.models import Task
 
 router = APIRouter()
 
@@ -73,3 +75,14 @@ async def post_log(
             extra_logs_to_save=request_body.extra_logs_to_save,
         )
     return {"status": "ok"}
+
+
+@router.post(
+    "/pipelines/jobs",
+    description="Run a job on a batch of tasks",
+)
+async def post_run_job_on_task(
+    request: RunJobOnTasksRequest,
+    is_request_authenticated: bool = Depends(authenticate_key),
+):
+    logger.info(f"Running job {request.job.id} on {len(request.tasks)} tasks")
