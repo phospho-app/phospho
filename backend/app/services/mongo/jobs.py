@@ -42,7 +42,8 @@ async def backcompute_job(
     project_id: str,
     job_id: str,
     limit: int = 10000,
-    timestamp_limit: int = 0,  # Unix timestamp limit, default to the implementation date of the feature: 1713885864
+    timestamp_limit: int = 1713885864 - 86400,  # Unix timestamp limit
+    # default to the implementation date of the feature: 1713885864 minus a day - 86400
     wait_time: float = 10 / 10000,  # In seconds. We have a rate limit of 10k RPM
 ) -> Job:
     """
@@ -73,17 +74,15 @@ async def backcompute_job(
         )
 
     # For each task, check if a prediction has a job_id and a task_id matching the task
-    for task in tasks:
-        # Check if the task has been processed
-        if not await mongo_db["predictions"].find_one(
-            {"task_id": task.id, "job_id": job.id}
-        ):
-            # If not, run the prediction
-            logger.debug(f"Running prediction fo job {job_id} for task {task.id}")
-            await run_job_on_tasks(task, job)
-            time.sleep(wait_time)
+    tasks_to_process = []
 
-        else:
-            logger.debug(
-                f"Prediction for job {job_id} and task {task.id} already exists"
-            )
+    for task in tasks:
+        # Make a call to the prediction collection in the database
+        prediction = await mongo_db["predictions"].find_one(
+            {"task_id": task.id, "job_id": job.id}
+        )
+        if prediction is None:
+            tasks_to_process.append(task)
+
+    # Send the task to the job pipeline of the extractor
+    await run_job_on_tasks(tasks_to_process, job)
