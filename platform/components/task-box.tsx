@@ -234,29 +234,21 @@ const TaskBox = ({
       </div>
       <div className="flex flex-col space-y-0.5 ">
         <div className="flex justify-start">
-          <div className="bg-secondary min-w-[400px] rounded-lg p-1 ml-2 mr-2">
-            <div className="text-muted-foreground font-semibold mx-2 text-sm">
-              User:
-            </div>
-            <div className="whitespace-pre-wrap">
+          <div>
+            <div className="text-muted-foreground ml-4 text-sm">User:</div>
+            <div className="bg-secondary min-w-[400px] rounded-lg p-1 mx-2 whitespace-pre-wrap">
               {task.input && (
-                <ReactMarkdown className="mb-2 mx-2">
-                  {task.input}
-                </ReactMarkdown>
+                <ReactMarkdown className="m-1">{task.input}</ReactMarkdown>
               )}
             </div>
           </div>
         </div>
-        <div className="flex justify-end">
-          <div className="bg-secondary min-w-[400px] rounded-lg p-1 ml-2 mr-2">
-            <div className="text-muted-foreground font-semibold mx-2 text-sm">
-              Assistant:
-            </div>
-            <div className="whitespace-pre-wrap">
+        <div className="flex justify-start pt-1">
+          <div className="flex flex-col">
+            <div className="text-muted-foreground ml-4 text-sm">Assistant:</div>
+            <div className="bg-green-500 text-secondary min-w-[400px] rounded-lg p-1 mx-2 whitespace-pre-wrap">
               {task.output && (
-                <ReactMarkdown className="mb-2 mx-2">
-                  {task.output}
-                </ReactMarkdown>
+                <ReactMarkdown className="m-1">{task.output}</ReactMarkdown>
               )}
             </div>
           </div>
