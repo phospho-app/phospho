@@ -137,5 +137,5 @@ phospho.init(
     project_id=st.secrets["PHOSPHO_PROJECT_ID"],
     # base_url="http://127.0.0.1:8000/v2",
     base_url=os.getenv("PHOSPHO_BASE_URL"),
-    # version_id="testo",
+    # version_id="v2"
 )
