@@ -86,4 +86,9 @@ module.exports = {
     },
   },
   plugins: [require("tailwindcss-animate")],
+  variants: {
+    extend: {
+        display: ["group-hover"],
+    },
+},
 }
