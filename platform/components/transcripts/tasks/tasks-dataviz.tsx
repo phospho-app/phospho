@@ -205,14 +205,38 @@ const TasksDataviz: React.FC = () => {
       },
     );
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltipNbrTasks = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
           <p className="text-secondary font-semibold">{`${label}`}</p>
-          <p className="text-green-500">
-            {`${payload[0].value.toFixed(2)}% success rate`}
-          </p>
+          <p className="text-green-500">{`${payload[0].value == 1 ? payload[0].value + " task" : payload[0].value + " tasks"}`}</p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const CustomTooltipEvent = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-primary shadow-md p-2 rounded-md">
+          <p className="text-secondary font-semibold">{`${label}`}</p>
+          <p className="text-green-500">{`${payload[0].value == 1 ? payload[0].value + " event detected" : payload[0].value + " events detected"}`}</p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const CustomTooltipSuccessRate = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-primary shadow-md p-2 rounded-md">
+          <p className="text-secondary font-semibold">{`Success rate after ${label == 1 ? label + " task" : label + " tasks"}`}</p>
+          <p className="text-green-500">{`${payload[0].value.toFixed(2)}% success rate`}</p>
         </div>
       );
     }
@@ -317,7 +341,7 @@ const TasksDataviz: React.FC = () => {
                   >
                     <XAxis dataKey="day" />
                     <YAxis />
-                    <Tooltip content={CustomTooltip} />
+                    <Tooltip content={CustomTooltipNbrTasks} />
                     <Bar
                       dataKey="nb_tasks"
                       fill="#22c55e"
@@ -349,7 +373,7 @@ const TasksDataviz: React.FC = () => {
                       overflow={"visible"}
                       // angle={-45} // Rotate the labels by 45 degrees
                     />
-                    <Tooltip content={CustomTooltip} />
+                    <Tooltip content={CustomTooltipEvent} />
                     <Bar
                       dataKey="nb_events"
                       fill="#22c55e"
@@ -397,7 +421,7 @@ const TasksDataviz: React.FC = () => {
                   </defs>
                   <XAxis dataKey="task_position" className="text-slate-500" />
                   <YAxis unit="%" />
-                  <Tooltip content={CustomTooltip} />
+                  <Tooltip content={CustomTooltipSuccessRate} />
                   <Area
                     type="monotone"
                     dataKey="success_rate"
