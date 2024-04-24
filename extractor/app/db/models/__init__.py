@@ -10,7 +10,7 @@ from phospho.models import (
     EventDefinition,
     FlattenedTask,
     LlmCall,
-    PipelineJobResult,
+    JobResult,
     Project,
     Session,
     Task,

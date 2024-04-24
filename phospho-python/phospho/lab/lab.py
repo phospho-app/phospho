@@ -173,13 +173,13 @@ class Job:
         if result is None:
             logger.error(f"Job {self.id} returned None for message {message.id}.")
             result = JobResult(
-                job_id=self.id,
+                recipe_id=self.id,
                 result_type=ResultType.error,
                 value=None,
             )
 
         # Add the job_id to the result
-        result.job_id = self.id
+        result.recipe_id = self.id
         # Store the result
         self.results[message.id] = result
 
@@ -210,12 +210,12 @@ class Job:
                     f"Job {self.id} returned None for message {message.id} on alternative config run."
                 )
                 prediction = JobResult(
-                    job_id=self.id,
+                    recipe_id=self.id,
                     result_type=ResultType.error,
                     value=None,
                 )
             # Add the job_id to the result
-            prediction.job_id = self.id
+            prediction.recipe_id = self.id
             # Add the prediction to the alternative_results
             self.alternative_results[alternative_config_index][message.id] = prediction
 

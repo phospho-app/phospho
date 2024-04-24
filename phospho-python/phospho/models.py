@@ -3,6 +3,7 @@ All the models stored in database.
 """
 
 import datetime
+from enum import Enum
 from typing import Dict, List, Literal, Optional, Any, Union
 
 from pydantic import BaseModel, Field, field_serializer
@@ -58,7 +59,7 @@ class EventDefinition(ProjectElementBaseModel):
     detection_scope: DetectionScope = "task"
     keywords: Optional[str] = None
     regex_pattern: Optional[str] = None
-    job_id: Optional[str] = None  # Associated job id
+    recipe_id: Optional[str] = None  # Associated Recipe id
 
 
 class Event(ProjectElementBaseModel):
@@ -134,7 +135,6 @@ class ProjectSettings(BaseModel):
 
 
 class Project(DatedBaseModel):
-    project_name: str  # to validate this, use https://docs.pydantic.dev/latest/concepts/validators/
     org_id: str
     project_name: str  # to validate this, use https://docs.pydantic.dev/latest/concepts/validators/
     settings: ProjectSettings = Field(default_factory=ProjectSettings)
@@ -215,6 +215,7 @@ class LlmCall(DatedBaseModel, extra="allow"):
     task_id: Optional[str] = None
     session_id: Optional[str] = None
     job_id: Optional[str] = None
+    recipe_id: Optional[str] = None
 
 
 class FlattenedTask(BaseModel, extra="allow"):
@@ -513,28 +514,38 @@ class Message(DatedBaseModel):
         )
 
 
-PipelineJobType = Literal["evaluation", "event_detection"]  # Add other job types here
+RecipeType = Literal["evaluation", "event_detection"]  # Add other job types here
 
 
-class PipelineJob(ProjectElementBaseModel):
+class Recipe(ProjectElementBaseModel):
     status: Literal["enabled", "deleted"]
-    job_type: PipelineJobType
+    recipe_type: RecipeType
     # Parameters for the job, for instance it was the event object in the settings
     parameters: dict = Field(default_factory=dict)
 
 
-class PipelineJobResult(ProjectElementBaseModel):
-    """
-    Represents a prediction made by phospho, the user or else
-    For instance, a user feedback as "Failure" is a prediction
-    For instance, the output of an event detection is a prediction
-    """
+class ResultType(Enum):
+    error = "error"
+    bool = "bool"
+    literal = "literal"
+    list = "list"
+    dict = "dict"
+    string = "string"
+    number = "number"
+    object = "object"
 
-    job_id: str  # Job that generated the prediction
-    job: Optional[PipelineJob] = None
+
+class JobResult(DatedBaseModel, extra="allow"):
+    org_id: Optional[str] = None
+    project_id: Optional[str] = None
+    value: Any
+    result_type: ResultType
+    logs: List[Any] = Field(default_factory=list)
+    metadata: dict = Field(default_factory=dict)
+    created_at: int = Field(default_factory=generate_timestamp)
+    recipe_id: Optional[str] = None
+    recipe: Optional[Recipe] = None
     task_id: Optional[str] = None
-    job_type: PipelineJobType
-    value: Any  # The value of the prediction
 
 
 class ProjectDataFilters(BaseModel):
