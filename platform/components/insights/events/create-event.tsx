@@ -122,6 +122,8 @@ export default function CreateEvent({
 
     // On purpose, we do not pass the job_id, so a new job object will be created for this event
     selectedProject.settings.events[values.event_name] = {
+      project_id: selectedProject.id,
+      org_id: selectedProject.org_id,
       event_name: values.event_name,
       description: values.description,
       webhook: values.webhook,

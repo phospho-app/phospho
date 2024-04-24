@@ -23,6 +23,7 @@ async def get_project_by_id(project_id: str) -> Project:
         raise ValueError(f"Project {project_id} not found")
 
     # If event_name not in project_data.settings.events.values(), add it based on the key
+    push_to_db = False
     if (
         "settings" in project_data.keys()
         and "events" in project_data["settings"].keys()
@@ -32,13 +33,25 @@ async def get_project_by_id(project_id: str) -> Project:
                 project_data["settings"]["events"][event_name][
                     "event_name"
                 ] = event_name
-                mongo_db["projects"].update_one(
-                    {"_id": project_data["_id"]},
-                    {"$set": {"settings.events": project_data["settings"]["events"]}},
-                )
+                push_to_db = True
+            if "org_id" not in event.keys():
+                project_data["settings"]["events"][event_name]["org_id"] = project_data[
+                    "org_id"
+                ]
+                push_to_db = True
+            if "project_id" not in event.keys():
+                project_data["settings"]["events"][event_name][
+                    "project_id"
+                ] = project_data["id"]
+                push_to_db = True
 
     try:
         project = Project(**project_data)
+        # push the updated project to the database
+        if push_to_db:
+            mongo_db["projects"].update_one(
+                {"_id": project_data["_id"]}, {"$set": project.model_dump()}
+            )
     except Exception as e:
         logger.warning(f"Error validating model of project {project_data.id}: {e}")
         raise ValueError(f"Error validating project model: {e}")

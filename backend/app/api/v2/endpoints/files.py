@@ -23,7 +23,7 @@ async def create_upload_file(
     background_tasks: BackgroundTasks,
     org: dict = Depends(authenticate_org_key),
 ):
-    if not file.filename.endswith(".csv"):
+    if not file.filename or not file.filename.endswith(".csv"):
         raise HTTPException(
             status_code=400, detail="Invalid file type. Only csv files are supported."
         )

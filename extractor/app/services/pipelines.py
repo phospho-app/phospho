@@ -71,6 +71,7 @@ async def task_event_detection_pipeline(
                 org_id=task_data.org_id,
                 task_id=task.id,
                 job_id=result.job_id,
+                project_id=project_id,
             )
             mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
         else:
@@ -266,7 +267,11 @@ async def task_scoring_pipeline(
     llm_call = job_result.metadata.get("llm_call", None)
     if llm_call is not None:
         llm_call_obj = LlmCall(
-            **llm_call, org_id=task.org_id, task_id=task.id, job_id="evaluate_task"
+            **llm_call,
+            org_id=task.org_id,
+            task_id=task.id,
+            job_id="evaluate_task",
+            project_id=task.project_id,
         )
         mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
 

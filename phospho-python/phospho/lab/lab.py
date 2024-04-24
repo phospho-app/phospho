@@ -430,7 +430,10 @@ class Workload:
                 )
 
             # We use a keyword detection engine
-            elif event.detection_engine == "keyword_detection":
+            elif (
+                event.detection_engine == "keyword_detection"
+                and event.keywords is not None
+            ):
                 workload.add_job(
                     Job(
                         id=event_name,
@@ -445,7 +448,10 @@ class Workload:
                 )
 
             # We use a regex pattern to detect the event
-            elif event.detection_engine == "regex_detection":
+            elif (
+                event.detection_engine == "regex_detection"
+                and event.regex_pattern is not None
+            ):
                 workload.add_job(
                     Job(
                         id=event_name,

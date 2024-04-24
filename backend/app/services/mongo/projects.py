@@ -612,14 +612,13 @@ async def store_onboarding_survey(project_id: str, user: User, survey: dict):
 
 async def generate_events_for_use_case(
     project_id: str,
+    org_id: str,
     build: str,
     purpose: str,
     custom_build: Optional[str] = None,
     custom_purpose: Optional[str] = None,
     user_id: Optional[str] = None,
-) -> Tuple[List[EventDefinition], Optional[str]]:
-    mongo_db = await get_mongo_db()
-
+) -> Tuple[List[EventDefinition], Optional[dict]]:
     start_time = time.time()
     build_to_desc = {
         "knowledge-assistant": "A knowledge assistant that helps users find information. He must be accurate, truthful and fast.",
@@ -734,13 +733,15 @@ Relevant events:
         return (
             [
                 EventDefinition(
+                    project_id=project_id,
+                    org_id=org_id,
                     event_name=k,
                     description=v.get("description", "Default description"),
                     webhook=v["webhook"],
                 )
                 for k, v in default_events.items()
             ],
-            {},  # Empty logged content
+            {},
         )
     # Extract the events from the response
     extracted_events = response.choices[0].message.content.split("\n")[1:]
@@ -757,7 +758,12 @@ Relevant events:
         description = description.strip()
         try:
             events.append(
-                EventDefinition(event_name=event_name, description=description)
+                EventDefinition(
+                    project_id=project_id,
+                    org_id=org_id,
+                    event_name=event_name,
+                    description=description,
+                )
             )
         except Exception as e:
             logger.warning(f"Error creating event: {e}. Skipping.")
@@ -785,6 +791,7 @@ Relevant events:
 
 async def suggest_events_for_use_case(
     project_id: str,
+    org_id: str,
     build: str,
     purpose: str,
     custom_build: Optional[str] = None,
@@ -802,6 +809,8 @@ async def suggest_events_for_use_case(
             logger.info("Found existing suggestions. Returning them.")
             existing_events = [
                 EventDefinition(
+                    project_id=project_id,
+                    org_id=org_id,
                     event_name=event["event_name"],
                     description=event["description"],
                     webhook=event["webhook"],
@@ -826,6 +835,7 @@ async def suggest_events_for_use_case(
     # Otherwise, generate the events
     events, logged_content = await generate_events_for_use_case(
         project_id=project_id,
+        org_id=org_id,
         build=build,
         purpose=purpose,
         custom_build=custom_build,

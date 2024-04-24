@@ -11,11 +11,19 @@ from phospho.utils import generate_timestamp, generate_uuid
 import json
 
 
-class Eval(BaseModel):
+class DatedBaseModel(BaseModel):
     id: str = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
-    project_id: str
+
+
+class ProjectElementBaseModel(DatedBaseModel):
+    id: str = Field(default_factory=generate_uuid)
+    created_at: int = Field(default_factory=generate_timestamp)
     org_id: Optional[str] = None
+    project_id: str
+
+
+class Eval(ProjectElementBaseModel):
     session_id: Optional[str] = None
     task_id: str
     # Flag to indicate if the task is success or failure
@@ -41,9 +49,7 @@ DetectionEngine = Literal[
 ]
 
 
-class EventDefinition(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
+class EventDefinition(ProjectElementBaseModel):
     event_name: str
     description: str
     webhook: Optional[str] = None
@@ -55,15 +61,11 @@ class EventDefinition(BaseModel):
     job_id: Optional[str] = None  # Associated job id
 
 
-class Event(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
+class Event(ProjectElementBaseModel):
     # The name of the event (as defined in the project settings)
     event_name: str
     task_id: Optional[str] = None
     session_id: Optional[str] = None
-    project_id: str
-    org_id: Optional[str] = None
     # The webhook that was called (happened if the event was True and the webhook was set in settings)
     webhook: Optional[str] = None
     # The source of the event (either "user" or "phospho-{id}")
@@ -73,11 +75,7 @@ class Event(BaseModel):
     messages: Optional[List["Message"]] = Field(default_factory=list)
 
 
-class Task(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
-    project_id: str
-    org_id: Optional[str] = None
+class Task(ProjectElementBaseModel):
     session_id: Optional[str] = None
     input: str
     additional_input: Optional[dict] = Field(default_factory=dict)
@@ -112,11 +110,7 @@ class Task(BaseModel):
         return json.loads(json.dumps(metadata, default=str))
 
 
-class Session(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
-    project_id: str
-    org_id: Optional[str] = None
+class Session(ProjectElementBaseModel):
     metadata: Optional[dict] = None
     data: Optional[dict] = None
     # Notes are a free text field that can be edited
@@ -139,31 +133,18 @@ class ProjectSettings(BaseModel):
     events: Dict[str, EventDefinition] = Field(default_factory=dict)
 
 
-class Project(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
+class Project(DatedBaseModel):
     project_name: str  # to validate this, use https://docs.pydantic.dev/latest/concepts/validators/
     org_id: str
+    project_name: str  # to validate this, use https://docs.pydantic.dev/latest/concepts/validators/
     settings: ProjectSettings = Field(default_factory=ProjectSettings)
     user_id: Optional[str] = None
 
 
-class Organization(BaseModel):
-    id: str
-    created_at: int  # UNIX timetamp in seconds
-    name: str
-    modified_at: int
-    email: str  # Email for the organization -> relevant notifications
-    status: str  # Status of the organization -> "active" or "inactive"
-    type: str  # Type of the organization -> "beta"
-
-
-class Test(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
+class Test(ProjectElementBaseModel):
     project_id: str
     org_id: Optional[str] = None
     created_by: str
-    created_at: int = Field(default_factory=generate_timestamp)
     last_updated_at: int
     terminated_at: Optional[int] = None
     status: Literal["started", "completed", "canceled"]
@@ -179,11 +160,7 @@ ComparisonResults = Literal[
 ]
 
 
-class Comparison(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
-    project_id: Optional[str] = None
-    org_id: Optional[str] = None
+class Comparison(ProjectElementBaseModel):
     instructions: Optional[str] = None
     context_input: str
     old_output: str
@@ -193,10 +170,9 @@ class Comparison(BaseModel):
     test_id: Optional[str] = None
 
 
-class LlmCall(BaseModel, extra="allow"):
-    id: str = Field(default_factory=generate_uuid)
+class LlmCall(DatedBaseModel, extra="allow"):
+    project_id: Optional[str] = None
     org_id: Optional[str] = None
-    created_at: int = Field(default_factory=generate_timestamp)
     model: str
     prompt: str
     llm_output: Optional[str] = None
@@ -223,9 +199,7 @@ class FlattenedTask(BaseModel, extra="allow"):
     event_created_at: Optional[int] = None
 
 
-class DatasetRow(BaseModel, extra="allow"):
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
+class DatasetRow(DatedBaseModel, extra="allow"):
     org_id: str
     detection_scope: DetectionScope
     task_input: str
@@ -236,14 +210,13 @@ class DatasetRow(BaseModel, extra="allow"):
     file_name: str
 
 
-class FineTuningJob(BaseModel, extra="allow"):
+class FineTuningJob(DatedBaseModel, extra="allow"):
     id: str = Field(default_factory=lambda: generate_uuid("ftjob_"))
-    created_at: int = Field(default_factory=generate_timestamp)
     org_id: str
     file_id: str  # File id used for the fine-tuning (will be splitted in train and validation sets)
-    fine_tuned_model: Optional[str] = (
-        None  # The name of the fine-tuned model that is being created. Null if the fine-tuning job is still running.
-    )
+    fine_tuned_model: Optional[
+        str
+    ] = None  # The name of the fine-tuned model that is being created. Null if the fine-tuning job is still running.
     finished_at: Optional[int] = None
     parameters: Optional[
         dict
@@ -252,9 +225,7 @@ class FineTuningJob(BaseModel, extra="allow"):
     status: Literal["started", "finished", "failed", "cancelled"]
 
 
-class Message(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
+class Message(DatedBaseModel):
     role: Optional[str] = None
     content: str
     previous_messages: List["Message"] = Field(default_factory=list)
@@ -510,35 +481,26 @@ class Message(BaseModel):
         )
 
 
-JobType = Literal["evaluation", "event_detection"]  # Add other job types here
+PipelineJobType = Literal["evaluation", "event_detection"]  # Add other job types here
 
 
-class Job(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
-    org_id: str
-    project_id: str
+class PipelineJob(ProjectElementBaseModel):
     status: Literal["enabled", "deleted"]
-    job_type: JobType
-    parameters: dict = Field(
-        default_factory=dict
-    )  # Parameters for the job, for instance it was the event object in the settings
+    job_type: PipelineJobType
+    # Parameters for the job, for instance it was the event object in the settings
+    parameters: dict = Field(default_factory=dict)
 
 
-class Prediction(BaseModel):
+class PipelineJobResult(ProjectElementBaseModel):
     """
     Represents a prediction made by phospho, the user or else
     For instance, a user feedback as "Failure" is a prediction
     For instance, the output of an event detection is a prediction
     """
 
-    id: str = Field(default_factory=generate_uuid)
-    created_at: int = Field(default_factory=generate_timestamp)
-    org_id: str
-    project_id: str
-    task_id: Optional[str] = None  # Task id if the prediction is related to a task
-    job_type: JobType
-    job_id: str  # The id of the job that generated the prediction
+    job_id: str  # Job that generated the prediction
+    task_id: Optional[str] = None
+    job_type: PipelineJobType
     value: Any  # The value of the prediction
 
 
