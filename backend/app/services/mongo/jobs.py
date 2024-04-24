@@ -1,7 +1,7 @@
 from typing import Literal
 from loguru import logger
 
-from app.db.models import PipelineJob
+from app.db.models import Recipe
 from app.db.mongo import get_mongo_db
 
 
@@ -12,17 +12,17 @@ async def create_job(
     parameters: dict,
     status: Literal["enabled", "deleted"] = "enabled",
     raise_error_if_exists: bool = False,
-) -> PipelineJob:
+) -> Recipe:
     """
     Create a job in the database.
     """
     mongo_db = await get_mongo_db()
 
     # Validate the job
-    job = PipelineJob(
+    job = Recipe(
         org_id=org_id,
         project_id=project_id,
-        job_type=job_type,
+        recipe_type=job_type,
         parameters=parameters,
         status=status,
     )
