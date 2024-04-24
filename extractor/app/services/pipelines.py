@@ -190,13 +190,93 @@ async def task_event_detection_pipeline(
     workload = lab.Workload.from_phospho_project_config(project)
     logger.debug(f"Workload for project {project_id} : {workload}")
 
-    # Get the
+    # events_per_task = await run_event_detection_pipeline(workload=workload, tasks=[task])
 
-    events_per_task = await run_event_detection_pipeline(
-        workload=workload, tasks=[task]
+    message = lab.Message.from_task(task=task_data, previous_tasks=task_context)
+    latest_message_id = message.id
+    await workload.async_run(
+        messages=[message],
+        executor_type="parallel_jobs",
     )
 
-    return events_per_task[task.id]
+    # Check the results of the workload
+    message_results = workload.results.get(latest_message_id, [])
+    detected_events = []
+    for event_name, result in message_results.items():
+        # Store the LLM call in the database
+        metadata = result.metadata
+        llm_call = metadata.get("llm_call", None)
+        if llm_call is not None:
+            llm_call_obj = LlmCall(
+                **llm_call,
+                org_id=task_data.org_id,
+                task_id=task.id,
+                job_id=result.job_id,
+            )
+            mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+        else:
+            logger.warning(f"No LLM call detected for event {event_name}")
+
+        # When the event is detected, result is True
+        if result.value:
+            logger.info(f"Event {event_name} detected for task {task_data.id}")
+            # Get back the event definition from the job metadata
+            metadata = workload.jobs[result.job_id].metadata
+            event = EventDefinition(**metadata)
+            # Push event to db
+            detected_event_data = Event(
+                event_name=event_name,
+                # Events detected at the session scope are not linked to a task
+                task_id=task_data.id,
+                session_id=task_data.session_id,
+                project_id=project_id,
+                source=result.metadata.get("source", "phospho-unknown"),
+                webhook=event.webhook,
+                org_id=task_data.org_id,
+                event_definition=event,
+                task=task_data if not save_task else None,
+            )
+            detected_events.append(detected_event_data)
+            # Update the task object with the event
+            if save_task:
+                mongo_db["tasks"].update_many(
+                    {"id": task.id, "project_id": task.project_id},
+                    # Add the event to the list of events
+                    {"$push": {"events": detected_event_data.model_dump()}},
+                )
+            # Trigger the webhook if it exists
+            if event.webhook is not None:
+                await trigger_webhook(
+                    url=event.webhook,
+                    json=detected_event_data.model_dump(),
+                    headers=event.webhook_headers,
+                )
+
+        # Save the prediction
+        # Get the event object from the settings
+        event_settings = project.settings.events[event_name]
+
+        # Get the job_id from the event
+        job_id = event_settings.job_id
+
+        if job_id is None:
+            logger.error(f"No job_id found for event {event_name}")
+
+        else:
+            prediction = await create_prediction(
+                project.org_id,
+                project_id,
+                job_id,
+                result.value,
+                "event_detection",
+                task_id=task.id,
+            )
+
+    if len(detected_events) > 0:
+        mongo_db["events"].insert_many(
+            [event.model_dump() for event in detected_events]
+        )
+    return detected_events
 
 
 async def task_scoring_pipeline(
