@@ -187,14 +187,14 @@ async def add_event_to_task(
         webhook=event.webhook,
         org_id=task.org_id,
     )
-    event_insert = await mongo_db["events"].insert_one(detected_event_data.model_dump())
+    _ = await mongo_db["events"].insert_one(detected_event_data.model_dump())
 
     if task.events is None:
         task.events = []
     task.events.append(detected_event_data)
 
     # Update the task object
-    task_ref = await mongo_db["tasks"].update_many(
+    _ = await mongo_db["tasks"].update_many(
         {"id": task.id, "project_id": task.project_id}, {"$set": task.model_dump()}
     )
 
