@@ -539,12 +539,13 @@ class ResultType(Enum):
 class JobResult(DatedBaseModel, extra="allow"):
     org_id: Optional[str] = None
     project_id: Optional[str] = None
+    job_id: Optional[str] = None
     value: Any
     result_type: ResultType
     logs: List[Any] = Field(default_factory=list)
     metadata: dict = Field(default_factory=dict)
-    created_at: int = Field(default_factory=generate_timestamp)
     recipe_id: Optional[str] = None
+    recipe_type: Optional[RecipeType] = None
     task_id: Optional[str] = None
 
 
