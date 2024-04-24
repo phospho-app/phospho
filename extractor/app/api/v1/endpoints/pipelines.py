@@ -8,7 +8,7 @@ from app.security.authentication import authenticate_key
 from app.services.pipelines import (
     task_main_pipeline,
     messages_main_pipeline,
-    job_pipeline,
+    recipe_pipeline,
 )
 from app.services.log import process_log
 
@@ -18,7 +18,7 @@ from app.api.v1.models import (
     LogProcessRequest,
     PipelineResults,
     RunMainPipelineOnMessagesRequest,
-    RunJobOnTasksRequest,
+    RunRecipeOnTaskRequest,
 )
 from app.db.models import Task
 
@@ -82,12 +82,12 @@ async def post_log(
 
 
 @router.post(
-    "/pipelines/jobs",
-    description="Run a job on a task",
+    "/pipelines/recipes",
+    description="Run a recipe on a task",
 )
 async def post_run_job_on_task(
     background_tasks: BackgroundTasks,
-    request: RunJobOnTasksRequest,
+    request: RunRecipeOnTaskRequest,
     is_request_authenticated: bool = Depends(authenticate_key),
 ):
     # If there is no tasks to process, return
@@ -95,14 +95,14 @@ async def post_run_job_on_task(
         logger.debug("No tasks to process.")
         return {"status": "no tasks to process"}
 
-    if request.job.job_type == "event_detection":
+    if request.recipe.recipe_type == "event_detection":
         logger.info(
-            f"Running job {request.job.job_type} on {len(request.tasks)} tasks."
+            f"Running job {request.recipe.recipe_type} on {len(request.tasks)} tasks."
         )
         background_tasks.add_task(
-            job_pipeline,
+            recipe_pipeline,
             tasks=request.tasks,
-            job=request.job,
+            recipe=request.recipe,
         )
         return {"status": "ok"}
 

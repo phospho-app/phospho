@@ -17,7 +17,7 @@ from app.security import authenticate_org_key, verify_propelauth_org_owns_projec
 from app.services.mongo.projects import (
     get_all_sessions,
     get_all_tasks,
-    backcompute_jobs,
+    backcompute_recipes,
 )
 from app.services.mongo.explore import (
     fetch_flattened_tasks,
@@ -159,7 +159,7 @@ async def post_backcompute_job(
     job_ids = compute_job_request.job_ids[:NB_JOBS_LIMIT]
 
     background_tasks.add_task(
-        backcompute_jobs,
+        backcompute_recipes,
         project_id,
         job_ids,
         compute_job_request.filters,

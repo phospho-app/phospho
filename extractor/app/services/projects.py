@@ -1,6 +1,6 @@
 from loguru import logger
 from app.db.mongo import get_mongo_db
-from app.db.models import Project
+from app.db.models import Project, Recipe
 
 
 async def get_project_by_id(project_id: str) -> Project:
@@ -12,33 +12,23 @@ async def get_project_by_id(project_id: str) -> Project:
     if project_data is None:
         raise ValueError(f"Project {project_id} not found")
 
-    # Handle different names of the same field
-    if "creation_date" in project_data.keys():
-        project_data["created_at"] = project_data["creation_date"]
-
-    if "id" not in project_data.keys():
-        project_data["id"] = project_data["_id"]
-
-    if "org_id" not in project_data.keys():
-        raise ValueError(f"Project {project_id} not found")
-
-    # If event_name not in project_data.settings.events.values(), add it based on the key
-    if (
-        "settings" in project_data.keys()
-        and "events" in project_data["settings"].keys()
-    ):
-        for event_name, event in project_data["settings"]["events"].items():
-            if "event_name" not in event.keys():
-                project_data["settings"]["events"][event_name][
-                    "event_name"
-                ] = event_name
-                mongo_db["projects"].update_one(
-                    {"_id": project_data["_id"]},
-                    {"$set": {"settings.events": project_data["settings"]["events"]}},
-                )
-
     try:
-        project = Project(**project_data)
+        project = Project.from_previous(project_data)
+        for event_name, event in project.settings.events.items():
+            if not event.recipe_id:
+                recipe = Recipe(
+                    org_id=project.org_id,
+                    project_id=project.id,
+                    recipe_type="event_detection",
+                    parameters=event.model_dump(),
+                )
+                mongo_db["recipes"].insert_one(recipe.model_dump())
+                project.settings.events[event_name].recipe_id = recipe.id
+        # If the project dict is different from project_data, update the project_data
+        if project.model_dump() != project_data:
+            mongo_db["projects"].update_one(
+                {"_id": project_data["_id"]}, {"$set": project.model_dump()}
+            )
     except Exception as e:
         logger.warning(f"Error validating model of project {project_data.id}: {e}")
         raise ValueError(f"Error validating project model: {e}")
