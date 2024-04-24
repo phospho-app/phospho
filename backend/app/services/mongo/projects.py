@@ -121,7 +121,9 @@ async def update_project(project: Project, **kwargs) -> Project:
         logger.debug(f"Creating project from previous data: {payload}")
 
         updated_project = Project.from_previous(updated_project_data)
-        for event_name, event in updated_project.settings.events.items():
+
+        # Create a new recipe for each event in the payload
+        for event_name, event in payload.get("settings", {}).get("events", {}).items():
             recipe = Recipe(
                 org_id=project.org_id,
                 project_id=project.id,
