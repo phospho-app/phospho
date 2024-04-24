@@ -22,28 +22,14 @@ async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Proje
         .to_list(length=limit)
     )
     # Add event_name if not present
+    projects = []
     for project_data in project_list:
-        if (
-            "settings" in project_data.keys()
-            and "events" in project_data["settings"].keys()
-        ):
-            for event_name, event in project_data["settings"]["events"].items():
-                if "event_name" not in event.keys():
-                    project_data["settings"]["events"][event_name]["event_name"] = (
-                        event_name
-                    )
-                    # Update the project
-                    mongo_db["projects"].update_one(
-                        {"_id": project_data["_id"]},
-                        {
-                            "$set": {
-                                "settings.events": project_data["settings"]["events"]
-                            }
-                        },
-                    )
+        try:
+            project = Project.from_previous(project_data)
+        except Exception as e:
+            logger.warning(f"Error validating model of project {project_data.id}: {e}")
+        projects.append(project)
 
-    # Convert to a list of Project objects
-    projects = [Project.model_validate(project) for project in project_list]
     return projects
 
 
