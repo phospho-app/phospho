@@ -50,15 +50,9 @@ const Sessions: React.FC = () => {
           </CardHeader>
         </Card>
       )}
-      <div className="hidden h-full flex-1 flex-col space-y-8 p-2 md:flex mx-2">
-        <div>
-          <div className="container px-0 space-y-2">
-            <SessionsDataviz />
-            <SessionsTable />
-          </div>
-
-          <div className="h-20"></div>
-        </div>
+      <div className="hidden h-full flex-1 flex-col space-y-2 md:flex ">
+        <SessionsDataviz />
+        <SessionsTable />
       </div>
     </>
   );
