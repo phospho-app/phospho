@@ -579,9 +579,9 @@ async def keyword_event_detection(
     """
     from re import search
 
-    listExchangeToSearch = []
+    listExchangeToSearch: List[str] = []
     if event_scope == "task":
-        listExchangeToSearch = message.latest_interaction()
+        listExchangeToSearch = [message.latest_interaction()]
 
     elif event_scope == "task_input_only":
         message_list = message.as_list()
@@ -651,9 +651,9 @@ async def regex_event_detection(
     """
     from re import search
 
-    listExchangeToSearch = []
+    listExchangeToSearch: List[str] = []
     if event_scope == "task":
-        listExchangeToSearch = message.latest_interaction()
+        listExchangeToSearch = [message.latest_interaction()]
 
     elif event_scope == "task_input_only":
         message_list = message.as_list()
