@@ -306,6 +306,9 @@ class Workload:
 
     _valid_project_events: Optional[Dict[str, EventDefinition]] = None
 
+    project_id: Optional[str] = None
+    org_id: Optional[str] = None
+
     def __init__(self, jobs: Optional[List[Job]] = None):
         """
         A Workload is a set of jobs to be performed on messages.
@@ -410,6 +413,9 @@ class Workload:
             return cls()
 
         workload = cls()
+        workload.project_id = project_config.id
+        workload.org_id = project_config.org_id
+
         # Create the jobs from the configuration
         for event_name, event in project_events.items():
             logger.debug(f"Add event detection job for event {event_name}")
@@ -645,6 +651,11 @@ class Workload:
         if self._results is None:
             logger.warning("Results are not available. Please run the workload first.")
             return None
+        # Mark all the jobs with org_id and project_id
+        for job_id, job in self.jobs.items():
+            for message_id, job_result in job.results.items():
+                job_result.org_id = self.org_id
+                job_result.project_id = self.project_id
         return self._results
 
     @results.setter
