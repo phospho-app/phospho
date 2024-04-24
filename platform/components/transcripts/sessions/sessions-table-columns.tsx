@@ -7,6 +7,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, SessionWithEvents } from "@/models/models";
@@ -201,13 +206,25 @@ export function getColumns() {
       cell: (row) => {
         const output = row.getValue() as string; // asserting the type as string
         return (
-          <span>
-            {output
-              ? output.length > 50
-                ? output.substring(0, 50) + "..."
-                : output
-              : "-"}
-          </span>
+          <Popover>
+            <PopoverTrigger
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+              }}
+              className="text-left"
+            >
+              {output
+                ? output.length > 50
+                  ? output.substring(0, 50) + "..."
+                  : output
+                : "-"}
+            </PopoverTrigger>
+            <PopoverContent className="text-sm">
+              <h1 className="text-m">Latest message in the session:</h1>
+              <br></br>
+              {output}
+            </PopoverContent>
+          </Popover>
         );
       },
     },
