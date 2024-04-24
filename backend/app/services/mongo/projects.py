@@ -12,6 +12,7 @@ from app.core import config
 from app.db.models import (
     Event,
     EventDefinition,
+    Job,
     Project,
     Session,
     Task,
@@ -28,6 +29,8 @@ from fastapi import HTTPException
 from loguru import logger
 from openai import AsyncOpenAI
 from propelauth_fastapi import User
+
+from app.services.mongo.extractor import run_job_on_tasks
 
 import phospho
 from phospho.utils import filter_nonjsonable_keys
@@ -71,9 +74,9 @@ async def get_project_by_id(project_id: str) -> Project:
     ):
         for event_name, event in project_data["settings"]["events"].items():
             if "event_name" not in event.keys():
-                project_data["settings"]["events"][event_name][
-                    "event_name"
-                ] = event_name
+                project_data["settings"]["events"][event_name]["event_name"] = (
+                    event_name
+                )
                 mongo_db["projects"].update_one(
                     {"_id": project_data["_id"]},
                     {"$set": {"settings.events": project_data["settings"]["events"]}},
@@ -867,3 +870,62 @@ async def get_all_users_metadata(project_id: str) -> List[UserMetadata]:
         logger.error(f"Error fetching users metadata: {e}")
         users = []
     return users
+
+
+async def backcompute_jobs(
+    project_id: str,
+    job_ids: List[str],
+    filters: ProjectDataFilters,
+    limit: int = 10000,
+) -> None:
+    """
+    Run predictions for a list of jobs on all the tasks of a project that match the filters and that have not been processed yet.
+    """
+
+    # Filter the tasks from the filters
+
+    # TODO: filter on user_id is not implemented
+    # Will be ignored for now
+    if filters.user_id:
+        logger.warning("Filter on user_id is not implemented")
+
+    tasks = await get_all_tasks(
+        project_id=project_id,
+        limit=limit,
+        flag_filter=filters.flag,
+        event_name_filter=filters.event_name,
+        last_eval_source_filter=filters.last_eval_source,
+        metadata_filter=filters.metadata,
+        created_at_start=filters.created_at_start,
+        created_at_end=filters.created_at_end,
+    )
+
+    # For each job, run the job on the tasks
+    for job_id in job_ids:
+        await backcompute_job(job_id, tasks)
+
+
+async def backcompute_job(job_id: str, tasks: List[Task]) -> Job:
+    """
+    Run predictions for a job on all the tasks of a project that have not been processed yet.
+    """
+    mongo_db = await get_mongo_db()
+
+    # Get the job using it's id
+    job = await mongo_db["jobs"].find_one({"id": job_id})
+    # Make it a Job object
+    job = Job(**job)
+
+    # For each task, check if a prediction has a job_id and a task_id matching the task
+    tasks_to_process = []
+
+    for task in tasks:
+        # Make a call to the prediction collection in the database
+        prediction = await mongo_db["predictions"].find_one(
+            {"task_id": task.id, "job_id": job.id}
+        )
+        if prediction is None:
+            tasks_to_process.append(task)
+
+    # Send the task to the job pipeline of the extractor
+    await run_job_on_tasks(tasks_to_process, job)

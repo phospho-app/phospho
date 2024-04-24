@@ -1,8 +1,10 @@
 from typing import Optional
+from loguru import logger
 
 from fastapi import APIRouter, Depends, BackgroundTasks
 
 from app.api.v2.models import (
+    ComputeJobsRequest,
     Sessions,
     Tasks,
     FlattenedTasks,
@@ -12,12 +14,15 @@ from app.api.v2.models import (
 from app.api.platform.models.explore import ProjectDataFilters
 
 from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
-from app.services.mongo.projects import get_all_sessions, get_all_tasks
+from app.services.mongo.projects import (
+    get_all_sessions,
+    get_all_tasks,
+    backcompute_jobs,
+)
 from app.services.mongo.explore import (
     fetch_flattened_tasks,
     update_from_flattened_tasks,
 )
-from app.services.mongo.jobs import backcompute_job
 
 router = APIRouter(tags=["Projects"])
 
@@ -125,13 +130,13 @@ async def post_flattened_tasks(
 
 
 @router.post(
-    "/projects/{project_id}/jobs/{job_id}/backcompute",
-    description="Run predictions for a job on all the tasks of a project that have not been processed yet.",
+    "/projects/{project_id}/compute-jobs",
+    description="Run predictions for a list of jobs on all the tasks of a project matching a filter and that have not been processed yet",
 )
 async def post_backcompute_job(
     background_tasks: BackgroundTasks,
     project_id: str,
-    job_id: str,
+    compute_job_request: ComputeJobsRequest,
     limit: int = 10000,
     org: dict = Depends(authenticate_org_key),
 ) -> None:
@@ -144,6 +149,21 @@ async def post_backcompute_job(
     HARD_LIMIT = 1000
     limit = min(limit, HARD_LIMIT)
 
-    background_tasks.add_task(backcompute_job, project_id, job_id, limit=limit)
+    # Limit the number of jobs to run
+    NB_JOBS_LIMIT = 10
+    if len(compute_job_request.job_ids) > NB_JOBS_LIMIT:
+        logger.warning(
+            f"Number of jobs {len(compute_job_request.job_ids)} is greater than the limit {NB_JOBS_LIMIT}, only the first {NB_JOBS_LIMIT} jobs will be processed"
+        )
+
+    job_ids = compute_job_request.job_ids[:NB_JOBS_LIMIT]
+
+    background_tasks.add_task(
+        backcompute_jobs,
+        project_id,
+        job_ids,
+        compute_job_request.filters,
+        limit=limit,
+    )
 
     return {"message": "Backcompute job started"}
