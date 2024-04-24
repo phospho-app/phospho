@@ -6,7 +6,6 @@ import datetime
 from enum import Enum
 from typing import Dict, List, Literal, Optional, Any, Union
 
-from loguru import logger
 from pydantic import BaseModel, Field, field_serializer
 
 from phospho.utils import generate_timestamp, generate_uuid

@@ -4,7 +4,6 @@ import time
 from typing import Dict, List, Optional, Tuple, Union
 
 from app.api.platform.models.explore import Sorting
-from app.services.mongo.sessions import compute_session_length
 import pandas as pd
 import resend
 from app.api.platform.models import UserMetadata, Pagination
