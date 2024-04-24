@@ -160,8 +160,8 @@ async def compare_answers(
     context: str,
     old_output_str: str,
     new_output_str: str,
+    project_id: str,
     instructions: Optional[str] = "",
-    project_id: Optional[str] = None,
     test_id: Optional[str] = None,
     org_id: Optional[str] = None,
 ) -> Comparison:

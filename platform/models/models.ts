@@ -101,6 +101,10 @@ export enum DetectionScope {
 }
 
 export interface EventDefinition {
+  id?: string;
+  created_at?: number;
+  project_id: string;
+  org_id: string;
   event_name: string;
   description: string;
   webhook?: string;
