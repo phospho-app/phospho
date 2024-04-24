@@ -397,24 +397,13 @@ class Workload:
         return cls.from_config(config)
 
     @classmethod
-    def from_phospho_project_config(
-        cls,
-        project_config: Project,
-    ):
-        """
-        Create a workload from a phospho project configuration.
-
-        To fetch the project configuration, look at `Workload.from_phospho()`
-        """
-        project_events = project_config.settings.events
-        if project_events is None:
-            logger.warning(f"Project with id {project_config.id} has no event setup")
-            return cls()
-
+    def from_phospho_events(cls, events: List[EventDefinition]) -> "Workload":
         workload = cls()
-        # Create the jobs from the configuration
-        for event_name, event in project_events.items():
-            logger.debug(f"Add event detection job for event {event_name}")
+
+        for event in events:
+            event_name = event.name
+
+            logger.debug(f"Add event detection job for event {event.name}")
 
             # We stick to the LLM detection engine
             if event.detection_engine == "llm_detection":
@@ -463,7 +452,7 @@ class Workload:
 
             else:
                 logger.warning(
-                    f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}, project {project_config.id}"
+                    f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}"
                 )
 
         return workload
@@ -476,66 +465,26 @@ class Workload:
         """
         Create a workload from a phospho job (as defined is the database).
         """
-
-        workload = cls()
-
-        event_name = phospho_job.parameters["event_name"]
         event = EventDefinition(**phospho_job.parameters)
 
-        # Create the jobs from the configuration
-        logger.debug(f"Add event detection job for event {event_name}")
+        return Workload.from_phospho_events([event])
 
-        # We stick to the LLM detection engine
-        if event.detection_engine == "llm_detection":
-            workload.add_job(
-                Job(
-                    id=event_name,
-                    job_function=job_library.event_detection,
-                    config=EventConfig(
-                        event_name=event_name,
-                        event_description=event.description,
-                        event_scope=event.detection_scope,
-                    ),
-                    metadata=event.model_dump(),
-                )
-            )
+    @classmethod
+    def from_phospho_project_config(
+        cls,
+        project_config: Project,
+    ):
+        """
+        Create a workload from a phospho project configuration.
 
-        # We use a keyword detection engine
-        elif event.detection_engine == "keyword_detection":
-            workload.add_job(
-                Job(
-                    id=event_name,
-                    job_function=job_library.keyword_event_detection,
-                    config=EventConfigForKeywords(
-                        event_name=event_name,
-                        keywords=event.keywords,
-                        event_scope=event.detection_scope,
-                    ),
-                    metadata=event.model_dump(),
-                )
-            )
+        To fetch the project configuration, look at `Workload.from_phospho()`
+        """
+        project_events = project_config.settings.events
+        if project_events is None:
+            logger.warning(f"Project with id {project_config.id} has no event setup")
+            return cls()
 
-        # We use a regex pattern to detect the event
-        elif event.detection_engine == "regex_detection":
-            workload.add_job(
-                Job(
-                    id=event_name,
-                    job_function=job_library.regex_event_detection,
-                    config=EvenConfigForRegex(
-                        event_name=event_name,
-                        regex_pattern=event.regex_pattern,
-                        event_scope=event.detection_scope,
-                    ),
-                    metadata=event.model_dump(),
-                )
-            )
-
-        else:
-            logger.warning(
-                f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}"
-            )
-
-        return workload
+        return cls.from_phospho_events(project_events)
 
     @classmethod
     def from_phospho(
