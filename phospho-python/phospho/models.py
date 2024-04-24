@@ -531,6 +531,7 @@ class PipelineJobResult(ProjectElementBaseModel):
     """
 
     job_id: str  # Job that generated the prediction
+    job: Optional[PipelineJob] = None
     task_id: Optional[str] = None
     job_type: PipelineJobType
     value: Any  # The value of the prediction
