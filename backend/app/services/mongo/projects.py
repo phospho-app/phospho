@@ -12,6 +12,7 @@ from app.core import config
 from app.db.models import (
     Event,
     EventDefinition,
+    Recipe,
     Project,
     Session,
     Task,
@@ -21,13 +22,14 @@ from app.db.models import (
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
 from app.services.mongo.metadata import fetch_user_metadata
-from app.services.mongo.jobs import create_job
 from app.services.slack import slack_notification
 from app.utils import generate_timestamp
 from fastapi import HTTPException
 from loguru import logger
 from openai import AsyncOpenAI
 from propelauth_fastapi import User
+
+from app.services.mongo.extractor import run_recipe_on_tasks
 
 import phospho
 from phospho.utils import filter_nonjsonable_keys
@@ -103,26 +105,21 @@ async def update_project(project: Project, **kwargs) -> Project:
     }
 
     if payload:
-        # Check if there is some events in the payload without a job_id
-        if "settings" in payload.keys() and "events" in payload["settings"].keys():
-            for event_name, event in payload["settings"]["events"].items():
-                logger.debug(f"Event: {event}")
-                if "job_id" not in event.keys():
-                    # Create the corresponding jobs based on the project settings
-                    job = await create_job(
-                        org_id=project.org_id,
-                        project_id=project.id,
-                        job_type="event_detection",
-                        parameters=event,
-                    )
-                    # Update the settings with the job_id
-                    payload["settings"]["events"][event_name]["job_id"] = job.id
-
-        logger.debug(f"Update project {project.id} with payload {payload}")
+        updated_project = Project.from_previous(payload)
+        if updated_project.settings.events:
+            for event_name, event in updated_project.settings.events.items():
+                recipe = Recipe(
+                    org_id=project.org_id,
+                    project_id=project.id,
+                    recipe_type="event_detection",
+                    parameters=event.model_dump(),
+                )
+                mongo_db["recipes"].insert_one(recipe.model_dump())
+                updated_project.settings.events[event_name].recipe_id = recipe.id
 
         # Update the database
         update_result = await mongo_db["projects"].update_one(
-            {"id": project.id}, {"$set": payload}
+            {"id": project.id}, {"$set": updated_project.model_dump()}
         )
 
     updated_project = await get_project_by_id(project.id)
@@ -446,7 +443,7 @@ async def get_all_sessions(
         if sessions_filter.flag is not None:
             additional_sessions_filter["flag"] = sessions_filter.flag
 
-    pipeline = [
+    pipeline: List[Dict[str, object]] = [
         {
             "$match": {
                 "project_id": project_id,
@@ -854,3 +851,62 @@ async def get_all_users_metadata(project_id: str) -> List[UserMetadata]:
         logger.error(f"Error fetching users metadata: {e}")
         users = []
     return users
+
+
+async def backcompute_recipe(job_id: str, tasks: List[Task]) -> None:
+    """
+    Run predictions for a job on all the tasks of a project that have not been processed yet.
+    """
+    mongo_db = await get_mongo_db()
+
+    # Get the job using it's id
+    job = await mongo_db["recipes"].find_one({"id": job_id})
+    # Make it a Job object
+    job = Job(**job)
+
+    # For each task, check if a prediction has a job_id and a task_id matching the task
+    tasks_to_process = []
+
+    for task in tasks:
+        # Make a call to the prediction collection in the database
+        prediction = await mongo_db["predictions"].find_one(
+            {"task_id": task.id, "job_id": job.id}
+        )
+        if prediction is None:
+            tasks_to_process.append(task)
+
+    # Send the task to the job pipeline of the extractor
+    await run_recipe_on_tasks(tasks_to_process, job)
+
+
+async def backcompute_recipes(
+    project_id: str,
+    recipe_ids: List[str],
+    filters: ProjectDataFilters,
+    limit: int = 10000,
+) -> None:
+    """
+    Run predictions for a list of jobs on all the tasks of a project that match the filters and that have not been processed yet.
+    """
+
+    # Filter the tasks from the filters
+
+    # TODO: filter on user_id is not implemented
+    # Will be ignored for now
+    if filters.user_id:
+        logger.warning("Filter on user_id is not implemented")
+
+    tasks = await get_all_tasks(
+        project_id=project_id,
+        limit=limit,
+        flag_filter=filters.flag,
+        event_name_filter=filters.event_name,
+        last_eval_source_filter=filters.last_eval_source,
+        metadata_filter=filters.metadata,
+        created_at_start=filters.created_at_start,
+        created_at_end=filters.created_at_end,
+    )
+
+    # For each job, run the job on the tasks
+    for recipe_id in recipe_ids:
+        await backcompute_recipe(recipe_id, tasks)

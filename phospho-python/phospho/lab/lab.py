@@ -31,7 +31,9 @@ from .models import (
     Message,
     Project,
     ResultType,
+    Recipe,
 )
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -398,27 +400,14 @@ class Workload:
         return cls.from_config(config)
 
     @classmethod
-    def from_phospho_project_config(
-        cls,
-        project_config: Project,
-    ):
-        """
-        Create a workload from a phospho project configuration.
-
-        To fetch the project configuration, look at `Workload.from_phospho()`
-        """
-        project_events = project_config.settings.events
-        if project_events is None:
-            logger.warning(f"Project with id {project_config.id} has no event setup")
-            return cls()
-
+    def from_phospho_events(cls, events: List[EventDefinition]) -> "Workload":
         workload = cls()
-        workload.project_id = project_config.id
-        workload.org_id = project_config.org_id
 
-        # Create the jobs from the configuration
-        for event_name, event in project_events.items():
-            logger.debug(f"Add event detection job for event {event_name}")
+        for event in events:
+            event_name = event.event_name
+            workload.project_id = event.project_id
+
+            logger.debug(f"Add event detection job for event {event.event_name}")
 
             # We stick to the LLM detection engine
             if event.detection_engine == "llm_detection":
@@ -473,9 +462,44 @@ class Workload:
 
             else:
                 logger.warning(
-                    f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}, project {project_config.id}"
+                    f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}"
                 )
 
+        return workload
+
+    @classmethod
+    def from_phospho_recipe(
+        cls,
+        recipe: Recipe,
+    ):
+        """
+        Create a workload from a phospho job (as defined is the database).
+        """
+        event = EventDefinition(**recipe.parameters)
+
+        if event.recipe_id is None:
+            event.recipe_id = recipe.id
+
+        return Workload.from_phospho_events([event])
+
+    @classmethod
+    def from_phospho_project_config(
+        cls,
+        project_config: Project,
+    ):
+        """
+        Create a workload from a phospho project configuration.
+
+        To fetch the project configuration, look at `Workload.from_phospho()`
+        """
+        project_events = project_config.settings.events
+        if project_events is None:
+            logger.warning(f"Project with id {project_config.id} has no event setup")
+            return cls()
+
+        workload = cls.from_phospho_events(list(project_events.values()))
+        workload.project_id = project_config.id
+        workload.org_id = project_config.org_id
         return workload
 
     @classmethod

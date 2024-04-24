@@ -1,12 +1,11 @@
 import time
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
 from loguru import logger
 
 from app.core import config
-from app.db.models import Eval, Event, EventDefinition, LlmCall, Task
+from app.db.models import Eval, Event, EventDefinition, Recipe, LlmCall, Task
 from app.db.mongo import get_mongo_db
-from phospho.models import JobResult
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
 
@@ -20,6 +19,138 @@ from app.api.v1.models.pipelines import PipelineResults
 class EventConfig(lab.JobConfig):
     event_name: str
     event_description: str
+
+
+async def run_event_detection_pipeline(
+    workload: lab.Workload, tasks: List[Task]
+) -> Dict[str, List[Event]]:
+    """
+    webhook_url and webhook_headers are optional parameters of the metadata
+    `webhook_url` is the URL to trigger when an event is detected. If None, no webhook is triggered.
+    job_id can be found for each job of the workload in the job metadata
+    """
+    mongo_db = await get_mongo_db()
+    # Create the list of messages
+    messages = []
+    events_per_task = {}
+
+    for task in tasks:
+        message = lab.Message.from_task(task=task, metadata={"task": task})
+        messages.append(message)
+
+    await workload.async_run(
+        messages=messages,
+        executor_type="parallel_jobs",
+    )
+
+    logger.debug("Workload finished")
+
+    # Display the workload results
+    logger.info(f"Workload results : {workload.results}")
+
+    # Iter over the results
+    for message in messages:
+        results = workload.results.get(message.id, {})
+        logger.debug(f"Results for message {message.id} : {results}")
+
+        events_per_task[message.metadata["task"].id] = []
+
+        for event_name, result in results.items():
+            # event_name is the primary key of the table
+            # Get the `job_id`from the job metadata, which is a dump of the event definition
+            phospho_job_id = workload.jobs[event_name].metadata.get("job_id", None)
+            webhook_url = workload.jobs[event_name].metadata.get("webhook_url", None)
+            webhook_headers = workload.jobs[event_name].metadata.get(
+                "webhook_headers", None
+            )
+
+            # Store the LLM call in the database
+            metadata = result.metadata
+            llm_call = metadata.get("llm_call", None)
+            if llm_call is not None:
+                llm_call_obj = LlmCall(
+                    **llm_call,
+                    org_id=task.org_id,
+                    task_id=message.metadata["task"].id,
+                    recipe_id=result.recipe_id,
+                )
+                mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+            else:
+                logger.warning(f"No LLM call detected for event {event_name}")
+
+            # When the event is detected, result is True
+            if result.value:
+                logger.info(
+                    f"Event {event_name} detected for task {message.metadata['task'].id}"
+                )
+                # Get back the event definition from the job metadata
+                metadata = workload.jobs[result.recipe_id].metadata
+                event = EventDefinition(**metadata)
+                # Push event to db
+                detected_event_data = Event(
+                    event_name=event_name,
+                    # Events detected at the session scope are not linked to a task
+                    task_id=message.metadata["task"].id,
+                    session_id=message.metadata["task"].session_id,
+                    project_id=message.metadata["task"].project_id,
+                    source=result.metadata.get("source", "phospho-unknown"),
+                    webhook=event.webhook,
+                    org_id=message.metadata["task"].org_id,
+                    event_definition=event,
+                    task=message.metadata["task"],
+                )
+
+                # Update the task object with the event
+                await mongo_db["tasks"].update_one(
+                    {
+                        "id": message.metadata["task"].id,
+                        "project_id": message.metadata["task"].project_id,
+                    },
+                    # Add the event to the list of events
+                    {"$addToSet": {"events": detected_event_data.model_dump()}},
+                )
+                if webhook_url is not None:
+                    await trigger_webhook(
+                        url=webhook_url,
+                        json=detected_event_data.model_dump(),
+                        headers=webhook_headers,
+                    )
+
+                # Update the Events collection with the new event
+                await mongo_db["events"].insert_one(detected_event_data.model_dump())
+
+                events_per_task[message.metadata["task"].id].append(detected_event_data)
+
+            else:
+                logger.info(
+                    f"Event {event_name} NOT detected for task {message.metadata['task'].id}"
+                )
+                # Handle the case where the event is not detected, but was previously detected
+                # We need to remove the event from the task document
+
+                await mongo_db["tasks"].update_one(
+                    {
+                        "id": message.metadata["task"].id,
+                        "project_id": message.metadata["task"].project_id,
+                    },
+                    # Remove the event from the list of events
+                    {"$pull": {"events": {"event_name": event_name}}},
+                )
+
+                # Try to delete the event from the Event collection
+                await mongo_db["events"].delete_one(
+                    {"task_id": message.metadata["task"].id, "event_name": event_name}
+                )
+
+            # Save the prediction
+            if phospho_job_id is None:
+                logger.error(
+                    f"No job_id found for event {event_name}. Cannot save prediction."
+                )
+            else:
+                mongo_db["job_result"].insert_one(result.model_dump())
+
+    return events_per_task
 
 
 async def task_event_detection_pipeline(
@@ -50,6 +181,8 @@ async def task_event_detection_pipeline(
     # and importing models from the phospho module
     workload = lab.Workload.from_phospho_project_config(project)
     logger.debug(f"Workload for project {project_id} : {workload}")
+
+    # events_per_task = await run_event_detection_pipeline(workload=workload, tasks=[task])
 
     message = lab.Message.from_task(task=task_data, previous_tasks=task_context)
     latest_message_id = message.id
@@ -452,3 +585,24 @@ async def messages_main_pipeline(
         events=events,
         flag=None,
     )
+
+
+async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
+    """
+    Run a job on a task
+    """
+
+    if recipe.recipe_type == "event_detection":
+        logger.info(
+            f"PIPELINE: Running event detection job {recipe.id} on {len(tasks)} tasks"
+        )
+
+        workload = lab.Workload.from_phospho_recipe(recipe)
+
+        # display the jobs
+        logger.info(f"Jobs for the workload: {workload.jobs}")
+
+        await run_event_detection_pipeline(workload, tasks)
+
+    else:
+        raise ValueError(f"Job type {recipe.recipe_type} not supported")
