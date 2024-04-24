@@ -55,23 +55,27 @@ const TaskBox = ({
         <div className="flex justify-start">
           <div>
             <div className="text-muted-foreground ml-4 text-sm">User:</div>
-            <div className="bg-secondary min-w-[400px] rounded-lg p-1 mx-2 whitespace-pre-wrap">
+            <div className="bg-secondary min-w-[200px] rounded-lg px-2 py-1 mx-2 whitespace-pre-wrap">
               {task.input && (
                 <ReactMarkdown className="m-1">{task.input}</ReactMarkdown>
               )}
             </div>
           </div>
         </div>
-        <div className="flex justify-start pt-1">
-          <div className="flex flex-col">
-            <div className="text-muted-foreground ml-4 text-sm">Assistant:</div>
-            <div className="bg-green-500 text-secondary min-w-[400px] rounded-lg p-1 mx-2 whitespace-pre-wrap">
-              {task.output && (
-                <ReactMarkdown className="m-1">{task.output}</ReactMarkdown>
-              )}
+        {task.output && (
+          <div className="flex justify-start pt-1">
+            <div className="flex flex-col">
+              <div className="text-muted-foreground ml-4 text-sm">
+                Assistant:
+              </div>
+              <div className="bg-green-500 text-secondary min-w-[200px] rounded-lg px-2 py-1 mx-2 whitespace-pre-wrap">
+                {task.output && (
+                  <ReactMarkdown className="m-1">{task.output}</ReactMarkdown>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
       <Collapsible>
         <CollapsibleTrigger>
