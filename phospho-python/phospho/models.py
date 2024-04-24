@@ -140,6 +140,39 @@ class Project(DatedBaseModel):
     settings: ProjectSettings = Field(default_factory=ProjectSettings)
     user_id: Optional[str] = None
 
+    @classmethod
+    def from_previous(cls, project_data: dict) -> "Project":
+        # Handle different names of the same field
+        if "creation_date" in project_data.keys():
+            project_data["created_at"] = project_data["creation_date"]
+
+        if "id" not in project_data.keys():
+            project_data["id"] = project_data["_id"]
+
+        if "org_id" not in project_data.keys():
+            raise ValueError("org_id is required in project_data")
+
+        # If event_name not in project_data.settings.events.values(), add it based on the key
+        if (
+            "settings" in project_data.keys()
+            and "events" in project_data["settings"].keys()
+        ):
+            for event_name, event in project_data["settings"]["events"].items():
+                if "event_name" not in event.keys():
+                    project_data["settings"]["events"][event_name][
+                        "event_name"
+                    ] = event_name
+                if "org_id" not in event.keys():
+                    project_data["settings"]["events"][event_name][
+                        "org_id"
+                    ] = project_data["org_id"]
+                if "project_id" not in event.keys():
+                    project_data["settings"]["events"][event_name][
+                        "project_id"
+                    ] = project_data["id"]
+
+        return cls(**project_data)
+
 
 class Test(ProjectElementBaseModel):
     project_id: str
