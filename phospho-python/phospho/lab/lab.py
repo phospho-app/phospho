@@ -401,9 +401,9 @@ class Workload:
         workload = cls()
 
         for event in events:
-            event_name = event.name
+            event_name = event.event_name
 
-            logger.debug(f"Add event detection job for event {event.name}")
+            logger.debug(f"Add event detection job for event {event.event_name}")
 
             # We stick to the LLM detection engine
             if event.detection_engine == "llm_detection":
@@ -466,6 +466,9 @@ class Workload:
         Create a workload from a phospho job (as defined is the database).
         """
         event = EventDefinition(**phospho_job.parameters)
+
+        if event.job_id is None:
+            event.job_id = phospho_job.id
 
         return Workload.from_phospho_events([event])
 
