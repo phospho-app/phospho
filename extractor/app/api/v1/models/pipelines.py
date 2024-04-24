@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional, Literal
 
-from app.db.models import Task, Event
+from app.db.models import Task, Event, Recipe
 from phospho.lab import Message
 
 
@@ -17,3 +17,8 @@ class RunMainPipelineOnMessagesRequest(BaseModel):
 class PipelineResults(BaseModel):
     events: List[Event]
     flag: Optional[Literal["success", "failure"]]
+
+
+class RunRecipeOnTaskRequest(BaseModel):
+    tasks: List[Task]
+    recipe: Recipe

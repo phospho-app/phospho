@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from phospho.models import Recipe
 import pydantic
 from fastapi import HTTPException
 from loguru import logger
@@ -8,7 +9,6 @@ from app.db.models import Project
 from app.db.mongo import get_mongo_db
 from app.core import config
 from app.security.authentification import propelauth
-from app.services.mongo.jobs import create_job
 
 
 async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Project]:
@@ -50,21 +50,23 @@ async def create_project_by_org(org_id: str, user_id: str, **kwargs) -> Project:
             status_code=400, detail=f"Error while creating project: {e}"
         )
 
+    mongo_db = await get_mongo_db()
+
     # If some events are created, first let's create the coresponding Jobs objects
     # Let's get the events in the settings
     if project.settings.events:
         for event_name, event in project.settings.events.items():
-            job = await create_job(
-                org_id,
+            recipe = Recipe(
+                org_id=org_id,
                 project_id=project.id,
-                job_type="event_detection",
+                recipe_type="event_detection",
                 parameters=event.model_dump(),
             )
+            mongo_db["recipes"].insert_one(recipe.model_dump())
             # Update the settings with the job_id
-            project.settings.events[event_name].recipe_id = job.id
+            project.settings.events[event_name].recipe_id = recipe.id
 
     # Create the corresponding jobs based on the project settings
-    mongo_db = await get_mongo_db()
     result = await mongo_db["projects"].insert_one(project.model_dump())
 
     return project

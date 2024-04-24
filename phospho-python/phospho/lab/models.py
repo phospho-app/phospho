@@ -14,6 +14,7 @@ from phospho.models import (
     Message,
     JobResult,
     ResultType,
+    Recipe,
 )
 
 from .utils import get_literal_values

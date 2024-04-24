@@ -3,4 +3,5 @@ from .pipelines import (
     PipelineResults,
     RunMainPipelineOnMessagesRequest,
     RunMainPipelineOnTaskRequest,
+    RunRecipeOnTaskRequest,
 )

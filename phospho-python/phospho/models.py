@@ -518,7 +518,7 @@ RecipeType = Literal["evaluation", "event_detection"]  # Add other job types her
 
 
 class Recipe(ProjectElementBaseModel):
-    status: Literal["enabled", "deleted"]
+    status: Literal["enabled", "deleted"] = "enabled"
     recipe_type: RecipeType
     # Parameters for the job, for instance it was the event object in the settings
     parameters: dict = Field(default_factory=dict)
