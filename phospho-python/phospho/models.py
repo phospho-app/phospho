@@ -213,14 +213,13 @@ class DatasetRow(DatedBaseModel, extra="allow"):
 class FineTuningJob(DatedBaseModel, extra="allow"):
     id: str = Field(default_factory=lambda: generate_uuid("ftjob_"))
     org_id: str
-    file_id: str  # File id used for the fine-tuning (will be splitted in train and validation sets)
-    fine_tuned_model: Optional[
-        str
-    ] = None  # The name of the fine-tuned model that is being created. Null if the fine-tuning job is still running.
+    # File id used for the fine-tuning (will be splitted in train and validation sets)
+    file_id: str
+    # The name of the fine-tuned model that is being created. Null if the fine-tuning job is still running.
+    fine_tuned_model: Optional[str] = None
     finished_at: Optional[int] = None
-    parameters: Optional[
-        dict
-    ] = {}  # Storing parameters for the fine-tuning job, also detection_scope, event_description
+    # Storing parameters for the fine-tuning job, also detection_scope, event_description
+    parameters: Optional[dict] = Field(default_factory=dict)
     model: str  # The base model that is being fine-tuned.
     status: Literal["started", "finished", "failed", "cancelled"]
 
