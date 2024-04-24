@@ -143,12 +143,10 @@ async def run_event_detection_pipeline(
                 )
 
             # Save the prediction
-            if phospho_job_id is None:
-                logger.error(
-                    f"No job_id found for event {event_name}. Cannot save prediction."
-                )
-            else:
-                mongo_db["job_results"].insert_one(result.model_dump())
+            result.task_id = message.metadata["task"].id
+            if result.recipe_id is None:
+                logger.error(f"No recipe_id found for event {event_name}.")
+            mongo_db["job_results"].insert_one(result.model_dump())
 
     return events_per_task
 
@@ -250,13 +248,13 @@ async def task_event_detection_pipeline(
         event_settings = project.settings.events[event_name]
 
         # Get the job_id from the event
-        job_id = event_settings.recipe_id
+        result.recipe_id = event_settings.recipe_id
+        result.task_id = task.id
 
-        if job_id is None:
-            logger.error(f"No job_id found for event {event_name}")
+        if result.recipe_id is None:
+            logger.error(f"No recipe_id found for event {event_name}")
 
-        else:
-            mongo_db["job_results"].insert_one(result.model_dump())
+        mongo_db["job_results"].insert_one(result.model_dump())
 
     if len(detected_events) > 0:
         mongo_db["events"].insert_many(
@@ -415,6 +413,8 @@ async def task_scoring_pipeline(
     )
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
     # Save the prediction
+    job_result.recipe_type = "evaluation"
+    job_result.task_id = task.id
     mongo_db["job_results"].insert_one(job_result.model_dump())
 
     # Update the task object if the flag is None (no previous evaluation)
@@ -569,12 +569,11 @@ async def messages_main_pipeline(
                 )
 
         # Save the prediction
-        recipe_id = event.recipe_id
-        if recipe_id is None:
-            logger.error(f"No job_id found for event {event_name}")
-        else:
-            # WARNING: task_id is not available in this context
-            mongo_db["job_results"].insert_one(result.model_dump())
+        result.recipe_id = event.recipe_id
+        if result.recipe_id is None:
+            logger.error(f"No recipe_id found for event {event_name}")
+
+        mongo_db["job_results"].insert_one(result.model_dump())
 
     # Push the events to the database
     if len(events) > 0:

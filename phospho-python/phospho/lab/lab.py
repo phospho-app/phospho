@@ -59,6 +59,9 @@ class Job:
     workload: Optional["Workload"] = None
     sample: float = 1
 
+    recipe_id: Optional[str] = None
+    recipe_type: Optional[str] = None
+
     def __init__(
         self,
         id: Optional[str] = None,
@@ -73,6 +76,8 @@ class Job:
         metadata: Optional[Dict[str, Any]] = None,
         workload: Optional["Workload"] = None,
         sample: float = 1.0,
+        recipe_id: Optional[str] = None,
+        recipe_type: Optional[str] = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
@@ -109,6 +114,8 @@ class Job:
         :param metadata: Extra metadata to store with the job.
         :param workload: The workload to which the job belongs. This is useful to access the results of other jobs.
         :param sample: The sample rate of the job. If the sample rate is 0.5, the job will run on 50% of the messages.
+        :param recipe_id: The id of the recipe that created the job. This is useful to track the origin of the job.
+        :param recipe_type: The type of the recipe that created the job.
         """
 
         if job_function is None and name is None:
@@ -149,6 +156,8 @@ class Job:
         self.metadata = metadata
         self.workload = workload
         self.sample = sample
+        self.recipe_id = recipe_id
+        self.recipe_type = recipe_type
 
     async def async_run(self, message: Message) -> JobResult:
         """
@@ -181,7 +190,9 @@ class Job:
             )
 
         # Add the job_id to the result
-        result.recipe_id = self.id
+        result.job_id = self.id
+        result.recipe_id = self.recipe_id
+        result.recipe_type = self.recipe_type
         # Store the result
         self.results[message.id] = result
 
@@ -203,23 +214,24 @@ class Job:
         for alternative_config_index in range(0, len(self.alternative_configs)):
             params = self.alternative_configs[alternative_config_index].model_dump()
             if asyncio.iscoroutinefunction(self.job_function):
-                prediction = await self.job_function(message, **params)
+                job_result = await self.job_function(message, **params)
             else:
-                prediction = self.job_function(message, **params)
+                job_result = self.job_function(message, **params)
 
-            if prediction is None:
+            if job_result is None:
                 logger.error(
                     f"Job {self.id} returned None for message {message.id} on alternative config run."
                 )
-                prediction = JobResult(
+                job_result = JobResult(
                     recipe_id=self.id,
                     result_type=ResultType.error,
                     value=None,
                 )
             # Add the job_id to the result
-            prediction.recipe_id = self.id
+            job_result.job_id = self.id
+            job_result.recipe_id = self.recipe_id
             # Add the prediction to the alternative_results
-            self.alternative_results[alternative_config_index][message.id] = prediction
+            self.alternative_results[alternative_config_index][message.id] = job_result
 
         return self.alternative_results
 
@@ -421,6 +433,8 @@ class Workload:
                             event_scope=event.detection_scope,
                         ),
                         metadata=event.model_dump(),
+                        recipe_id=event.recipe_id,
+                        recipe_type="event_detection",
                     )
                 )
 
@@ -439,6 +453,8 @@ class Workload:
                             event_scope=event.detection_scope,
                         ),
                         metadata=event.model_dump(),
+                        recipe_id=event.recipe_id,
+                        recipe_type="event_detection",
                     )
                 )
 
@@ -457,6 +473,8 @@ class Workload:
                             event_scope=event.detection_scope,
                         ),
                         metadata=event.model_dump(),
+                        recipe_id=event.recipe_id,
+                        recipe_type="event_detection",
                     )
                 )
 
@@ -676,10 +694,11 @@ class Workload:
             logger.warning("Results are not available. Please run the workload first.")
             return None
         # Mark all the jobs with org_id and project_id
-        for job_id, job in self.jobs.items():
-            for message_id, job_result in job.results.items():
-                job_result.org_id = self.org_id
-                job_result.project_id = self.project_id
+        if self.org_id is not None or self.project_id is not None:
+            for job_id, job in self.jobs.items():
+                for message_id, job_result in job.results.items():
+                    job_result.org_id = self.org_id
+                    job_result.project_id = self.project_id
         return self._results
 
     @results.setter
