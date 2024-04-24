@@ -4,7 +4,6 @@ import SessionsDataviz from "@/components/transcripts/sessions/session-dataviz";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
