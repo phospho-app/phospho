@@ -1,4 +1,7 @@
-import { Badge } from "@/components/ui/badge";
+import {
+  AddEventDropdownForSessions,
+  InteractiveEventBadgeForSessions,
+} from "@/components/label-events";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,9 +31,13 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import useSWR from "swr";
+import useSWR, { KeyedMutator } from "swr";
 
-export function getColumns() {
+export function getColumns({
+  mutateSessions,
+}: {
+  mutateSessions: KeyedMutator<SessionWithEvents[]>;
+}): ColumnDef<SessionWithEvents>[] {
   const project_id = navigationStateStore((state) => state.project_id);
   const sessionsPagination = navigationStateStore(
     (state) => state.sessionsPagination,
@@ -68,10 +75,12 @@ export function getColumns() {
         if (filterValue === null) return true;
         return filterValue.includes(row.original.id);
       },
-      header: "",
+      header: ({ column }) => {
+        return <></>;
+      },
       accessorKey: "id",
       cell: ({ row }) => {
-        row.original.id;
+        return <></>;
       },
       enableHiding: true,
     },
@@ -166,17 +175,53 @@ export function getColumns() {
       },
       accessorKey: "events",
       cell: (row) => (
-        <span>
-          {(row.getValue() as Event[]).map((event: Event) => (
-            <Badge
-              key={event.id}
-              variant="secondary"
-              className="ml-2 mt-1 mb-1"
-            >
-              {event.event_name as string}
-            </Badge>
-          ))}
-        </span>
+        <div className="group flex items-center justify-between space-x-2">
+          <div className="flex flex-wrap space-y-1">
+            {(row.getValue() as Event[]).map((event: Event) => {
+              return (
+                <>
+                  <InteractiveEventBadgeForSessions
+                    key={event.event_name}
+                    event={event}
+                    session={row.row.original as SessionWithEvents}
+                    setSession={(session: SessionWithEvents) => {
+                      // Update the session in the table
+                      mutateSessions((data: any) => {
+                        return data.sessions.map(
+                          (existingSession: SessionWithEvents) => {
+                            if (existingSession.id === session.id) {
+                              return session;
+                            }
+                            return data;
+                          },
+                        );
+                      });
+                    }}
+                  />
+                </>
+              );
+            })}
+          </div>
+          {/* <div className="flex-grow"></div> */}
+          <div className="w-10">
+            <AddEventDropdownForSessions
+              session={row.row.original as SessionWithEvents}
+              className="hidden group-hover:block"
+              setSession={(session: SessionWithEvents) => {
+                mutateSessions((data: any) => {
+                  return data.sessions.map(
+                    (existingSession: SessionWithEvents) => {
+                      if (existingSession.id === session.id) {
+                        return session;
+                      }
+                      return data;
+                    },
+                  );
+                });
+              }}
+            />
+          </div>
+        </div>
       ),
     },
     // Session Length
@@ -249,6 +294,5 @@ export function getColumns() {
       maxSize: 10,
     },
   ];
-
   return columns;
 }

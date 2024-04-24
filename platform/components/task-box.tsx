@@ -12,7 +12,10 @@ import { Event, Task, TaskWithEvents } from "@/models/models";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 
-import { AddEventDropdown, InteractiveEventBadge } from "./label-events";
+import {
+  AddEventDropdownForTasks,
+  InteractiveEventBadgeForTasks,
+} from "./label-events";
 
 const TaskBox = ({
   task,
@@ -31,7 +34,7 @@ const TaskBox = ({
         <div className="space-x-2 flex justify-between items-center">
           {task?.events?.map((event) => {
             return (
-              <InteractiveEventBadge
+              <InteractiveEventBadgeForTasks
                 key={event.event_name}
                 event={event}
                 task={task}
@@ -39,7 +42,7 @@ const TaskBox = ({
               />
             );
           })}
-          <AddEventDropdown task={task} setTask={setTask} />
+          <AddEventDropdownForTasks task={task} setTask={setTask} />
         </div>
         <ThumbsUpAndDown
           task={task}

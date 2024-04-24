@@ -1,6 +1,6 @@
 import {
-  AddEventDropdown,
-  InteractiveEventBadge,
+  AddEventDropdownForTasks,
+  InteractiveEventBadgeForTasks,
 } from "@/components/label-events";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowDown,
   ArrowUp,
-  ArrowUpDown,
   Check,
   ChevronDown,
   ChevronRight,
@@ -33,7 +32,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import useSWR, { KeyedMutator, useSWRConfig } from "swr";
+import useSWR, { KeyedMutator } from "swr";
 
 async function flagTask({
   task_id,
@@ -330,7 +329,7 @@ export function getColumns({
             {(row.getValue() as Event[]).map((event: Event) => {
               return (
                 <>
-                  <InteractiveEventBadge
+                  <InteractiveEventBadgeForTasks
                     key={event.event_name}
                     event={event}
                     task={row.row.original as TaskWithEvents}
@@ -356,7 +355,7 @@ export function getColumns({
           </div>
           {/* <div className="flex-grow"></div> */}
           <div className="w-10">
-            <AddEventDropdown
+            <AddEventDropdownForTasks
               task={row.row.original as TaskWithEvents}
               className="hidden group-hover:block"
               setTask={(task: TaskWithEvents) => {
