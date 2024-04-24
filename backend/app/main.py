@@ -114,7 +114,6 @@ def check_health():
 # Following PropelAuth
 
 from app.api.v2.endpoints import (
-    backfill,
     evals,
     files,
     fine_tuning,
@@ -140,7 +139,6 @@ api_v2 = FastAPI(
     },
 )
 
-api_v2.include_router(backfill.router)
 api_v2.include_router(me.router)
 api_v2.include_router(evals.router)
 api_v2.include_router(files.router)

@@ -25,7 +25,7 @@ qdrant-client = "^1.7.3"
 [tool.poetry.group.dev]
 optional = true
 [tool.poetry.group.dev.dependencies]
-phospho = { path = "../phospho-python", develop = false, extras = ["lab"] }
+phospho = { path = "../phospho-python", develop = true, extras = ["lab"] }
 
 
 [build-system]
