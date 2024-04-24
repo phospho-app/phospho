@@ -6,9 +6,9 @@ from loguru import logger
 from app.core import config
 from app.db.models import Eval, Event, EventDefinition, LlmCall, Task
 from app.db.mongo import get_mongo_db
+from phospho.models import PipelineJobResult
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
-from app.services.predictions import create_prediction
 
 # from app.services.topics import extract_topics  # TODO
 from app.services.webhook import trigger_webhook
@@ -123,14 +123,15 @@ async def task_event_detection_pipeline(
             logger.error(f"No job_id found for event {event_name}")
 
         else:
-            prediction = await create_prediction(
-                project.org_id,
-                project_id,
-                job_id,
-                result.value,
-                "event_detection",
+            pipeline_job_result = PipelineJobResult(
+                org_id=project.org_id,
+                project_id=project_id,
+                job_id=job_id,
+                value=result.value,
+                job_type="event_detection",
                 task_id=task.id,
             )
+            mongo_db["pipeline_job_result"].insert_one(pipeline_job_result.model_dump())
 
     if len(detected_events) > 0:
         mongo_db["events"].insert_many(
@@ -290,14 +291,15 @@ async def task_scoring_pipeline(
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
 
     # Save the prediction
-    prediction = await create_prediction(
-        task.org_id,
-        task.project_id,
-        config.TASK_EVALUATION_JOB_ID,
-        flag,
-        "evaluation",
+    pipeline_job_result = PipelineJobResult(
+        org_id=task.org_id,
+        project_id=task.project_id,
+        job_id=config.TASK_EVALUATION_JOB_ID,
+        value=flag,
+        job_type="evaluation",
         task_id=task.id,
     )
+    mongo_db["pipeline_job_result"].insert_one(pipeline_job_result.model_dump())
 
     # Update the task object if the flag is None (no previous evaluation)
     if save_task:
@@ -410,7 +412,9 @@ async def messages_main_pipeline(
 
     - Event detection
     """
+    mongo_db = await get_mongo_db()
     project = await get_project_by_id(project_id)
+
     if project.settings is None:
         logger.warning(f"Project with id {project_id} has no settings")
         return []
@@ -449,23 +453,22 @@ async def messages_main_pipeline(
                 )
 
         # Save the prediction
-        # Get the event object from the settings
-        event_settings = project.settings.events.get(event_name)
-
-        # Get the job_id from the event
-        job_id = event_settings.job_id
-
+        job_id = event.job_id
         if job_id is None:
             logger.error(f"No job_id found for event {event_name}")
-
         else:
             # WARNING: task_id is not available in this context
-            prediction = await create_prediction(
-                project.org_id, project_id, job_id, result.value, "event_detection"
+            pipeline_job_result = PipelineJobResult(
+                org_id=project.org_id,
+                project_id=project_id,
+                job_id=job_id,
+                value=result.value,
+                job_type="event_detection",
             )
+            mongo_db["pipeline_job_result"].insert_one(pipeline_job_result.model_dump())
+
     # Push the events to the database
     if len(events) > 0:
-        mongo_db = await get_mongo_db()
         mongo_db["events"].insert_many([event.model_dump() for event in events])
 
     return PipelineResults(

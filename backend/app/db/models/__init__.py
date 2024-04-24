@@ -19,4 +19,5 @@ from phospho.models import (
     Task,
     Test,
     ProjectDataFilters,
+    PipelineJobType,
 )
