@@ -4,6 +4,7 @@ from app.db.mongo import get_mongo_db
 
 from loguru import logger
 from fastapi import HTTPException
+from app.db.models import Session, Event, EventDefinition
 
 from phospho.utils import is_jsonable
 
@@ -35,6 +36,18 @@ async def get_session_by_id(session_id: str) -> Session:
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
+                    }
+                },
+                # We filter out the removed events
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
                     }
                 },
                 {
@@ -118,7 +131,7 @@ async def edit_session_metadata(session_data: Session, **kwargs) -> Session:
                 logger.warning(
                     f"Cannot update Session.{key} to {value} (field not in schema)"
                 )
-    update_result = await mongo_db["sessions"].update_one(
+    _ = await mongo_db["sessions"].update_one(
         {"id": session_data.id}, {"$set": session_data.model_dump()}
     )
     updated_session = await get_session_by_id(session_data.id)
@@ -268,3 +281,72 @@ async def event_suggestion(
         logger.error(f"event_detection call to OpenAI API failed : {e}")
 
         return ["Error", "An error occured while trying to suggest an event."]
+
+
+async def add_event_to_session(
+    session: Session, event: EventDefinition, event_source: str = "owner"
+) -> Session:
+    """
+    Adds an event to a Session
+    """
+    mongo_db = await get_mongo_db()
+    # Check if the event is already in the Session
+    if session.events is not None and event.event_name in [
+        e.event_name for e in session.events
+    ]:
+        return session
+
+    # Add the event to the events collection and to the session
+    detected_event_data = Event(
+        event_name=event.event_name,
+        session_id=session.id,
+        project_id=session.project_id,
+        source=event_source,
+        webhook=event.webhook,
+        org_id=session.org_id,
+        event_definition=event,
+    )
+    _ = await mongo_db["events"].insert_one(detected_event_data.model_dump())
+
+    if session.events is None:
+        session.events = []
+    session.events.append(detected_event_data)
+
+    # Update the session object
+    _ = await mongo_db["sessions"].update_many(
+        {"id": session.id, "project_id": session.project_id},
+        {"$set": session.model_dump()},
+    )
+
+    return session
+
+
+async def remove_event_from_session(session: Session, event_name: str) -> Session:
+    """
+    Removes an event from a session
+    """
+    mongo_db = await get_mongo_db()
+    # Check if the event is in the session
+    if session.events is not None and event_name in [
+        e.event_name for e in session.events
+    ]:
+        # Mark the event as removed in the events database
+        _ = await mongo_db["events"].update_many(
+            {"session_id": session.id, "event_name": event_name},
+            {"$set": {"removed": True}},
+        )
+
+        # Remove the event from the session
+        session.events = [e for e in session.events if e.event_name != event_name]
+
+        # Update the session object
+        _ = await mongo_db["sessions"].update_one(
+            {"id": session.id, "project_id": session.project_id},
+            {"$set": session.model_dump()},
+        )
+        return session
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Event {event_name} not found in session {session.id}",
+        )

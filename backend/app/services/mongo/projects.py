@@ -491,7 +491,19 @@ async def get_all_sessions(
                         "as": "events",
                     }
                 },
-                {"$match": {"events.removed": {"$ne": True}}},
+                # In the sessions collection, the events field is an array of objects
+                # We want to select only the events that don't have a removed field set to True
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
+                    }
+                },
             ]
         )
     if get_tasks or (

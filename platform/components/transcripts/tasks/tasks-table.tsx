@@ -19,21 +19,13 @@ import { Task, TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
-  SortingState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  ChevronFirstIcon,
-  ChevronLastIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  FilterX,
-} from "lucide-react";
+import { FilterX } from "lucide-react";
 import { Database, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

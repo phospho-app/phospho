@@ -15,6 +15,8 @@ from app.services.mongo.sessions import (
     get_session_by_id,
     event_suggestion,
 )
+from app.api.platform.models import AddEventRequest, RemoveEventRequest
+from app.services.mongo.sessions import add_event_to_session, remove_event_from_session
 
 router = APIRouter(tags=["Sessions"])
 
@@ -90,3 +92,46 @@ async def get_session_suggestion(
     await verify_if_propelauth_user_can_access_project(user, session.project_id)
     event_description = await event_suggestion(session_id)
     return event_description
+
+
+@router.post(
+    "/sessions/{session_id}/add-event",
+    response_model=Session,
+    description="Add an event to a session",
+)
+async def post_add_event_to_sessions(
+    session_id: str,
+    add_event: AddEventRequest,
+    user: User = Depends(propelauth.require_user),
+) -> Session:
+    """
+    Add an event to a session
+    """
+    session = await get_session_by_id(session_id)
+    await verify_if_propelauth_user_can_access_project(user, session.project_id)
+
+    updated_session = await add_event_to_session(session=session, event=add_event.event)
+    return updated_session
+
+
+@router.post(
+    "/sessions/{session_id}/remove-event",
+    response_model=Session,
+    description="Remove an event from a Session",
+)
+async def post_remove_event_from_task(
+    session_id: str,
+    remove_event: RemoveEventRequest,
+    user: User = Depends(propelauth.require_user),
+) -> Session:
+    """
+    Remove an event from a Session
+    """
+    session = await get_session_by_id(session_id)
+    await verify_if_propelauth_user_can_access_project(user, session.project_id)
+
+    updated_session = await remove_event_from_session(
+        session=session,
+        event_name=remove_event.event_name,
+    )
+    return updated_session
