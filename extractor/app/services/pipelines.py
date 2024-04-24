@@ -4,7 +4,7 @@ from typing import List, Literal, Optional
 from loguru import logger
 
 from app.core import config
-from app.db.models import Eval, Event, EventDefinition, LlmCall, Task
+from app.db.models import Eval, Event, EventDefinition, Job, LlmCall, Task
 from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
@@ -467,3 +467,129 @@ async def messages_main_pipeline(
         events=events,
         flag=None,
     )
+
+
+async def job_pipeline(tasks: List[Task], job: Job):
+    """
+    Run a job on a task
+    """
+    mongo_db = await get_mongo_db()
+
+    if job.job_type == "event_detection":
+        detected_events = []
+
+        logger.info(
+            f"PIPELINE: Running event detection job {job.id} on {len(tasks)} tasks"
+        )
+
+        workload = lab.Workload.from_phospho_job(job)
+
+        # display the jobs
+        logger.info(f"Jobs for the workload: {workload.jobs}")
+
+        messages = []
+        message_ids = []
+
+        for task in tasks:
+            logger.debug(f"Adding task {task.id} to the workload")
+            message = lab.Message.from_task(task=task)
+            messages.append(message)
+            message_ids.append(message.id)
+
+        await workload.async_run(
+            messages=messages,
+            executor_type="parallel_jobs",
+        )
+
+        logger.debug(f"Workload finished for job {job.id}")
+
+        # Display the workload results
+        logger.info(f"Workload results : {workload.results}")
+
+        # Iter over the results
+        for i in range(0, len(message_ids)):
+            message_id = message_ids[i]
+            results = workload.results.get(message_id, {})
+            logger.debug(f"Results for message {message_id} : {results}")
+            for event_name, result in results.items():
+                # Store the LLM call in the database
+                metadata = result.metadata
+                llm_call = metadata.get("llm_call", None)
+                if llm_call is not None:
+                    llm_call_obj = LlmCall(
+                        **llm_call,
+                        org_id=task.org_id,
+                        task_id=tasks[i].id,
+                        job_id=result.job_id,
+                    )
+                    mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+                else:
+                    logger.warning(f"No LLM call detected for event {event_name}")
+
+                # When the event is detected, result is True
+                if result.value:
+                    logger.info(f"Event {event_name} detected for task {tasks[i].id}")
+                    # Get back the event definition from the job metadata
+                    metadata = workload.jobs[result.job_id].metadata
+                    event = EventDefinition(**metadata)
+                    # Push event to db
+                    detected_event_data = Event(
+                        event_name=event_name,
+                        # Events detected at the session scope are not linked to a task
+                        task_id=tasks[i].id,
+                        session_id=tasks[i].session_id,
+                        project_id=tasks[i].project_id,
+                        source=result.metadata.get("source", "phospho-unknown"),
+                        webhook=event.webhook,
+                        org_id=tasks[i].org_id,
+                        event_definition=event,
+                        task=tasks[i],
+                    )
+                    detected_events.append(detected_event_data)
+
+                    # Update the task object with the event
+                    await mongo_db["tasks"].update_one(
+                        {"id": tasks[i].id, "project_id": tasks[i].project_id},
+                        # Add the event to the list of events
+                        {"$addToSet": {"events": detected_event_data.model_dump()}},
+                    )
+                    # We do not trigger the webhook here, as the event is not detected in the context of a real time message
+
+                    # Update the Events collection with the new event
+                    await mongo_db["events"].insert_one(
+                        detected_event_data.model_dump()
+                    )
+
+                else:
+                    logger.info(
+                        f"Event {event_name} NOT detected for task {tasks[i].id}"
+                    )
+                    # Handle the case where the event is not detected, but was previously detected
+                    # We need to remove the event from the task document
+
+                    await mongo_db["tasks"].update_one(
+                        {"id": tasks[i].id, "project_id": tasks[i].project_id},
+                        # Remove the event from the list of events
+                        {"$pull": {"events": {"event_name": event_name}}},
+                    )
+
+                    # Try to delete the event from the Event collection
+                    await mongo_db["events"].delete_one(
+                        {"task_id": tasks[i].id, "event_name": event_name}
+                    )
+
+                # Save the prediction
+
+                prediction = await create_prediction(
+                    tasks[i].org_id,
+                    tasks[i].project_id,
+                    job.id,
+                    result.value,
+                    job.job_type,
+                    task_id=tasks[i].id,
+                )
+
+        # Store the new predictions in the database
+
+    else:
+        raise ValueError(f"Job type {job.job_type} not supported")

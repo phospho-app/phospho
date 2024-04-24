@@ -51,6 +51,8 @@ class LogEvent(MinimalLogEvent, extra="allow"):
     raw_output_type_name: Optional[str] = None
     # data
     environment: str = "default environment"
+    # Backcompute
+    job_ids: Optional[List[str]] = None
 
 
 class LogError(BaseModel):
