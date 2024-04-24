@@ -26,6 +26,21 @@ async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Proje
     for project_data in project_list:
         try:
             project = Project.from_previous(project_data)
+            for event_name, event in project.settings.events.items():
+                if not event.recipe_id:
+                    recipe = Recipe(
+                        org_id=project.org_id,
+                        project_id=project.id,
+                        recipe_type="event_detection",
+                        parameters=event.model_dump(),
+                    )
+                    mongo_db["recipes"].insert_one(recipe.model_dump())
+                    project.settings.events[event_name].recipe_id = recipe.id
+            if project.model_dump() != project_data:
+                mongo_db["projects"].update_one(
+                    {"_id": project_data["_id"]}, {"$set": project.model_dump()}
+                )
+
         except Exception as e:
             logger.warning(f"Error validating model of project {project_data.id}: {e}")
         projects.append(project)
