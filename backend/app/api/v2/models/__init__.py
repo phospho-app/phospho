@@ -11,6 +11,7 @@ from .events import (
 )
 from .log import LogError, LogEvent, LogReply, LogRequest, MinimalLogEvent
 from .projects import (
+    ComputeJobsRequest,
     EventDefinition,
     FlattenedTasksRequest,
     Project,

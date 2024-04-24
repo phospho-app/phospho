@@ -1,10 +1,9 @@
-from typing import Literal
+from typing import Literal, List
 from loguru import logger
 import time
 
-from app.db.models import Job, Task
+from app.db.models import Job, Task, ProjectDataFilters
 from app.db.mongo import get_mongo_db
-from app.services.mongo.extractor import run_job_on_tasks
 
 
 async def create_job(
@@ -36,53 +35,3 @@ async def create_job(
     )
 
     return job
-
-
-async def backcompute_job(
-    project_id: str,
-    job_id: str,
-    limit: int = 10000,
-    timestamp_limit: int = 1713885864 - 86400,  # Unix timestamp limit
-    # default to the implementation date of the feature: 1713885864 minus a day - 86400
-    wait_time: float = 10 / 10000,  # In seconds. We have a rate limit of 10k RPM
-) -> Job:
-    """
-    Run predictions for a job on all the tasks of a project that have not been processed yet.
-    """
-    mongo_db = await get_mongo_db()
-
-    # Get all the tasks of the project
-    tasks = (
-        await mongo_db["tasks"]
-        .find({"project_id": project_id, "created_at": {"$gt": timestamp_limit}})
-        .sort("timestamp", -1)
-        .to_list(limit)
-    )
-
-    # Make them Task objects
-    tasks = [Task(**task) for task in tasks]
-
-    # Get the job using it's id
-    job = await mongo_db["jobs"].find_one({"id": job_id})
-    # Make it a Job object
-    job = Job(**job)
-
-    # Display a warning if the number of tasks is greater than the limit
-    if len(tasks) >= limit:
-        logger.error(
-            f"Number of tasks {len(tasks)} is greater than the limit {limit}, only the first {limit} tasks will be processed"
-        )
-
-    # For each task, check if a prediction has a job_id and a task_id matching the task
-    tasks_to_process = []
-
-    for task in tasks:
-        # Make a call to the prediction collection in the database
-        prediction = await mongo_db["predictions"].find_one(
-            {"task_id": task.id, "job_id": job.id}
-        )
-        if prediction is None:
-            tasks_to_process.append(task)
-
-    # Send the task to the job pipeline of the extractor
-    await run_job_on_tasks(tasks_to_process, job)
