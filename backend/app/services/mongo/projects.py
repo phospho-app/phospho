@@ -55,6 +55,17 @@ async def get_project_by_id(project_id: str) -> Project:
 
     try:
         project = Project.from_previous(project_data)
+        for event_name, event in project.settings.events.items():
+            if not event.recipe_id:
+                recipe = Recipe(
+                    org_id=project.org_id,
+                    project_id=project.id,
+                    recipe_type="event_detection",
+                    parameters=event.model_dump(),
+                )
+                mongo_db["recipes"].insert_one(recipe.model_dump())
+                project.settings.events[event_name].recipe_id = recipe.id
+
         # If the project dict is different from project_data, update the project_data
         if project.model_dump() != project_data:
             mongo_db["projects"].update_one(
@@ -110,16 +121,15 @@ async def update_project(project: Project, **kwargs) -> Project:
         logger.debug(f"Creating project from previous data: {payload}")
 
         updated_project = Project.from_previous(updated_project_data)
-        if updated_project.settings.events:
-            for event_name, event in updated_project.settings.events.items():
-                recipe = Recipe(
-                    org_id=project.org_id,
-                    project_id=project.id,
-                    recipe_type="event_detection",
-                    parameters=event.model_dump(),
-                )
-                mongo_db["recipes"].insert_one(recipe.model_dump())
-                updated_project.settings.events[event_name].recipe_id = recipe.id
+        for event_name, event in updated_project.settings.events.items():
+            recipe = Recipe(
+                org_id=project.org_id,
+                project_id=project.id,
+                recipe_type="event_detection",
+                parameters=event.model_dump(),
+            )
+            mongo_db["recipes"].insert_one(recipe.model_dump())
+            updated_project.settings.events[event_name].recipe_id = recipe.id
 
         # Update the database
         update_result = await mongo_db["projects"].update_one(
