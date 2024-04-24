@@ -6,6 +6,7 @@ import datetime
 from enum import Enum
 from typing import Dict, List, Literal, Optional, Any, Union
 
+from loguru import logger
 from pydantic import BaseModel, Field, field_serializer
 
 from phospho.utils import generate_timestamp, generate_uuid
@@ -544,7 +545,6 @@ class JobResult(DatedBaseModel, extra="allow"):
     metadata: dict = Field(default_factory=dict)
     created_at: int = Field(default_factory=generate_timestamp)
     recipe_id: Optional[str] = None
-    recipe: Optional[Recipe] = None
     task_id: Optional[str] = None
 
 

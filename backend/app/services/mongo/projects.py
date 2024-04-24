@@ -103,9 +103,13 @@ async def update_project(project: Project, **kwargs) -> Project:
         for key, value in kwargs.items()
         if value is not None and key in Project.model_fields.keys()
     }
+    updated_project_data = project.model_dump()
+    updated_project_data.update(payload)
 
     if payload:
-        updated_project = Project.from_previous(payload)
+        logger.debug(f"Creating project from previous data: {payload}")
+
+        updated_project = Project.from_previous(updated_project_data)
         if updated_project.settings.events:
             for event_name, event in updated_project.settings.events.items():
                 recipe = Recipe(

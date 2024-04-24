@@ -148,7 +148,7 @@ async def run_event_detection_pipeline(
                     f"No job_id found for event {event_name}. Cannot save prediction."
                 )
             else:
-                mongo_db["job_result"].insert_one(result.model_dump())
+                mongo_db["job_results"].insert_one(result.model_dump())
 
     return events_per_task
 
@@ -256,7 +256,7 @@ async def task_event_detection_pipeline(
             logger.error(f"No job_id found for event {event_name}")
 
         else:
-            mongo_db["job_result"].insert_one(result.model_dump())
+            mongo_db["job_results"].insert_one(result.model_dump())
 
     if len(detected_events) > 0:
         mongo_db["events"].insert_many(
@@ -414,9 +414,8 @@ async def task_scoring_pipeline(
         task=task if not save_task else None,
     )
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
-
     # Save the prediction
-    mongo_db["job_result"].insert_one(job_result.model_dump())
+    mongo_db["job_results"].insert_one(job_result.model_dump())
 
     # Update the task object if the flag is None (no previous evaluation)
     if save_task:
@@ -575,7 +574,7 @@ async def messages_main_pipeline(
             logger.error(f"No job_id found for event {event_name}")
         else:
             # WARNING: task_id is not available in this context
-            mongo_db["job_result"].insert_one(result.model_dump())
+            mongo_db["job_results"].insert_one(result.model_dump())
 
     # Push the events to the database
     if len(events) > 0:
