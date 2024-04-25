@@ -59,9 +59,6 @@ class Job:
     workload: Optional["Workload"] = None
     sample: float = 1
 
-    recipe_id: Optional[str] = None
-    recipe_type: Optional[str] = None
-
     def __init__(
         self,
         id: Optional[str] = None,
@@ -76,8 +73,6 @@ class Job:
         metadata: Optional[Dict[str, Any]] = None,
         workload: Optional["Workload"] = None,
         sample: float = 1.0,
-        recipe_id: Optional[str] = None,
-        recipe_type: Optional[str] = None,
     ):
         """
         A job is a function that takes a message and a set of parameters and returns a result.
@@ -156,8 +151,6 @@ class Job:
         self.metadata = metadata
         self.workload = workload
         self.sample = sample
-        self.recipe_id = recipe_id
-        self.recipe_type = recipe_type
 
     async def async_run(self, message: Message) -> JobResult:
         """
@@ -184,15 +177,13 @@ class Job:
         if result is None:
             logger.error(f"Job {self.id} returned None for message {message.id}.")
             result = JobResult(
-                recipe_id=self.id,
                 result_type=ResultType.error,
                 value=None,
             )
 
         # Add the job_id to the result
         result.job_id = self.id
-        result.recipe_id = self.recipe_id
-        result.recipe_type = self.recipe_type
+        result.job_metadata = self.metadata
         # Store the result
         self.results[message.id] = result
 
@@ -223,13 +214,12 @@ class Job:
                     f"Job {self.id} returned None for message {message.id} on alternative config run."
                 )
                 job_result = JobResult(
-                    recipe_id=self.id,
                     result_type=ResultType.error,
                     value=None,
                 )
             # Add the job_id to the result
             job_result.job_id = self.id
-            job_result.recipe_id = self.recipe_id
+            job_result.job_metadata = self.metadata
             # Add the prediction to the alternative_results
             self.alternative_results[alternative_config_index][message.id] = job_result
 
@@ -433,8 +423,6 @@ class Workload:
                             event_scope=event.detection_scope,
                         ),
                         metadata=event.model_dump(),
-                        recipe_id=event.recipe_id,
-                        recipe_type="event_detection",
                     )
                 )
 
@@ -453,8 +441,6 @@ class Workload:
                             event_scope=event.detection_scope,
                         ),
                         metadata=event.model_dump(),
-                        recipe_id=event.recipe_id,
-                        recipe_type="event_detection",
                     )
                 )
 
@@ -473,8 +459,6 @@ class Workload:
                             event_scope=event.detection_scope,
                         ),
                         metadata=event.model_dump(),
-                        recipe_id=event.recipe_id,
-                        recipe_type="event_detection",
                     )
                 )
 
@@ -493,10 +477,18 @@ class Workload:
         """
         Create a workload from a phospho job (as defined is the database).
         """
-        event = EventDefinition(**recipe.parameters)
+        event = EventDefinition(
+            recipe_id=recipe.id,
+            recipe_type=recipe.recipe_type,
+            project_id=recipe.project_id,
+            org_id=recipe.org_id,
+            **recipe.parameters,
+        )
 
         if event.recipe_id is None:
             event.recipe_id = recipe.id
+        if event.recipe_type is None:
+            event.recipe_type = "event_detection"
 
         return Workload.from_phospho_events([event])
 

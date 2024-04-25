@@ -11,6 +11,19 @@ from pydantic import BaseModel, Field, field_serializer
 from phospho.utils import generate_timestamp, generate_uuid
 import json
 
+RecipeType = Literal["evaluation", "event_detection"]  # Add other job types here
+
+
+class ResultType(Enum):
+    error = "error"
+    bool = "bool"
+    literal = "literal"
+    list = "list"
+    dict = "dict"
+    string = "string"
+    number = "number"
+    object = "object"
+
 
 class DatedBaseModel(BaseModel):
     id: str = Field(default_factory=generate_uuid)
@@ -60,6 +73,7 @@ class EventDefinition(ProjectElementBaseModel):
     keywords: Optional[str] = None
     regex_pattern: Optional[str] = None
     recipe_id: Optional[str] = None  # Associated Recipe id
+    recipe_type: RecipeType = "event_detection"
 
 
 class Event(ProjectElementBaseModel):
@@ -514,9 +528,6 @@ class Message(DatedBaseModel):
         )
 
 
-RecipeType = Literal["evaluation", "event_detection"]  # Add other job types here
-
-
 class Recipe(ProjectElementBaseModel):
     status: Literal["enabled", "deleted"] = "enabled"
     recipe_type: RecipeType
@@ -524,27 +535,15 @@ class Recipe(ProjectElementBaseModel):
     parameters: dict = Field(default_factory=dict)
 
 
-class ResultType(Enum):
-    error = "error"
-    bool = "bool"
-    literal = "literal"
-    list = "list"
-    dict = "dict"
-    string = "string"
-    number = "number"
-    object = "object"
-
-
 class JobResult(DatedBaseModel, extra="allow"):
     org_id: Optional[str] = None
     project_id: Optional[str] = None
     job_id: Optional[str] = None
+    job_metadata: dict = Field(default_factory=dict)
     value: Any
     result_type: ResultType
     logs: List[Any] = Field(default_factory=list)
     metadata: dict = Field(default_factory=dict)
-    recipe_id: Optional[str] = None
-    recipe_type: Optional[RecipeType] = None
     task_id: Optional[str] = None
 
 
