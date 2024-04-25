@@ -845,38 +845,46 @@ async def get_total_nb_of_sessions(
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
         main_filter["created_at"] = {"$lte": created_at_end}
-    if event_name_filter is None:
-        total_nb_sessions = await mongo_db["sessions"].count_documents(main_filter)
-    else:
-        # Do an aggregate query
-        query_result = (
-            await mongo_db["sessions"]
-            .aggregate(
-                [
-                    {"$match": main_filter},
-                    {
-                        "$match": {
-                            "$and": [
-                                {"events": {"$ne": []}},
-                                {
-                                    "events": {
-                                        "$elemMatch": {
-                                            "event_name": {"$in": event_name_filter}
-                                        }
+
+    pipeline: List[Dict[str, object]] = [
+        {"$match": main_filter},
+    ]
+    if event_name_filter is not None:
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "events",
+                        "localField": "id",
+                        "foreignField": "session_id",
+                        "as": "events",
+                    }
+                },
+                {
+                    "$match": {
+                        "$and": [
+                            {"events": {"$ne": []}},
+                            {
+                                "events": {
+                                    "$elemMatch": {
+                                        "event_name": {"$in": event_name_filter}
                                     }
-                                },
-                            ]
-                        }
-                    },
-                    {"$count": "nb_sessions"},
-                ]
-            )
-            .to_list(length=1)
+                                }
+                            },
+                        ]
+                    }
+                },
+            ]
         )
-        if query_result is not None and len(query_result) > 0:
-            total_nb_sessions = query_result[0]["nb_sessions"]
-        else:
-            total_nb_sessions = 0
+    pipeline.append(
+        {"$count": "nb_sessions"},
+    )
+
+    query_result = await mongo_db["sessions"].aggregate(pipeline).to_list(length=1)
+    if query_result is not None and len(query_result) > 0:
+        total_nb_sessions = query_result[0]["nb_sessions"]
+    else:
+        total_nb_sessions = 0
     return total_nb_sessions
 
 
