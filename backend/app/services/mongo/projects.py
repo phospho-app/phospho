@@ -451,10 +451,7 @@ async def get_all_sessions(
                 **additional_sessions_filter.get("created_at", {}),
                 "$lte": sessions_filter.created_at_end,
             }
-        if sessions_filter.event_name is not None:
-            additional_sessions_filter["events.event_name"] = {
-                "$in": sessions_filter.event_name
-            }
+
         if sessions_filter.flag is not None:
             additional_sessions_filter["flag"] = sessions_filter.flag
 
@@ -466,7 +463,9 @@ async def get_all_sessions(
             }
         },
     ]
-    if get_events:
+    if get_events or (
+        sessions_filter is not None and sessions_filter.event_name is not None
+    ):
         pipeline.extend(
             [
                 {
@@ -492,6 +491,28 @@ async def get_all_sessions(
                 },
             ]
         )
+    if sessions_filter is not None and sessions_filter.event_name is not None:
+        pipeline.extend(
+            [
+                {
+                    "$match": {
+                        "$and": [
+                            {"events": {"$ne": []}},
+                            {
+                                "events": {
+                                    "$elemMatch": {
+                                        "event_name": {
+                                            "$in": sessions_filter.event_name
+                                        }
+                                    }
+                                }
+                            },
+                        ]
+                    },
+                },
+            ]
+        )
+
     if get_tasks or (
         sessions_filter is not None and sessions_filter.user_id is not None
     ):

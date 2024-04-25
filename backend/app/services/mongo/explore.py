@@ -236,19 +236,42 @@ async def get_success_rate_per_task_position(
         },
     ]
     if event_name_filter is not None:
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"tasks.events": {"$ne": []}},
-                        {
-                            "tasks.events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
-                    ]
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "events",
+                        "localField": "id",
+                        "foreignField": "session_id",
+                        "as": "events",
+                    }
                 },
-            },
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
+                    }
+                },
+                {
+                    "$match": {
+                        "$and": [
+                            {"events": {"$ne": []}},
+                            {
+                                "events": {
+                                    "$elemMatch": {
+                                        "event_name": {"$in": event_name_filter}
+                                    }
+                                }
+                            },
+                        ]
+                    },
+                },
+            ]
         )
     tasks_filter: Dict[str, object] = {"tasks": {"$ne": []}}
     # Filter on the flag
