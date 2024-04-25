@@ -115,7 +115,6 @@ export interface EventDefinition {
   keywords?: string;
   regex_pattern?: string;
   job_id?: string;
-  id?: string;
 }
 
 export interface ABTest {
