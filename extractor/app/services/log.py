@@ -396,7 +396,9 @@ async def process_log_with_session_id(
         )
         .to_list(length=len(list_of_log_event))
     )
-    sessions_id_already_in_db = [session["id"] for session in sessions_id_already_in_db]
+    sessions_id_already_in_db = [
+        str(session["id"]) for session in sessions_id_already_in_db
+    ]
 
     for log_event in list_of_log_event:
         if log_event.project_id is None:
