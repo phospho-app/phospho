@@ -14,7 +14,7 @@ import json
 RecipeType = Literal["evaluation", "event_detection"]  # Add other job types here
 
 
-class ResultType(Enum):
+class ResultType(str, Enum):
     error = "error"
     bool = "bool"
     literal = "literal"
