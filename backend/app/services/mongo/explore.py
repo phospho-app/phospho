@@ -900,7 +900,6 @@ async def get_global_average_session_length(
     mongo_db = await get_mongo_db()
     main_filter: Dict[str, object] = {
         "project_id": project_id,
-        "session_id": {"$ne": None},
     }
     # Time range filter
     if created_at_start is not None:
@@ -911,32 +910,44 @@ async def get_global_average_session_length(
         {"$match": main_filter},
     ]
     if event_name_filter is not None:
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
-                    ]
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "events",
+                        "localField": "id",
+                        "foreignField": "session_id",
+                        "as": "events",
+                    }
                 },
-            },
+                {
+                    "$match": {
+                        "$and": [
+                            {"events": {"$ne": []}},
+                            {"events.removed": {"$ne": True}},
+                            {
+                                "events": {
+                                    "$elemMatch": {
+                                        "event_name": {"$in": event_name_filter}
+                                    }
+                                }
+                            },
+                        ]
+                    },
+                },
+            ]
         )
     result = (
-        await mongo_db["tasks"]
+        await mongo_db["sessions"]
         .aggregate(
             pipeline
             + [
                 {
                     "$group": {
-                        "_id": "$session_id",
-                        "nb_tasks": {"$sum": 1},
+                        "_id": None,
+                        "avg_session_length": {"$avg": "$session_length"},
                     }
                 },
-                {"$group": {"_id": None, "avg_session_length": {"$avg": "$nb_tasks"}}},
                 {"$project": {"_id": 0, "avg_session_length": 1}},
             ]
         )
