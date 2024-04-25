@@ -363,6 +363,9 @@ async def task_scoring_pipeline(
             },
         )
     )
+    workload.org_id = task.org_id
+    workload.project_id = task.project_id
+
     # Convert to a list of messages
     message = lab.Message.from_task(
         task=task,
@@ -590,6 +593,8 @@ async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
         )
 
         workload = lab.Workload.from_phospho_recipe(recipe)
+        workload.org_id = recipe.org_id
+        workload.project_id = recipe.project_id
 
         # display the jobs
         logger.info(f"Jobs for the workload: {workload.jobs}")
