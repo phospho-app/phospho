@@ -3,7 +3,6 @@
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -25,6 +24,7 @@ import {
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Pencil, Trash } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 
@@ -54,15 +54,20 @@ function EventRow({
   eventName,
   eventDefinition,
   handleDeleteEvent,
+  handleOnClick,
 }: {
   eventName: string;
   eventDefinition: any;
   handleDeleteEvent: (eventNameToDelete: string) => void;
+  handleOnClick: (eventName: string) => void;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <TableRow>
+    <TableRow
+      onClick={() => handleOnClick(eventName)}
+      className="cursor-pointer"
+    >
       <TableCell>{eventName}</TableCell>
       <TableCell className="text-left">{eventDefinition.description}</TableCell>
       <TableCell className="text-left">
@@ -115,6 +120,7 @@ function EventsList() {
 
   const events = selectedProject?.settings?.events || {};
   const eventArray = Object.entries(events);
+  const router = useRouter();
 
   // Deletion event
   const handleDeleteEvent = async (eventNameToDelete: string) => {
@@ -145,6 +151,17 @@ function EventsList() {
     }
   };
 
+  const handleOnClick = (eventName: string) => {
+    if (!selectedProject?.settings) {
+      return;
+    }
+    const eventId = selectedProject.settings.events[eventName].id;
+    if (eventId === undefined) {
+      return;
+    }
+    router.push(`/org/insights/events/${encodeURI(eventId)}`);
+  };
+
   return (
     <>
       <Card className="mt-4">
@@ -167,6 +184,7 @@ function EventsList() {
                     eventName={eventName}
                     eventDefinition={eventDefinition}
                     handleDeleteEvent={handleDeleteEvent}
+                    handleOnClick={handleOnClick}
                   />
                 ))}
               </TableBody>

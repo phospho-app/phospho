@@ -54,8 +54,6 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
             await suggestion_response.json();
           form.setValue("event_name", eventName);
           form.setValue("description", eventDescription);
-          console.log("Fetched event name:", eventName);
-          console.log("Fetched event description:", eventDescription);
         } else {
           console.error(
             "Failed to fetch event description:",
