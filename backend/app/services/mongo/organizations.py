@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from phospho.models import Recipe
 import pydantic
 from fastapi import HTTPException
 from loguru import logger
@@ -8,7 +9,6 @@ from app.db.models import Project
 from app.db.mongo import get_mongo_db
 from app.core import config
 from app.security.authentification import propelauth
-from app.services.mongo.jobs import create_job
 
 
 async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Project]:
@@ -22,28 +22,29 @@ async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Proje
         .to_list(length=limit)
     )
     # Add event_name if not present
+    projects = []
     for project_data in project_list:
-        if (
-            "settings" in project_data.keys()
-            and "events" in project_data["settings"].keys()
-        ):
-            for event_name, event in project_data["settings"]["events"].items():
-                if "event_name" not in event.keys():
-                    project_data["settings"]["events"][event_name]["event_name"] = (
-                        event_name
+        try:
+            project = Project.from_previous(project_data)
+            for event_name, event in project.settings.events.items():
+                if not event.recipe_id:
+                    recipe = Recipe(
+                        org_id=project.org_id,
+                        project_id=project.id,
+                        recipe_type="event_detection",
+                        parameters=event.model_dump(),
                     )
-                    # Update the project
-                    mongo_db["projects"].update_one(
-                        {"_id": project_data["_id"]},
-                        {
-                            "$set": {
-                                "settings.events": project_data["settings"]["events"]
-                            }
-                        },
-                    )
+                    mongo_db["recipes"].insert_one(recipe.model_dump())
+                    project.settings.events[event_name].recipe_id = recipe.id
+            if project.model_dump() != project_data:
+                mongo_db["projects"].update_one(
+                    {"_id": project_data["_id"]}, {"$set": project.model_dump()}
+                )
 
-    # Convert to a list of Project objects
-    projects = [Project.model_validate(project) for project in project_list]
+        except Exception as e:
+            logger.warning(f"Error validating model of project {project_data.id}: {e}")
+        projects.append(project)
+
     return projects
 
 
@@ -64,21 +65,23 @@ async def create_project_by_org(org_id: str, user_id: str, **kwargs) -> Project:
             status_code=400, detail=f"Error while creating project: {e}"
         )
 
+    mongo_db = await get_mongo_db()
+
     # If some events are created, first let's create the coresponding Jobs objects
     # Let's get the events in the settings
     if project.settings.events:
         for event_name, event in project.settings.events.items():
-            job = await create_job(
-                org_id,
+            recipe = Recipe(
+                org_id=org_id,
                 project_id=project.id,
-                job_type="event_detection",
+                recipe_type="event_detection",
                 parameters=event.model_dump(),
             )
+            mongo_db["recipes"].insert_one(recipe.model_dump())
             # Update the settings with the job_id
-            project.settings.events[event_name].job_id = job.id
+            project.settings.events[event_name].recipe_id = recipe.id
 
     # Create the corresponding jobs based on the project settings
-    mongo_db = await get_mongo_db()
     result = await mongo_db["projects"].insert_one(project.model_dump())
 
     return project

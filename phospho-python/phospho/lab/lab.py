@@ -31,7 +31,9 @@ from .models import (
     Message,
     Project,
     ResultType,
+    Recipe,
 )
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -107,6 +109,8 @@ class Job:
         :param metadata: Extra metadata to store with the job.
         :param workload: The workload to which the job belongs. This is useful to access the results of other jobs.
         :param sample: The sample rate of the job. If the sample rate is 0.5, the job will run on 50% of the messages.
+        :param recipe_id: The id of the recipe that created the job. This is useful to track the origin of the job.
+        :param recipe_type: The type of the recipe that created the job.
         """
 
         if job_function is None and name is None:
@@ -173,13 +177,13 @@ class Job:
         if result is None:
             logger.error(f"Job {self.id} returned None for message {message.id}.")
             result = JobResult(
-                job_id=self.id,
                 result_type=ResultType.error,
                 value=None,
             )
 
         # Add the job_id to the result
         result.job_id = self.id
+        result.job_metadata = self.metadata
         # Store the result
         self.results[message.id] = result
 
@@ -201,23 +205,23 @@ class Job:
         for alternative_config_index in range(0, len(self.alternative_configs)):
             params = self.alternative_configs[alternative_config_index].model_dump()
             if asyncio.iscoroutinefunction(self.job_function):
-                prediction = await self.job_function(message, **params)
+                job_result = await self.job_function(message, **params)
             else:
-                prediction = self.job_function(message, **params)
+                job_result = self.job_function(message, **params)
 
-            if prediction is None:
+            if job_result is None:
                 logger.error(
                     f"Job {self.id} returned None for message {message.id} on alternative config run."
                 )
-                prediction = JobResult(
-                    job_id=self.id,
+                job_result = JobResult(
                     result_type=ResultType.error,
                     value=None,
                 )
             # Add the job_id to the result
-            prediction.job_id = self.id
+            job_result.job_id = self.id
+            job_result.job_metadata = self.metadata
             # Add the prediction to the alternative_results
-            self.alternative_results[alternative_config_index][message.id] = prediction
+            self.alternative_results[alternative_config_index][message.id] = job_result
 
         return self.alternative_results
 
@@ -305,6 +309,9 @@ class Workload:
     _results: Optional[Dict[str, Dict[str, JobResult]]]
 
     _valid_project_events: Optional[Dict[str, EventDefinition]] = None
+
+    project_id: Optional[str] = None
+    org_id: Optional[str] = None
 
     def __init__(self, jobs: Optional[List[Job]] = None):
         """
@@ -395,24 +402,14 @@ class Workload:
         return cls.from_config(config)
 
     @classmethod
-    def from_phospho_project_config(
-        cls,
-        project_config: Project,
-    ):
-        """
-        Create a workload from a phospho project configuration.
-
-        To fetch the project configuration, look at `Workload.from_phospho()`
-        """
-        project_events = project_config.settings.events
-        if project_events is None:
-            logger.warning(f"Project with id {project_config.id} has no event setup")
-            return cls()
-
+    def from_phospho_events(cls, events: List[EventDefinition]) -> "Workload":
         workload = cls()
-        # Create the jobs from the configuration
-        for event_name, event in project_events.items():
-            logger.debug(f"Add event detection job for event {event_name}")
+
+        for event in events:
+            event_name = event.event_name
+            workload.project_id = event.project_id
+
+            logger.debug(f"Add event detection job for event {event.event_name}")
 
             # We stick to the LLM detection engine
             if event.detection_engine == "llm_detection":
@@ -430,7 +427,10 @@ class Workload:
                 )
 
             # We use a keyword detection engine
-            elif event.detection_engine == "keyword_detection":
+            elif (
+                event.detection_engine == "keyword_detection"
+                and event.keywords is not None
+            ):
                 workload.add_job(
                     Job(
                         id=event_name,
@@ -445,7 +445,10 @@ class Workload:
                 )
 
             # We use a regex pattern to detect the event
-            elif event.detection_engine == "regex_detection":
+            elif (
+                event.detection_engine == "regex_detection"
+                and event.regex_pattern is not None
+            ):
                 workload.add_job(
                     Job(
                         id=event_name,
@@ -461,9 +464,52 @@ class Workload:
 
             else:
                 logger.warning(
-                    f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}, project {project_config.id}"
+                    f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}"
                 )
 
+        return workload
+
+    @classmethod
+    def from_phospho_recipe(
+        cls,
+        recipe: Recipe,
+    ):
+        """
+        Create a workload from a phospho job (as defined is the database).
+        """
+        event = EventDefinition(
+            recipe_id=recipe.id,
+            recipe_type=recipe.recipe_type,
+            project_id=recipe.project_id,
+            org_id=recipe.org_id,
+            **recipe.parameters,
+        )
+
+        if event.recipe_id is None:
+            event.recipe_id = recipe.id
+        if event.recipe_type is None:
+            event.recipe_type = "event_detection"
+
+        return Workload.from_phospho_events([event])
+
+    @classmethod
+    def from_phospho_project_config(
+        cls,
+        project_config: Project,
+    ):
+        """
+        Create a workload from a phospho project configuration.
+
+        To fetch the project configuration, look at `Workload.from_phospho()`
+        """
+        project_events = project_config.settings.events
+        if project_events is None:
+            logger.warning(f"Project with id {project_config.id} has no event setup")
+            return cls()
+
+        workload = cls.from_phospho_events(list(project_events.values()))
+        workload.project_id = project_config.id
+        workload.org_id = project_config.org_id
         return workload
 
     @classmethod
@@ -639,6 +685,12 @@ class Workload:
         if self._results is None:
             logger.warning("Results are not available. Please run the workload first.")
             return None
+        # Mark all the jobs with org_id and project_id
+        if self.org_id is not None or self.project_id is not None:
+            for job_id, job in self.jobs.items():
+                for message_id, job_result in job.results.items():
+                    job_result.org_id = self.org_id
+                    job_result.project_id = self.project_id
         return self._results
 
     @results.setter

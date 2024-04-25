@@ -246,8 +246,8 @@ class Client:
                 )
 
         self._post(
-            f"/backfill/{self._project_id()}",
-            payload={"tasks": [task.model_dump() for task in tasks]},
+            f"/log/{self._project_id()}",
+            payload={"batched_log_events": [task.model_dump() for task in tasks]},
         )
 
         return None

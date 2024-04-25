@@ -52,14 +52,7 @@ function EventDisplay({
   );
 }
 
-const dummyEventDefinitions: EventDefinition[] = [
-  {
-    event_name: "thank you",
-    description: "The user said thank you to the assistant",
-    detection_scope: DetectionScope.Task,
-    detection_engine: DetectionEngine.LLM,
-  },
-];
+const dummyEventDefinitions: EventDefinition[] = [];
 
 export default function AddEvents({
   project_id,
