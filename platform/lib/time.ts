@@ -23,7 +23,7 @@ export function formatUnixTimestampToLiteralDatetime(
   if (isNaN(date.getTime())) {
     return "Invalid date";
   }
-  return format(date, "yyyy-MMM-dd HH:mm:ssX");
+  return format(date, "yyyy MMMM dd, HH:mm:ss");
 }
 
 // Convert to the ISO standard

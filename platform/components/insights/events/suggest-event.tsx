@@ -132,7 +132,13 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
       delete selectedProject.settings.events[event.event_name];
     }
 
+    if (!selectedProject.settings.events) {
+      selectedProject.settings.events = {};
+    }
+
     selectedProject.settings.events[values.event_name] = {
+      project_id: selectedProject.id,
+      org_id: selectedProject.org_id,
       event_name: values.event_name,
       description: values.description,
       webhook: values.webhook,

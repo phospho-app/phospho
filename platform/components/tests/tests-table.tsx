@@ -63,22 +63,20 @@ export function DataTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       header: "Date",
       accessorKey: "created_at",
       cell: ({ row }) => (
-        <span>
+        <div>
           {formatUnixTimestampToLiteralDatetime(
             Number(row.original.created_at),
           )}
-        </span>
+        </div>
       ),
     },
     {
       header: "Status",
       accessorKey: "status",
       cell: (row) => (
-        <span>
-          <Badge variant={getVariant(row.getValue() as string)}>
-            {row.getValue() as string}
-          </Badge>
-        </span>
+        <Badge variant={getVariant(row.getValue() as string)}>
+          {row.getValue() as string}
+        </Badge>
       ),
     },
     {

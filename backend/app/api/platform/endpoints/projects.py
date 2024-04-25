@@ -334,7 +334,10 @@ async def suggest_events(
     propelauth.require_org_member(user, project.org_id)
     await store_onboarding_survey(project_id, user, survey.model_dump())
     event_suggestions, phospho_task_id = await suggest_events_for_use_case(
-        project_id=project_id, **survey.model_dump(), user_id=user.email
+        project_id=project_id,
+        org_id=project.org_id,
+        **survey.model_dump(),
+        user_id=user.email,
     )
     response = OnboardingSurveyResponse(
         suggested_events=event_suggestions, phospho_task_id=phospho_task_id

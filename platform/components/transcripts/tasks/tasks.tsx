@@ -105,12 +105,9 @@ const Tasks: React.FC = () => {
           </CardHeader>
         </Card>
       )}
-      <div className="hidden h-full flex-1 flex-col space-y-8 p-2 md:flex mx-2 relative">
-        <div className="container px-0 space-y-2">
-          <TasksDataviz />
-          <TasksTable />
-          <div className="h-20"></div>
-        </div>
+      <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
+        <TasksDataviz />
+        <TasksTable />
       </div>
     </>
   );

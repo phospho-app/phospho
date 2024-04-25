@@ -12,32 +12,14 @@ from phospho.models import (
     Session,
     DetectionScope,
     Message,
+    JobResult,
+    ResultType,
+    Recipe,
 )
-from phospho.utils import generate_timestamp
 
 from .utils import get_literal_values
 
 logger = logging.getLogger(__name__)
-
-
-class ResultType(Enum):
-    error = "error"
-    bool = "bool"
-    literal = "literal"
-    list = "list"
-    dict = "dict"
-    string = "string"
-    number = "number"
-    object = "object"
-
-
-class JobResult(BaseModel, extra="allow"):
-    value: Any
-    result_type: ResultType
-    logs: List[Any] = Field(default_factory=list)
-    metadata: dict = Field(default_factory=dict)
-    created_at: int = Field(default_factory=generate_timestamp)
-    job_id: Optional[str] = None
 
 
 class JobConfig(BaseModel, extra="allow"):
@@ -86,12 +68,14 @@ class JobConfig(BaseModel, extra="allow"):
 
 
 class EventDetectionConfig(JobConfig):
-    model: Literal["gpt-4-turbo", "gpt-3.5-turbo"] = "gpt-4"  # OpenAI model name
+    # OpenAI model name
+    model: Literal["gpt-4-turbo", "gpt-3.5-turbo", "gpt-4"] = "gpt-4"
     # instruction: str
 
 
 class EvalConfig(JobConfig):
-    model: Literal["gpt-4-turbo", "gpt-3.5-turbo"] = "gpt-4"  # OpenAI model name
+    # OpenAI model name
+    model: Literal["gpt-4-turbo", "gpt-3.5-turbo", "gpt-4"] = "gpt-4"
     metadata: dict = Field(default_factory=dict)
 
 

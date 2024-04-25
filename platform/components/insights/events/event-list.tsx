@@ -14,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -21,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Pencil, Trash } from "lucide-react";
@@ -78,18 +80,20 @@ function EventRow({
         )}
       </TableCell>
       <TableCell className="text-right">
-        <AlertDialog open={open} onOpenChange={setOpen} key={eventName}>
+        <Sheet open={open} onOpenChange={setOpen} key={eventName}>
           <DropdownMenu>
-            <DropdownMenuTrigger className="hover:text-accent-foreground">
-              <EllipsisVertical />
+            <DropdownMenuTrigger>
+              <Button size="icon" variant="ghost">
+                <EllipsisVertical />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <AlertDialogTrigger asChild>
+              <SheetTrigger asChild>
                 <DropdownMenuItem>
                   <Pencil className="w-4 h-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
-              </AlertDialogTrigger>
+              </SheetTrigger>
 
               <DropdownMenuItem
                 className=" text-red-500"
@@ -99,14 +103,14 @@ function EventRow({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <AlertDialogContent className="md:w-1/2">
+          <SheetContent className="md:w-1/2">
             <CreateEvent
               setOpen={setOpen}
               eventNameToEdit={eventName}
               key={eventName}
             />
-          </AlertDialogContent>
-        </AlertDialog>
+          </SheetContent>
+        </Sheet>
       </TableCell>
     </TableRow>
   );
