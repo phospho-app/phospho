@@ -1678,6 +1678,37 @@ async def get_success_rate_by_event_name(
     return result
 
 
+async def get_total_nb_of_detections(
+    project_id: str,
+    event_name_filter: Optional[List[str]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
+) -> int:
+    """
+    Get the total number of detections of a project. Uses the
+    job_results collection.
+    """
+    mongo_db = await get_mongo_db()
+    main_filter: Dict[str, object] = {"project_id": project_id}
+    # Time range filter
+    if created_at_start is not None:
+        main_filter["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        main_filter["created_at"] = {"$lte": created_at_end}
+    if event_name_filter is not None:
+        main_filter["job_metadata.event_name"] = {"$in": event_name_filter}
+    pipeline: List[Dict[str, object]] = [
+        {"$match": main_filter},
+        {"$count": "nb_detections"},
+    ]
+    query_result = await mongo_db["job_results"].aggregate(pipeline).to_list(length=1)
+    if query_result is not None and len(query_result) > 0:
+        total_nb_detections = query_result[0]["nb_detections"]
+    else:
+        total_nb_detections = 0
+    return total_nb_detections
+
+
 async def get_events_aggregated_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
@@ -1694,7 +1725,13 @@ async def get_events_aggregated_metrics(
         output["success_rate_by_event_name"] = await get_success_rate_by_event_name(
             project_id=project_id,
         )
-    output["total_nb_events"] = 123456789
+    if "total_nb_events" in metrics:
+        output["total_nb_events"] = await get_total_nb_of_detections(
+            project_id=project_id,
+            event_name_filter=event_name_filter,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
+        )
     return output
 
 
