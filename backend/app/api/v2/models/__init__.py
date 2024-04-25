@@ -1,5 +1,3 @@
-from .batckfill import BackfillBatchRequest
-
 from .evals import Comparison, ComparisonQuery, Eval
 from .events import (
     DetectEventInMessagesRequest,
@@ -11,6 +9,7 @@ from .events import (
 )
 from .log import LogError, LogEvent, LogReply, LogRequest, MinimalLogEvent
 from .projects import (
+    ComputeJobsRequest,
     EventDefinition,
     FlattenedTasksRequest,
     Project,

@@ -66,7 +66,7 @@ const TasksDataviz: React.FC = () => {
   const dateRange = navigationStateStore((state) => state.dateRange);
 
   let flagFilter: string | null = null;
-  let eventFilter: string | null = null;
+  let eventFilter: string[] | null = null;
   for (let filter of tasksColumnsFilters) {
     if (
       filter.id === "flag" &&
@@ -74,11 +74,10 @@ const TasksDataviz: React.FC = () => {
     ) {
       flagFilter = filter?.value;
     }
-    if (
-      filter.id === "events" &&
-      (typeof filter?.value === "string" || filter?.value === null)
-    ) {
-      eventFilter = filter?.value;
+    if (filter.id === "events" && typeof filter?.value === "string") {
+      eventFilter = [filter?.value];
+    } else {
+      eventFilter = null;
     }
   }
 

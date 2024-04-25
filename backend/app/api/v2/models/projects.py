@@ -50,3 +50,8 @@ class FlattenedTasksRequest(BaseModel):
     limit: int = 1000
     with_events: bool = True
     with_sessions: bool = True
+
+
+class ComputeJobsRequest(BaseModel):
+    job_ids: List[str]
+    filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)

@@ -9,7 +9,7 @@ const Authenticate: React.FC = () => {
   return (
     <>
       <div className="hidden"></div>
-      <div className="h-screen container relative h-[800px] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+      <div className="h-screen container relative h-[800px] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0 lg:mx-0">
         {/*<Link
               href="/dashboard"
               className={cn(

@@ -19,21 +19,13 @@ import { Task, TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
-  SortingState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  ChevronFirstIcon,
-  ChevronLastIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  FilterX,
-} from "lucide-react";
+import { FilterX } from "lucide-react";
 import { Database, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -100,7 +92,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       }
     }
   }
-  const { data: tasksData } = useSWR(
+  const { data: tasksData, mutate: mutateTasks } = useSWR(
     project_id
       ? [
           `/api/projects/${project_id}/tasks`,
@@ -196,7 +188,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     setIsLoading(false);
   };
 
-  const columns = getColumns();
+  const columns = getColumns({ mutateTasks: mutateTasks });
 
   const table = useReactTable({
     data: tasksWithEvents,

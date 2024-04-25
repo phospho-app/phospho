@@ -18,27 +18,18 @@ import { SessionWithEvents } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
-  SortingState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  ChevronFirstIcon,
-  ChevronLastIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  Database,
-  FilterX,
-  Sparkles,
-} from "lucide-react";
+import { Database, FilterX, Sparkles } from "lucide-react";
+import { warnOptionHasBeenMovedOutOfExperimental } from "next/dist/server/config";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 
 import { getColumns } from "./sessions-table-columns";
 
@@ -93,7 +84,7 @@ export function SessionsTable<TData, TValue>({
     }
   }
   console.log("Event filter:", eventFilter);
-  const { data: sessionsData } = useSWR(
+  const { data: sessionsData, mutate: mutateSessions } = useSWR(
     project_id
       ? [
           `/api/projects/${project_id}/sessions`,
@@ -174,7 +165,7 @@ export function SessionsTable<TData, TValue>({
     setIsLoading(false);
   };
 
-  const columns = getColumns();
+  const columns = getColumns({ mutateSessions: mutateSessions });
 
   const table = useReactTable({
     data: sessionsWithEvents,
