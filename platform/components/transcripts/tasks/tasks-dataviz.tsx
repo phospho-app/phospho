@@ -67,15 +67,15 @@ const TasksDataviz: React.FC = () => {
 
   let flagFilter: string | null = null;
   let eventFilter: string[] | null = null;
-  for (let filter of tasksColumnsFilters) {
-    if (
-      filter.id === "flag" &&
-      (typeof filter?.value === "string" || filter?.value === null)
-    ) {
-      flagFilter = filter?.value;
+
+  console.log("tasksColumnsFilters", tasksColumnsFilters);
+
+  for (const [key, value] of Object.entries(tasksColumnsFilters)) {
+    if (key === "flag" && (typeof value === "string" || value === null)) {
+      flagFilter = value;
     }
-    if (filter.id === "events" && typeof filter?.value === "string") {
-      eventFilter = [filter?.value];
+    if (key === "events" && typeof value === "string") {
+      eventFilter = [value];
     } else {
       eventFilter = null;
     }

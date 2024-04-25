@@ -2,6 +2,7 @@
 
 import { DatePickerWithRange } from "@/components/date-range";
 import DownloadButton from "@/components/download-csv";
+import FilterComponent from "@/components/filters";
 import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const dateRange = navigationStateStore((state) => state.dateRange);
 
   const [query, setQuery] = useState("");
-  const { user, loading, accessToken } = useUser();
+  const { accessToken } = useUser();
   const [isLoading, setIsLoading] = useState(false);
 
   const tasksPagination = navigationStateStore(
@@ -74,24 +75,18 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   // Fetch all tasks
   let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
-  if (tasksColumnsFilters.length > 0) {
-    console.log("tasksColumnsFilters", tasksColumnsFilters);
-    for (let filter of tasksColumnsFilters) {
-      if (
-        filter.id === "flag" &&
-        (typeof filter?.value === "string" || filter?.value === null)
-      ) {
-        flagFilter = filter?.value;
-      }
-      if (filter.id === "events") {
-        if (typeof filter?.value === "string") {
-          eventFilter = [filter.value];
-        } else {
-          eventFilter = null;
-        }
-      }
+
+  for (const [key, value] of Object.entries(tasksColumnsFilters)) {
+    if (key === "flag" && (typeof value === "string" || value === null)) {
+      flagFilter = value;
+    }
+    if (key === "events" && typeof value === "string") {
+      eventFilter = [value];
+    } else {
+      eventFilter = null;
     }
   }
+
   const { data: tasksData, mutate: mutateTasks } = useSWR(
     project_id
       ? [
@@ -163,8 +158,6 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     ? Math.ceil(totalNbTasks / tasksPagination.pageSize)
     : -1;
 
-  // console.log("taskscolumnsFilters", tasksColumnsFilters);
-
   const query_tasks = async () => {
     // Call the /search endpoint
     setIsLoading(true);
@@ -201,7 +194,6 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: setTasksPagination,
     state: {
-      columnFilters: tasksColumnsFilters,
       sorting: tasksSorting,
       pagination: tasksPagination,
     },
@@ -295,6 +287,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
         <TableNavigation table={table} />
       </div>
 
+      <FilterComponent />
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -350,7 +344,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No task found.
+                  No tasks found.
                 </TableCell>
               </TableRow>
             )}
