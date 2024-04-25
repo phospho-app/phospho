@@ -1639,6 +1639,9 @@ async def get_success_rate_by_event_name(
 async def get_events_aggregated_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
+    event_name_filter: Optional[List[str]] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> Dict[str, object]:
     if metrics is None:
         metrics = [
@@ -1649,6 +1652,7 @@ async def get_events_aggregated_metrics(
         output["success_rate_by_event_name"] = await get_success_rate_by_event_name(
             project_id=project_id,
         )
+    output["total_nb_events"] = 123456789
     return output
 
 

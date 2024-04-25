@@ -71,9 +71,9 @@ async def get_project_by_id(project_id: str) -> Project:
     ):
         for event_name, event in project_data["settings"]["events"].items():
             if "event_name" not in event.keys():
-                project_data["settings"]["events"][event_name][
-                    "event_name"
-                ] = event_name
+                project_data["settings"]["events"][event_name]["event_name"] = (
+                    event_name
+                )
                 mongo_db["projects"].update_one(
                     {"_id": project_data["_id"]},
                     {"$set": {"settings.events": project_data["settings"]["events"]}},
@@ -144,9 +144,7 @@ async def update_project(project: Project, **kwargs) -> Project:
         logger.debug(f"Update project {project.id} with payload {payload}")
 
         # Update the database
-        update_result = await mongo_db["projects"].update_one(
-            {"id": project.id}, {"$set": payload}
-        )
+        _ = await mongo_db["projects"].update_one({"id": project.id}, {"$set": payload})
 
     updated_project = await get_project_by_id(project.id)
     return updated_project
