@@ -65,13 +65,12 @@ const SessionsDataviz: React.FC = () => {
   );
   const dateRange = navigationStateStore((state) => state.dateRange);
 
-  let eventFilter: string | null = null;
+  let eventFilter: string[] | null = null;
   for (let filter of sessionsColumnsFilters) {
-    if (
-      filter.id === "events" &&
-      (typeof filter.value === "string" || filter.value === null)
-    ) {
-      eventFilter = filter.value;
+    if (filter.id === "events" && typeof filter.value === "string") {
+      eventFilter = [filter.value];
+    } else {
+      eventFilter = null;
     }
   }
 
