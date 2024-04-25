@@ -133,7 +133,7 @@ async def update_project(project: Project, **kwargs) -> Project:
             updated_project.settings.events[event_name].recipe_id = recipe.id
 
         # Update the database
-        update_result = await mongo_db["projects"].update_one(
+        _ = await mongo_db["projects"].update_one(
             {"id": project.id}, {"$set": updated_project.model_dump()}
         )
 
@@ -907,24 +907,21 @@ async def backcompute_recipe(job_id: str, tasks: List[Task]) -> None:
     """
     mongo_db = await get_mongo_db()
 
-    # Get the job using it's id
-    job = await mongo_db["recipes"].find_one({"id": job_id})
-    # Make it a Job object
-    job = Job(**job)
+    recipe = await mongo_db["recipes"].find_one({"id": job_id})
+    recipe = Recipe.model_validate(recipe)
 
     # For each task, check if a prediction has a job_id and a task_id matching the task
     tasks_to_process = []
 
     for task in tasks:
-        # Make a call to the prediction collection in the database
-        prediction = await mongo_db["predictions"].find_one(
-            {"task_id": task.id, "job_id": job.id}
+        prediction = await mongo_db["job_results"].find_one(
+            {"task_id": task.id, "job_metadata.recipe_id": recipe.id}
         )
         if prediction is None:
             tasks_to_process.append(task)
 
     # Send the task to the job pipeline of the extractor
-    await run_recipe_on_tasks(tasks_to_process, job)
+    await run_recipe_on_tasks(tasks_to_process, recipe)
 
 
 async def backcompute_recipes(
