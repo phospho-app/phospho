@@ -365,6 +365,10 @@ async def task_scoring_pipeline(
         lab.Job(
             id="evaluate_task",
             job_function=lab.job_library.evaluate_task,
+            metadata={
+                "recipe_id": "generic_evaluation",
+                "recipe_type": "evaluation",
+            },
         )
     )
     # Convert to a list of messages
@@ -413,7 +417,6 @@ async def task_scoring_pipeline(
     )
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
     # Save the prediction
-    job_result.recipe_type = "evaluation"
     job_result.task_id = task.id
     mongo_db["job_results"].insert_one(job_result.model_dump())
 
