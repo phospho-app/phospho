@@ -5,61 +5,47 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
-import { navigationStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
 import useSWR from "swr";
 
-interface EventAnalyticsProps {
-  eventId: string;
-}
-
-const EventAnalytics: React.FC<EventAnalyticsProps> = (event) => {
+function EventAnalytics({ eventId }: { eventId: string }) {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-  const sessionsColumnsFilters = navigationStateStore(
-    (state) => state.sessionsColumnsFilters,
-  );
+  const selectedProject = dataStateStore((state) => state.selectedProject);
   const dateRange = navigationStateStore((state) => state.dateRange);
 
-  let eventFilter: string | null = null;
-  for (let filter of sessionsColumnsFilters) {
-    if (
-      filter.id === "events" &&
-      (typeof filter.value === "string" || filter.value === null)
-    ) {
-      eventFilter = filter.value;
-    }
-  }
-
-  const sessionsFilters = {
-    event_name: eventFilter,
-    created_at_start: dateRange?.created_at_start,
-    created_at_end: dateRange?.created_at_end,
+  const eventFilters = {
+    // created_at_start: dateRange?.created_at_start,
+    // created_at_end: dateRange?.created_at_end,
   };
 
-  if (!project_id) {
+  if (!project_id || !selectedProject) {
     return <></>;
   }
 
-  const { data: totalNbSessionsData } = useSWR(
+  const { data: totalNbDetections } = useSWR(
     [
-      `/api/explore/${encodeURI(project_id)}/${encodeURI(event.eventId)}/aggregated/detections`,
+      `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
       accessToken,
       "total_nb_events",
-      JSON.stringify(sessionsFilters),
+      JSON.stringify(eventFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_events"],
-        sessions_filter: sessionsFilters,
       }),
     {
       keepPreviousData: true,
     },
   );
-  console.log(totalNbSessionsData);
-  const NbEventsDetected = totalNbSessionsData?.total_nb_events;
+
+  // In the Record, find the event with the same id as the one passed in the props
+  const eventsAsArray = Object.entries(selectedProject.settings?.events || {});
+  const event = eventsAsArray.find(([, event]) => event.id === eventId)?.[1];
+
+  console.log(totalNbDetections);
 
   return (
     <div>
@@ -71,8 +57,10 @@ const EventAnalytics: React.FC<EventAnalyticsProps> = (event) => {
                 <CardDescription>Total Nb of detections</CardDescription>
               </CardHeader>
               <CardContent>
-                {(!NbEventsDetected && <p>...</p>) || (
-                  <p className="text-xl">{NbEventsDetected}</p>
+                {(!totalNbDetections?.total_nb_events && <p>...</p>) || (
+                  <p className="text-xl">
+                    {totalNbDetections?.total_nb_events}
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -81,6 +69,6 @@ const EventAnalytics: React.FC<EventAnalyticsProps> = (event) => {
       </div>
     </div>
   );
-};
+}
 
 export default EventAnalytics;

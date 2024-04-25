@@ -13,7 +13,7 @@ from app.api.platform.models import (
     EventsMetricsFilter,
     DashboardMetricsFilter,
 )
-from app.services.mongo.events import get_event_from_event_id
+from app.services.mongo.events import get_event_definition_from_event_id
 from app.security.authentification import propelauth
 from app.security import verify_if_propelauth_user_can_access_project
 from app.services.mongo.explore import (
@@ -437,42 +437,39 @@ async def get_dashboard_graphs(
 
 
 @router.post(
-    "/explore/{project_id}/{event_id}/aggregated/detections",
+    "/explore/{project_id}/aggregated/events/{event_id}",
     description="Get aggregated metrics for an event. Used for the Events dashboard.",
 )
 async def get_event_detection_metrics(
     project_id: str,
     event_id: str,
     metrics: Optional[List[str]] = None,
-    sessions_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
     Get aggregated metrics for an event. Used for the event dashboard.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    logger.info(f"Event request: {event_id} {sessions_filter}")
-    event = await get_event_from_event_id(event_id=event_id)
+    logger.info(f"Event request: {event_id} {filters}")
+    event = await get_event_definition_from_event_id(
+        project_id=project_id, event_id=event_id
+    )
     logger.info(f"Event: {event}")
-    event_name = event["event_name"]
 
-    if sessions_filter is None:
-        sessions_filter = ProjectDataFilters(event_name=event_name)
-    if isinstance(sessions_filter.event_name, str):
-        sessions_filter.event_name = [sessions_filter.event_name]
     # Convert to UNIX timestamp in seconds
-    if isinstance(sessions_filter.created_at_start, datetime.datetime):
-        sessions_filter.created_at_start = int(
-            sessions_filter.created_at_start.timestamp()
-        )
-    if isinstance(sessions_filter.created_at_end, datetime.datetime):
-        sessions_filter.created_at_end = int(sessions_filter.created_at_end.timestamp())
+    if filters is None:
+        filters = ProjectDataFilters()
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = int(filters.created_at_start.timestamp())
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = int(filters.created_at_end.timestamp())
 
     output = await get_events_aggregated_metrics(
         project_id=project_id,
         metrics=metrics,
-        event_name_filter=sessions_filter.event_name,
-        created_at_start=sessions_filter.created_at_start,
-        created_at_end=sessions_filter.created_at_end,
+        event_name_filter=filters.event_name,
+        created_at_start=filters.created_at_start,
+        created_at_end=filters.created_at_end,
     )
     return output
