@@ -58,7 +58,6 @@ async def run_event_detection_pipeline(
         for event_name, result in results.items():
             # event_name is the primary key of the table
             # Get the `job_id`from the job metadata, which is a dump of the event definition
-            phospho_job_id = workload.jobs[event_name].metadata.get("job_id", None)
             webhook_url = workload.jobs[event_name].metadata.get("webhook_url", None)
             webhook_headers = workload.jobs[event_name].metadata.get(
                 "webhook_headers", None
@@ -72,7 +71,7 @@ async def run_event_detection_pipeline(
                     **llm_call,
                     org_id=task.org_id,
                     task_id=message.metadata["task"].id,
-                    recipe_id=result.recipe_id,
+                    recipe_id=result.job_metadata.get("recipe_id"),
                 )
                 mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
             else:
@@ -84,7 +83,7 @@ async def run_event_detection_pipeline(
                     f"Event {event_name} detected for task {message.metadata['task'].id}"
                 )
                 # Get back the event definition from the job metadata
-                metadata = workload.jobs[result.recipe_id].metadata
+                metadata = workload.jobs[result.job_id].metadata
                 event = EventDefinition(**metadata)
                 # Push event to db
                 detected_event_data = Event(
@@ -144,7 +143,7 @@ async def run_event_detection_pipeline(
 
             # Save the prediction
             result.task_id = message.metadata["task"].id
-            if result.recipe_id is None:
+            if result.job_metadata.get("recipe_id") is None:
                 logger.error(f"No recipe_id found for event {event_name}.")
             mongo_db["job_results"].insert_one(result.model_dump())
 
@@ -201,7 +200,7 @@ async def task_event_detection_pipeline(
                 **llm_call,
                 org_id=task_data.org_id,
                 task_id=task.id,
-                job_id=result.recipe_id,
+                recipe_id=result.job_metadata.get("recipe_id"),
                 project_id=project_id,
             )
             mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
@@ -212,7 +211,7 @@ async def task_event_detection_pipeline(
         if result.value:
             logger.info(f"Event {event_name} detected for task {task_data.id}")
             # Get back the event definition from the job metadata
-            metadata = workload.jobs[result.recipe_id].metadata
+            metadata = workload.jobs[result.job_id].metadata
             event = EventDefinition(**metadata)
             # Push event to db
             detected_event_data = Event(
@@ -243,15 +242,8 @@ async def task_event_detection_pipeline(
                     headers=event.webhook_headers,
                 )
 
-        # Save the prediction
-        # Get the event object from the settings
-        event_settings = project.settings.events[event_name]
-
-        # Get the job_id from the event
-        result.recipe_id = event_settings.recipe_id
         result.task_id = task.id
-
-        if result.recipe_id is None:
+        if result.job_metadata.get("recipe_id") is None:
             logger.error(f"No recipe_id found for event {event_name}")
 
         mongo_db["job_results"].insert_one(result.model_dump())
@@ -398,7 +390,7 @@ async def task_scoring_pipeline(
             **llm_call,
             org_id=task.org_id,
             task_id=task.id,
-            job_id="evaluate_task",
+            recipe_id=job_result.job_metadata.get("recipe_id"),
             project_id=task.project_id,
         )
         mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
@@ -572,8 +564,7 @@ async def messages_main_pipeline(
                 )
 
         # Save the prediction
-        result.recipe_id = event.recipe_id
-        if result.recipe_id is None:
+        if result.job_metadata.get("recipe_id") is None:
             logger.error(f"No recipe_id found for event {event_name}")
 
         mongo_db["job_results"].insert_one(result.model_dump())
