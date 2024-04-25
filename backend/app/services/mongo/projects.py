@@ -127,7 +127,7 @@ async def update_project(project: Project, **kwargs) -> Project:
                 org_id=project.org_id,
                 project_id=project.id,
                 recipe_type="event_detection",
-                parameters=event.model_dump(),
+                parameters=event,
             )
             mongo_db["recipes"].insert_one(recipe.model_dump())
             updated_project.settings.events[event_name].recipe_id = recipe.id
