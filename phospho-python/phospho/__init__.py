@@ -879,6 +879,11 @@ def backfill(tasks: List[models.Task]) -> None:
     Upload historical data in batch to phospho to backfill the logs.
     For now, this doesn't send the task in the main_pipeline()
     """
+    global client
+
+    if client is None:
+        raise ValueError("Call phospho.init() before calling phospho.backfill()")
+
     client.backfill(tasks)
 
 
