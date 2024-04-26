@@ -218,6 +218,8 @@ async def get_success_rate_per_task_position(
     Return None if there is no session_id in the tasks.
     """
     mongo_db = await get_mongo_db()
+    collection_name = "sessions"
+
     main_filter: Dict[str, object] = {"project_id": project_id}
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
@@ -236,31 +238,20 @@ async def get_success_rate_per_task_position(
         },
     ]
     if event_name_filter is not None:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "events_active",
-                        "localField": "id",
-                        "foreignField": "session_id",
-                        "as": "events",
-                    }
+        collection_name = "sessions_with_events"
+        pipeline.append(
+            {
+                "$match": {
+                    "$and": [
+                        {"events": {"$ne": []}},
+                        {
+                            "events": {
+                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
+                            }
+                        },
+                    ]
                 },
-                {
-                    "$match": {
-                        "$and": [
-                            {"events": {"$ne": []}},
-                            {
-                                "events": {
-                                    "$elemMatch": {
-                                        "event_name": {"$in": event_name_filter}
-                                    }
-                                }
-                            },
-                        ]
-                    },
-                },
-            ]
+            },
         )
     tasks_filter: Dict[str, object] = {"tasks": {"$ne": []}}
     # Filter on the flag
@@ -272,7 +263,7 @@ async def get_success_rate_per_task_position(
         {"$match": tasks_filter},
     )
     result = (
-        await mongo_db["sessions"]
+        await mongo_db[collection_name]
         .aggregate(
             pipeline
             + [
@@ -367,6 +358,7 @@ async def get_total_nb_of_tasks(
     Get the total number of tasks of a project.
     """
     mongo_db = await get_mongo_db()
+    collection_name = "tasks"
     # Time range filter
     global_filters: Dict[str, object] = {"project_id": project_id}
     if created_at_start is not None:
@@ -382,6 +374,7 @@ async def get_total_nb_of_tasks(
         total_nb_tasks = await mongo_db["tasks"].count_documents(global_filters)
     elif event_name_filter is not None:
         # Do an aggregate query
+        collection_name = "tasks_with_events"
         if flag_filter is not None:
             global_filters["flag"] = flag_filter
         global_filters["$and"] = [
@@ -389,7 +382,7 @@ async def get_total_nb_of_tasks(
             {"events": {"$elemMatch": {"event_name": {"$in": event_name_filter}}}},
         ]
         query_result = (
-            await mongo_db["tasks"]
+            await mongo_db[collection_name]
             .aggregate(
                 [
                     {"$match": global_filters},
@@ -418,6 +411,7 @@ async def get_total_success_rate(
     """
 
     mongo_db = await get_mongo_db()
+    collection_name = "tasks"
     main_filter: Dict[str, object] = {"project_id": project_id}
     # Filter on the flag
     if flag_filter is not None:
@@ -435,31 +429,20 @@ async def get_total_success_rate(
     ]
     # Filter on the event name
     if event_name_filter is not None:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "events_active",
-                        "localField": "id",
-                        "foreignField": "task_id",
-                        "as": "events",
-                    },
+        collection_name = "tasks_with_events"
+        pipeline.append(
+            {
+                "$match": {
+                    "$and": [
+                        {"events": {"$ne": []}},
+                        {
+                            "events": {
+                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
+                            }
+                        },
+                    ]
                 },
-                {
-                    "$match": {
-                        "$and": [
-                            {"events": {"$ne": []}},
-                            {
-                                "events": {
-                                    "$elemMatch": {
-                                        "event_name": {"$in": event_name_filter}
-                                    }
-                                }
-                            },
-                        ]
-                    },
-                },
-            ]
+            },
         )
     # Add the success rate computation
     pipeline.extend(
@@ -476,7 +459,7 @@ async def get_total_success_rate(
         ]
     )
     # Query
-    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=1)
+    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
     logger.info(f"result: {result}")
     if len(result) == 0:
         # No tasks = success rate is None
@@ -664,6 +647,7 @@ async def get_daily_success_rate(
     Get the daily success rate of a project.
     """
     mongo_db = await get_mongo_db()
+    collection_name = "tasks"
     main_filter = {
         "project_id": project_id,
         "created_at": {"$gte": start_timestamp, "$lte": end_timestamp},
@@ -674,31 +658,20 @@ async def get_daily_success_rate(
         {"$match": main_filter},
     ]
     if event_name_filter is not None:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "event_active",
-                        "localField": "id",
-                        "foreignField": "task_id",
-                        "as": "events",
-                    },
+        collection_name = "tasks_with_events"
+        pipeline.append(
+            {
+                "$match": {
+                    "$and": [
+                        {"events": {"$ne": []}},
+                        {
+                            "events": {
+                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
+                            }
+                        },
+                    ]
                 },
-                {
-                    "$match": {
-                        "$and": [
-                            {"events": {"$ne": []}},
-                            {
-                                "events": {
-                                    "$elemMatch": {
-                                        "event_name": {"$in": event_name_filter}
-                                    }
-                                }
-                            },
-                        ]
-                    },
-                },
-            ]
+            },
         )
     # Add the success rate computation
     pipeline.extend(
@@ -714,7 +687,7 @@ async def get_daily_success_rate(
             {"$sort": {"date": 1}},
         ]
     )
-    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
 
     df = pd.DataFrame(result)
 
@@ -859,6 +832,7 @@ async def get_total_nb_of_sessions(
     Get the total number of sessions of a project.
     """
     mongo_db = await get_mongo_db()
+    collection_name = "sessions"
     main_filter: Dict[str, object] = {"project_id": project_id}
     # Time range filter
     if created_at_start is not None:
@@ -870,37 +844,26 @@ async def get_total_nb_of_sessions(
         {"$match": main_filter},
     ]
     if event_name_filter is not None:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "events_active",
-                        "localField": "id",
-                        "foreignField": "session_id",
-                        "as": "events",
-                    },
+        collection_name = "sessions_with_events"
+        pipeline.append(
+            {
+                "$match": {
+                    "$and": [
+                        {"events": {"$ne": []}},
+                        {
+                            "events": {
+                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
+                            }
+                        },
+                    ]
                 },
-                {
-                    "$match": {
-                        "$and": [
-                            {"events": {"$ne": []}},
-                            {
-                                "events": {
-                                    "$elemMatch": {
-                                        "event_name": {"$in": event_name_filter}
-                                    }
-                                }
-                            },
-                        ]
-                    },
-                },
-            ]
+            },
         )
     pipeline.append(
         {"$count": "nb_sessions"},
     )
 
-    query_result = await mongo_db["sessions"].aggregate(pipeline).to_list(length=1)
+    query_result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
     if query_result is not None and len(query_result) > 0:
         total_nb_sessions = query_result[0]["nb_sessions"]
     else:
@@ -918,6 +881,7 @@ async def get_global_average_session_length(
     Get the global average session length of a project.
     """
     mongo_db = await get_mongo_db()
+    collection_name = "sessions"
     main_filter: Dict[str, object] = {
         "project_id": project_id,
     }
@@ -930,34 +894,23 @@ async def get_global_average_session_length(
         {"$match": main_filter},
     ]
     if event_name_filter is not None:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "events_active",
-                        "localField": "id",
-                        "foreignField": "session_id",
-                        "as": "events",
-                    },
+        collection_name = "sessions_with_events"
+        pipeline.append(
+            {
+                "$match": {
+                    "$and": [
+                        {"events": {"$ne": []}},
+                        {
+                            "events": {
+                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
+                            }
+                        },
+                    ]
                 },
-                {
-                    "$match": {
-                        "$and": [
-                            {"events": {"$ne": []}},
-                            {
-                                "events": {
-                                    "$elemMatch": {
-                                        "event_name": {"$in": event_name_filter}
-                                    }
-                                }
-                            },
-                        ]
-                    },
-                },
-            ]
+            },
         )
     result = (
-        await mongo_db["sessions"]
+        await mongo_db[collection_name]
         .aggregate(
             pipeline
             + [
@@ -988,6 +941,7 @@ async def get_last_message_success_rate(
     Get the success rate of the last message of a project.
     """
     mongo_db = await get_mongo_db()
+    collection_name = "sessions"
     main_filter: Dict[str, object] = {"project_id": project_id}
     # Time range filter
     if created_at_start is not None:
@@ -996,31 +950,20 @@ async def get_last_message_success_rate(
         main_filter["created_at"] = {"$lte": created_at_end}
     pipeline: List[Dict[str, object]] = [{"$match": main_filter}]
     if event_name_filter is not None:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "events_active",
-                        "localField": "id",
-                        "foreignField": "session_id",
-                        "as": "events",
-                    },
+        collection_name = "sessions_with_events"
+        pipeline.append(
+            {
+                "$match": {
+                    "$and": [
+                        {"events": {"$ne": []}},
+                        {
+                            "events": {
+                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
+                            }
+                        },
+                    ]
                 },
-                {
-                    "$match": {
-                        "$and": [
-                            {"events": {"$ne": []}},
-                            {
-                                "events": {
-                                    "$elemMatch": {
-                                        "event_name": {"$in": event_name_filter}
-                                    }
-                                }
-                            },
-                        ]
-                    },
-                },
-            ]
+            },
         )
     pipeline.extend(
         [
@@ -1065,7 +1008,7 @@ async def get_last_message_success_rate(
             {"$project": {"_id": 0, "success_rate": 1}},
         ]
     )
-    result = await mongo_db["sessions"].aggregate(pipeline).to_list(length=1)
+    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
     if len(result) == 0:
         return 0
     last_message_success_rate = result[0]["success_rate"]
@@ -1082,6 +1025,7 @@ async def get_nb_sessions_per_day(
     Get the nb of sessions per day of a project.
     """
     mongo_db = await get_mongo_db()
+    collection_name = "sessions"
     pipeline: List[Dict[str, object]] = [
         {
             "$match": {
@@ -1091,34 +1035,23 @@ async def get_nb_sessions_per_day(
         },
     ]
     if event_name_filter is not None:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "events_active",
-                        "localField": "id",
-                        "foreignField": "session_id",
-                        "as": "events",
-                    },
+        collection_name = "sessions_with_events"
+        pipeline.append(
+            {
+                "$match": {
+                    "$and": [
+                        {"events": {"$ne": []}},
+                        {
+                            "events": {
+                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
+                            }
+                        },
+                    ]
                 },
-                {
-                    "$match": {
-                        "$and": [
-                            {"events": {"$ne": []}},
-                            {
-                                "events": {
-                                    "$elemMatch": {
-                                        "event_name": {"$in": event_name_filter}
-                                    }
-                                }
-                            },
-                        ]
-                    },
-                },
-            ]
+            },
         )
     result = (
-        await mongo_db["sessions"]
+        await mongo_db[collection_name]
         .aggregate(
             pipeline
             + [
@@ -1168,6 +1101,7 @@ async def get_nb_sessions_histogram(
     Get the number of sessions per session length
     """
     mongo_db = await get_mongo_db()
+    collection_name = "sessions"
     main_filter: Dict[str, object] = {"project_id": project_id}
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
@@ -1175,34 +1109,23 @@ async def get_nb_sessions_histogram(
         main_filter["created_at"] = {"$lte": created_at_end}
     pipeline: List[Dict[str, object]] = [{"$match": main_filter}]
     if event_name_filter is not None:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "events_active",
-                        "localField": "id",
-                        "foreignField": "session_id",
-                        "as": "events",
-                    },
+        collection_name = "sessions_with_events"
+        pipeline.append(
+            {
+                "$match": {
+                    "$and": [
+                        {"events": {"$ne": []}},
+                        {
+                            "events": {
+                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
+                            }
+                        },
+                    ]
                 },
-                {
-                    "$match": {
-                        "$and": [
-                            {"events": {"$ne": []}},
-                            {
-                                "events": {
-                                    "$elemMatch": {
-                                        "event_name": {"$in": event_name_filter}
-                                    }
-                                }
-                            },
-                        ]
-                    },
-                },
-            ]
+            },
         )
     result = (
-        await mongo_db["sessions"]
+        await mongo_db[collection_name]
         .aggregate(
             pipeline
             + [
