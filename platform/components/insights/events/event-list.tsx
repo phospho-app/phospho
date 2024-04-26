@@ -3,7 +3,6 @@
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -27,6 +26,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Pencil, Trash } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 
@@ -56,15 +56,25 @@ function EventRow({
   eventName,
   eventDefinition,
   handleDeleteEvent,
+  handleOnClick,
 }: {
   eventName: string;
   eventDefinition: any;
   handleDeleteEvent: (eventNameToDelete: string) => void;
+  handleOnClick: (eventName: string) => void;
 }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <TableRow>
+    <TableRow
+      onClick={(mouseEvent) => {
+        mouseEvent.stopPropagation();
+        if (!open) {
+          handleOnClick(eventName);
+        }
+      }}
+      className="cursor-pointer"
+    >
       <TableCell>{eventName}</TableCell>
       <TableCell className="text-left">{eventDefinition.description}</TableCell>
       <TableCell className="text-left">
@@ -77,14 +87,22 @@ function EventRow({
       <TableCell className="text-right">
         <Sheet open={open} onOpenChange={setOpen} key={eventName}>
           <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+              }}
+            >
               <Button size="icon" variant="ghost">
                 <EllipsisVertical />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <SheetTrigger asChild>
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(mouseEvent) => {
+                    mouseEvent.stopPropagation();
+                  }}
+                >
                   <Pencil className="w-4 h-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
@@ -119,6 +137,7 @@ function EventsList() {
 
   const events = selectedProject?.settings?.events || {};
   const eventArray = Object.entries(events);
+  const router = useRouter();
 
   // Deletion event
   const handleDeleteEvent = async (eventNameToDelete: string) => {
@@ -149,6 +168,20 @@ function EventsList() {
     }
   };
 
+  const handleOnClick = (eventName: string) => {
+    if (!selectedProject?.settings) {
+      return;
+    }
+    if (!selectedProject.settings.events[eventName]) {
+      return;
+    }
+    const eventId = selectedProject.settings.events[eventName].id;
+    if (eventId === undefined) {
+      return;
+    }
+    router.push(`/org/insights/events/${encodeURI(eventId)}`);
+  };
+
   return (
     <>
       <Card className="mt-4">
@@ -171,6 +204,7 @@ function EventsList() {
                     eventName={eventName}
                     eventDefinition={eventDefinition}
                     handleDeleteEvent={handleDeleteEvent}
+                    handleOnClick={handleOnClick}
                   />
                 ))}
               </TableBody>

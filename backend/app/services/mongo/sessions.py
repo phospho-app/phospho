@@ -32,22 +32,10 @@ async def get_session_by_id(session_id: str) -> Session:
                 {"$match": {"id": session_id}},
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "events_active",
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
-                    }
-                },
-                # We filter out the removed events
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
                     }
                 },
                 {
