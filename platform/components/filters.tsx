@@ -17,6 +17,7 @@ import {
   Calendar,
   CandlestickChart,
   Flag,
+  ListFilter,
   ThumbsDown,
   ThumbsUp,
   X,
@@ -60,7 +61,10 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
       <DropdownMenu>
         <div className="flex align-items">
           <DropdownMenuTrigger asChild>
-            <Button variant="outline">Select filters</Button>
+            <Button variant="outline">
+              <ListFilter className="h-4 w-4 mr-2" />
+              Filters
+            </Button>
           </DropdownMenuTrigger>
           {flagFilter !== null && (
             <Button
@@ -108,7 +112,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
             </Button>
           )}
         </div>
-        <DropdownMenuContent className="w-56">
+        <DropdownMenuContent className="w-56" align="start">
           <DropdownMenuLabel>Filters to apply</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {/* Flag */}
