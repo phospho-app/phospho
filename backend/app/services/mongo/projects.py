@@ -303,7 +303,7 @@ async def get_all_tasks(
             [
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "events_active",
                         "localField": "id",
                         "foreignField": "task_id",
                         "as": "events",
@@ -311,18 +311,6 @@ async def get_all_tasks(
                 },
                 # If events is None, set to empty list
                 {"$addFields": {"events": {"$ifNull": ["$events", []]}}},
-                # Filter the events to keep only the ones that are not removed
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
-                    }
-                },
             ]
         )
 
@@ -631,23 +619,10 @@ async def get_all_sessions(
             [
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "events_active",
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
-                    }
-                },
-                # In the sessions collection, the events field is an array of objects
-                # We want to select only the events that don't have a removed field set to True
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
                     }
                 },
             ]
