@@ -125,13 +125,66 @@ async def connect_and_init_db():
                 ["project_id", "event_name"], background=True
             )
 
-            mongo_db[MONGODB_NAME].command(
-                {
-                    "create": "events_active",
-                    "viewOn": "events",
-                    "pipeline": [{"$match": {"removed": {"$ne": True}}}],
-                }
-            )
+            try:
+                await mongo_db[MONGODB_NAME].command(
+                    {
+                        "create": "sessions_with_events",
+                        "viewOn": "sessions",
+                        "pipeline": [
+                            {
+                                "$lookup": {
+                                    "from": "events",
+                                    "localField": "id",
+                                    "foreignField": "session_id",
+                                    "as": "events",
+                                },
+                            },
+                            {
+                                "$addFields": {
+                                    "events": {
+                                        "$filter": {
+                                            "input": "$events",
+                                            "as": "event",
+                                            "cond": {"$ne": ["$$event.removed", True]},
+                                        }
+                                    }
+                                }
+                            },
+                        ],
+                    }
+                )
+            except Exception as e:
+                logger.info("sessions_with_events already exists")
+            try:
+                await mongo_db[MONGODB_NAME].command(
+                    {
+                        "create": "tasks_with_events",
+                        "viewOn": "tasks",
+                        "pipeline": [
+                            {
+                                "$lookup": {
+                                    "from": "events",
+                                    "localField": "id",
+                                    "foreignField": "task_id",
+                                    "as": "events",
+                                },
+                            },
+                            {
+                                "$addFields": {
+                                    "events": {
+                                        "$filter": {
+                                            "input": "$events",
+                                            "as": "event",
+                                            "cond": {"$ne": ["$$event.removed", True]},
+                                        }
+                                    }
+                                }
+                            },
+                        ],
+                    }
+                )
+            except Exception as e:
+                logger.info("tasks_with_events already exists")
 
             # EventDefinitions
             mongo_db[MONGODB_NAME]["event_definitions"].create_index(
