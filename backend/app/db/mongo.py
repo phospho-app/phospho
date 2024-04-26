@@ -125,6 +125,20 @@ async def connect_and_init_db():
                 ["project_id", "event_name"], background=True
             )
 
+            # EventDefinitions
+            mongo_db[MONGODB_NAME]["event_definitions"].create_index(
+                "id", unique=True, background=True
+            )
+            mongo_db[MONGODB_NAME]["event_definitions"].create_index(
+                "project_id", background=True
+            )
+            mongo_db[MONGODB_NAME]["event_definitions"].create_index(
+                ["project_id", "id"], background=True
+            )
+            mongo_db[MONGODB_NAME]["event_definitions"].create_index(
+                "event_name", background=True
+            )
+
         except Exception as e:
             logger.warning(f"Error while connecting to Mongo: {e}")
             raise e
