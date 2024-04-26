@@ -180,6 +180,7 @@ async def get_tasks_project_metrics(
         metrics=metrics,
         created_at_start=tasks_filter.created_at_start,
         created_at_end=tasks_filter.created_at_end,
+        last_eval_source=tasks_filter.last_eval_source,
     )
     return output
 

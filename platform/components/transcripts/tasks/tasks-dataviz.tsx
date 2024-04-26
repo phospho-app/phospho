@@ -67,15 +67,13 @@ const TasksDataviz: React.FC = () => {
 
   let flagFilter: string | null = null;
   let eventFilter: string[] | null = null;
-  for (let filter of tasksColumnsFilters) {
-    if (
-      filter.id === "flag" &&
-      (typeof filter?.value === "string" || filter?.value === null)
-    ) {
-      flagFilter = filter?.value;
+
+  for (const [key, value] of Object.entries(tasksColumnsFilters)) {
+    if (key === "flag" && (typeof value === "string" || value === null)) {
+      flagFilter = value;
     }
-    if (filter.id === "events" && typeof filter?.value === "string") {
-      eventFilter = [filter?.value];
+    if (key === "events" && typeof value === "string") {
+      eventFilter = eventFilter == null ? [value] : eventFilter.concat(value);
     } else {
       eventFilter = null;
     }
@@ -106,7 +104,6 @@ const TasksDataviz: React.FC = () => {
   );
   const totalNbTasks: number | null | undefined =
     totalNbTasksData?.total_nb_tasks;
-  console.log("totalNbTasksData", totalNbTasksData);
 
   const { data: mostDetectedEventData } = useSWR(
     [
@@ -126,7 +123,6 @@ const TasksDataviz: React.FC = () => {
   );
   const mostDetectedEvent: string | null | undefined =
     mostDetectedEventData?.most_detected_event;
-  console.log("mostDetectedEventData", mostDetectedEventData);
 
   const { data: globalSuccessRateData } = useSWR(
     [
