@@ -76,6 +76,7 @@ class EventDefinition(DatedBaseModel):
     regex_pattern: Optional[str] = None
     recipe_id: Optional[str] = None  # Associated Recipe id
     recipe_type: RecipeType = "event_detection"
+    removed: bool = False
 
 
 class Event(ProjectElementBaseModel):

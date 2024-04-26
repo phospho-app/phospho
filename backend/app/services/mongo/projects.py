@@ -46,11 +46,56 @@ def cast_datetime_or_timestamp_to_timestamp(
 async def get_project_by_id(project_id: str) -> Project:
     mongo_db = await get_mongo_db()
 
-    # doc = db.get_document("projects", project_id).get()
-    project_data = await mongo_db["projects"].find_one({"id": project_id})
+    # project_data = await mongo_db["projects"].find_one({"id": project_id})
+    project_data = (
+        await mongo_db["projects"]
+        .aggregate(
+            [
+                {"$match": {"id": project_id}},
+                {
+                    "$lookup": {
+                        "from": "event_definitions",
+                        "localField": "id",
+                        "foreignField": "project_id",
+                        "as": "settings.events",
+                    }
+                },
+                # Filter the EventDefinitions mapping to keep only the ones that are not removed
+                {
+                    "$addFields": {
+                        "settings.events": {
+                            "$filter": {
+                                "input": "$settings.events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
+                    }
+                },
+                # The lookup operation turns the events into an array of EventDefinitions
+                # Convert into a Mapping {eventName: EventDefinition}
+                {
+                    "$addFields": {
+                        "settings.events": {
+                            "$arrayToObject": {
+                                "$map": {
+                                    "input": "$settings.events",
+                                    "as": "item",
+                                    "in": {"k": "$$item.event_name", "v": "$$item"},
+                                }
+                            }
+                        }
+                    }
+                },
+            ]
+        )
+        .to_list(length=1)
+    )
 
     if project_data is None:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+
+    project_data = project_data[0]
 
     try:
         project = Project.from_previous(project_data)
@@ -122,15 +167,45 @@ async def update_project(project: Project, **kwargs) -> Project:
         updated_project = Project.from_previous(updated_project_data)
 
         # Create a new recipe for each event in the payload
-        for event_name, event in payload.get("settings", {}).get("events", {}).items():
-            recipe = Recipe(
-                org_id=project.org_id,
-                project_id=project.id,
-                recipe_type="event_detection",
-                parameters=event,
-            )
-            mongo_db["recipes"].insert_one(recipe.model_dump())
-            updated_project.settings.events[event_name].recipe_id = recipe.id
+        for event_name, event_definition in (
+            payload.get("settings", {}).get("events", {}).items()
+        ):
+            try:
+                event_definition_model = EventDefinition.model_validate(
+                    event_definition
+                )
+                recipe = Recipe(
+                    org_id=project.org_id,
+                    project_id=project.id,
+                    recipe_type="event_detection",
+                    parameters=event_definition_model.model_dump(),
+                )
+                mongo_db["recipes"].insert_one(recipe.model_dump())
+                updated_project.settings.events[event_name].recipe_id = recipe.id
+                event_definition_model.recipe_id = recipe.id
+                # update event_definition with event_id
+                mongo_db["event_definitions"].update_one(
+                    {"project_id": project.id, "id": event_definition_model.id},
+                    {"$set": event_definition_model.model_dump()},
+                    upsert=True,
+                )
+            except Exception as e:
+                logger.error(f"Error creating recipe for event {event_name}: {e}")
+
+        # Detect if an event has been removed
+        for event_name, event_definition in project.settings.events.items():
+            if event_name not in updated_project.settings.events:
+                # Event has been removed
+                event_definition.removed = True
+                mongo_db["event_definitions"].update_one(
+                    {"project_id": project.id, "id": event_definition.id},
+                    {"$set": event_definition.model_dump()},
+                )
+                # Disable the recipe
+                recipe.enabled = False
+                mongo_db["recipes"].update_one(
+                    {"id": event_definition.recipe_id}, {"$set": recipe.model_dump()}
+                )
 
         # Update the database
         _ = await mongo_db["projects"].update_one(
@@ -166,6 +241,9 @@ async def add_project_events(project_id: str, events: List[EventDefinition]) -> 
                 }
             }
         },
+    )
+    await mongo_db["event_definitions"].insert_many(
+        [event.model_dump() for event in events]
     )
     updated_project = await get_project_by_id(project_id)
     logger.debug(f"Updated project: {updated_project} {updated_project.settings}")
@@ -219,8 +297,54 @@ async def get_all_tasks(
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
-    if event_name_filter is not None:
-        pipeline.append({"$match": {"events.event_name": {"$in": event_name_filter}}})
+
+    if get_events or (event_name_filter is not None and len(event_name_filter) > 0):
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "events",
+                        "localField": "id",
+                        "foreignField": "task_id",
+                        "as": "events",
+                    }
+                },
+                # If events is None, set to empty list
+                {"$addFields": {"events": {"$ifNull": ["$events", []]}}},
+                # Filter the events to keep only the ones that are not removed
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
+                    }
+                },
+            ]
+        )
+
+        if event_name_filter:
+            pipeline.extend(
+                [
+                    {
+                        "$match": {
+                            "$and": [
+                                {"events": {"$ne": []}},
+                                {
+                                    "events": {
+                                        "$elemMatch": {
+                                            "event_name": {"$in": event_name_filter}
+                                        }
+                                    }
+                                },
+                            ]
+                        }
+                    },
+                ]
+            )
 
     if sorting is not None and len(sorting) > 0:
         sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
