@@ -75,17 +75,20 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   // Fetch all tasks
   let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
+  let metaDataFilter: Record<string, any> | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
       flagFilter = value;
     }
-    if (key === "events" && typeof value === "string") {
-      eventFilter = [value];
-    } else {
-      eventFilter = null;
+    if (key === "event" && typeof value === "string") {
+      eventFilter = eventFilter == null ? [value] : [...eventFilter, value];
+    }
+    if (key === "metaData" && typeof value === "object") {
+      metaDataFilter = value;
     }
   }
+  console.log("Metadata: ", metaDataFilter);
 
   const { data: tasksData, mutate: mutateTasks } = useSWR(
     project_id
@@ -97,6 +100,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           JSON.stringify(flagFilter),
           JSON.stringify(dateRange),
           JSON.stringify(tasksSorting),
+          JSON.stringify(metaDataFilter),
         ]
       : null,
     ([url, accessToken]) =>
@@ -205,8 +209,6 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   if (!project_id) {
     return <></>;
   }
-
-  console.log("Rendering tasks table", tasksWithEvents.length, table);
 
   return (
     <div>
