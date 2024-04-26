@@ -258,6 +258,17 @@ async def get_success_rate_per_task_position(
                     }
                 },
                 {
+                    "$addFields": {
+                        "settings.events": {
+                            "$filter": {
+                                "input": "$settings.events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
+                    }
+                },
+                {
                     "$match": {
                         "$and": [
                             {"events": {"$ne": []}},
@@ -443,19 +454,42 @@ async def get_total_success_rate(
     ]
     # Filter on the event name
     if event_name_filter is not None:
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "events",
+                        "localField": "id",
+                        "foreignField": "task_id",
+                        "as": "events",
+                    },
+                },
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
                             }
-                        },
-                    ]
-                }
-            },
+                        }
+                    }
+                },
+                {
+                    "$match": {
+                        "$and": [
+                            {"events": {"$ne": []}},
+                            {
+                                "events": {
+                                    "$elemMatch": {
+                                        "event_name": {"$in": event_name_filter}
+                                    }
+                                }
+                            },
+                        ]
+                    },
+                },
+            ]
         )
     # Add the success rate computation
     pipeline.extend(
@@ -492,7 +526,10 @@ async def get_most_detected_event_name(
     Get the most detected event name of a project.
     """
     mongo_db = await get_mongo_db()
-    main_filter: Dict[str, object] = {"project_id": project_id}
+    main_filter: Dict[str, object] = {
+        "project_id": project_id,
+        "removed": {"$ne": True},
+    }
     # Filter on the event name
     if event_name_filter is not None:
         main_filter["event_name"] = {"$in": event_name_filter}
@@ -609,6 +646,7 @@ async def get_top_event_names_and_count(
             "$gte": start_timestamp,
             "$lte": end_timestamp,
         },
+        "removed": {"$ne": True},
     }
     if event_name_filter is not None:
         main_filter["event_name"] = {"$in": event_name_filter}
@@ -666,19 +704,42 @@ async def get_daily_success_rate(
         {"$match": main_filter},
     ]
     if event_name_filter is not None:
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
-                    ]
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "events",
+                        "localField": "id",
+                        "foreignField": "task_id",
+                        "as": "events",
+                    },
                 },
-            },
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
+                    }
+                },
+                {
+                    "$match": {
+                        "$and": [
+                            {"events": {"$ne": []}},
+                            {
+                                "events": {
+                                    "$elemMatch": {
+                                        "event_name": {"$in": event_name_filter}
+                                    }
+                                }
+                            },
+                        ]
+                    },
+                },
+            ]
         )
     # Add the success rate computation
     pipeline.extend(
@@ -858,6 +919,17 @@ async def get_total_nb_of_sessions(
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
+                    },
+                },
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
                     }
                 },
                 {
@@ -872,7 +944,7 @@ async def get_total_nb_of_sessions(
                                 }
                             },
                         ]
-                    }
+                    },
                 },
             ]
         )
@@ -918,13 +990,23 @@ async def get_global_average_session_length(
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
+                    },
+                },
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
                     }
                 },
                 {
                     "$match": {
                         "$and": [
                             {"events": {"$ne": []}},
-                            {"events.removed": {"$ne": True}},
                             {
                                 "events": {
                                     "$elemMatch": {
@@ -985,60 +1067,78 @@ async def get_last_message_success_rate(
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
+                    },
+                },
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
                     }
                 },
                 {
                     "$match": {
                         "$and": [
                             {"events": {"$ne": []}},
-                            {"events.event_name": {"$in": event_name_filter}},
-                            {"events.removed": {"$ne": True}},
+                            {
+                                "events": {
+                                    "$elemMatch": {
+                                        "event_name": {"$in": event_name_filter}
+                                    }
+                                }
+                            },
                         ]
                     },
                 },
             ]
         )
-    pipeline += [
-        {
-            "$lookup": {
-                "from": "tasks",
-                "localField": "id",
-                "foreignField": "session_id",
-                "as": "tasks",
-            }
-        },
-        # Sort tasks to make the latest one first
-        {
-            "$set": {
-                "tasks": {
-                    "$sortArray": {
-                        "input": "$tasks",
-                        "sortBy": {"tasks.created_at": -1},
-                    },
+    pipeline.extend(
+        [
+            {
+                "$lookup": {
+                    "from": "tasks",
+                    "localField": "id",
+                    "foreignField": "session_id",
+                    "as": "tasks",
                 }
-            }
-        },
-        # Transform to get 1 doc = 1 task. We also add the task position.
-        {"$unwind": {"path": "$tasks", "includeArrayIndex": "task_position"}},
-        # Filter to keep only the last task (task_position = 0 ; starting from the end)
-        {"$match": {"task_position": 0}},
-        # Add a field "is_success" to the task
-        {
-            "$set": {
-                "is_success": {"$cond": [{"$eq": ["$tasks.flag", "success"]}, 1, 0]}
-            }
-        },
-        # Group on the task position
-        {
-            "$group": {
-                "_id": 0,
-                "count": {"$count": {}},
-                "nb_success": {"$sum": "$is_success"},
-                "success_rate": {"$avg": "$is_success"},
-            }
-        },
-        {"$project": {"_id": 0, "success_rate": 1}},
-    ]
+            },
+            # Sort tasks to make the latest one first
+            {
+                "$set": {
+                    "tasks": {
+                        "$sortArray": {
+                            "input": "$tasks",
+                            "sortBy": {"tasks.created_at": -1},
+                        },
+                    }
+                }
+            },
+            # Transform to get 1 doc = 1 task. We also add the task position.
+            {"$unwind": {"path": "$tasks", "includeArrayIndex": "task_position"}},
+            # Filter to keep only the last task (task_position = 0 ; starting from the end)
+            {"$match": {"task_position": 0}},
+            # Add a field "is_success" to the task
+            {
+                "$set": {
+                    "is_success": {"$cond": [{"$eq": ["$tasks.flag", "success"]}, 1, 0]}
+                }
+            },
+            # Group on the task position
+            {
+                "$group": {
+                    "_id": 0,
+                    "count": {"$count": {}},
+                    "nb_success": {"$sum": "$is_success"},
+                    "success_rate": {"$avg": "$is_success"},
+                }
+            },
+            {"$project": {"_id": 0, "success_rate": 1}},
+        ]
+    )
     result = await mongo_db["sessions"].aggregate(pipeline).to_list(length=1)
     if len(result) == 0:
         return 0
@@ -1073,14 +1173,30 @@ async def get_nb_sessions_per_day(
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
+                    },
+                },
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
                     }
                 },
                 {
                     "$match": {
                         "$and": [
                             {"events": {"$ne": []}},
-                            {"events.event_name": {"$in": event_name_filter}},
-                            {"events.removed": {"$ne": True}},
+                            {
+                                "events": {
+                                    "$elemMatch": {
+                                        "event_name": {"$in": event_name_filter}
+                                    }
+                                }
+                            },
                         ]
                     },
                 },
@@ -1117,7 +1233,6 @@ async def get_nb_sessions_per_day(
         )
 
         # Add missing days
-
         nb_sessions_per_day = pd.merge(
             complete_df, nb_sessions_per_day, on="date", how="left"
         ).fillna(0)
@@ -1153,14 +1268,30 @@ async def get_nb_sessions_histogram(
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
+                    },
+                },
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
                     }
                 },
                 {
                     "$match": {
                         "$and": [
                             {"events": {"$ne": []}},
-                            {"events.event_name": {"$in": event_name_filter}},
-                            {"events.removed": {"$ne": True}},
+                            {
+                                "events": {
+                                    "$elemMatch": {
+                                        "event_name": {"$in": event_name_filter}
+                                    }
+                                }
+                            },
                         ]
                     },
                 },
@@ -1838,6 +1969,7 @@ async def get_events_per_day(project_id: str):
                     "$gte": seven_days_ago_timestamp,
                     "$lte": today_timestamp,
                 },
+                "removed": {"$ne": True},
             }
         },
         {
