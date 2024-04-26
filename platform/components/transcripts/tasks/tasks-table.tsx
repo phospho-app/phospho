@@ -1,7 +1,6 @@
 "use client";
 
 import { DatePickerWithRange } from "@/components/date-range";
-import DownloadButton from "@/components/download-csv";
 import FilterComponent from "@/components/filters";
 import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -75,7 +74,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   // Fetch all tasks
   let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
-  let metaDataFilter: Record<string, any> | null = null;
+  let lastEvalSourceFilter: string | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
@@ -84,11 +83,10 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     if (key === "event" && typeof value === "string") {
       eventFilter = eventFilter == null ? [value] : [...eventFilter, value];
     }
-    if (key === "metaData" && typeof value === "object") {
-      metaDataFilter = value;
+    if (key === "lastEvalSource" && typeof value === "string") {
+      lastEvalSourceFilter = value;
     }
   }
-  console.log("Metadata: ", metaDataFilter);
 
   const { data: tasksData, mutate: mutateTasks } = useSWR(
     project_id
@@ -98,9 +96,9 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           tasksPagination.pageIndex,
           JSON.stringify(eventFilter),
           JSON.stringify(flagFilter),
+          JSON.stringify(lastEvalSourceFilter),
           JSON.stringify(dateRange),
           JSON.stringify(tasksSorting),
-          JSON.stringify(metaDataFilter),
         ]
       : null,
     ([url, accessToken]) =>
@@ -108,6 +106,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
         filters: {
           event_name: eventFilter,
           flag: flagFilter,
+          last_eval_source: lastEvalSourceFilter,
           created_at_start: dateRange?.created_at_start,
           created_at_end: dateRange?.created_at_end,
         },
@@ -139,6 +138,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       accessToken,
       JSON.stringify(eventFilter),
       JSON.stringify(flagFilter),
+      JSON.stringify(lastEvalSourceFilter),
       JSON.stringify(dateRange),
       "total_nb_tasks",
     ],
@@ -148,6 +148,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
         tasks_filter: {
           flag: flagFilter,
           event_name: eventFilter,
+          last_eval_source: lastEvalSourceFilter,
           created_at_start: dateRange?.created_at_start,
           created_at_end: dateRange?.created_at_end,
         },
@@ -213,7 +214,6 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   return (
     <div>
       <div className="flex flex-row gap-x-2 items-center mb-2">
-        <DatePickerWithRange />
         <div className="flex-grow">
           <Input
             placeholder="Search for a topic"
@@ -272,7 +272,12 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
             ></path>
           </svg>
         )}
-        <DownloadButton />
+        <TableNavigation table={table} />
+      </div>
+
+      <div className="flex flex-row gap-x-2 items-center mb-2 ">
+        <DatePickerWithRange />
+        <FilterComponent />
         <Button
           variant="secondary"
           onClick={() => {
@@ -286,10 +291,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           <FilterX className="h-4 w-4 mr-1" />
           Clear filters
         </Button>
-        <TableNavigation table={table} />
       </div>
-
-      <FilterComponent />
 
       <div className="rounded-md border">
         <Table>

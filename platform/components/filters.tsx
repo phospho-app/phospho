@@ -13,8 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
-import { enIE } from "date-fns/locale";
-import { Calendar, Flag, ThumbsDown, ThumbsUp } from "lucide-react";
+import {
+  Calendar,
+  CandlestickChart,
+  Flag,
+  ThumbsDown,
+  ThumbsUp,
+  X,
+} from "lucide-react";
 import React from "react";
 
 const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
@@ -27,7 +33,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
 
   let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
-  let metadata: Record<string, any> | null = null;
+  let lastEvalSourceFilter: string | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
@@ -36,8 +42,8 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
     if (key === "event" && typeof value === "string") {
       eventFilter = eventFilter == null ? [value] : eventFilter.concat(value);
     }
-    if (key === "metadata" && typeof value === "object") {
-      metadata = value;
+    if (key === "lastEvalSource" && typeof value === "string") {
+      lastEvalSourceFilter = value;
     }
   }
 
@@ -54,9 +60,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
       <DropdownMenu>
         <div className="flex align-items">
           <DropdownMenuTrigger asChild>
-            <Button className="mb-2" variant="outline">
-              Select filters
-            </Button>
+            <Button variant="outline">Select filters</Button>
           </DropdownMenuTrigger>
           {flagFilter !== null && (
             <Button
@@ -69,8 +73,8 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                 }));
               }}
             >
-              <Flag className="h-4 w-4 mr-2" />
               {flagFilter}
+              <X className="h-4 w-4 ml-2" />
             </Button>
           )}
           {eventFilter !== null && (
@@ -84,8 +88,23 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                 }));
               }}
             >
-              <Calendar className="h-4 w-4 mr-2" />
               {eventFilter.join(", ")}
+              <X className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+          {lastEvalSourceFilter !== null && (
+            <Button
+              className="ml-2"
+              variant="outline"
+              onClick={() => {
+                setTasksColumnsFilters((prevFilters) => ({
+                  ...prevFilters,
+                  lastEvalSource: null,
+                }));
+              }}
+            >
+              {lastEvalSourceFilter}
+              <X className="h-4 w-4 ml-2" />
             </Button>
           )}
         </div>
@@ -133,11 +152,11 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
           </DropdownMenuSub>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Calendar className="h-4 w-4 mr-2 " />
+              <Calendar className="h-4 w-4 mr-2" />
               <span>Events</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent>
+              <DropdownMenuSubContent className="overflow-y-auto">
                 {events &&
                   Object.entries(events).map(([event_name, event]) => {
                     return (
@@ -159,6 +178,44 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                       </DropdownMenuItem>
                     );
                   })}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <CandlestickChart className="h-4 w-4 mr-2" />
+              <span>Last Eval Source</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      lastEvalSource: "phospho",
+                    }));
+                  }}
+                  style={{
+                    color:
+                      lastEvalSourceFilter === "phospho" ? "green" : "inherit",
+                  }}
+                >
+                  phospho
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      lastEvalSource: "user",
+                    }));
+                  }}
+                  style={{
+                    color:
+                      lastEvalSourceFilter === "user" ? "green" : "inherit",
+                  }}
+                >
+                  user
+                </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>

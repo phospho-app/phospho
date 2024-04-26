@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional, Union
+from typing import List, Optional
 from phospho.models import ProjectDataFilters
 
 

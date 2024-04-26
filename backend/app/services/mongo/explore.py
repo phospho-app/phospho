@@ -351,6 +351,7 @@ async def get_total_nb_of_tasks(
     project_id: str,
     flag_filter: Optional[Literal["success", "failure"]] = None,
     event_name_filter: Optional[List[str]] = None,
+    last_eval_source: Optional[str] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
 ) -> Optional[int]:
@@ -365,6 +366,13 @@ async def get_total_nb_of_tasks(
         global_filters["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
         global_filters["created_at"] = {"$lte": created_at_end}
+    if last_eval_source is not None:
+        if last_eval_source.startswith("phospho"):
+            # We want to filter on the source starting with "phospho"
+            global_filters["last_eval.source"] = {"$regex": "^phospho"}
+        else:
+            # We want to filter on the source not starting with "phospho"
+            global_filters["last_eval.source"] = {"$regex": "^(?!phospho).*"}
 
     # Other filters
     if flag_filter is None and event_name_filter is None:
@@ -724,6 +732,7 @@ async def get_daily_success_rate(
 async def get_tasks_aggregated_metrics(
     project_id: str,
     flag_filter: Optional[str] = None,
+    last_eval_source: Optional[str] = None,
     event_name_filter: Optional[List[str]] = None,
     metrics: Optional[List[str]] = None,
     quantile_filter: Optional[float] = None,
@@ -765,6 +774,7 @@ async def get_tasks_aggregated_metrics(
             event_name_filter=event_name_filter,
             created_at_start=created_at_start,
             created_at_end=created_at_end,
+            last_eval_source=last_eval_source,
         )
     if "global_success_rate" in metrics:
         output["global_success_rate"] = await get_total_success_rate(
