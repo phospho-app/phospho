@@ -273,6 +273,7 @@ async def get_all_tasks(
     """
 
     mongo_db = await get_mongo_db()
+    collection_name = "tasks"
 
     main_filter: Dict[str, object] = {}
     main_filter["project_id"] = project_id
@@ -299,20 +300,7 @@ async def get_all_tasks(
     ]
 
     if get_events or (event_name_filter is not None and len(event_name_filter) > 0):
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "events_active",
-                        "localField": "id",
-                        "foreignField": "task_id",
-                        "as": "events",
-                    }
-                },
-                # If events is None, set to empty list
-                {"$addFields": {"events": {"$ifNull": ["$events", []]}}},
-            ]
-        )
+        collection_name = "tasks_with_events"
 
         if event_name_filter:
             pipeline.extend(
@@ -381,7 +369,7 @@ async def get_all_tasks(
         },
     )
 
-    tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
+    tasks = await mongo_db[collection_name].aggregate(pipeline).to_list(length=limit)
 
     # Cast to tasks
     valid_tasks = [Task.model_validate(data) for data in tasks]
@@ -586,6 +574,7 @@ async def get_all_sessions(
     sorting: Optional[List[Sorting]] = None,
 ) -> List[Session]:
     mongo_db = await get_mongo_db()
+    collection_name = "sessions"
     # await compute_session_length(project_id)
     additional_sessions_filter: Dict[str, object] = {}
     if sessions_filter is not None:
@@ -615,39 +604,28 @@ async def get_all_sessions(
     if get_events or (
         sessions_filter is not None and sessions_filter.event_name is not None
     ):
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "events_active",
-                        "localField": "id",
-                        "foreignField": "session_id",
-                        "as": "events",
-                    }
-                },
-            ]
-        )
-    if sessions_filter is not None and sessions_filter.event_name is not None:
-        pipeline.extend(
-            [
-                {
-                    "$match": {
-                        "$and": [
-                            {"events": {"$ne": []}},
-                            {
-                                "events": {
-                                    "$elemMatch": {
-                                        "event_name": {
-                                            "$in": sessions_filter.event_name
+        collection_name = "sessions_with_events"
+        if sessions_filter is not None and sessions_filter.event_name is not None:
+            pipeline.extend(
+                [
+                    {
+                        "$match": {
+                            "$and": [
+                                {"events": {"$ne": []}},
+                                {
+                                    "events": {
+                                        "$elemMatch": {
+                                            "event_name": {
+                                                "$in": sessions_filter.event_name
+                                            }
                                         }
                                     }
-                                }
-                            },
-                        ]
+                                },
+                            ]
+                        },
                     },
-                },
-            ]
-        )
+                ]
+            )
 
     if get_tasks or (
         sessions_filter is not None and sessions_filter.user_id is not None
@@ -694,43 +672,7 @@ async def get_all_sessions(
             ]
         )
 
-    if get_events:
-        pipeline.extend(
-            [
-                # If events is None, set to empty list
-                {"$addFields": {"events": {"$ifNull": ["$events", []]}}},
-                # Deduplicate events names. We want the unique event_names of the session
-                {
-                    "$addFields": {
-                        "events": {
-                            "$reduce": {
-                                "input": "$events",
-                                "initialValue": [],
-                                "in": {
-                                    "$concatArrays": [
-                                        "$$value",
-                                        {
-                                            "$cond": [
-                                                {
-                                                    "$in": [
-                                                        "$$this.event_name",
-                                                        "$$value.event_name",
-                                                    ]
-                                                },
-                                                [],
-                                                ["$$this"],
-                                            ]
-                                        },
-                                    ]
-                                },
-                            }
-                        }
-                    }
-                },
-            ]
-        )
-
-    sessions = await mongo_db["sessions"].aggregate(pipeline).to_list(length=limit)
+    sessions = await mongo_db[collection_name].aggregate(pipeline).to_list(length=limit)
 
     # Filter the _id field from the Sessions
     for session in sessions:
