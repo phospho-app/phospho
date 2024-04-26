@@ -307,14 +307,14 @@ async def get_all_tasks(
     ]
 
     # Get rid of the raw_input and raw_output fields
-    pipeline.append(
-        {
-            "$project": {
-                "additional_input": 0,
-                "additional_output": 0,
-            }
-        }
-    )
+    # pipeline.append(
+    #     {
+    #         "$project": {
+    #             "additional_input": 0,
+    #             "additional_output": 0,
+    #         }
+    #     }
+    # )
 
     if get_events or (event_name_filter is not None and len(event_name_filter) > 0):
         collection_name = "tasks_with_events"
