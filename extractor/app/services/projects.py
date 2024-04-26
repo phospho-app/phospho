@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from loguru import logger
 from app.db.mongo import get_mongo_db
 from app.db.models import Project, Recipe
@@ -18,6 +19,18 @@ async def get_project_by_id(project_id: str) -> Project:
                         "localField": "id",
                         "foreignField": "project_id",
                         "as": "settings.events",
+                    }
+                },
+                # Filter the EventDefinitions that are not removed
+                {
+                    "$addFields": {
+                        "settings.events": {
+                            "$filter": {
+                                "input": "$settings.events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
                     }
                 },
                 # The lookup operation turns the events into an array of EventDefinitions

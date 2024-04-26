@@ -60,6 +60,18 @@ async def get_project_by_id(project_id: str) -> Project:
                         "as": "settings.events",
                     }
                 },
+                # Filter the EventDefinitions mapping to keep only the ones that are not removed
+                {
+                    "$addFields": {
+                        "settings.events": {
+                            "$filter": {
+                                "input": "$settings.events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
+                    }
+                },
                 # The lookup operation turns the events into an array of EventDefinitions
                 # Convert into a Mapping {eventName: EventDefinition}
                 {
@@ -175,9 +187,25 @@ async def update_project(project: Project, **kwargs) -> Project:
                 mongo_db["event_definitions"].update_one(
                     {"project_id": project.id, "id": event_definition_model.id},
                     {"$set": event_definition_model.model_dump()},
+                    upsert=True,
                 )
             except Exception as e:
                 logger.error(f"Error creating recipe for event {event_name}: {e}")
+
+        # Detect if an event has been removed
+        for event_name, event_definition in project.settings.events.items():
+            if event_name not in updated_project.settings.events:
+                # Event has been removed
+                event_definition.removed = True
+                mongo_db["event_definitions"].update_one(
+                    {"project_id": project.id, "id": event_definition.id},
+                    {"$set": event_definition.model_dump()},
+                )
+                # Disable the recipe
+                recipe.enabled = False
+                mongo_db["recipes"].update_one(
+                    {"id": event_definition.recipe_id}, {"$set": recipe.model_dump()}
+                )
 
         # Update the database
         _ = await mongo_db["projects"].update_one(
