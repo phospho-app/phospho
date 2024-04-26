@@ -14,10 +14,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { Calendar as CalendarIcon, ChevronDown } from "lucide-react";
 import * as React from "react";
-import { DateRange } from "react-day-picker";
 
 import { Separator } from "./ui/separator";
 

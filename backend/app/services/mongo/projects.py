@@ -279,8 +279,15 @@ async def get_all_tasks(
     main_filter["project_id"] = project_id
     if flag_filter:
         main_filter["flag"] = flag_filter
+
     if last_eval_source_filter:
-        main_filter["last_eval.source"] = last_eval_source_filter
+        if last_eval_source_filter.startswith("phospho"):
+            # We want to filter on the source starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^phospho"}
+        else:
+            # We want to filter on the source not starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^(?!phospho).*"}
+
     if metadata_filter:
         main_filter["metadata"] = metadata_filter
     if created_at_start:

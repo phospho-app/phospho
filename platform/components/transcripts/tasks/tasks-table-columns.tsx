@@ -26,9 +26,7 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
-  ChevronDown,
   ChevronRight,
-  FilterX,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
@@ -108,11 +106,6 @@ export function getColumns({
   const columns: ColumnDef<TaskWithEvents>[] = [
     // id
     {
-      filterFn: (row, id, filterValue) => {
-        // if is in the filtervalue
-        if (filterValue === null) return true;
-        return filterValue.includes(row.original.id);
-      },
       header: ({ column }) => {
         return <></>;
       },
@@ -155,52 +148,10 @@ export function getColumns({
     {
       header: ({ column }) => {
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost">
-                <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-                Eval
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onClick={() => {
-                  column.setFilterValue("success");
-                  setTasksPagination({
-                    ...tasksPagination,
-                    pageIndex: 0,
-                  });
-                }}
-              >
-                Success
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  column.setFilterValue("failure");
-                  setTasksPagination({
-                    ...tasksPagination,
-                    pageIndex: 0,
-                  });
-                }}
-              >
-                Failure
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  column.setFilterValue(null);
-                  setTasksPagination({
-                    ...tasksPagination,
-                    pageIndex: 0,
-                  });
-                }}
-              >
-                <FilterX className="h-4 w-4 mr-1" />
-                Clear filter
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center">
+            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+            Eval
+          </div>
         );
       },
       accessorKey: "flag",
@@ -265,61 +216,12 @@ export function getColumns({
     },
     // Events
     {
-      filterFn: (row, id, filterValue) => {
-        if (filterValue === null) return true;
-        // If the filter value is not null, return whether
-        // the filterValue is in [event.event_name] array
-        return (row.original.events as Event[]).some(
-          (event) => event.event_name === filterValue,
-        );
-      },
       header: ({ column }) => {
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === "asc")
-                }
-              >
-                <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-                Events
-                <ChevronDown size={16} className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {uniqueEventNamesInData.map((eventName) => (
-                <DropdownMenuItem
-                  key={eventName}
-                  onClick={() => {
-                    column.setFilterValue(eventName);
-                    setTasksPagination({
-                      ...tasksPagination,
-                      pageIndex: 0,
-                    });
-                  }}
-                >
-                  {eventName}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                key="event_clear"
-                onClick={() => {
-                  column.setFilterValue(null);
-                  setTasksPagination({
-                    ...tasksPagination,
-                    pageIndex: 0,
-                  });
-                }}
-              >
-                <FilterX className="h-4 w-4 mr-1" />
-                Clear filter
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-            <DropdownMenu />
-          </DropdownMenu>
+          <div className="flex items-center">
+            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+            Events
+          </div>
         );
       },
       accessorKey: "events",
