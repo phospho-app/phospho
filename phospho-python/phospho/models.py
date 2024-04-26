@@ -90,6 +90,8 @@ class Event(ProjectElementBaseModel):
     event_definition: Optional[EventDefinition] = None
     task: Optional["Task"] = None
     messages: Optional[List["Message"]] = Field(default_factory=list)
+    removal_reason: Optional[str] = None
+    removed: bool = False
 
 
 class Task(ProjectElementBaseModel):
