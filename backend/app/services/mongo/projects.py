@@ -412,6 +412,22 @@ async def email_project_tasks(
     uid: str,
     limit: Optional[int] = 1000,
 ):
+    def send_error_message():
+        # Send an error message to the user
+        params = {
+            "from": "phospho <contact@phospho.ai>",
+            "to": [user.get("email")],
+            "subject": "Error exporting your tasks",
+            "html": f"""<p>Hello!<br><br>We could not export your tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
+            <p><br>Please contact the support at contact@phospho.ai</p>
+            <p>Best,<br>
+            The Phospho Team</p>
+            """,
+        }
+
+        email = resend.Emails.send(params)
+        logger.debug(f"Sent error message to user: {user.get('email')}")
+
     if config.ENVIRONMENT != "preview":
         tasks_list = await get_all_tasks(project_id=project_id)
 
@@ -424,63 +440,84 @@ async def email_project_tasks(
         try:
             # Convert task list to Pandas DataFrame
             df = pd.DataFrame([task.model_dump() for task in tasks_list])
+        except Exception as e:
+            error_message = f"Error converting tasks to DataFrame for {user.get('email')} project id {project_id}: {e}"
+            logger.error(error_message)
+            await slack_notification(error_message)
 
-            # Convert the DataFrame to a CSV string, then to bytes
+        exports = []
+        # Convert the DataFrame to a CSV string, then to bytes
+        try:
             csv_string = df.to_csv(index=False)
             csv_bytes = csv_string.encode()
+            exports.append(
+                {
+                    "filename": "tasks.csv",
+                    "content": list(csv_bytes),
+                }
+            )
+        except Exception as e:
+            error_message = f"Error converting tasks to CSV for {user.get('email')} project id {project_id}: {e}"
+            logger.error(error_message)
+            await slack_notification(error_message)
 
-            # Get the excel file buffer
+        # Get the excel file buffer
+        try:
             excel_buffer = io.BytesIO()
             df.to_excel(excel_buffer, index=False)
             excel_data = excel_buffer.getvalue()
             # encoded_excel = base64.b64encode(excel_data).decode()
-
-            params = {
-                "from": "phospho <contact@phospho.ai>",
-                "to": [user.get("email")],
-                "subject": "Your exported tasks are ready",
-                "html": f"""<p>Hello!<br><br>Here are attached your exported tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
-                <p><br>So, what do you think about phospho for now? Feel free to respond to this email address and share your toughts !</p>
-                <p>Enjoy,<br>
-                The Phospho Team</p>
-                """,
-                "attachments": [
-                    {
-                        "filename": "tasks.csv",
-                        "content": list(csv_bytes),  # Attach the bytes content directly
-                    },
-                    {
-                        "filename": "tasks.xlsx",
-                        "content": list(
-                            excel_data
-                        ),  # Attach the bytes content directly for Excel
-                    },
-                ],
-            }
-
-            email = resend.Emails.send(params)
-
-            logger.info(f"Successfully sent tasks by email to {user.get('email')}")
-
+            exports.append(
+                {
+                    "filename": "tasks.xlsx",
+                    "content": list(excel_data),
+                }
+            )
         except Exception as e:
-            logger.error(f"Error sending tasks by email: {e}")
+            error_message = f"Error converting tasks to Excel for {user.get('email')} project id {project_id}: {e}"
+            logger.error(error_message)
+            await slack_notification(error_message)
 
-            # Send an error message to the user
-            params = {
-                "from": "phospho <contact@phospho.ai>",
-                "to": [user.get("email")],
-                "subject": "Error exporting your tasks",
-                "html": f"""<p>Hello!<br><br>We could not export your tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
-                <p><br>Please contact the support at contact@phospho.app</p>
-                <p>Best,<br>
-                The Phospho Team</p>
-                """,
-            }
+        # TODO : Add .parquet file export for large datasets
+        try:
+            parquet_buffer = io.BytesIO()
+            df.to_parquet(parquet_buffer, index=False)
+            parquet_data = parquet_buffer.getvalue()
+            exports.append(
+                {
+                    "filename": "tasks.parquet",
+                    "content": list(parquet_data),
+                }
+            )
+        except Exception as e:
+            error_message = f"Error converting tasks to Parquet for {user.get('email')} project id {project_id}: {e}"
+            logger.error(error_message)
+            await slack_notification(error_message)
 
-            email = resend.Emails.send(params)
+        # If no exports, send an error message
+        if not exports:
+            send_error_message()
+            return
 
-            logger.debug("Sent error message to user")
+        params = {
+            "from": "phospho <contact@phospho.ai>",
+            "to": [user.get("email")],
+            "subject": "Your exported tasks are ready",
+            "html": f"""<p>Hello!<br><br>Here are attached your exported tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
+            <p><br>So, what do you think about phospho for now? Feel free to respond to this email address and share your toughts !</p>
+            <p>Enjoy,<br>
+            The Phospho Team</p>
+            """,
+            "attachments": exports,
+        }
 
+        try:
+            resend.Emails.send(params)
+            logger.info(f"Successfully sent tasks by email to {user.get('email')}")
+        except Exception as e:
+            error_message = f"Error sending email to {user.get('email')} project_id {project_id}: {e}"
+            logger.error(error_message)
+            await slack_notification(error_message)
     else:
         logger.warning("Preview environment: emails disabled")
 
