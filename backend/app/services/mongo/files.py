@@ -16,7 +16,14 @@ async def process_csv_file_as_df(
     df: pd.DataFrame,
     org_id: str,
     max_rows: int = CSV_UPLOAD_MAX_ROWS,
+    correct_columns: List[str] = ["text", "label", "label_text"],
 ):
+    """
+    "text",
+    "label", # True or False
+    "label_text", # A text describing the label when True (ex: The user is asking about pricing)
+    """
+
     # Check that the csv has less than max_rows
     if len(df) > max_rows:
         logger.error(
@@ -24,14 +31,6 @@ async def process_csv_file_as_df(
         )
         # Only get the first max_rows
         df = df.head(max_rows)
-
-    correct_columns = [
-        "detection_scope",
-        "task_input",
-        "task_output",
-        "event_description",
-        "label",
-    ]
 
     # Check that the correct_columns are in the dataframe columns
     if not all([col in df.columns for col in correct_columns]):

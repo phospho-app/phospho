@@ -8,3 +8,4 @@ secrets.toml
 .env
 .env.docker
 .research
+.venv/
