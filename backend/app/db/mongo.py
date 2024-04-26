@@ -125,6 +125,14 @@ async def connect_and_init_db():
                 ["project_id", "event_name"], background=True
             )
 
+            mongo_db[MONGODB_NAME].command(
+                {
+                    "create": "events_active",
+                    "viewOn": "events",
+                    "pipeline": [{"$match": {"removed": {"$ne": True}}}],
+                }
+            )
+
             # EventDefinitions
             mongo_db[MONGODB_NAME]["event_definitions"].create_index(
                 "id", unique=True, background=True

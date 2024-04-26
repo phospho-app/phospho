@@ -240,32 +240,10 @@ async def get_success_rate_per_task_position(
             [
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "events_active",
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
-                    }
-                },
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
-                    }
-                },
-                {
-                    "$addFields": {
-                        "settings.events": {
-                            "$filter": {
-                                "input": "$settings.events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
                     }
                 },
                 {
@@ -440,7 +418,7 @@ async def get_total_success_rate(
     """
 
     mongo_db = await get_mongo_db()
-    main_filter = {"project_id": project_id}
+    main_filter: Dict[str, object] = {"project_id": project_id}
     # Filter on the flag
     if flag_filter is not None:
         main_filter["flag"] = flag_filter
@@ -448,7 +426,10 @@ async def get_total_success_rate(
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
-        main_filter["created_at"] = {"$lte": created_at_end}
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": created_at_end,
+        }
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
@@ -458,22 +439,11 @@ async def get_total_success_rate(
             [
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "events_active",
                         "localField": "id",
                         "foreignField": "task_id",
                         "as": "events",
                     },
-                },
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
-                    }
                 },
                 {
                     "$match": {
@@ -708,22 +678,11 @@ async def get_daily_success_rate(
             [
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "event_active",
                         "localField": "id",
                         "foreignField": "task_id",
                         "as": "events",
                     },
-                },
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
-                    }
                 },
                 {
                     "$match": {
@@ -915,22 +874,11 @@ async def get_total_nb_of_sessions(
             [
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "events_active",
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
                     },
-                },
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
-                    }
                 },
                 {
                     "$match": {
@@ -986,22 +934,11 @@ async def get_global_average_session_length(
             [
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "events_active",
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
                     },
-                },
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
-                    }
                 },
                 {
                     "$match": {
@@ -1063,22 +1000,11 @@ async def get_last_message_success_rate(
             [
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "events_active",
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
                     },
-                },
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
-                    }
                 },
                 {
                     "$match": {
@@ -1169,22 +1095,11 @@ async def get_nb_sessions_per_day(
             [
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "events_active",
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
                     },
-                },
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
-                    }
                 },
                 {
                     "$match": {
@@ -1264,22 +1179,11 @@ async def get_nb_sessions_histogram(
             [
                 {
                     "$lookup": {
-                        "from": "events",
+                        "from": "events_active",
                         "localField": "id",
                         "foreignField": "session_id",
                         "as": "events",
                     },
-                },
-                {
-                    "$addFields": {
-                        "events": {
-                            "$filter": {
-                                "input": "$events",
-                                "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
-                            }
-                        }
-                    }
                 },
                 {
                     "$match": {
