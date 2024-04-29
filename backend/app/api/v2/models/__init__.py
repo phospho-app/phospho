@@ -9,6 +9,7 @@ from .events import (
 )
 from .log import LogError, LogEvent, LogReply, LogRequest, MinimalLogEvent
 from .models import Model, ModelsResponse
+from .predict import PredictRequest, PredictResponse
 from .projects import (
     ComputeJobsRequest,
     EventDefinition,

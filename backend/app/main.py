@@ -121,6 +121,7 @@ from app.api.v2.endpoints import (
     log,
     me,
     models,
+    predict,
     projects,
     sessions,
     tasks,
@@ -149,6 +150,7 @@ api_v2.include_router(me.router)
 api_v2.include_router(models.router)
 api_v2.include_router(tasks.router)
 api_v2.include_router(tests.router)
+api_v2.include_router(predict.router)
 api_v2.include_router(projects.router)
 api_v2.include_router(sessions.router)
 api_v2.include_router(health.router)

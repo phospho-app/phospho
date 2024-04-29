@@ -6,7 +6,13 @@ from loguru import logger
 import httpx
 
 from app.core import config
-from app.api.v2.models import Model, ModelsResponse, TrainRequest
+from app.api.v2.models import (
+    Model,
+    ModelsResponse,
+    TrainRequest,
+    PredictRequest,
+    PredictResponse,
+)
 
 
 def health_check():
@@ -85,6 +91,25 @@ def train_model(request_body: TrainRequest) -> Model | None:
         )
         # Parse the response
         return Model(**response.json())
+
+    except Exception as e:
+        logger.error(e)
+        return None
+
+
+def predict(predict_request: PredictRequest) -> PredictResponse | None:
+    try:
+        response = httpx.post(
+            f"{config.PROPRIETARY_AI_HUB_URL}/v1/predict",
+            json=predict_request.model_dump(),
+            headers={
+                "Authorization": f"Bearer {config.PROPRIETARY_AI_HUB_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            timeout=60,
+        )
+        # Parse the response
+        return PredictResponse(**response.json())
 
     except Exception as e:
         logger.error(e)
