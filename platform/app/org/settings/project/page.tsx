@@ -1,16 +1,11 @@
 "use client";
 
-import CreateProjectButton from "@/components/navbar/create-project-button";
 import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
 import TaskProgress from "@/components/settings/tasks-quota";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -41,7 +36,12 @@ export default function Page() {
     ([url, token]) => authFetcher(url, token),
   );
 
-  const currentUsage = usage?.current_usage;
+  let credits = usage?.credits;
+  if (credits === undefined) {
+    credits = 0;
+  } else if (typeof credits === "number") {
+    credits /= 1000;
+  }
   const maxUsage = usage?.max_usage;
   const maxUsageLabel = usage?.max_usage_label;
 
@@ -96,19 +96,16 @@ export default function Page() {
         <div>
           {plan === "pro" && (
             <p>
-              You have unlimited usage quota (currently: {currentUsage ?? "..."}{" "}
-              logs).
+              You currently have $ {credits?.toFixed(3) ?? "..."} worth of
+              credits.
             </p>
           )}
           {plan === "hobby" && (
             <>
-              <TaskProgress
-                currentValue={currentUsage ?? 0}
-                maxValue={maxUsage ?? 1}
-              />
+              {/*<TaskProgress currentValue={credits ?? 0} maxValue={maxUsage ?? 1}/>*/}
               <p>
-                Your usage quota is {currentUsage ?? "..."} logs out of{" "}
-                {maxUsageLabel ?? "..."}.{" "}
+                You currently have ${credits?.toFixed(3) ?? "..."} worth of
+                credits left. <br />
                 <Link href="/org/settings/billing" className="underline">
                   Add a payment method to increase your quota
                 </Link>

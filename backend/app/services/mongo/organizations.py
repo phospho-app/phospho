@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from phospho.models import Recipe
+from phospho.models import Recipe, Organization
 import pydantic
 from fastapi import HTTPException
 from loguru import logger
@@ -82,9 +82,22 @@ async def create_project_by_org(org_id: str, user_id: str, **kwargs) -> Project:
             project.settings.events[event_name].recipe_id = recipe.id
 
     # Create the corresponding jobs based on the project settings
-    result = await mongo_db["projects"].insert_one(project.model_dump())
+    _ = await mongo_db["projects"].insert_one(project.model_dump())
 
     return project
+
+
+async def diminish_credits(org_id: str, nb_credits: int) -> None:
+    """
+    Diminish the credits of an organization
+    """
+    mongo_db = await get_mongo_db()
+    await mongo_db["organizations"].update_one(
+        {"id": org_id},
+        {"$inc": {"credits": -nb_credits}},
+    )
+    logger.info(f"Org {org_id} has spent {nb_credits} credits ")
+    return None
 
 
 async def get_usage_quota(org_id: str, plan: str) -> dict:
@@ -93,7 +106,21 @@ async def get_usage_quota(org_id: str, plan: str) -> dict:
     The usage quota is the number of tasks logged by the organization.
     """
     mongo_db = await get_mongo_db()
-    nb_tasks_logged = await mongo_db["tasks"].count_documents({"org_id": org_id})
+
+    org_info = await mongo_db["organizations"].find_one(
+        {"id": org_id, "credits": {"$exists": True}}
+    )
+
+    if not org_info:
+        org_info = await mongo_db["organizations"].update_one(
+            {"id": org_id},
+            {"$set": {"credits": 0}},
+            upsert=True,
+        )
+
+    org_info_model = Organization.model_validate(org_info)
+
+    logger.info(f"Org {org_id} has {org_info_model.credits} credits")
 
     # These orgs are exempted from the quota
     EXEMPTED_ORG_IDS = [
@@ -107,20 +134,23 @@ async def get_usage_quota(org_id: str, plan: str) -> dict:
         "5a3d67ab-231c-4ad1-adba-84b6842668ad",  # sa (a)
         "7e8f6db2-3b6b-4bf6-84ee-3f226b81e43d",  # di
     ]
-    if plan == "hobby":
-        max_usage: Optional[int] = config.PLAN_HOBBY_MAX_NB_TASKS
-        max_usage_label = str(config.PLAN_HOBBY_MAX_NB_TASKS)
-    if plan == "pro" or org_id in EXEMPTED_ORG_IDS:
-        max_usage = None
-        max_usage_label = "unlimited"
 
-    return {
-        "org_id": org_id,
-        "plan": plan,
-        "current_usage": nb_tasks_logged,
-        "max_usage": max_usage,
-        "max_usage_label": max_usage_label,
-    }
+    if plan == "pro" or org_id in EXEMPTED_ORG_IDS:
+        return {
+            "org_id": org_id,
+            "plan": "pro",
+            "credits": org_info_model.credits,
+            "max_usage": None,
+            "max_usage_label": "unlimited",
+        }
+    else:
+        return {
+            "org_id": org_id,
+            "plan": "hobby",
+            "credits": org_info_model.credits,
+            "max_usage": config.PLAN_HOBBY_MAX_NB_TASKS,
+            "max_usage_label": str(config.PLAN_HOBBY_MAX_NB_TASKS),
+        }
 
 
 def fetch_users_from_org(org_id: str):

@@ -6,13 +6,10 @@ import {
   SelectGroup,
   SelectItem,
   SelectLabel,
-  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { dataStateStore, navigationStateStore } from "@/store/store";
-
-import CreateProjectButton from "./create-project-button";
 
 export function SelectProjectButton() {
   // Zustand state management

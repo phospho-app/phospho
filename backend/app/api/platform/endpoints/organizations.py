@@ -143,7 +143,7 @@ async def get_org_usage_quota(
     org_id: str,
     user: User = Depends(propelauth.require_user),
 ):
-    org_member_info = propelauth.require_org_member(user, org_id)
+    _ = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_id)
     logger.info(org)
     org_metadata = org.get("metadata", {})
@@ -401,7 +401,7 @@ async def post_create_billing_portal_session(
     org_id: str,
     user: User = Depends(propelauth.require_user),
 ):
-    org_member_info = propelauth.require_org_member(user, org_id)
+    _ = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_id)
     org_metadata = org.get("metadata", {})
     org_plan = org_metadata.get("plan", "hobby")
@@ -413,7 +413,7 @@ async def post_create_billing_portal_session(
             f"Creating billing portal session for org {org_id}, user {user.email}, and customer {org_metadata.get('customer_id', None)}"
         )
         # Update the metadata of the customer in stripe
-        customer = stripe.Customer.modify(
+        _ = stripe.Customer.modify(
             org_metadata.get("customer_id", None),
             metadata={"org_id": org_id},
         )
@@ -425,3 +425,19 @@ async def post_create_billing_portal_session(
     except Exception as e:
         logger.error(f"Error creating billing portal session: {e}")
         return {"error": f"Unexpected error: {e}"}
+
+
+@router.get(
+    "/organizations/{org_id}/credits",
+    description="Get the credits of an organization",
+)
+async def get_org_credits(
+    org_id: str,
+    user: User = Depends(propelauth.require_user),
+):
+    _ = propelauth.require_org_member(user, org_id)
+    org = propelauth.fetch_org(org_id)
+    org_metadata = org.get("metadata", {})
+    org_plan = org_metadata.get("plan", "hobby")
+    usage_quota = await get_usage_quota(org_id, plan=org_plan)
+    return {"credits": usage_quota.get("credits", 0)}

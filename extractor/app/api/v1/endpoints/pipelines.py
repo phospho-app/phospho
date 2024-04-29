@@ -20,7 +20,6 @@ from app.api.v1.models import (
     RunMainPipelineOnMessagesRequest,
     RunRecipeOnTaskRequest,
 )
-from app.db.models import Task
 
 router = APIRouter()
 

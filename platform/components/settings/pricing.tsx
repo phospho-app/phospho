@@ -223,7 +223,7 @@ export default function Pricing({
       pro: {
         title: "Pro",
         price: "Cancel anytime",
-        tagline: "Try for free for 15 days",
+        tagline: "Get $10 of free credits",
       },
       enterprise: {
         title: "Enterprise",
@@ -232,6 +232,19 @@ export default function Pricing({
       },
     },
     criterias: [
+      {
+        type: "title",
+        label: "Pricing",
+      },
+      {
+        type: "section",
+        label: "Per 1K events",
+        tiers: {
+          hobby: "free",
+          pro: "$1",
+          enterprise: "$1",
+        },
+      },
       { type: "title", label: "Usage" },
       {
         type: "section",
@@ -271,7 +284,7 @@ export default function Pricing({
       },
       {
         type: "section",
-        label: "Events Detection",
+        label: "Event Detection",
         tiers: { hobby: true, pro: true, enterprise: true },
       },
       {

@@ -153,6 +153,11 @@ class ProjectSettings(BaseModel):
     events: Dict[str, EventDefinition] = Field(default_factory=dict)
 
 
+class Organization(DatedBaseModel):
+    id: str = Field(default_factory=generate_uuid)
+    credits: Optional[int] = 0
+
+
 class Project(DatedBaseModel):
     org_id: str
     project_name: str  # to validate this, use https://docs.pydantic.dev/latest/concepts/validators/
@@ -178,17 +183,17 @@ class Project(DatedBaseModel):
         ):
             for event_name, event in project_data["settings"]["events"].items():
                 if "event_name" not in event.keys():
-                    project_data["settings"]["events"][event_name][
-                        "event_name"
-                    ] = event_name
+                    project_data["settings"]["events"][event_name]["event_name"] = (
+                        event_name
+                    )
                 if "org_id" not in event.keys():
-                    project_data["settings"]["events"][event_name][
-                        "org_id"
-                    ] = project_data["org_id"]
+                    project_data["settings"]["events"][event_name]["org_id"] = (
+                        project_data["org_id"]
+                    )
                 if "project_id" not in event.keys():
-                    project_data["settings"]["events"][event_name][
-                        "project_id"
-                    ] = project_data["id"]
+                    project_data["settings"]["events"][event_name]["project_id"] = (
+                        project_data["id"]
+                    )
 
         return cls(**project_data)
 
@@ -418,7 +423,7 @@ class Message(DatedBaseModel):
         # Verify that mandatory field are present. If not, raise a ValueError
         if col_mapping["content"] is None:
             raise ValueError(
-                f'Column "content" not found in the DataFrame. '
+                'Column "content" not found in the DataFrame. '
                 + 'Please provide a keyword argument with the column to use: `Message.from_df(df, content="message_content")`.'
             )
 

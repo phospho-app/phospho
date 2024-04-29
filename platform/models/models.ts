@@ -34,7 +34,7 @@ export interface TaskWithEvents extends Task {
 export interface UsageQuota {
   org_id: string;
   plan: string;
-  current_usage: number;
+  credits: number;
   max_usage: number;
   max_usage_label: string;
 }

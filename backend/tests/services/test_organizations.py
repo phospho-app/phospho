@@ -14,4 +14,4 @@ async def test_org_service(db, populated_project):
 
         logger.debug(f"Usage: {usage}")
 
-        assert usage.get("current_usage") == 4
+        assert usage.get("credits") == 0

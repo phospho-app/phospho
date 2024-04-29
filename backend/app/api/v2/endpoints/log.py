@@ -14,6 +14,7 @@ from app.security.authentification import raise_error_if_not_in_pro_tier
 from app.services.mongo.extractor import run_log_process
 from app.services.mongo.emails import send_quota_exceeded_email
 from app.core import config
+from app.services.mongo.organizations import diminish_credits
 
 router = APIRouter(tags=["Logs"])
 
@@ -40,11 +41,13 @@ async def store_batch_of_log_events(
     extra_logs_to_save: List[LogEvent] = []
 
     org_plan = await get_quota(project_id)
-    current_usage = org_plan.get("current_usage", 0)
+    credits = org_plan.get("credits", 0)
     max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_TASKS)
 
+    org_id = org["org"].get("org_id")
+
     for log_event_model in log_request.batched_log_events:
-        # Validate the log in a second time, using the pydantic model
+        # We now validate the logs
         try:
             if log_event_model.project_id is None:
                 log_event_model.project_id = project_id
@@ -60,18 +63,15 @@ async def store_batch_of_log_events(
             logged_events.append(valid_log_event)
             # Process this log only if the usage quota is not reached
 
-            if max_usage is None or (
-                max_usage is not None and current_usage < max_usage
-            ):
+            if max_usage is None or (max_usage is not None and credits > 0):
                 logs_to_process.append(valid_log_event)
-                current_usage += 1
+                # Update the credits
+                await diminish_credits(org_id, 1)
             else:
-                logger.warning(f"Max usage quota reached for project {project_id}")
+                logger.warning(f"No more credits for org: {org_id}")
                 background_tasks.add_task(send_quota_exceeded_email, project_id)
                 logged_events.append(
-                    LogError(
-                        error_in_log=f"Max usage quota reached for project {project_id}: {current_usage}/{max_usage} logs"
-                    )
+                    LogError(error_in_log=f"No more credits for org: {org_id}")
                 )
                 extra_logs_to_save.append(valid_log_event)
         except ValidationError as e:
@@ -90,7 +90,7 @@ async def store_batch_of_log_events(
         f"Project {project_id} replying to log request with {len(logged_events)}: {len(logs_to_process)} valid logs and {len(extra_logs_to_save)} extra logs to save."
     )
 
-    # All the tasks to process were deemed as valid and part of the usage quota
+    # All the tasks to process were deemed as valid and the org had enough credits to process them
     background_tasks.add_task(
         run_log_process,
         logs_to_process=logs_to_process,

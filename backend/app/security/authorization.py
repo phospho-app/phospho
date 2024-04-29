@@ -54,4 +54,4 @@ async def authorize_main_pipeline(project_id: str) -> bool:
     if usage["max_usage"] is None:
         return True
     else:
-        return usage["current_usage"] < usage["max_usage"]
+        return usage["credits"] > 0
