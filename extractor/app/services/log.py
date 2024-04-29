@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from app.services.slack import slack_notification
 import openai
 from loguru import logger
 
@@ -339,7 +340,12 @@ async def process_log_without_session_id(
         tasks_to_create, tasks_id_to_process
     )
     if len(tasks_to_create) > 0:
-        await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
+        try:
+            await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
+        except Exception as e:
+            error_mesagge = f"Error saving tasks to the database: {e}"
+            logger.error(error_mesagge)
+            await slack_notification(error_mesagge)
 
     if trigger_pipeline:
         # Vectorize them
@@ -461,7 +467,12 @@ async def process_log_with_session_id(
         tasks_to_create, tasks_id_to_process
     )
     if len(tasks_to_create) > 0:
-        await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
+        try:
+            await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
+        except Exception as e:
+            error_mesagge = f"Error saving tasks to the database: {e}"
+            logger.error(error_mesagge)
+            await slack_notification(error_mesagge)
 
     # Add sessions to database
     if len(sessions_to_create) > 0:
@@ -496,9 +507,14 @@ async def process_log_with_session_id(
             logger.info(
                 f"Creating sessions: {' '.join([session_id for session_id in sessions_to_create.keys()])}"
             )
-            insert_result = await mongo_db["sessions"].insert_many(
-                sessions_to_create_dump, ordered=False
-            )
+            try:
+                insert_result = await mongo_db["sessions"].insert_many(
+                    sessions_to_create_dump, ordered=False
+                )
+            except Exception as e:
+                error_mesagge = f"Error saving sessions to the database: {e}"
+                logger.error(error_mesagge)
+                await slack_notification(error_mesagge)
             logger.info(f"Created {len(insert_result.inserted_ids)} sessions")
     else:
         logger.info("Logevent: no session to create")
@@ -544,9 +560,14 @@ async def process_log(
     )
     # Save the non-error log events
     if len(nonerror_log_events) > 0:
-        mongo_db["logs"].insert_many(
-            [log_event.model_dump() for log_event in nonerror_log_events]
-        )
+        try:
+            mongo_db["logs"].insert_many(
+                [log_event.model_dump() for log_event in nonerror_log_events]
+            )
+        except Exception as e:
+            error_mesagge = f"Error saving logs to the database: {e}"
+            logger.error(error_mesagge)
+            await slack_notification(error_mesagge)
 
     # Process logs without session_id
     await process_log_without_session_id(
