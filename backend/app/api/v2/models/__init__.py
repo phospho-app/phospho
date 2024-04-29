@@ -8,7 +8,7 @@ from .events import (
     PipelineResults,
 )
 from .log import LogError, LogEvent, LogReply, LogRequest, MinimalLogEvent
-from .models import ModelsResponse
+from .models import Model, ModelsResponse
 from .projects import (
     ComputeJobsRequest,
     EventDefinition,
@@ -32,3 +32,4 @@ from .tasks import (
     TaskUpdateRequest,
 )
 from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest
+from .train import TrainRequest

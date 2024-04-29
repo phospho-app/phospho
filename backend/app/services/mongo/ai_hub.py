@@ -6,7 +6,7 @@ from loguru import logger
 import httpx
 
 from app.core import config
-from app.api.v2.models import ModelsResponse
+from app.api.v2.models import Model, ModelsResponse, TrainRequest
 
 
 def health_check():
@@ -46,3 +46,46 @@ def fetch_models(org_id: str = None) -> ModelsResponse:
     except Exception as e:
         logger.error(e)
         return False
+
+
+def fetch_model(model_id: str) -> Model | None:
+    """
+    Get a model by its id
+    """
+    try:
+        response = httpx.get(
+            f"{config.PROPRIETARY_AI_HUB_URL}/v1/models/{model_id}",
+            headers={
+                "Authorization": f"Bearer {config.PROPRIETARY_AI_HUB_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            timeout=60,
+        )
+        # Parse the response
+        return Model(**response.json())
+
+    except Exception as e:
+        logger.error(e)
+        return None
+
+
+def train_model(request_body: TrainRequest) -> Model | None:
+    """
+    Create a training job for a given model and dataset
+    """
+    try:
+        response = httpx.post(
+            f"{config.PROPRIETARY_AI_HUB_URL}/v1/train",
+            json=request_body.model_dump(),
+            headers={
+                "Authorization": f"Bearer {config.PROPRIETARY_AI_HUB_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            timeout=60,
+        )
+        # Parse the response
+        return Model(**response.json())
+
+    except Exception as e:
+        logger.error(e)
+        return None

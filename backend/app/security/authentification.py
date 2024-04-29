@@ -21,6 +21,17 @@ propelauth = init_auth(config.PROPELAUTH_URL, config.PROPELAUTH_API_KEY)
 bearer = HTTPBearer()
 
 
+def is_org_in_alpha(org: dict) -> bool:
+    """
+    Check if an organization is in the alpha program
+    """
+    org_metadata = org["org"].get("metadata", {})
+    if not org_metadata:
+        return False
+
+    return org_metadata.get("is_in_alpha", False)
+
+
 def authenticate_org_key(
     authorization: HTTPAuthorizationCredentials = Depends(bearer),
 ) -> dict:
@@ -32,6 +43,36 @@ def authenticate_org_key(
 
     try:
         org = propelauth.validate_org_api_key(api_key_token)
+
+    except Exception as e:
+        logger.debug(f"Caught Exception: {e}")
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    logger.debug(
+        f"API key authentification for org {org['org']['org_id']} ending in {api_key_token[-4:]}"
+    )
+
+    return org
+
+
+def authenticate_org_key_in_alpha(
+    authorization: HTTPAuthorizationCredentials = Depends(bearer),
+) -> dict:
+    """
+    API key authentification for orgs
+    Request will be denied if the org is not in the alpha program
+    """
+    # Parse credentials
+    api_key_token = authorization.credentials
+
+    try:
+        org = propelauth.validate_org_api_key(api_key_token)
+
+        if not is_org_in_alpha(org):
+            raise HTTPException(
+                status_code=403,
+                detail="Organization not in the Alpha program. Request access at contact@phospho.app",
+            )
 
     except Exception as e:
         logger.debug(f"Caught Exception: {e}")
@@ -156,14 +197,3 @@ def raise_error_if_not_in_pro_tier(org: dict, enforce: bool = False) -> None:
             detail="This feature is only available with a payment method. Add it on https://platform.phospho.ai/",
         )
     return
-
-
-def is_org_in_alpha(org: dict) -> bool:
-    """
-    Check if an organization is in the alpha program
-    """
-    org_metadata = org["org"].get("metadata", {})
-    if not org_metadata:
-        return False
-
-    return org_metadata.get("is_in_alpha", False)
