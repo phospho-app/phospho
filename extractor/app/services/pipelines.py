@@ -249,9 +249,12 @@ async def task_event_detection_pipeline(
         mongo_db["job_results"].insert_one(result.model_dump())
 
     if len(detected_events) > 0:
-        mongo_db["events"].insert_many(
-            [event.model_dump() for event in detected_events]
-        )
+        try:
+            mongo_db["events"].insert_many(
+                [event.model_dump() for event in detected_events]
+            )
+        except Exception as e:
+            logger.error(f"Error saving detected events to the database: {e}")
     return detected_events
 
 
@@ -574,7 +577,10 @@ async def messages_main_pipeline(
 
     # Push the events to the database
     if len(events) > 0:
-        mongo_db["events"].insert_many([event.model_dump() for event in events])
+        try:
+            mongo_db["events"].insert_many([event.model_dump() for event in events])
+        except Exception as e:
+            logger.error(f"Error saving detected events to the database: {e}")
 
     return PipelineResults(
         events=events,
