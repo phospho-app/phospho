@@ -7,7 +7,6 @@ import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 export default function Page() {
@@ -42,17 +41,7 @@ export default function Page() {
   return (
     <>
       <div className="flex-col">
-        {plan === "pro" && (
-          <div className="mb-4">
-            <Pricing
-              currentPlan={null}
-              selectedPlan="pro"
-              proPlanTagline="Add payment method"
-              displayHobbyCTA={true}
-            />
-          </div>
-        )}
-        {/*<div className="mb-4">
+        <div className="mb-4">
           {plan === "hobby" && (
             <Pricing
               currentPlan={null}
@@ -67,7 +56,7 @@ export default function Page() {
               Manage subscription
             </Button>
           )}
-        </div>*/}
+        </div>
       </div>
     </>
   );

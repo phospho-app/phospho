@@ -107,7 +107,7 @@ export default function Page() {
                 You currently have ${credits?.toFixed(3) ?? "..."} worth of
                 credits left. <br />
                 <Link href="/org/settings/billing" className="underline">
-                  Add a payment method to increase your quota
+                  Add a payment method to get $10 worth of free credits.
                 </Link>
               </p>
             </>
