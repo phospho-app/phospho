@@ -546,16 +546,14 @@ async def process_log(
             return True
         return False
 
-    nonerror_log_events = [
-        log_event
-        for log_event in logs_to_process + extra_logs_to_save
-        if not log_is_error(log_event) and isinstance(log_event, LogEvent)
-    ]
-    error_log_events = [
-        log_event
-        for log_event in logs_to_process + extra_logs_to_save
-        if log_is_error(log_event) and isinstance(log_event, LogEvent)
-    ]
+    nonerror_log_events = []
+    error_log_events = []
+    for log_event in logs_to_process + extra_logs_to_save:
+        if not log_is_error(log_event) and isinstance(log_event, LogEvent):
+            nonerror_log_events.append(log_event)
+        else:
+            error_log_events.append(log_event)
+
     logger.info(
         f"Project {project_id}: saving {len(nonerror_log_events)} non-error log events"
     )
