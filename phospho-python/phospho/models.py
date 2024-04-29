@@ -178,17 +178,17 @@ class Project(DatedBaseModel):
         ):
             for event_name, event in project_data["settings"]["events"].items():
                 if "event_name" not in event.keys():
-                    project_data["settings"]["events"][event_name][
-                        "event_name"
-                    ] = event_name
+                    project_data["settings"]["events"][event_name]["event_name"] = (
+                        event_name
+                    )
                 if "org_id" not in event.keys():
-                    project_data["settings"]["events"][event_name][
-                        "org_id"
-                    ] = project_data["org_id"]
+                    project_data["settings"]["events"][event_name]["org_id"] = (
+                        project_data["org_id"]
+                    )
                 if "project_id" not in event.keys():
-                    project_data["settings"]["events"][event_name][
-                        "project_id"
-                    ] = project_data["id"]
+                    project_data["settings"]["events"][event_name]["project_id"] = (
+                        project_data["id"]
+                    )
 
         return cls(**project_data)
 
@@ -254,13 +254,9 @@ class FlattenedTask(BaseModel, extra="allow"):
 
 class DatasetRow(DatedBaseModel, extra="allow"):
     org_id: str
-    detection_scope: DetectionScope
-    task_input: str
-    task_output: str
-    event_description: str
-    label: bool
     file_id: str  # Generated on the fly when the file is uploaded to the API
-    file_name: str
+    file_name: Optional[str] = None
+    # Then any information in the dataset is stored as an extra field
 
 
 class FineTuningJob(DatedBaseModel, extra="allow"):
