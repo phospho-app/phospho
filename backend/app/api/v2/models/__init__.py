@@ -8,6 +8,7 @@ from .events import (
     PipelineResults,
 )
 from .log import LogError, LogEvent, LogReply, LogRequest, MinimalLogEvent
+from .models import ModelsResponse
 from .projects import (
     ComputeJobsRequest,
     EventDefinition,

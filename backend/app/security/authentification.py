@@ -156,3 +156,14 @@ def raise_error_if_not_in_pro_tier(org: dict, enforce: bool = False) -> None:
             detail="This feature is only available with a payment method. Add it on https://platform.phospho.ai/",
         )
     return
+
+
+def is_org_in_alpha(org: dict) -> bool:
+    """
+    Check if an organization is in the alpha program
+    """
+    org_metadata = org["org"].get("metadata", {})
+    if not org_metadata:
+        return False
+
+    return org_metadata.get("is_in_alpha", False)
