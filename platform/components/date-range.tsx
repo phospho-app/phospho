@@ -46,14 +46,20 @@ export function DatePickerWithRange({
     dateRangeLabel = "All time";
   }
   if (dateRangePreset === null) {
-    if (dateRange?.from && dateRange.to) {
-      dateRangeLabel = `${format(dateRange.from, "y-LLL-dd")} - ${format(
-        dateRange.to,
-        "y-LLL-dd",
-      )}`;
-    } else if (dateRange?.from && !dateRange.to) {
-      dateRangeLabel = `${format(dateRange.from, "y-LLL-dd")}`;
-    } else {
+    try {
+      if (dateRange?.from && dateRange.to) {
+        console.log(dateRange.from, dateRange.to);
+        dateRangeLabel = `${format(dateRange.from, "y-LLL-dd")} - ${format(
+          dateRange.to,
+          "y-LLL-dd",
+        )}`;
+      } else if (dateRange?.from && !dateRange.to) {
+        dateRangeLabel = `${format(dateRange.from, "y-LLL-dd")}`;
+      } else {
+        dateRangeLabel = "Pick a date";
+      }
+    } catch (e) {
+      console.log(e);
       dateRangeLabel = "Pick a date";
     }
   }
@@ -107,9 +113,13 @@ export function DatePickerWithRange({
                 selected={dateRange}
                 onSelect={(selected) => {
                   if (selected !== undefined) {
-                    // Add one day to the end date to include the selected day
+                    // Set the time of the from date to 00:00:00
+                    if (selected.from) {
+                      selected.from.setHours(0, 0, 0, 0);
+                    }
+                    // Set the time of the to date to 23:59:59
                     if (selected.to) {
-                      selected.to = new Date(selected.to.getTime() + 86400000);
+                      selected.to.setHours(23, 59, 59, 999);
                     }
                     setDateRange(selected);
                   }
