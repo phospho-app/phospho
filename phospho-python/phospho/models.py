@@ -76,6 +76,7 @@ class EventDefinition(DatedBaseModel):
     regex_pattern: Optional[str] = None
     recipe_id: Optional[str] = None  # Associated Recipe id
     recipe_type: RecipeType = "event_detection"
+    removed: bool = False
 
 
 class Event(ProjectElementBaseModel):
@@ -90,6 +91,8 @@ class Event(ProjectElementBaseModel):
     event_definition: Optional[EventDefinition] = None
     task: Optional["Task"] = None
     messages: Optional[List["Message"]] = Field(default_factory=list)
+    removal_reason: Optional[str] = None
+    removed: bool = False
 
 
 class Task(ProjectElementBaseModel):

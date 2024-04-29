@@ -71,16 +71,20 @@ try:
             logger.debug(
                 "Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613."
             )
-            return num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613")
+            tokens_per_message = 3
+            tokens_per_name = 1
         elif "gpt-4" in model:
             logger.debug(
                 "Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613."
             )
-            return num_tokens_from_messages(messages, model="gpt-4-0613")
+            tokens_per_message = 3
+            tokens_per_name = 1
         else:
             logger.warning(
                 f"""num_tokens_from_messages() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."""
             )
+            tokens_per_message = 3
+            tokens_per_name = 1
         num_tokens = 0
         for message in messages:
             num_tokens += tokens_per_message

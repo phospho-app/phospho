@@ -1,5 +1,6 @@
 "use client";
 
+import DownloadButton from "@/components/navbar/download-csv";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -100,6 +101,8 @@ export function NavBarSettings() {
               </DropdownMenuItem>
             </DropdownMenuSubContent>
           </DropdownMenuSub>
+          <DropdownMenuSeparator />
+          <DownloadButton />
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={async () => {

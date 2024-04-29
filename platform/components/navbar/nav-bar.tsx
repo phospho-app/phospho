@@ -6,7 +6,6 @@ import getConfig from "next/config";
 import Link from "next/link";
 import { usePostHog } from "posthog-js/react";
 
-import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { NavBarHelp } from "./help";
 import { NavBarSettings } from "./navsettings";

@@ -72,7 +72,6 @@ export function SessionsTable<TData, TValue>({
   // Filtering
   let eventFilter: string[] | null = null;
   if (sessionsColumnsFilters.length > 0) {
-    console.log("tasksColumnsFilters", sessionsColumnsFilters);
     for (let filter of sessionsColumnsFilters) {
       if (filter.id === "events") {
         if (typeof filter?.value === "string") {

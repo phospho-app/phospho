@@ -67,7 +67,12 @@ function EventRow({
 
   return (
     <TableRow
-      onClick={() => handleOnClick(eventName)}
+      onClick={(mouseEvent) => {
+        mouseEvent.stopPropagation();
+        if (!open) {
+          handleOnClick(eventName);
+        }
+      }}
       className="cursor-pointer"
     >
       <TableCell>{eventName}</TableCell>
@@ -82,14 +87,22 @@ function EventRow({
       <TableCell className="text-right">
         <Sheet open={open} onOpenChange={setOpen} key={eventName}>
           <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+              }}
+            >
               <Button size="icon" variant="ghost">
                 <EllipsisVertical />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <SheetTrigger asChild>
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(mouseEvent) => {
+                    mouseEvent.stopPropagation();
+                  }}
+                >
                   <Pencil className="w-4 h-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
@@ -157,6 +170,9 @@ function EventsList() {
 
   const handleOnClick = (eventName: string) => {
     if (!selectedProject?.settings) {
+      return;
+    }
+    if (!selectedProject.settings.events[eventName]) {
       return;
     }
     const eventId = selectedProject.settings.events[eventName].id;

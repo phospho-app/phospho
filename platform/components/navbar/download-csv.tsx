@@ -41,10 +41,10 @@ const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
   };
 
   return (
-    <Button variant="secondary" onClick={handleButtonClick} disabled={isSent}>
+    <Button variant={"ghost"} onClick={handleButtonClick} disabled={isSent}>
       {/* <Mail className="mr-2 h-4 w-4" /> */}
-      <Download className="mr-1 h-4 w-4" />
-      {isSent ? `Data sent to ${user.email}!` : "Export"}
+      <Download className="mr-2 h-4 w-4" />
+      {isSent ? `Data sent to ${user.email}!` : "Export Data"}
     </Button>
   );
 };
