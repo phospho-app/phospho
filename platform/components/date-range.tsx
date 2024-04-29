@@ -107,6 +107,10 @@ export function DatePickerWithRange({
                 selected={dateRange}
                 onSelect={(selected) => {
                   if (selected !== undefined) {
+                    // Add one day to the end date to include the selected day
+                    if (selected.to) {
+                      selected.to = new Date(selected.to.getTime() + 86400000);
+                    }
                     setDateRange(selected);
                   }
                 }}
