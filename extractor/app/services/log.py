@@ -546,11 +546,14 @@ async def process_log(
             return True
         return False
 
-    nonerror_log_events = [
-        log_event
-        for log_event in logs_to_process + extra_logs_to_save
-        if not log_is_error(log_event) and isinstance(log_event, LogEvent)
-    ]
+    nonerror_log_events = []
+    error_log_events = []
+    for log_event in logs_to_process + extra_logs_to_save:
+        if not log_is_error(log_event) and isinstance(log_event, LogEvent):
+            nonerror_log_events.append(log_event)
+        else:
+            error_log_events.append(log_event)
+
     logger.info(
         f"Project {project_id}: saving {len(nonerror_log_events)} non-error log events"
     )
@@ -559,6 +562,18 @@ async def process_log(
         try:
             mongo_db["logs"].insert_many(
                 [log_event.model_dump() for log_event in nonerror_log_events]
+            )
+        except Exception as e:
+            error_mesagge = f"Error saving logs to the database: {e}"
+            logger.error(error_mesagge)
+    # Save the error log events
+    if len(error_log_events) > 0:
+        logger.error(
+            f"Project {project_id}: saving {len(error_log_events)} error log events"
+        )
+        try:
+            mongo_db["log_errors"].insert_many(
+                [log_event.model_dump() for log_event in error_log_events]
             )
         except Exception as e:
             error_mesagge = f"Error saving logs to the database: {e}"
