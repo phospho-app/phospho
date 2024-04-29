@@ -1,6 +1,7 @@
 import time
 from typing import Dict, List, Literal, Optional
 
+from app.services.slack import slack_notification
 from loguru import logger
 
 from app.core import config
@@ -254,7 +255,10 @@ async def task_event_detection_pipeline(
                 [event.model_dump() for event in detected_events]
             )
         except Exception as e:
-            logger.error(f"Error saving detected events to the database: {e}")
+            error_mesagge = f"Error saving detected events to the database: {e}"
+            logger.error(error_mesagge)
+            await slack_notification(error_mesagge)
+
     return detected_events
 
 
@@ -580,7 +584,9 @@ async def messages_main_pipeline(
         try:
             mongo_db["events"].insert_many([event.model_dump() for event in events])
         except Exception as e:
-            logger.error(f"Error saving detected events to the database: {e}")
+            error_mesagge = f"Error saving detected events to the database: {e}"
+            logger.error(error_mesagge)
+            await slack_notification(error_mesagge)
 
     return PipelineResults(
         events=events,
