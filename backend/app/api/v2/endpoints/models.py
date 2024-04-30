@@ -23,7 +23,12 @@ async def get_models(org=Depends(authenticate_org_key_in_alpha)):
     logger.info(f"Query to /models by org {org['org']['org_id']}")
     # Check that the org is in the Alpha list
 
-    return await fetch_models(org_id=org["org"]["org_id"])
+    models = await fetch_models(org_id=org["org"]["org_id"])
+
+    if models is None:
+        return ModelsResponse(models=[])
+
+    return models
 
 
 @router.get(
@@ -40,6 +45,12 @@ async def get_model(model_id: str, org=Depends(authenticate_org_key_in_alpha)):
 
     # Check that the org is in the Alpha list
     fetched_model = await fetch_model(model_id)
+
+    if fetched_model is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Model not found",
+        )
 
     # Check the ownership of the model
     if fetched_model.owned_by is not None:

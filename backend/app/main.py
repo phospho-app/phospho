@@ -9,6 +9,7 @@ from app.core import config
 from app.db.mongo import close_mongo_db, connect_and_init_db
 from app.db.qdrant import close_qdrant, init_qdrant
 from app.services.mongo.extractor import check_health
+from app.services.mongo.ai_hub import check_health_ai_hub
 
 logging.info(f"ENVIRONMENT : {config.ENVIRONMENT}")
 
@@ -99,6 +100,7 @@ else:
 
 # Other services
 app.add_event_handler("startup", check_health)
+app.add_event_handler("startup", check_health_ai_hub)
 
 
 # Healthcheck
