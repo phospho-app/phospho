@@ -25,7 +25,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { FilterX } from "lucide-react";
+import { FilterX, X } from "lucide-react";
 import { Database, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -161,7 +161,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     totalNbTasksData?.total_nb_tasks;
   const maxNbPages = totalNbTasks
     ? Math.ceil(totalNbTasks / tasksPagination.pageSize)
-    : -1;
+    : 1;
 
   const query_tasks = async () => {
     // Call the /search endpoint
@@ -211,10 +211,12 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     return <></>;
   }
 
+  console.log("tasksColumnsFilters", tasksColumnsFilters);
+
   return (
     <div>
       <div className="flex flex-row gap-x-2 items-center mb-2">
-        <div className="flex-grow">
+        {/* <div className="flex-grow">
           <Input
             placeholder="Search for a topic"
             value={
@@ -271,28 +273,30 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             ></path>
           </svg>
-        )}
+        )} */}
+      </div>
+      <div className="flex flex-row justify-between items-center mb-2 gap-x-2">
+        <div className="flex flew-row  gap-x-2">
+          <DatePickerWithRange />
+          <FilterComponent />
+          {tasksColumnsFilters &&
+            Object.keys(tasksColumnsFilters).length > 0 && (
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  table.setColumnFilters([]);
+                  setQuery("");
+                  eventFilter = null;
+                  flagFilter = null;
+                }}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Clear all filters
+              </Button>
+            )}
+        </div>
         <TableNavigation table={table} />
       </div>
-
-      <div className="flex flex-row gap-x-2 items-center mb-2 ">
-        <DatePickerWithRange />
-        <FilterComponent />
-        <Button
-          variant="secondary"
-          onClick={() => {
-            table.setColumnFilters([]);
-            setQuery("");
-            eventFilter = null;
-            flagFilter = null;
-          }}
-          disabled={tasksColumnsFilters.length === 0}
-        >
-          <FilterX className="h-4 w-4 mr-1" />
-          Clear filters
-        </Button>
-      </div>
-
       <div className="rounded-md border">
         <Table>
           <TableHeader>
