@@ -187,9 +187,7 @@ def collect_metadata(log_event: LogEvent) -> Optional[dict]:
     return metadata
 
 
-async def add_vectorized_tasks(
-    tasks_id: List[str],
-):
+async def add_vectorized_tasks(tasks_id: List[str]):
     """
     Compute the vector representation of the tasks and add them to Qdrant database
     """
@@ -228,6 +226,9 @@ async def add_vectorized_tasks(
                         "task_id": task.id,
                         "project_id": task.project_id,
                         "session_id": task.session_id,
+                        "created_at": task.created_at,
+                        "org_id": task.org_id,
+                        "metadata": task.metadata,
                     },
                 )
                 for task, embedding in zip(tasks, embedding.data)

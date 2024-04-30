@@ -138,3 +138,9 @@ if ENVIRONMENT != "preview":
 
 CSV_UPLOAD_MAX_ROWS = 100000
 FINE_TUNING_MINIMUM_DOCUMENTS = 20
+
+### PHOSPHO AI HUB ###
+PHOSPHO_AI_HUB_URL = os.getenv("PHOSPHO_AI_HUB_URL", None)
+PHOSPHO_AI_HUB_API_KEY = os.getenv("PHOSPHO_AI_HUB_API_KEY", None)
+if ENVIRONMENT != "preview" and PHOSPHO_AI_HUB_URL is None:
+    logger.error("PHOSPHO_AI_HUB_URL is missing from the environment variables")
