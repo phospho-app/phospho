@@ -182,7 +182,7 @@ async def fetch_user_metadata(
         ]
 
     # First, we update the relevant sessions collection with the session_length
-    await compute_session_length(project_id)
+    # await compute_session_length(project_id)
 
     # Then, we fetch the user metadata
     metadata_pipeline = match_pipeline + [
@@ -306,8 +306,8 @@ async def fetch_user_metadata(
     ]
 
     users = await mongo_db["tasks"].aggregate(metadata_pipeline).to_list(length=None)
-    if users is None or users == []:
-        raise HTTPException(status_code=404, detail="User not found")
+    if users is None or (user_id is not None and len(users) == 0):
+        raise HTTPException(status_code=404, detail="No user found")
 
     users = [UserMetadata.model_validate(data) for data in users]
     # logger.debug(f"User metadata: {users}")
