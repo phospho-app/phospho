@@ -21,6 +21,18 @@ async def post_train(
     org_id = org["org"]["org_id"]
     request_body.org_id = org_id
 
+    if request_body.dataset is None and request_body.examples is None:
+        raise HTTPException(
+            status_code=400,
+            detail="You need to provide a dataset or a list of examples.",
+        )
+
+    if request_body.dataset is not None and request_body.examples is not None:
+        raise HTTPException(
+            status_code=400,
+            detail="You can't provide both a dataset and a list of examples.",
+        )
+
     # Perform some checks
     if request_body.model == "phospho-small":
         # Check task type. For now, we only support binary classification
@@ -31,7 +43,7 @@ async def post_train(
             )
 
         else:
-            created_model = train_model(request_body)
+            created_model = await train_model(request_body)
 
             if created_model:
                 return created_model

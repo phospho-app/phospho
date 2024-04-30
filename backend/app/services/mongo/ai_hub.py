@@ -14,6 +14,7 @@ from app.api.v2.models import (
     PredictRequest,
     PredictResponse,
 )
+from app.services.mongo.files import process_and_save_examples
 
 
 def health_check():
@@ -76,14 +77,30 @@ def fetch_model(model_id: str) -> Model | None:
         return None
 
 
-def train_model(request_body: TrainRequest) -> Model | None:
+async def train_model(request_body: TrainRequest) -> Model | None:
     """
     Create a training job for a given model and dataset
     """
+
+    # Handle the case where the dataset is passed as a list of examples
+    if request_body.dataset is None and request_body.examples is not None:
+        # Example mode (no dataset uploaded)
+        file_id = await process_and_save_examples(
+            request_body.examples, request_body.org_id
+        )
+
+    else:
+        file_id = request_body.dataset
+
     try:
         response = httpx.post(
             f"{config.PHOSPHO_AI_HUB_URL}/v1/train",
-            json=request_body.model_dump(),
+            json={
+                "model": request_body.model,
+                "dataset": file_id,
+                "task_type": request_body.task_type,
+                "org_id": request_body.org_id,
+            },
             headers={
                 "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
                 "Content-Type": "application/json",
