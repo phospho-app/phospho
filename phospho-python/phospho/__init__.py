@@ -887,6 +887,26 @@ def backfill(tasks: List[models.Task]) -> None:
     client.backfill(tasks)
 
 
+def train(
+    model: str, examples: list, task_type: str = "binary-classification"
+) -> Optional[Dict[str, object]]:
+    """
+    Train a model on a set of examples.
+
+    :param model: The name of the model to train.
+    :param examples: A list of examples to train the model on, with keys 'text', 'label', 'label_text.
+    :param task_type: The type of task to train the model on.
+    """
+    global client
+
+    if client is None:
+        raise ValueError("Call phospho.init() before calling phospho.train()")
+
+    model = client.train(model=model, examples=examples, task_type=task_type)
+
+    return model
+
+
 ### Requires phospho lab extras ###
 
 try:

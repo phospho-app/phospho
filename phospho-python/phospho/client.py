@@ -245,9 +245,12 @@ class Client:
         assert task_type in ["binary-classification"], "Task type not supported"
         assert len(examples) >= 20, "You need at least 20 examples to train the model."
 
-        self._post(
+        response = self._post(
             "/train",
             payload={"model": model, "examples": examples, "task_type": task_type},
         )
 
-        return None
+        # Get the body of the response
+        response_body = response.json()
+
+        return response_body
