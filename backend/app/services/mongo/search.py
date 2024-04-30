@@ -15,6 +15,8 @@ async def search_tasks_in_project(
 ) -> List[Task]:
     mongo_db = await get_mongo_db()
     qdrant_db = await get_qdrant()
+    if qdrant_db is None:
+        return []
     # Embed the query
     try:
         query_embedding = await openai_client.embeddings.create(
