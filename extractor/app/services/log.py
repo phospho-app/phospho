@@ -187,9 +187,7 @@ def collect_metadata(log_event: LogEvent) -> Optional[dict]:
     return metadata
 
 
-async def add_vectorized_tasks(
-    tasks_id: List[str],
-):
+async def add_vectorized_tasks(tasks_id: List[str]):
     """
     Compute the vector representation of the tasks and add them to Qdrant database
     """
@@ -228,6 +226,9 @@ async def add_vectorized_tasks(
                         "task_id": task.id,
                         "project_id": task.project_id,
                         "session_id": task.session_id,
+                        "created_at": task.created_at,
+                        "org_id": task.org_id,
+                        "metadata": task.metadata,
                     },
                 )
                 for task, embedding in zip(tasks, embedding.data)
@@ -339,7 +340,11 @@ async def process_log_without_session_id(
         tasks_to_create, tasks_id_to_process
     )
     if len(tasks_to_create) > 0:
-        await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
+        try:
+            await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
+        except Exception as e:
+            error_mesagge = f"Error saving tasks to the database: {e}"
+            logger.error(error_mesagge)
 
     if trigger_pipeline:
         # Vectorize them
@@ -461,7 +466,11 @@ async def process_log_with_session_id(
         tasks_to_create, tasks_id_to_process
     )
     if len(tasks_to_create) > 0:
-        await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
+        try:
+            await mongo_db["tasks"].insert_many(tasks_to_create, ordered=False)
+        except Exception as e:
+            error_mesagge = f"Error saving tasks to the database: {e}"
+            logger.error(error_mesagge)
 
     # Add sessions to database
     if len(sessions_to_create) > 0:
@@ -496,9 +505,13 @@ async def process_log_with_session_id(
             logger.info(
                 f"Creating sessions: {' '.join([session_id for session_id in sessions_to_create.keys()])}"
             )
-            insert_result = await mongo_db["sessions"].insert_many(
-                sessions_to_create_dump, ordered=False
-            )
+            try:
+                insert_result = await mongo_db["sessions"].insert_many(
+                    sessions_to_create_dump, ordered=False
+                )
+            except Exception as e:
+                error_mesagge = f"Error saving sessions to the database: {e}"
+                logger.error(error_mesagge)
             logger.info(f"Created {len(insert_result.inserted_ids)} sessions")
     else:
         logger.info("Logevent: no session to create")
@@ -534,19 +547,38 @@ async def process_log(
             return True
         return False
 
-    nonerror_log_events = [
-        log_event
-        for log_event in logs_to_process + extra_logs_to_save
-        if not log_is_error(log_event) and isinstance(log_event, LogEvent)
-    ]
+    nonerror_log_events = []
+    error_log_events = []
+    for log_event in logs_to_process + extra_logs_to_save:
+        if not log_is_error(log_event) and isinstance(log_event, LogEvent):
+            nonerror_log_events.append(log_event)
+        else:
+            error_log_events.append(log_event)
+
     logger.info(
         f"Project {project_id}: saving {len(nonerror_log_events)} non-error log events"
     )
     # Save the non-error log events
     if len(nonerror_log_events) > 0:
-        mongo_db["logs"].insert_many(
-            [log_event.model_dump() for log_event in nonerror_log_events]
+        try:
+            mongo_db["logs"].insert_many(
+                [log_event.model_dump() for log_event in nonerror_log_events]
+            )
+        except Exception as e:
+            error_mesagge = f"Error saving logs to the database: {e}"
+            logger.error(error_mesagge)
+    # Save the error log events
+    if len(error_log_events) > 0:
+        logger.error(
+            f"Project {project_id}: saving {len(error_log_events)} error log events"
         )
+        try:
+            mongo_db["log_errors"].insert_many(
+                [log_event.model_dump() for log_event in error_log_events]
+            )
+        except Exception as e:
+            error_mesagge = f"Error saving logs to the database: {e}"
+            logger.error(error_mesagge)
 
     # Process logs without session_id
     await process_log_without_session_id(

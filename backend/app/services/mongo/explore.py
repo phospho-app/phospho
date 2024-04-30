@@ -365,7 +365,10 @@ async def get_total_nb_of_tasks(
     if created_at_start is not None:
         global_filters["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
-        global_filters["created_at"] = {"$lte": created_at_end}
+        global_filters["created_at"] = {
+            **global_filters.get("created_at", {}),
+            "$lte": created_at_end,
+        }
     if last_eval_source is not None:
         if last_eval_source.startswith("phospho"):
             # We want to filter on the source starting with "phospho"

@@ -139,7 +139,7 @@ async def post_backcompute_job(
     compute_job_request: ComputeJobsRequest,
     limit: int = 10000,
     org: dict = Depends(authenticate_org_key),
-) -> None:
+):
     """
     Run predictions for a job on all the tasks of a project that have not been processed yet.
     """

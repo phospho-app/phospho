@@ -44,6 +44,10 @@ PHOSPHO_API_KEY=
 # Extractor API key and URL
 EXTRACTOR_SECRET_KEY=""
 EXTRACTOR_URL="http://127.0.0.1:7605" # In test mode
+
+# For access to phospho models
+PHOSPHO_AI_HUB_URL=""
+PHOSPHO_AI_HUB_API_KEY=""
 ```
 
 ### Run tests

@@ -14,7 +14,7 @@ anyscale_client = openai.OpenAI(
     base_url=config.ANYSCALE_BASE_URL, api_key=config.ANYSCALE_API_KEY
 )
 
-system_prompt = "You are a helpful assistant that assert if an event is present in a given text. You are given an dialog between a user and an assitant, and your goal is to respond True if the event is present in the text, and False otherwise."
+system_prompt = "You are a helpful assistant that assert if an event is present in a given text. Your respond Yes if the event is present in the text, and Yes otherwise. You only respond with the word 'Yes' or 'No'."
 
 
 def convert_to_msg(row):

@@ -9,6 +9,7 @@ from app.core import config
 from app.db.mongo import close_mongo_db, connect_and_init_db
 from app.db.qdrant import close_qdrant, init_qdrant
 from app.services.mongo.extractor import check_health
+from app.services.mongo.ai_hub import check_health_ai_hub
 
 logging.info(f"ENVIRONMENT : {config.ENVIRONMENT}")
 
@@ -99,6 +100,7 @@ else:
 
 # Other services
 app.add_event_handler("startup", check_health)
+app.add_event_handler("startup", check_health_ai_hub)
 
 
 # Healthcheck
@@ -120,10 +122,13 @@ from app.api.v2.endpoints import (
     health,
     log,
     me,
+    models,
+    predict,
     projects,
     sessions,
     tasks,
     tests,
+    train,
     events,
 )
 
@@ -139,17 +144,20 @@ api_v2 = FastAPI(
     },
 )
 
-api_v2.include_router(me.router)
 api_v2.include_router(evals.router)
 api_v2.include_router(files.router)
 api_v2.include_router(fine_tuning.router)
 api_v2.include_router(log.router)
+api_v2.include_router(me.router)
+api_v2.include_router(models.router)
 api_v2.include_router(tasks.router)
 api_v2.include_router(tests.router)
+api_v2.include_router(predict.router)
 api_v2.include_router(projects.router)
 api_v2.include_router(sessions.router)
 api_v2.include_router(health.router)
 api_v2.include_router(events.router)
+api_v2.include_router(train.router)
 
 
 # Mount the subapplication on the main app with the prefix /v2/

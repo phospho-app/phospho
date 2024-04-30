@@ -259,13 +259,9 @@ class FlattenedTask(BaseModel, extra="allow"):
 
 class DatasetRow(DatedBaseModel, extra="allow"):
     org_id: str
-    detection_scope: DetectionScope
-    task_input: str
-    task_output: str
-    event_description: str
-    label: bool
     file_id: str  # Generated on the fly when the file is uploaded to the API
-    file_name: str
+    file_name: Optional[str] = None
+    # Then any information in the dataset is stored as an extra field
 
 
 class FineTuningJob(DatedBaseModel, extra="allow"):
