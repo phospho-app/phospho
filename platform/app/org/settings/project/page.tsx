@@ -2,6 +2,7 @@
 
 import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
+import StripeMeter from "@/components/settings/stripe-meter";
 import TaskProgress from "@/components/settings/tasks-quota";
 import {
   AlertDialog,
@@ -90,7 +91,10 @@ export default function Page() {
         </div>
         <div>
           {plan === "pro" && (
-            <p>You currently have {currentUsage ?? "..."} logs.</p>
+            <div>
+              <p>You currently have {currentUsage ?? "..."} logs.</p>
+              <StripeMeter />
+            </div>
           )}
           {plan === "hobby" && (
             <>

@@ -445,7 +445,7 @@ async def get_org_credit_update(
     org = propelauth.fetch_org(org_id)
     org_metadata = org.get("metadata", {})
     org_plan = org_metadata.get("plan", "hobby")
-    customer_id = (org_metadata.get("customer_id", None),)
+    customer_id = org_metadata.get("customer_id", None)
 
     if org_plan == "hobby":
         return {"error": "Organization has a hobby plan, no billing portal available"}
@@ -457,10 +457,15 @@ async def get_org_credit_update(
     if credits_used is None:
         return {"error": "Error getting credits for org"}
 
-    stripe.billing.MeterEvent.create(
-        event_name="phospho_usage_based_subscription",
-        payload={
-            "credits": credits_used,
-            "stripe_customer_id": customer_id,
-        },
-    )
+    if customer_id:
+        stripe.billing.MeterEvent.create(
+            event_name="phospho_usage_based_subscription",
+            payload={
+                "credits": credits_used,
+                "stripe_customer_id": customer_id,
+            },
+        )
+
+        return {"credits_used": credits_used}
+    else:
+        return {"error": "No customer_id in org metadata"}

@@ -158,7 +158,7 @@ async def verify_if_propelauth_user_can_access_project(
             detail=f"Project {project_id} has no org_id. Access denied.",
         )
     try:
-        org = propelauth.require_org_member(user, org_id)
+        _ = propelauth.require_org_member(user, org_id)
     except Exception as e:
         logger.error(
             f"Can't verify that {user} is a member of org {org_id} due to: {e}"
