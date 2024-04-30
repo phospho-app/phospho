@@ -20,7 +20,7 @@ async def post_predict(
     base_model = request_body.model.split(":")[0]
 
     if base_model == "phospho-small":
-        predictions = predict(request_body)
+        predictions = await predict(request_body)
 
         if predictions is None:
             raise HTTPException(
