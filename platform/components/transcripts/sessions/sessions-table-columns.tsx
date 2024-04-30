@@ -175,8 +175,8 @@ export function getColumns({
       },
       accessorKey: "events",
       cell: (row) => (
-        <div className="group flex items-center justify-between space-x-2">
-          <div className="flex flex-wrap space-y-1">
+        <div className="group flex items-center justify-between space-y-1">
+          <div className="flex flex-wrap space-x-1">
             {(row.getValue() as Event[]).map((event: Event) => {
               return (
                 <>
