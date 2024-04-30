@@ -24,7 +24,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Database, FilterX, Sparkles } from "lucide-react";
+import { Database, FilterX, Sparkles, X } from "lucide-react";
 import { warnOptionHasBeenMovedOutOfExperimental } from "next/dist/server/config";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -183,7 +183,7 @@ export function SessionsTable<TData, TValue>({
     },
     pageCount: totalNbSessions
       ? Math.ceil(totalNbSessions / sessionPagination.pageSize)
-      : 0,
+      : 1,
     autoResetPageIndex: false,
     manualPagination: true,
     manualSorting: true,
@@ -195,9 +195,8 @@ export function SessionsTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex flex-row gap-x-2 items-center mb-2">
-        <DatePickerWithRange />
-        <div className="flex-grow">
+      <div className="flex flex-row justify-between gap-x-2 items-center mb-2">
+        {/* <div className="flex-grow">
           <Input
             placeholder="Search for a topic"
             value={
@@ -242,19 +241,25 @@ export function SessionsTable<TData, TValue>({
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             ></path>
           </svg>
-        )}
-        <Button
-          variant="secondary"
-          onClick={() => {
-            table.setColumnFilters([]);
-            setQuery("");
-            eventFilter = null;
-          }}
-          disabled={sessionsColumnsFilters.length === 0}
-        >
-          <FilterX className="h-4 w-4 mr-1" />
-          Clear filters
-        </Button>
+        )} */}
+        <div className="flex flex-row space-x-2">
+          <DatePickerWithRange />
+          {sessionsColumnsFilters &&
+            Object.keys(sessionsColumnsFilters).length > 0 && (
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  table.setColumnFilters([]);
+                  setQuery("");
+                  eventFilter = null;
+                }}
+                // disabled={sessionsColumnsFilters.length === 0}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Clear all filters
+              </Button>
+            )}
+        </div>
         <TableNavigation table={table} />
       </div>
 
