@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
+
 from app.api.v2.models import Model, TrainRequest
 from app.security.authentification import authenticate_org_key_in_alpha
 from app.services.mongo.ai_hub import train_model
@@ -43,18 +44,20 @@ async def post_train(
             )
 
         # Check the number of examples in example mode
-        if request_body.examples is not None:
-            if len(request_body.examples) < 20:
-                raise HTTPException(
-                    status_code=400,
-                    detail="You need at least 20 examples to train the phospho-small model.",
-                )
+        if request_body.examples is not None and len(request_body.examples) < 20:
+            raise HTTPException(
+                status_code=400,
+                detail="You need at least 20 examples to train the phospho-small model.",
+            )
 
         else:
             created_model = await train_model(request_body)
 
-            if created_model:
-                return created_model
+            if created_model is not None:
+                # Validate the pydantic model of the created_model object
+                model_to_return = Model(**created_model.model_dump())
+
+                return model_to_return
 
             else:
                 raise HTTPException(
