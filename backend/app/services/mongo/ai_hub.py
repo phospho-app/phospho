@@ -38,9 +38,9 @@ async def fetch_models(org_id: Optional[str] = None) -> Optional[ModelsResponse]
     async with httpx.AsyncClient() as client:
         try:
             if org_id is None:
-                response = client.get(f"{config.PHOSPHO_AI_HUB_URL}/v1/models")
+                response = await client.get(f"{config.PHOSPHO_AI_HUB_URL}/v1/models")
             else:
-                response = client.get(
+                response = await client.get(
                     f"{config.PHOSPHO_AI_HUB_URL}/v1/models",
                     params={"org_id": org_id},
                     headers={
@@ -63,7 +63,7 @@ async def fetch_model(model_id: str) -> Model | None:
     """
     async with httpx.AsyncClient() as client:
         try:
-            response = client.get(
+            response = await client.get(
                 f"{config.PHOSPHO_AI_HUB_URL}/v1/models/{model_id}",
                 headers={
                     "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
@@ -96,7 +96,7 @@ async def train_model(request_body: TrainRequest) -> Model | None:
 
     async with httpx.AsyncClient() as client:
         try:
-            response = client.post(
+            response = await client.post(
                 f"{config.PHOSPHO_AI_HUB_URL}/v1/train",
                 json={
                     "model": request_body.model,
@@ -121,7 +121,7 @@ async def train_model(request_body: TrainRequest) -> Model | None:
 async def predict(predict_request: PredictRequest) -> PredictResponse | None:
     async with httpx.AsyncClient() as client:
         try:
-            response = client.post(
+            response = await client.post(
                 f"{config.PHOSPHO_AI_HUB_URL}/v1/predict",
                 json=predict_request.model_dump(),
                 headers={

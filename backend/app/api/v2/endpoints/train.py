@@ -42,6 +42,14 @@ async def post_train(
                 detail="Task not supported. Only 'binary-classification' is supported for now.",
             )
 
+        # Check the number of examples in example mode
+        if request_body.examples is not None:
+            if len(request_body.examples) < 20:
+                raise HTTPException(
+                    status_code=400,
+                    detail="You need at least 20 examples to train the phospho-small model.",
+                )
+
         else:
             created_model = await train_model(request_body)
 
