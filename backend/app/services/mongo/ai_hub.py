@@ -97,6 +97,8 @@ async def train_model(request_body: TrainRequest) -> Model | None:
     Create a training job for a given model and dataset
     """
 
+    assert request_body.org_id is not None, "org_id is required"
+
     # Handle the case where the dataset is passed as a list of examples
     if request_body.dataset is None and request_body.examples is not None:
         # Example mode (no dataset uploaded)
