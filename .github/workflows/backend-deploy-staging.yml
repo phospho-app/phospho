@@ -120,7 +120,7 @@ jobs:
           EXTRACTOR_SECRET_KEY: ${{ secrets.EXTRACTOR_SECRET_KEY }}
           EXTRACTOR_URL: ${{ vars.EXTRACTOR_URL }}
           ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
-          PHOSPHO_AI_HUB_URL: ${{ vars.PHOSPHO_AI_HUB_URL }}
+          PHOSPHO_AI_HUB_URL: ${{ secrets.PHOSPHO_AI_HUB_URL }}
           PHOSPHO_AI_HUB_API_KEY: ${{ secrets.PHOSPHO_AI_HUB_API_KEY }}
         run: |
           gcloud run deploy phospho-backend-staging \
