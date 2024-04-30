@@ -26,11 +26,7 @@ const StripeMeter: React.FC = () => {
     );
   }
 
-  return (
-    <div className="stripe-meter">
-      Updating your total spending for the month...
-    </div>
-  );
+  return <div></div>;
 };
 
 export default StripeMeter;
