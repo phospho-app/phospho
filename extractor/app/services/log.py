@@ -198,6 +198,8 @@ async def add_vectorized_tasks(tasks_id: List[str]):
     logger.info(f"Vectorizing {len(tasks_id)} tasks and adding them to Qdrant")
     mongo_db = await get_mongo_db()
     qdrant_db = await get_qdrant()
+    if qdrant_db is None:
+        return
     # Get tasks
     tasks = await mongo_db["tasks"].find({"id": {"$in": tasks_id}}).to_list(length=None)
     tasks = [Task.model_validate(task) for task in tasks]

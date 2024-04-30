@@ -11,7 +11,8 @@ async def get_qdrant():
     global qdrant_db
 
     if qdrant_db is None:
-        raise Exception("Qdrant is not initialized.")
+        logger.warning("Qdrant is not initialized.")
+
     return qdrant_db
 
 
@@ -40,6 +41,8 @@ async def init_qdrant():
 
     except Exception as e:
         logger.error(f"Error initializing Qdrant: {e}")
+        await close_qdrant()
+        qdrant_db = None
 
 
 async def close_qdrant():
