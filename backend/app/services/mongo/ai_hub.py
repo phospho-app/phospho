@@ -2,6 +2,7 @@
 Interact with the AI Hub service
 """
 
+from typing import Optional
 from loguru import logger
 import httpx
 
@@ -20,14 +21,14 @@ def health_check():
     Check if the extractor server is healthy
     """
     try:
-        response = httpx.get(f"{config.PROPRIETARY_AI_HUB_URL}/v1/health")
+        response = httpx.get(f"{config.PHOSPHO_AI_HUB_URL}/v1/health")
         return response.status_code == 200
     except Exception as e:
         logger.error(e)
         return False
 
 
-def fetch_models(org_id: str = None) -> ModelsResponse:
+def fetch_models(org_id: Optional[str] = None) -> Optional[ModelsResponse]:
     """
     List all the models of the AI Hub
     An organization id can be provided to filter the models
@@ -35,13 +36,13 @@ def fetch_models(org_id: str = None) -> ModelsResponse:
     """
     try:
         if org_id is None:
-            response = httpx.get(f"{config.PROPRIETARY_AI_HUB_URL}/v1/models")
+            response = httpx.get(f"{config.PHOSPHO_AI_HUB_URL}/v1/models")
         else:
             response = httpx.get(
-                f"{config.PROPRIETARY_AI_HUB_URL}/v1/models",
+                f"{config.PHOSPHO_AI_HUB_URL}/v1/models",
                 params={"org_id": org_id},
                 headers={
-                    "Authorization": f"Bearer {config.PROPRIETARY_AI_HUB_API_KEY}",
+                    "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_URL}",
                     "Content-Type": "application/json",
                 },
                 timeout=60,
@@ -51,7 +52,7 @@ def fetch_models(org_id: str = None) -> ModelsResponse:
 
     except Exception as e:
         logger.error(e)
-        return False
+        return None
 
 
 def fetch_model(model_id: str) -> Model | None:
@@ -60,9 +61,9 @@ def fetch_model(model_id: str) -> Model | None:
     """
     try:
         response = httpx.get(
-            f"{config.PROPRIETARY_AI_HUB_URL}/v1/models/{model_id}",
+            f"{config.PHOSPHO_AI_HUB_URL}/v1/models/{model_id}",
             headers={
-                "Authorization": f"Bearer {config.PROPRIETARY_AI_HUB_API_KEY}",
+                "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
                 "Content-Type": "application/json",
             },
             timeout=60,
@@ -81,10 +82,10 @@ def train_model(request_body: TrainRequest) -> Model | None:
     """
     try:
         response = httpx.post(
-            f"{config.PROPRIETARY_AI_HUB_URL}/v1/train",
+            f"{config.PHOSPHO_AI_HUB_URL}/v1/train",
             json=request_body.model_dump(),
             headers={
-                "Authorization": f"Bearer {config.PROPRIETARY_AI_HUB_API_KEY}",
+                "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
                 "Content-Type": "application/json",
             },
             timeout=60,
@@ -100,10 +101,10 @@ def train_model(request_body: TrainRequest) -> Model | None:
 def predict(predict_request: PredictRequest) -> PredictResponse | None:
     try:
         response = httpx.post(
-            f"{config.PROPRIETARY_AI_HUB_URL}/v1/predict",
+            f"{config.PHOSPHO_AI_HUB_URL}/v1/predict",
             json=predict_request.model_dump(),
             headers={
-                "Authorization": f"Bearer {config.PROPRIETARY_AI_HUB_API_KEY}",
+                "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
                 "Content-Type": "application/json",
             },
             timeout=60,
