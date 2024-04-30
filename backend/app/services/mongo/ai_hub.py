@@ -29,6 +29,19 @@ def health_check():
         return False
 
 
+def check_health_ai_hub():
+    """
+    Check if the AI Hub server is healthy
+    """
+    ai_hub_is_healthy = health_check()
+    if not ai_hub_is_healthy:
+        logger.error(
+            f"AI Hub server is not reachable at url {config.PHOSPHO_AI_HUB_URL}"
+        )
+    else:
+        logger.debug(f"AI Hub server is reachable at url {config.PHOSPHO_AI_HUB_URL}")
+
+
 async def fetch_models(org_id: Optional[str] = None) -> Optional[ModelsResponse]:
     """
     List all the models of the AI Hub
@@ -44,7 +57,7 @@ async def fetch_models(org_id: Optional[str] = None) -> Optional[ModelsResponse]
                     f"{config.PHOSPHO_AI_HUB_URL}/v1/models",
                     params={"org_id": org_id},
                     headers={
-                        "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_URL}",
+                        "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
                         "Content-Type": "application/json",
                     },
                     timeout=60,
