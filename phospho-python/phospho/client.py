@@ -233,21 +233,24 @@ class Client:
         response = self._get(f"/projects/{self._project_id()}")
         return Project.model_validate(response.json())
 
-    def backfill(self, tasks: List[Task]) -> None:
+    def train(
+        self, model: str, examples: list, task_type: str = "binary-classification"
+    ) -> None:
         """
         Upload historical data in batch to phospho to backfill the logs.
         For now, this doesn't send the task in the main_pipeline()
         """
         # Assert that all tasks have a created_at timestamp, otherwise the backend won't store them
-        for task in tasks:
-            if task.created_at is None:
-                raise ValueError(
-                    f"Task {task.id} has no created_at timestamp. All tasks must have a created_at timestamp when backfilling data"
-                )
 
-        self._post(
-            f"/log/{self._project_id()}",
-            payload={"batched_log_events": [task.model_dump() for task in tasks]},
+        assert task_type in ["binary-classification"], "Task type not supported"
+        assert len(examples) >= 20, "You need at least 20 examples to train the model."
+
+        response = self._post(
+            "/train",
+            payload={"model": model, "examples": examples, "task_type": task_type},
         )
 
-        return None
+        # Get the body of the response
+        response_body = response.json()
+
+        return response_body
