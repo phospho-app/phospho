@@ -15,6 +15,7 @@ from app.services.mongo.organizations import (
     create_project_by_org,
     get_projects_from_org_id,
     get_usage_quota,
+    get_credits_for_org,
     change_organization_plan,
 )
 from app.services.slack import slack_notification
@@ -77,7 +78,7 @@ def post_init_org(
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
-    org_member_info = propelauth.require_org_member(user, org_id)
+    _ = propelauth.require_org_member(user, org_id)
 
     # Get the org metatdata to check if it's already initialized
     org = propelauth.fetch_org(org_id)
@@ -175,7 +176,7 @@ async def post_create_checkout_session(
     org_id: str,
     user: User = Depends(propelauth.require_user),
 ):
-    org_member_info = propelauth.require_org_member(user, org_id)
+    _ = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_id)
     org_metadata = org.get("metadata", {})
     org_plan = org_metadata.get("plan", "hobby")
@@ -194,8 +195,7 @@ async def post_create_checkout_session(
                 {
                     # This is the Stripe price ID for the pro plan subscription
                     # https://dashboard.stripe.com/products?active=true
-                    "price": config.PRO_PLAN_STRIPE_PRICE_ID,
-                    "quantity": 1,
+                    "price": config.PRO_PLAN_STRIPE_SUBSCRIPTION_ID,
                 },
             ],
             mode="subscription",
@@ -207,8 +207,7 @@ async def post_create_checkout_session(
                 "trial_settings": {
                     "end_behavior": {"missing_payment_method": "cancel"}
                 },
-                "trial_period_days": 15,
-                "description": "Unlock the full potential of phospho.",
+                "description": "Unlock phospho's full potential.",
             },
         )
     except Exception as e:
@@ -267,7 +266,10 @@ async def post_stripe_webhook(
             price = item.get("price", None)
             product = price.get("product", None)
             customer_id = session.get("customer", None)
-            if product == config.PRO_PLAN_STRIPE_PRODUCT_ID and customer_id is not None:
+            if (
+                product == config.PRO_PLAN_STRIPE_SUBSCRIPTION_ID
+                and customer_id is not None
+            ):
                 # This is the pro plan subscription
                 # Get the org_id from the metadata
                 org_id = session.get("metadata", {}).get("org_id", None)
@@ -317,9 +319,10 @@ async def post_stripe_webhook(
             subscription.get("customer", {}).get("metadata", {}).get("org_id", None)
         )
         customer_id = subscription.get("customer", {}).get("id", None)
-        if event["type"] == "customer.subscription.trial_will_end":
-            logger.warning("Unhandled: Subscription trial will end")
-            return {"status": "ok"}
+        # No more trials in the updated pricing model
+        # if event["type"] == "customer.subscription.trial_will_end":
+        #     logger.warning("Unhandled: Subscription trial will end")
+        #     return {"status": "ok"}
         if event["type"] in [
             "customer.subscription.updated",
         ]:
@@ -328,11 +331,11 @@ async def post_stripe_webhook(
             plan = subscription.get("plan", {})
             plan_active = plan.get("active", False)
             plan_product = plan.get("product", None)
-            if plan_product == config.PRO_PLAN_STRIPE_PRODUCT_ID and plan_active:
+            if plan_product == config.PRO_PLAN_STRIPE_SUBSCRIPTION_ID and plan_active:
                 # This is the pro plan subscription
                 if org_id is not None:
                     # Upgrade the organization to the pro plan
-                    logger.info(f"Upgrading organization {org_id} to plan pro")
+                    logger.info(f"Upgrading organization {org_id} to pro plan")
                     background_tasks.add_task(
                         change_organization_plan,
                         org_id=org_id,
@@ -347,7 +350,10 @@ async def post_stripe_webhook(
                         f"/!\ Automatic upgrade failed! Stripe subscription {subscription.id}"
                         + " was updated but has no org_id in metadata"
                     )
-            elif plan_product == config.PRO_PLAN_STRIPE_PRODUCT_ID and not plan_active:
+            elif (
+                plan_product == config.PRO_PLAN_STRIPE_SUBSCRIPTION_ID
+                and not plan_active
+            ):
                 # This is the pro plan subscription
                 if org_id is not None:
                     # Downgrade the organization to the hobby plan
@@ -428,10 +434,10 @@ async def post_create_billing_portal_session(
 
 
 @router.get(
-    "/organizations/{org_id}/credits",
-    description="Get the credits of an organization",
+    "/organizations/{org_id}/update-usage",
+    description="Update the usage quota of all organizations",
 )
-async def get_org_credits(
+async def get_org_credit_update(
     org_id: str,
     user: User = Depends(propelauth.require_user),
 ):
@@ -439,5 +445,22 @@ async def get_org_credits(
     org = propelauth.fetch_org(org_id)
     org_metadata = org.get("metadata", {})
     org_plan = org_metadata.get("plan", "hobby")
-    usage_quota = await get_usage_quota(org_id, plan=org_plan)
-    return {"credits": usage_quota.get("credits", 0)}
+    customer_id = (org_metadata.get("customer_id", None),)
+
+    if org_plan == "hobby":
+        return {"error": "Organization has a hobby plan, no billing portal available"}
+
+    stripe.api_key = config.STRIPE_SECRET_KEY
+
+    # Get the org's usage
+    credits_used = get_credits_for_org(org_id)
+    if credits_used is None:
+        return {"error": "Error getting credits for org"}
+
+    stripe.billing.MeterEvent.create(
+        event_name="phospho_usage_based_subscription",
+        payload={
+            "credits": credits_used,
+            "stripe_customer_id": customer_id,
+        },
+    )

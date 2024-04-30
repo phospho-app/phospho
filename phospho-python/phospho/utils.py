@@ -14,6 +14,25 @@ def generate_timestamp() -> int:
     return int(time.time())
 
 
+def generate_timestamp_next_month() -> int:
+    """
+    Returns the UNIX timestamp of the same day, but next month
+    Exeptions are made for the end of the month and december
+    """
+    import datetime
+
+    now = datetime.datetime.now()
+    if now.month == 12:
+        next_month = datetime.datetime(now.year + 1, 1, now.day)
+    elif now.month == 1 and (now.day == 31 or now.day == 30 or now.day == 29):
+        next_month = datetime.datetime(now.year, 2, 28)
+    elif now.month in [3, 5, 7, 8, 10] and now.day == 31:
+        next_month = datetime.datetime(now.year, now.month + 1, 30)
+    else:
+        next_month = datetime.datetime(now.year, now.month + 1, now.day)
+    return int(next_month.timestamp())
+
+
 def generate_uuid(prefix: str = "") -> str:
     """
     Add a prefiw if needed to the uuid

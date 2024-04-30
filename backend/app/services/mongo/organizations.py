@@ -1,6 +1,7 @@
 from typing import List, Optional
+import time
 
-from phospho.models import Recipe, Organization
+from phospho.models import Recipe, UsageQuota
 import pydantic
 from fastapi import HTTPException
 from loguru import logger
@@ -9,6 +10,8 @@ from app.db.models import Project
 from app.db.mongo import get_mongo_db
 from app.core import config
 from app.security.authentification import propelauth
+from typing import Dict
+from app.services.mongo.projects import get_project_by_id
 
 
 async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Project]:
@@ -87,16 +90,55 @@ async def create_project_by_org(org_id: str, user_id: str, **kwargs) -> Project:
     return project
 
 
-async def diminish_credits(org_id: str, nb_credits: int) -> None:
+async def increase_usage_for_org(
+    org_id: str, project_id: str, nb_logs_to_analyze: int
+) -> None:
     """
-    Diminish the credits of an organization
+    Increase the usage of an organization.
     """
+    current_timestamp = time.time()
     mongo_db = await get_mongo_db()
-    await mongo_db["organizations"].update_one(
-        {"id": org_id},
-        {"$inc": {"credits": -nb_credits}},
+
+    project = await get_project_by_id(project_id)
+
+    if project:
+        events_count = len(project.settings.events)
+    if events_count == 0:
+        credits = 0
+    else:
+        credits = events_count * nb_logs_to_analyze
+
+    usage = UsageQuota(
+        credits_used=credits,
+        org_id=org_id,
     )
-    logger.info(f"Org {org_id} has spent {nb_credits} credits ")
+
+    document = await mongo_db["usage"].find_one(
+        {
+            "org_id": org_id,
+            "period_start": {"$lte": current_timestamp},
+            "period_end": {"$gte": current_timestamp},
+        }
+    )
+
+    if document:
+        result = await mongo_db["usage"].update_one(
+            {
+                "org_id": org_id,
+                "period_start": {"$lte": current_timestamp},
+                "period_end": {"$gte": current_timestamp},
+            },
+            {
+                "$inc": {"credits_used": credits},
+                "$set": {"credits_consumed_since_last_reported": True},
+            },
+        )
+    else:
+        result = await mongo_db["usage"].insert_one(usage.model_dump()).list(1)
+
+    logger.debug(f"Usage update result: {result}")
+    logger.info(f"Org {org_id} has spent {nb_logs_to_analyze} credits ")
+
     return None
 
 
@@ -107,20 +149,8 @@ async def get_usage_quota(org_id: str, plan: str) -> dict:
     """
     mongo_db = await get_mongo_db()
 
-    org_info = await mongo_db["organizations"].find_one(
-        {"id": org_id, "credits": {"$exists": True}}
-    )
-
-    if not org_info:
-        org_info = await mongo_db["organizations"].update_one(
-            {"id": org_id},
-            {"$set": {"credits": 0}},
-            upsert=True,
-        )
-
-    org_info_model = Organization.model_validate(org_info)
-
-    logger.info(f"Org {org_id} has {org_info_model.credits} credits")
+    # Get usage info for the orgnization
+    nb_tasks_logged = await mongo_db["tasks"].count_documents({"org_id": org_id})
 
     # These orgs are exempted from the quota
     EXEMPTED_ORG_IDS = [
@@ -135,22 +165,21 @@ async def get_usage_quota(org_id: str, plan: str) -> dict:
         "7e8f6db2-3b6b-4bf6-84ee-3f226b81e43d",  # di
     ]
 
+    if plan == "hobby":
+        max_usage = config.PLAN_HOBBY_MAX_NB_TASKS
+        max_usage_label = str(config.PLAN_HOBBY_MAX_NB_TASKS)
+
     if plan == "pro" or org_id in EXEMPTED_ORG_IDS:
-        return {
-            "org_id": org_id,
-            "plan": "pro",
-            "credits": org_info_model.credits,
-            "max_usage": None,
-            "max_usage_label": "unlimited",
-        }
-    else:
-        return {
-            "org_id": org_id,
-            "plan": "hobby",
-            "credits": org_info_model.credits,
-            "max_usage": config.PLAN_HOBBY_MAX_NB_TASKS,
-            "max_usage_label": str(config.PLAN_HOBBY_MAX_NB_TASKS),
-        }
+        max_usage = None
+        max_usage_label = "unlimited"
+
+    return {
+        "org_id": org_id,
+        "plan": plan,
+        "current_usage": nb_tasks_logged,
+        "max_usage": max_usage,
+        "max_usage_label": max_usage_label,
+    }
 
 
 def fetch_users_from_org(org_id: str):
@@ -201,3 +230,17 @@ def change_organization_plan(
     except Exception as e:
         logger.error(f"Error upgrading organization {org_id} to pro plan: {e}")
         return None
+
+
+async def get_credits_for_org(org_id: str) -> int:
+    """
+    Get the number of credits spent by an organization and their stripe substriction
+    """
+
+    mongo_db = await get_mongo_db()
+    usage = await mongo_db["usage"].find_one(
+        {"org_id": org_id, "period_end": {"$gte": time.time()}}
+    )
+    if usage:
+        return usage.get("credits_remaining", 0)
+    return 0

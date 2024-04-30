@@ -7,7 +7,6 @@ import Link from "next/link";
 import { usePostHog } from "posthog-js/react";
 
 import { Separator } from "../ui/separator";
-import Credits from "./credits";
 import { NavBarHelp } from "./help";
 import { NavBarSettings } from "./navsettings";
 import { NavBarProject } from "./project";
@@ -63,9 +62,7 @@ export function Navbar({
               >
                 Blog
               </Link> */}
-            <div className="hidden md:flex items-center align-items ">
-              <Credits />
-            </div>
+            <div className="hidden md:flex items-center align-items "></div>
             <NavBarHelp />
             <NavBarSettings />
             <NavBarProject />

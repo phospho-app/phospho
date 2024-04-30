@@ -36,12 +36,7 @@ export default function Page() {
     ([url, token]) => authFetcher(url, token),
   );
 
-  let credits = usage?.credits;
-  if (credits === undefined) {
-    credits = 0;
-  } else if (typeof credits === "number") {
-    credits /= 1000;
-  }
+  const currentUsage = usage?.current_usage;
   const maxUsage = usage?.max_usage;
   const maxUsageLabel = usage?.max_usage_label;
 
@@ -95,19 +90,18 @@ export default function Page() {
         </div>
         <div>
           {plan === "pro" && (
-            <p>
-              You currently have $ {credits?.toFixed(3) ?? "..."} worth of
-              credits.
-            </p>
+            <p>You currently have {currentUsage ?? "..."} logs.</p>
           )}
           {plan === "hobby" && (
             <>
-              {/*<TaskProgress currentValue={credits ?? 0} maxValue={maxUsage ?? 1}/>*/}
+              <TaskProgress
+                currentValue={currentUsage ?? 0}
+                maxValue={maxUsage ?? 1}
+              />
               <p>
-                You currently have ${credits?.toFixed(3) ?? "..."} worth of
-                credits left. <br />
+                You have currently logged {currentUsage ?? "..."} tasks <br />
                 <Link href="/org/settings/billing" className="underline">
-                  Add a payment method to get $10 worth of free credits.
+                  Add a payment method to enable event detection.
                 </Link>
               </p>
             </>

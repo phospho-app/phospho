@@ -221,9 +221,9 @@ export default function Pricing({
         tagline: "Join the community!",
       },
       pro: {
-        title: "Pro",
+        title: "Usage Based",
         price: "Cancel anytime",
-        tagline: "Get $10 of free credits",
+        tagline: "$10 / month",
       },
       enterprise: {
         title: "Enterprise",

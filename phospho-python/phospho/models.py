@@ -8,7 +8,11 @@ from typing import Dict, List, Literal, Optional, Any, Union
 
 from pydantic import BaseModel, Field, field_serializer
 
-from phospho.utils import generate_timestamp, generate_uuid
+from phospho.utils import (
+    generate_timestamp,
+    generate_timestamp_next_month,
+    generate_uuid,
+)
 import json
 
 RecipeType = Literal["evaluation", "event_detection"]  # Add other job types here
@@ -153,9 +157,14 @@ class ProjectSettings(BaseModel):
     events: Dict[str, EventDefinition] = Field(default_factory=dict)
 
 
-class Organization(DatedBaseModel):
+class UsageQuota(BaseModel):
     id: str = Field(default_factory=generate_uuid)
-    credits: Optional[int] = 0
+    org_id: str
+    period_start: int = Field(default_factory=generate_timestamp)
+    period_end: int = Field(default_factory=generate_timestamp_next_month)
+    credits_used: int
+    credits_consumed_since_last_reported: bool = False
+    stripe_subscription_id: Optional[str] = None
 
 
 class Project(DatedBaseModel):

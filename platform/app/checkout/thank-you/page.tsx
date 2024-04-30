@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 // This is a Thank you page displayed after a successful checkout
@@ -21,7 +20,7 @@ export default function Page() {
 
   function onBoogieClick() {
     toast.toast({
-      title: "Your account activation is in progress 🚀",
+      title: "We are activating your account 🚀",
       description:
         "You should see changes in a few minutes max. If not, please refresh the page. Contact us if anything - we're here to help.",
     });

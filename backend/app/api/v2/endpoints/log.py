@@ -14,7 +14,7 @@ from app.security.authentification import raise_error_if_not_in_pro_tier
 from app.services.mongo.extractor import run_log_process
 from app.services.mongo.emails import send_quota_exceeded_email
 from app.core import config
-from app.services.mongo.organizations import diminish_credits
+from app.services.mongo.organizations import increase_usage_for_org
 
 router = APIRouter(tags=["Logs"])
 
@@ -41,10 +41,8 @@ async def store_batch_of_log_events(
     extra_logs_to_save: List[LogEvent] = []
 
     org_plan = await get_quota(project_id)
-    credits = org_plan.get("credits", 0)
+    current_usage = org_plan.get("current_usage", 0)
     max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_TASKS)
-
-    org_id = org["org"].get("org_id")
 
     for log_event_model in log_request.batched_log_events:
         # We now validate the logs
@@ -63,15 +61,18 @@ async def store_batch_of_log_events(
             logged_events.append(valid_log_event)
             # Process this log only if the usage quota is not reached
 
-            if max_usage is None or (max_usage is not None and credits > 0):
+            if max_usage is None or (
+                max_usage is not None and current_usage < max_usage
+            ):
                 logs_to_process.append(valid_log_event)
-                # Update the credits
-                await diminish_credits(org_id, 1)
+                current_usage += 1
             else:
-                logger.warning(f"No more credits for org: {org_id}")
+                logger.warning(f"Max usage quota reached for project: {project_id}")
                 background_tasks.add_task(send_quota_exceeded_email, project_id)
                 logged_events.append(
-                    LogError(error_in_log=f"No more credits for org: {org_id}")
+                    LogError(
+                        error_in_log=f"Max usage quota reached for project {project_id}: {current_usage}/{max_usage} logs"
+                    )
                 )
                 extra_logs_to_save.append(valid_log_event)
         except ValidationError as e:
@@ -98,5 +99,15 @@ async def store_batch_of_log_events(
         project_id=project_id,
         org_id=org["org"].get("org_id"),
     )
+
+    try:
+        await increase_usage_for_org(
+            org_id=org["org"].get("org_id"),
+            project_id=project_id,
+            nb_logs_to_analyze=len(logs_to_process),
+        )
+
+    except Exception as e:
+        logger.warning(f"Error increasing usage for org: {e}")
 
     return log_reply
