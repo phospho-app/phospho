@@ -15,7 +15,7 @@ from app.services.mongo.organizations import (
     create_project_by_org,
     get_projects_from_org_id,
     get_usage_quota,
-    get_credits_for_org,
+    get_credits_used_by_org,
     change_organization_plan,
 )
 from app.services.slack import slack_notification
@@ -195,7 +195,7 @@ async def post_create_checkout_session(
                 {
                     # This is the Stripe price ID for the pro plan subscription
                     # https://dashboard.stripe.com/products?active=true
-                    "price": config.PRO_PLAN_STRIPE_SUBSCRIPTION_ID,
+                    "price": config.PRO_PLAN_STRIPE_PRICE_ID,
                 },
             ],
             mode="subscription",
@@ -266,10 +266,7 @@ async def post_stripe_webhook(
             price = item.get("price", None)
             product = price.get("product", None)
             customer_id = session.get("customer", None)
-            if (
-                product == config.PRO_PLAN_STRIPE_SUBSCRIPTION_ID
-                and customer_id is not None
-            ):
+            if product == config.PRO_PLAN_STRIPE_PRODUCT_ID and customer_id is not None:
                 # This is the pro plan subscription
                 # Get the org_id from the metadata
                 org_id = session.get("metadata", {}).get("org_id", None)
@@ -331,7 +328,7 @@ async def post_stripe_webhook(
             plan = subscription.get("plan", {})
             plan_active = plan.get("active", False)
             plan_product = plan.get("product", None)
-            if plan_product == config.PRO_PLAN_STRIPE_SUBSCRIPTION_ID and plan_active:
+            if plan_product == config.PRO_PLAN_STRIPE_PRODUCT_ID and plan_active:
                 # This is the pro plan subscription
                 if org_id is not None:
                     # Upgrade the organization to the pro plan
@@ -350,10 +347,7 @@ async def post_stripe_webhook(
                         f"/!\ Automatic upgrade failed! Stripe subscription {subscription.id}"
                         + " was updated but has no org_id in metadata"
                     )
-            elif (
-                plan_product == config.PRO_PLAN_STRIPE_SUBSCRIPTION_ID
-                and not plan_active
-            ):
+            elif plan_product == config.PRO_PLAN_STRIPE_PRODUCT_ID and not plan_active:
                 # This is the pro plan subscription
                 if org_id is not None:
                     # Downgrade the organization to the hobby plan
@@ -453,7 +447,7 @@ async def get_org_credit_update(
     stripe.api_key = config.STRIPE_SECRET_KEY
 
     # Get the org's usage
-    credits_used = get_credits_for_org(org_id)
+    credits_used = get_credits_used_by_org(org_id)
     if credits_used is None:
         return {"error": "Error getting credits for org"}
 

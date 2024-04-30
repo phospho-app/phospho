@@ -142,7 +142,7 @@ async def increase_usage_for_org(
     return None
 
 
-async def get_usage_quota(org_id: str, plan: str) -> dict:
+async def get_usage_quota(org_id: str, plan: str) -> UsageQuota:
     """
     Calculate the usage quota of an organization.
     The usage quota is the number of tasks logged by the organization.
@@ -232,9 +232,9 @@ def change_organization_plan(
         return None
 
 
-async def get_credits_for_org(org_id: str) -> int:
+async def get_credits_used_by_org(org_id: str) -> int:
     """
-    Get the number of credits spent by an organization and their stripe substriction
+    Get the usage by an organization and their stripe substriction
     """
 
     mongo_db = await get_mongo_db()
@@ -242,5 +242,5 @@ async def get_credits_for_org(org_id: str) -> int:
         {"org_id": org_id, "period_end": {"$gte": time.time()}}
     )
     if usage:
-        return usage.get("credits_remaining", 0)
+        return usage.get("credits_used", 0)
     return 0
