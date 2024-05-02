@@ -383,6 +383,8 @@ async def breakdown_by_sum_of_metadata_field(
     number_metadata_fields: List[str],
     category_metadata_fields: List[str],
     breakdown_by: Optional[str] = None,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ):
     """
     Get the sum of a metadata field, grouped by another metadata field if provided.
@@ -396,10 +398,19 @@ async def breakdown_by_sum_of_metadata_field(
         breakdown_by_col = breakdown_by
 
     mongo_db = await get_mongo_db()
+    main_filter: Dict[str, object] = {
+        "project_id": project_id,
+    }
+    if created_at_start is not None:
+        main_filter["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": created_at_end,
+        }
+
     pipeline: list[dict[str, object]] = [
-        {
-            "$match": {"project_id": project_id},
-        },
+        {"$match": main_filter},
     ]
 
     if breakdown_by == "event_name":
@@ -550,6 +561,6 @@ async def breakdown_by_sum_of_metadata_field(
         },
         {"$sort": {f"{metric}{metadata_field}": -1, metric: -1}},
     ]
-    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=200)
+    result = await mongo_db["tasks_with_events"].aggregate(pipeline).to_list(length=200)
 
     return result

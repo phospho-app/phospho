@@ -1,6 +1,8 @@
+import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 
+from phospho.models import ProjectDataFilters
 from propelauth_fastapi import User
 from app.security.authentification import propelauth
 from app.security import verify_if_propelauth_user_can_access_project
@@ -179,6 +181,18 @@ async def post_metadata_pivot(
     Create a pivot table for metadata in a project.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
+    if pivot_query.filters is None:
+        pivot_query.filters = ProjectDataFilters()
+    # Convert to UNIX timestamp in seconds
+    if isinstance(pivot_query.filters.created_at_start, datetime.datetime):
+        pivot_query.filters.created_at_start = int(
+            pivot_query.filters.created_at_start.timestamp()
+        )
+    if isinstance(pivot_query.filters.created_at_end, datetime.datetime):
+        pivot_query.filters.created_at_end = int(
+            pivot_query.filters.created_at_end.timestamp()
+        )
+
     pivot_table = await breakdown_by_sum_of_metadata_field(
         project_id=project_id,
         metric=pivot_query.metric,
@@ -186,5 +200,7 @@ async def post_metadata_pivot(
         breakdown_by=pivot_query.breakdown_by,
         number_metadata_fields=pivot_query.number_metadata_fields,
         category_metadata_fields=pivot_query.category_metadata_fields,
+        created_at_start=pivot_query.filters.created_at_start,
+        created_at_end=pivot_query.filters.created_at_end,
     )
     return MetadataPivotResponse(pivot_table=pivot_table)
