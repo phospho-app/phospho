@@ -10,6 +10,8 @@ import random
 import time
 from typing import List, Literal, Optional, cast
 
+from phospho.utils import get_number_of_tokens, shorten_text
+
 try:
     from openai import AsyncOpenAI, OpenAI
 except ImportError:
@@ -147,6 +149,7 @@ async def event_detection(
     # Check if some Env variables override the default model and LLM provider
     provider, model_name = get_provider_and_model(model)
     async_openai_client = get_async_client(provider)
+    MAX_TOKENS = 128_000
 
     # Build the prompt
     prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
@@ -161,10 +164,16 @@ This conversation is between a User and a Assistant.
         prompt += f"You don't have any description of the event '{event_name}'.\n"
 
     if len(message.previous_messages) > 1 and "task" in event_scope:
+        truncated_context = shorten_text(
+            message.latest_interaction_context(),
+            MAX_TOKENS,
+            get_number_of_tokens(prompt) + 100,
+            how="right",
+        )
         prompt += f"""
 To help you label the interaction, here are the previous messages leading to the interaction:
 [START CONTEXT]
-{message.latest_interaction_context()}
+{truncated_context}
 [END CONTEXT]
 """
 
@@ -184,17 +193,29 @@ To help you label the interaction, here are the previous messages leading to the
                 value=False,
                 logs=["No user message in the interaction"],
             )
+        truncated_context = shorten_text(
+            message_list[-1].content,
+            MAX_TOKENS,
+            get_number_of_tokens(prompt) + 100,
+            how="right",
+        )
 
         prompt += f"""
 Now, you have to label the following interaction, which only contains the user message:
 [START INTERACTION]
-User: {message_list[-1].content}
+User: {truncated_context}
 [END INTERACTION]
 """
     elif event_scope == "task_output_only":
         message_list = message.as_list()
         # Filter to keep only the assistant messages
         message_list = [m for m in message_list if m.role == "Assistant"]
+        truncated_context = shorten_text(
+            message_list[-1].content,
+            MAX_TOKENS,
+            get_number_of_tokens(prompt) + 100,
+            how="right",
+        )
         if len(message_list) == 0:
             return JobResult(
                 result_type=ResultType.bool,
@@ -204,14 +225,20 @@ User: {message_list[-1].content}
         prompt += f"""
 Now, you have to label the following interaction, which only contains the assistant message:
 [START INTERACTION]
-Assistant: {message_list[-1].content}
+Assistant: {truncated_context}
 [END INTERACTION]
 """
     elif event_scope == "session":
+        truncated_context = shorten_text(
+            message.transcript(with_role=True, with_previous_messages=True),
+            MAX_TOKENS,
+            get_number_of_tokens(prompt) + 100,
+            how="right",
+        )
         prompt += f"""
 Now, you have the full conversation to label. If the event '{event_name}' at any point during the conversation, respond with 'Yes'.
 [START INTERACTION]
-{message.transcript(with_role=True, with_previous_messages=True)}
+{truncated_context}
 [END INTERACTION]
 """
     else:
@@ -740,7 +767,7 @@ async def get_topic_of_conversation(
         )
 
     except Exception as e:
-        logger.error(f"event_detection call to OpenAI API failed : {e}")
+        logger.error(f"get_topic_of_conversation call to OpenAI API failed : {e}")
         return JobResult(
             result_type=ResultType.error,
             value=None,
