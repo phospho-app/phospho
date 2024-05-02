@@ -1,5 +1,4 @@
 from typing import List, Optional
-import time
 
 from phospho.models import Recipe, UsageQuota
 import pydantic
@@ -88,7 +87,7 @@ async def create_project_by_org(org_id: str, user_id: str, **kwargs) -> Project:
     return project
 
 
-async def get_usage_quota(org_id: str, plan: str) -> UsageQuota:
+async def get_usage_quota(org_id: str, plan: str) -> dict:
     """
     Calculate the usage quota of an organization.
     The usage quota is the number of tasks logged by the organization.
@@ -127,7 +126,6 @@ async def get_usage_quota(org_id: str, plan: str) -> UsageQuota:
         "org_id": org_id,
         "plan": plan,
         "current_usage": nb_tasks_logged,
-        "credits_used": nb_tasks_logged,
         "max_usage": max_usage,
         "max_usage_label": max_usage_label,
     }

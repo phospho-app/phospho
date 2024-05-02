@@ -37,9 +37,7 @@ export default function Page() {
   );
 
   const currentUsage = usage?.current_usage;
-  const credits_used = usage?.credits_used;
   const maxUsage = usage?.max_usage;
-  const maxUsageLabel = usage?.max_usage_label;
 
   if (project_id === null || project_id === undefined) {
     return <>No project_id selected</>;
@@ -94,9 +92,6 @@ export default function Page() {
             <div>
               <p>
                 You currently have {currentUsage ?? "..."} logs. <br />
-                You are on a usage based plan, you will be charged $
-                {credits_used == undefined ? "..." : credits_used / 1000} at the
-                end of the period.
               </p>
             </div>
           )}

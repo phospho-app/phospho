@@ -18,8 +18,6 @@ from app.services.mongo.organizations import (
     change_organization_plan,
 )
 from app.services.slack import slack_notification
-from phospho.models import UsageQuota
-from app.db.mongo import get_mongo_db
 
 router = APIRouter(tags=["Organizations"])
 

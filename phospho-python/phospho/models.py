@@ -157,16 +157,6 @@ class ProjectSettings(BaseModel):
     events: Dict[str, EventDefinition] = Field(default_factory=dict)
 
 
-class UsageQuota(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    org_id: str
-    period_start: int = Field(default_factory=generate_timestamp)
-    period_end: int = Field(default_factory=generate_timestamp_next_month)
-    credits_used: int
-    credits_consumed_since_last_reported: bool = False
-    stripe_customer_id: str = None
-
-
 class Project(DatedBaseModel):
     org_id: str
     project_name: str  # to validate this, use https://docs.pydantic.dev/latest/concepts/validators/

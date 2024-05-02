@@ -20,6 +20,7 @@ from app.api.v1.models import (
     RunMainPipelineOnMessagesRequest,
     RunRecipeOnTaskRequest,
 )
+from app.services.projects import get_project_by_id
 
 router = APIRouter()
 
@@ -77,7 +78,16 @@ async def post_log(
             logs_to_process=request_body.logs_to_process,
             extra_logs_to_save=request_body.extra_logs_to_save,
         )
-    return {"status": "ok", "nb_job_results": len(request_body.logs_to_process)}
+
+        project = await get_project_by_id(request_body.project_id)
+        nbr_event = len(project.settings.events)
+
+        return {
+            "status": "ok",
+            "nb_job_results": len(request_body.logs_to_process) * (nbr_event + 1),
+        }
+    else:
+        raise HTTPException(status_code=401, detail="Invalid API key")
 
 
 @router.post(
