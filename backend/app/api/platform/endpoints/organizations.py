@@ -288,15 +288,6 @@ async def post_stripe_webhook(
                 # Activate the organization
                 logger.info(f"Activating organization {org_id} with plan pro")
 
-                # Add the organization to the usage table and change the plan
-                usage = UsageQuota(
-                    org_id=org_id,
-                    credits_used=0,
-                    stripe_customer_id=customer_id,
-                )
-                mongo_db = await get_mongo_db()
-                mongo_db["usage"].insert_one(usage.model_dump())
-
                 background_tasks.add_task(
                     change_organization_plan,
                     org_id=org_id,
@@ -345,30 +336,12 @@ async def post_stripe_webhook(
                     # Upgrade the organization to the pro plan
                     logger.info(f"Upgrading organization {org_id} to pro plan")
 
-                    # Add the organization to the usage table and change the plan
-
-                    usage = UsageQuota(
-                        org_id=org_id,
-                        credits_used=0,
-                        stripe_customer_id=customer_id,
-                    )
-                    mongo_db = await get_mongo_db()
-                    mongo_db["usage"].insert_one(usage.model_dump())
-
                     background_tasks.add_task(
                         change_organization_plan,
                         org_id=org_id,
                         plan="usage_based",
                         customer_id=customer_id,
                     )
-                    # Add the organization to the usage table
-                    usage = UsageQuota(
-                        org_id=org_id,
-                        credits_used=0,
-                        stripe_customer_id=customer_id,
-                    )
-                    mongo_db = await get_mongo_db()
-                    mongo_db["usage"].insert_one(usage.model_dump())
                 else:
                     logger.error(
                         f"No org_id in metadata for stripe subscription {subscription.id}"

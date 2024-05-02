@@ -96,7 +96,7 @@ async def get_usage_quota(org_id: str, plan: str) -> UsageQuota:
     mongo_db = await get_mongo_db()
 
     # Get usage info for the orgnization
-    nb_tasks_logged = await mongo_db["tasks"].count_documents({"org_id": org_id})
+    nb_tasks_logged = await mongo_db["job_results"].count_documents({"org_id": org_id})
 
     # These orgs are exempted from the quota
     EXEMPTED_ORG_IDS = [
@@ -114,29 +114,20 @@ async def get_usage_quota(org_id: str, plan: str) -> UsageQuota:
     if plan == "hobby":
         max_usage = config.PLAN_HOBBY_MAX_NB_TASKS
         max_usage_label = str(config.PLAN_HOBBY_MAX_NB_TASKS)
-        credits_used = None
 
     if plan == "usage_based":
         max_usage = None
         max_usage_label = "unlimited"
-        usage = await mongo_db["usage"].find_one(
-            {"org_id": org_id, "period_end": {"$gte": time.time()}}
-        )
-        if usage:
-            credits_used = usage.get("credits_used", 0)
-        else:
-            credits_used = 0
 
     if plan == "pro" or org_id in EXEMPTED_ORG_IDS:
         max_usage = None
         max_usage_label = "unlimited"
-        credits_used = None
 
     return {
         "org_id": org_id,
         "plan": plan,
         "current_usage": nb_tasks_logged,
-        "credits_used": credits_used,
+        "credits_used": nb_tasks_logged,
         "max_usage": max_usage,
         "max_usage_label": max_usage_label,
     }

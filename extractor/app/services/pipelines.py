@@ -14,7 +14,6 @@ from app.services.webhook import trigger_webhook
 from phospho import lab
 
 from app.api.v1.models.pipelines import PipelineResults
-from app.services.organizations import increase_usage_for_org, bill_on_stripe
 
 
 class EventConfig(lab.JobConfig):
@@ -248,18 +247,6 @@ async def task_event_detection_pipeline(
             logger.error(f"No recipe_id found for event {event_name}")
 
         mongo_db["job_results"].insert_one(result.model_dump())
-
-    # We bill the event detection job to the org_id
-    nb_events = len(message_results)
-
-    await increase_usage_for_org(
-        org_id=task_data.org_id,
-        nb_events_to_log=nb_events,
-    )
-    await bill_on_stripe(
-        org_id=task_data.org_id,
-        nb_events_to_bill=nb_events,
-    )
 
     if len(detected_events) > 0:
         try:
