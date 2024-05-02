@@ -4,7 +4,16 @@ import uuid
 import logging
 import pydantic
 
-from typing import Any, Dict, AsyncGenerator, Generator, Callable, Optional, Union
+from typing import (
+    Any,
+    Dict,
+    AsyncGenerator,
+    Generator,
+    Callable,
+    Literal,
+    Optional,
+    Union,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +169,12 @@ def get_number_of_tokens(prompt: str) -> int:
     return len(encoding.encode(prompt))
 
 
-def shorten_text(prompt: Optional[str], max_length: int, margin: int = 20) -> str:
+def shorten_text(
+    prompt: Optional[str],
+    max_length: int,
+    margin: int = 20,
+    how: Literal["left", "right"] = "left",
+) -> str:
     """
     Shorten the text to fit in the max_length by only keeping the beginning of the text
     """
@@ -179,4 +193,9 @@ def shorten_text(prompt: Optional[str], max_length: int, margin: int = 20) -> st
     if number_of_tokens <= max_length:
         return prompt
     else:
-        return encoding.decode(tokens[: max_length - margin])
+        if how == "left":
+            return encoding.decode(tokens[: max_length - margin])
+        if how == "right":
+            return encoding.decode(tokens[-(max_length - margin) :])
+        else:
+            raise ValueError(f"Unknown value for how: {how}")

@@ -149,7 +149,7 @@ async def event_detection(
     # Check if some Env variables override the default model and LLM provider
     provider, model_name = get_provider_and_model(model)
     async_openai_client = get_async_client(provider)
-    MAX_TOKENS = 128 * 1000
+    MAX_TOKENS = 128_000
 
     # Build the prompt
     prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
@@ -168,6 +168,7 @@ This conversation is between a User and a Assistant.
             message.latest_interaction_context(),
             MAX_TOKENS,
             get_number_of_tokens(prompt) + 100,
+            how="right",
         )
         prompt += f"""
 To help you label the interaction, here are the previous messages leading to the interaction:
@@ -193,7 +194,10 @@ To help you label the interaction, here are the previous messages leading to the
                 logs=["No user message in the interaction"],
             )
         truncated_context = shorten_text(
-            message_list[-1].content, MAX_TOKENS, get_number_of_tokens(prompt) + 100
+            message_list[-1].content,
+            MAX_TOKENS,
+            get_number_of_tokens(prompt) + 100,
+            how="right",
         )
 
         prompt += f"""
@@ -207,7 +211,10 @@ User: {truncated_context}
         # Filter to keep only the assistant messages
         message_list = [m for m in message_list if m.role == "Assistant"]
         truncated_context = shorten_text(
-            message_list[-1].content, MAX_TOKENS, get_number_of_tokens(prompt) + 100
+            message_list[-1].content,
+            MAX_TOKENS,
+            get_number_of_tokens(prompt) + 100,
+            how="right",
         )
         if len(message_list) == 0:
             return JobResult(
@@ -226,6 +233,7 @@ Assistant: {truncated_context}
             message.transcript(with_role=True, with_previous_messages=True),
             MAX_TOKENS,
             get_number_of_tokens(prompt) + 100,
+            how="right",
         )
         prompt += f"""
 Now, you have the full conversation to label. If the event '{event_name}' at any point during the conversation, respond with 'Yes'.
