@@ -50,6 +50,7 @@ export default function Page() {
               displayHobbyCTA={true}
             />
           )}
+          {plan === "usage_based" && <Pricing currentPlan="pro" />}
           {plan === "pro" && <Pricing currentPlan="pro" />}
           {plan && plan !== "hobby" && (
             <Button variant="secondary" onClick={onBillingPortalClick}>

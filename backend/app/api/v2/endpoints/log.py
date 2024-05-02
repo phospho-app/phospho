@@ -10,11 +10,9 @@ from app.security import (
     verify_propelauth_org_owns_project_id,
     get_quota,
 )
-from app.security.authentification import raise_error_if_not_in_pro_tier
 from app.services.mongo.extractor import run_log_process
 from app.services.mongo.emails import send_quota_exceeded_email
 from app.core import config
-from app.services.mongo.organizations import increase_usage_for_org
 
 router = APIRouter(tags=["Logs"])
 
@@ -99,15 +97,5 @@ async def store_batch_of_log_events(
         project_id=project_id,
         org_id=org["org"].get("org_id"),
     )
-
-    try:
-        await increase_usage_for_org(
-            org_id=org["org"].get("org_id"),
-            project_id=project_id,
-            nb_logs_to_analyze=len(logs_to_process),
-        )
-
-    except Exception as e:
-        logger.warning(f"Error increasing usage for org: {e}")
 
     return log_reply

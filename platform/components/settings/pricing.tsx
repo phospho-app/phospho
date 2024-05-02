@@ -223,7 +223,7 @@ export default function Pricing({
       pro: {
         title: "Usage Based",
         price: "Cancel anytime",
-        tagline: "$10 / month",
+        tagline: "Pay as you go",
       },
       enterprise: {
         title: "Enterprise",

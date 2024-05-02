@@ -2,7 +2,6 @@
 
 import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
-import StripeMeter from "@/components/settings/stripe-meter";
 import TaskProgress from "@/components/settings/tasks-quota";
 import {
   AlertDialog,
@@ -38,6 +37,7 @@ export default function Page() {
   );
 
   const currentUsage = usage?.current_usage;
+  const credits_used = usage?.credits_used;
   const maxUsage = usage?.max_usage;
   const maxUsageLabel = usage?.max_usage_label;
 
@@ -90,10 +90,19 @@ export default function Page() {
           <AlertDialogDeleteProject />
         </div>
         <div>
+          {plan === "usage_based" && (
+            <div>
+              <p>
+                You currently have {currentUsage ?? "..."} logs. <br />
+                You are on a usage based plan, you will be charged $
+                {credits_used == undefined ? "..." : credits_used / 1000} at the
+                end of the period.
+              </p>
+            </div>
+          )}
           {plan === "pro" && (
             <div>
               <p>You currently have {currentUsage ?? "..."} logs.</p>
-              <StripeMeter />
             </div>
           )}
           {plan === "hobby" && (

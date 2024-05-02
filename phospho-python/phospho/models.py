@@ -164,6 +164,7 @@ class UsageQuota(BaseModel):
     period_end: int = Field(default_factory=generate_timestamp_next_month)
     credits_used: int
     credits_consumed_since_last_reported: bool = False
+    stripe_customer_id: str = None
 
 
 class Project(DatedBaseModel):

@@ -15,10 +15,11 @@ from app.services.mongo.organizations import (
     create_project_by_org,
     get_projects_from_org_id,
     get_usage_quota,
-    get_credits_used_by_org,
     change_organization_plan,
 )
 from app.services.slack import slack_notification
+from phospho.models import UsageQuota
+from app.db.mongo import get_mongo_db
 
 router = APIRouter(tags=["Organizations"])
 
@@ -286,10 +287,20 @@ async def post_stripe_webhook(
                         )
                 # Activate the organization
                 logger.info(f"Activating organization {org_id} with plan pro")
+
+                # Add the organization to the usage table and change the plan
+                usage = UsageQuota(
+                    org_id=org_id,
+                    credits_used=0,
+                    stripe_customer_id=customer_id,
+                )
+                mongo_db = await get_mongo_db()
+                mongo_db["usage"].insert_one(usage.model_dump())
+
                 background_tasks.add_task(
                     change_organization_plan,
                     org_id=org_id,
-                    plan="pro",
+                    plan="usage_based",
                     customer_id=customer_id,
                 )
             else:
@@ -316,10 +327,10 @@ async def post_stripe_webhook(
             subscription.get("customer", {}).get("metadata", {}).get("org_id", None)
         )
         customer_id = subscription.get("customer", {}).get("id", None)
-        # No more trials in the updated pricing model
-        # if event["type"] == "customer.subscription.trial_will_end":
-        #     logger.warning("Unhandled: Subscription trial will end")
-        #     return {"status": "ok"}
+        # This corresponds to legacy subscriptions
+        if event["type"] == "customer.subscription.trial_will_end":
+            logger.warning("Unhandled: Subscription trial will end")
+            return {"status": "ok"}
         if event["type"] in [
             "customer.subscription.updated",
         ]:
@@ -333,12 +344,31 @@ async def post_stripe_webhook(
                 if org_id is not None:
                     # Upgrade the organization to the pro plan
                     logger.info(f"Upgrading organization {org_id} to pro plan")
+
+                    # Add the organization to the usage table and change the plan
+
+                    usage = UsageQuota(
+                        org_id=org_id,
+                        credits_used=0,
+                        stripe_customer_id=customer_id,
+                    )
+                    mongo_db = await get_mongo_db()
+                    mongo_db["usage"].insert_one(usage.model_dump())
+
                     background_tasks.add_task(
                         change_organization_plan,
                         org_id=org_id,
-                        plan="pro",
+                        plan="usage_based",
                         customer_id=customer_id,
                     )
+                    # Add the organization to the usage table
+                    usage = UsageQuota(
+                        org_id=org_id,
+                        credits_used=0,
+                        stripe_customer_id=customer_id,
+                    )
+                    mongo_db = await get_mongo_db()
+                    mongo_db["usage"].insert_one(usage.model_dump())
                 else:
                     logger.error(
                         f"No org_id in metadata for stripe subscription {subscription.id}"
@@ -368,6 +398,7 @@ async def post_stripe_webhook(
                     )
 
         if event["type"] in [
+            "customer.subscription.updated",
             "customer.subscription.canceled",
             "customer.subscription.deleted",
         ]:
@@ -378,7 +409,7 @@ async def post_stripe_webhook(
                     change_organization_plan,
                     org_id=org_id,
                     plan="hobby",
-                    customer_id=None,
+                    customer_id=customer_id,
                 )
             else:
                 logger.error(
@@ -425,41 +456,3 @@ async def post_create_billing_portal_session(
     except Exception as e:
         logger.error(f"Error creating billing portal session: {e}")
         return {"error": f"Unexpected error: {e}"}
-
-
-@router.get(
-    "/organizations/{org_id}/update-usage",
-    description="Update the usage quota of all organizations",
-)
-async def get_org_credit_update(
-    org_id: str,
-    user: User = Depends(propelauth.require_user),
-):
-    _ = propelauth.require_org_member(user, org_id)
-    org = propelauth.fetch_org(org_id)
-    org_metadata = org.get("metadata", {})
-    org_plan = org_metadata.get("plan", "hobby")
-    customer_id = org_metadata.get("customer_id", None)
-
-    if org_plan == "hobby":
-        return {"error": "Organization has a hobby plan, no billing portal available"}
-
-    stripe.api_key = config.STRIPE_SECRET_KEY
-
-    # Get the org's usage
-    credits_used = get_credits_used_by_org(org_id)
-    if credits_used is None:
-        return {"error": "Error getting credits for org"}
-
-    if customer_id:
-        stripe.billing.MeterEvent.create(
-            event_name="phospho_usage_based_subscription",
-            payload={
-                "credits": credits_used,
-                "stripe_customer_id": customer_id,
-            },
-        )
-
-        return {"credits_used": credits_used}
-    else:
-        return {"error": "No customer_id in org metadata"}
