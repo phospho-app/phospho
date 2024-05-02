@@ -229,16 +229,26 @@ async def get_sessions_project_metrics(
 async def get_events_project_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
-    events_filter: Optional[EventsMetricsFilter] = None,
+    filters: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ):
     """
     Get aggregated metrics for the events of a project. Used for the Events dashboard.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
+    # Convert to UNIX timestamp in seconds
+    if filters is None:
+        filters = ProjectDataFilters()
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = int(filters.created_at_start.timestamp())
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = int(filters.created_at_end.timestamp())
+
     output = await get_events_aggregated_metrics(
         project_id=project_id,
         metrics=metrics,
+        created_at_start=filters.created_at_start,
+        created_at_end=filters.created_at_end,
     )
     return output
 

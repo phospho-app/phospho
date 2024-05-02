@@ -1,5 +1,6 @@
 "use client";
 
+import { DatePickerWithRange } from "@/components/date-range";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -45,6 +46,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
     string | null
   >(null);
   const [selectedGroupBy, setSelectedGroupBy] = useState<string>("flag");
+  const dateRange = navigationStateStore((state) => state.dateRange);
 
   // Fetch metadata unique metadata fields from the API
   const { data } = useSWR(
@@ -69,6 +71,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
       selectedGroupBy,
       numberMetadataFields,
       categoryMetadataFields,
+      JSON.stringify(dateRange),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
@@ -77,6 +80,10 @@ const MetadataForm: React.FC<{}> = ({}) => {
         breakdown_by: selectedGroupBy,
         number_metadata_fields: numberMetadataFields,
         category_metadata_fields: categoryMetadataFields,
+        filters: {
+          created_at_start: dateRange?.created_at_start,
+          created_at_end: dateRange?.created_at_end,
+        },
       }).then((response) => {
         return response?.pivot_table;
       }),
@@ -93,9 +100,10 @@ const MetadataForm: React.FC<{}> = ({}) => {
   return (
     <>
       <div className="flex flex-row space-x-2 items-center">
+        <DatePickerWithRange />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button>
+            <Button variant="outline">
               Metric: {selectedMetric} {selectedMetricMetadata ?? ""}{" "}
               <ChevronDown className="h-4 w-4 ml-2" />
             </Button>
@@ -175,7 +183,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button>
+            <Button variant="outline">
               Breakdown by: {selectedGroupBy}{" "}
               <ChevronDown className="h-4 w-4 ml-2" />
             </Button>

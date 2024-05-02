@@ -1,3 +1,4 @@
+import { DatePickerWithRange } from "@/components/date-range";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
@@ -22,17 +23,27 @@ function SuccessRateByEvent() {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
+  const dateRange = navigationStateStore((state) => state.dateRange);
+
   const {
     data: successRateByEvent,
   }: {
     data: SuccessRate[] | null | undefined;
   } = useSWR(
     project_id
-      ? [`/api/explore/${project_id}/aggregated/events`, accessToken]
+      ? [
+          `/api/explore/${project_id}/aggregated/events`,
+          accessToken,
+          JSON.stringify(dateRange),
+        ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["success_rate_by_event_name"],
+        filters: {
+          created_at_start: dateRange?.created_at_start,
+          created_at_end: dateRange?.created_at_end,
+        },
       }).then((response) => {
         return response?.success_rate_by_event_name?.map((event: any) => {
           // Round the success rate to 2 decimal places
@@ -62,12 +73,13 @@ function SuccessRateByEvent() {
     return null;
   };
 
-  if (successRateByEvent === null || successRateByEvent?.length === 0) {
+  if (successRateByEvent === null) {
     return <></>;
   }
 
   return (
-    <div>
+    <div className="flex flex-col space-y-2">
+      <DatePickerWithRange />
       <Card className="col-span-full lg:col-span-5">
         <CardHeader>Success Rate (%) by Event</CardHeader>
         <CardContent>

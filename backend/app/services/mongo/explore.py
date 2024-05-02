@@ -1603,18 +1603,26 @@ async def compute_session_length_per_metadata(
 
 async def get_success_rate_by_event_name(
     project_id: str,
+    created_at_start: Optional[int] = None,
+    created_at_end: Optional[int] = None,
 ) -> Dict[str, float]:
     """
     Get the success rate by event name of a project.
     """
     mongo_db = await get_mongo_db()
+    main_filter: Dict[str, object] = {
+        "project_id": project_id,
+        "removed": {"$ne": True},
+    }
+    if created_at_start is not None:
+        main_filter["created_at"] = {"$gte": created_at_start}
+    if created_at_end is not None:
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": created_at_end,
+        }
     pipeline = [
-        {
-            "$match": {
-                "project_id": project_id,
-                "removed": {"$ne": True},
-            }
-        },
+        {"$match": main_filter},
         {
             "$lookup": {
                 "from": "tasks",
@@ -1695,6 +1703,8 @@ async def get_events_aggregated_metrics(
     if "success_rate_by_event_name" in metrics:
         output["success_rate_by_event_name"] = await get_success_rate_by_event_name(
             project_id=project_id,
+            created_at_start=created_at_start,
+            created_at_end=created_at_end,
         )
     if "total_nb_events" in metrics:
         output["total_nb_events"] = await get_total_nb_of_detections(
