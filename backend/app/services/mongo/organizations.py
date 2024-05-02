@@ -111,8 +111,8 @@ async def get_usage_quota(org_id: str, plan: str) -> dict:
     ]
 
     if plan == "hobby":
-        max_usage = config.PLAN_HOBBY_MAX_NB_TASKS
-        max_usage_label = str(config.PLAN_HOBBY_MAX_NB_TASKS)
+        max_usage = config.PLAN_HOBBY_MAX_NB_DETECTIONS
+        max_usage_label = str(config.PLAN_HOBBY_MAX_NB_DETECTIONS)
 
     if plan == "usage_based":
         max_usage = None

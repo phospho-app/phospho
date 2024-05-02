@@ -90,14 +90,12 @@ export default function Page() {
         <div>
           {plan === "usage_based" && (
             <div>
-              <p>
-                You currently have {currentUsage ?? "..."} logs. <br />
-              </p>
+              <p>You have currently run {currentUsage ?? "..."} detections.</p>
             </div>
           )}
           {plan === "pro" && (
             <div>
-              <p>You currently have {currentUsage ?? "..."} logs.</p>
+              <p>You have currently run {currentUsage ?? "..."} detections.</p>
             </div>
           )}
           {plan === "hobby" && (
@@ -107,11 +105,12 @@ export default function Page() {
                 maxValue={maxUsage ?? 1}
               />
               <p>
-                You have currently logged {currentUsage ?? "..."} tasks <br />
-                <Link href="/org/settings/billing" className="underline">
-                  Add a payment method to enable event detection.
-                </Link>
+                You have currently run {currentUsage ?? "..."}/{maxUsage}{" "}
+                detections.
               </p>
+              <Link href="/org/settings/billing" className="underline">
+                Add a payment method to enable more detections.
+              </Link>
             </>
           )}
         </div>

@@ -369,7 +369,6 @@ async def post_stripe_webhook(
                     )
 
         if event["type"] in [
-            "customer.subscription.updated",
             "customer.subscription.canceled",
             "customer.subscription.deleted",
         ]:
