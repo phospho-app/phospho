@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field, field_serializer
 
 from phospho.utils import (
     generate_timestamp,
-    generate_timestamp_next_month,
     generate_uuid,
 )
 import json

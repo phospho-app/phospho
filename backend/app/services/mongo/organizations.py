@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from phospho.models import Recipe, UsageQuota
+from phospho.models import Recipe
 import pydantic
 from fastapi import HTTPException
 from loguru import logger
