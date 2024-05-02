@@ -16,6 +16,8 @@ from app.utils import generate_uuid
 from loguru import logger
 
 from phospho.lab import Message
+from app.security import propelauth
+import stripe
 
 
 def health_check():
@@ -39,6 +41,33 @@ def check_health():
         logger.error(f"Extractor server is not reachable at url {config.EXTRACTOR_URL}")
     else:
         logger.debug(f"Extractor server is reachable at url {config.EXTRACTOR_URL}")
+
+
+async def bill_on_stripe(
+    org_id: str,
+    nb_job_results: int,
+) -> None:
+    """
+    Bill an organization on Stripe based on the consumption
+    """
+
+    stripe.api_key = config.STRIPE_SECRET_KEY
+
+    # Get the stripe customer id from the org metadata
+    org = propelauth.fetch_org(org_id)
+    org_metadata = org.get("metadata", {})
+    customer_id = org_metadata.get("customer_id", None)
+
+    if customer_id:
+        stripe.billing.MeterEvent.create(
+            event_name="phospho_usage_based_meter",
+            payload={
+                "value": nb_job_results,
+                "stripe_customer_id": customer_id,
+            },
+        )
+    else:
+        logger.error(f"Organization {org_id} has no stripe customer id")
 
 
 async def run_log_process(
@@ -85,6 +114,11 @@ async def run_log_process(
                     await slack_notification(
                         f"Error returned when calling main pipeline (status code: {response.status_code}): {response.text}"
                     )
+            if response.status_code == 200:
+                # Bill the customer
+                nb_job_results = response.json().get("nb_job_results", 0)
+                await bill_on_stripe(org_id=org_id, nb_job_results=nb_job_results)
+
         except Exception as e:
             errror_id = generate_uuid()
             error_message = f"Caught error while calling main pipeline (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"

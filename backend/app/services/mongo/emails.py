@@ -30,7 +30,7 @@ def send_email(
     }
 
     if config.ENVIRONMENT != "preview":
-        email = resend.Emails.send(params)
+        _ = resend.Emails.send(params)
         logger.info(f"Sent email to {to_email}")
 
 
@@ -176,4 +176,4 @@ def send_payment_issue_email(to_email: str):
             "reply_to": "paul-louis@phospho.app",
         }
 
-        email = resend.Emails.send(params)
+        _ = resend.Emails.send(params)

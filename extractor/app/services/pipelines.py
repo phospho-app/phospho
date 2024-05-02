@@ -495,6 +495,7 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
 
     # Do the session scoring -> success, failure
     mongo_db = await get_mongo_db()
+
     if save_task:
         task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
         if task_in_db.get("flag") is None:

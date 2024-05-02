@@ -77,7 +77,7 @@ def post_init_org(
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
-    org_member_info = propelauth.require_org_member(user, org_id)
+    _ = propelauth.require_org_member(user, org_id)
 
     # Get the org metatdata to check if it's already initialized
     org = propelauth.fetch_org(org_id)
@@ -143,7 +143,7 @@ async def get_org_usage_quota(
     org_id: str,
     user: User = Depends(propelauth.require_user),
 ):
-    org_member_info = propelauth.require_org_member(user, org_id)
+    _ = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_id)
     logger.info(org)
     org_metadata = org.get("metadata", {})
@@ -175,7 +175,7 @@ async def post_create_checkout_session(
     org_id: str,
     user: User = Depends(propelauth.require_user),
 ):
-    org_member_info = propelauth.require_org_member(user, org_id)
+    _ = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_id)
     org_metadata = org.get("metadata", {})
     org_plan = org_metadata.get("plan", "hobby")
@@ -195,7 +195,6 @@ async def post_create_checkout_session(
                     # This is the Stripe price ID for the pro plan subscription
                     # https://dashboard.stripe.com/products?active=true
                     "price": config.PRO_PLAN_STRIPE_PRICE_ID,
-                    "quantity": 1,
                 },
             ],
             mode="subscription",
@@ -207,8 +206,7 @@ async def post_create_checkout_session(
                 "trial_settings": {
                     "end_behavior": {"missing_payment_method": "cancel"}
                 },
-                "trial_period_days": 15,
-                "description": "Unlock the full potential of phospho.",
+                "description": "Unlock phospho's full potential.",
             },
         )
     except Exception as e:
@@ -287,10 +285,11 @@ async def post_stripe_webhook(
                         )
                 # Activate the organization
                 logger.info(f"Activating organization {org_id} with plan pro")
+
                 background_tasks.add_task(
                     change_organization_plan,
                     org_id=org_id,
-                    plan="pro",
+                    plan="usage_based",
                     customer_id=customer_id,
                 )
             else:
@@ -317,6 +316,7 @@ async def post_stripe_webhook(
             subscription.get("customer", {}).get("metadata", {}).get("org_id", None)
         )
         customer_id = subscription.get("customer", {}).get("id", None)
+        # This corresponds to legacy subscriptions
         if event["type"] == "customer.subscription.trial_will_end":
             logger.warning("Unhandled: Subscription trial will end")
             return {"status": "ok"}
@@ -332,11 +332,12 @@ async def post_stripe_webhook(
                 # This is the pro plan subscription
                 if org_id is not None:
                     # Upgrade the organization to the pro plan
-                    logger.info(f"Upgrading organization {org_id} to plan pro")
+                    logger.info(f"Upgrading organization {org_id} to pro plan")
+
                     background_tasks.add_task(
                         change_organization_plan,
                         org_id=org_id,
-                        plan="pro",
+                        plan="usage_based",
                         customer_id=customer_id,
                     )
                 else:
@@ -378,7 +379,7 @@ async def post_stripe_webhook(
                     change_organization_plan,
                     org_id=org_id,
                     plan="hobby",
-                    customer_id=None,
+                    customer_id=customer_id,
                 )
             else:
                 logger.error(
@@ -401,7 +402,7 @@ async def post_create_billing_portal_session(
     org_id: str,
     user: User = Depends(propelauth.require_user),
 ):
-    org_member_info = propelauth.require_org_member(user, org_id)
+    _ = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_id)
     org_metadata = org.get("metadata", {})
     org_plan = org_metadata.get("plan", "hobby")
@@ -413,7 +414,7 @@ async def post_create_billing_portal_session(
             f"Creating billing portal session for org {org_id}, user {user.email}, and customer {org_metadata.get('customer_id', None)}"
         )
         # Update the metadata of the customer in stripe
-        customer = stripe.Customer.modify(
+        _ = stripe.Customer.modify(
             org_metadata.get("customer_id", None),
             metadata={"org_id": org_id},
         )

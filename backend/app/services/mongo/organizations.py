@@ -82,7 +82,7 @@ async def create_project_by_org(org_id: str, user_id: str, **kwargs) -> Project:
             project.settings.events[event_name].recipe_id = recipe.id
 
     # Create the corresponding jobs based on the project settings
-    result = await mongo_db["projects"].insert_one(project.model_dump())
+    _ = await mongo_db["projects"].insert_one(project.model_dump())
 
     return project
 
@@ -93,7 +93,9 @@ async def get_usage_quota(org_id: str, plan: str) -> dict:
     The usage quota is the number of tasks logged by the organization.
     """
     mongo_db = await get_mongo_db()
-    nb_tasks_logged = await mongo_db["tasks"].count_documents({"org_id": org_id})
+
+    # Get usage info for the orgnization
+    nb_tasks_logged = await mongo_db["job_results"].count_documents({"org_id": org_id})
 
     # These orgs are exempted from the quota
     EXEMPTED_ORG_IDS = [
@@ -107,9 +109,15 @@ async def get_usage_quota(org_id: str, plan: str) -> dict:
         "5a3d67ab-231c-4ad1-adba-84b6842668ad",  # sa (a)
         "7e8f6db2-3b6b-4bf6-84ee-3f226b81e43d",  # di
     ]
+
     if plan == "hobby":
-        max_usage: Optional[int] = config.PLAN_HOBBY_MAX_NB_TASKS
-        max_usage_label = str(config.PLAN_HOBBY_MAX_NB_TASKS)
+        max_usage = config.PLAN_HOBBY_MAX_NB_DETECTIONS
+        max_usage_label = str(config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+
+    if plan == "usage_based":
+        max_usage = None
+        max_usage_label = "unlimited"
+
     if plan == "pro" or org_id in EXEMPTED_ORG_IDS:
         max_usage = None
         max_usage_label = "unlimited"
@@ -151,10 +159,10 @@ def fetch_users_from_org(org_id: str):
 
 
 def change_organization_plan(
-    org_id: str, plan: str = "pro", customer_id: Optional[str] = None
+    org_id: str, plan: str = "usage_based", customer_id: Optional[str] = None
 ) -> Optional[dict]:
     """
-    Upgrade the organization to the pro plan
+    Upgrade the organization to a usage_based plan
     """
     try:
         # Upgrade the organization to the pro plan
