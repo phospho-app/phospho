@@ -94,6 +94,10 @@ async def run_log_process(
     if extra_logs_to_save is None:
         extra_logs_to_save = []
 
+    if len(logs_to_process) == 0:
+        logger.debug(f"No logs to process for project {project_id}")
+        return
+
     async with httpx.AsyncClient() as client:
         logger.debug(
             f"Calling the extractor API for {len(logs_to_process)} logevents, project {project_id} org {org_id}: {config.EXTRACTOR_URL}/v1/pipelines/log"
@@ -198,6 +202,11 @@ async def run_main_pipeline_on_messages(
     """
     Run the log procesing pipeline on messages asynchronously
     """
+
+    if len(messages) == 0:
+        logger.debug(f"No messages to process for project {project_id}")
+        return PipelineResults(events=[], flag=None)
+
     async with httpx.AsyncClient() as client:
         logger.debug(
             f"Calling the extractor API for {len(messages)} messages: {config.EXTRACTOR_URL}/v1/pipelines/log"
@@ -243,6 +252,10 @@ async def run_main_pipeline_on_messages(
 
 
 async def run_recipe_on_tasks(tasks: List[Task], recipe: Recipe):
+    if len(tasks) == 0:
+        logger.debug(f"No tasks to process for recipe {recipe.id}")
+        return
+
     async with httpx.AsyncClient() as client:
         logger.debug(
             f"Calling the extractor run_recipe_on_task API for recipe {recipe.id} on {len(tasks)} tasks at {config.EXTRACTOR_URL}/v1/pipelines/recipes"
