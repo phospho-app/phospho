@@ -45,15 +45,6 @@ EVALUATION_SOURCE = "phospho-4"  # If phospho
 FEW_SHOT_MIN_NUMBER_OF_EXAMPLES = 10  # Make it even
 FEW_SHOT_MAX_NUMBER_OF_EXAMPLES = 50  # Imposed by Cohere API
 
-### BILLING ###
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
-if ENVIRONMENT != "preview":
-    assert (
-        STRIPE_SECRET_KEY is not None
-    ), "STRIPE_SECRET_KEY is missing from the environment variables"
-else:
-    STRIPE_SECRET_KEY = "NO_STRIPE_SECRET_KEY"
-
 ### COHERE ###
 COHERE_API_KEY = os.getenv("COHERE_API_KEY")
 

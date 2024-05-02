@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field, field_serializer
 
 from phospho.utils import (
     generate_timestamp,
-    generate_timestamp_next_month,
     generate_uuid,
 )
 import json
@@ -155,16 +154,6 @@ class Session(ProjectElementBaseModel):
 
 class ProjectSettings(BaseModel):
     events: Dict[str, EventDefinition] = Field(default_factory=dict)
-
-
-class UsageQuota(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
-    org_id: str
-    period_start: int = Field(default_factory=generate_timestamp)
-    period_end: int = Field(default_factory=generate_timestamp_next_month)
-    credits_used: int
-    credits_consumed_since_last_reported: bool = False
-    stripe_customer_id: str = None
 
 
 class Project(DatedBaseModel):

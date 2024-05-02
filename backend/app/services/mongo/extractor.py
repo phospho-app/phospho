@@ -7,7 +7,6 @@ A service to interact with the extractor server
 import traceback
 from typing import List, Optional
 
-from app.services.mongo.projects import get_project_by_id
 import httpx
 from app.api.v2.models import LogEvent, PipelineResults
 from app.core import config
@@ -119,6 +118,7 @@ async def run_log_process(
                 # Bill the customer
                 nb_job_results = response.json().get("nb_job_results", 0)
                 await bill_on_stripe(org_id=org_id, nb_job_results=nb_job_results)
+
         except Exception as e:
             errror_id = generate_uuid()
             error_message = f"Caught error while calling main pipeline (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"

@@ -37,9 +37,7 @@ export default function Page() {
   );
 
   const currentUsage = usage?.current_usage;
-  const credits_used = usage?.credits_used;
   const maxUsage = usage?.max_usage;
-  const maxUsageLabel = usage?.max_usage_label;
 
   if (project_id === null || project_id === undefined) {
     return <>No project_id selected</>;
@@ -92,17 +90,12 @@ export default function Page() {
         <div>
           {plan === "usage_based" && (
             <div>
-              <p>
-                You currently have {currentUsage ?? "..."} logs. <br />
-                You are on a usage based plan, you will be charged $
-                {credits_used == undefined ? "..." : credits_used / 1000} at the
-                end of the period.
-              </p>
+              <p>You have currently run {currentUsage ?? "..."} detections.</p>
             </div>
           )}
           {plan === "pro" && (
             <div>
-              <p>You currently have {currentUsage ?? "..."} logs.</p>
+              <p>You have currently run {currentUsage ?? "..."} detections.</p>
             </div>
           )}
           {plan === "hobby" && (
@@ -112,11 +105,12 @@ export default function Page() {
                 maxValue={maxUsage ?? 1}
               />
               <p>
-                You have currently logged {currentUsage ?? "..."} tasks <br />
-                <Link href="/org/settings/billing" className="underline">
-                  Add a payment method to enable event detection.
-                </Link>
+                You have currently run {currentUsage ?? "..."}/{maxUsage}{" "}
+                detections.
               </p>
+              <Link href="/org/settings/billing" className="underline">
+                Add a payment method to enable more detections.
+              </Link>
             </>
           )}
         </div>

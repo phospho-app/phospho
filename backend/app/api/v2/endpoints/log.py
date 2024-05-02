@@ -40,7 +40,7 @@ async def store_batch_of_log_events(
 
     org_plan = await get_quota(project_id)
     current_usage = org_plan.get("current_usage", 0)
-    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_TASKS)
+    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
 
     for log_event_model in log_request.batched_log_events:
         # We now validate the logs

@@ -28,7 +28,7 @@ export default function Page() {
     <div>
       <div className="mb-8">
         <h2 className="text-2xl font-bold tracking-tight mb-4">Your Account</h2>
-        <p>Current logged in user: {user?.email}</p>
+        <p>Currently logged in user: {user?.email}</p>
         <div className="mt-4 mb-4">
           <Button variant="secondary" onClick={redirectToAccountPage}>
             Manage Account
