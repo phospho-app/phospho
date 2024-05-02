@@ -1,16 +1,11 @@
 "use client";
 
-import CreateProjectButton from "@/components/navbar/create-project-button";
 import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
 import TaskProgress from "@/components/settings/tasks-quota";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -43,7 +38,6 @@ export default function Page() {
 
   const currentUsage = usage?.current_usage;
   const maxUsage = usage?.max_usage;
-  const maxUsageLabel = usage?.max_usage_label;
 
   if (project_id === null || project_id === undefined) {
     return <>No project_id selected</>;
@@ -94,11 +88,15 @@ export default function Page() {
           <AlertDialogDeleteProject />
         </div>
         <div>
+          {plan === "usage_based" && (
+            <div>
+              <p>You have currently run {currentUsage ?? "..."} detections.</p>
+            </div>
+          )}
           {plan === "pro" && (
-            <p>
-              You have unlimited usage quota (currently: {currentUsage ?? "..."}{" "}
-              logs).
-            </p>
+            <div>
+              <p>You have currently run {currentUsage ?? "..."} detections.</p>
+            </div>
           )}
           {plan === "hobby" && (
             <>
@@ -107,12 +105,12 @@ export default function Page() {
                 maxValue={maxUsage ?? 1}
               />
               <p>
-                Your usage quota is {currentUsage ?? "..."} logs out of{" "}
-                {maxUsageLabel ?? "..."}.{" "}
-                <Link href="/org/settings/billing" className="underline">
-                  Add a payment method to increase your quota
-                </Link>
+                You have currently run {currentUsage ?? "..."}/{maxUsage}{" "}
+                detections.
               </p>
+              <Link href="/org/settings/billing" className="underline">
+                Add a payment method to enable more detections.
+              </Link>
             </>
           )}
         </div>

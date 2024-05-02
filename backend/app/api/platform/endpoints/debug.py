@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends
-from propelauth_fastapi import init_auth
 from propelauth_py.user import User
 
-from app.core import config
 from app.security.authentification import propelauth
 
 router = APIRouter(include_in_schema=False)

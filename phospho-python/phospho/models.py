@@ -8,7 +8,10 @@ from typing import Dict, List, Literal, Optional, Any, Union
 
 from pydantic import BaseModel, Field, field_serializer
 
-from phospho.utils import generate_timestamp, generate_uuid
+from phospho.utils import (
+    generate_timestamp,
+    generate_uuid,
+)
 import json
 
 RecipeType = Literal["evaluation", "event_detection"]  # Add other job types here
@@ -414,7 +417,7 @@ class Message(DatedBaseModel):
         # Verify that mandatory field are present. If not, raise a ValueError
         if col_mapping["content"] is None:
             raise ValueError(
-                f'Column "content" not found in the DataFrame. '
+                'Column "content" not found in the DataFrame. '
                 + 'Please provide a keyword argument with the column to use: `Message.from_df(df, content="message_content")`.'
             )
 

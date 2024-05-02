@@ -7,7 +7,6 @@ import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 export default function Page() {
@@ -20,7 +19,7 @@ export default function Page() {
   const toast = useToast();
   const router = useRouter();
 
-  const plan = selectedOrgMetadata?.plan ?? "hobby";
+  const plan = selectedOrgMetadata?.plan;
 
   const { data: billingPortalLink } = useSWR(
     [`/api/organizations/${selectedOrgId}/billing-portal`, accessToken],
@@ -39,6 +38,10 @@ export default function Page() {
     }
   };
 
+  if (loading) {
+    return <>Loading...</>;
+  }
+
   return (
     <>
       <div className="flex-col">
@@ -46,11 +49,12 @@ export default function Page() {
           {plan === "hobby" && (
             <Pricing
               currentPlan={null}
-              selectedPlan="pro"
+              selectedPlan="usage_based"
               proPlanTagline="Add payment method"
               displayHobbyCTA={true}
             />
           )}
+          {plan === "usage_based" && <Pricing currentPlan="usage_based" />}
           {plan === "pro" && <Pricing currentPlan="pro" />}
           {plan && plan !== "hobby" && (
             <Button variant="secondary" onClick={onBillingPortalClick}>

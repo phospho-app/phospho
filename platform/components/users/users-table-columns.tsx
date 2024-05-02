@@ -1,11 +1,9 @@
 import { authFetcher } from "@/lib/fetcher";
 import { Event, UserMetadata } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
-  ArrowDown,
-  ArrowUp,
   ArrowUpDown,
   ChevronDown,
   ChevronRight,

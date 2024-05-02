@@ -17,6 +17,11 @@ interface PricingData {
       price: string;
       tagline: string;
     };
+    usage_based: {
+      title: string;
+      price: string;
+      tagline: string;
+    };
     pro: {
       title: string;
       price: string;
@@ -33,6 +38,7 @@ interface PricingData {
     label: string;
     tiers?: {
       hobby: string | number | boolean;
+      usage_based: string | number | boolean;
       pro: string | number | boolean;
       enterprise: string | number | boolean;
     };
@@ -42,20 +48,24 @@ interface PricingData {
 function CtaButton({
   currentPlan,
   tierName,
-  proPlanTagline,
+  addPaymentTagline,
   displayHobbyCTA,
 }: {
   currentPlan: string | null;
   tierName: string;
-  proPlanTagline?: string;
+  addPaymentTagline?: string;
   displayHobbyCTA?: boolean;
 }) {
   if (currentPlan === tierName) {
     return <p className="text-green-500">Current Plan</p>;
   }
 
+  if (tierName === "usage_based") {
+    return <UpgradeButton tagline={addPaymentTagline} />;
+  }
+
   if (tierName === "pro") {
-    return <UpgradeButton tagline={proPlanTagline} />;
+    return <UpgradeButton tagline={addPaymentTagline} />;
   }
 
   if (tierName === "enterprise") {
@@ -96,11 +106,6 @@ function CriteriaDisplay({ tierName, criteria }: any) {
   }
   // if currentPlan is not in criteria.tiers, then return nothing
   if (!tiers[tierName]) {
-    return <></>;
-  }
-
-  // Don't return the Pricing section
-  if (label === "Pricing") {
     return <></>;
   }
 
@@ -190,7 +195,7 @@ function PricingCard({
         <CtaButton
           currentPlan={currentPlan}
           tierName={tierName}
-          proPlanTagline={proPlanTagline}
+          addPaymentTagline={proPlanTagline}
           displayHobbyCTA={displayHobbyCTA}
         />
       </CardFooter>
@@ -220,10 +225,15 @@ export default function Pricing({
         price: "Free",
         tagline: "Join the community!",
       },
+      usage_based: {
+        title: "Usage-based",
+        price: "Cancel anytime",
+        tagline: "Pay as you go",
+      },
       pro: {
         title: "Pro",
         price: "Cancel anytime",
-        tagline: "Try for free for 15 days",
+        tagline: "$299/ month",
       },
       enterprise: {
         title: "Enterprise",
@@ -237,8 +247,9 @@ export default function Pricing({
         type: "section",
         label: "Pricing",
         tiers: {
-          hobby: "0$ up to 10K logs",
-          pro: "1$ / 10K logs",
+          hobby: "Free",
+          usage_based: "1$ / 1K logs",
+          pro: "Unlimited",
           enterprise: "Custom",
         },
       },
@@ -247,6 +258,7 @@ export default function Pricing({
         label: "Team members",
         tiers: {
           hobby: "Self-hosted",
+          usage_based: "15 max",
           pro: "15 max",
           enterprise: "Custom",
         },
@@ -256,7 +268,8 @@ export default function Pricing({
         label: "Custom events",
         tiers: {
           hobby: "Self-billed",
-          pro: "100 different",
+          usage_based: "Up to 100",
+          pro: "Up to 100",
           enterprise: "Unlimited",
         },
       },
@@ -267,48 +280,68 @@ export default function Pricing({
       {
         type: "section",
         label: "Custom Evaluations",
-        tiers: { hobby: true, pro: true, enterprise: true },
+        tiers: { hobby: true, usage_based: true, pro: true, enterprise: true },
       },
       {
         type: "section",
-        label: "Events Detection",
-        tiers: { hobby: true, pro: true, enterprise: true },
+        label: "Event Detection",
+        tiers: { hobby: true, usage_based: true, pro: true, enterprise: true },
       },
       {
         type: "section",
         label: "Cloud hosting",
-        tiers: { hobby: false, pro: true, enterprise: true },
+        tiers: { hobby: false, usage_based: true, pro: true, enterprise: true },
       },
       {
         type: "section",
         label: "Team Workspace",
-        tiers: { hobby: false, pro: true, enterprise: true },
+        tiers: { hobby: false, usage_based: true, pro: true, enterprise: true },
       },
       {
         type: "section",
         label: "SSO + SAML",
-        tiers: { hobby: false, pro: false, enterprise: true },
+        tiers: {
+          hobby: false,
+          usage_based: false,
+          pro: false,
+          enterprise: true,
+        },
       },
       {
         type: "section",
         label: "Higher Rate Limits",
-        tiers: { hobby: false, pro: false, enterprise: true },
+        tiers: {
+          hobby: false,
+          usage_based: false,
+          pro: false,
+          enterprise: true,
+        },
       },
       { type: "title", label: "Support" },
       {
         type: "section",
         label: "Dedicated Support",
-        tiers: { hobby: false, pro: true, enterprise: true },
+        tiers: { hobby: false, usage_based: true, pro: true, enterprise: true },
       },
       {
         type: "section",
         label: "White Glove Migration",
-        tiers: { hobby: false, pro: false, enterprise: true },
+        tiers: {
+          hobby: false,
+          usage_based: false,
+          pro: false,
+          enterprise: true,
+        },
       },
       {
         type: "section",
         label: "Priority on Feature Release",
-        tiers: { hobby: false, pro: false, enterprise: true },
+        tiers: {
+          hobby: false,
+          usage_based: false,
+          pro: false,
+          enterprise: true,
+        },
       },
     ],
   };
@@ -334,6 +367,16 @@ export default function Pricing({
       displayHobbyCTA={displayHobbyCTA}
     />
   );
+  const usagePricingCard = (
+    <PricingCard
+      currentPlan={currentPlan}
+      selectedPlan={selectedPlan}
+      tierName="usage_based"
+      tier={pricingData.tiers.usage_based}
+      pricingData={pricingData}
+      proPlanTagline={proPlanTagline}
+    />
+  );
   const proPricingCard = (
     <PricingCard
       currentPlan={currentPlan}
@@ -357,7 +400,8 @@ export default function Pricing({
   return (
     <div className="flex items-start gap-x-4 ">
       {(currentPlan === "hobby" || currentPlan === null) && hobbyPricingCard}
-      {proPricingCard}
+      {currentPlan === "pro" && proPricingCard}
+      {currentPlan !== "pro" && usagePricingCard}
       {enterprisePricingCard}
     </div>
   );
