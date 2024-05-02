@@ -1988,7 +1988,6 @@ async def fetch_flattened_tasks(
             "event_created_at": "$event_created_at",
         }
     if with_sessions:
-        await compute_session_length(project_id)
         pipeline.extend(
             [
                 {
@@ -2014,7 +2013,9 @@ async def fetch_flattened_tasks(
         ]
     )
     # Query Mongo
-    flattened_tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
+    flattened_tasks = (
+        await mongo_db["tasks_with_events"].aggregate(pipeline).to_list(length=limit)
+    )
     # Ignore _id field
     flattened_tasks = [
         {k: v for k, v in task.items() if k != "_id"} for task in flattened_tasks

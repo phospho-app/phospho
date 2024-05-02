@@ -433,6 +433,11 @@ async def breakdown_by_sum_of_metadata_field(
                 }
             },
             {"$unwind": "$events"},
+            {
+                "$match": {
+                    "events.removed": {"$ne": True},
+                }
+            },
         ]
         breakdown_by_col = "events.event_name"
 
@@ -463,7 +468,6 @@ async def breakdown_by_sum_of_metadata_field(
         ]
 
     if metric.lower() == "avg session length":
-        await compute_session_length(project_id)
         pipeline += [
             {
                 "$lookup": {
