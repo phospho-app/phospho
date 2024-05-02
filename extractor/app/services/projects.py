@@ -28,7 +28,12 @@ async def get_project_by_id(project_id: str) -> Project:
                             "$filter": {
                                 "input": "$settings.events",
                                 "as": "event",
-                                "cond": {"$ne": ["$$event.removed", True]},
+                                "cond": {
+                                    "$and": [
+                                        {"$ne": ["$$event.removed", True]},
+                                        {"$ne": ["$$event.event_name", None]},
+                                    ]
+                                },
                             }
                         }
                     }

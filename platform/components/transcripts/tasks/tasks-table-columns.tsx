@@ -226,32 +226,30 @@ export function getColumns({
       },
       accessorKey: "events",
       cell: (row) => (
-        <div className="group flex items-center justify-between space-x-2">
-          <div className="flex flex-wrap space-y-1">
+        <div className="group flex items-center justify-between space-y-1">
+          <div className="flex flex-wrap space-x-1">
             {(row.getValue() as Event[]).map((event: Event) => {
               return (
-                <>
-                  <InteractiveEventBadgeForTasks
-                    key={event.event_name}
-                    event={event}
-                    task={row.row.original as TaskWithEvents}
-                    setTask={(task: TaskWithEvents) => {
-                      // Use mutateTasks
-                      mutateTasks((data: any) => {
-                        // Edit the Task with the same task id
-                        data.tasks = data.tasks.map(
-                          (existingTask: TaskWithEvents) => {
-                            if (existingTask.id === task.id) {
-                              return task;
-                            }
-                            return existingTask;
-                          },
-                        );
-                        return data;
-                      });
-                    }}
-                  />
-                </>
+                <InteractiveEventBadgeForTasks
+                  key={event.event_name}
+                  event={event}
+                  task={row.row.original as TaskWithEvents}
+                  setTask={(task: TaskWithEvents) => {
+                    // Use mutateTasks
+                    mutateTasks((data: any) => {
+                      // Edit the Task with the same task id
+                      data.tasks = data.tasks.map(
+                        (existingTask: TaskWithEvents) => {
+                          if (existingTask.id === task.id) {
+                            return task;
+                          }
+                          return existingTask;
+                        },
+                      );
+                      return data;
+                    });
+                  }}
+                />
               );
             })}
           </div>
