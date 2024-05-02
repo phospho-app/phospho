@@ -4,7 +4,7 @@ import uuid
 import logging
 import pydantic
 
-from typing import Any, Dict, AsyncGenerator, Generator, Callable, Union
+from typing import Any, Dict, AsyncGenerator, Generator, Callable, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -160,23 +160,23 @@ def get_number_of_tokens(prompt: str) -> int:
     return len(encoding.encode(prompt))
 
 
-def shorten_text(prompt: str, max_length: int) -> str:
+def shorten_text(prompt: Optional[str], max_length: int, margin: int = 20) -> str:
     """
     Shorten the text to fit in the max_length by only keeping the beginning of the text
     """
-    number_of_tokens = get_number_of_tokens(prompt)
+    try:
+        import tiktoken
+    except ImportError:
+        raise ImportError(
+            "Please install the `tiktoken` package to use the `shorten_text` function."
+        )
+
+    if prompt is None:
+        return ""
+    encoding = tiktoken.get_encoding("cl100k_base")
+    tokens = encoding.encode(prompt)
+    number_of_tokens = len(tokens)
     if number_of_tokens <= max_length:
         return prompt
     else:
-        try:
-            import tiktoken
-        except ImportError:
-            raise ImportError(
-                "Please install the `tiktoken` package to use the `shorten_text` function."
-            )
-
-        encoding = tiktoken.get_encoding("cl100k_base")
-        tokens = encoding.encode(prompt)
-        return encoding.decode(
-            tokens[: max_length - 20]
-        )  # We shorten the text by 20 tokens to have some margin
+        return encoding.decode(tokens[: max_length - margin])
