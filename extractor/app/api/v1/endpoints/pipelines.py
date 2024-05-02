@@ -1,3 +1,4 @@
+from app.services.mongo.projects import get_project_by_id
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from loguru import logger
 
@@ -77,7 +78,12 @@ async def post_log(
             logs_to_process=request_body.logs_to_process,
             extra_logs_to_save=request_body.extra_logs_to_save,
         )
-    return {"status": "ok", "nb_job_results": len(request_body.logs_to_process)}
+
+    nb_events = len(get_project_by_id(request_body.project_id).settings.events)
+    return {
+        "status": "ok",
+        "nb_job_results": len(request_body.logs_to_process) * nb_events,
+    }
 
 
 @router.post(
