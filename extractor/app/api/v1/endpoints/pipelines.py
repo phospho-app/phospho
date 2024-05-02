@@ -77,7 +77,7 @@ async def post_log(
             logs_to_process=request_body.logs_to_process,
             extra_logs_to_save=request_body.extra_logs_to_save,
         )
-    return {"status": "ok"}
+    return {"status": "ok", "nb_job_results": len(request_body.logs_to_process)}
 
 
 @router.post(
