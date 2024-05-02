@@ -3,10 +3,8 @@ import json
 import uuid
 import logging
 import pydantic
-import datetime
 
 from typing import Any, Dict, AsyncGenerator, Generator, Callable, Union
-from dateutil.relativedelta import relativedelta
 
 logger = logging.getLogger(__name__)
 
@@ -14,18 +12,6 @@ logger = logging.getLogger(__name__)
 def generate_timestamp() -> int:
     """Returns the current UNIX timestamp in seconds"""
     return int(time.time())
-
-
-def generate_timestamp_next_month() -> int:
-    """
-    Returns the UNIX timestamp of the same day, but next calendar month
-    Eg: if today is 2021-09-15, it will return the timestamp of 2021-10-15
-    Eg: if today is 2023-01-30, it will return the timestamp of 2023-02-28
-    """
-
-    now = datetime.datetime.now()
-    next_month = now + relativedelta(months=1)
-    return int(next_month.timestamp())
 
 
 def generate_uuid(prefix: str = "") -> str:

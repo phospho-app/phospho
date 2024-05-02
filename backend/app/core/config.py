@@ -112,12 +112,12 @@ else:
     PHOSPHO_FRONTEND_URL = "http://localhost:3000"
 
 if ENVIRONMENT == "production":
-    PRO_PLAN_STRIPE_PRICE_ID = "price_1PBxCXKMbS7I1rNclr4tic3K"
+    PRO_PLAN_STRIPE_PRICE_ID = "price_1PC0wPKMbS7I1rNcv09yd05H"
 else:
     PRO_PLAN_STRIPE_PRICE_ID = "price_1PBxCXKMbS7I1rNclr4tic3K"
 
 if ENVIRONMENT == "production":
-    PRO_PLAN_STRIPE_PRODUCT_ID = "prod_Q21F3pwJZDvzNg"
+    PRO_PLAN_STRIPE_PRODUCT_ID = "prod_Q256x4rqB1O2XF"
 else:
     PRO_PLAN_STRIPE_PRODUCT_ID = "prod_Q21F3pwJZDvzNg"
 
