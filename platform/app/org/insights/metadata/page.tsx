@@ -296,10 +296,17 @@ const MetadataForm: React.FC<{}> = ({}) => {
                         ? Math.round(payload[0].value * 10000) / 10000
                         : payload[0].value;
                     return (
-                      <div className="bg-black text-white p-1">
-                        <p>{`${selectedMetric} ${
-                          selectedMetricMetadata ?? ""
-                        } : ${formatedValue}`}</p>
+                      <div className="bg-primary shadow-md p-2 rounded-md">
+                        <p className="text-secondary font-semibold">{`${label}`}</p>
+                        <p className="text-green-500">
+                          {payload.map((item: any) => {
+                            return (
+                              <p key={item.name}>
+                                {item.name}: {item.value}
+                              </p>
+                            );
+                          })}
+                        </p>
                       </div>
                     );
                   }
