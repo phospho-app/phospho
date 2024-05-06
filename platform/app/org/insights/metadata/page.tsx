@@ -13,6 +13,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -37,15 +38,34 @@ const MetadataForm: React.FC<{}> = ({}) => {
 
   // The data is fetched and then displayed as a bar chart or a table
 
+  const { toast } = useToast();
+
   const { accessToken, loading } = useUser();
   const hasTasks = dataStateStore((state) => state.hasTasks);
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const [selectedMetric, setSelectedMetric] = useState<string>("Nb tasks");
-  const [selectedMetricMetadata, setSelectedMetricMetadata] = useState<
-    string | null
-  >(null);
-  const [selectedGroupBy, setSelectedGroupBy] = useState<string>("flag");
+  // const [selectedMetric, setSelectedMetric] = useState<string>("Nb tasks");
+  // const [selectedMetricMetadata, setSelectedMetricMetadata] = useState<
+  //   string | null
+  // >(null);
+  // const [selectedGroupBy, setSelectedGroupBy] = useState<string>("flag");
+  const selectedMetric = navigationStateStore((state) => state.selectedMetric);
+  const selectedMetricMetadata = navigationStateStore(
+    (state) => state.selectedMetricMetadata,
+  );
+  const selectedGroupBy = navigationStateStore(
+    (state) => state.selectedGroupBy,
+  );
+  const setSelectedMetric = navigationStateStore(
+    (state) => state.setSelectedMetric,
+  );
+  const setSelectedMetricMetadata = navigationStateStore(
+    (state) => state.setSelectedMetricMetadata,
+  );
+  const setSelectedGroupBy = navigationStateStore(
+    (state) => state.setSelectedGroupBy,
+  );
+
   const dateRange = navigationStateStore((state) => state.dateRange);
 
   // Fetch metadata unique metadata fields from the API
@@ -62,7 +82,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
   const categoryMetadataFields: string[] | undefined = data?.string;
 
   // Fetch aggregated metrics from the API
-  const { data: pivotData } = useSWR(
+  const { data: pivotData, isLoading: pivotLoading } = useSWR(
     [
       `/api/metadata/${project_id}/pivot/`,
       accessToken,
@@ -145,12 +165,13 @@ const MetadataForm: React.FC<{}> = ({}) => {
                   {numberMetadataFields?.map((field) => (
                     // TODO : Add a way to indicate this is a sum
                     <DropdownMenuItem
+                      key={field}
                       onClick={() => {
                         setSelectedMetric("Avg");
                         setSelectedMetricMetadata(field);
                       }}
                     >
-                      {field}
+                      {`${field}_avg`}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuSubContent>
@@ -172,6 +193,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
                         setSelectedMetric("Sum");
                         setSelectedMetricMetadata(field);
                       }}
+                      key={`${field}_sum`}
                     >
                       {field}
                     </DropdownMenuItem>
@@ -220,7 +242,10 @@ const MetadataForm: React.FC<{}> = ({}) => {
                     </DropdownMenuItem>
                   )}
                   {categoryMetadataFields?.map((field) => (
-                    <DropdownMenuItem onClick={() => setSelectedGroupBy(field)}>
+                    <DropdownMenuItem
+                      onClick={() => setSelectedGroupBy(field)}
+                      key={`${field}_metadata`}
+                    >
                       {field}
                     </DropdownMenuItem>
                   ))}
@@ -230,7 +255,8 @@ const MetadataForm: React.FC<{}> = ({}) => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div>
+      <div className="w-full h-screen max-h-3/4">
+        {!pivotData && pivotLoading && <p>Loading...</p>}
         {(pivotData === null || pivotData?.length == 0) && (
           <p>No data matching your query</p>
         )}
@@ -256,7 +282,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
           </>
         )}
         {pivotData?.length > 1 && (
-          <ResponsiveContainer width="100%" height={500}>
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={pivotData}
               layout="vertical"
@@ -268,7 +294,6 @@ const MetadataForm: React.FC<{}> = ({}) => {
               }}
             >
               <CartesianGrid />
-
               <YAxis
                 dataKey={selectedGroupBy}
                 stroke="#888888"
@@ -276,6 +301,14 @@ const MetadataForm: React.FC<{}> = ({}) => {
                 tickLine={false}
                 axisLine={false}
                 type="category"
+                tickFormatter={(value: any) => {
+                  // if value is a string and is too long, truncate it
+                  if (typeof value === "string" && value.length > 30) {
+                    return value.slice(0, 30) + "...";
+                  }
+                  return value;
+                }}
+                width={150}
               />
               <XAxis
                 stroke="#888888"
@@ -290,6 +323,14 @@ const MetadataForm: React.FC<{}> = ({}) => {
                 dataKey={`${selectedMetric}${selectedMetricMetadata ?? ""}`}
                 fill="#22c55e"
                 radius={[0, 20, 20, 0]}
+                onClick={(data) => {
+                  // Copy the Y value to the clipboard
+                  navigator.clipboard.writeText(data[selectedGroupBy]);
+                  toast({
+                    title: "Copied to clipboard",
+                    description: data[selectedGroupBy],
+                  });
+                }}
               />
               <Tooltip
                 formatter={(value) => {
@@ -301,7 +342,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
                   if (active && payload && payload.length) {
                     const formatedValue =
                       typeof payload[0].value === "number"
-                        ? Math.round(payload[0].value * 10000) / 10000
+                        ? Math.round(payload[0].value * 1000) / 1000
                         : payload[0].value;
                     return (
                       <div className="bg-primary shadow-md p-2 rounded-md">
@@ -310,7 +351,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
                           {payload.map((item: any) => {
                             return (
                               <p key={item.name}>
-                                {item.name}: {item.value}
+                                {item.name}: {formatedValue}
                               </p>
                             );
                           })}
