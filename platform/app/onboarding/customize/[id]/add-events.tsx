@@ -12,11 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  DetectionEngine,
-  DetectionScope,
-  EventDefinition,
-} from "@/models/models";
+import { DetectionScope, EventDefinition } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
 import { sendUserFeedback } from "phospho";
@@ -66,7 +63,9 @@ export default function AddEvents({
   redirectTo?: string;
 }) {
   const router = useRouter();
-  const { user, loading, accessToken } = useUser();
+  let selectedOrgId =
+    navigationStateStore((state) => state.selectedOrgId) ?? "";
+  const { loading, accessToken } = useUser();
   const { toast } = useToast();
 
   const [isSelected, setIsSelected] = useState<{ [key: string]: boolean }>(
@@ -146,6 +145,61 @@ export default function AddEvents({
     }
   };
 
+  const generateEvents = (eventType: string) => {
+    if (eventType === "text") {
+      customEvents = [
+        {
+          project_id: project_id,
+          event_name: "Text generation",
+          description: "Generate text for a given prompt",
+          org_id: selectedOrgId,
+          detection_scope: DetectionScope.Session,
+        },
+        {
+          project_id: project_id,
+          event_name: "Text completion",
+          description: "Complete a given text prompt",
+          org_id: selectedOrgId,
+          detection_scope: DetectionScope.Session,
+        },
+      ];
+    } else if (eventType === "support") {
+      customEvents = [
+        {
+          project_id: project_id,
+          event_name: "Customer support",
+          description: "Provide customer support",
+          org_id: selectedOrgId,
+          detection_scope: DetectionScope.Session,
+        },
+        {
+          project_id: project_id,
+          event_name: "Customer feedback",
+          description: "Collect customer feedback",
+          org_id: selectedOrgId,
+          detection_scope: DetectionScope.Session,
+        },
+      ];
+    } else {
+      customEvents = [
+        {
+          project_id: project_id,
+          event_name: "LLM app",
+          description: "Use the LLM app",
+          org_id: selectedOrgId,
+          detection_scope: DetectionScope.Session,
+        },
+        {
+          project_id: project_id,
+          event_name: "LLM app feedback",
+          description: "Provide feedback on the LLM app",
+          org_id: selectedOrgId,
+          detection_scope: DetectionScope.Session,
+        },
+      ];
+    }
+  };
+
   return (
     <>
       <Card className="max-w-1/2">
@@ -162,25 +216,28 @@ export default function AddEvents({
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col space-y-2 border-gray-500">
-          <div className="flex flex-col overflow-y-auto h-96">
+          <div className="flex justify-center items-center">
+            <Button className="mr-4" onClick={() => generateEvents("text")}>
+              Text generation
+            </Button>
+            <Button className="mr-4" onClick={() => generateEvents("support")}>
+              Customer support
+            </Button>
+            <Button className="mr-4" onClick={() => generateEvents("LLM")}>
+              LLM app
+            </Button>
+          </div>
+          <div className="flex flex-col space-y-2 overflow-y-auto h-96">
             {customEvents &&
               customEvents?.map &&
-              customEvents?.map((eventDefintion) => (
+              customEvents?.map((eventDefinition) => (
                 <EventDisplay
-                  eventDefintion={eventDefintion}
-                  key={eventDefintion.event_name}
-                  onToggle={() => handleToggle(eventDefintion.event_name)}
-                  isSelected={isSelected[eventDefintion.event_name]}
+                  eventDefintion={eventDefinition}
+                  key={eventDefinition.event_name}
+                  onToggle={() => handleToggle(eventDefinition.event_name)}
+                  isSelected={isSelected[eventDefinition.event_name]}
                 />
               ))}
-            {customEvents === null && (
-              <div className="flex flex-grow align-middle justify-center">
-                <Icons.spinner className="h-4 w-4 animate-spin" />
-                <div className="text-gray-500 text-xs">
-                  Reticulating splines...
-                </div>
-              </div>
-            )}
           </div>
           <div className="text-gray-500">
             Did you know? You can later setup events to trigger webhooks (slack,

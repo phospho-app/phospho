@@ -736,9 +736,9 @@ async def generate_events_for_use_case(
     project_id: str,
     org_id: str,
     customer: str,
-    purpose: str,
+    contact: str,
     custom_customer: Optional[str] = None,
-    custom_purpose: Optional[str] = None,
+    custom_contact: Optional[str] = None,
     user_id: Optional[str] = None,
 ) -> Tuple[List[EventDefinition], Optional[dict]]:
     start_time = time.time()
@@ -778,15 +778,11 @@ async def generate_events_for_use_case(
         + "Events should be related to the assistant's performance.",
     }
 
-    if custom_purpose is not None:
-        purpose_full_description = custom_purpose
+    if custom_contact is not None:
+        purpose_full_description = custom_contact
     else:
-        if purpose in purpose_to_desc.keys() and (
-            purpose != "other"
-            or purpose != "rather-not-say"
-            or purpose != "just-looking"
-        ):
-            purpose_full_description = purpose_to_desc[purpose]
+        if contact in purpose_to_desc.keys() and (contact != "other"):
+            purpose_full_description = purpose_to_desc[contact]
         else:
             purpose_full_description = list(purpose_to_desc.values())[0]
 
@@ -816,7 +812,6 @@ Relevant events:
 ---
 
 Reviewer description: ({customer}) {customer_full_description}
-Use case: ({purpose}) {purpose_full_description}
 
 Relevant events:
 """
@@ -919,7 +914,7 @@ Relevant events:
             temperature=0.2,
             execution_time=execution_time,
             customer=customer,
-            purpose=purpose,
+            contact=contact,
             model="gpt-3.5-turbo",
             user_id=user_id,
         )
@@ -934,17 +929,17 @@ async def suggest_events_for_use_case(
     org_id: str,
     code: str,
     customer: str,
-    purpose: str,
+    contact: str,
     custom_customer: Optional[str] = None,
-    custom_purpose: Optional[str] = None,
+    custom_contact: Optional[str] = None,
     user_id: Optional[str] = None,
 ) -> Tuple[List[EventDefinition], Optional[str]]:
     mongo_db = await get_mongo_db()
 
     # See if there's already a suggestion for this code, customer and purpose
-    if customer != "other" and purpose != "other":
+    if customer != "other" and contact != "other":
         existing_suggestions = await mongo_db["suggested_events"].find_one(
-            {"customer": customer, "purpose": purpose},
+            {"customer": customer, "contact": contact},
             sort=[("created_at", -1)],
         )
         if existing_suggestions:
@@ -961,12 +956,12 @@ async def suggest_events_for_use_case(
             ]
             if config.ENVIRONMENT != "preview":
                 logged_content = phospho.log(
-                    input=f"Code: {code}, Customer: {customer}, Purpose: {purpose}",
+                    input=f"Code: {code}, Customer: {customer}, Contact: {contact}",
                     output=existing_suggestions["suggested_events"],
                     execution_time=0,
                     code=code,
                     customer=customer,
-                    purpose=purpose,
+                    contact=contact,
                     user_id=user_id,
                 )
                 task_id: str = logged_content.get("task_id", None)
@@ -981,8 +976,8 @@ async def suggest_events_for_use_case(
         org_id=org_id,
         customer=customer,
         custom_customer=custom_customer,
-        purpose=purpose,
-        custom_purpose=custom_purpose,
+        contact=contact,
+        custom_contact=custom_contact,
         user_id=user_id,
     )
 
@@ -993,7 +988,7 @@ async def suggest_events_for_use_case(
             "created_at": generate_timestamp(),
             "code": code,
             "customer": customer,
-            "purpose": purpose,
+            "contact": contact,
             "suggested_events": [event.model_dump() for event in events],
         }
     )

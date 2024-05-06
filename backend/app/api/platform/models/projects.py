@@ -8,8 +8,8 @@ class OnboardingSurvey(BaseModel):
     code: str
     customer: str
     custom_customer: Optional[str] = None
-    purpose: str
-    custom_purpose: Optional[str] = None
+    contact: str
+    custom_contact: Optional[str] = None
 
 
 class OnboardingSurveyResponse(BaseModel):

@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import {
   Form,
-  FormControl,
   FormField,
   FormItem,
   FormLabel,
@@ -39,32 +38,28 @@ const myString = z
 
 const formSchema = z
   .object({
-    code: z.union([z.literal("yes"), z.literal("no")]),
-    customer: z.union([
-      z.literal("student"),
-      z.literal("developer"),
-      z.literal("founder"),
-      z.literal("product-manager"),
-      z.literal("c-level"),
-      z.literal("consultant"),
-      z.literal("researcher"),
-      z.literal("rather-not-say"),
-      z.literal("other"),
-    ]),
-    purpose: z.union([
-      z.literal("metrics"),
-      z.literal("retention"),
-      z.literal("tickets"),
-      z.literal("benchmark"),
-      z.literal("tone-of-voice"),
-      z.literal("compare-models"),
-      z.literal("just-looking"),
-      z.literal("rather-not-say"),
-      z.literal("other"),
-    ]),
+    code: z.union([z.literal("yes"), z.literal("no")]).optional(),
+    customer: z
+      .union([
+        z.literal("software"),
+        z.literal("data"),
+        z.literal("manager"),
+        z.literal("consultant"),
+        z.literal("other"),
+      ])
+      .optional(),
+    contact: z
+      .union([
+        z.literal("friends"),
+        z.literal("socials"),
+        z.literal("blog"),
+        z.literal("conference"),
+        z.literal("other"),
+      ])
+      .optional(),
     // if build is "other", then customBuild is required
-    customCustomer: myString,
-    customPurpose: myString,
+    customCustomer: myString.optional(),
+    customContact: myString.optional(),
   })
   //   .partial()
   .refine(
@@ -72,13 +67,13 @@ const formSchema = z
       if (data.customer === "other" && !data.customCustomer) {
         return false;
       }
-      if (data.purpose === "other" && !data.customPurpose) {
+      if (data.contact === "other" && !data.customContact) {
         return false;
       }
       if (data.customer !== "other") {
         return true;
       }
-      if (data.purpose !== "other") {
+      if (data.contact !== "other") {
         return true;
       }
 
@@ -106,7 +101,7 @@ export default function AboutYou({
 }) {
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
-  const { user, loading, accessToken } = useUser();
+  const { loading, accessToken } = useUser();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
 
   useEffect(() => {
@@ -152,9 +147,6 @@ export default function AboutYou({
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    // Call the API endpoint
     fetch(`/api/projects/${project_id}/suggest-events`, {
       method: "POST",
       headers: {
@@ -165,12 +157,12 @@ export default function AboutYou({
         code: values.code,
         customer: values.customer,
         custom_customer: values.customCustomer,
-        purpose: values.purpose,
-        custom_purpose: values.customPurpose,
+        contact: values.contact,
+        custom_contact: values.customContact,
       }),
     }).then(async (res) => {
       const response_json = await res.json();
-      setCustomEvents(response_json.suggested_events);
+      //setCustomEvents(response_json.suggested_events);
       setPhosphoTaskId(response_json.phospho_task_id);
     });
 
@@ -222,18 +214,16 @@ export default function AboutYou({
                 name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Can you code ?</FormLabel>
-                    <FormControl>
-                      <ToggleGroup
-                        type="single"
-                        className="flex-wrap"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <ToggleGroupItem value="yes">Yes</ToggleGroupItem>
-                        <ToggleGroupItem value="no">No</ToggleGroupItem>
-                      </ToggleGroup>
-                    </FormControl>
+                    <FormLabel>Do you write code ?</FormLabel>
+                    <ToggleGroup
+                      type="single"
+                      className="flex-wrap"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <ToggleGroupItem value="yes">Yes</ToggleGroupItem>
+                      <ToggleGroupItem value="no">No</ToggleGroupItem>
+                    </ToggleGroup>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -244,41 +234,27 @@ export default function AboutYou({
                   name="customer"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Who are you ?</FormLabel>
-                      <FormControl>
-                        <ToggleGroup
-                          type="single"
-                          className="flex-wrap"
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <ToggleGroupItem value="student">
-                            Student
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="developer">
-                            Developer
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="founder">
-                            Founder
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="product-manager">
-                            Product Manager
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="c-level">
-                            C-level
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="consultant">
-                            Consultant
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="researcher">
-                            Researcher
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="rather-not-say">
-                            Rather not say
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="other">Other</ToggleGroupItem>
-                        </ToggleGroup>
-                      </FormControl>
+                      <FormLabel>What's your job title ?</FormLabel>
+                      <ToggleGroup
+                        type="single"
+                        className="flex-wrap"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <ToggleGroupItem value="software">
+                          Software engineer
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="data">
+                          Data Analyst
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="manager">
+                          Manager
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="consultant">
+                          Consultant
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="other">Other</ToggleGroupItem>
+                      </ToggleGroup>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -291,12 +267,10 @@ export default function AboutYou({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tell us more about who you are</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Engage users, increase retention, ..."
-                          {...field}
-                        />
-                      </FormControl>
+                      <Input
+                        placeholder="Researcher, student, ..."
+                        {...field}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -305,64 +279,48 @@ export default function AboutYou({
               {form.watch("customer") !== undefined && (
                 <FormField
                   control={form.control}
-                  name="purpose"
+                  name="contact"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>What do you need help with ?</FormLabel>
-                      <FormControl>
-                        <ToggleGroup
-                          type="single"
-                          className="flex-wrap"
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <ToggleGroupItem value="metrics">
-                            Metrics
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="retention">
-                            Improve user retention
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="tickets">
-                            Resolve tickets
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="benchmark">
-                            Benchmark
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="tone-of-voice">
-                            Tone of voice
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="compare-models">
-                            Compare models
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="just-looking">
-                            Just looking around
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="rather-not-say">
-                            Rather not say
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="other">Other</ToggleGroupItem>
-                        </ToggleGroup>
-                      </FormControl>
+                      <FormLabel>How did you hear about phospho ?</FormLabel>
+                      <ToggleGroup
+                        type="single"
+                        className="flex-wrap"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <ToggleGroupItem value="friends">
+                          Friends
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="socials">
+                          Social media
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="blog">
+                          Blog post
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="conference">
+                          Conference
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="other">Other</ToggleGroupItem>
+                      </ToggleGroup>
                       <FormMessage />
                     </FormItem>
                   )}
                 ></FormField>
               )}
-              {form.watch("purpose") === "other" && (
+              {form.watch("contact") === "other" && (
                 <FormField
                   control={form.control}
-                  name="customPurpose"
+                  name="customContact"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Tell us more about your expectations
+                        Tell us more about how you heard about phospho:
                       </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="A/B testing, user segmentation, ..."
-                          {...field}
-                        />
-                      </FormControl>
+                      <Input
+                        placeholder="Employees, customers, ..."
+                        {...field}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
