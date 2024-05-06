@@ -26,34 +26,9 @@ async def get_session_by_id(session_id: str) -> Session:
     # session = await mongo_db["sessions"].find_one({"id": session_id})
     # Merge events from the session
     found_session = (
-        await mongo_db["sessions"]
-        .aggregate(
-            [
-                {"$match": {"id": session_id}},
-                {
-                    "$lookup": {
-                        "from": "events_active",
-                        "localField": "id",
-                        "foreignField": "session_id",
-                        "as": "events",
-                    }
-                },
-                {
-                    "$project": {
-                        "id": 1,
-                        "created_at": 1,
-                        "project_id": 1,
-                        "org_id": 1,
-                        "data": 1,
-                        "notes": 1,
-                        "preview": 1,
-                        "environment": 1,
-                        "events": 1,
-                        "tasks": 1,
-                        "session_length": 1,
-                    }
-                },
-            ]
+        await mongo_db["sessions_with_events"]
+        .find(
+            {"id": session_id},
         )
         .to_list(length=1)
     )
