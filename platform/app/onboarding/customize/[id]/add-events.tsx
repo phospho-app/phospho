@@ -153,8 +153,8 @@ export default function AddEvents({
           <CardTitle>Setup events for this project</CardTitle>
           <CardDescription>
             <div>
-              According to your use case, here are some relevant events. Phospho
-              will look for these events based on their descriptions.
+              Phospho helps you monitor your application by tracking events,
+              here's what we recommend.
             </div>
             <div className="pt-2">
               You can add more events later in Events/Manage section.

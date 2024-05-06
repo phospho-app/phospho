@@ -735,57 +735,60 @@ async def store_onboarding_survey(project_id: str, user: User, survey: dict):
 async def generate_events_for_use_case(
     project_id: str,
     org_id: str,
-    build: str,
+    customer: str,
     purpose: str,
-    custom_build: Optional[str] = None,
+    custom_customer: Optional[str] = None,
     custom_purpose: Optional[str] = None,
     user_id: Optional[str] = None,
 ) -> Tuple[List[EventDefinition], Optional[dict]]:
     start_time = time.time()
-    build_to_desc = {
-        "knowledge-assistant": "A knowledge assistant that helps users find information. He must be accurate, truthful and fast.",
-        "virtual-companion": "A virtual companion that helps users feel less lonely. He must be empathic, friendly, and engaging.",
-        "narrator": "A narrator that tells stories to users. He must be engaging, fun, and entertaining.",
-        "ask-ai": "A feature that allows to quickly give an AI answer to a user's question. The assistant must be fast, accurate, and to the point.",
-        "customer-support": "A customer support assistant that helps users with their issues about an opened ticket. The assistant must be professional, empathic, patient, and helpful.",
+
+    customer_to_desc = {
+        "student": "A student is creating an assistant.",
+        "developer": "A developer is creating an assistant.",
+        "founder": "A founder is creating an assistant.",
+        "researcher": "A researcher is creating an assistant.",
+        "consultant": "A consultant is creating an assistant.",
+        "product-manager": "A product manager is creating an assistant.",
+        "c-level": "A C-level executive is creating an assistant.",
     }
-    if custom_build is not None:
-        build_full_description = custom_build
+
+    if custom_customer is not None:
+        customer_full_description = custom_customer
     else:
-        if build in build_to_desc.keys() and build != "other":
-            build_full_description = build_to_desc[build]
+        if customer in customer_to_desc.keys() and (
+            customer != "other" or customer != "rather-not-say"
+        ):
+            customer_full_description = customer_to_desc[customer]
         else:
-            build_full_description = list(build_to_desc.values())[0]
+            customer_full_description = list(customer_to_desc.values())[0]
 
     purpose_to_desc = {
-        "entertainment": "A good assistant must be fun, engaging and entertaining."
-        + " A successful interaction is when the user is having fun, laughing, and enjoying the experience.",
-        "aquisition": "A good assistant qualifies customer leads for a company."
-        + " The assistant must be engaging, open-minded, and listen to the issues of the user. Interesting users are those who are genuinely interested in the product or service.",
+        "metrics": "The customer wants to measure the performance of the assistant."
+        + "Events should be related to the assistant's performance.",
         "retention": "A good assistant is persuasive, empathic, friendly, and to the point."
-        + " A successful interaction is when the user is convinced to stay, to buy, or to come back.",
-        "marketing": "A good assistant is truthful to the brand, engaging, and persuasive."
-        + "A good assistant doesn't hallucinate or make up prices.",
-        "productivity": "A good assistant is accurate and to the point. His answers benefits the user. The user learns something and gets more efficient."
-        + "The assistant's Answers are short and precise. The assistant must be able to understand the user's request and provide the right information."
-        + "The user is thanking the assistant for the help. The assistant doesn't hallucinate.",
-        "resolve-tikets": "A good assistant is professional, empathic, patient, and helpful. He's precise and always correct."
+        + "A successful interaction is when the user is convinced to stay, to buy, or to come back.",
+        "tickets": "A good assistant is professional, empathic, patient, and helpful. He's precise and always correct."
         + "The assistant must be certain that he understands the user's request and provide the proper information without damaging the brand.",
+        "benchmark": "The customer wants to measure becnhmark the assistant against other assistants."
+        + "Events should be related to the assistant's performance.",
+        "tone-of-voice": "A good assistant is friendly, empathic, and to the point."
+        + "Suggest events that describe the tone of voice of the assistant",
+        "compare-models": "The customer wants to measure the performance of the assistant."
+        + "Events should be related to the assistant's performance.",
     }
+
     if custom_purpose is not None:
         purpose_full_description = custom_purpose
     else:
-        if purpose in purpose_to_desc.keys() and purpose != "other":
+        if purpose in purpose_to_desc.keys() and (
+            purpose != "other"
+            or purpose != "rather-not-say"
+            or purpose != "just-looking"
+        ):
             purpose_full_description = purpose_to_desc[purpose]
         else:
             purpose_full_description = list(purpose_to_desc.values())[0]
-
-    # Format the description without the line breaks
-    build_full_description = " ".join(build_full_description.split())
-    purpose_full_description = " ".join(purpose_full_description.split())
-
-    logger.info(f"build_full_description: {build_full_description}")
-    logger.info(f"purpose_full_description: {purpose_full_description}")
 
     # Create a prompt
     openai_client = AsyncOpenAI()
@@ -801,18 +804,18 @@ Use the following template.
 ---
 
 Example:
-Assistant description: (knowledge-assistant) A knowledge assistant that helps users find information. He must be accurate, truthful and fast.
+Event creator: (developer) A developer is creating an assistant.
 Use case: (entertainment) A good assistant must be fun, engaging and entertaining. A successful interaction is when the user is having fun, laughing, and enjoying the experience.
 
 Relevant events:
 - user laughing: The user is laughing during the interaction with the assistant.
 - inaccurate answer: The assistant provides an inaccurate answer to the user's question. The user points out an inaccuracy in the assistant's answer.
 - unable to answer: The user asked a question that the assistant is unable to answer. The assistant says "I don't know", "I can't answer you", or "I don't have the information".
-- user thanks: The user is thanking the assistant for the help. The assistant doesn't hallucinate.
+- user thanks: The user is thanking the assistant. The assistant doesn't hallucinate.
 
 ---
 
-Assistant description: ({build}) {build_full_description}
+Reviewer description: ({customer}) {customer_full_description}
 Use case: ({purpose}) {purpose_full_description}
 
 Relevant events:
@@ -839,7 +842,11 @@ Relevant events:
     if response is None or response.choices[0].message.content is None:
         # Return the default events if error
         default_events = {
-            "question_answering": {
+            "penetration test": {
+                "description": "The user is attempting to test the assistant's guardrails.",
+                "webhook": None,
+            },
+            "question answering": {
                 "description": "The user asks a question to the assistant.",
                 "webhook": None,
             },
@@ -847,7 +854,7 @@ Relevant events:
                 "description": "The user thanks the assistant.",
                 "webhook": None,
             },
-            "toxic_behavior": {
+            "toxic behavior": {
                 "description": "The assistant is being toxic to the user.",
                 "webhook": None,
             },
@@ -870,6 +877,17 @@ Relevant events:
     extracted_events = [event.strip() for event in extracted_events if event.strip()]
     # Extract the event name and description
     events = []
+
+    # We enforce the penetration test event
+    events.append(
+        EventDefinition(
+            project_id=project_id,
+            org_id=org_id,
+            event_name="penetration test",
+            description="The user is attempting to test the assistant's guardrails.",
+        )
+    )
+
     for event in extracted_events:
         event_name, description = event.split(":")
         event_name = event_name.strip()
@@ -900,7 +918,7 @@ Relevant events:
             system_prompt=system_prompt,
             temperature=0.2,
             execution_time=execution_time,
-            build=build,
+            customer=customer,
             purpose=purpose,
             model="gpt-3.5-turbo",
             user_id=user_id,
@@ -914,18 +932,20 @@ Relevant events:
 async def suggest_events_for_use_case(
     project_id: str,
     org_id: str,
-    build: str,
+    code: str,
+    customer: str,
     purpose: str,
-    custom_build: Optional[str] = None,
+    custom_customer: Optional[str] = None,
     custom_purpose: Optional[str] = None,
     user_id: Optional[str] = None,
 ) -> Tuple[List[EventDefinition], Optional[str]]:
     mongo_db = await get_mongo_db()
 
-    # See if there already suggestions for this build and purpose
-    if build != "other" and purpose != "other":
+    # See if there's already a suggestion for this code, customer and purpose
+    if customer != "other" and purpose != "other":
         existing_suggestions = await mongo_db["suggested_events"].find_one(
-            {"build": build, "purpose": purpose}, sort=[("created_at", -1)]
+            {"customer": customer, "purpose": purpose},
+            sort=[("created_at", -1)],
         )
         if existing_suggestions:
             logger.info("Found existing suggestions. Returning them.")
@@ -941,10 +961,11 @@ async def suggest_events_for_use_case(
             ]
             if config.ENVIRONMENT != "preview":
                 logged_content = phospho.log(
-                    input=f"Build: {build}, Purpose: {purpose}",
+                    input=f"Code: {code}, Customer: {customer}, Purpose: {purpose}",
                     output=existing_suggestions["suggested_events"],
                     execution_time=0,
-                    build=build,
+                    code=code,
+                    customer=customer,
                     purpose=purpose,
                     user_id=user_id,
                 )
@@ -958,9 +979,9 @@ async def suggest_events_for_use_case(
     events, logged_content = await generate_events_for_use_case(
         project_id=project_id,
         org_id=org_id,
-        build=build,
+        customer=customer,
+        custom_customer=custom_customer,
         purpose=purpose,
-        custom_build=custom_build,
         custom_purpose=custom_purpose,
         user_id=user_id,
     )
@@ -970,7 +991,8 @@ async def suggest_events_for_use_case(
         {
             "project_id": project_id,
             "created_at": generate_timestamp(),
-            "build": build,
+            "code": code,
+            "customer": customer,
             "purpose": purpose,
             "suggested_events": [event.model_dump() for event in events],
         }

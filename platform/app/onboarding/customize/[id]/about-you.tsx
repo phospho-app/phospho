@@ -11,7 +11,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -40,37 +39,43 @@ const myString = z
 
 const formSchema = z
   .object({
-    build: z.union([
-      z.literal("knowledge-assistant"),
-      z.literal("virtual-companion"),
-      z.literal("narrator"),
-      z.literal("ask-ai"),
-      z.literal("customer-support"),
+    code: z.union([z.literal("yes"), z.literal("no")]),
+    customer: z.union([
+      z.literal("student"),
+      z.literal("developer"),
+      z.literal("founder"),
+      z.literal("product-manager"),
+      z.literal("c-level"),
+      z.literal("consultant"),
+      z.literal("researcher"),
+      z.literal("rather-not-say"),
       z.literal("other"),
     ]),
     purpose: z.union([
-      z.literal("entertainment"),
-      z.literal("aquisition"),
+      z.literal("metrics"),
       z.literal("retention"),
-      z.literal("marketing"),
-      z.literal("productivity"),
-      z.literal("resolve-tikets"),
+      z.literal("tickets"),
+      z.literal("benchmark"),
+      z.literal("tone-of-voice"),
+      z.literal("compare-models"),
+      z.literal("just-looking"),
+      z.literal("rather-not-say"),
       z.literal("other"),
     ]),
     // if build is "other", then customBuild is required
-    customBuild: myString,
+    customCustomer: myString,
     customPurpose: myString,
   })
   //   .partial()
   .refine(
     (data) => {
-      if (data.build === "other" && !data.customBuild) {
+      if (data.customer === "other" && !data.customCustomer) {
         return false;
       }
       if (data.purpose === "other" && !data.customPurpose) {
         return false;
       }
-      if (data.build !== "other") {
+      if (data.customer !== "other") {
         return true;
       }
       if (data.purpose !== "other") {
@@ -80,8 +85,8 @@ const formSchema = z
       return true;
     },
     {
-      message: "Custom build and custom purpose are required.",
-      path: ["customBuild", "customPurpose"],
+      message: "Custom customer and custom purpose are required.",
+      path: ["customCustomer", "customPurpose"],
     },
   );
 
@@ -157,8 +162,9 @@ export default function AboutYou({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        build: values.build,
-        custom_build: values.customBuild,
+        code: values.code,
+        customer: values.customer,
+        custom_customer: values.customCustomer,
         purpose: values.purpose,
         custom_purpose: values.customPurpose,
       }),
@@ -204,8 +210,8 @@ export default function AboutYou({
             {project && <span>{project.project_name}</span>}
           </CardTitle>
           <CardDescription>
-            Based on your use case, phospho will suggest relevant events to
-            track in your app.
+            <div>We just want to know a bit more about you.</div>
+            <div>This will help us setup event detection.</div>
           </CardDescription>
         </CardHeader>
         <CardContent className={CARD_STYLE}>
@@ -213,13 +219,10 @@ export default function AboutYou({
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
-                name="build"
+                name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>What are you building with a LLM?</FormLabel>
-                    {/* <FormDescription className="font-normal">
-                      We will customize defaults based on your choice.
-                    </FormDescription> */}
+                    <FormLabel>Can you code ?</FormLabel>
                     <FormControl>
                       <ToggleGroup
                         type="single"
@@ -227,38 +230,70 @@ export default function AboutYou({
                         value={field.value}
                         onValueChange={field.onChange}
                       >
-                        <ToggleGroupItem value="knowledge-assistant">
-                          Knowledge assistant
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="virtual-companion">
-                          Virtual companion
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="customer-support">
-                          Customer support
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="narrator">
-                          Adventure narrator
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="ask-ai">
-                          "Ask AI" button
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="other">Other</ToggleGroupItem>
+                        <ToggleGroupItem value="yes">Yes</ToggleGroupItem>
+                        <ToggleGroupItem value="no">No</ToggleGroupItem>
                       </ToggleGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               ></FormField>
-              {form.watch("build") === "other" && (
+              {form.watch("code") !== undefined && (
                 <FormField
                   control={form.control}
-                  name="customBuild"
+                  name="customer"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Give us a brief description</FormLabel>
+                      <FormLabel>Who are you ?</FormLabel>
+                      <FormControl>
+                        <ToggleGroup
+                          type="single"
+                          className="flex-wrap"
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <ToggleGroupItem value="student">
+                            Student
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="developer">
+                            Developer
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="founder">
+                            Founder
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="product-manager">
+                            Product Manager
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="c-level">
+                            C-level
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="consultant">
+                            Consultant
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="researcher">
+                            Researcher
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="rather-not-say">
+                            Rather not say
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="other">Other</ToggleGroupItem>
+                        </ToggleGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                ></FormField>
+              )}
+              {form.watch("customer") === "other" && (
+                <FormField
+                  control={form.control}
+                  name="customCustomer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tell us more about who you are</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="A code generator, a chatbot, a game..."
+                          placeholder="Engage users, increase retention, ..."
                           {...field}
                         />
                       </FormControl>
@@ -267,16 +302,13 @@ export default function AboutYou({
                   )}
                 ></FormField>
               )}
-              {form.watch("build") !== undefined && (
+              {form.watch("customer") !== undefined && (
                 <FormField
                   control={form.control}
                   name="purpose"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>What's the goal of this project?</FormLabel>
-                      <FormDescription className="font-normal">
-                        Different goals mean different attention points.
-                      </FormDescription>
+                      <FormLabel>What do you need help with ?</FormLabel>
                       <FormControl>
                         <ToggleGroup
                           type="single"
@@ -284,23 +316,29 @@ export default function AboutYou({
                           value={field.value}
                           onValueChange={field.onChange}
                         >
-                          <ToggleGroupItem value="productivity">
-                            Increase productivity
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="aquisition">
-                            Generate leads
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="entertainment">
-                            Have fun
+                          <ToggleGroupItem value="metrics">
+                            Metrics
                           </ToggleGroupItem>
                           <ToggleGroupItem value="retention">
-                            Avoid churn
+                            Improve user retention
                           </ToggleGroupItem>
-                          <ToggleGroupItem value="resolve-tikets">
+                          <ToggleGroupItem value="tickets">
                             Resolve tickets
                           </ToggleGroupItem>
-                          <ToggleGroupItem value="marketing">
-                            Promote a brand
+                          <ToggleGroupItem value="benchmark">
+                            Benchmark
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="tone-of-voice">
+                            Tone of voice
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="compare-models">
+                            Compare models
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="just-looking">
+                            Just looking around
+                          </ToggleGroupItem>
+                          <ToggleGroupItem value="rather-not-say">
+                            Rather not say
                           </ToggleGroupItem>
                           <ToggleGroupItem value="other">Other</ToggleGroupItem>
                         </ToggleGroup>
@@ -317,11 +355,11 @@ export default function AboutYou({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Tell us more about your project purpose
+                        Tell us more about your expectations
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Mental health, lifestyle change..."
+                          placeholder="A/B testing, user segmentation, ..."
                           {...field}
                         />
                       </FormControl>
@@ -332,8 +370,9 @@ export default function AboutYou({
               )}
 
               <div className="flex justify-end">
+                {/* Button is only accessible when the form is complete */}
                 <Button type="submit" disabled={loading}>
-                  Create events
+                  Next
                 </Button>
               </div>
             </form>

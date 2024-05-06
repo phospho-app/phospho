@@ -5,8 +5,9 @@ from app.db.models import EventDefinition
 
 
 class OnboardingSurvey(BaseModel):
-    build: str
-    custom_build: Optional[str] = None
+    code: str
+    customer: str
+    custom_customer: Optional[str] = None
     purpose: str
     custom_purpose: Optional[str] = None
 
