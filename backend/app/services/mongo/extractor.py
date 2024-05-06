@@ -50,6 +50,9 @@ async def bill_on_stripe(
     """
     Bill an organization on Stripe based on the consumption
     """
+    if nb_job_results == 0:
+        logger.debug(f"No job results to bill for organization {org_id}")
+        return
 
     stripe.api_key = config.STRIPE_SECRET_KEY
 
@@ -94,9 +97,9 @@ async def run_log_process(
     if extra_logs_to_save is None:
         extra_logs_to_save = []
 
-    if len(logs_to_process) == 0:
-        logger.debug(f"No logs to process for project {project_id}")
-        return
+    # if len(logs_to_process) == 0:
+    #     logger.debug(f"No logs to process for project {project_id}")
+    #     return
 
     async with httpx.AsyncClient() as client:
         logger.debug(
