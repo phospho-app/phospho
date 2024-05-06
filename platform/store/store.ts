@@ -47,6 +47,13 @@ interface navigationState {
   dateRange: CustomDateRange | undefined;
   setDateRangePreset: (dateRangePreset: string | null) => void;
   setDateRange: (dateRange: DateRange) => void;
+
+  selectedMetric: string;
+  setSelectedMetric: (metric: string) => void;
+  selectedMetricMetadata: string | null;
+  setSelectedMetricMetadata: (metadata: string | null) => void;
+  selectedGroupBy: string;
+  setSelectedGroupBy: (groupBy: string) => void;
 }
 
 export const navigationStateStore = create(
@@ -241,6 +248,16 @@ export const navigationStateStore = create(
           },
         }));
       },
+
+      selectedMetric: "tasks",
+      setSelectedMetric: (metric: string) =>
+        set((state) => ({ selectedMetric: metric })),
+      selectedMetricMetadata: null,
+      setSelectedMetricMetadata: (metadata: string | null) =>
+        set((state) => ({ selectedMetricMetadata: metadata })),
+      selectedGroupBy: "flag",
+      setSelectedGroupBy: (groupBy: string) =>
+        set((state) => ({ selectedGroupBy: groupBy })),
     }),
 
     {
