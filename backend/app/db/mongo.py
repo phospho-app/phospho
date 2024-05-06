@@ -68,11 +68,18 @@ async def connect_and_init_db():
                 [("created_at", pymongo.DESCENDING)], background=True
             )
             mongo_db[MONGODB_NAME]["tasks"].create_index(
+                [("created_at", pymongo.ASCENDING)], background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
                 ["project_id", "test_id", ("created_at", pymongo.DESCENDING)],
                 background=True,
             )
             mongo_db[MONGODB_NAME]["tasks"].create_index(
                 ["project_id", "test_id", "flag", ("created_at", pymongo.DESCENDING)],
+                background=True,
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                ["project_id", "test_id", ("created_at", pymongo.ASCENDING)],
                 background=True,
             )
             mongo_db[MONGODB_NAME]["tasks"].create_index(
@@ -104,25 +111,28 @@ async def connect_and_init_db():
             mongo_db[MONGODB_NAME]["events"].create_index(
                 "id", unique=True, background=True
             )
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                ["id", "task_id", "removed"], background=True
+            )
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                ["id", "session_id", "removed"], background=True
+            )
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                ["task_id", "removed"], background=True
+            )
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                ["session_id", "removed"], background=True
+            )
             mongo_db[MONGODB_NAME]["events"].create_index("removed", background=True)
             mongo_db[MONGODB_NAME]["events"].create_index("event_name", background=True)
             mongo_db[MONGODB_NAME]["events"].create_index("project_id", background=True)
             mongo_db[MONGODB_NAME]["events"].create_index("session_id", background=True)
             mongo_db[MONGODB_NAME]["events"].create_index("task_id", background=True)
             mongo_db[MONGODB_NAME]["events"].create_index(
-                ["event_name", "task_id"], background=True
-            )
-            mongo_db[MONGODB_NAME]["events"].create_index(
-                ["project_id", "event_name", "task_id"], background=True
-            )
-            mongo_db[MONGODB_NAME]["events"].create_index(
                 [("created_at", pymongo.DESCENDING)], background=True
             )
             mongo_db[MONGODB_NAME]["events"].create_index(
                 ["project_id", ("created_at", pymongo.DESCENDING)], background=True
-            )
-            mongo_db[MONGODB_NAME]["events"].create_index(
-                ["project_id", "event_name"], background=True
             )
 
             try:
