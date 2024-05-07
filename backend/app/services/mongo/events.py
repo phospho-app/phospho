@@ -80,7 +80,7 @@ async def get_recipe_by_id(recipe_id: str) -> Recipe:
 
 
 async def run_event_detection_on_timeframe(
-    project_id: str, event_backfill_request: EventBackfillRequest
+    org_id: str, project_id: str, event_backfill_request: EventBackfillRequest
 ) -> None:
     """
     Run event detection on a given event_id and event_data
@@ -100,5 +100,5 @@ async def run_event_detection_on_timeframe(
         created_at_end=event_backfill_request.created_at_end,
         sample_rate=event_backfill_request.sample_rate,
     )
-    await run_recipe_on_tasks(tasks=tasks, recipe=recipe)
+    await run_recipe_on_tasks(tasks=tasks, recipe=recipe, org_id=org_id)
     return None

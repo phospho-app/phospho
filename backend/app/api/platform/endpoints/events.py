@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from propelauth_fastapi import User
 
 from app.api.platform.models import EventBackfillRequest
@@ -7,6 +7,7 @@ from app.security.authentification import (
     verify_if_propelauth_user_can_access_project,
 )
 from app.services.mongo.events import run_event_detection_on_timeframe
+from app.core import config
 
 router = APIRouter(tags=["Events"])
 
@@ -25,9 +26,23 @@ async def post_backfill_event(
     """
     Detect an event on logged data
     """
-    await verify_if_propelauth_user_can_access_project(user, project_id)
+    org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
+    org = propelauth.fetch_org(org_id)
+    org_metadata = org.get("metadata", {})
+    customer_id = None
+
+    if "customer_id" in org_metadata.keys():
+        customer_id = org_metadata.get("customer_id", None)
+
+    if not customer_id and org_id != config.PHOSPHO_ORG_ID:
+        raise HTTPException(
+            status_code=402,
+            detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
+        )
+
     background_tasks.add_task(
         run_event_detection_on_timeframe,
+        org_id=org_id,
         project_id=project_id,
         event_backfill_request=event_backfill_request,
     )
