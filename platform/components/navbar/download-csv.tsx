@@ -1,16 +1,17 @@
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import { navigationStateStore } from "@/store/store";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
-import { Download } from "lucide-react";
+import { Download, MailIcon } from "lucide-react";
 import React, { useState } from "react";
 
 interface DownloadButtonProps {}
 const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
   // PropelAuth
   const { user, loading, accessToken } = useUser();
+  const { toast } = useToast();
 
-  const [isSent, setIsSent] = useState(false);
   const project_id = navigationStateStore((state) => state.project_id);
 
   // if no user
@@ -33,7 +34,11 @@ const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
         console.error("Error in fetching tasks:", data.error);
       } else {
         console.log("Sent email successfully:", data);
-        setIsSent(true); // Set isSent to true after successful operation
+        toast({
+          // Add a mail emoji
+          title: "✉️ Your tasks are on the way!",
+          description: `After processing, we'll send tasks to ${user.email}`,
+        });
       }
     } catch (error) {
       console.error("Error in making the request:", error);
@@ -41,11 +46,10 @@ const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
   };
 
   return (
-    <Button variant={"ghost"} onClick={handleButtonClick} disabled={isSent}>
-      {/* <Mail className="mr-2 h-4 w-4" /> */}
-      <Download className="mr-2 h-4 w-4" />
-      {isSent ? `Data sent to ${user.email}!` : "Export Data"}
-    </Button>
+    <div onClick={handleButtonClick} className="flex flex-row items-center">
+      <Download className="mr-2 h-6 w-6" />
+      Export Data
+    </div>
   );
 };
 

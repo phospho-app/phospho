@@ -102,7 +102,9 @@ export function NavBarSettings() {
             </DropdownMenuSubContent>
           </DropdownMenuSub>
           <DropdownMenuSeparator />
-          <DownloadButton />
+          <DropdownMenuItem>
+            <DownloadButton />
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={async () => {

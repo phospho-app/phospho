@@ -31,7 +31,11 @@ export function NavBarHelp() {
   const [hasClicked, setHasClicked] = React.useState(false);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu
+      onOpenChange={() => {
+        setHasClicked(true);
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <div>
           <HoverCard openDelay={50} closeDelay={50}>
@@ -40,13 +44,12 @@ export function NavBarHelp() {
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:text-primary"
-                // onClick={() => {
-                //   setHasClicked(true);
-                // }}
               >
                 {/* // Add a red dot on the top right of the help icon */}
                 <div className="relative h-6 w-6">
-                  <Dot className="absolute text-red-500 z-10 -top-4 -right-4 w-10 h-10" />
+                  {!hasClicked && (
+                    <Dot className="absolute text-red-500 z-10 -top-4 -right-4 w-10 h-10" />
+                  )}
                   <HelpCircle className="z-0 w-6 h-6" />
                 </div>
               </Button>
