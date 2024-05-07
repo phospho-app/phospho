@@ -82,12 +82,22 @@ async def get_project_by_id(project_id: str) -> Project:
                 {
                     "$addFields": {
                         "settings.events": {
-                            "$arrayToObject": {
-                                "$map": {
-                                    "input": "$settings.events",
-                                    "as": "item",
-                                    "in": {"k": "$$item.event_name", "v": "$$item"},
-                                }
+                            # if the array is empty, return an empty object
+                            "$cond": {
+                                "if": {"$eq": [{"$size": "$settings.events"}, 0]},
+                                "then": {},
+                                "else": {
+                                    "$arrayToObject": {
+                                        "$map": {
+                                            "input": "$settings.events",
+                                            "as": "item",
+                                            "in": {
+                                                "k": "$$item.event_name",
+                                                "v": "$$item",
+                                            },
+                                        }
+                                    }
+                                },
                             }
                         }
                     }
