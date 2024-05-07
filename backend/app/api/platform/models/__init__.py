@@ -35,7 +35,6 @@ from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueRe
 from .projects import (
     AddEventsQuery,
     OnboardingSurvey,
-    OnboardingSurveyResponse,
 )
 from .tasks import AddEventRequest, RemoveEventRequest
 from .topics import Topic, Topics
