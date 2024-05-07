@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components//ui/table";
+import ComingSoonAlert from "@/components/coming-soon";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -185,7 +186,11 @@ function EventRow({
               setTableIsClickable(true);
             }}
           >
-            {sheetToOpen === "run" && <div>test</div>}
+            {sheetToOpen === "run" && (
+              <>
+                <ComingSoonAlert />
+              </>
+            )}
             {sheetToOpen === "edit" && (
               <CreateEvent
                 setOpen={setOpen}
