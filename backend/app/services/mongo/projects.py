@@ -211,6 +211,14 @@ async def update_project(project: Project, **kwargs) -> Project:
                 mongo_db["recipes"].update_one(
                     {"id": event_definition.recipe_id}, {"$set": recipe.model_dump()}
                 )
+                # Remove all historical events
+                mongo_db["events"].update_many(
+                    {
+                        "project_id": project.id,
+                        "event_definition.id": event_definition.id,
+                    },
+                    {"$set": {"removed": True}},
+                )
 
         # Update the database
         _ = await mongo_db["projects"].update_one(
