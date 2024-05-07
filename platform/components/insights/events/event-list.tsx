@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components//ui/table";
-import ComingSoonAlert from "@/components/coming-soon";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +40,7 @@ import { useState } from "react";
 import { useSWRConfig } from "swr";
 
 import CreateEvent from "./create-event";
+import RunEvent from "./run-event";
 
 function EllipsisVertical() {
   return (
@@ -63,12 +63,10 @@ function EllipsisVertical() {
 }
 
 function EventRow({
-  eventName,
   eventDefinition,
   handleDeleteEvent,
   handleOnClick,
 }: {
-  eventName: string;
   eventDefinition: any;
   handleDeleteEvent: (eventNameToDelete: string) => void;
   handleOnClick: (eventName: string) => void;
@@ -82,12 +80,12 @@ function EventRow({
       onClick={(mouseEvent) => {
         mouseEvent.stopPropagation();
         if (tableIsClickable) {
-          handleOnClick(eventName);
+          handleOnClick(eventDefinition.id);
         }
       }}
       className="cursor-pointer"
     >
-      <TableCell>{eventName}</TableCell>
+      <TableCell>{eventDefinition.event_name}</TableCell>
       <TableCell className="text-left">{eventDefinition.description}</TableCell>
       <TableCell className="text-left">
         {eventDefinition?.webhook && eventDefinition.webhook.length > 1 ? (
@@ -97,7 +95,11 @@ function EventRow({
         )}
       </TableCell>
       <TableCell className="text-right">
-        <Sheet open={open} onOpenChange={setOpen} key={`${eventName}_edit`}>
+        <Sheet
+          open={open}
+          onOpenChange={setOpen}
+          key={`${eventDefinition.event_name}_edit`}
+        >
           <AlertDialog>
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -149,7 +151,8 @@ function EventRow({
             </DropdownMenu>
             <AlertDialogContent className="md:w-1/3">
               <AlertDialogTitle>
-                Are you sure you want to delete the event "{eventName}"?
+                Are you sure you want to delete the event "
+                {eventDefinition.event_name}"?
               </AlertDialogTitle>
               <AlertDialogDescription>
                 <div>
@@ -161,7 +164,7 @@ function EventRow({
               <AlertDialogAction
                 onClick={(mouseEvent) => {
                   mouseEvent.stopPropagation();
-                  handleDeleteEvent(eventName);
+                  handleDeleteEvent(eventDefinition.event_name);
                 }}
               >
                 Delete event and all previous detections
@@ -187,15 +190,17 @@ function EventRow({
             }}
           >
             {sheetToOpen === "run" && (
-              <>
-                <ComingSoonAlert />
-              </>
+              <RunEvent
+                setOpen={setOpen}
+                eventToRun={eventDefinition}
+                key={eventDefinition.id}
+              />
             )}
             {sheetToOpen === "edit" && (
               <CreateEvent
                 setOpen={setOpen}
-                eventNameToEdit={eventName}
-                key={eventName}
+                eventNameToEdit={eventDefinition.event_name}
+                key={eventDefinition.id}
               />
             )}
           </SheetContent>
@@ -213,6 +218,8 @@ function EventsList() {
 
   const events = selectedProject?.settings?.events || {};
   const eventArray = Object.entries(events);
+  // sort the events by name
+  eventArray.sort((a, b) => a[0].localeCompare(b[0]));
   const router = useRouter();
 
   // Deletion event
@@ -244,17 +251,7 @@ function EventsList() {
     }
   };
 
-  const handleOnClick = (eventName: string) => {
-    if (!selectedProject?.settings) {
-      return;
-    }
-    if (!selectedProject.settings.events[eventName]) {
-      return;
-    }
-    const eventId = selectedProject.settings.events[eventName].id;
-    if (eventId === undefined) {
-      return;
-    }
+  const handleOnClick = (eventId: string) => {
     router.push(`/org/insights/events/${encodeURI(eventId)}`);
   };
 
@@ -277,7 +274,6 @@ function EventsList() {
                 {eventArray.map(([eventName, eventDefinition], index) => (
                   <EventRow
                     key={index}
-                    eventName={eventName}
                     eventDefinition={eventDefinition}
                     handleDeleteEvent={handleDeleteEvent}
                     handleOnClick={handleOnClick}
