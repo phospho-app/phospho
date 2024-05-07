@@ -198,8 +198,16 @@ async def update_project(project: Project, **kwargs) -> Project:
                 logger.error(f"Error creating recipe for event {event_name}: {e}")
 
         # Detect if an event has been removed
+        # Create a set of events that are NOT in the payload, but are in the current project, based on their id
+
+        updated_project_events_ids = [
+            event_definition.id
+            for event_definition in updated_project.settings.events.values()
+        ]
+
         for event_name, event_definition in project.settings.events.items():
-            if event_name not in updated_project.settings.events:
+            if event_definition.id not in updated_project_events_ids:
+                logger.info(f"Event {event_definition.id} has been removed")
                 # Event has been removed
                 event_definition.removed = True
                 mongo_db["event_definitions"].update_one(
@@ -207,9 +215,20 @@ async def update_project(project: Project, **kwargs) -> Project:
                     {"$set": event_definition.model_dump()},
                 )
                 # Disable the recipe
-                recipe.enabled = False
+                recipe.status = "deleted"
                 mongo_db["recipes"].update_one(
                     {"id": event_definition.recipe_id}, {"$set": recipe.model_dump()}
+                )
+                # Remove all historical events
+                logger.debug(
+                    f"Removing all historical events for event {event_definition.id}"
+                )
+                mongo_db["events"].update_many(
+                    {
+                        "project_id": project.id,
+                        "event_definition.id": event_definition.id,
+                    },
+                    {"$set": {"removed": True}},
                 )
 
         # Update the database
