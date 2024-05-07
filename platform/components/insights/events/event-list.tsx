@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components//ui/table";
-import ComingSoonAlert from "@/components/coming-soon";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +40,7 @@ import { useState } from "react";
 import { useSWRConfig } from "swr";
 
 import CreateEvent from "./create-event";
+import RunEvent from "./run-event";
 
 function EllipsisVertical() {
   return (
@@ -187,9 +187,11 @@ function EventRow({
             }}
           >
             {sheetToOpen === "run" && (
-              <>
-                <ComingSoonAlert />
-              </>
+              <RunEvent
+                setOpen={setOpen}
+                eventToRun={eventDefinition}
+                key={eventName}
+              />
             )}
             {sheetToOpen === "edit" && (
               <CreateEvent
