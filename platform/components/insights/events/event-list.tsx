@@ -215,6 +215,8 @@ function EventsList() {
 
   const events = selectedProject?.settings?.events || {};
   const eventArray = Object.entries(events);
+  // sort the events by name
+  eventArray.sort((a, b) => a[0].localeCompare(b[0]));
   const router = useRouter();
 
   // Deletion event
@@ -279,7 +281,7 @@ function EventsList() {
                 {eventArray.map(([eventName, eventDefinition], index) => (
                   <EventRow
                     key={index}
-                    eventName={eventName}
+                    eventName={eventDefinition.event_name}
                     eventDefinition={eventDefinition}
                     handleDeleteEvent={handleDeleteEvent}
                     handleOnClick={handleOnClick}
