@@ -62,7 +62,7 @@ async def fetch_models(org_id: Optional[str] = None) -> Optional[ModelsResponse]
                     },
                     timeout=60,
                 )
-            # PArse the response
+            # Parse the response
             return ModelsResponse(**response.json())
 
         except Exception as e:

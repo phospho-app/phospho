@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/card";
 import {
   Form,
-  FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -32,56 +30,58 @@ import { z } from "zod";
 // empty, or min 4
 const myString = z
   .string()
-  .min(10, {
-    message: "Description must be at least 10 characters.",
+  .min(5, {
+    message: "Description must be at least 5 characters.",
   })
   .max(200, { message: "Description must be at most 200 characters." })
   .optional();
 
 const formSchema = z
   .object({
-    build: z.union([
-      z.literal("knowledge-assistant"),
-      z.literal("virtual-companion"),
-      z.literal("narrator"),
-      z.literal("ask-ai"),
-      z.literal("customer-support"),
-      z.literal("other"),
-    ]),
-    purpose: z.union([
-      z.literal("entertainment"),
-      z.literal("aquisition"),
-      z.literal("retention"),
-      z.literal("marketing"),
-      z.literal("productivity"),
-      z.literal("resolve-tikets"),
-      z.literal("other"),
-    ]),
+    code: z.union([z.literal("yes"), z.literal("no")]).optional(),
+    customer: z
+      .union([
+        z.literal("software"),
+        z.literal("data"),
+        z.literal("manager"),
+        z.literal("founder"),
+        z.literal("other"),
+      ])
+      .optional(),
+    contact: z
+      .union([
+        z.literal("friends"),
+        z.literal("socials"),
+        z.literal("blog"),
+        z.literal("conference"),
+        z.literal("other"),
+      ])
+      .optional(),
     // if build is "other", then customBuild is required
-    customBuild: myString,
-    customPurpose: myString,
+    customCustomer: myString.optional(),
+    customContact: myString.optional(),
   })
   //   .partial()
   .refine(
     (data) => {
-      if (data.build === "other" && !data.customBuild) {
+      if (data.customer === "other" && !data.customCustomer) {
         return false;
       }
-      if (data.purpose === "other" && !data.customPurpose) {
+      if (data.contact === "other" && !data.customContact) {
         return false;
       }
-      if (data.build !== "other") {
+      if (data.customer !== "other") {
         return true;
       }
-      if (data.purpose !== "other") {
+      if (data.contact !== "other") {
         return true;
       }
 
       return true;
     },
     {
-      message: "Custom build and custom purpose are required.",
-      path: ["customBuild", "customPurpose"],
+      message: "Custom customer and custom purpose are required.",
+      path: ["customCustomer", "customPurpose"],
     },
   );
 
@@ -91,8 +91,6 @@ const CARD_STYLE =
 export default function AboutYou({
   project_id,
   setAboutYouValues,
-  setCustomEvents,
-  setPhosphoTaskId,
 }: {
   project_id: string;
   setAboutYouValues: (values: any) => void;
@@ -101,7 +99,7 @@ export default function AboutYou({
 }) {
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
-  const { user, loading, accessToken } = useUser();
+  const { loading, accessToken } = useUser();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
 
   useEffect(() => {
@@ -147,25 +145,19 @@ export default function AboutYou({
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    // Call the API endpoint
-    fetch(`/api/projects/${project_id}/suggest-events`, {
+    fetch(`/api/projects/${project_id}/log-onboarding-survey`, {
       method: "POST",
       headers: {
         Authorization: "Bearer " + accessToken,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        build: values.build,
-        custom_build: values.customBuild,
-        purpose: values.purpose,
-        custom_purpose: values.customPurpose,
+        code: values.code,
+        customer: values.customer,
+        custom_customer: values.customCustomer,
+        contact: values.contact,
+        custom_contact: values.customContact,
       }),
-    }).then(async (res) => {
-      const response_json = await res.json();
-      setCustomEvents(response_json.suggested_events);
-      setPhosphoTaskId(response_json.phospho_task_id);
     });
 
     setAboutYouValues(values);
@@ -204,8 +196,8 @@ export default function AboutYou({
             {project && <span>{project.project_name}</span>}
           </CardTitle>
           <CardDescription>
-            Based on your use case, phospho will suggest relevant events to
-            track in your app.
+            <div>We just want to know a bit more about you.</div>
+            <div>This will help us setup event detection.</div>
           </CardDescription>
         </CardHeader>
         <CardContent className={CARD_STYLE}>
@@ -213,118 +205,116 @@ export default function AboutYou({
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
-                name="build"
+                name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>What are you building with a LLM?</FormLabel>
-                    {/* <FormDescription className="font-normal">
-                      We will customize defaults based on your choice.
-                    </FormDescription> */}
-                    <FormControl>
+                    <FormLabel>Do you write code ?</FormLabel>
+                    <ToggleGroup
+                      type="single"
+                      className="flex-wrap"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <ToggleGroupItem value="yes">Yes</ToggleGroupItem>
+                      <ToggleGroupItem value="no">No</ToggleGroupItem>
+                    </ToggleGroup>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              ></FormField>
+              {form.watch("code") !== undefined && (
+                <FormField
+                  control={form.control}
+                  name="customer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>What's your job title ?</FormLabel>
                       <ToggleGroup
                         type="single"
                         className="flex-wrap"
                         value={field.value}
                         onValueChange={field.onChange}
                       >
-                        <ToggleGroupItem value="knowledge-assistant">
-                          Knowledge assistant
+                        <ToggleGroupItem value="software">
+                          Software engineer
                         </ToggleGroupItem>
-                        <ToggleGroupItem value="virtual-companion">
-                          Virtual companion
+                        <ToggleGroupItem value="data">
+                          Data analyst
                         </ToggleGroupItem>
-                        <ToggleGroupItem value="customer-support">
-                          Customer support
+                        <ToggleGroupItem value="manager">
+                          Product manager
                         </ToggleGroupItem>
-                        <ToggleGroupItem value="narrator">
-                          Adventure narrator
-                        </ToggleGroupItem>
-                        <ToggleGroupItem value="ask-ai">
-                          "Ask AI" button
+                        <ToggleGroupItem value="founder">
+                          Founder
                         </ToggleGroupItem>
                         <ToggleGroupItem value="other">Other</ToggleGroupItem>
                       </ToggleGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              ></FormField>
-              {form.watch("build") === "other" && (
-                <FormField
-                  control={form.control}
-                  name="customBuild"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Give us a brief description</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="A code generator, a chatbot, a game..."
-                          {...field}
-                        />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 ></FormField>
               )}
-              {form.watch("build") !== undefined && (
+              {form.watch("customer") === "other" && (
                 <FormField
                   control={form.control}
-                  name="purpose"
+                  name="customCustomer"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>What's the goal of this project?</FormLabel>
-                      <FormDescription className="font-normal">
-                        Different goals mean different attention points.
-                      </FormDescription>
-                      <FormControl>
-                        <ToggleGroup
-                          type="single"
-                          className="flex-wrap"
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <ToggleGroupItem value="productivity">
-                            Increase productivity
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="aquisition">
-                            Generate leads
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="entertainment">
-                            Have fun
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="retention">
-                            Avoid churn
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="resolve-tikets">
-                            Resolve tickets
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="marketing">
-                            Promote a brand
-                          </ToggleGroupItem>
-                          <ToggleGroupItem value="other">Other</ToggleGroupItem>
-                        </ToggleGroup>
-                      </FormControl>
+                      <FormLabel>Tell us more about who you are</FormLabel>
+                      <Input
+                        placeholder="Researcher, student, ..."
+                        {...field}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
                 ></FormField>
               )}
-              {form.watch("purpose") === "other" && (
+              {form.watch("customer") !== undefined && (
                 <FormField
                   control={form.control}
-                  name="customPurpose"
+                  name="contact"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>How did you hear about phospho ?</FormLabel>
+                      <ToggleGroup
+                        type="single"
+                        className="flex-wrap"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <ToggleGroupItem value="friends">
+                          Friends
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="socials">
+                          Social media
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="blog">
+                          Blog post
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="conference">
+                          Conference
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="other">Other</ToggleGroupItem>
+                      </ToggleGroup>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                ></FormField>
+              )}
+              {form.watch("contact") === "other" && (
+                <FormField
+                  control={form.control}
+                  name="customContact"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Tell us more about your project purpose
+                        Tell us more about how you heard about phospho:
                       </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Mental health, lifestyle change..."
-                          {...field}
-                        />
-                      </FormControl>
+                      <Input
+                        placeholder="Employees, customers, ..."
+                        {...field}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -332,8 +322,9 @@ export default function AboutYou({
               )}
 
               <div className="flex justify-end">
+                {/* Button is only accessible when the form is complete */}
                 <Button type="submit" disabled={loading}>
-                  Create events
+                  Next
                 </Button>
               </div>
             </form>

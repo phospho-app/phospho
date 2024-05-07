@@ -29,3 +29,8 @@ These examples show basic functionalities of phospho logging.
 - [hello.py](./logging/hello.py) How to log an OpenAI call
 - [session.py](./logging/session.py) How to set up custom session management
 - [metadata.py](./logging/session.py) How to log metadata
+
+## API models
+
+These examples show what you can build using phospho API models:
+- [vision-api-cookbook.ipynb](./api/vision-api-cookbook.ipynb) How to use the phospho multimodal API
