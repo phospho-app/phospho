@@ -45,12 +45,12 @@ def check_health():
 
 async def bill_on_stripe(
     org_id: str,
-    nb_job_results: int,
+    nb_credits_used: int,
 ) -> None:
     """
     Bill an organization on Stripe based on the consumption
     """
-    if nb_job_results == 0:
+    if nb_credits_used == 0:
         logger.debug(f"No job results to bill for organization {org_id}")
         return
 
@@ -77,7 +77,7 @@ async def bill_on_stripe(
         stripe.billing.MeterEvent.create(
             event_name="phospho_usage_based_meter",
             payload={
-                "value": nb_job_results,
+                "value": nb_credits_used,
                 "stripe_customer_id": customer_id,
             },
         )
@@ -136,7 +136,7 @@ async def run_log_process(
             if response.status_code == 200:
                 # Bill the customer
                 nb_job_results = response.json().get("nb_job_results", 0)
-                await bill_on_stripe(org_id=org_id, nb_job_results=nb_job_results)
+                await bill_on_stripe(org_id=org_id, nb_credits_used=nb_job_results)
 
         except Exception as e:
             errror_id = generate_uuid()
