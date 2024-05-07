@@ -30,8 +30,8 @@ import { z } from "zod";
 // empty, or min 4
 const myString = z
   .string()
-  .min(10, {
-    message: "Description must be at least 10 characters.",
+  .min(5, {
+    message: "Description must be at least 5 characters.",
   })
   .max(200, { message: "Description must be at most 200 characters." })
   .optional();
@@ -91,8 +91,6 @@ const CARD_STYLE =
 export default function AboutYou({
   project_id,
   setAboutYouValues,
-  setCustomEvents,
-  setPhosphoTaskId,
 }: {
   project_id: string;
   setAboutYouValues: (values: any) => void;
@@ -147,7 +145,7 @@ export default function AboutYou({
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    fetch(`/api/projects/${project_id}/suggest-events`, {
+    fetch(`/api/projects/${project_id}/log-onboarding-survey`, {
       method: "POST",
       headers: {
         Authorization: "Bearer " + accessToken,
@@ -160,10 +158,6 @@ export default function AboutYou({
         contact: values.contact,
         custom_contact: values.customContact,
       }),
-    }).then(async (res) => {
-      const response_json = await res.json();
-      //setCustomEvents(response_json.suggested_events);
-      setPhosphoTaskId(response_json.phospho_task_id);
     });
 
     setAboutYouValues(values);

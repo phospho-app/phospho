@@ -9,9 +9,7 @@ import AddEvents from "./add-events";
 
 export default function Page({ params }: { params: { id: string } }) {
   const [aboutYouValues, setAboutYouValues] = useState(null);
-  const [customEvents, setCustomEvents] = useState<EventDefinition[] | null>(
-    null,
-  );
+  const [, setCustomEvents] = useState<EventDefinition[] | null>(null);
   const [phosphoTaskId, setPhosphoTaskId] = useState<string | null>(null);
 
   // This page is called during onboarding, but also when the users clicks the
@@ -35,7 +33,6 @@ export default function Page({ params }: { params: { id: string } }) {
       {aboutYouValues !== null && (
         <AddEvents
           project_id={params.id}
-          customEvents={customEvents}
           phosphoTaskId={phosphoTaskId}
           redirectTo={redirectTo}
         />

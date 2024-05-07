@@ -5,16 +5,11 @@ from app.db.models import EventDefinition
 
 
 class OnboardingSurvey(BaseModel):
-    code: str
-    customer: str
+    code: Optional[str] = None
+    customer: Optional[str] = None
     custom_customer: Optional[str] = None
-    contact: str
+    contact: Optional[str] = None
     custom_contact: Optional[str] = None
-
-
-class OnboardingSurveyResponse(BaseModel):
-    suggested_events: List[EventDefinition]
-    phospho_task_id: Optional[str] = None
 
 
 class AddEventsQuery(BaseModel):
