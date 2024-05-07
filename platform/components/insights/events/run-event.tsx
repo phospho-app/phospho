@@ -1,9 +1,7 @@
 "use client";
 
-import ComingSoonAlert from "@/components/coming-soon";
 import { DatePickerWithRange } from "@/components/date-range";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -18,13 +16,6 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
   SheetDescription,
@@ -32,22 +23,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import {
-  CustomDateRange,
-  DetectionEngine,
-  DetectionScope,
-  EventDefinition,
-} from "@/models/models";
+import { EventDefinition } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import useSWR, { useSWRConfig } from "swr";
+import useSWR from "swr";
 import { z } from "zod";
 
 export default function RunEvent({
@@ -63,7 +48,6 @@ export default function RunEvent({
   const project_id = navigationStateStore((state) => state.project_id);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const selectedProject = dataStateStore((state) => state.selectedProject);
-  const { mutate } = useSWRConfig();
   const { loading, accessToken } = useUser();
   const { toast } = useToast();
   const dateRange = navigationStateStore((state) => state.dateRange);
@@ -103,13 +87,42 @@ export default function RunEvent({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log("Submitting event:", values);
+    const sampleSize = Math.floor(totalNbTasks ?? 0 * values.sample_rate);
     if (!selectedProject) {
       console.log("Submit: No selected project");
       return;
     }
-    if (!selectedProject.settings) {
-      console.log("Submit: No selected project settings");
-      return;
+    try {
+      const creation_response = await fetch(`/api/events/${project_id}/run`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          event_id: eventToRun.id,
+          sample_rate: values.sample_rate,
+          created_at_start: dateRange?.created_at_start,
+          created_at_end: dateRange?.created_at_end,
+        }),
+      });
+      if (creation_response.ok) {
+        toast({
+          title: `Event detection for "${eventToRun.event_name}" started.`,
+          description: `Running on ${sampleSize} tasks`,
+        });
+        setOpen(false);
+      } else {
+        toast({
+          title: "Error starting event detection",
+          description: await creation_response.text(),
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error starting event detection",
+        description: `${error}`,
+      });
     }
   }
 
