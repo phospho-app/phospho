@@ -254,7 +254,11 @@ async def run_main_pipeline_on_messages(
             return PipelineResults(events=[], flag=None)
 
 
-async def run_recipe_on_tasks(tasks: List[Task], recipe: Recipe):
+async def run_recipe_on_tasks(
+    tasks: List[Task],
+    recipe: Recipe,
+    org_id: str,
+):
     if len(tasks) == 0:
         logger.debug(f"No tasks to process for recipe {recipe.id}")
         return
@@ -276,6 +280,10 @@ async def run_recipe_on_tasks(tasks: List[Task], recipe: Recipe):
                 },
                 timeout=60,
             )
+            if response.status_code == 200:
+                # Bill the customer
+                nb_job_results = response.json().get("nb_job_results", 0)
+                await bill_on_stripe(org_id=org_id, nb_credits_used=nb_job_results)
             if response.status_code != 200:
                 logger.error(
                     f"Error returned when calling run recipe on task (status code: {response.status_code}): {response.text}"

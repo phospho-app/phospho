@@ -23,6 +23,7 @@ from app.api.v2.models import (
 )
 
 from .abtests import ABTest, ABTests
+from .events import EventBackfillRequest
 from .explore import (
     AggregateMetricsRequest,
     DashboardMetricsFilter,

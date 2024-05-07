@@ -112,7 +112,7 @@ async def post_run_job_on_task(
             tasks=request.tasks,
             recipe=request.recipe,
         )
-        return {"status": "ok"}
+        return {"status": "ok", "nb_job_results": len(request.tasks)}
 
     else:
         raise HTTPException(

@@ -1,3 +1,4 @@
+from app.core import config
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 
 from app.api.v2.models import PredictRequest, PredictResponse
@@ -26,7 +27,7 @@ async def post_predict(
     if "customer_id" in org_metadata.keys():
         customer_id = org_metadata.get("customer_id", None)
 
-    if not customer_id and org_id != "13b5f728-21a5-481d-82fa-0241ca0e07b9":
+    if not customer_id and org_id != config.PHOSPHO_ORG_ID:
         raise HTTPException(
             status_code=402,
             detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
@@ -48,9 +49,7 @@ async def post_predict(
 
         else:
             if request_body.model[: len("phospho-mutlimodal")] == "phospho-multimodal":
-                if (
-                    org_id != "13b5f728-21a5-481d-82fa-0241ca0e07b9"
-                ):  # Only whitelisted org
+                if org_id != config.PHOSPHO_ORG_ID:  # Only whitelisted org
                     # We bill 10 credits per image prediction
                     background_tasks.add_task(
                         metered_prediction,
