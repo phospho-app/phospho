@@ -4,6 +4,7 @@ import time
 from typing import Dict, List, Optional, Tuple, Union
 
 from app.api.platform.models.explore import Sorting
+from app.services.mongo.explore import get_total_nb_of_tasks
 import pandas as pd
 import resend
 from app.api.platform.models import UserMetadata, Pagination
@@ -288,7 +289,7 @@ async def get_all_tasks(
     project_id: str,
     flag_filter: Optional[str] = None,
     metadata_filter: Optional[Dict[str, object]] = None,
-    last_eval_source_filter: Optional[str] = None,
+    last_eval_source: Optional[str] = None,
     event_name_filter: Optional[List[str]] = None,
     created_at_start: Optional[Union[int, datetime.datetime]] = None,
     created_at_end: Optional[Union[int, datetime.datetime]] = None,
@@ -298,6 +299,7 @@ async def get_all_tasks(
     limit: Optional[int] = None,
     pagination: Optional[Pagination] = None,
     sorting: Optional[List[Sorting]] = None,
+    sample_rate: Optional[float] = None,
 ) -> List[Task]:
     """
     Get all the tasks of a project.
@@ -314,8 +316,8 @@ async def get_all_tasks(
     if flag_filter:
         main_filter["flag"] = flag_filter
 
-    if last_eval_source_filter:
-        if last_eval_source_filter.startswith("phospho"):
+    if last_eval_source:
+        if last_eval_source.startswith("phospho"):
             # We want to filter on the source starting with "phospho"
             main_filter["last_eval.source"] = {"$regex": "^phospho"}
         else:
@@ -419,6 +421,24 @@ async def get_all_tasks(
             }
         },
     )
+
+    if sample_rate is not None:
+        total_nb_tasks = await get_total_nb_of_tasks(
+            project_id=project_id,
+            flag_filter=flag_filter,
+            metadata_filter=metadata_filter,
+            last_eval_source=last_eval_source,
+            event_name_filter=event_name_filter,
+            created_at_start=cast_datetime_or_timestamp_to_timestamp(created_at_start)
+            if created_at_start
+            else None,
+            created_at_end=cast_datetime_or_timestamp_to_timestamp(created_at_end)
+            if created_at_end
+            else None,
+        )
+        if total_nb_tasks is not None:
+            sample_size = int(total_nb_tasks * sample_rate)
+            pipeline.append({"$sample": {"size": sample_size}})
 
     tasks = await mongo_db[collection_name].aggregate(pipeline).to_list(length=limit)
 
@@ -1075,7 +1095,7 @@ async def backcompute_recipes(
         limit=limit,
         flag_filter=filters.flag,
         event_name_filter=filters.event_name,
-        last_eval_source_filter=filters.last_eval_source,
+        last_eval_source=filters.last_eval_source,
         metadata_filter=filters.metadata,
         created_at_start=filters.created_at_start,
         created_at_end=filters.created_at_end,

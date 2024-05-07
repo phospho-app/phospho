@@ -5,6 +5,7 @@ from app.api.v2.models import (
     DetectEventsInTaskRequest,
     Task,
     DetectEventInMessagesRequest,
+    EventBackfillRequest,
 )
 from app.security import (
     authenticate_org_key,

@@ -130,7 +130,7 @@ async def deprecated_get_dashboard_aggregated_metrics(
             limit=limit,
             flag_filter=filters.flag,
             event_name_filter=filters.event_name,
-            last_eval_source_filter=filters.last_eval_source,
+            last_eval_source=filters.last_eval_source,
             metadata_filter=filters.metadata,
             created_at_start=filters.created_at_start,
             created_at_end=filters.created_at_end,
@@ -349,9 +349,10 @@ async def get_success_rate_per_task_position(
 
 async def get_total_nb_of_tasks(
     project_id: str,
-    flag_filter: Optional[Literal["success", "failure"]] = None,
+    flag_filter: Optional[str] = None,
     event_name_filter: Optional[List[str]] = None,
     last_eval_source: Optional[str] = None,
+    metadata_filter: Optional[Dict[str, object]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
 ) -> Optional[int]:
@@ -376,6 +377,8 @@ async def get_total_nb_of_tasks(
         else:
             # We want to filter on the source not starting with "phospho"
             global_filters["last_eval.source"] = {"$regex": "^(?!phospho).*"}
+    if metadata_filter is not None:
+        global_filters["metadata"] = metadata_filter
 
     # Other filters
     if flag_filter is None and event_name_filter is None:
