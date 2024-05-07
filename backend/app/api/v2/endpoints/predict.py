@@ -17,9 +17,12 @@ async def post_predict(
     request_body: PredictRequest,
     org: dict = Depends(authenticate_org_key_in_alpha),
 ) -> PredictResponse:
-    base_model = request_body.model.split(":")[0]
-
-    if base_model == "phospho-small":
+    if (
+        len(request_body.model) >= len("phospho-small")
+        and request_body.model[: len("phospho-small")] == "phospho-small"
+        or len(request_body.model) >= len("phospho-multimodal")
+        and request_body.model[: len("phospho-multimodal")] == "phospho-multimodal"
+    ):
         predictions = await predict(request_body)
 
         if predictions is None:
