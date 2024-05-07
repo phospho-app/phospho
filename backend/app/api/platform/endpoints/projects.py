@@ -17,7 +17,6 @@ from app.api.platform.models import (
     AddEventsQuery,
     OnboardingSurvey,
     Users,
-    OnboardingSurveyResponse,
     ProjectDataFilters,
     QuerySessionsTasksRequest,
 )
@@ -36,7 +35,6 @@ from app.services.mongo.projects import (
     get_project_by_id,
     get_all_users_metadata,
     update_project,
-    suggest_events_for_use_case,
     add_project_events,
     store_onboarding_survey,
 )
@@ -316,33 +314,22 @@ async def get_tests(
 
 
 @router.post(
-    "/projects/{project_id}/suggest-events",
-    description="Suggest events for a project (Onboarding)",
-    response_model=OnboardingSurveyResponse,
+    "/projects/{project_id}/log-onboarding-survey",
+    description="Logs the onboarding survey answers",
+    response_model=dict,
 )
 async def suggest_events(
     project_id: str,
     survey: OnboardingSurvey,
     user: User = Depends(propelauth.require_user),
-) -> OnboardingSurveyResponse:
+) -> dict:
     """
-    Suggest events for a project based on the answers to an onboarding survey.
-
-    This is part of the onboarding flow.
+    Logs the onboarding survey answers
     """
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
     await store_onboarding_survey(project_id, user, survey.model_dump())
-    event_suggestions, phospho_task_id = await suggest_events_for_use_case(
-        project_id=project_id,
-        org_id=project.org_id,
-        **survey.model_dump(),
-        user_id=user.email,
-    )
-    response = OnboardingSurveyResponse(
-        suggested_events=event_suggestions, phospho_task_id=phospho_task_id
-    )
-    return response
+    return {"status": "ok"}
 
 
 @router.post(

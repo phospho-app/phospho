@@ -1,19 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
-  CarouselApi,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 import {
   HoverCard,
@@ -214,7 +206,6 @@ function WhatAreEvents() {
           <div className="flex justify-center pt-6">
             <Button
               onClick={() => router.push("/onboarding/create-project")}
-              // className="bg-green-500 text-2xl p-10 logo-animation"
               className="bg-green-500 text-2xl p-10"
               variant="outline"
             >
@@ -228,7 +219,7 @@ function WhatAreEvents() {
 }
 
 export default function Page() {
-  const [carousel_array, set_carousel_array] = useState([1, 2, 3, 4, 5]);
+  const [carousel_array] = useState([1, 2, 3, 4, 5]);
 
   return (
     <>
