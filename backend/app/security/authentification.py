@@ -140,8 +140,15 @@ async def verify_propelauth_org_owns_project_id(
 
 async def verify_if_propelauth_user_can_access_project(
     user: User, project_id: str, bdd: Literal["firebase", "mongo"] = "mongo"
-) -> None:
-    """Verify if a Propelauth user can access a project. If not, raise an HTTPException."""
+) -> str:
+    """Verify if a Propelauth user can access a project. If not, raise an HTTPException.
+
+    Raises:
+    - HTTPException 403: If the user can't access the project.
+    - HTTPException 404: If the project doesn't exist.
+
+    Returns: The org_id of the project.
+    """
 
     mongo_db = await get_mongo_db()
     project_data = await mongo_db["projects"].find_one({"id": project_id})
@@ -167,7 +174,7 @@ async def verify_if_propelauth_user_can_access_project(
             status_code=403,
             detail=f"Can't verify that {user} is a member of org {org_id} due to: {e}",
         )
-    return
+    return org_id
 
 
 def raise_error_if_not_in_pro_tier(org: dict, enforce: bool = False) -> None:

@@ -255,7 +255,7 @@ async def post_tasks(
         flag_filter=query.filters.flag,
         event_name_filter=query.filters.event_name,
         pagination=query.pagination,
-        last_eval_source_filter=query.filters.last_eval_source,
+        last_eval_source=query.filters.last_eval_source,
         metadata_filter=metadata_filter,
         sorting=query.sorting,
         created_at_start=query.filters.created_at_start,

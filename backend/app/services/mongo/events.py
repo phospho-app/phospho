@@ -1,7 +1,10 @@
-from app.db.models import EventDefinition
+from app.db.models import EventDefinition, Recipe
 from app.db.mongo import get_mongo_db
 from fastapi import HTTPException
 from loguru import logger
+from app.services.mongo.extractor import run_recipe_on_tasks
+from app.services.mongo.projects import get_all_tasks
+from app.api.platform.models import EventBackfillRequest
 
 
 async def get_event_definition_from_event_id(
@@ -62,3 +65,40 @@ async def get_event_from_name_and_project_id(
         raise HTTPException(status_code=404, detail="Event definition not found")
     validated_event = EventDefinition.model_validate(event_definition[0])
     return validated_event
+
+
+async def get_recipe_by_id(recipe_id: str) -> Recipe:
+    """
+    Get a recipe by its id
+    """
+    mongo_db = await get_mongo_db()
+    recipe = await mongo_db["recipes"].find_one({"id": recipe_id})
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    validated_recipe = Recipe.model_validate(recipe)
+    return validated_recipe
+
+
+async def run_event_detection_on_timeframe(
+    org_id: str, project_id: str, event_backfill_request: EventBackfillRequest
+) -> None:
+    """
+    Run event detection on a given event_id and event_data
+    """
+    event_definition = await get_event_definition_from_event_id(
+        project_id, event_backfill_request.event_id
+    )
+    if event_definition.recipe_id is None:
+        logger.error(
+            f"Event {event_definition.event_name} has no recipe_id for project {project_id}. Canceling."
+        )
+        return
+    recipe = await get_recipe_by_id(recipe_id=event_definition.recipe_id)
+    tasks = await get_all_tasks(
+        project_id=project_id,
+        created_at_start=event_backfill_request.created_at_start,
+        created_at_end=event_backfill_request.created_at_end,
+        sample_rate=event_backfill_request.sample_rate,
+    )
+    await run_recipe_on_tasks(tasks=tasks, recipe=recipe, org_id=org_id)
+    return None

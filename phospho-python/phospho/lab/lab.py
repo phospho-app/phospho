@@ -477,13 +477,15 @@ class Workload:
         """
         Create a workload from a phospho job (as defined is the database).
         """
-        event = EventDefinition(
-            recipe_id=recipe.id,
-            recipe_type=recipe.recipe_type,
-            project_id=recipe.project_id,
-            org_id=recipe.org_id,
+        parameters = {
             **recipe.parameters,
-        )
+            "recipe_id": recipe.id,
+            "recipe_type": recipe.recipe_type,
+            "project_id": recipe.project_id,
+            "org_id": recipe.org_id,
+        }
+        logger.debug(f"parameters: {parameters}")
+        event = EventDefinition(**parameters)
 
         if event.recipe_id is None:
             event.recipe_id = recipe.id

@@ -85,7 +85,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Database
 
 app.add_event_handler("startup", connect_and_init_db)
@@ -107,9 +106,6 @@ app.add_event_handler("startup", check_health_ai_hub)
 @app.get("/health")
 def check_health():
     return {"status": "ok"}
-
-
-### V0 API DELETED ###
 
 
 ### V2 API ###
@@ -169,6 +165,7 @@ app.mount("/v0", api_v2)
 ### PLATEFORM ENDPOINTS ###
 from app.api.platform.endpoints import (
     debug,
+    events,
     explore,
     metadata,
     organizations,
@@ -184,6 +181,7 @@ api_platform.include_router(organizations.router)
 api_platform.include_router(projects.router)
 api_platform.include_router(tasks.router)
 api_platform.include_router(sessions.router)
+api_platform.include_router(events.router)
 api_platform.include_router(explore.router)
 api_platform.include_router(metadata.router)
 
