@@ -94,11 +94,6 @@ async def run_event_detection_on_timeframe(
         )
         return
     recipe = await get_recipe_by_id(recipe_id=event_definition.recipe_id)
-    # Clamp the sample rate between 0 and 1
-    if event_backfill_request.sample_rate < 0:
-        event_backfill_request.sample_rate = 0
-    if event_backfill_request.sample_rate > 1:
-        event_backfill_request.sample_rate = 1
     tasks = await get_all_tasks(
         project_id=project_id,
         created_at_start=event_backfill_request.created_at_start,
