@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 
 from app.api.v2.models import PredictRequest, PredictResponse
-from app.security.authentification import authenticate_org_key_in_alpha
+from app.security.authentification import authenticate_org_key
 from app.services.mongo.ai_hub import predict
-
+from app.services.mongo.predict import metered_prediction
 
 router = APIRouter(tags=["Predict"])
 
@@ -14,25 +14,48 @@ router = APIRouter(tags=["Predict"])
     description="Generate predictions for a given model on a batch of inputs",
 )
 async def post_predict(
+    background_tasks: BackgroundTasks,
     request_body: PredictRequest,
-    org: dict = Depends(authenticate_org_key_in_alpha),
+    org: dict = Depends(authenticate_org_key),
 ) -> PredictResponse:
+    # Get customer_id
+    org_metadata = org["org"].get("metadata", {})
+    customer_id = None
+
+    if "customer_id" in org_metadata.keys():
+        customer_id = org_metadata.get("customer_id", None)
+
+    if not customer_id:
+        raise HTTPException(
+            status_code=402,
+            detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
+        )
+
     if (
         len(request_body.model) >= len("phospho-small")
         and request_body.model[: len("phospho-small")] == "phospho-small"
         or len(request_body.model) >= len("phospho-multimodal")
         and request_body.model[: len("phospho-multimodal")] == "phospho-multimodal"
     ):
-        predictions = await predict(request_body)
+        prediction_response = await predict(request_body)
 
-        if predictions is None:
+        if prediction_response is None:
             raise HTTPException(
                 status_code=500,
                 detail="An error occurred while generating predictions.",
             )
 
         else:
-            return predictions
+            if request_body.model[: len("phospho-mutlimodal")] == "phospho-multimodal":
+                # We bill 10 credits per image prediction
+                background_tasks.add_task(
+                    metered_prediction,
+                    org["org"]["org_id"],
+                    request_body.model,
+                    request_body.inputs,
+                    prediction_response.predictions,
+                )
+            return prediction_response
 
     else:
         raise HTTPException(

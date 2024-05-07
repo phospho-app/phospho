@@ -128,7 +128,13 @@ This app is packaged in a Docker container and is deployed with github actions.
 - Tool for building: [Kaniko](https://github.com/GoogleContainerTools/kaniko). This is useful for caching. See [cloudbuild.yaml](./cloudbuild.yaml) for configuration.
 - Tool for the build steps: Docker. See the [Dockerfile](./Dockerfile) for how the execution environment is packaged.
 
-## Scripts
+## Stripe
+
+To get stripe working on your local development server, you need to setup the stripe webhook locally, for that, run the following command and update your stripe-webhook-secret
+
+```rb
+stripe listen --forward-to localhost:8000/api/organizations/stripe-webhook
+```
 
 ### Populate the local test database
 
