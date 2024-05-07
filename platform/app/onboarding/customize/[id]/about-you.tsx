@@ -44,7 +44,7 @@ const formSchema = z
         z.literal("software"),
         z.literal("data"),
         z.literal("manager"),
-        z.literal("consultant"),
+        z.literal("founder"),
         z.literal("other"),
       ])
       .optional(),
@@ -239,13 +239,13 @@ export default function AboutYou({
                           Software engineer
                         </ToggleGroupItem>
                         <ToggleGroupItem value="data">
-                          Data Analyst
+                          Data analyst
                         </ToggleGroupItem>
                         <ToggleGroupItem value="manager">
-                          Manager
+                          Product manager
                         </ToggleGroupItem>
-                        <ToggleGroupItem value="consultant">
-                          Consultant
+                        <ToggleGroupItem value="founder">
+                          Founder
                         </ToggleGroupItem>
                         <ToggleGroupItem value="other">Other</ToggleGroupItem>
                       </ToggleGroup>

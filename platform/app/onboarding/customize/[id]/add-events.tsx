@@ -307,8 +307,10 @@ export default function AddEvents({
                 >
                   Customer support
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => generateEvents("LLM app")}>
-                  LLM app
+                <DropdownMenuItem
+                  onClick={() => generateEvents("Writing assistant")}
+                >
+                  Writing assistant
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

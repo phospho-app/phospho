@@ -19,7 +19,7 @@ async def slack_notification(message: str, send_only_in_prod: bool = True) -> No
 
     if send_only_in_prod and (env != "production"):
         logger.info("Skipping slack notification because we are not in production")
-        logger.debug("Message: %s" % message)
+        logger.debug(f"Message: {message}")
         return
     else:
         data = {"text": message}
