@@ -14,10 +14,15 @@ import {
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import {
+  Annoyed,
   Calendar,
   CandlestickChart,
   Flag,
+  Frown,
   ListFilter,
+  Meh,
+  Smile,
+  SmilePlus,
   ThumbsDown,
   ThumbsUp,
   X,
@@ -35,6 +40,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
   let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
   let lastEvalSourceFilter: string | null = null;
+  let sentimentFilter: string | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
@@ -45,6 +51,9 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
     }
     if (key === "lastEvalSource" && typeof value === "string") {
       lastEvalSourceFilter = value;
+    }
+    if (key === "sentiment" && typeof value === "string") {
+      sentimentFilter = value;
     }
   }
 
@@ -111,6 +120,21 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
+          {sentimentFilter !== null && (
+            <Button
+              className="ml-2"
+              variant="outline"
+              onClick={() => {
+                setTasksColumnsFilters((prevFilters) => ({
+                  ...prevFilters,
+                  sentiment: null,
+                }));
+              }}
+            >
+              {sentimentFilter}
+              <X className="h-4 w-4 ml-2" />
+            </Button>
+          )}
         </div>
         <DropdownMenuContent className="w-56" align="start">
           <DropdownMenuLabel>Filters to apply</DropdownMenuLabel>
@@ -154,6 +178,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+          {/* Events */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Calendar className="h-4 w-4 mr-2" />
@@ -185,6 +210,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+          {/* Last Eval Source */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <CandlestickChart className="h-4 w-4 mr-2" />
@@ -219,6 +245,73 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                   }}
                 >
                   user
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          {/* Sentiment */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <SmilePlus className="h-4 w-4 mr-2" />
+              <span>Sentiment</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      sentiment: "positive",
+                    }));
+                  }}
+                  style={{
+                    color: sentimentFilter === "positive" ? "green" : "inherit",
+                  }}
+                >
+                  <Smile className="h-4 w-4 mr-2" />
+                  <span>Positive</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      sentiment: "neutral",
+                    }));
+                  }}
+                  style={{
+                    color: sentimentFilter === "neutral" ? "red" : "inherit",
+                  }}
+                >
+                  <Meh className="h-4 w-4 mr-2" />
+                  <span>Neutral</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      sentiment: "mixed",
+                    }));
+                  }}
+                  style={{
+                    color: sentimentFilter === "mixed" ? "green" : "inherit",
+                  }}
+                >
+                  <Annoyed className="h-4 w-4 mr-2" />
+                  <span>Mixed</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      sentiment: "negative",
+                    }));
+                  }}
+                  style={{
+                    color: sentimentFilter === "negative" ? "green" : "inherit",
+                  }}
+                >
+                  <Frown className="h-4 w-4 mr-2" />
+                  <span>Negative</span>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>

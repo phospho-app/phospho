@@ -172,7 +172,6 @@ async def get_tasks_project_metrics(
         tasks_filter.created_at_start = int(tasks_filter.created_at_start.timestamp())
     if isinstance(tasks_filter.created_at_end, datetime.datetime):
         tasks_filter.created_at_end = int(tasks_filter.created_at_end.timestamp())
-
     output = await get_tasks_aggregated_metrics(
         project_id=project_id,
         flag_filter=tasks_filter.flag,
@@ -181,6 +180,7 @@ async def get_tasks_project_metrics(
         created_at_start=tasks_filter.created_at_start,
         created_at_end=tasks_filter.created_at_end,
         last_eval_source=tasks_filter.last_eval_source,
+        sentiment_filter=tasks_filter.sentiment,
     )
     return output
 

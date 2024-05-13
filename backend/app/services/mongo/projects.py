@@ -290,6 +290,7 @@ async def get_all_tasks(
     flag_filter: Optional[str] = None,
     metadata_filter: Optional[Dict[str, object]] = None,
     last_eval_source: Optional[str] = None,
+    sentiment_filter: Optional[str] = None,
     event_name_filter: Optional[List[str]] = None,
     created_at_start: Optional[Union[int, datetime.datetime]] = None,
     created_at_end: Optional[Union[int, datetime.datetime]] = None,
@@ -323,6 +324,9 @@ async def get_all_tasks(
         else:
             # We want to filter on the source not starting with "phospho"
             main_filter["last_eval.source"] = {"$regex": "^(?!phospho).*"}
+
+    if sentiment_filter:
+        main_filter["sentiment.label"] = sentiment_filter
 
     if metadata_filter:
         main_filter["metadata"] = metadata_filter

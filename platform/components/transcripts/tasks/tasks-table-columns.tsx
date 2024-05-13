@@ -291,7 +291,12 @@ export function getColumns({
     // Sentiment Analysis
     {
       header: ({ column }) => {
-        return <div className="flex items-center">Sentiment</div>;
+        return (
+          <div className="flex items-center">
+            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+            Sentiment
+          </div>
+        );
       },
       accessorKey: "sentiment.label",
       cell: (row) => (

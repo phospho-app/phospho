@@ -572,3 +572,4 @@ class ProjectDataFilters(BaseModel):
     metadata: Optional[dict] = None
     user_id: Optional[str] = None
     last_eval_source: Optional[str] = None
+    sentiment: Optional[str] = None
