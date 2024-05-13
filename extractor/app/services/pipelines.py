@@ -12,8 +12,12 @@ from app.services.projects import get_project_by_id
 # from app.services.topics import extract_topics  # TODO
 from app.services.webhook import trigger_webhook
 from phospho import lab
+from phospho.models import SentimentObject
 
 from app.api.v1.models.pipelines import PipelineResults
+
+from app.services.tasks import detect_language_pipeline
+from app.services.sentiment_analysis import run_sentiment_analysis
 
 
 class EventConfig(lab.JobConfig):
@@ -481,6 +485,8 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
     Main pipeline to run on a task.
     - Event detection
     - Evaluate task success/failure
+    - Language detection
+    - Sentiment analysis
     """
 
     # Get the starting time of the pipeline
@@ -491,7 +497,12 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
 
     # Do the event detection
     if task.test_id is None:
+        # Run the event detection pipeline
         events = await task_event_detection_pipeline(task, save_task=save_task)
+        # Detect language of the user input
+        language = await detect_language_pipeline(task)
+        # Run sentiment analysis on the user input
+        sentiment_object = await sentiment_analysis_pipeline(task, language)
 
     # Do the session scoring -> success, failure
     mongo_db = await get_mongo_db()
@@ -518,6 +529,8 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
     return PipelineResults(
         events=events,
         flag=flag,
+        language=language,
+        sentiment=sentiment_object,
     )
 
 
@@ -613,3 +626,23 @@ async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
 
     else:
         raise ValueError(f"Job type {recipe.recipe_type} not supported")
+
+
+async def sentiment_analysis_pipeline(task: Task, language: str) -> SentimentObject:
+    """
+    Run the sentiment analysis on the input of a task
+    """
+    mongo_db = await get_mongo_db()
+    sentiment_object = await run_sentiment_analysis(task.input, language)
+
+    await mongo_db["tasks"].update_one(
+        {
+            "id": task.id,
+            "project_id": task.project_id,
+        },
+        {"$set": {"sentiment": sentiment_object.model_dump()}},
+    )
+
+    logger.debug(f"Sentiment analysis for task {task.id} : {sentiment_object}")
+
+    return sentiment_object
