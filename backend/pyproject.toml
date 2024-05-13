@@ -36,6 +36,7 @@ cohere = "^4.45"
 stripe = "^8.2.0"
 python-multipart = "^0.0.9"
 mypy = "^1.9.0"
+pyarrow = "^16.0.0"
 
 [tool.poetry.group.dev]
 optional = true
