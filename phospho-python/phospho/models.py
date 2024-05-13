@@ -99,8 +99,9 @@ class Event(ProjectElementBaseModel):
 
 
 class SentimentObject(BaseModel):
-    score: Optional[float]
-    magnitude: Optional[float]
+    score: Optional[float] = None
+    magnitude: Optional[float] = None
+    label: Optional[str] = None
 
 
 class Task(ProjectElementBaseModel):

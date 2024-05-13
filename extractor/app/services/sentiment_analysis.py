@@ -54,9 +54,20 @@ async def run_sentiment_analysis(
             # sentences=response.sentences,
         )
 
+        # We interpret the sentiment score as follows:
+        if sentiment_response.score > 0.2:
+            sentiment_response.label = "positive"
+        elif sentiment_response.score < -0.2:
+            sentiment_response.label = "negative"
+        else:
+            if sentiment_response.magnitude < 1:
+                sentiment_response.label = "neutral"
+            else:
+                sentiment_response.label = "mixed"
+
     except Exception as e:
         logger.error(f"Error in sentiment analysis: {e}")
 
-        sentiment_response = SentimentObject(score=0.1, magnitude=0.1)
+        sentiment_response = SentimentObject(score=0.1, magnitude=0.1, label="neutral")
 
     return sentiment_response

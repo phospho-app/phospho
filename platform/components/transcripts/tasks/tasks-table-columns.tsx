@@ -278,6 +278,26 @@ export function getColumns({
         </div>
       ),
     },
+    // Language
+    {
+      header: ({ column }) => {
+        return <div className="flex items-center">Language</div>;
+      },
+      accessorKey: "language",
+      cell: (row) => (
+        <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
+      ),
+    },
+    // Sentiment Analysis
+    {
+      header: ({ column }) => {
+        return <div className="flex items-center">Sentiment</div>;
+      },
+      accessorKey: "sentiment.label",
+      cell: (row) => (
+        <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
+      ),
+    },
     {
       header: "Input",
       accessorKey: "input",

@@ -5,7 +5,6 @@ import FilterComponent from "@/components/filters";
 import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -25,8 +24,8 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { FilterX, X } from "lucide-react";
-import { Database, Sparkles } from "lucide-react";
+import { X } from "lucide-react";
+import { Database } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -118,6 +117,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       }),
     { keepPreviousData: true },
   );
+  console.log("tasksData", tasksData);
   if (
     project_id &&
     tasksData &&
