@@ -1,17 +1,19 @@
 from google.cloud import language_v2
 from phospho.models import SentimentObject
 from loguru import logger
-from app.core import config
 from google.oauth2 import service_account
+import os
+import json
 
 try:
-    credentials_dict = config.GCP_JSON_CREDENTIALS
+    credentials_dict = json.loads(os.getenv("GCP_JSON_CREDENTIALS"))
     credentials = service_account.Credentials.from_service_account_info(
         credentials_dict
     )
     client = language_v2.LanguageServiceClient(credentials=credentials)
+    logger.info("Sentiment analysis active")
 except Exception as e:
-    logger.error(f"Error in sentiment analysis: {e}")
+    logger.error(f"Error connecting to sentiment analysis: {e}")
     client = None
 
 
@@ -53,11 +55,10 @@ async def run_sentiment_analysis(
             magnitude=response.document_sentiment.magnitude,
             # sentences=response.sentences,
         )
-
         # We interpret the sentiment score as follows:
-        if sentiment_response.score > 0.2:
+        if sentiment_response.score > 0.3:
             sentiment_response.label = "positive"
-        elif sentiment_response.score < -0.2:
+        elif sentiment_response.score < -0.3:
             sentiment_response.label = "negative"
         else:
             if sentiment_response.magnitude < 1:
@@ -68,6 +69,6 @@ async def run_sentiment_analysis(
     except Exception as e:
         logger.error(f"Error in sentiment analysis: {e}")
 
-        sentiment_response = SentimentObject(score=0.1, magnitude=0.1, label="neutral")
+        sentiment_response = SentimentObject()
 
     return sentiment_response
