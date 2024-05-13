@@ -104,7 +104,6 @@ async def get_usage_quota(org_id: str, plan: str) -> dict:
         "a5724a02-a243-4025-9b34-080f40818a31",  # m
         "144df1a7-40f6-4c8d-a0a2-9ed010c1a142",  # v
         "3bf3f4b0-2ef7-47f7-a043-d96e9f5a3d7e",  # st
-        "8e530a71-8739-450a-844a-5a6430067f9a",  # y
         "2fdbcf01-eb52-4747-bb14-b66621973e8f",  # sa
         "5a3d67ab-231c-4ad1-adba-84b6842668ad",  # sa (a)
         "7e8f6db2-3b6b-4bf6-84ee-3f226b81e43d",  # di
