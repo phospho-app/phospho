@@ -180,6 +180,23 @@ export default function CreateEvent({
         <div className="flex space-x-4">
           <Button
             onClick={() => {
+              form.setValue("event_name", "Penetration testing");
+              form.setValue(
+                "description",
+                "The user is trying to jailbreak the assistant.",
+              );
+              form.setValue("detection_scope", "task");
+              form.setValue("detection_engine", "llm_detection");
+              toast({
+                title: "Template selected",
+                description: "Penetration testing",
+              });
+            }}
+          >
+            Penetration testing
+          </Button>
+          <Button
+            onClick={() => {
               form.setValue("event_name", "Assistant coherence");
               form.setValue(
                 "description",
