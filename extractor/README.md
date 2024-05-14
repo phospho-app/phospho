@@ -16,6 +16,7 @@ MONGODB_URL=""
 COHERE_API_KEY=""
 OPENAI_API_KEY=""
 TEST_PROPELAUTH_ORG_ID=""
+GCP_JSON_CREDENTIALS='{}'
 ```
 
 Install the dependencies if you are running loccaly in dev mode:
