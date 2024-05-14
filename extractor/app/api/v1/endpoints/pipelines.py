@@ -81,9 +81,10 @@ async def post_log(
         project = await get_project_by_id(request_body.project_id)
         nbr_event = len(project.settings.events)
 
+        # We return the number of events to process + 2 (one for the eval and one for the sentiment analysis)
         return {
             "status": "ok",
-            "nb_job_results": len(request_body.logs_to_process) * (nbr_event + 1),
+            "nb_job_results": len(request_body.logs_to_process) * (nbr_event + 2),
         }
     else:
         raise HTTPException(status_code=401, detail="Invalid API key")
