@@ -5,7 +5,6 @@ import FilterComponent from "@/components/filters";
 import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -25,8 +24,8 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { FilterX, X } from "lucide-react";
-import { Database, Sparkles } from "lucide-react";
+import { X } from "lucide-react";
+import { Database } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -75,6 +74,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
   let lastEvalSourceFilter: string | null = null;
+  let sentimentFilter: string | null = null;
+  let languageFilter: string | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
@@ -85,6 +86,12 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     }
     if (key === "lastEvalSource" && typeof value === "string") {
       lastEvalSourceFilter = value;
+    }
+    if (key === "sentiment" && typeof value === "string") {
+      sentimentFilter = value;
+    }
+    if (key === "language" && typeof value === "string") {
+      languageFilter = value;
     }
   }
 
@@ -97,6 +104,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           JSON.stringify(eventFilter),
           JSON.stringify(flagFilter),
           JSON.stringify(lastEvalSourceFilter),
+          JSON.stringify(sentimentFilter),
+          JSON.stringify(languageFilter),
           JSON.stringify(dateRange),
           JSON.stringify(tasksSorting),
         ]
@@ -107,6 +116,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           event_name: eventFilter,
           flag: flagFilter,
           last_eval_source: lastEvalSourceFilter,
+          sentiment: sentimentFilter,
+          language: languageFilter,
           created_at_start: dateRange?.created_at_start,
           created_at_end: dateRange?.created_at_end,
         },
@@ -118,6 +129,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       }),
     { keepPreviousData: true },
   );
+  console.log("tasksData", tasksData);
   if (
     project_id &&
     tasksData &&
@@ -139,6 +151,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       JSON.stringify(eventFilter),
       JSON.stringify(flagFilter),
       JSON.stringify(lastEvalSourceFilter),
+      JSON.stringify(sentimentFilter),
+      JSON.stringify(languageFilter),
       JSON.stringify(dateRange),
       "total_nb_tasks",
     ],
@@ -149,6 +163,8 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           flag: flagFilter,
           event_name: eventFilter,
           last_eval_source: lastEvalSourceFilter,
+          sentiment: sentimentFilter,
+          language: languageFilter,
           created_at_start: dateRange?.created_at_start,
           created_at_end: dateRange?.created_at_end,
         },
@@ -288,6 +304,9 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
                   setQuery("");
                   eventFilter = null;
                   flagFilter = null;
+                  lastEvalSourceFilter = null;
+                  sentimentFilter = null;
+                  languageFilter = null;
                 }}
               >
                 <X className="h-4 w-4 mr-1" />

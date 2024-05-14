@@ -278,6 +278,45 @@ export function getColumns({
         </div>
       ),
     },
+    // Language
+    {
+      header: ({ column }) => {
+        return <div className="flex items-center">Language</div>;
+      },
+      accessorKey: "language",
+      cell: (row) => (
+        <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
+      ),
+    },
+    // Sentiment Analysis
+    {
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+            Sentiment
+          </div>
+        );
+      },
+      accessorKey: "sentiment.label",
+      cell: (row) => {
+        const sentiment_label = row.getValue() as string;
+        return (
+          <Badge
+            className={
+              sentiment_label == "positive"
+                ? "border-green-500"
+                : sentiment_label == "negative"
+                  ? "border-red-500"
+                  : ""
+            }
+            variant={"secondary"}
+          >
+            {sentiment_label}
+          </Badge>
+        );
+      },
+    },
     {
       header: "Input",
       accessorKey: "input",

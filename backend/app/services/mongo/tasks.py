@@ -8,6 +8,8 @@ from fastapi import HTTPException
 
 from app.utils import generate_uuid
 
+from loguru import logger
+
 
 async def create_task(
     project_id: str,
@@ -229,6 +231,7 @@ async def get_total_nb_of_tasks(
     project_id: str,
     flag_filter: Optional[str] = None,
     event_name_filter: Optional[List[str]] = None,
+    sentiment_filter: Optional[str] = None,
     last_eval_source: Optional[str] = None,
     metadata_filter: Optional[Dict[str, object]] = None,
     created_at_start: Optional[int] = None,
@@ -258,6 +261,8 @@ async def get_total_nb_of_tasks(
     if metadata_filter is not None:
         global_filters["metadata"] = metadata_filter
 
+    if sentiment_filter is not None:
+        global_filters["sentiment"] = sentiment_filter
     # Other filters
     if flag_filter is None and event_name_filter is None:
         total_nb_tasks = await mongo_db["tasks"].count_documents(global_filters)

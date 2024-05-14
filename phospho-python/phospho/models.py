@@ -98,6 +98,12 @@ class Event(ProjectElementBaseModel):
     removed: bool = False
 
 
+class SentimentObject(BaseModel):
+    score: Optional[float] = None
+    magnitude: Optional[float] = None
+    label: Optional[str] = None
+
+
 class Task(ProjectElementBaseModel):
     session_id: Optional[str] = None
     input: str
@@ -109,6 +115,8 @@ class Task(ProjectElementBaseModel):
     # Flag to indicate if the task is success or failure
     flag: Optional[str] = None  # Literal["success", "failure", "undefined"]
     last_eval: Optional[Eval] = None
+    sentiment: Optional[SentimentObject] = None
+    language: Optional[str] = None
     # Events are stored in a subcollection of the task document
     events: Optional[List[Event]] = Field(default_factory=list)
     # The environment is a label
@@ -564,3 +572,5 @@ class ProjectDataFilters(BaseModel):
     metadata: Optional[dict] = None
     user_id: Optional[str] = None
     last_eval_source: Optional[str] = None
+    sentiment: Optional[str] = None
+    language: Optional[str] = None

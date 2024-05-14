@@ -11,9 +11,16 @@ export interface Task {
   data?: Record<string, any>;
   flag?: string;
   last_eval?: Eval;
-  environment?: string;
+  sentiment?: SentimentObject;
+  language?: string;
   notes?: string;
   topics?: string[];
+}
+
+export interface SentimentObject {
+  score: number;
+  magnitude: number;
+  label: string;
 }
 
 export interface Eval {
