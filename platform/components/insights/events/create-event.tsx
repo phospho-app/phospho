@@ -175,6 +175,62 @@ export default function CreateEvent({
           </SheetTitle>
         </SheetHeader>
         <Separator />
+        {/* Event templates */}
+        <h2>Templates</h2>
+        <div className="flex space-x-4">
+          <Button
+            onClick={() => {
+              form.setValue("event_name", "Assistant coherence");
+              form.setValue(
+                "description",
+                "The agent answers coherently and consistently.",
+              );
+              form.setValue("detection_scope", "session");
+              form.setValue("detection_engine", "llm_detection");
+              toast({
+                title: "Template selected",
+                description: "Assistant coherence",
+              });
+            }}
+          >
+            Coherence
+          </Button>
+          <Button
+            onClick={() => {
+              form.setValue("event_name", "Assistant correctness");
+              form.setValue(
+                "description",
+                "The assistant correctly answered the question.",
+              );
+              form.setValue("detection_scope", "task");
+              form.setValue("detection_engine", "llm_detection");
+              toast({
+                title: "Template selected",
+                description: "Assistant correctness",
+              });
+            }}
+          >
+            Correctness
+          </Button>
+          <Button
+            onClick={() => {
+              form.setValue("event_name", "Assistant plausibility");
+              form.setValue(
+                "description",
+                "The assistant's answer is plausible and makes sense.",
+              );
+              form.setValue("detection_scope", "task");
+              form.setValue("detection_engine", "llm_detection");
+              toast({
+                title: "Template selected",
+                description: "Assistant plausibility",
+              });
+            }}
+          >
+            Plausibility
+          </Button>
+        </div>
+        <Separator />
         <div className="flex-col space-y-2">
           <FormField
             control={form.control}
