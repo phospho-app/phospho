@@ -382,7 +382,9 @@ async def get_total_success_rate(
         main_filter["flag"] = flag_filter
     # Filter on the sentiment
     if sentiment_filter is not None:
-        main_filter["sentiment"] = sentiment_filter
+        main_filter["sentiment.label"] = sentiment_filter
+
+    logger.debug(f"main_filter: {main_filter}")
     # Last eval source filter
     if last_eval_source:
         if last_eval_source.startswith("phospho"):
@@ -659,6 +661,7 @@ async def get_daily_success_rate(
         "project_id": project_id,
         "created_at": {"$gte": start_timestamp, "$lte": end_timestamp},
     }
+    # Filter on sentiment
     if sentiment_filter is not None:
         main_filter["sentiment"] = sentiment_filter
     # Last eval source filter
@@ -741,8 +744,9 @@ async def get_daily_success_rate(
 async def get_tasks_aggregated_metrics(
     project_id: str,
     flag_filter: Optional[str] = None,
-    last_eval_source: Optional[str] = None,
+    last_eval_source_filter: Optional[str] = None,
     sentiment_filter: Optional[str] = None,
+    language_filter: Optional[str] = None,
     event_name_filter: Optional[List[str]] = None,
     metrics: Optional[List[str]] = None,
     quantile_filter: Optional[float] = None,
@@ -784,7 +788,7 @@ async def get_tasks_aggregated_metrics(
             event_name_filter=event_name_filter,
             created_at_start=created_at_start,
             created_at_end=created_at_end,
-            last_eval_source=last_eval_source,
+            last_eval_source=last_eval_source_filter,
             sentiment_filter=sentiment_filter,
         )
     if "global_success_rate" in metrics:
@@ -795,7 +799,7 @@ async def get_tasks_aggregated_metrics(
             created_at_start=created_at_start,
             created_at_end=created_at_end,
             sentiment_filter=sentiment_filter,
-            last_eval_source=last_eval_source,
+            last_eval_source=last_eval_source_filter,
         )
     if "most_detected_event" in metrics:
         output["most_detected_event"] = await get_most_detected_event_name(
@@ -805,7 +809,7 @@ async def get_tasks_aggregated_metrics(
             created_at_start=created_at_start,
             created_at_end=created_at_end,
             sentiment_filter=sentiment_filter,
-            last_eval_source=last_eval_source,
+            last_eval_source=last_eval_source_filter,
         )
     if "nb_daily_tasks" in metrics:
         output["nb_daily_tasks"] = await get_nb_of_daily_tasks(
@@ -815,7 +819,7 @@ async def get_tasks_aggregated_metrics(
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
             sentiment_filter=sentiment_filter,
-            last_eval_source=last_eval_source,
+            last_eval_source=last_eval_source_filter,
         )
     if "events_ranking" in metrics:
         output["events_ranking"] = await get_top_event_names_and_count(
@@ -826,7 +830,7 @@ async def get_tasks_aggregated_metrics(
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
             sentiment_filter=sentiment_filter,
-            last_eval_source=last_eval_source,
+            last_eval_source=last_eval_source_filter,
         )
     if "daily_success_rate" in metrics:
         output["daily_success_rate"] = await get_daily_success_rate(
@@ -836,7 +840,7 @@ async def get_tasks_aggregated_metrics(
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
             sentiment_filter=sentiment_filter,
-            last_eval_source=last_eval_source,
+            last_eval_source=last_eval_source_filter,
         )
     if "success_rate_per_task_position" in metrics:
         output[
@@ -849,7 +853,7 @@ async def get_tasks_aggregated_metrics(
             created_at_start=created_at_start,
             sentiment_filter=sentiment_filter,
             created_at_end=created_at_end,
-            last_eval_source=last_eval_source,
+            last_eval_source=last_eval_source_filter,
         )
 
     return output

@@ -12,6 +12,7 @@ export interface Task {
   flag?: string;
   last_eval?: Eval;
   sentiment?: SentimentObject;
+  language?: string;
   notes?: string;
   topics?: string[];
 }

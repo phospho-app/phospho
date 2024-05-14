@@ -12,7 +12,7 @@ from app.services.projects import get_project_by_id
 # from app.services.topics import extract_topics  # TODO
 from app.services.webhook import trigger_webhook
 from phospho import lab
-from phospho.models import SentimentObject
+from phospho.models import SentimentObject, JobResult
 
 from app.api.v1.models.pipelines import PipelineResults
 
@@ -640,9 +640,27 @@ async def sentiment_analysis_pipeline(task: Task, language: str) -> SentimentObj
             "id": task.id,
             "project_id": task.project_id,
         },
-        {"$set": {"sentiment": sentiment_object.model_dump()}},
+        {
+            "$set": {
+                "sentiment": sentiment_object.model_dump(),
+                "metadata.sentiment_score": sentiment_object.score,
+                "metadata.sentiment_magnitude": sentiment_object.magnitude,
+                "metadata.sentiment_label": sentiment_object.label,
+            }
+        },
     )
 
-    logger.debug(f"Sentiment analysis for task {task.id} : {sentiment_object}")
+    jobresult = JobResult(
+        org_id=task.org_id,
+        project_id=task.project_id,
+        job_id="sentiment_analysis",
+        value=sentiment_object.model_dump(),
+        result_type="dict",
+        input=task.input,
+    )
+
+    mongo_db["job_results"].insert_one(jobresult.model_dump())
+
+    logger.info(f"Sentiment analysis for task {task.id} : {sentiment_object}")
 
     return sentiment_object

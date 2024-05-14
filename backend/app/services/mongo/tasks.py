@@ -8,6 +8,8 @@ from fastapi import HTTPException
 
 from app.utils import generate_uuid
 
+from loguru import logger
+
 
 async def create_task(
     project_id: str,

@@ -573,3 +573,4 @@ class ProjectDataFilters(BaseModel):
     user_id: Optional[str] = None
     last_eval_source: Optional[str] = None
     sentiment: Optional[str] = None
+    language: Optional[str] = None

@@ -53,8 +53,8 @@ async def run_sentiment_analysis(
         sentiment_response = SentimentObject(
             score=response.document_sentiment.score,
             magnitude=response.document_sentiment.magnitude,
-            # sentences=response.sentences,
         )
+
         # We interpret the sentiment score as follows:
         if sentiment_response.score > 0.3:
             sentiment_response.label = "positive"

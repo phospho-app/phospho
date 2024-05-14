@@ -19,6 +19,7 @@ import {
   CandlestickChart,
   Flag,
   Frown,
+  Languages,
   ListFilter,
   Meh,
   Smile,
@@ -39,8 +40,9 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
 
   let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
-  let lastEvalSourceFilter: string | null = null;
+  let languageFilter: string | null = null;
   let sentimentFilter: string | null = null;
+  let lastEvalSourceFilter: string | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
@@ -49,11 +51,14 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
     if (key === "event" && typeof value === "string") {
       eventFilter = eventFilter == null ? [value] : eventFilter.concat(value);
     }
-    if (key === "lastEvalSource" && typeof value === "string") {
-      lastEvalSourceFilter = value;
+    if (key === "language" && typeof value === "string") {
+      languageFilter = value;
     }
     if (key === "sentiment" && typeof value === "string") {
       sentimentFilter = value;
+    }
+    if (key === "lastEvalSource" && typeof value === "string") {
+      lastEvalSourceFilter = value;
     }
   }
 
@@ -105,18 +110,18 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
-          {lastEvalSourceFilter !== null && (
+          {languageFilter !== null && (
             <Button
               className="ml-2"
               variant="outline"
               onClick={() => {
                 setTasksColumnsFilters((prevFilters) => ({
                   ...prevFilters,
-                  lastEvalSource: null,
+                  language: null,
                 }));
               }}
             >
-              {lastEvalSourceFilter}
+              {languageFilter}
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
@@ -132,6 +137,21 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               }}
             >
               {sentimentFilter}
+              <X className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+          {lastEvalSourceFilter !== null && (
+            <Button
+              className="ml-2"
+              variant="outline"
+              onClick={() => {
+                setTasksColumnsFilters((prevFilters) => ({
+                  ...prevFilters,
+                  lastEvalSource: null,
+                }));
+              }}
+            >
+              {lastEvalSourceFilter}
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
@@ -210,11 +230,11 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
-          {/* Last Eval Source */}
+          {/* Language */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <CandlestickChart className="h-4 w-4 mr-2" />
-              <span>Last Eval Source</span>
+              <Languages className="h-4 w-4 mr-2" />
+              <span>Language</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
@@ -222,29 +242,79 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                   onClick={() => {
                     setTasksColumnsFilters((prevFilters) => ({
                       ...prevFilters,
-                      lastEvalSource: "phospho",
+                      language: "en",
                     }));
                   }}
                   style={{
-                    color:
-                      lastEvalSourceFilter === "phospho" ? "green" : "inherit",
+                    color: languageFilter === "en" ? "green" : "inherit",
                   }}
                 >
-                  phospho
+                  English
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     setTasksColumnsFilters((prevFilters) => ({
                       ...prevFilters,
-                      lastEvalSource: "user",
+                      language: "fr",
                     }));
                   }}
                   style={{
-                    color:
-                      lastEvalSourceFilter === "user" ? "green" : "inherit",
+                    color: languageFilter === "fr" ? "green" : "inherit",
                   }}
                 >
-                  user
+                  French
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "es",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "es" ? "green" : "inherit",
+                  }}
+                >
+                  Spanish
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "pt",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "pt" ? "green" : "inherit",
+                  }}
+                >
+                  Portuguese
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "zh-cn",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "zh-cn" ? "green" : "inherit",
+                  }}
+                >
+                  Chinese
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "rus",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "rus" ? "green" : "inherit",
+                  }}
+                >
+                  Russian
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
@@ -312,6 +382,45 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                 >
                   <Frown className="h-4 w-4 mr-2" />
                   <span>Negative</span>
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          {/* Last Eval Source */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <CandlestickChart className="h-4 w-4 mr-2" />
+              <span>Last Eval Source</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      lastEvalSource: "phospho",
+                    }));
+                  }}
+                  style={{
+                    color:
+                      lastEvalSourceFilter === "phospho" ? "green" : "inherit",
+                  }}
+                >
+                  phospho
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      lastEvalSource: "user",
+                    }));
+                  }}
+                  style={{
+                    color:
+                      lastEvalSourceFilter === "user" ? "green" : "inherit",
+                  }}
+                >
+                  user
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>

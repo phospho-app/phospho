@@ -69,6 +69,7 @@ const TasksDataviz: React.FC = () => {
   let eventFilter: string[] | null = null;
   let lastEvalSourceFilter: string | null = null;
   let sentimentFilter: string | null = null;
+  let languageFilter: string | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
@@ -85,6 +86,9 @@ const TasksDataviz: React.FC = () => {
     if (key === "sentiment" && typeof value === "string") {
       sentimentFilter = value;
     }
+    if (key === "languageFile" && typeof value === "string") {
+      languageFilter = value;
+    }
   }
 
   const tasksFilters = {
@@ -93,6 +97,7 @@ const TasksDataviz: React.FC = () => {
     created_at_start: dateRange?.created_at_start,
     created_at_end: dateRange?.created_at_end,
     last_eval_source: lastEvalSourceFilter,
+    language: languageFilter,
     sentiment: sentimentFilter,
   };
 

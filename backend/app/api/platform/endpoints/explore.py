@@ -162,7 +162,6 @@ async def get_tasks_project_metrics(
     Get aggregated metrics for the tasks of a project. Used for the Tasks dashboard.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    logger.info(f"Tasks request: {tasks_filter}")
     if tasks_filter is None:
         tasks_filter = ProjectDataFilters(flag=None, event_name=None)
     if isinstance(tasks_filter.event_name, str):
@@ -172,6 +171,7 @@ async def get_tasks_project_metrics(
         tasks_filter.created_at_start = int(tasks_filter.created_at_start.timestamp())
     if isinstance(tasks_filter.created_at_end, datetime.datetime):
         tasks_filter.created_at_end = int(tasks_filter.created_at_end.timestamp())
+
     output = await get_tasks_aggregated_metrics(
         project_id=project_id,
         flag_filter=tasks_filter.flag,
@@ -179,8 +179,9 @@ async def get_tasks_project_metrics(
         metrics=metrics,
         created_at_start=tasks_filter.created_at_start,
         created_at_end=tasks_filter.created_at_end,
-        last_eval_source=tasks_filter.last_eval_source,
+        last_eval_source_filter=tasks_filter.last_eval_source,
         sentiment_filter=tasks_filter.sentiment,
+        language_filter=tasks_filter.language,
     )
     return output
 

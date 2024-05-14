@@ -75,6 +75,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   let flagFilter: string | null = null;
   let lastEvalSourceFilter: string | null = null;
   let sentimentFilter: string | null = null;
+  let languageFilter: string | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
@@ -89,6 +90,9 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     if (key === "sentiment" && typeof value === "string") {
       sentimentFilter = value;
     }
+    if (key === "language" && typeof value === "string") {
+      languageFilter = value;
+    }
   }
 
   const { data: tasksData, mutate: mutateTasks } = useSWR(
@@ -101,6 +105,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           JSON.stringify(flagFilter),
           JSON.stringify(lastEvalSourceFilter),
           JSON.stringify(sentimentFilter),
+          JSON.stringify(languageFilter),
           JSON.stringify(dateRange),
           JSON.stringify(tasksSorting),
         ]
@@ -112,6 +117,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           flag: flagFilter,
           last_eval_source: lastEvalSourceFilter,
           sentiment: sentimentFilter,
+          language: languageFilter,
           created_at_start: dateRange?.created_at_start,
           created_at_end: dateRange?.created_at_end,
         },
@@ -146,6 +152,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       JSON.stringify(flagFilter),
       JSON.stringify(lastEvalSourceFilter),
       JSON.stringify(sentimentFilter),
+      JSON.stringify(languageFilter),
       JSON.stringify(dateRange),
       "total_nb_tasks",
     ],
@@ -157,6 +164,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           event_name: eventFilter,
           last_eval_source: lastEvalSourceFilter,
           sentiment: sentimentFilter,
+          language: languageFilter,
           created_at_start: dateRange?.created_at_start,
           created_at_end: dateRange?.created_at_end,
         },
@@ -296,6 +304,9 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
                   setQuery("");
                   eventFilter = null;
                   flagFilter = null;
+                  lastEvalSourceFilter = null;
+                  sentimentFilter = null;
+                  languageFilter = null;
                 }}
               >
                 <X className="h-4 w-4 mr-1" />
