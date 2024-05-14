@@ -6,7 +6,7 @@ import os
 import json
 
 try:
-    json_credentials = os.getenv("GCP_JSON_CREDENTIALS")
+    json_credentials = os.getenv("GCP_JSON_CREDENTIALS_NATURAL_LANGUAGE_PROCESSING")
     if json_credentials is None:
         logger.error("No GCP_JSON_CREDENTIALS environment variable found")
     credentials_dict = json.loads(json_credentials)
@@ -64,7 +64,7 @@ async def run_sentiment_analysis(
         elif sentiment_response.score < -0.3:
             sentiment_response.label = "negative"
         else:
-            if sentiment_response.magnitude < 1:
+            if sentiment_response.magnitude < 0.6:
                 sentiment_response.label = "neutral"
             else:
                 sentiment_response.label = "mixed"
