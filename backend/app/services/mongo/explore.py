@@ -210,6 +210,8 @@ async def get_success_rate_per_task_position(
     event_name_filter: Optional[Union[str, List[str]]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    sentiment_filter: Optional[str] = None,
+    last_eval_source: Optional[str] = None,
 ) -> Optional[Dict[str, object]]:
     """
     Compute the success rate per message position. Used for the Tasks and the Sessions dashboard.
@@ -225,6 +227,17 @@ async def get_success_rate_per_task_position(
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
         main_filter["created_at"] = {"$lte": created_at_end}
+    # Filter on the sentiment
+    if sentiment_filter is not None:
+        main_filter["sentiment"] = sentiment_filter
+    # Last eval source filter
+    if last_eval_source:
+        if last_eval_source.startswith("phospho"):
+            # We want to filter on the source starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^phospho"}
+        else:
+            # We want to filter on the source not starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^(?!phospho).*"}
     pipeline = [
         {"$match": main_filter},
         # Find tasks
@@ -353,6 +366,8 @@ async def get_total_success_rate(
     event_name_filter: Optional[Union[str, List[str]]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    sentiment_filter: Optional[str] = None,
+    last_eval_source: Optional[str] = None,
 ) -> Optional[float]:
     """
     Get the total success rate of a project. This is the ratio of successful tasks over
@@ -365,6 +380,19 @@ async def get_total_success_rate(
     # Filter on the flag
     if flag_filter is not None:
         main_filter["flag"] = flag_filter
+    # Filter on the sentiment
+    if sentiment_filter is not None:
+        main_filter["sentiment.label"] = sentiment_filter
+
+    logger.debug(f"main_filter: {main_filter}")
+    # Last eval source filter
+    if last_eval_source:
+        if last_eval_source.startswith("phospho"):
+            # We want to filter on the source starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^phospho"}
+        else:
+            # We want to filter on the source not starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^(?!phospho).*"}
     # Time range filter
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
@@ -423,6 +451,8 @@ async def get_most_detected_event_name(
     event_name_filter: Optional[Union[str, List[str]]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    sentiment_filter: Optional[str] = None,
+    last_eval_source: Optional[str] = None,
 ) -> Optional[str]:
     """
     Get the most detected event name of a project.
@@ -438,6 +468,17 @@ async def get_most_detected_event_name(
     # Time range filter
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
+    # Sentiment filter
+    if sentiment_filter is not None:
+        main_filter["sentiment"] = sentiment_filter
+    # Last eval source filter
+    if last_eval_source:
+        if last_eval_source.startswith("phospho"):
+            # We want to filter on the source starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^phospho"}
+        else:
+            # We want to filter on the source not starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^(?!phospho).*"}
     if created_at_end is not None:
         main_filter["created_at"] = {"$lte": created_at_end}
     # Event is not removed
@@ -480,6 +521,8 @@ async def get_nb_of_daily_tasks(
     end_timestamp: int,
     flag_filter: Optional[Literal["success", "failure"]] = None,
     event_name_filter: Optional[Union[str, List[str]]] = None,
+    sentiment_filter: Optional[str] = None,
+    last_eval_source: Optional[str] = None,
 ) -> List[dict]:
     """
     Get the number of daily tasks of a project.
@@ -493,6 +536,8 @@ async def get_nb_of_daily_tasks(
         event_name_filter=event_name_filter,
         created_at_start=start_timestamp,
         created_at_end=end_timestamp,
+        sentiment_filter=sentiment_filter,
+        last_eval_source=last_eval_source,
     )
     df = pd.DataFrame([task.model_dump() for task in tasks])
     complete_date_range = pd.date_range(
@@ -532,6 +577,8 @@ async def get_top_event_names_and_count(
     end_timestamp: Optional[int] = None,
     flag_filter: Optional[Literal["success", "failure"]] = None,
     event_name_filter: Optional[Union[str, List[str]]] = None,
+    sentiment_filter: Optional[str] = None,
+    last_eval_source: Optional[str] = None,
 ) -> List[Dict[str, object]]:
     """
     Get the top event names and count of a project.
@@ -552,6 +599,17 @@ async def get_top_event_names_and_count(
     }
     if event_name_filter is not None:
         main_filter["event_name"] = {"$in": event_name_filter}
+    # Filter on the sentiment
+    if sentiment_filter is not None:
+        main_filter["sentiment"] = sentiment_filter
+    # Last eval source filter
+    if last_eval_source:
+        if last_eval_source.startswith("phospho"):
+            # We want to filter on the source starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^phospho"}
+        else:
+            # We want to filter on the source not starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^(?!phospho).*"}
     # Event is not removed
     main_filter["removed"] = {"$ne": True}
     # Either the remove filed doesn't exist, either it's not True
@@ -591,6 +649,8 @@ async def get_daily_success_rate(
     end_timestamp: int,
     flag_filter: Optional[Literal["success", "failure"]] = None,
     event_name_filter: Optional[Union[str, List[str]]] = None,
+    sentiment_filter: Optional[str] = None,
+    last_eval_source: Optional[str] = None,
 ) -> List[dict]:
     """
     Get the daily success rate of a project.
@@ -601,6 +661,17 @@ async def get_daily_success_rate(
         "project_id": project_id,
         "created_at": {"$gte": start_timestamp, "$lte": end_timestamp},
     }
+    # Filter on sentiment
+    if sentiment_filter is not None:
+        main_filter["sentiment"] = sentiment_filter
+    # Last eval source filter
+    if last_eval_source:
+        if last_eval_source.startswith("phospho"):
+            # We want to filter on the source starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^phospho"}
+        else:
+            # We want to filter on the source not starting with "phospho"
+            main_filter["last_eval.source"] = {"$regex": "^(?!phospho).*"}
     if flag_filter is not None:
         main_filter["flag"] = flag_filter
     pipeline: List[Dict[str, object]] = [
@@ -673,7 +744,9 @@ async def get_daily_success_rate(
 async def get_tasks_aggregated_metrics(
     project_id: str,
     flag_filter: Optional[str] = None,
-    last_eval_source: Optional[str] = None,
+    last_eval_source_filter: Optional[str] = None,
+    sentiment_filter: Optional[str] = None,
+    language_filter: Optional[str] = None,
     event_name_filter: Optional[List[str]] = None,
     metrics: Optional[List[str]] = None,
     quantile_filter: Optional[float] = None,
@@ -715,7 +788,8 @@ async def get_tasks_aggregated_metrics(
             event_name_filter=event_name_filter,
             created_at_start=created_at_start,
             created_at_end=created_at_end,
-            last_eval_source=last_eval_source,
+            last_eval_source=last_eval_source_filter,
+            sentiment_filter=sentiment_filter,
         )
     if "global_success_rate" in metrics:
         output["global_success_rate"] = await get_total_success_rate(
@@ -724,6 +798,8 @@ async def get_tasks_aggregated_metrics(
             event_name_filter=event_name_filter,
             created_at_start=created_at_start,
             created_at_end=created_at_end,
+            sentiment_filter=sentiment_filter,
+            last_eval_source=last_eval_source_filter,
         )
     if "most_detected_event" in metrics:
         output["most_detected_event"] = await get_most_detected_event_name(
@@ -732,6 +808,8 @@ async def get_tasks_aggregated_metrics(
             event_name_filter=event_name_filter,
             created_at_start=created_at_start,
             created_at_end=created_at_end,
+            sentiment_filter=sentiment_filter,
+            last_eval_source=last_eval_source_filter,
         )
     if "nb_daily_tasks" in metrics:
         output["nb_daily_tasks"] = await get_nb_of_daily_tasks(
@@ -740,6 +818,8 @@ async def get_tasks_aggregated_metrics(
             end_timestamp=today_timestamp,
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
+            sentiment_filter=sentiment_filter,
+            last_eval_source=last_eval_source_filter,
         )
     if "events_ranking" in metrics:
         output["events_ranking"] = await get_top_event_names_and_count(
@@ -749,6 +829,8 @@ async def get_tasks_aggregated_metrics(
             end_timestamp=today_timestamp,
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
+            sentiment_filter=sentiment_filter,
+            last_eval_source=last_eval_source_filter,
         )
     if "daily_success_rate" in metrics:
         output["daily_success_rate"] = await get_daily_success_rate(
@@ -757,6 +839,8 @@ async def get_tasks_aggregated_metrics(
             end_timestamp=today_timestamp,
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
+            sentiment_filter=sentiment_filter,
+            last_eval_source=last_eval_source_filter,
         )
     if "success_rate_per_task_position" in metrics:
         output[
@@ -767,7 +851,9 @@ async def get_tasks_aggregated_metrics(
             flag_filter=flag_filter,
             event_name_filter=event_name_filter,
             created_at_start=created_at_start,
+            sentiment_filter=sentiment_filter,
             created_at_end=created_at_end,
+            last_eval_source=last_eval_source_filter,
         )
 
     return output

@@ -43,6 +43,12 @@ const TaskBox = ({
             );
           })}
           <AddEventDropdownForTasks task={task} setTask={setTask} />
+          {task?.language != null && (
+            <Badge variant="outline">Language: {task?.language}</Badge>
+          )}
+          {task?.sentiment?.label != null && (
+            <Badge variant="outline">Sentiment: {task?.sentiment?.label}</Badge>
+          )}
         </div>
         <ThumbsUpAndDown
           task={task}

@@ -14,10 +14,16 @@ import {
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import {
+  Annoyed,
   Calendar,
   CandlestickChart,
   Flag,
+  Frown,
+  Languages,
   ListFilter,
+  Meh,
+  Smile,
+  SmilePlus,
   ThumbsDown,
   ThumbsUp,
   X,
@@ -34,6 +40,8 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
 
   let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
+  let languageFilter: string | null = null;
+  let sentimentFilter: string | null = null;
   let lastEvalSourceFilter: string | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
@@ -42,6 +50,12 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
     }
     if (key === "event" && typeof value === "string") {
       eventFilter = eventFilter == null ? [value] : eventFilter.concat(value);
+    }
+    if (key === "language" && typeof value === "string") {
+      languageFilter = value;
+    }
+    if (key === "sentiment" && typeof value === "string") {
+      sentimentFilter = value;
     }
     if (key === "lastEvalSource" && typeof value === "string") {
       lastEvalSourceFilter = value;
@@ -93,6 +107,36 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               }}
             >
               {eventFilter.join(", ")}
+              <X className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+          {languageFilter !== null && (
+            <Button
+              className="ml-2"
+              variant="outline"
+              onClick={() => {
+                setTasksColumnsFilters((prevFilters) => ({
+                  ...prevFilters,
+                  language: null,
+                }));
+              }}
+            >
+              {languageFilter}
+              <X className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+          {sentimentFilter !== null && (
+            <Button
+              className="ml-2"
+              variant="outline"
+              onClick={() => {
+                setTasksColumnsFilters((prevFilters) => ({
+                  ...prevFilters,
+                  sentiment: null,
+                }));
+              }}
+            >
+              {sentimentFilter}
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
@@ -154,6 +198,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+          {/* Events */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Calendar className="h-4 w-4 mr-2" />
@@ -185,6 +230,163 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+          {/* Language */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Languages className="h-4 w-4 mr-2" />
+              <span>Language</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "en",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "en" ? "green" : "inherit",
+                  }}
+                >
+                  English
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "fr",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "fr" ? "green" : "inherit",
+                  }}
+                >
+                  French
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "es",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "es" ? "green" : "inherit",
+                  }}
+                >
+                  Spanish
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "pt",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "pt" ? "green" : "inherit",
+                  }}
+                >
+                  Portuguese
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "zh-cn",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "zh-cn" ? "green" : "inherit",
+                  }}
+                >
+                  Chinese
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "rus",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "rus" ? "green" : "inherit",
+                  }}
+                >
+                  Russian
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          {/* Sentiment */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <SmilePlus className="h-4 w-4 mr-2" />
+              <span>Sentiment</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      sentiment: "positive",
+                    }));
+                  }}
+                  style={{
+                    color: sentimentFilter === "positive" ? "green" : "inherit",
+                  }}
+                >
+                  <Smile className="h-4 w-4 mr-2" />
+                  <span>Positive</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      sentiment: "neutral",
+                    }));
+                  }}
+                  style={{
+                    color: sentimentFilter === "neutral" ? "green" : "inherit",
+                  }}
+                >
+                  <Meh className="h-4 w-4 mr-2" />
+                  <span>Neutral</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      sentiment: "mixed",
+                    }));
+                  }}
+                  style={{
+                    color: sentimentFilter === "mixed" ? "green" : "inherit",
+                  }}
+                >
+                  <Annoyed className="h-4 w-4 mr-2" />
+                  <span>Mixed</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      sentiment: "negative",
+                    }));
+                  }}
+                  style={{
+                    color: sentimentFilter === "negative" ? "red" : "inherit",
+                  }}
+                >
+                  <Frown className="h-4 w-4 mr-2" />
+                  <span>Negative</span>
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          {/* Last Eval Source */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <CandlestickChart className="h-4 w-4 mr-2" />
