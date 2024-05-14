@@ -6,7 +6,10 @@ import os
 import json
 
 try:
-    credentials_dict = json.loads(os.getenv("GCP_JSON_CREDENTIALS"))
+    json_credentials = os.getenv("GCP_JSON_CREDENTIALS")
+    if json_credentials is None:
+        logger.error("No GCP_JSON_CREDENTIALS environment variable found")
+    credentials_dict = json.loads(json_credentials)
     credentials = service_account.Credentials.from_service_account_info(
         credentials_dict
     )
