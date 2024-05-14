@@ -384,7 +384,6 @@ async def get_total_success_rate(
     if sentiment_filter is not None:
         main_filter["sentiment.label"] = sentiment_filter
 
-    logger.debug(f"main_filter: {main_filter}")
     # Last eval source filter
     if last_eval_source:
         if last_eval_source.startswith("phospho"):
