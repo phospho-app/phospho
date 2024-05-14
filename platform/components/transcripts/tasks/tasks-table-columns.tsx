@@ -299,9 +299,23 @@ export function getColumns({
         );
       },
       accessorKey: "sentiment.label",
-      cell: (row) => (
-        <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
-      ),
+      cell: (row) => {
+        const sentiment_label = row.getValue() as string;
+        return (
+          <Badge
+            className={
+              sentiment_label == "positive"
+                ? "border-green-500"
+                : sentiment_label == "negative"
+                  ? "border-red-500"
+                  : ""
+            }
+            variant={"secondary"}
+          >
+            {sentiment_label}
+          </Badge>
+        );
+      },
     },
     {
       header: "Input",

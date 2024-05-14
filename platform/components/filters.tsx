@@ -279,7 +279,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                     }));
                   }}
                   style={{
-                    color: sentimentFilter === "neutral" ? "red" : "inherit",
+                    color: sentimentFilter === "neutral" ? "green" : "inherit",
                   }}
                 >
                   <Meh className="h-4 w-4 mr-2" />
@@ -307,7 +307,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                     }));
                   }}
                   style={{
-                    color: sentimentFilter === "negative" ? "green" : "inherit",
+                    color: sentimentFilter === "negative" ? "red" : "inherit",
                   }}
                 >
                   <Frown className="h-4 w-4 mr-2" />
