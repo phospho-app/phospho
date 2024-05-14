@@ -56,7 +56,6 @@ jobs:
           EXTRACTOR_SENTRY_DSN: ${{ secrets.EXTRACTOR_SENTRY_DSN }}
           QDRANT_URL: ${{ secrets.QDRANT_URL }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
-          GCP_JSON_CREDENTIALS: ${{ secrets.GCP_JSON_CREDENTIALS }}
         run: |
           gcloud run deploy phospho-extractor \
             --project $GCP_PROJECT_ID \
@@ -64,7 +63,7 @@ jobs:
             --memory 2Gi \
             --region europe-west1 \
             --allow-unauthenticated \
-            --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,ENVIRONMENT=production,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,COHERE_API_KEY=$COHERE_API_KEY,EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_SENTRY_DSN=$EXTRACTOR_SENTRY_DSN,QDRANT_URL=$QDRANT_URL,QDRANT_API_KEY=$QDRANT_API_KEY,GCP_JSON_CREDENTIALS=$GCP_JSON_CREDENTIALS \
+            --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,ENVIRONMENT=production,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,COHERE_API_KEY=$COHERE_API_KEY,EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_SENTRY_DSN=$EXTRACTOR_SENTRY_DSN,QDRANT_URL=$QDRANT_URL,QDRANT_API_KEY=$QDRANT_API_KEY \
             --image europe-west1-docker.pkg.dev/portal-385519/phospho-extractor/app:production
 
   deploy_backend_production:
