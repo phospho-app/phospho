@@ -4,12 +4,17 @@ from loguru import logger
 from google.oauth2 import service_account
 import os
 import json
+from base64 import b64decode
 
 try:
-    json_credentials = os.getenv("GCP_JSON_CREDENTIALS_NATURAL_LANGUAGE_PROCESSING")
-    if json_credentials is None:
+    credentials_natural_language = os.getenv(
+        "GCP_JSON_CREDENTIALS_NATURAL_LANGUAGE_PROCESSING"
+    )
+    if credentials_natural_language is None:
         logger.error("No GCP_JSON_CREDENTIALS environment variable found")
-    credentials_dict = json.loads(json_credentials)
+    credentials_dict = json.loads(
+        b64decode(credentials_natural_language).decode("utf-8")
+    )
     credentials = service_account.Credentials.from_service_account_info(
         credentials_dict
     )
