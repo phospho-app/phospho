@@ -50,6 +50,8 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
     }
     if (key === "event" && typeof value === "string") {
       eventFilter = eventFilter == null ? [value] : eventFilter.concat(value);
+    } else {
+      eventFilter = null;
     }
     if (key === "language" && typeof value === "string") {
       languageFilter = value;
@@ -106,7 +108,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                 }));
               }}
             >
-              {eventFilter.join(", ")}
+              {eventFilter}
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
@@ -218,9 +220,8 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                           }));
                         }}
                         style={{
-                          color: eventFilter?.includes(event_name)
-                            ? "green"
-                            : "inherit",
+                          color:
+                            eventFilter === event_name ? "green" : "inherit",
                         }}
                       >
                         {event_name}
@@ -276,6 +277,32 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                   }}
                 >
                   Spanish
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "de",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "de" ? "green" : "inherit",
+                  }}
+                >
+                  German
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTasksColumnsFilters((prevFilters) => ({
+                      ...prevFilters,
+                      language: "it",
+                    }));
+                  }}
+                  style={{
+                    color: languageFilter === "it" ? "green" : "inherit",
+                  }}
+                >
+                  Italian
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
