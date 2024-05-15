@@ -218,29 +218,46 @@ async def update_project(project: Project, **kwargs) -> Project:
 
         for event_name, event_definition in project.settings.events.items():
             if event_definition.id not in updated_project_events_ids:
-                logger.info(f"Event {event_definition.id} has been removed")
                 # Event has been removed
-                event_definition.removed = True
-                mongo_db["event_definitions"].update_one(
-                    {"project_id": project.id, "id": event_definition.id},
-                    {"$set": event_definition.model_dump()},
-                )
+                try:
+                    event_definition.removed = True
+                    mongo_db["event_definitions"].update_one(
+                        {"project_id": project.id, "id": event_definition.id},
+                        {"$set": event_definition.model_dump()},
+                    )
+                    logger.info(f"Event {event_definition.id} has been removed")
+                except Exception as e:
+                    logger.error(f"Error removing event {event_definition.id}: {e}")
+
                 # Disable the recipe
-                recipe.status = "deleted"
-                mongo_db["recipes"].update_one(
-                    {"id": event_definition.recipe_id}, {"$set": recipe.model_dump()}
-                )
+                try:
+                    recipe = await mongo_db["recipes"].find_one(
+                        {"id": event_definition.recipe_id}
+                    )
+                    recipe = Recipe.model_validate(recipe)
+                    recipe.status = "deleted"
+                    mongo_db["recipes"].update_one(
+                        {"id": event_definition.recipe_id},
+                        {"$set": recipe.model_dump()},
+                    )
+                except Exception as e:
+                    logger.error(f"Error disabling recipe for event {event_name}: {e}")
                 # Remove all historical events
-                logger.debug(
-                    f"Removing all historical events for event {event_definition.id}"
-                )
-                mongo_db["events"].update_many(
-                    {
-                        "project_id": project.id,
-                        "event_definition.id": event_definition.id,
-                    },
-                    {"$set": {"removed": True}},
-                )
+                try:
+                    mongo_db["events"].update_many(
+                        {
+                            "project_id": project.id,
+                            "event_definition.id": event_definition.id,
+                        },
+                        {"$set": {"removed": True}},
+                    )
+                    logger.debug(
+                        f"Removing all historical events for event {event_definition.id}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error removing all historical events for event {event_definition.id}: {e}"
+                    )
 
         # Update the database
         _ = await mongo_db["projects"].update_one(
