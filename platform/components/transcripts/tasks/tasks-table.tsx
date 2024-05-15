@@ -129,7 +129,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       }),
     { keepPreviousData: true },
   );
-  console.log("tasksData", tasksData);
+
   if (
     project_id &&
     tasksData &&
@@ -193,7 +193,6 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       }),
     });
     const response_json = await response.json();
-    console.log("Search response:", response_json);
     tasksColumnsFilters.push({
       id: "id",
       value: response_json.task_ids,
@@ -226,8 +225,6 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   if (!project_id) {
     return <></>;
   }
-
-  console.log("tasksColumnsFilters", tasksColumnsFilters);
 
   return (
     <div>
