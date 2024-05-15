@@ -2,19 +2,22 @@
 Interact with the AI Hub service
 """
 
+import traceback
 from typing import Optional
-from loguru import logger
-import httpx
 
-from app.core import config
+from app.services.slack import slack_notification
+import httpx
 from app.api.v2.models import (
     Model,
     ModelsResponse,
-    TrainRequest,
     PredictRequest,
     PredictResponse,
+    TrainRequest,
 )
+from app.core import config
 from app.services.mongo.files import process_and_save_examples
+from app.utils import generate_uuid
+from loguru import logger
 
 
 def health_check():
@@ -149,5 +152,16 @@ async def predict(predict_request: PredictRequest) -> PredictResponse | None:
             return PredictResponse(**response.json())
 
         except Exception as e:
-            logger.error(e)
+            errror_id = generate_uuid()
+            error_message = f"Caught error while calling main pipeline (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
+            logger.error(error_message)
+
+            traceback.print_exc()
+            if config.ENVIRONMENT == "production":
+                if len(error_message) > 200:
+                    slack_message = error_message[:200]
+                else:
+                    slack_message = error_message
+                await slack_notification(slack_message)
+
             return None
