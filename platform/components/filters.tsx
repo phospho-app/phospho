@@ -220,8 +220,9 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                           }));
                         }}
                         style={{
-                          color:
-                            eventFilter === event_name ? "green" : "inherit",
+                          color: eventFilter?.includes(event_name)
+                            ? "green"
+                            : "inherit",
                         }}
                       >
                         {event_name}
