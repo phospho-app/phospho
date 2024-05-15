@@ -69,15 +69,19 @@ const TasksDataviz: React.FC = () => {
   let eventFilter: string[] | null = null;
   let lastEvalSourceFilter: string | null = null;
   let sentimentFilter: string | null = null;
+  let languageFilter: string | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
       flagFilter = value;
     }
-    if (key === "events" && typeof value === "string") {
+    if (key === "event" && typeof value === "string") {
       eventFilter = eventFilter == null ? [value] : eventFilter.concat(value);
     } else {
       eventFilter = null;
+    }
+    if (key === "language" && typeof value === "string") {
+      languageFilter = value;
     }
     if (key === "lastEvalSource" && typeof value === "string") {
       lastEvalSourceFilter = value;
@@ -94,6 +98,7 @@ const TasksDataviz: React.FC = () => {
     created_at_end: dateRange?.created_at_end,
     last_eval_source: lastEvalSourceFilter,
     sentiment: sentimentFilter,
+    language: languageFilter,
   };
 
   const { data: totalNbTasksData } = useSWR(

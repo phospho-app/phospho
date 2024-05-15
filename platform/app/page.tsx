@@ -17,6 +17,10 @@ const Page: React.FC = () => {
 
   const router = useRouter();
 
+  if (process.env.NODE_ENV === "production") {
+    console.log = function () {};
+  }
+
   if (!loading && !user) {
     router.push("/authenticate");
   }
