@@ -153,7 +153,7 @@ async def predict(predict_request: PredictRequest) -> PredictResponse | None:
 
         except Exception as e:
             errror_id = generate_uuid()
-            error_message = f"Caught error while calling main pipeline (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
+            error_message = f"Caught error while calling predict (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)
 
             traceback.print_exc()
