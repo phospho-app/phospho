@@ -173,7 +173,7 @@ async def get_event_descriptions(project_id: str) -> List[str]:
 
 async def event_suggestion(
     session_id: str,
-    model: str = "openai:gpt-4-turbo",
+    model: str = "openai:gpt-4o",
 ) -> list[str]:
     """
     Fetches the messages from a session ID and sends them to the LLM model to get an event suggestion.

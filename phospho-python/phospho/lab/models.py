@@ -69,13 +69,13 @@ class JobConfig(BaseModel, extra="allow"):
 
 class EventDetectionConfig(JobConfig):
     # OpenAI model name
-    model: Literal["gpt-4-turbo", "gpt-3.5-turbo", "gpt-4"] = "gpt-4"
+    model: Literal["gpt-4-turbo", "gpt-3.5-turbo", "gpt-4", "gpt-4o"] = "gpt-4"
     # instruction: str
 
 
 class EvalConfig(JobConfig):
     # OpenAI model name
-    model: Literal["gpt-4-turbo", "gpt-3.5-turbo", "gpt-4"] = "gpt-4"
+    model: Literal["gpt-4-turbo", "gpt-3.5-turbo", "gpt-4", "gpt-4o"] = "gpt-4"
     metadata: dict = Field(default_factory=dict)
 
 

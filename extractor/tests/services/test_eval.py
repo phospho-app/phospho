@@ -48,7 +48,7 @@ async def test_evals(db, populated_project):
         Respond with only one word, success if the assistant was helpful, failure if not.
         """
 
-        flag = await get_flag(prompt, model_name="gpt-4-turbo")
+        flag = await get_flag(prompt, model_name="gpt-4o")
 
         assert flag in ["success", "failure"]
 
