@@ -236,12 +236,12 @@ async def get_total_nb_of_tasks(
     metadata_filter: Optional[Dict[str, object]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    language_filter: Optional[str] = None,
 ) -> Optional[int]:
     """
     Get the total number of tasks of a project.
     """
     mongo_db = await get_mongo_db()
-    collection_name = "tasks"
     # Time range filter
     global_filters: Dict[str, object] = {"project_id": project_id}
     if created_at_start is not None:
@@ -254,32 +254,27 @@ async def get_total_nb_of_tasks(
     if last_eval_source is not None:
         if last_eval_source.startswith("phospho"):
             # We want to filter on the source starting with "phospho"
-            global_filters["last_eval.source"] = {"$regex": "^phospho"}
+            global_filters["evaluation_source"] = {"$regex": "^phospho"}
         else:
             # We want to filter on the source not starting with "phospho"
-            global_filters["last_eval.source"] = {"$regex": "^(?!phospho).*"}
+            global_filters["evalutation_source"] = {"$regex": "^(?!phospho).*"}
     if metadata_filter is not None:
         global_filters["metadata"] = metadata_filter
-
+    if language_filter is not None:
+        global_filters["language"] = language_filter
     if sentiment_filter is not None:
-        global_filters["sentiment"] = sentiment_filter
-    # Other filters
-    if flag_filter is None and event_name_filter is None:
-        total_nb_tasks = await mongo_db["tasks"].count_documents(global_filters)
-    elif flag_filter is not None and event_name_filter is None:
+        global_filters["sentiment.label"] = sentiment_filter
+    if flag_filter is not None:
         global_filters["flag"] = flag_filter
-        total_nb_tasks = await mongo_db["tasks"].count_documents(global_filters)
-    elif event_name_filter is not None:
-        # Do an aggregate query
-        collection_name = "tasks_with_events"
-        if flag_filter is not None:
-            global_filters["flag"] = flag_filter
+
+    logger.debug(event_name_filter)
+    if event_name_filter is not None:
         global_filters["$and"] = [
             {"events": {"$ne": []}},
             {"events": {"$elemMatch": {"event_name": {"$in": event_name_filter}}}},
         ]
         query_result = (
-            await mongo_db[collection_name]
+            await mongo_db["tasks"]
             .aggregate(
                 [
                     {"$match": global_filters},
@@ -292,4 +287,9 @@ async def get_total_nb_of_tasks(
             total_nb_tasks = query_result[0]["nb_tasks"]
         else:
             total_nb_tasks = None
+
+    else:
+        total_nb_tasks = await mongo_db["tasks"].count_documents(global_filters)
+
+    logger.debug(f"Total number of tasks: {total_nb_tasks}")
     return total_nb_tasks
