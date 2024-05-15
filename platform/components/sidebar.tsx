@@ -166,32 +166,28 @@ export function Sidebar() {
         </div>
 
         <div className="flex justify-center mx-2 mb-4 mt-4">
-          {selectedOrgMetadata &&
-            selectedOrgMetadata?.plan === "hobby" &&
-            hasTasks && (
-              <Card>
-                <CardContent className="flex justify-center mb-0">
-                  <div>
-                    <div className="flex items-baseline">
-                      <Sparkles className="h-4 w-4 text-green-500 mr-1" />
-                      <h2 className="font-semibold mt-4 mb-1">
-                        Complete setup
-                      </h2>
-                    </div>
-                    <p className="mb-2 text-sm">
-                      Enable automatic evaluation and event detection
-                    </p>
-                    <div className="flex justify-center">
-                      <UpgradeButton
-                        tagline="Add payment method"
-                        enlarge={false}
-                        green={false}
-                      />
-                    </div>
+          {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
+            <Card>
+              <CardContent className="flex justify-center mb-0">
+                <div>
+                  <div className="flex items-baseline">
+                    <Sparkles className="h-4 w-4 text-green-500 mr-1" />
+                    <h2 className="font-semibold mt-4 mb-1">Complete setup</h2>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  <p className="mb-2 text-sm">
+                    Enable automatic evaluation and event detection
+                  </p>
+                  <div className="flex justify-center">
+                    <UpgradeButton
+                      tagline="Add payment method"
+                      enlarge={false}
+                      green={false}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           {selectedOrgMetadata && selectedOrgMetadata?.plan === "pro" && (
             <Card>
               <CardContent className="flex justify-center items-center mt-6">
