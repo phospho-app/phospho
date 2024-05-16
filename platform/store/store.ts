@@ -249,7 +249,7 @@ export const navigationStateStore = create(
         }));
       },
 
-      selectedMetric: "tasks",
+      selectedMetric: "Nb tasks",
       setSelectedMetric: (metric: string) =>
         set((state) => ({ selectedMetric: metric })),
       selectedMetricMetadata: null,
