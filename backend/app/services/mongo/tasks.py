@@ -259,7 +259,8 @@ async def get_total_nb_of_tasks(
             # We want to filter on the source not starting with "phospho"
             global_filters["evalutation_source"] = {"$regex": "^(?!phospho).*"}
     if metadata_filter is not None:
-        global_filters["metadata"] = metadata_filter
+        for key, value in metadata_filter.items():
+            global_filters[f"metadata.{key}"] = value
     if language_filter is not None:
         global_filters["language"] = language_filter
     if sentiment_filter is not None:

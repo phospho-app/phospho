@@ -70,6 +70,7 @@ const TasksDataviz: React.FC = () => {
   let lastEvalSourceFilter: string | null = null;
   let sentimentFilter: string | null = null;
   let languageFilter: string | null = null;
+  let metadataFilter: Record<string, any> | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
@@ -89,6 +90,9 @@ const TasksDataviz: React.FC = () => {
     if (key === "sentiment" && typeof value === "string") {
       sentimentFilter = value;
     }
+    if ((key === "metadata" && typeof value === "object") || value === null) {
+      metadataFilter = value;
+    }
   }
 
   const tasksFilters = {
@@ -99,6 +103,7 @@ const TasksDataviz: React.FC = () => {
     last_eval_source: lastEvalSourceFilter,
     sentiment: sentimentFilter,
     language: languageFilter,
+    metadata: metadataFilter,
   };
 
   const { data: totalNbTasksData } = useSWR(

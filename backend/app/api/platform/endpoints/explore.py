@@ -182,6 +182,7 @@ async def get_tasks_project_metrics(
         last_eval_source_filter=tasks_filter.last_eval_source,
         sentiment_filter=tasks_filter.sentiment,
         language_filter=tasks_filter.language,
+        metadata_filter=tasks_filter.metadata,
     )
     return output
 
