@@ -33,7 +33,7 @@ const TaskProgress = ({ currentValue, maxValue }: ProgressProps) => {
       value={progress}
     >
       <Progress.Indicator
-        className="bg-green-500 w-full h-full transition-transform duration-[660ms] ease-[cubic-bezier(0.65, 0, 0.35, 1)]"
+        className="bg-green-500 w-full h-full transition-transform duration-&lsqb;660ms&rsqb; ease-[cubic-bezier(0.65, 0, 0.35, 1)]"
         style={{
           transform: `translateX(-${Math.round(100 - translation * 100)}%)`,
         }}
