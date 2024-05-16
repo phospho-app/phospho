@@ -6,10 +6,6 @@ const dns = require("dns");
 dns.setDefaultResultOrder("ipv4first")
 
 module.exports = {
-  experimental: {
-    appDir: true,
-    // other experimental configurations if needed
-  },
   publicRuntimeConfig: {
     "version": version,
   },

@@ -19,12 +19,26 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "phospho",
   description: "The LLM analytics platform",
+  metadataBase: new URL("https://phospho.app/"),
   twitter: {
     card: "summary_large_image",
     title: "phospho",
     description: "The LLM analytics platform",
     creator: "@phospho_app",
     images: ["https://phospho.app/image/twitterpreview.png"],
+  },
+  openGraph: {
+    type: "website",
+    title: "phospho",
+    description: "The LLM analytics platform",
+    images: [
+      {
+        url: "https://phospho.app/image/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "phospho",
+      },
+    ],
   },
 };
 
