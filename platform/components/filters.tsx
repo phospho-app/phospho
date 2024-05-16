@@ -11,12 +11,16 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { authFetcher } from "@/lib/fetcher";
+import { MetadataFieldsToUniqueValues } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import {
   Annoyed,
   Calendar,
   CandlestickChart,
+  Code,
   Flag,
   Frown,
   Languages,
@@ -29,6 +33,7 @@ import {
   X,
 } from "lucide-react";
 import React from "react";
+import useSWR from "swr";
 
 const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
   const setTasksColumnsFilters = navigationStateStore(
@@ -37,6 +42,9 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
   const tasksColumnsFilters = navigationStateStore(
     (state) => state.tasksColumnsFilters,
   );
+  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const { accessToken } = useUser();
+  const events = selectedProject?.settings?.events;
 
   let eventFilter: string[] | null = null;
   let flagFilter: string | null = null;
@@ -64,13 +72,26 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
     }
   }
 
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  // Metadata filters: {"string": {metadata_key: [unique_metadata_values]}}
+  const { data: metadataFieldsToValues } = useSWR(
+    selectedProject?.id
+      ? [
+          `/api/metadata/${selectedProject?.id}/fields/values`,
+          accessToken,
+          "unique_metadata_fields_to_values",
+        ]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const stringFields: MetadataFieldsToUniqueValues | undefined =
+    metadataFieldsToValues?.string;
 
   if (!selectedProject) {
     return <></>;
   }
-
-  const events = selectedProject.settings?.events;
 
   return (
     <div>
@@ -450,6 +471,49 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                 >
                   user
                 </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Code className="h-4 w-4 mr-2" />
+              <span>Metadata</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                {stringFields &&
+                  Object.entries(stringFields).map(([field, values]) => {
+                    return (
+                      <DropdownMenuSub key={field}>
+                        <DropdownMenuSubTrigger>
+                          <span>{field}</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            {values.map((value) => {
+                              return (
+                                <DropdownMenuItem
+                                  key={value}
+                                  onClick={() => {
+                                    setTasksColumnsFilters((prevFilters) => ({
+                                      ...prevFilters,
+                                      [field]: value,
+                                    }));
+                                  }}
+                                >
+                                  {value
+                                    ? value.length > 50
+                                      ? value.substring(0, 50) + "..."
+                                      : value
+                                    : "-"}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    );
+                  })}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>

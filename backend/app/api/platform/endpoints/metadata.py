@@ -1,4 +1,5 @@
 import datetime
+from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 
@@ -9,6 +10,7 @@ from app.security import verify_if_propelauth_user_can_access_project
 
 # Service
 from app.services.mongo.metadata import (
+    collect_unique_metadata_field_values,
     fetch_count,
     calculate_average_for_metadata,
     calculate_top10_percent,
@@ -145,12 +147,12 @@ async def get_user_metadata(
 @router.post(
     "/metadata/{project_id}/fields",
     description="Get the list of all unique metadata fields in a project.",
-    response_model=dict[str, list[str]],
+    response_model=Dict[str, List[str]],
 )
 async def get_metadata_fields(
     project_id: str,
     user: User = Depends(propelauth.require_user),
-) -> dict[str, list[str]]:
+) -> Dict[str, List[str]]:
     """
     Get the list of all unique metadata fields names in a project.
     """
@@ -164,6 +166,28 @@ async def get_metadata_fields(
     return {
         "number": unique_number_metadata_fields,
         "string": unique_string_metadata_fields,
+    }
+
+
+@router.post(
+    "/metadata/{project_id}/fields/values",
+    description="Get a list of all unique metadata fields values in a project, with their associated unique values.",
+    response_model=Dict[str, Dict[str, List[str]]],
+)
+async def get_metadata_fields_values(
+    project_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> Dict[str, Dict[str, List[str]]]:
+    """
+    Get the list of all unique metadata fields values in a project.
+    """
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    metadata_fields_to_unique_values = await collect_unique_metadata_field_values(
+        project_id=project_id, type="string"
+    )
+    return {
+        "number": {},  # TODO: implement group of values/ranges?
+        "string": metadata_fields_to_unique_values,
     }
 
 

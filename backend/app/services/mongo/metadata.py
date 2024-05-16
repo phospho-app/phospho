@@ -315,14 +315,10 @@ async def fetch_user_metadata(
     return users
 
 
-async def collect_unique_metadata_fields(
+async def _build_unique_metadata_fields_pipeline(
     project_id: str, type: Literal["number", "string"] = "number"
-) -> List[str]:
-    """
-    Get the unique metadata keys for a project
-    """
-    mongo_db = await get_mongo_db()
-    pipeline = [
+) -> List[Dict[str, object]]:
+    pipeline: List[Dict[str, object]] = [
         {
             "$match": {
                 "project_id": project_id,
@@ -356,6 +352,18 @@ async def collect_unique_metadata_fields(
             }
         )
 
+    return pipeline
+
+
+async def collect_unique_metadata_fields(
+    project_id: str,
+    type: Literal["number", "string"] = "number",
+) -> List[str]:
+    """
+    Get the unique metadata keys for a project
+    """
+    mongo_db = await get_mongo_db()
+    pipeline = await _build_unique_metadata_fields_pipeline(project_id, type)
     pipeline += [
         {
             "$group": {
@@ -368,12 +376,62 @@ async def collect_unique_metadata_fields(
         },
         {"$sort": {"count": -1}},
     ]
+
     keys = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
     if not keys or len(keys) == 0 or "metadata_keys" not in keys[0]:
         # No metadata keys found
         return []
     keys = keys[0]["metadata_keys"]
     return keys
+
+
+async def collect_unique_metadata_field_values(
+    project_id: str, type: Literal["number", "string"] = "string"
+) -> Dict[str, List[str]]:
+    """
+    Get the unique metadata values for all the metadata fields of a certain
+    type in a project.
+    """
+    if type not in ["string"]:
+        raise NotImplementedError("Only string metadata values are supported")
+
+    mongo_db = await get_mongo_db()
+    pipeline = await _build_unique_metadata_fields_pipeline(project_id, type)
+
+    # Extend the pipeline to create a dict: metadata_key: [metadata_values]
+    pipeline += [
+        {
+            "$match": {
+                "metadata_keys.k": {"$ne": "task_id"},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$metadata_keys.k",
+                "metadata_values": {
+                    "$addToSet": "$metadata_keys.v",
+                },
+                # "count": {"$sum": 1},
+            },
+        },
+        {
+            "$project": {
+                "metadata_key": "$_id",
+                "metadata_values": 1,
+            }
+        },
+        {
+            "$sort": {"metadata_key": 1, "metadata_values": 1},
+        },
+    ]
+    keys_and_values = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+    if not keys_and_values or len(keys_and_values) == 0:
+        return {}
+    keys_to_values = {
+        key["metadata_key"]: key["metadata_values"] for key in keys_and_values
+    }
+
+    return keys_to_values
 
 
 async def breakdown_by_sum_of_metadata_field(

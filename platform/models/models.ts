@@ -173,3 +173,11 @@ export interface CustomDateRange {
   created_at_start: number | undefined;
   created_at_end: number | undefined;
 }
+
+export interface MetadataFieldsToUniqueValues {
+  [key: string]: string[];
+}
+export interface MetadataTypeToFieldsToUniqueValues {
+  number: MetadataFieldsToUniqueValues;
+  string: MetadataFieldsToUniqueValues;
+}

@@ -94,6 +94,15 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
       languageFilter = value;
     }
   }
+  let tasksFilters = {
+    flag: flagFilter,
+    event_name: eventFilter,
+    created_at_start: dateRange?.created_at_start,
+    created_at_end: dateRange?.created_at_end,
+    last_eval_source: lastEvalSourceFilter,
+    sentiment: sentimentFilter,
+    language: languageFilter,
+  };
 
   const { data: tasksData, mutate: mutateTasks } = useSWR(
     project_id
@@ -101,26 +110,13 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           `/api/projects/${project_id}/tasks`,
           accessToken,
           tasksPagination.pageIndex,
-          JSON.stringify(eventFilter),
-          JSON.stringify(flagFilter),
-          JSON.stringify(lastEvalSourceFilter),
-          JSON.stringify(sentimentFilter),
-          JSON.stringify(languageFilter),
-          JSON.stringify(dateRange),
+          JSON.stringify(tasksFilters),
           JSON.stringify(tasksSorting),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        filters: {
-          event_name: eventFilter,
-          flag: flagFilter,
-          last_eval_source: lastEvalSourceFilter,
-          sentiment: sentimentFilter,
-          language: languageFilter,
-          created_at_start: dateRange?.created_at_start,
-          created_at_end: dateRange?.created_at_end,
-        },
+        filters: tasksFilters,
         pagination: {
           page: tasksPagination.pageIndex,
           page_size: tasksPagination.pageSize,
@@ -148,26 +144,13 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
-      JSON.stringify(eventFilter),
-      JSON.stringify(flagFilter),
-      JSON.stringify(lastEvalSourceFilter),
-      JSON.stringify(sentimentFilter),
-      JSON.stringify(languageFilter),
-      JSON.stringify(dateRange),
+      JSON.stringify(tasksFilters),
       "total_nb_tasks",
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        tasks_filter: {
-          flag: flagFilter,
-          event_name: eventFilter,
-          last_eval_source: lastEvalSourceFilter,
-          sentiment: sentimentFilter,
-          language: languageFilter,
-          created_at_start: dateRange?.created_at_start,
-          created_at_end: dateRange?.created_at_end,
-        },
+        tasks_filter: tasksFilters,
       }),
     {
       keepPreviousData: true,
