@@ -76,6 +76,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   let lastEvalSourceFilter: string | null = null;
   let sentimentFilter: string | null = null;
   let languageFilter: string | null = null;
+  let metadataFilter: Record<string, any> | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
@@ -93,6 +94,9 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     if (key === "language" && typeof value === "string") {
       languageFilter = value;
     }
+    if ((key === "metadata" && typeof value === "object") || value === null) {
+      metadataFilter = value;
+    }
   }
   let tasksFilters = {
     flag: flagFilter,
@@ -102,6 +106,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     last_eval_source: lastEvalSourceFilter,
     sentiment: sentimentFilter,
     language: languageFilter,
+    metadata: metadataFilter,
   };
 
   const { data: tasksData, mutate: mutateTasks } = useSWR(

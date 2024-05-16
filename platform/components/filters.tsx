@@ -51,6 +51,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
   let languageFilter: string | null = null;
   let sentimentFilter: string | null = null;
   let lastEvalSourceFilter: string | null = null;
+  let metadataFilter: Record<string, any> | null = null;
 
   for (const [key, value] of Object.entries(tasksColumnsFilters)) {
     if (key === "flag" && (typeof value === "string" || value === null)) {
@@ -69,6 +70,9 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
     }
     if (key === "lastEvalSource" && typeof value === "string") {
       lastEvalSourceFilter = value;
+    }
+    if (key === "metadata" && typeof value === "object") {
+      metadataFilter = value;
     }
   }
 
@@ -175,6 +179,24 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               }}
             >
               {lastEvalSourceFilter}
+              <X className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+          {metadataFilter !== null && (
+            <Button
+              className="ml-2"
+              variant="outline"
+              onClick={() => {
+                setTasksColumnsFilters((prevFilters) => ({
+                  ...prevFilters,
+                  metadata: null,
+                }));
+              }}
+            >
+              {Object.entries(metadataFilter)[0][0]}:{" "}
+              {Object.entries(metadataFilter)[0][1].length > 20
+                ? Object.entries(metadataFilter)[0][1].substring(0, 20) + "..."
+                : Object.entries(metadataFilter)[0][1]}
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
@@ -497,7 +519,9 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                                   onClick={() => {
                                     setTasksColumnsFilters((prevFilters) => ({
                                       ...prevFilters,
-                                      [field]: value,
+                                      metadata: {
+                                        [field]: value,
+                                      },
                                     }));
                                   }}
                                 >

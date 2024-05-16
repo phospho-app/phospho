@@ -241,12 +241,13 @@ async def post_tasks(
     """
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
-    metadata_filter: Optional[Dict[str, object]] = None
 
     if query is None:
         query = QuerySessionsTasksRequest()
     if query.filters.user_id is not None:
-        metadata_filter["user_id"] = query.filters.user_id
+        if query.filters.metadata is None:
+            query.filters.metadata = {}
+        query.filters.metadata["user_id"] = query.filters.user_id
 
     tasks = await get_all_tasks(
         project_id=project_id,
@@ -258,7 +259,7 @@ async def post_tasks(
         last_eval_source=query.filters.last_eval_source,
         sentiment_filter=query.filters.sentiment,
         language_filter=query.filters.language,
-        metadata_filter=metadata_filter,
+        metadata_filter=query.filters.metadata,
         sorting=query.sorting,
         created_at_start=query.filters.created_at_start,
         created_at_end=query.filters.created_at_end,

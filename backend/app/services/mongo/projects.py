@@ -330,6 +330,8 @@ async def get_all_tasks(
     mongo_db = await get_mongo_db()
     collection_name = "tasks"
 
+    logger.debug(f"Metadata filter: {type(metadata_filter)} {metadata_filter}")
+
     main_filter: Dict[str, object] = {}
     main_filter["project_id"] = project_id
     if flag_filter:
@@ -345,12 +347,11 @@ async def get_all_tasks(
 
     if sentiment_filter:
         main_filter["sentiment.label"] = sentiment_filter
-
     if language_filter:
         main_filter["language"] = language_filter
-
     if metadata_filter:
-        main_filter["metadata"] = metadata_filter
+        for key, value in metadata_filter.items():
+            main_filter[f"metadata.{key}"] = value
     if created_at_start:
         main_filter["created_at"] = {
             "$gte": cast_datetime_or_timestamp_to_timestamp(created_at_start)
@@ -717,6 +718,10 @@ async def get_all_sessions(
 
         if sessions_filter.flag is not None:
             additional_sessions_filter["flag"] = sessions_filter.flag
+
+        if sessions_filter.metadata is not None:
+            for key, value in sessions_filter.metadata.items():
+                additional_sessions_filter[f"metadata.{key}"] = value
 
     pipeline: List[Dict[str, object]] = [
         {
