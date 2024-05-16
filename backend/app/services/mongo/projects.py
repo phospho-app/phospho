@@ -400,9 +400,20 @@ async def get_all_tasks(
                 ]
             )
 
+    # To avoid the sort to OOM on Serverless MongoDB executor, we restrain the pipeline to the necessary fields...
+    pipeline.append(
+        {
+            "$project": {
+                "id": 1,
+                "created_at": 1,
+            }
+        },
+    )
     if sorting is not None and len(sorting) > 0:
         sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
-        pipeline.append({"$sort": sorting_dict})
+        pipeline.append(
+            {"$sort": sorting_dict},
+        )
     else:
         pipeline.append({"$sort": {"created_at": -1}})
 
@@ -415,6 +426,24 @@ async def get_all_tasks(
             ]
         )
         limit = None
+
+    # ... and then we add the lookup and the deduplication
+    pipeline.extend(
+        [
+            {
+                "$lookup": {
+                    "from": "tasks_with_events",
+                    "localField": "id",
+                    "foreignField": "id",
+                    "as": "tasks",
+                }
+            },
+            # unwind the tasks array
+            {"$unwind": "$tasks"},
+            # Replace the root with the tasks
+            {"$replaceRoot": {"newRoot": "$tasks"}},
+        ]
+    )
 
     # Deduplicate events names. We want the unique event_names of the task
     pipeline.append(
@@ -753,6 +782,15 @@ async def get_all_sessions(
                 ]
             )
 
+    # To avoid the sort to OOM on Serverless MongoDB executor, we restrain the pipeline to the necessary fields...
+    pipeline.append(
+        {
+            "$project": {
+                "id": 1,
+                "created_at": 1,
+            }
+        },
+    )
     if sorting is not None and len(sorting) > 0:
         sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
         pipeline.append({"$sort": sorting_dict})
@@ -767,6 +805,24 @@ async def get_all_sessions(
                 {"$limit": pagination.per_page},
             ]
         )
+
+    # ... and then we add the lookup and the deduplication
+    pipeline.extend(
+        [
+            {
+                "$lookup": {
+                    "from": "sessions_with_events",
+                    "localField": "id",
+                    "foreignField": "id",
+                    "as": "sessions",
+                }
+            },
+            # unwind the sessions array
+            {"$unwind": "$sessions"},
+            # Replace the root with the sessions
+            {"$replaceRoot": {"newRoot": "$sessions"}},
+        ]
+    )
 
     sessions = await mongo_db[collection_name].aggregate(pipeline).to_list(length=limit)
 
