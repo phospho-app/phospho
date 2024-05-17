@@ -12,10 +12,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authFetcher } from "@/lib/fetcher";
+import { getLanguageLabel } from "@/lib/utils";
 import { MetadataFieldsToUniqueValues } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { get } from "https";
 import {
   Annoyed,
   Calendar,
@@ -86,6 +88,12 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
       keepPreviousData: true,
     },
   );
+
+  const languageFilterOptions = languages?.map((language: string) => ({
+    value: language,
+    label: getLanguageLabel(language),
+  }));
+  console.log("languageFilterOptions", languageFilterOptions);
 
   // Metadata filters: {"string": {metadata_key: [unique_metadata_values]}}
   const { data: metadataFieldsToValues } = useSWR(
@@ -294,23 +302,25 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
-                {languages &&
-                  languages.map((language: string) => {
+                {languageFilterOptions &&
+                  languageFilterOptions.map((languageFilterOption: any) => {
                     return (
                       <DropdownMenuItem
-                        key={language}
+                        key={languageFilterOption.value}
                         onClick={() => {
                           setTasksColumnsFilters((prevFilters) => ({
                             ...prevFilters,
-                            language: language,
+                            language: languageFilterOption.value,
                           }));
                         }}
                         style={{
                           color:
-                            languageFilter === language ? "green" : "inherit",
+                            languageFilter === languageFilterOption.value
+                              ? "green"
+                              : "inherit",
                         }}
                       >
-                        {language}
+                        {languageFilterOption.label}
                       </DropdownMenuItem>
                     );
                   })}
