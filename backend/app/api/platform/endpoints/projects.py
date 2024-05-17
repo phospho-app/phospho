@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 from fastapi import APIRouter, BackgroundTasks, Depends
 from loguru import logger
@@ -37,6 +37,7 @@ from app.services.mongo.projects import (
     update_project,
     add_project_events,
     store_onboarding_survey,
+    collect_languages,
 )
 
 from app.services.mongo.search import (
@@ -192,6 +193,24 @@ async def post_search_tasks(
         search_query=search_query.query,
     )
     return SearchResponse(task_ids=[task.id for task in relevant_tasks])
+
+
+@router.get(
+    "/projects/{project_id}/languages",
+    description="Get the list of all unique languages detected in a project.",
+    response_model=List[str],
+)
+async def get_languages(
+    project_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> List[str]:
+    """
+    Get the list of all unique languages detected in a project.
+    """
+    project = await get_project_by_id(project_id)
+    propelauth.require_org_member(user, project.org_id)
+    languages = await collect_languages(project_id=project_id)
+    return languages
 
 
 @router.post(

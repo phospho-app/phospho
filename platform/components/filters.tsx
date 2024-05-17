@@ -76,6 +76,17 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
     }
   }
 
+  // Language filters
+  const { data: languages } = useSWR(
+    selectedProject?.id
+      ? [`/api/projects/${selectedProject?.id}/languages`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+
   // Metadata filters: {"string": {metadata_key: [unique_metadata_values]}}
   const { data: metadataFieldsToValues } = useSWR(
     selectedProject?.id
@@ -283,110 +294,26 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
-                      language: "en",
-                    }));
-                  }}
-                  style={{
-                    color: languageFilter === "en" ? "green" : "inherit",
-                  }}
-                >
-                  English
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
-                      language: "fr",
-                    }));
-                  }}
-                  style={{
-                    color: languageFilter === "fr" ? "green" : "inherit",
-                  }}
-                >
-                  French
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
-                      language: "es",
-                    }));
-                  }}
-                  style={{
-                    color: languageFilter === "es" ? "green" : "inherit",
-                  }}
-                >
-                  Spanish
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
-                      language: "de",
-                    }));
-                  }}
-                  style={{
-                    color: languageFilter === "de" ? "green" : "inherit",
-                  }}
-                >
-                  German
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
-                      language: "it",
-                    }));
-                  }}
-                  style={{
-                    color: languageFilter === "it" ? "green" : "inherit",
-                  }}
-                >
-                  Italian
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
-                      language: "pt",
-                    }));
-                  }}
-                  style={{
-                    color: languageFilter === "pt" ? "green" : "inherit",
-                  }}
-                >
-                  Portuguese
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
-                      language: "zh-cn",
-                    }));
-                  }}
-                  style={{
-                    color: languageFilter === "zh-cn" ? "green" : "inherit",
-                  }}
-                >
-                  Chinese
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
-                      language: "rus",
-                    }));
-                  }}
-                  style={{
-                    color: languageFilter === "rus" ? "green" : "inherit",
-                  }}
-                >
-                  Russian
-                </DropdownMenuItem>
+                {languages &&
+                  languages.map((language: string) => {
+                    return (
+                      <DropdownMenuItem
+                        key={language}
+                        onClick={() => {
+                          setTasksColumnsFilters((prevFilters) => ({
+                            ...prevFilters,
+                            language: language,
+                          }));
+                        }}
+                        style={{
+                          color:
+                            languageFilter === language ? "green" : "inherit",
+                        }}
+                      >
+                        {language}
+                      </DropdownMenuItem>
+                    );
+                  })}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
