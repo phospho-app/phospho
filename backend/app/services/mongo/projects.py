@@ -954,7 +954,8 @@ async def collect_languages(
     mongo_db = await get_mongo_db()
     pipeline = [
         {"$match": {"project_id": project_id}},
-        {"$group": {"_id": "$language"}},
+        {"$group": {"_id": "$language", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1, "_id": 1}},
     ]
     languages = await mongo_db["tasks"].aggregate(pipeline).to_list(length=10)
     languages = [lang.get("_id") for lang in languages if lang.get("_id") is not None]
