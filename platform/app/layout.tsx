@@ -17,23 +17,25 @@ const PostHogPageView = dynamic(() => import("./PostHogPageView"), {
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "phospho",
-  description: "The LLM analytics platform",
-  metadataBase: new URL("https://phospho.app/"),
+  title: "phospho AI",
+  description: "The LLM analytics platform that helps you understand your data",
+  metadataBase: new URL("https://platform.phospho.ai"),
   twitter: {
     card: "summary_large_image",
-    title: "phospho",
-    description: "The LLM analytics platform",
+    title: "phospho AI",
+    description:
+      "The LLM analytics platform that helps you understand your data",
     creator: "@phospho_app",
-    images: ["https://phospho.app/image/twitterpreview.png"],
+    images: ["https://platform.phospho.ai/image/twitterpreview.png"],
   },
   openGraph: {
     type: "website",
-    title: "phospho",
-    description: "The LLM analytics platform",
+    title: "phospho AI",
+    description:
+      "The LLM analytics platform that helps you understand your data",
     images: [
       {
-        url: "https://phospho.app/image/opengraph-image.png",
+        url: "https://platform.phospho.ai/image/opengraph-image.png",
         width: 1200,
         height: 630,
         alt: "phospho",
