@@ -8,7 +8,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Event, Task, TaskWithEvents } from "@/models/models";
+import { getLanguageLabel } from "@/lib/utils";
+import { Task, TaskWithEvents } from "@/models/models";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -44,7 +45,9 @@ const TaskBox = ({
           })}
           <AddEventDropdownForTasks task={task} setTask={setTask} />
           {task?.language != null && (
-            <Badge variant="outline">Language: {task?.language}</Badge>
+            <Badge variant="outline">
+              User language: {getLanguageLabel(task?.language)}
+            </Badge>
           )}
           {task?.sentiment?.label != null && (
             <Badge variant="outline">Sentiment: {task?.sentiment?.label}</Badge>
