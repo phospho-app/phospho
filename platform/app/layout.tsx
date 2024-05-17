@@ -22,15 +22,17 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://platform.phospho.ai"),
   twitter: {
     card: "summary_large_image",
-    title: "phospho",
-    description: "The LLM analytics platform",
+    title: "phospho AI",
+    description:
+      "The LLM analytics platform that helps you understand your data",
     creator: "@phospho_app",
     images: ["https://platform.phospho.ai/image/twitterpreview.png"],
   },
   openGraph: {
     type: "website",
-    title: "phospho",
-    description: "The LLM analytics platform",
+    title: "phospho AI",
+    description:
+      "The LLM analytics platform that helps you understand your data",
     images: [
       {
         url: "https://platform.phospho.ai/image/opengraph-image.png",
