@@ -8,9 +8,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   Popover,
   PopoverContent,
@@ -18,6 +22,7 @@ import {
 } from "@/components/ui/popover";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
+import { getLanguageLabel } from "@/lib/utils";
 import { Event, TaskWithEvents } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -285,7 +290,14 @@ export function getColumns({
       },
       accessorKey: "language",
       cell: (row) => (
-        <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
+        <HoverCard openDelay={80} closeDelay={30}>
+          <HoverCardTrigger>
+            <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
+          </HoverCardTrigger>
+          <HoverCardContent side="top" className="text-sm text-center">
+            {getLanguageLabel(row.getValue() as string)}
+          </HoverCardContent>
+        </HoverCard>
       ),
     },
     // Sentiment Analysis
