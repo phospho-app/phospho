@@ -31,7 +31,7 @@ export const countObjectsPerDay = (data: Session[]): Record<string, number>  => 
 };
 
 // list of 55 languages supported by langdetect
-export function getLanguageLabel(isoCode: string): string {
+export function getLanguageLabel(isoCode: string | null): string {
   const languageMap: Record<string, string> = {
     af: "Afrikaans",
     ar: "Arabic",
@@ -76,6 +76,7 @@ export function getLanguageLabel(isoCode: string): string {
     sl: "Slovenian",
     so: "Somali",
     sq: "Albanian",
+    sr: "Serbian",
     sv: "Swedish",
     sw: "Swahili",
     ta: "Tamil",
@@ -87,8 +88,11 @@ export function getLanguageLabel(isoCode: string): string {
     ur: "Urdu",
     vi: "Vietnamese",
     "zh-cn": "Chinese (Simplified)",
+    "zh-latn": "Chinese (Simplified)",
     "zh-tw": "Chinese (Traditional)"
   };
-
+  if (!isoCode) {
+    return "Unknown";
+  }
   return languageMap[isoCode.toLowerCase()] || "Unknown";
 }

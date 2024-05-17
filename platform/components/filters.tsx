@@ -17,7 +17,6 @@ import { MetadataFieldsToUniqueValues } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { get } from "https";
 import {
   Annoyed,
   Calendar,
@@ -167,7 +166,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                 }));
               }}
             >
-              {languageFilter}
+              {getLanguageLabel(languageFilter)}
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
@@ -462,11 +461,13 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                                     }));
                                   }}
                                 >
-                                  {value
-                                    ? value.length > 50
-                                      ? value.substring(0, 50) + "..."
-                                      : value
-                                    : "-"}
+                                  {field !== "language"
+                                    ? value
+                                      ? value.length > 50
+                                        ? value.substring(0, 50) + "..."
+                                        : value
+                                      : "-"
+                                    : getLanguageLabel(value)}
                                 </DropdownMenuItem>
                               );
                             })}
