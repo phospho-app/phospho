@@ -502,7 +502,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               <span>Metadata</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent>
+              <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
                 {stringFields &&
                   Object.entries(stringFields).map(([field, values]) => {
                     return (
@@ -511,7 +511,7 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                           <span>{field}</span>
                         </DropdownMenuSubTrigger>
                         <DropdownMenuPortal>
-                          <DropdownMenuSubContent>
+                          <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
                             {values.map((value) => {
                               return (
                                 <DropdownMenuItem
