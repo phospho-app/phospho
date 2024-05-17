@@ -646,6 +646,7 @@ async def sentiment_analysis_pipeline(task: Task, language: str) -> SentimentObj
                 "metadata.sentiment_score": sentiment_object.score,
                 "metadata.sentiment_magnitude": sentiment_object.magnitude,
                 "metadata.sentiment_label": sentiment_object.label,
+                "metadata.language": language,
             }
         },
     )

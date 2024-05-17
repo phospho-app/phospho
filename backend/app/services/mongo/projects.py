@@ -943,3 +943,20 @@ async def backcompute_recipes(
     # For each job, run the job on the tasks
     for recipe_id in recipe_ids:
         await backcompute_recipe(recipe_id, tasks)
+
+
+async def collect_languages(
+    project_id: str,
+) -> List[str]:
+    """
+    Collect all detected languages from the tasks of a project
+    """
+    mongo_db = await get_mongo_db()
+    pipeline = [
+        {"$match": {"project_id": project_id}},
+        {"$group": {"_id": "$language"}},
+    ]
+    languages = await mongo_db["tasks"].aggregate(pipeline).to_list(length=10)
+    languages = [lang.get("_id") for lang in languages if lang.get("_id") is not None]
+    logger.info(f"Languages detected in project {project_id}: {languages}")
+    return languages
