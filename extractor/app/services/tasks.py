@@ -29,11 +29,12 @@ async def get_task_by_id(task_id: str) -> Task:
     return task
 
 
+# Archived, we use Google Sentiment Analysis API to detect language
+# Doesn't work well with short texts, but strong on longer formats
 async def detect_language_pipeline(task: Task) -> str:
     """
     Uses the langdetect library to detect the language of a given text
     returns a two letter identifier for the language, e.g. 'en' for English, 'fr' for French, etc.
-    Warning: chinese is identified as 'zh-cn' and not 'zh'
     """
     mongo_db = await get_mongo_db()
     try:

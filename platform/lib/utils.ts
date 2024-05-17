@@ -76,6 +76,7 @@ export function getLanguageLabel(isoCode: string): string {
     sl: "Slovenian",
     so: "Somali",
     sq: "Albanian",
+    sr: "Serbian",
     sv: "Swedish",
     sw: "Swahili",
     ta: "Tamil",
@@ -87,6 +88,7 @@ export function getLanguageLabel(isoCode: string): string {
     ur: "Urdu",
     vi: "Vietnamese",
     "zh-cn": "Chinese (Simplified)",
+    "zh-latn": "Chinese (Simplified)",
     "zh-tw": "Chinese (Traditional)"
   };
 

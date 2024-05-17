@@ -5,6 +5,7 @@ from google.oauth2 import service_account
 import os
 import json
 from base64 import b64decode
+from langdetect import detect
 
 try:
     credentials_natural_language = os.getenv(
@@ -25,11 +26,13 @@ except Exception as e:
     client = None
 
 
-async def run_sentiment_analysis(
-    text: str, language: str = "unknown"
-) -> SentimentObject:
+async def run_sentiment_and_language_analysis(text: str) -> tuple[SentimentObject, str]:
     """
-    Analyzes Sentiment in a string.
+    Analyzes Sentiment and Language of a given text.
+
+    The sentiment object contains both a score and a magnitude.
+    - score: positive values indicate positive sentiment, negative values indicate negative sentiment.
+    - magnitude: the overall strength of emotion (both positive and negative) within the given text.
 
     Args:
       text_content: The text content to analyze.
@@ -46,8 +49,6 @@ async def run_sentiment_analysis(
             "content": text,
             "type_": document_type_in_plain_text,
         }
-        if language != "unknown":
-            document["language_code"] = language
 
         # Available values: NONE, UTF8, UTF16, UTF32
         # See https://cloud.google.com/natural-language/docs/reference/rest/v2/EncodingType.
@@ -74,9 +75,17 @@ async def run_sentiment_analysis(
             else:
                 sentiment_response.label = "mixed"
 
+        language = response.language_code
+        if language is None:
+            logger.info(
+                "Language not detected by Google API, falling back on langdetect"
+            )
+            language = await detect(text)
+
     except Exception as e:
         logger.error(f"Error in sentiment analysis: {e}")
 
         sentiment_response = SentimentObject()
+        language = None
 
-    return sentiment_response
+    return sentiment_response, language

@@ -16,8 +16,7 @@ from phospho.models import SentimentObject, JobResult
 
 from app.api.v1.models.pipelines import PipelineResults
 
-from app.services.tasks import detect_language_pipeline
-from app.services.sentiment_analysis import run_sentiment_analysis
+from app.services.sentiment_analysis import run_sentiment_and_language_analysis
 
 
 class EventConfig(lab.JobConfig):
@@ -499,10 +498,10 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
     if task.test_id is None:
         # Run the event detection pipeline
         events = await task_event_detection_pipeline(task, save_task=save_task)
-        # Detect language of the user input
-        language = await detect_language_pipeline(task)
         # Run sentiment analysis on the user input
-        sentiment_object = await sentiment_analysis_pipeline(task, language)
+        sentiment_object, language = await sentiment_and_language_analysis_pipeline(
+            task
+        )
 
     # Do the session scoring -> success, failure
     mongo_db = await get_mongo_db()
@@ -628,12 +627,14 @@ async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
         raise ValueError(f"Job type {recipe.recipe_type} not supported")
 
 
-async def sentiment_analysis_pipeline(task: Task, language: str) -> SentimentObject:
+async def sentiment_and_language_analysis_pipeline(
+    task: Task,
+) -> tuple[SentimentObject, str]:
     """
     Run the sentiment analysis on the input of a task
     """
     mongo_db = await get_mongo_db()
-    sentiment_object = await run_sentiment_analysis(task.input, language)
+    sentiment_object, language = await run_sentiment_and_language_analysis(task.input)
 
     await mongo_db["tasks"].update_one(
         {
@@ -643,6 +644,7 @@ async def sentiment_analysis_pipeline(task: Task, language: str) -> SentimentObj
         {
             "$set": {
                 "sentiment": sentiment_object.model_dump(),
+                "language": language,
                 "metadata.sentiment_score": sentiment_object.score,
                 "metadata.sentiment_magnitude": sentiment_object.magnitude,
                 "metadata.sentiment_label": sentiment_object.label,
@@ -664,4 +666,4 @@ async def sentiment_analysis_pipeline(task: Task, language: str) -> SentimentObj
 
     logger.info(f"Sentiment analysis for task {task.id} : {sentiment_object}")
 
-    return sentiment_object
+    return sentiment_object, language
