@@ -58,3 +58,8 @@ async def metered_prediction(
         completion_tokens = sum(
             [response["usage"]["completion_tokens"] for response in predictions]
         )
+        await bill_on_stripe(
+            org_id,
+            (input_tokens + 3 * completion_tokens) * 250,  # 2.5$ / 1M tokens
+            meter_event_name="phospho_token_based_meter",
+        )

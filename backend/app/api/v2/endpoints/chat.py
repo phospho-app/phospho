@@ -122,7 +122,7 @@ async def create(
             detail="An error occurred while generating predictions.",
         )
 
-    if org_id != config.PHOSPHO_ORG_ID:  # Only whitelisted org
+    if org_id != config.PHOSPHO_ORG_ID:
         background_tasks.add_task(
             metered_prediction,
             org_id=org["org"]["org_id"],
