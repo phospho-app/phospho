@@ -1,9 +1,8 @@
 from typing import Dict, Iterable, List, Literal, Optional, Union
 
 import httpx
-import openai
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from openai._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from openai._types import Body, Headers, Query
 from openai.types.chat import completion_create_params
 from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
@@ -33,29 +32,29 @@ async def create(
     project_id: str,
     messages: Iterable[ChatCompletionMessageParam],
     model: Literal["openai:gpt-4o",],
-    frequency_penalty: Optional[float] | NotGiven = NOT_GIVEN,
-    function_call: completion_create_params.FunctionCall | NotGiven = NOT_GIVEN,
-    functions: Iterable[completion_create_params.Function] | NotGiven = NOT_GIVEN,
-    logit_bias: Optional[Dict[str, int]] | NotGiven = NOT_GIVEN,
-    logprobs: Optional[bool] | NotGiven = NOT_GIVEN,
-    max_tokens: Optional[int] | NotGiven = NOT_GIVEN,
-    n: Optional[int] | NotGiven = NOT_GIVEN,
-    presence_penalty: Optional[float] | NotGiven = NOT_GIVEN,
-    response_format: completion_create_params.ResponseFormat | NotGiven = NOT_GIVEN,
-    seed: Optional[int] | NotGiven = NOT_GIVEN,
-    stop: Union[Optional[str], List[str]] | NotGiven = NOT_GIVEN,
-    stream: Optional[Literal[False]] | NotGiven = NOT_GIVEN,
-    stream_options: Optional[ChatCompletionStreamOptionsParam] | NotGiven = NOT_GIVEN,
-    temperature: Optional[float] | NotGiven = NOT_GIVEN,
-    tool_choice: ChatCompletionToolChoiceOptionParam | NotGiven = NOT_GIVEN,
-    tools: Iterable[ChatCompletionToolParam] | NotGiven = NOT_GIVEN,
-    top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
-    top_p: Optional[float] | NotGiven = NOT_GIVEN,
-    user: str | NotGiven = NOT_GIVEN,
+    frequency_penalty: Optional[float] | None = None,
+    function_call: completion_create_params.FunctionCall | None = None,
+    functions: Iterable[completion_create_params.Function] | None = None,
+    logit_bias: Optional[Dict[str, int]] | None = None,
+    logprobs: Optional[bool] | None = None,
+    max_tokens: Optional[int] | None = None,
+    n: Optional[int] | None = None,
+    presence_penalty: Optional[float] | None = None,
+    response_format: completion_create_params.ResponseFormat | None = None,
+    seed: Optional[int] | None = None,
+    stop: Union[Optional[str], List[str]] | None = None,
+    stream: Optional[Literal[False]] | None = None,
+    stream_options: Optional[ChatCompletionStreamOptionsParam] | None = None,
+    temperature: Optional[float] | None = None,
+    tool_choice: ChatCompletionToolChoiceOptionParam | None = None,
+    tools: Iterable[ChatCompletionToolParam] | None = None,
+    top_logprobs: Optional[int] | None = None,
+    top_p: Optional[float] | None = None,
+    user: str | None = None,
     extra_headers: Headers | None = None,
     extra_query: Query | None = None,
     extra_body: Body | None = None,
-    timeout: float | httpx.Timeout | None | NotGiven = NOT_GIVEN,
+    timeout: float | httpx.Timeout | None | None = None,
     org: dict = Depends(authenticate_org_key),
     background_tasks: BackgroundTasks,
 ) -> ChatCompletion:
