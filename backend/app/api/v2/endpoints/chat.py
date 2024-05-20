@@ -116,5 +116,6 @@ async def create(
         #     request_body.inputs,
         #     prediction_response.predictions,
         # )
-        # TODO : Bill based on the # of tokens (input, output)
+        # TODO : Bill based on the # of tokens (input, output)
+        pass
     return response
