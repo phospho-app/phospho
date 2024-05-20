@@ -21,14 +21,7 @@ from phospho.lab.language_models import get_async_client, get_provider_and_model
 router = APIRouter(tags=["chat"])
 
 
-@router.get(
-    "/{project_id}/chat/completions",
-    description="Create a chat completion",
-)
-async def create(
-    self,
-    *,
-    project_id: str,
+class CreateRequest(completion_create_params.CreateRequest):
     messages: Iterable[ChatCompletionMessageParam],
     model: Literal["openai:gpt-4o",],
     frequency_penalty: Optional[float] | None = None,
@@ -54,8 +47,16 @@ async def create(
     # extra_query: Query | None = None,
     # extra_body: Body | None = None,
     timeout: float | None | None = None,
-    org: dict = Depends(authenticate_org_key),
+
+@router.get(
+    "/{project_id}/chat/completions",
+    description="Create a chat completion",
+)
+async def create(
+    project_id: str,
+    create_request: CreateRequest,
     background_tasks: BackgroundTasks,
+    org: dict = Depends(authenticate_org_key),
 ) -> ChatCompletion:
     """
     Generate a chat completion
@@ -75,7 +76,7 @@ async def create(
         )
 
     SUPPORTED_MODELS = ["openai:gpt-4o"]
-    if model not in SUPPORTED_MODELS:
+    if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
             status_code=400,
             detail=f"Model {model} not supported or you don't have access to it.",
@@ -84,33 +85,7 @@ async def create(
     provider, model_name = get_provider_and_model(model)
     openai_client = get_async_client(provider)
 
-    query_inputs = {
-        "messages": messages,
-        "model": model_name,
-        "frequency_penalty": frequency_penalty,
-        # "function_call": function_call,
-        # "functions": functions,
-        "logit_bias": logit_bias,
-        "logprobs": logprobs,
-        "max_tokens": max_tokens,
-        "n": n,
-        "presence_penalty": presence_penalty,
-        # "response_format": response_format,
-        "seed": seed,
-        "stop": stop,
-        # "stream": stream,
-        # "stream_options": stream_options,
-        "temperature": temperature,
-        # "tool_choice": tool_choice,
-        # "tools": tools,
-        "top_logprobs": top_logprobs,
-        "top_p": top_p,
-        "user": user,
-        # "extra_headers": extra_headers,
-        # "extra_query": extra_query,
-        # "extra_body": extra_body,
-        "timeout": timeout,
-    }
+    query_inputs = create_request.model_dump()
     response = await openai_client.chat.completions.create(
         **query_inputs,
     )
@@ -124,7 +99,7 @@ async def create(
         background_tasks.add_task(
             metered_prediction,
             org_id=org["org"]["org_id"],
-            model_id=model,
+            model_id=create_request.model,
             inputs=[query_inputs],
             predictions=[response],
             project_id=project_id,
