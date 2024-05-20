@@ -4,6 +4,8 @@ from app.db.mongo import get_mongo_db
 from app.db.models import JobResult
 from loguru import logger
 
+from phospho.lab.models import ResultType
+
 
 async def metered_prediction(
     org_id: str, model_id: str, inputs: List[dict], predictions: List[dict]
@@ -14,14 +16,18 @@ async def metered_prediction(
     logger.debug(f"Making predictions for org_id {org_id} with model_id {model_id}")
     if model_id == "phospho-multimodal":
         jobresults = []
-        for index in range(0, len(predictions)):
+        for i, prediction in enumerate(predictions):
             try:
                 jobresult = JobResult(
                     org_id=org_id,
                     job_id=model_id,
-                    value=predictions[index],
-                    result_type="dict",
-                    input=inputs[index],
+                    value=prediction,
+                    result_type=ResultType.dict,
+                    metadata={
+                        "model_id": model_id,
+                        "org_id": org_id,
+                        "input": inputs[i],
+                    },
                 )
                 jobresults.append(jobresult)
 
@@ -39,5 +45,3 @@ async def metered_prediction(
 
         # We bill through stripe, $10 / 1k images
         await bill_on_stripe(org_id, 10 * len(jobresults))
-
-    return predictions
