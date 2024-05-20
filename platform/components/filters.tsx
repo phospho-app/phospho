@@ -17,7 +17,6 @@ import { MetadataFieldsToUniqueValues } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { get } from "https";
 import {
   Annoyed,
   Calendar,
