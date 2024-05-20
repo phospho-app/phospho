@@ -1,9 +1,10 @@
 from typing import Dict, Iterable, List, Literal, Optional, Union
 
-from app.core import config
 import httpx
+import openai
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from httpx import Body, Headers, Query
+from openai._types import NOT_GIVEN, Body, Headers, NotGiven, Query
+from openai.types.chat import completion_create_params
 from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 from openai.types.chat.chat_completion_stream_options_param import (
@@ -13,13 +14,11 @@ from openai.types.chat.chat_completion_tool_choice_option_param import (
     ChatCompletionToolChoiceOptionParam,
 )
 from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
-from openai.types.chat import completion_create_params
 
-from openai._types import NotGiven, NOT_GIVEN
-
+from app.core import config
 from app.security.authentification import authenticate_org_key
-
-from phospho.lab.utils import get_provider_and_model, get_async_client
+from app.services.mongo.predict import metered_prediction
+from phospho.lab.language_models import get_async_client, get_provider_and_model
 
 router = APIRouter(tags=["chat"])
 
@@ -77,45 +76,60 @@ async def create(
             detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
         )
 
+    SUPPORTED_MODELS = ["openai:gpt-4o"]
+    if model not in SUPPORTED_MODELS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model {model} not supported or you don't have access to it.",
+        )
+
     provider, model_name = get_provider_and_model(model)
     openai_client = get_async_client(provider)
 
+    query_inputs = {
+        "messages": messages,
+        "model": model_name,
+        "frequency_penalty": frequency_penalty,
+        "function_call": function_call,
+        "functions": functions,
+        "logit_bias": logit_bias,
+        "logprobs": logprobs,
+        "max_tokens": max_tokens,
+        "n": n,
+        "presence_penalty": presence_penalty,
+        "response_format": response_format,
+        "seed": seed,
+        "stop": stop,
+        "stream": stream,
+        "stream_options": stream_options,
+        "temperature": temperature,
+        "tool_choice": tool_choice,
+        "tools": tools,
+        "top_logprobs": top_logprobs,
+        "top_p": top_p,
+        "user": user,
+        "extra_headers": extra_headers,
+        "extra_query": extra_query,
+        "extra_body": extra_body,
+        "timeout": timeout,
+    }
     response = await openai_client.chat.completions.create(
-        messages=messages,
-        model=model_name,
-        frequency_penalty=frequency_penalty,
-        function_call=function_call,
-        functions=functions,
-        logit_bias=logit_bias,
-        logprobs=logprobs,
-        max_tokens=max_tokens,
-        n=n,
-        presence_penalty=presence_penalty,
-        response_format=response_format,
-        seed=seed,
-        stop=stop,
-        stream=stream,
-        stream_options=stream_options,
-        temperature=temperature,
-        tool_choice=tool_choice,
-        tools=tools,
-        top_logprobs=top_logprobs,
-        top_p=top_p,
-        user=user,
-        extra_headers=extra_headers,
-        extra_query=extra_query,
-        extra_body=extra_body,
-        timeout=timeout,
+        **query_inputs,
     )
+    if not response:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while generating predictions.",
+        )
 
     if org_id != config.PHOSPHO_ORG_ID:  # Only whitelisted org
-        # background_tasks.add_task(
-        #     metered_prediction,
-        #     org["org"]["org_id"],
-        #     request_body.model,
-        #     request_body.inputs,
-        #     prediction_response.predictions,
-        # )
-        # TODO : Bill based on the # of tokens (input, output)
-        pass
+        background_tasks.add_task(
+            metered_prediction,
+            org_id=org["org"]["org_id"],
+            model_id=model,
+            inputs=[query_inputs],
+            predictions=[response],
+            project_id=project_id,
+        )
+
     return response
