@@ -22,31 +22,32 @@ router = APIRouter(tags=["chat"])
 
 
 class CreateRequest(completion_create_params.CreateRequest):
-    messages: Iterable[ChatCompletionMessageParam],
-    model: Literal["openai:gpt-4o",],
-    frequency_penalty: Optional[float] | None = None,
-    # function_call: completion_create_params.FunctionCall | None = None,
-    # functions: Iterable[completion_create_params.Function] | None = None,
-    logit_bias: Optional[Dict[str, int]] | None = None,
-    logprobs: Optional[bool] | None = None,
-    max_tokens: Optional[int] | None = None,
-    n: Optional[int] | None = None,
-    presence_penalty: Optional[float] | None = None,
-    # response_format: completion_create_params.ResponseFormat | None = None,
-    seed: Optional[int] | None = None,
-    stop: Union[Optional[str], List[str]] | None = None,
-    # stream: Optional[Literal[False]] | None = None,
-    # stream_options: Optional[ChatCompletionStreamOptionsParam] | None = None,
-    temperature: Optional[float] | None = None,
-    # tool_choice: ChatCompletionToolChoiceOptionParam | None = None,
-    # tools: Iterable[ChatCompletionToolParam] | None = None,
-    top_logprobs: Optional[int] | None = None,
-    top_p: Optional[float] | None = None,
-    user: str | None = None,
-    # extra_headers: Headers | None = None,
-    # extra_query: Query | None = None,
-    # extra_body: Body | None = None,
-    timeout: float | None | None = None,
+    messages: Iterable[ChatCompletionMessageParam]
+    model: Literal["openai:gpt-4o",]
+    frequency_penalty: Optional[float] | None = None
+    # function_call: completion_create_params.FunctionCall | None = None
+    # functions: Iterable[completion_create_params.Function] | None = None
+    logit_bias: Optional[Dict[str, int]] | None = None
+    logprobs: Optional[bool] | None = None
+    max_tokens: Optional[int] | None = None
+    n: Optional[int] | None = None
+    presence_penalty: Optional[float] | None = None
+    # response_format: completion_create_params.ResponseFormat | None = None
+    seed: Optional[int] | None = None
+    stop: Union[Optional[str], List[str]] | None = None
+    # stream: Optional[Literal[False]] | None = None
+    # stream_options: Optional[ChatCompletionStreamOptionsParam] | None = None
+    temperature: Optional[float] | None = None
+    # tool_choice: ChatCompletionToolChoiceOptionParam | None = None
+    # tools: Iterable[ChatCompletionToolParam] | None = None
+    top_logprobs: Optional[int] | None = None
+    top_p: Optional[float] | None = None
+    user: str | None = None
+    # extra_headers: Headers | None = None
+    # extra_query: Query | None = None
+    # extra_body: Body | None = None
+    timeout: float | None | None = None
+
 
 @router.get(
     "/{project_id}/chat/completions",
