@@ -79,10 +79,10 @@ async def create(
     if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
             status_code=400,
-            detail=f"Model {model} not supported or you don't have access to it.",
+            detail=f"Model {create_request.model} not supported or you don't have access to it.",
         )
 
-    provider, model_name = get_provider_and_model(model)
+    provider, model_name = get_provider_and_model(create_request.model)
     openai_client = get_async_client(provider)
 
     query_inputs = create_request.model_dump()
