@@ -17,11 +17,12 @@ from app.core import config
 from app.security.authentification import authenticate_org_key
 from app.services.mongo.predict import metered_prediction
 from phospho.lab.language_models import get_async_client, get_provider_and_model
+import pydantic
 
 router = APIRouter(tags=["chat"])
 
 
-class CreateRequest(completion_create_params.CreateRequest):
+class CreateRequest(pydantic.BaseModel):
     messages: Iterable[ChatCompletionMessageParam]
     model: Literal["openai:gpt-4o",]
     frequency_penalty: Optional[float] | None = None
