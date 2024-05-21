@@ -1,18 +1,9 @@
-from typing import Dict, Iterable, List, Literal, Optional, Union
+from typing import Any, Dict, Iterable, List, Literal, Optional, Union
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
-from openai._types import Body, Headers, Query
-from openai.types.chat import completion_create_params
 from openai.types.chat.chat_completion import ChatCompletion
-from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
-from openai.types.chat.chat_completion_stream_options_param import (
-    ChatCompletionStreamOptionsParam,
-)
-from openai.types.chat.chat_completion_tool_choice_option_param import (
-    ChatCompletionToolChoiceOptionParam,
-)
-from openai.types.chat.chat_completion_tool_param import ChatCompletionToolParam
+
 
 from app.core import config
 from app.security.authentification import authenticate_org_key
@@ -21,6 +12,15 @@ from phospho.lab.language_models import get_async_client, get_provider_and_model
 import pydantic
 
 router = APIRouter(tags=["chat"])
+
+
+class ChatCompletionMessageParam(pydantic.BaseModel):
+    content: str
+    role: Literal["system", "user", "assistant", "tool", "function"]
+    name: str | None = None
+    function_call: Any | None = None  # will be ignored
+    tool_calls: Iterable[Any] | None = None  # will be ignored
+    tool_call_id: str | None = None  # will be ignored
 
 
 class CreateRequest(pydantic.BaseModel):
