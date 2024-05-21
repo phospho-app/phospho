@@ -17,8 +17,6 @@ import { MetadataFieldsToUniqueValues } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { data } from "autoprefixer";
-import { da } from "date-fns/locale";
 import {
   Annoyed,
   Calendar,

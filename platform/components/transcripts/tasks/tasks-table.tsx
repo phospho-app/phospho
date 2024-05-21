@@ -24,11 +24,10 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { X } from "lucide-react";
 import { Database } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React from "react";
 import useSWR from "swr";
 
 import { getColumns } from "./tasks-table-columns";

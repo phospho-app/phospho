@@ -10,7 +10,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -30,19 +29,11 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  Database,
-  FilterX,
-  LucideTrafficCone,
-  Sparkles,
-  TrafficCone,
-  X,
-} from "lucide-react";
-import { warnOptionHasBeenMovedOutOfExperimental } from "next/dist/server/config";
+import { Database, TrafficCone } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
-import useSWR, { mutate } from "swr";
+import React from "react";
+import useSWR from "swr";
 
 import { getColumns } from "./sessions-table-columns";
 
@@ -157,7 +148,7 @@ export function SessionsTable<TData, TValue>({
           <FilterComponent variant="sessions" />
           <HoverCard>
             <HoverCardTrigger>
-              <LucideTrafficCone className="w-6 h-6 text-muted-foreground" />
+              <TrafficCone className="w-6 h-6 text-muted-foreground" />
             </HoverCardTrigger>
             <HoverCardContent>
               Work in progress! Only the event filters are available for now.

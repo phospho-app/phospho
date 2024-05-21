@@ -4,13 +4,6 @@ import {
 } from "@/components/label-events";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -25,13 +18,11 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  ChevronDown,
   ChevronRight,
-  FilterX,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import useSWR, { KeyedMutator } from "swr";
+import { KeyedMutator } from "swr";
 
 export function getColumns({
   mutateSessions,
