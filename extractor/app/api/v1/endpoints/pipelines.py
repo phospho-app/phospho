@@ -146,8 +146,18 @@ async def store_opentelemetry_data(
         # TODO: Find better way of doing this
         resource_spans = data["resourceSpans"]
         resource = resource_spans[0]["scopeSpans"]
-
         spans = resource[0]["spans"][0]
+
+        # Unpack attributes
+        attributes = spans["attributes"]
+        unpacked_attributes = {}
+        for attr in attributes:
+            if "stringValue" in attr["value"]:
+                unpacked_attributes[attr["key"]] = attr["value"]["stringValue"]
+            elif "intValue" in attr["value"]:
+                unpacked_attributes[attr["key"]] = attr["value"]["intValue"]
+
+        spans["attributes"] = unpacked_attributes
 
         background_tasks.add_task(
             store_opentelemetry_data_in_db,
