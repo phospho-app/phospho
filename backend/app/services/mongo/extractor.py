@@ -46,6 +46,7 @@ def check_health():
 async def bill_on_stripe(
     org_id: str,
     nb_credits_used: int,
+    meter_event_name: str = "phospho_usage_based_meter",
 ) -> None:
     """
     Bill an organization on Stripe based on the consumption
@@ -74,7 +75,7 @@ async def bill_on_stripe(
 
     if customer_id:
         stripe.billing.MeterEvent.create(
-            event_name="phospho_usage_based_meter",
+            event_name=meter_event_name,
             payload={
                 "value": nb_credits_used,
                 "stripe_customer_id": customer_id,

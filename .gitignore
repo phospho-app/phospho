@@ -9,3 +9,4 @@ secrets.toml
 .env.docker
 .research
 .venv/
+local/
