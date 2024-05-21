@@ -50,31 +50,24 @@ async def get_sessions(
 async def get_tasks(
     project_id: str,
     limit: int = 1000,
-    task_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     org: dict = Depends(authenticate_org_key),
 ) -> Tasks:
     """
-    Get all the tasks of a project. If task_filter is specified, the tasks will be filtered according to the filter.
+    Get all the tasks of a project. If filters is specified, the tasks will be filtered according to the filter.
 
     Args:
         project_id: The id of the project
         limit: The maximum number of tasks to return
-        task_filter: This model is used to filter tasks in the get_tasks endpoint. The filters are applied as AND filters.
+        filters: This model is used to filter tasks in the get_tasks endpoint. The filters are applied as AND filters.
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
-    if task_filter is None:
-        task_filter = ProjectDataFilters()
-    if isinstance(task_filter.event_name, str):
-        task_filter.event_name = [task_filter.event_name]
+    if filters is None:
+        filters = ProjectDataFilters()
+    if isinstance(filters.event_name, str):
+        filters.event_name = [filters.event_name]
 
-    tasks = await get_all_tasks(
-        project_id=project_id,
-        limit=limit,
-        flag_filter=task_filter.flag,
-        event_name_filter=task_filter.event_name,
-        last_eval_source=task_filter.last_eval_source,
-        metadata_filter=task_filter.metadata,
-    )
+    tasks = await get_all_tasks(project_id=project_id, limit=limit, filters=filters)
     return Tasks(tasks=tasks)
 
 

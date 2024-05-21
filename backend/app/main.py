@@ -126,6 +126,7 @@ from app.api.v2.endpoints import (
     tests,
     train,
     events,
+    chat,
 )
 
 api_v2 = FastAPI(
@@ -154,6 +155,7 @@ api_v2.include_router(sessions.router)
 api_v2.include_router(health.router)
 api_v2.include_router(events.router)
 api_v2.include_router(train.router)
+api_v2.include_router(chat.router)
 
 
 # Mount the subapplication on the main app with the prefix /v2/

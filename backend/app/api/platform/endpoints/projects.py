@@ -135,7 +135,7 @@ async def post_sessions(
         project_id=project_id,
         get_events=True,
         get_tasks=False,
-        sessions_filter=query.filters,
+        filters=query.filters,
         pagination=query.pagination,
         sorting=query.sorting,
     )
@@ -272,16 +272,9 @@ async def post_tasks(
         project_id=project_id,
         limit=None,
         validate_metadata=True,
-        flag_filter=query.filters.flag,
-        event_name_filter=query.filters.event_name,
-        pagination=query.pagination,
-        last_eval_source=query.filters.last_eval_source,
-        sentiment_filter=query.filters.sentiment,
-        language_filter=query.filters.language,
-        metadata_filter=query.filters.metadata,
+        filters=query.filters,
         sorting=query.sorting,
-        created_at_start=query.filters.created_at_start,
-        created_at_end=query.filters.created_at_end,
+        pagination=query.pagination,
     )
     return Tasks(tasks=tasks)
 
@@ -398,7 +391,7 @@ async def get_users(
 )
 async def get_project_unique_events(
     project_id: str,
-    events_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ) -> Events:
     """
@@ -408,7 +401,7 @@ async def get_project_unique_events(
     propelauth.require_org_member(user, project.org_id)
     events = await get_all_events(
         project_id=project_id,
-        events_filter=events_filter,
+        filters=filters,
         include_removed=True,
         unique=True,
     )

@@ -62,7 +62,7 @@ export default function RunEvent({
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        tasks_filter: {
+        filters: {
           created_at_start: dateRange?.created_at_start,
           created_at_end: dateRange?.created_at_end,
         },

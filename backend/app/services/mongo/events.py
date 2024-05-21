@@ -5,6 +5,7 @@ from loguru import logger
 from app.services.mongo.extractor import run_recipe_on_tasks
 from app.services.mongo.projects import get_all_tasks
 from app.api.platform.models import EventBackfillRequest
+from phospho.models import ProjectDataFilters
 
 
 async def get_event_definition_from_event_id(
@@ -96,8 +97,10 @@ async def run_event_detection_on_timeframe(
     recipe = await get_recipe_by_id(recipe_id=event_definition.recipe_id)
     tasks = await get_all_tasks(
         project_id=project_id,
-        created_at_start=event_backfill_request.created_at_start,
-        created_at_end=event_backfill_request.created_at_end,
+        filters=ProjectDataFilters(
+            created_at_start=event_backfill_request.created_at_start,
+            created_at_end=event_backfill_request.created_at_end,
+        ),
         sample_rate=event_backfill_request.sample_rate,
     )
     await run_recipe_on_tasks(tasks=tasks, recipe=recipe, org_id=org_id)
