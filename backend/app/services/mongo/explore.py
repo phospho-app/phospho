@@ -229,9 +229,6 @@ async def get_success_rate_per_task_position(
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
         main_filter["created_at"] = {"$lte": created_at_end}
-    if metadata_filter is not None:
-        for key, value in metadata_filter.items():
-            main_filter[f"metadata.{key}"] = value
 
     pipeline = [
         {"$match": main_filter},
@@ -245,33 +242,34 @@ async def get_success_rate_per_task_position(
             }
         },
     ]
+    task_filter: Dict[str, object] = {}
     # Filter on the flag
     if flag_filter is not None:
-        pipeline.append(
-            {"$match": {"tasks.flag": flag_filter}},
-        )
+        task_filter["tasks.flag"] = flag_filter
     # Filter on language
     if language_filter is not None:
-        pipeline.append(
-            {"$match": {"tasks.language": language_filter}},
-        )
+        task_filter["tasks.language"] = language_filter
     # Filter on eval source
     if last_eval_source is not None:
         if last_eval_source.startswith("phospho"):
             # We want to filter on the source starting with "phospho"
-            pipeline.append(
-                {"$match": {"tasks.last_eval.source": {"$regex": "^phospho"}}},
-            )
+            task_filter["tasks.last_eval.source"] = {"$regex": "^phospho"}
         else:
             # We want to filter on the source not starting with "phospho"
-            pipeline.append(
-                {"$match": {"tasks.last_eval.source": {"$regex": "^(?!phospho).*"}}},
-            )
+            task_filter["tasks.last_eval.source"] = {"$regex": "^(?!phospho).*"}
     # Filter on sentiment
     if sentiment_filter is not None:
+        task_filter["tasks.sentiment.label"] = sentiment_filter
+    # Filter on task metadata
+    if metadata_filter is not None:
+        for key, value in metadata_filter.items():
+            task_filter[f"tasks.metadata.{key}"] = value
+
+    if task_filter != {}:
         pipeline.append(
-            {"$match": {"tasks.sentiment.label": sentiment_filter}},
+            {"$match": task_filter},
         )
+
     if event_name_filter is not None:
         collection_name = "sessions_with_events"
         pipeline.append(
@@ -527,7 +525,7 @@ async def get_most_detected_event_name(
     # Filter on language
     if language_filter is not None:
         tasks_filter["tasks.language"] = language_filter
-
+    # Filter on task metadata
     if metadata_filter is not None:
         for key, value in metadata_filter.items():
             tasks_filter[f"tasks.metadata.{key}"] = value
@@ -663,9 +661,7 @@ async def get_top_event_names_and_count(
             **main_filter.get("created_at", {}),
             "$lte": created_at_end,
         }
-    if metadata_filter is not None:
-        for key, value in metadata_filter.items():
-            main_filter[f"metadata.{key}"] = value
+
     # Event is not removed
     main_filter["removed"] = {"$ne": True}
     # Either the remove filed doesn't exist, either it's not True
@@ -680,33 +676,34 @@ async def get_top_event_names_and_count(
             }
         },
     ]
+
+    tasks_filter: Dict[str, object] = {}
     # Filter on flag
     if flag_filter is not None:
-        pipeline.append(
-            {"$match": {"tasks.flag": flag_filter}},
-        )
+        tasks_filter["tasks.flag"] = flag_filter
     # Filter on sentiment
     if sentiment_filter is not None:
-        pipeline.append(
-            {"$match": {"tasks.sentiment.label": sentiment_filter}},
-        )
+        tasks_filter["tasks.sentiment.label"] = sentiment_filter
     # Filter on language
     if language_filter is not None:
-        pipeline.append(
-            {"$match": {"tasks.language": language_filter}},
-        )
+        tasks_filter["tasks.language"] = language_filter
     # Last eval source filter
     if last_eval_source is not None:
         if last_eval_source.startswith("phospho"):
             # We want to filter on the source starting with "phospho"
-            pipeline.append(
-                {"$match": {"tasks.last_eval.source": {"$regex": "^phospho"}}},
-            )
+            tasks_filter["tasks.last_eval.source"] = {"$regex": "^phospho"}
         else:
             # We want to filter on the source not starting with "phospho"
-            pipeline.append(
-                {"$match": {"tasks.last_eval.source": {"$regex": "^(?!phospho).*"}}},
-            )
+            tasks_filter["tasks.last_eval.source"] = {"$regex": "^(?!phospho).*"}
+    # Filter on task metadata
+    if metadata_filter is not None:
+        for key, value in metadata_filter.items():
+            tasks_filter[f"tasks.metadata.{key}"] = value
+
+    if tasks_filter != {}:
+        pipeline.append(
+            {"$match": tasks_filter},
+        )
 
     pipeline.extend(
         [
