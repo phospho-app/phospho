@@ -4,4 +4,5 @@ from .pipelines import (
     RunMainPipelineOnMessagesRequest,
     RunMainPipelineOnTaskRequest,
     RunRecipeOnTaskRequest,
+    AugmentedOpenTelemetryData,
 )

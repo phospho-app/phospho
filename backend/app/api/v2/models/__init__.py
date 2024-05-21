@@ -7,7 +7,13 @@ from .events import (
     Events,
     PipelineResults,
 )
-from .log import LogError, LogEvent, LogReply, LogRequest, MinimalLogEvent
+from .log import (
+    LogError,
+    LogEvent,
+    LogReply,
+    LogRequest,
+    MinimalLogEvent,
+)
 from .models import Model, ModelsResponse
 from .predict import PredictRequest, PredictResponse
 from .projects import (
