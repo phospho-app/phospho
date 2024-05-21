@@ -138,8 +138,8 @@ async def run_log_process(
                 await bill_on_stripe(org_id=org_id, nb_credits_used=nb_job_results)
 
         except Exception as e:
-            errror_id = generate_uuid()
-            error_message = f"Caught error while calling main pipeline (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
+            error_id = generate_uuid()
+            error_message = f"Caught error while calling main pipeline (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)
 
             traceback.print_exc()
@@ -184,8 +184,8 @@ async def run_main_pipeline_on_task(task: Task) -> PipelineResults:
             pipeline_results = PipelineResults.model_validate(response.json())
             return pipeline_results
         except Exception as e:
-            errror_id = generate_uuid()
-            error_message = f"Caught error while calling main pipeline (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
+            error_id = generate_uuid()
+            error_message = f"Caught error while calling main pipeline (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)
 
             traceback.print_exc()
@@ -239,8 +239,8 @@ async def run_main_pipeline_on_messages(
             pipeline_results = PipelineResults.model_validate(response.json())
             return pipeline_results
         except Exception as e:
-            errror_id = generate_uuid()
-            error_message = f"Caught error while calling main pipeline (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
+            error_id = generate_uuid()
+            error_message = f"Caught error while calling main pipeline (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)
 
             traceback.print_exc()
@@ -293,6 +293,38 @@ async def run_recipe_on_tasks(
                         f"Error returned when calling run recipe on task (status code: {response.status_code}): {response.text}"
                     )
         except Exception as e:
-            errror_id = generate_uuid()
-            error_message = f"Caught error while calling run recipe on task (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
+            error_id = generate_uuid()
+            error_message = f"Caught error while calling run recipe on task (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            logger.error(error_message)
+
+
+async def store_open_telemetry_data(
+    open_telemetry_data: dict, project_id: str, org_id: str
+):
+    async with httpx.AsyncClient() as client:
+        logger.debug(
+            f"Calling the extractor API for storing opentelemetry data: {config.EXTRACTOR_URL}/v1/pipelines/opentelemetry"
+        )
+        try:
+            response = await client.post(
+                f"{config.EXTRACTOR_URL}/v1/pipelines/opentelemetry",  # WARNING: hardcoded API version
+                json={
+                    "open_telemetry_data": open_telemetry_data,
+                    "project_id": project_id,
+                    "org_id": org_id,
+                },
+                headers={
+                    "Authorization": f"Bearer {config.EXTRACTOR_SECRET_KEY}",
+                    "Content-Type": "application/json",
+                },
+                timeout=60,
+            )
+            if response.status_code != 200:
+                logger.error(
+                    f"Error returned when storing opentelemetry data (status code: {response.status_code}): {response.text}"
+                )
+
+        except Exception as e:
+            error_id = generate_uuid()
+            error_message = f"Caught error while storing opentelemetry data (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)

@@ -5,6 +5,7 @@ from app.api.v1.models import (
     RunMainPipelineOnMessagesRequest,
     RunMainPipelineOnTaskRequest,
     RunRecipeOnTaskRequest,
+    AugmentedOpenTelemetryData,
 )
 
 # Security
@@ -16,6 +17,7 @@ from app.services.pipelines import (
     messages_main_pipeline,
     recipe_pipeline,
     task_main_pipeline,
+    store_opentelemetry_data_in_db,
 )
 from app.services.projects import get_project_by_id
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -120,3 +122,42 @@ async def post_run_job_on_task(
             status_code=400,
             detail="Invalid job type. Only 'event_detection' is supported.",
         )
+
+
+@router.post(
+    "/pipelines/opentelemetry",
+    response_model=dict,
+    description="Store data from OpenTelemetry in database",
+)
+async def store_opentelemetry_data(
+    augmented_open_telemetry_data: AugmentedOpenTelemetryData,
+    background_tasks: BackgroundTasks,
+) -> dict:
+    """Store the opentelemetry data in the opentelemetry database"""
+
+    logger.debug(
+        f"Storing opentelemetry data for project {augmented_open_telemetry_data.project_id}"
+    )
+
+    try:
+        # Assuming the JSON is stored in a variable called 'json_data'
+        data = augmented_open_telemetry_data.open_telemetry_data
+
+        # TODO: Find better way of doing this
+        resource_spans = data["resourceSpans"]
+        resource = resource_spans[0]["scopeSpans"]
+
+        spans = resource[0]["spans"][0]
+
+        background_tasks.add_task(
+            store_opentelemetry_data_in_db,
+            open_telemetry_data=spans,
+            project_id=augmented_open_telemetry_data.project_id,
+            org_id=augmented_open_telemetry_data.org_id,
+        )
+
+        return {"status": "ok"}
+
+    except KeyError as e:
+        logger.error(f"KeyError: {e}")
+        return {"status": "error", "message": f"KeyError: {e}"}

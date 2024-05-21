@@ -25,3 +25,9 @@ class PipelineResults(BaseModel):
 class RunRecipeOnTaskRequest(BaseModel):
     tasks: List[Task]
     recipe: Recipe
+
+
+class AugmentedOpenTelemetryData(BaseModel):
+    project_id: str
+    org_id: str
+    open_telemetry_data: dict
