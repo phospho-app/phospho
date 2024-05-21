@@ -1489,6 +1489,7 @@ async def get_success_rate_by_event_name(
     project_id: str,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    **kwargs,
 ) -> Dict[str, float]:
     """
     Get the success rate by event name of a project.
@@ -1546,6 +1547,7 @@ async def get_total_nb_of_detections(
     event_name: Optional[List[str]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    **kwargs,
 ) -> int:
     """
     Get the total number of detections of a project. Uses the
