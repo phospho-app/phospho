@@ -38,12 +38,8 @@ export function UsersTable<TData, TValue>({
   const project_id = navigationStateStore((state) => state.project_id);
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const sessionsColumnsFilters = navigationStateStore(
-    (state) => state.sessionsColumnsFilters,
-  );
-  const setSessionsColumnsFilters = navigationStateStore(
-    (state) => state.setSessionsColumnsFilters,
-  );
+  const [filters, setFilters] = React.useState<ColumnFiltersState>([]);
+
   const router = useRouter();
 
   const columns = getColumns();
@@ -54,11 +50,11 @@ export function UsersTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setSessionsColumnsFilters,
+    onColumnFiltersChange: setFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     state: {
-      columnFilters: sessionsColumnsFilters,
+      columnFilters: filters,
       sorting,
     },
   });
@@ -80,7 +76,7 @@ export function UsersTable<TData, TValue>({
             if (!table) return;
             table.setColumnFilters([]);
           }}
-          disabled={sessionsColumnsFilters.length === 0}
+          disabled={filters.length === 0}
         >
           <FilterX className="h-4 w-4 mr-1" />
           Clear
