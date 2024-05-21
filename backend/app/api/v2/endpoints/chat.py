@@ -1,6 +1,7 @@
 from typing import Dict, Iterable, List, Literal, Optional, Union
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from loguru import logger
 from openai._types import Body, Headers, Query
 from openai.types.chat import completion_create_params
 from openai.types.chat.chat_completion import ChatCompletion
@@ -72,9 +73,13 @@ async def create(
         customer_id = org_metadata.get("customer_id", None)
 
     if not customer_id and org_id != config.PHOSPHO_ORG_ID:
-        raise HTTPException(
-            status_code=402,
-            detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
+        if config.ENVIRONMENT != "test":
+            raise HTTPException(
+                status_code=402,
+                detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
+            )
+        logger.warning(
+            f"Customer ID not found for org_id: {org_id}. Skipping metered prediction. Will trigger a 402 error in production."
         )
 
     SUPPORTED_MODELS = ["openai:gpt-4o"]
@@ -86,6 +91,9 @@ async def create(
 
     provider, model_name = get_provider_and_model(create_request.model)
     openai_client = get_async_client(provider)
+
+    # Change the model name to the one used by OpenAI
+    create_request.model = model_name
 
     query_inputs = create_request.model_dump()
     response = await openai_client.chat.completions.create(
