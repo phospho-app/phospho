@@ -229,9 +229,6 @@ async def get_success_rate_per_task_position(
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
         main_filter["created_at"] = {"$lte": created_at_end}
-    if metadata_filter is not None:
-        for key, value in metadata_filter.items():
-            main_filter[f"metadata.{key}"] = value
 
     pipeline = [
         {"$match": main_filter},
@@ -272,6 +269,10 @@ async def get_success_rate_per_task_position(
         pipeline.append(
             {"$match": {"tasks.sentiment.label": sentiment_filter}},
         )
+    # Filter on task metadata
+    if metadata_filter is not None:
+        for key, value in metadata_filter.items():
+            main_filter[f"tasks.metadata.{key}"] = value
     if event_name_filter is not None:
         collection_name = "sessions_with_events"
         pipeline.append(
@@ -663,9 +664,7 @@ async def get_top_event_names_and_count(
             **main_filter.get("created_at", {}),
             "$lte": created_at_end,
         }
-    if metadata_filter is not None:
-        for key, value in metadata_filter.items():
-            main_filter[f"metadata.{key}"] = value
+
     # Event is not removed
     main_filter["removed"] = {"$ne": True}
     # Either the remove filed doesn't exist, either it's not True
@@ -707,6 +706,10 @@ async def get_top_event_names_and_count(
             pipeline.append(
                 {"$match": {"tasks.last_eval.source": {"$regex": "^(?!phospho).*"}}},
             )
+    # Filter on task metadata
+    if metadata_filter is not None:
+        for key, value in metadata_filter.items():
+            main_filter[f"metadata.{key}"] = value
 
     pipeline.extend(
         [
