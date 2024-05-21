@@ -63,3 +63,5 @@ async def metered_prediction(
             (input_tokens + 3 * completion_tokens) * 250,  # 2.5$ / 1M tokens
             meter_event_name="phospho_token_based_meter",
         )
+    else:
+        logger.error(f"Model {model_id} not supported for metered billing")
