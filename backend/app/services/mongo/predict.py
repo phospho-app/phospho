@@ -20,7 +20,7 @@ async def metered_prediction(
     logger.debug(f"Making predictions for org_id {org_id} with model_id {model_id}")
 
     jobresults = []
-    for i, prediction in enumerate(predictions):
+    for pred_input, prediction in zip(inputs, predictions):
         try:
             jobresult = JobResult(
                 org_id=org_id,
@@ -31,7 +31,7 @@ async def metered_prediction(
                 metadata={
                     "model_id": model_id,
                     "org_id": org_id,
-                    "input": inputs[i],
+                    "input": pred_input,
                 },
             )
             jobresults.append(jobresult)

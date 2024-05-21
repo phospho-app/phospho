@@ -109,7 +109,7 @@ async def create(
         background_tasks.add_task(
             metered_prediction,
             org_id=org["org"]["org_id"],
-            model_id=create_request.model,
+            model_id=f"{provider}:{model_name}",
             inputs=[query_inputs],
             predictions=[response],
             project_id=project_id,
