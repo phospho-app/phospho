@@ -17,7 +17,10 @@ from app.services.mongo.projects import (
     get_all_events,
     get_all_tasks,
 )
-from app.services.mongo.tasks import get_total_nb_of_tasks
+from app.services.mongo.tasks import (
+    get_total_nb_of_tasks,
+    task_filtering_pipeline_match,
+)
 from app.utils import generate_timestamp, get_last_week_timestamps
 from fastapi import HTTPException
 from loguru import logger
@@ -125,17 +128,7 @@ async def deprecated_get_dashboard_aggregated_metrics(
             filters = ProjectDataFilters()
         if isinstance(filters.event_name, str):
             filters.event_name = [filters.event_name]
-        tasks = await get_all_tasks(
-            project_id=project_id,
-            limit=limit,
-            flag_filter=filters.flag,
-            event_name_filter=filters.event_name,
-            last_eval_source=filters.last_eval_source,
-            metadata_filter=filters.metadata,
-            created_at_start=filters.created_at_start,
-            created_at_end=filters.created_at_end,
-            # tasks_filter=tasks_filter,
-        )
+        tasks = await get_all_tasks(project_id=project_id, limit=limit, filters=filters)
         df = pd.DataFrame([task.model_dump() for task in tasks])
     if count_of == "events":
         events = await get_all_events(
@@ -558,37 +551,19 @@ async def get_most_detected_event_name(
 
 async def get_nb_of_daily_tasks(
     project_id: str,
-    created_at_start: int,
-    created_at_end: int,
-    flag: Optional[Literal["success", "failure"]] = None,
-    event_name: Optional[Union[str, List[str]]] = None,
-    sentiment: Optional[str] = None,
-    last_eval_source: Optional[str] = None,
-    language: Optional[str] = None,
-    metadata: Optional[Dict[str, object]] = None,
+    filters: ProjectDataFilters,
     **kwargs,
 ) -> List[dict]:
     """
     Get the number of daily tasks of a project.
     """
-    if isinstance(event_name, str):
-        event_name = [event_name]
-    tasks = await get_all_tasks(
-        project_id=project_id,
-        limit=None,
-        flag_filter=flag,
-        event_name_filter=event_name,
-        created_at_start=created_at_start,
-        created_at_end=created_at_end,
-        sentiment_filter=sentiment,
-        last_eval_source=last_eval_source,
-        language_filter=language,
-        metadata_filter=metadata,
-    )
+    tasks = await get_all_tasks(project_id=project_id, limit=None, filters=filters)
     df = pd.DataFrame([task.model_dump() for task in tasks])
     complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(created_at_start, datetime.timezone.utc),
-        datetime.datetime.fromtimestamp(created_at_end, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(
+            filters.created_at_start, datetime.timezone.utc
+        ),
+        datetime.datetime.fromtimestamp(filters.created_at_end, datetime.timezone.utc),
         freq="D",
     )
     complete_df = pd.DataFrame({"date": complete_date_range})
@@ -709,82 +684,39 @@ async def get_top_event_names_and_count(
 
 async def get_daily_success_rate(
     project_id: str,
-    created_at_start: int,
-    created_at_end: int,
-    flag: Optional[Literal["success", "failure"]] = None,
-    event_name: Optional[Union[str, List[str]]] = None,
-    sentiment: Optional[str] = None,
-    last_eval_source: Optional[str] = None,
-    language: Optional[str] = None,
-    metadata: Optional[Dict[str, object]] = None,
+    filters: ProjectDataFilters,
     **kwargs,
 ) -> List[dict]:
     """
     Get the daily success rate of a project.
     """
     mongo_db = await get_mongo_db()
-    collection_name = "tasks"
-    main_filter: Dict[str, object] = {
-        "project_id": project_id,
-        "created_at": {"$gte": created_at_start, "$lte": created_at_end},
-    }
-    # Filter on sentiment
-    if sentiment is not None:
-        main_filter["sentiment"] = sentiment
-    # Filter on language
-    if language is not None:
-        main_filter["language"] = language
-    # Last eval source filter
-    if last_eval_source:
-        if last_eval_source.startswith("phospho"):
-            # We want to filter on the source starting with "phospho"
-            main_filter["last_eval.source"] = {"$regex": "^phospho"}
-        else:
-            # We want to filter on the source not starting with "phospho"
-            main_filter["last_eval.source"] = {"$regex": "^(?!phospho).*"}
-    if flag is not None:
-        main_filter["flag"] = flag
 
-    if metadata is not None:
-        for key, value in metadata.items():
-            main_filter[f"metadata.{key}"] = value
-
-    pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
-    ]
-    if event_name is not None:
-        collection_name = "tasks_with_events"
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
-                    ]
-                },
-            },
-        )
-    # Add the success rate computation
-    pipeline.extend(
-        [
-            {"$addFields": {"is_success": {"$eq": ["$flag", "success"]}}},
-            {
-                "$project": {
-                    "_id": 0,
-                    "created_at": 1,
-                    "is_success": 1,
-                }
-            },
-            {"$sort": {"date": 1}},
-        ]
+    main_filter, collection = task_filtering_pipeline_match(
+        project_id=project_id, filters=filters
     )
-    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
+    # Add the success rate computation
+    pipeline = [
+        {"$match": main_filter},
+        {"$addFields": {"is_success": {"$eq": ["$flag", "success"]}}},
+        {
+            "$project": {
+                "_id": 0,
+                "created_at": 1,
+                "is_success": 1,
+            }
+        },
+        {"$sort": {"date": 1}},
+    ]
+    result = await mongo_db[collection].aggregate(pipeline).to_list(length=None)
 
     df = pd.DataFrame(result)
 
     complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(created_at_start, datetime.timezone.utc),
-        datetime.datetime.fromtimestamp(created_at_end, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(
+            filters.created_at_start, datetime.timezone.utc
+        ),
+        datetime.datetime.fromtimestamp(filters.created_at_end, datetime.timezone.utc),
         freq="D",
     )
     complete_df = pd.DataFrame({"date": complete_date_range})
@@ -851,7 +783,7 @@ async def get_tasks_aggregated_metrics(
     if "total_nb_tasks" in metrics:
         output["total_nb_tasks"] = await get_total_nb_of_tasks(
             project_id=project_id,
-            **filters.model_dump(),
+            filters=filters,
         )
     if "global_success_rate" in metrics:
         output["global_success_rate"] = await get_total_success_rate(
@@ -871,7 +803,7 @@ async def get_tasks_aggregated_metrics(
             daily_tasks_filters.created_at_end = today_timestamp
         output["nb_daily_tasks"] = await get_nb_of_daily_tasks(
             project_id=project_id,
-            **daily_tasks_filters.model_dump(),
+            filters=daily_tasks_filters,
         )
     if "events_ranking" in metrics:
         output["events_ranking"] = await get_top_event_names_and_count(
@@ -887,7 +819,7 @@ async def get_tasks_aggregated_metrics(
             daily_tasks_filters.created_at_end = today_timestamp
         output["daily_success_rate"] = await get_daily_success_rate(
             project_id=project_id,
-            **daily_tasks_filters.model_dump(),
+            filters=daily_tasks_filters,
         )
     if "success_rate_per_task_position" in metrics:
         output[

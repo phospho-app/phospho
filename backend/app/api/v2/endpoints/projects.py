@@ -67,17 +67,7 @@ async def get_tasks(
     if isinstance(filters.event_name, str):
         filters.event_name = [filters.event_name]
 
-    tasks = await get_all_tasks(
-        project_id=project_id,
-        limit=limit,
-        flag_filter=filters.flag,
-        event_name_filter=filters.event_name,
-        last_eval_source=filters.last_eval_source,
-        metadata_filter=filters.metadata,
-        created_at_end=filters.created_at_end,
-        created_at_start=filters.created_at_start,
-        has_notes_filter=filters.has_notes,
-    )
+    tasks = await get_all_tasks(project_id=project_id, limit=limit, filters=filters)
     return Tasks(tasks=tasks)
 
 

@@ -1,4 +1,5 @@
-from typing import Dict, List, Literal, Optional, cast
+from typing import Dict, List, Literal, Optional, Tuple, cast
+from phospho.models import ProjectDataFilters
 from phospho.utils import filter_nonjsonable_keys
 
 import pydantic
@@ -226,71 +227,100 @@ async def remove_event_from_task(task: Task, event_name: str) -> Task:
     return task
 
 
+def task_filtering_pipeline_match(
+    project_id: str,
+    filters: Optional[ProjectDataFilters] = None,
+    prefix: str = "",
+    collection: str = "tasks",
+) -> Tuple[Dict[str, object], str]:
+    """
+    Generate the match part of the aggregation pipeline for task filtering.
+
+    Args:
+        project_id: The project ID.
+        filters: The filters to apply.
+        prefix: The prefix to use for the fields in the match query.
+    """
+
+    if filters is None:
+        filters = ProjectDataFilters()
+
+    if prefix != "" and not prefix.endswith("."):
+        # Add a dot at the end of the prefix if it is not already there
+        prefix += "."
+
+    match: Dict[str, object] = {"project_id": project_id}
+
+    if filters.created_at_start is not None:
+        match[f"{prefix}created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
+        match[f"{prefix}created_at"] = {
+            **match.get("created_at", {}),
+            "$lte": filters.created_at_end,
+        }
+
+    if filters.last_eval_source is not None:
+        if filters.last_eval_source.startswith("phospho"):
+            # We want to filter on the source starting with "phospho"
+            match[f"{prefix}evaluation_source"] = {"$regex": "^phospho"}
+        else:
+            # We want to filter on the source not starting with "phospho"
+            match["evalutation_source"] = {"$regex": "^(?!phospho).*"}
+
+    if filters.metadata is not None:
+        for key, value in filters.metadata.items():
+            match[f"{prefix}metadata.{key}"] = value
+
+    if filters.language is not None:
+        match[f"{prefix}language"] = filters.language
+
+    if filters.sentiment is not None:
+        match[f"{prefix}sentiment.label"] = filters.sentiment
+
+    if filters.flag is not None:
+        match[f"{prefix}flag"] = filters.flag
+
+    if filters.event_name is not None:
+        collection = "tasks_with_events"
+        match["$and"] = [
+            {f"{prefix}events": {"$ne": []}},
+            {
+                f"{prefix}events": {
+                    "$elemMatch": {"event_name": {"$in": filters.event_name}}
+                }
+            },
+        ]
+
+    return match, collection
+
+
 async def get_total_nb_of_tasks(
     project_id: str,
-    flag: Optional[str] = None,
-    event_name: Optional[List[str]] = None,
-    sentiment: Optional[str] = None,
-    last_eval_source: Optional[str] = None,
-    metadata: Optional[Dict[str, object]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    language: Optional[str] = None,
-    **kwargs,
+    filters: Optional[ProjectDataFilters] = None,
 ) -> Optional[int]:
     """
     Get the total number of tasks of a project.
     """
     mongo_db = await get_mongo_db()
     # Time range filter
-    global_filters: Dict[str, object] = {"project_id": project_id}
-    if created_at_start is not None:
-        global_filters["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
-        global_filters["created_at"] = {
-            **global_filters.get("created_at", {}),
-            "$lte": created_at_end,
-        }
-    if last_eval_source is not None:
-        if last_eval_source.startswith("phospho"):
-            # We want to filter on the source starting with "phospho"
-            global_filters["evaluation_source"] = {"$regex": "^phospho"}
-        else:
-            # We want to filter on the source not starting with "phospho"
-            global_filters["evalutation_source"] = {"$regex": "^(?!phospho).*"}
-    if metadata is not None:
-        for key, value in metadata.items():
-            global_filters[f"metadata.{key}"] = value
-    if language is not None:
-        global_filters["language"] = language
-    if sentiment is not None:
-        global_filters["sentiment.label"] = sentiment
-    if flag is not None:
-        global_filters["flag"] = flag
+    global_filters, collection = task_filtering_pipeline_match(
+        project_id=project_id, filters=filters
+    )
 
-    logger.debug(event_name)
-    if event_name is not None:
-        global_filters["$and"] = [
-            {"events": {"$ne": []}},
-            {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
-        ]
-        query_result = (
-            await mongo_db["tasks"]
-            .aggregate(
-                [
-                    {"$match": global_filters},
-                    {"$count": "nb_tasks"},
-                ]
-            )
-            .to_list(length=1)
+    query_result = (
+        await mongo_db[collection]
+        .aggregate(
+            [
+                {"$match": global_filters},
+                {"$count": "nb_tasks"},
+            ]
         )
-        if query_result is not None and len(query_result) > 0:
-            total_nb_tasks = query_result[0]["nb_tasks"]
-        else:
-            total_nb_tasks = None
+        .to_list(length=1)
+    )
+    if len(query_result) == 0:
+        return None
 
-    else:
-        total_nb_tasks = await mongo_db["tasks"].count_documents(global_filters)
+    total_nb_tasks = query_result[0]["nb_tasks"]
 
     logger.debug(f"Total number of tasks: {total_nb_tasks}")
     return total_nb_tasks
