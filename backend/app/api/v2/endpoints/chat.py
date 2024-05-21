@@ -50,7 +50,7 @@ class CreateRequest(pydantic.BaseModel):
     timeout: float | None | None = None
 
 
-@router.get(
+@router.post(
     "/{project_id}/chat/completions",
     description="Create a chat completion",
 )
@@ -97,7 +97,7 @@ async def create(
             detail="An error occurred while generating predictions.",
         )
 
-    if org_id != config.PHOSPHO_ORG_ID:
+    if org_id != config.PHOSPHO_ORG_ID and config.ENVIRONMENT == "production":
         background_tasks.add_task(
             metered_prediction,
             org_id=org["org"]["org_id"],
