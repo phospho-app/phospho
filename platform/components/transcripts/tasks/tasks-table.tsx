@@ -109,7 +109,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        tasks_filter: dataFilters,
+        filters: dataFilters,
       }),
     {
       keepPreviousData: true,

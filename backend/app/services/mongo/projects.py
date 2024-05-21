@@ -310,6 +310,7 @@ async def get_all_tasks(
     sentiment_filter: Optional[str] = None,
     language_filter: Optional[str] = None,
     event_name_filter: Optional[List[str]] = None,
+    has_notes_filter: Optional[bool] = None,
     created_at_start: Optional[Union[int, datetime.datetime]] = None,
     created_at_end: Optional[Union[int, datetime.datetime]] = None,
     get_events: bool = True,
@@ -352,6 +353,8 @@ async def get_all_tasks(
     if metadata_filter:
         for key, value in metadata_filter.items():
             main_filter[f"metadata.{key}"] = value
+    if has_notes_filter is not None:
+        main_filter["notes"] = {"$exists": has_notes_filter}
     if created_at_start:
         main_filter["created_at"] = {
             "$gte": cast_datetime_or_timestamp_to_timestamp(created_at_start)
@@ -480,10 +483,10 @@ async def get_all_tasks(
     if sample_rate is not None:
         total_nb_tasks = await get_total_nb_of_tasks(
             project_id=project_id,
-            flag_filter=flag_filter,
-            metadata_filter=metadata_filter,
+            flag=flag_filter,
+            metadata=metadata_filter,
             last_eval_source=last_eval_source,
-            event_name_filter=event_name_filter,
+            event_name=event_name_filter,
             created_at_start=cast_datetime_or_timestamp_to_timestamp(created_at_start)
             if created_at_start
             else None,
@@ -627,33 +630,27 @@ async def email_project_tasks(
 async def get_all_events(
     project_id: str,
     limit: Optional[int] = None,
-    events_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     include_removed: bool = False,
     unique: bool = False,
 ) -> List[Event]:
     mongo_db = await get_mongo_db()
     additional_event_filters: Dict[str, object] = {}
     pipeline: List[Dict[str, object]] = []
-    if events_filter is not None:
-        if events_filter.event_name is not None:
-            if isinstance(events_filter.event_name, str):
-                additional_event_filters["event_name"] = events_filter.event_name
-            if isinstance(events_filter.event_name, list):
-                additional_event_filters["event_name"] = {
-                    "$in": events_filter.event_name
-                }
-        if events_filter.created_at_start is not None:
+    if filters is not None:
+        if filters.event_name is not None:
+            if isinstance(filters.event_name, str):
+                additional_event_filters["event_name"] = filters.event_name
+            if isinstance(filters.event_name, list):
+                additional_event_filters["event_name"] = {"$in": filters.event_name}
+        if filters.created_at_start is not None:
             additional_event_filters["created_at"] = {
-                "$gt": cast_datetime_or_timestamp_to_timestamp(
-                    events_filter.created_at_start
-                )
+                "$gt": cast_datetime_or_timestamp_to_timestamp(filters.created_at_start)
             }
-        if events_filter.created_at_end is not None:
+        if filters.created_at_end is not None:
             additional_event_filters["created_at"] = {
                 **additional_event_filters.get("created_at", {}),
-                "$lt": cast_datetime_or_timestamp_to_timestamp(
-                    events_filter.created_at_end
-                ),
+                "$lt": cast_datetime_or_timestamp_to_timestamp(filters.created_at_end),
             }
     if not include_removed:
         additional_event_filters["removed"] = {"$ne": True}

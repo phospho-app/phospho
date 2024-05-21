@@ -228,14 +228,15 @@ async def remove_event_from_task(task: Task, event_name: str) -> Task:
 
 async def get_total_nb_of_tasks(
     project_id: str,
-    flag_filter: Optional[str] = None,
-    event_name_filter: Optional[List[str]] = None,
-    sentiment_filter: Optional[str] = None,
+    flag: Optional[str] = None,
+    event_name: Optional[List[str]] = None,
+    sentiment: Optional[str] = None,
     last_eval_source: Optional[str] = None,
-    metadata_filter: Optional[Dict[str, object]] = None,
+    metadata: Optional[Dict[str, object]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
-    language_filter: Optional[str] = None,
+    language: Optional[str] = None,
+    **kwargs,
 ) -> Optional[int]:
     """
     Get the total number of tasks of a project.
@@ -257,21 +258,21 @@ async def get_total_nb_of_tasks(
         else:
             # We want to filter on the source not starting with "phospho"
             global_filters["evalutation_source"] = {"$regex": "^(?!phospho).*"}
-    if metadata_filter is not None:
-        for key, value in metadata_filter.items():
+    if metadata is not None:
+        for key, value in metadata.items():
             global_filters[f"metadata.{key}"] = value
-    if language_filter is not None:
-        global_filters["language"] = language_filter
-    if sentiment_filter is not None:
-        global_filters["sentiment.label"] = sentiment_filter
-    if flag_filter is not None:
-        global_filters["flag"] = flag_filter
+    if language is not None:
+        global_filters["language"] = language
+    if sentiment is not None:
+        global_filters["sentiment.label"] = sentiment
+    if flag is not None:
+        global_filters["flag"] = flag
 
-    logger.debug(event_name_filter)
-    if event_name_filter is not None:
+    logger.debug(event_name)
+    if event_name is not None:
         global_filters["$and"] = [
             {"events": {"$ne": []}},
-            {"events": {"$elemMatch": {"event_name": {"$in": event_name_filter}}}},
+            {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
         ]
         query_result = (
             await mongo_db["tasks"]

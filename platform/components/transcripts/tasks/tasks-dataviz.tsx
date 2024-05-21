@@ -72,7 +72,7 @@ const TasksDataviz: React.FC = () => {
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        tasks_filter: dataFilters,
+        filters: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -91,7 +91,7 @@ const TasksDataviz: React.FC = () => {
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["most_detected_event"],
-        tasks_filter: dataFilters,
+        filters: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -110,7 +110,7 @@ const TasksDataviz: React.FC = () => {
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["global_success_rate"],
-        tasks_filter: dataFilters,
+        filters: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -132,7 +132,7 @@ const TasksDataviz: React.FC = () => {
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["nb_daily_tasks"],
-          tasks_filter: dataFilters,
+          filters: dataFilters,
         }).then((data) => {
           if (!data?.nb_daily_tasks) {
             return null;
@@ -161,7 +161,7 @@ const TasksDataviz: React.FC = () => {
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["events_ranking"],
-          tasks_filter: dataFilters,
+          filters: dataFilters,
         }).then((data) => {
           if (!data?.events_ranking) {
             return null;
@@ -229,7 +229,7 @@ const TasksDataviz: React.FC = () => {
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["success_rate_per_task_position"],
-        tasks_filter: dataFilters,
+        filters: dataFilters,
       }).then((data) => {
         if (!data?.success_rate_per_task_position) {
           return null;

@@ -141,7 +141,7 @@ async def deprecated_get_dashboard_aggregated_metrics(
         events = await get_all_events(
             project_id=project_id,
             limit=limit,
-            events_filter=filters,
+            filters=filters,
         )
         df = pd.DataFrame([event.model_dump() for event in events])
 
@@ -206,14 +206,15 @@ async def deprecated_get_dashboard_aggregated_metrics(
 async def get_success_rate_per_task_position(
     project_id,
     quantile_filter: Optional[float] = None,
-    flag_filter: Optional[Literal["success", "failure"]] = None,
-    event_name_filter: Optional[Union[str, List[str]]] = None,
+    flag: Optional[Literal["success", "failure"]] = None,
+    event_name: Optional[Union[str, List[str]]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
-    sentiment_filter: Optional[str] = None,
+    sentiment: Optional[str] = None,
     last_eval_source: Optional[str] = None,
-    language_filter: Optional[str] = None,
-    metadata_filter: Optional[Dict[str, object]] = None,
+    language: Optional[str] = None,
+    metadata: Optional[Dict[str, object]] = None,
+    **kwargs,
 ) -> Optional[Dict[str, object]]:
     """
     Compute the success rate per message position. Used for the Tasks and the Sessions dashboard.
@@ -244,11 +245,11 @@ async def get_success_rate_per_task_position(
     ]
     task_filter: Dict[str, object] = {}
     # Filter on the flag
-    if flag_filter is not None:
-        task_filter["tasks.flag"] = flag_filter
+    if flag is not None:
+        task_filter["tasks.flag"] = flag
     # Filter on language
-    if language_filter is not None:
-        task_filter["tasks.language"] = language_filter
+    if language is not None:
+        task_filter["tasks.language"] = language
     # Filter on eval source
     if last_eval_source is not None:
         if last_eval_source.startswith("phospho"):
@@ -258,11 +259,11 @@ async def get_success_rate_per_task_position(
             # We want to filter on the source not starting with "phospho"
             task_filter["tasks.last_eval.source"] = {"$regex": "^(?!phospho).*"}
     # Filter on sentiment
-    if sentiment_filter is not None:
-        task_filter["tasks.sentiment.label"] = sentiment_filter
+    if sentiment is not None:
+        task_filter["tasks.sentiment.label"] = sentiment
     # Filter on task metadata
-    if metadata_filter is not None:
-        for key, value in metadata_filter.items():
+    if metadata is not None:
+        for key, value in metadata.items():
             task_filter[f"tasks.metadata.{key}"] = value
 
     if task_filter != {}:
@@ -270,25 +271,21 @@ async def get_success_rate_per_task_position(
             {"$match": task_filter},
         )
 
-    if event_name_filter is not None:
+    if event_name is not None:
         collection_name = "sessions_with_events"
         pipeline.append(
             {
                 "$match": {
                     "$and": [
                         {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
+                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
                     ]
                 },
             },
         )
     tasks_filter: Dict[str, object] = {"tasks": {"$ne": []}}
     # Filter on the flag
-    if flag_filter is not None:
+    if flag is not None:
         # The below filter is just "a session that has at least 1 task with the flag"
         # tasks_filter["tasks.flag"] = flag_filter
         logger.debug("Flag filter for success rate per task position has no effect.")
@@ -382,14 +379,15 @@ async def get_success_rate_per_task_position(
 
 async def get_total_success_rate(
     project_id: str,
-    flag_filter: Optional[Literal["success", "failure"]] = None,
-    event_name_filter: Optional[Union[str, List[str]]] = None,
+    flag: Optional[Literal["success", "failure"]] = None,
+    event_name: Optional[Union[str, List[str]]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
-    sentiment_filter: Optional[str] = None,
+    sentiment: Optional[str] = None,
     last_eval_source: Optional[str] = None,
-    language_filter: Optional[str] = None,
-    metadata_filter: Optional[Dict[str, object]] = None,
+    language: Optional[str] = None,
+    metadata: Optional[Dict[str, object]] = None,
+    **kwargs,
 ) -> Optional[float]:
     """
     Get the total success rate of a project. This is the ratio of successful tasks over
@@ -400,17 +398,17 @@ async def get_total_success_rate(
     collection_name = "tasks"
     main_filter: Dict[str, object] = {"project_id": project_id}
     # Filter on the flag
-    if flag_filter is not None:
-        main_filter["flag"] = flag_filter
+    if flag is not None:
+        main_filter["flag"] = flag
     # Filter on the sentiment
-    if sentiment_filter is not None:
-        main_filter["sentiment.label"] = sentiment_filter
+    if sentiment is not None:
+        main_filter["sentiment.label"] = sentiment
     # Filter on the language
-    if language_filter is not None:
-        main_filter["language"] = language_filter
+    if language is not None:
+        main_filter["language"] = language
     # Filter on the metadata
-    if metadata_filter is not None:
-        for key, value in metadata_filter.items():
+    if metadata is not None:
+        for key, value in metadata.items():
             main_filter[f"metadata.{key}"] = value
     # Last eval source filter
     if last_eval_source:
@@ -432,18 +430,14 @@ async def get_total_success_rate(
         {"$match": main_filter},
     ]
     # Filter on the event name
-    if event_name_filter is not None:
+    if event_name is not None:
         collection_name = "tasks_with_events"
         pipeline.append(
             {
                 "$match": {
                     "$and": [
                         {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
+                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
                     ]
                 },
             },
@@ -474,14 +468,15 @@ async def get_total_success_rate(
 
 async def get_most_detected_event_name(
     project_id: str,
-    flag_filter: Optional[Literal["success", "failure"]] = None,
-    event_name_filter: Optional[Union[str, List[str]]] = None,
+    flag: Optional[Literal["success", "failure"]] = None,
+    event_name: Optional[Union[str, List[str]]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
-    sentiment_filter: Optional[str] = None,
+    sentiment: Optional[str] = None,
     last_eval_source: Optional[str] = None,
-    language_filter: Optional[str] = None,
-    metadata_filter: Optional[Dict[str, object]] = None,
+    language: Optional[str] = None,
+    metadata: Optional[Dict[str, object]] = None,
+    **kwargs,
 ) -> Optional[str]:
     """
     Get the most detected event name of a project.
@@ -492,8 +487,8 @@ async def get_most_detected_event_name(
         "removed": {"$ne": True},
     }
     # Filter on the event name
-    if event_name_filter is not None:
-        main_filter["event_name"] = {"$in": event_name_filter}
+    if event_name is not None:
+        main_filter["event_name"] = {"$in": event_name}
     # Time range filter
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
@@ -517,17 +512,17 @@ async def get_most_detected_event_name(
     ]
     tasks_filter = {}
     # Filter on flag
-    if flag_filter is not None:
-        tasks_filter["tasks.flag"] = flag_filter
+    if flag is not None:
+        tasks_filter["tasks.flag"] = flag
     # Filter on sentiment
-    if sentiment_filter is not None:
-        tasks_filter["tasks.sentiment.label"] = sentiment_filter
+    if sentiment is not None:
+        tasks_filter["tasks.sentiment.label"] = sentiment
     # Filter on language
-    if language_filter is not None:
-        tasks_filter["tasks.language"] = language_filter
+    if language is not None:
+        tasks_filter["tasks.language"] = language
     # Filter on task metadata
-    if metadata_filter is not None:
-        for key, value in metadata_filter.items():
+    if metadata is not None:
+        for key, value in metadata.items():
             tasks_filter[f"tasks.metadata.{key}"] = value
     # Last eval source filter
     if last_eval_source is not None:
@@ -563,36 +558,37 @@ async def get_most_detected_event_name(
 
 async def get_nb_of_daily_tasks(
     project_id: str,
-    start_timestamp: int,
-    end_timestamp: int,
-    flag_filter: Optional[Literal["success", "failure"]] = None,
-    event_name_filter: Optional[Union[str, List[str]]] = None,
-    sentiment_filter: Optional[str] = None,
+    created_at_start: int,
+    created_at_end: int,
+    flag: Optional[Literal["success", "failure"]] = None,
+    event_name: Optional[Union[str, List[str]]] = None,
+    sentiment: Optional[str] = None,
     last_eval_source: Optional[str] = None,
-    language_filter: Optional[str] = None,
-    metadata_filter: Optional[Dict[str, object]] = None,
+    language: Optional[str] = None,
+    metadata: Optional[Dict[str, object]] = None,
+    **kwargs,
 ) -> List[dict]:
     """
     Get the number of daily tasks of a project.
     """
-    if isinstance(event_name_filter, str):
-        event_name_filter = [event_name_filter]
+    if isinstance(event_name, str):
+        event_name = [event_name]
     tasks = await get_all_tasks(
         project_id=project_id,
         limit=None,
-        flag_filter=flag_filter,
-        event_name_filter=event_name_filter,
-        created_at_start=start_timestamp,
-        created_at_end=end_timestamp,
-        sentiment_filter=sentiment_filter,
+        flag_filter=flag,
+        event_name_filter=event_name,
+        created_at_start=created_at_start,
+        created_at_end=created_at_end,
+        sentiment_filter=sentiment,
         last_eval_source=last_eval_source,
-        language_filter=language_filter,
-        metadata_filter=metadata_filter,
+        language_filter=language,
+        metadata_filter=metadata,
     )
     df = pd.DataFrame([task.model_dump() for task in tasks])
     complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(start_timestamp, datetime.timezone.utc),
-        datetime.datetime.fromtimestamp(end_timestamp, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(created_at_start, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(created_at_end, datetime.timezone.utc),
         freq="D",
     )
     complete_df = pd.DataFrame({"date": complete_date_range})
@@ -623,36 +619,27 @@ async def get_nb_of_daily_tasks(
 async def get_top_event_names_and_count(
     project_id: str,
     limit: int = 3,
-    start_timestamp: Optional[int] = None,
-    end_timestamp: Optional[int] = None,
-    flag_filter: Optional[Literal["success", "failure"]] = None,
-    event_name_filter: Optional[Union[str, List[str]]] = None,
-    sentiment_filter: Optional[str] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    flag: Optional[Literal["success", "failure"]] = None,
+    event_name: Optional[Union[str, List[str]]] = None,
+    sentiment: Optional[str] = None,
     last_eval_source: Optional[str] = None,
-    language_filter: Optional[str] = None,
-    metadata_filter: Optional[Dict[str, object]] = None,
+    language: Optional[str] = None,
+    metadata: Optional[Dict[str, object]] = None,
+    **kwargs,
 ) -> List[Dict[str, object]]:
     """
     Get the top event names and count of a project.
     """
     mongo_db = await get_mongo_db()
-    if start_timestamp is None:
-        start_timestamp = 0
-    if end_timestamp is None:
-        end_timestamp = generate_timestamp()
 
     main_filter: Dict[str, object] = {
         "project_id": project_id,
-        "created_at": {
-            "$gte": start_timestamp,
-            "$lte": end_timestamp,
-        },
         "removed": {"$ne": True},
     }
-    if event_name_filter is not None:
-        main_filter["event_name"] = {"$in": event_name_filter}
+    if event_name is not None:
+        main_filter["event_name"] = {"$in": event_name}
     # Time range filter
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
@@ -679,14 +666,14 @@ async def get_top_event_names_and_count(
 
     tasks_filter: Dict[str, object] = {}
     # Filter on flag
-    if flag_filter is not None:
-        tasks_filter["tasks.flag"] = flag_filter
+    if flag is not None:
+        tasks_filter["tasks.flag"] = flag
     # Filter on sentiment
-    if sentiment_filter is not None:
-        tasks_filter["tasks.sentiment.label"] = sentiment_filter
+    if sentiment is not None:
+        tasks_filter["tasks.sentiment.label"] = sentiment
     # Filter on language
-    if language_filter is not None:
-        tasks_filter["tasks.language"] = language_filter
+    if language is not None:
+        tasks_filter["tasks.language"] = language
     # Last eval source filter
     if last_eval_source is not None:
         if last_eval_source.startswith("phospho"):
@@ -696,8 +683,8 @@ async def get_top_event_names_and_count(
             # We want to filter on the source not starting with "phospho"
             tasks_filter["tasks.last_eval.source"] = {"$regex": "^(?!phospho).*"}
     # Filter on task metadata
-    if metadata_filter is not None:
-        for key, value in metadata_filter.items():
+    if metadata is not None:
+        for key, value in metadata.items():
             tasks_filter[f"tasks.metadata.{key}"] = value
 
     if tasks_filter != {}:
@@ -722,14 +709,15 @@ async def get_top_event_names_and_count(
 
 async def get_daily_success_rate(
     project_id: str,
-    start_timestamp: int,
-    end_timestamp: int,
-    flag_filter: Optional[Literal["success", "failure"]] = None,
-    event_name_filter: Optional[Union[str, List[str]]] = None,
-    sentiment_filter: Optional[str] = None,
+    created_at_start: int,
+    created_at_end: int,
+    flag: Optional[Literal["success", "failure"]] = None,
+    event_name: Optional[Union[str, List[str]]] = None,
+    sentiment: Optional[str] = None,
     last_eval_source: Optional[str] = None,
-    language_filter: Optional[str] = None,
-    metadata_filter: Optional[Dict[str, object]] = None,
+    language: Optional[str] = None,
+    metadata: Optional[Dict[str, object]] = None,
+    **kwargs,
 ) -> List[dict]:
     """
     Get the daily success rate of a project.
@@ -738,14 +726,14 @@ async def get_daily_success_rate(
     collection_name = "tasks"
     main_filter: Dict[str, object] = {
         "project_id": project_id,
-        "created_at": {"$gte": start_timestamp, "$lte": end_timestamp},
+        "created_at": {"$gte": created_at_start, "$lte": created_at_end},
     }
     # Filter on sentiment
-    if sentiment_filter is not None:
-        main_filter["sentiment"] = sentiment_filter
+    if sentiment is not None:
+        main_filter["sentiment"] = sentiment
     # Filter on language
-    if language_filter is not None:
-        main_filter["language"] = language_filter
+    if language is not None:
+        main_filter["language"] = language
     # Last eval source filter
     if last_eval_source:
         if last_eval_source.startswith("phospho"):
@@ -754,28 +742,24 @@ async def get_daily_success_rate(
         else:
             # We want to filter on the source not starting with "phospho"
             main_filter["last_eval.source"] = {"$regex": "^(?!phospho).*"}
-    if flag_filter is not None:
-        main_filter["flag"] = flag_filter
+    if flag is not None:
+        main_filter["flag"] = flag
 
-    if metadata_filter is not None:
-        for key, value in metadata_filter.items():
+    if metadata is not None:
+        for key, value in metadata.items():
             main_filter[f"metadata.{key}"] = value
 
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
-    if event_name_filter is not None:
+    if event_name is not None:
         collection_name = "tasks_with_events"
         pipeline.append(
             {
                 "$match": {
                     "$and": [
                         {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
+                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
                     ]
                 },
             },
@@ -799,8 +783,8 @@ async def get_daily_success_rate(
     df = pd.DataFrame(result)
 
     complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(start_timestamp, datetime.timezone.utc),
-        datetime.datetime.fromtimestamp(end_timestamp, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(created_at_start, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(created_at_end, datetime.timezone.utc),
         freq="D",
     )
     complete_df = pd.DataFrame({"date": complete_date_range})
@@ -830,22 +814,17 @@ async def get_daily_success_rate(
 
 async def get_tasks_aggregated_metrics(
     project_id: str,
-    flag_filter: Optional[str] = None,
-    last_eval_source_filter: Optional[str] = None,
-    sentiment_filter: Optional[str] = None,
-    language_filter: Optional[str] = None,
-    event_name_filter: Optional[List[str]] = None,
     metrics: Optional[List[str]] = None,
-    quantile_filter: Optional[float] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    metadata_filter: Optional[Dict[str, object]] = None,
+    filters: Optional[ProjectDataFilters] = None,
 ) -> Dict[str, object]:
     """
     Compute aggregated metrics for the tasks of a project. Used for the Tasks dashboard.
     """
     if await project_has_tasks(project_id) is False:
         return {}
+
+    if filters is None:
+        filters = ProjectDataFilters()
 
     if metrics is None:
         metrics = [
@@ -872,101 +851,60 @@ async def get_tasks_aggregated_metrics(
     if "total_nb_tasks" in metrics:
         output["total_nb_tasks"] = await get_total_nb_of_tasks(
             project_id=project_id,
-            flag_filter=flag_filter,
-            event_name_filter=event_name_filter,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
-            last_eval_source=last_eval_source_filter,
-            sentiment_filter=sentiment_filter,
-            language_filter=language_filter,
-            metadata_filter=metadata_filter,
+            **filters.model_dump(),
         )
     if "global_success_rate" in metrics:
         output["global_success_rate"] = await get_total_success_rate(
             project_id=project_id,
-            flag_filter=flag_filter,
-            event_name_filter=event_name_filter,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
-            sentiment_filter=sentiment_filter,
-            last_eval_source=last_eval_source_filter,
-            language_filter=language_filter,
-            metadata_filter=metadata_filter,
+            **filters.model_dump(),
         )
     if "most_detected_event" in metrics:
         output["most_detected_event"] = await get_most_detected_event_name(
             project_id=project_id,
-            flag_filter=flag_filter,
-            event_name_filter=event_name_filter,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
-            sentiment_filter=sentiment_filter,
-            last_eval_source=last_eval_source_filter,
-            language_filter=language_filter,
-            metadata_filter=metadata_filter,
+            **filters.model_dump(),
         )
     if "nb_daily_tasks" in metrics:
+        daily_tasks_filters = filters
+        if daily_tasks_filters.created_at_start is None:
+            daily_tasks_filters.created_at_start = seven_days_ago_timestamp
+        if daily_tasks_filters.created_at_end is None:
+            daily_tasks_filters.created_at_end = today_timestamp
         output["nb_daily_tasks"] = await get_nb_of_daily_tasks(
             project_id=project_id,
-            start_timestamp=seven_days_ago_timestamp,
-            end_timestamp=today_timestamp,
-            flag_filter=flag_filter,
-            event_name_filter=event_name_filter,
-            sentiment_filter=sentiment_filter,
-            last_eval_source=last_eval_source_filter,
-            language_filter=language_filter,
-            metadata_filter=metadata_filter,
+            **daily_tasks_filters.model_dump(),
         )
     if "events_ranking" in metrics:
         output["events_ranking"] = await get_top_event_names_and_count(
             project_id=project_id,
             limit=3,
-            start_timestamp=seven_days_ago_timestamp,
-            end_timestamp=today_timestamp,
-            flag_filter=flag_filter,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
-            event_name_filter=event_name_filter,
-            sentiment_filter=sentiment_filter,
-            last_eval_source=last_eval_source_filter,
-            language_filter=language_filter,
-            metadata_filter=metadata_filter,
+            **filters.model_dump(),
         )
     if "daily_success_rate" in metrics:
+        daily_tasks_filters = filters
+        if daily_tasks_filters.created_at_start is None:
+            daily_tasks_filters.created_at_start = seven_days_ago_timestamp
+        if daily_tasks_filters.created_at_end is None:
+            daily_tasks_filters.created_at_end = today_timestamp
         output["daily_success_rate"] = await get_daily_success_rate(
             project_id=project_id,
-            start_timestamp=seven_days_ago_timestamp,
-            end_timestamp=today_timestamp,
-            flag_filter=flag_filter,
-            event_name_filter=event_name_filter,
-            sentiment_filter=sentiment_filter,
-            last_eval_source=last_eval_source_filter,
-            language_filter=language_filter,
-            metadata_filter=metadata_filter,
+            **daily_tasks_filters.model_dump(),
         )
     if "success_rate_per_task_position" in metrics:
         output[
             "success_rate_per_task_position"
         ] = await get_success_rate_per_task_position(
             project_id=project_id,
-            quantile_filter=quantile_filter,
-            flag_filter=flag_filter,
-            event_name_filter=event_name_filter,
-            created_at_start=created_at_start,
-            sentiment_filter=sentiment_filter,
-            created_at_end=created_at_end,
-            last_eval_source=last_eval_source_filter,
-            language_filter=language_filter,
-            metadata_filter=metadata_filter,
+            **filters.model_dump(),
         )
     return output
 
 
 async def get_total_nb_of_sessions(
     project_id: str,
-    event_name_filter: Optional[List[str]] = None,
+    event_name: Optional[List[str]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    **kwargs,
 ) -> int:
     """
     Get the total number of sessions of a project.
@@ -986,18 +924,14 @@ async def get_total_nb_of_sessions(
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
-    if event_name_filter is not None:
+    if event_name is not None:
         collection_name = "sessions_with_events"
         pipeline.append(
             {
                 "$match": {
                     "$and": [
                         {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
+                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
                     ]
                 },
             },
@@ -1016,9 +950,10 @@ async def get_total_nb_of_sessions(
 
 async def get_global_average_session_length(
     project_id: str,
-    event_name_filter: Optional[List[str]] = None,
+    event_name: Optional[List[str]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    **kwargs,
 ) -> float:
     """
     Get the global average session length of a project.
@@ -1036,18 +971,14 @@ async def get_global_average_session_length(
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
-    if event_name_filter is not None:
+    if event_name is not None:
         collection_name = "sessions_with_events"
         pipeline.append(
             {
                 "$match": {
                     "$and": [
                         {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
+                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
                     ]
                 },
             },
@@ -1076,9 +1007,10 @@ async def get_global_average_session_length(
 
 async def get_last_message_success_rate(
     project_id: str,
-    event_name_filter: Optional[List[str]] = None,
+    event_name: Optional[List[str]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    **kwargs,
 ) -> float:
     """
     Get the success rate of the last message of a project.
@@ -1092,18 +1024,14 @@ async def get_last_message_success_rate(
     if created_at_end is not None:
         main_filter["created_at"] = {"$lte": created_at_end}
     pipeline: List[Dict[str, object]] = [{"$match": main_filter}]
-    if event_name_filter is not None:
+    if event_name is not None:
         collection_name = "sessions_with_events"
         pipeline.append(
             {
                 "$match": {
                     "$and": [
                         {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
+                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
                     ]
                 },
             },
@@ -1160,9 +1088,10 @@ async def get_last_message_success_rate(
 
 async def get_nb_sessions_per_day(
     project_id: str,
-    start_timestamp: int,
-    end_timestamp: int,
-    event_name_filter: Optional[List[str]] = None,
+    created_at_start: int,
+    created_at_end: int,
+    event_name: Optional[List[str]] = None,
+    **kwargs,
 ) -> List[dict]:
     """
     Get the nb of sessions per day of a project.
@@ -1173,22 +1102,18 @@ async def get_nb_sessions_per_day(
         {
             "$match": {
                 "project_id": project_id,
-                "created_at": {"$gte": start_timestamp, "$lte": end_timestamp},
+                "created_at": {"$gte": created_at_start, "$lte": created_at_end},
             }
         },
     ]
-    if event_name_filter is not None:
+    if event_name is not None:
         collection_name = "sessions_with_events"
         pipeline.append(
             {
                 "$match": {
                     "$and": [
                         {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
+                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
                     ]
                 },
             },
@@ -1206,8 +1131,8 @@ async def get_nb_sessions_per_day(
     )
     df = pd.DataFrame(result)
     complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(start_timestamp, datetime.timezone.utc),
-        datetime.datetime.fromtimestamp(end_timestamp, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(created_at_start, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(created_at_end, datetime.timezone.utc),
         freq="D",
     )
     complete_df = pd.DataFrame({"date": complete_date_range})
@@ -1236,9 +1161,10 @@ async def get_nb_sessions_per_day(
 
 async def get_nb_sessions_histogram(
     project_id: str,
-    event_name_filter: Optional[List[str]] = None,
+    event_name: Optional[List[str]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
+    **kwargs,
 ):
     """
     Get the number of sessions per session length
@@ -1251,18 +1177,14 @@ async def get_nb_sessions_histogram(
     if created_at_end is not None:
         main_filter["created_at"] = {"$lte": created_at_end}
     pipeline: List[Dict[str, object]] = [{"$match": main_filter}]
-    if event_name_filter is not None:
+    if event_name is not None:
         collection_name = "sessions_with_events"
         pipeline.append(
             {
                 "$match": {
                     "$and": [
                         {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {"event_name": {"$in": event_name_filter}}
-                            }
-                        },
+                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
                     ]
                 },
             },
@@ -1316,9 +1238,7 @@ async def get_sessions_aggregated_metrics(
     project_id: str,
     quantile_filter: Optional[float] = None,
     metrics: Optional[List[str]] = None,
-    event_name_filter: Optional[List[str]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
+    filters: Optional[ProjectDataFilters] = None,
 ) -> Dict[str, object]:
     """
     Compute aggregated metrics for the sessions of a project. Used for the Sessions dashboard.
@@ -1340,6 +1260,9 @@ async def get_sessions_aggregated_metrics(
             "success_rate_per_task_position",
         ]
 
+    if filters is None:
+        filters = ProjectDataFilters()
+
     # Get timestamps
     today_datetime = datetime.datetime.now(datetime.timezone.utc)
     today_timestamp = int(today_datetime.timestamp())
@@ -1355,37 +1278,32 @@ async def get_sessions_aggregated_metrics(
     if "total_nb_sessions" in metrics:
         output["total_nb_sessions"] = await get_total_nb_of_sessions(
             project_id=project_id,
-            event_name_filter=event_name_filter,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
+            **filters.model_dump(),
         )
     if "average_session_length" in metrics:
         output["average_session_length"] = await get_global_average_session_length(
             project_id=project_id,
-            event_name_filter=event_name_filter,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
+            **filters.model_dump(),
         )
     if "last_task_success_rate" in metrics:
         output["last_task_success_rate"] = await get_last_message_success_rate(
             project_id=project_id,
-            event_name_filter=event_name_filter,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
+            **filters.model_dump(),
         )
     if "nb_sessions_per_day" in metrics:
+        daily_sessions_filters = filters
+        if daily_sessions_filters.created_at_start is None:
+            daily_sessions_filters.created_at_start = seven_days_ago_timestamp
+        if daily_sessions_filters.created_at_end is None:
+            daily_sessions_filters.created_at_end = today_timestamp
         output["nb_sessions_per_day"] = await get_nb_sessions_per_day(
             project_id=project_id,
-            start_timestamp=seven_days_ago_timestamp,
-            end_timestamp=today_timestamp,
-            event_name_filter=event_name_filter,
+            **filters.model_dump(),
         )
     if "session_length_histogram" in metrics:
         output["session_length_histogram"] = await get_nb_sessions_histogram(
             project_id=project_id,
-            event_name_filter=event_name_filter,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
+            **filters.model_dump(),
         )
     if "success_rate_per_task_position" in metrics:
         output[
@@ -1393,9 +1311,7 @@ async def get_sessions_aggregated_metrics(
         ] = await get_success_rate_per_task_position(
             project_id=project_id,
             quantile_filter=quantile_filter,
-            event_name_filter=event_name_filter,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
+            **filters.model_dump(),
         )
 
     return output
@@ -1789,7 +1705,7 @@ async def get_success_rate_by_event_name(
 
 async def get_total_nb_of_detections(
     project_id: str,
-    event_name_filter: Optional[List[str]] = None,
+    event_name: Optional[List[str]] = None,
     created_at_start: Optional[int] = None,
     created_at_end: Optional[int] = None,
 ) -> int:
@@ -1804,8 +1720,8 @@ async def get_total_nb_of_detections(
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
         main_filter["created_at"] = {"$lte": created_at_end}
-    if event_name_filter is not None:
-        main_filter["job_metadata.event_name"] = {"$in": event_name_filter}
+    if event_name is not None:
+        main_filter["job_metadata.event_name"] = {"$in": event_name}
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
         {"$count": "nb_detections"},
@@ -1821,10 +1737,10 @@ async def get_total_nb_of_detections(
 async def get_events_aggregated_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
-    event_name_filter: Optional[List[str]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
+    filters: Optional[ProjectDataFilters] = None,
 ) -> Dict[str, object]:
+    if filters is None:
+        filters = ProjectDataFilters()
     if metrics is None:
         metrics = [
             "success_rate_by_event_name",
@@ -1833,15 +1749,12 @@ async def get_events_aggregated_metrics(
     if "success_rate_by_event_name" in metrics:
         output["success_rate_by_event_name"] = await get_success_rate_by_event_name(
             project_id=project_id,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
+            **filters.model_dump(),
         )
     if "total_nb_events" in metrics:
         output["total_nb_events"] = await get_total_nb_of_detections(
             project_id=project_id,
-            event_name_filter=event_name_filter,
-            created_at_start=created_at_start,
-            created_at_end=created_at_end,
+            **filters.model_dump(),
         )
     return output
 

@@ -17,6 +17,7 @@ import { MetadataFieldsToUniqueValues } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { da } from "date-fns/locale";
 import {
   Annoyed,
   Calendar,
@@ -27,6 +28,7 @@ import {
   Languages,
   ListFilter,
   Meh,
+  PenSquare,
   Smile,
   SmilePlus,
   ThumbsDown,
@@ -112,7 +114,7 @@ const FilterComponent = ({
         <div className="flex align-items space-x-2">
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
-              <ListFilter className="h-4 w-4 mr-2" />
+              <ListFilter className="h-4 w-4 mr-1" />
               Filters
             </Button>
           </DropdownMenuTrigger>
@@ -130,6 +132,21 @@ const FilterComponent = ({
             >
               {dataFilters.flag}
               <X className="h-4 w-4" />
+            </Button>
+          )}
+          {dataFilters.has_notes && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDataFilters({
+                  ...dataFilters,
+                  has_notes: false,
+                });
+                resetPagination();
+              }}
+            >
+              Has notes
+              <X className="h-4 w-4 ml-2" />
             </Button>
           )}
           {dataFilters.event_name &&
@@ -273,11 +290,17 @@ const FilterComponent = ({
                   onClick={() => {
                     setDataFilters({
                       ...dataFilters,
-                      flag: null,
+                      has_notes: !dataFilters.has_notes,
                     });
                     resetPagination();
                   }}
-                ></DropdownMenuItem>
+                  style={{
+                    color: dataFilters.has_notes ? "green" : "inherit",
+                  }}
+                >
+                  <PenSquare className="h-4 w-4 mr-2" />
+                  <span>Has notes </span>
+                </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>

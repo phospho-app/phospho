@@ -289,6 +289,7 @@ export function getColumns({
           {/* <div className="flex-grow"></div> */}
           <div className="w-10">
             <AddEventDropdownForTasks
+              key={row.row.original.id}
               task={row.row.original as TaskWithEvents}
               className="hidden group-hover:block"
               setTask={(task: TaskWithEvents) => {

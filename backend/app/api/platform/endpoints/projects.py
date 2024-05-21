@@ -282,6 +282,7 @@ async def post_tasks(
         sorting=query.sorting,
         created_at_start=query.filters.created_at_start,
         created_at_end=query.filters.created_at_end,
+        has_notes_filter=query.filters.has_notes,
     )
     return Tasks(tasks=tasks)
 
@@ -398,7 +399,7 @@ async def get_users(
 )
 async def get_project_unique_events(
     project_id: str,
-    events_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ) -> Events:
     """
@@ -408,7 +409,7 @@ async def get_project_unique_events(
     propelauth.require_org_member(user, project.org_id)
     events = await get_all_events(
         project_id=project_id,
-        events_filter=events_filter,
+        filters=filters,
         include_removed=True,
         unique=True,
     )

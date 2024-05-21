@@ -74,6 +74,9 @@ async def get_tasks(
         event_name_filter=filters.event_name,
         last_eval_source=filters.last_eval_source,
         metadata_filter=filters.metadata,
+        created_at_end=filters.created_at_end,
+        created_at_start=filters.created_at_start,
+        has_notes_filter=filters.has_notes,
     )
     return Tasks(tasks=tasks)
 
