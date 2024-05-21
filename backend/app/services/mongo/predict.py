@@ -39,6 +39,7 @@ async def metered_prediction(
         except Exception as e:
             logger.error(f"Error validating prediction: {e}")
 
+    logger.debug(f"jobresults: {jobresults}")
     mongo_db = await get_mongo_db()
     mongo_db["job_results"].insert_many(
         [jobresult.model_dump() for jobresult in jobresults]

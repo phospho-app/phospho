@@ -24,7 +24,7 @@ class ChatCompletionMessageParam(pydantic.BaseModel):
 
 
 class CreateRequest(pydantic.BaseModel):
-    messages: Iterable[ChatCompletionMessageParam]
+    messages: List[ChatCompletionMessageParam]
     model: Literal["openai:gpt-4o",]
     frequency_penalty: Optional[float] | None = None
     # function_call: completion_create_params.FunctionCall | None = None
@@ -105,13 +105,14 @@ async def create(
             detail="An error occurred while generating predictions.",
         )
 
-    if org_id != config.PHOSPHO_ORG_ID and config.ENVIRONMENT == "production":
+    # if org_id != config.PHOSPHO_ORG_ID and config.ENVIRONMENT == "production":
+    if True:
         background_tasks.add_task(
             metered_prediction,
             org_id=org["org"]["org_id"],
             model_id=f"{provider}:{model_name}",
-            inputs=[query_inputs],
-            predictions=[response],
+            inputs=[create_request.model_dump()],
+            predictions=[response.model_dump()],
             project_id=project_id,
         )
 
