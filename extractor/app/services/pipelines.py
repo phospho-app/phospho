@@ -667,3 +667,23 @@ async def sentiment_and_language_analysis_pipeline(
     logger.info(f"Sentiment analysis for task {task.id} : {sentiment_object}")
 
     return sentiment_object, language
+
+
+async def store_opentelemetry_data_in_db(
+    open_telemetry_data: dict, project_id: str, org_id: str
+):
+    """
+    Store the opentelemetry data in the database
+    """
+    mongo_db = await get_mongo_db()
+
+    # Store the data in the database
+    mongo_db["opentelemetry"].insert_one(
+        {
+            "org_id": org_id,
+            "project_id": project_id,
+            "open_telemetry_data": open_telemetry_data,
+        }
+    )
+    logger.info("Opentelemetry data stored in the database")
+    return {"status": "ok"}

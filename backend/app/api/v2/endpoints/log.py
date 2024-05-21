@@ -4,13 +4,18 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 from pydantic import ValidationError
 
-from app.api.v2.models import LogEvent, LogReply, LogRequest, LogError
+from app.api.v2.models import (
+    LogEvent,
+    LogReply,
+    LogRequest,
+    LogError,
+)
 from app.security import (
     authenticate_org_key,
     verify_propelauth_org_owns_project_id,
     get_quota,
 )
-from app.services.mongo.extractor import run_log_process
+from app.services.mongo.extractor import run_log_process, store_open_telemetry_data
 from app.services.mongo.emails import send_quota_exceeded_email
 from app.core import config
 
@@ -99,3 +104,28 @@ async def store_batch_of_log_events(
     )
 
     return log_reply
+
+
+@router.post(
+    "/log/{project_id}/opentelemetry",
+    response_model=dict,
+    description="Store data from OpenTelemetry in database",
+)
+async def store_opentelemetry_log(
+    project_id: str,
+    open_telemetry_data: dict,
+    background_tasks: BackgroundTasks,
+    org: dict = Depends(authenticate_org_key),
+):
+    """Store the opentelemetry data in the opentelemetry database"""
+
+    await verify_propelauth_org_owns_project_id(org, project_id)
+
+    background_tasks.add_task(
+        store_open_telemetry_data,
+        open_telemetry_data=open_telemetry_data,
+        project_id=project_id,
+        org_id=org["org"].get("org_id"),
+    )
+
+    return {"status": "ok"}
