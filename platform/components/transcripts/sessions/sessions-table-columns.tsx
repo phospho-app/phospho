@@ -4,13 +4,6 @@ import {
 } from "@/components/label-events";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -25,13 +18,11 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  ChevronDown,
   ChevronRight,
-  FilterX,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import useSWR, { KeyedMutator } from "swr";
+import { KeyedMutator } from "swr";
 
 export function getColumns({
   mutateSessions,
@@ -39,32 +30,8 @@ export function getColumns({
   mutateSessions: KeyedMutator<SessionWithEvents[]>;
 }): ColumnDef<SessionWithEvents>[] {
   const project_id = navigationStateStore((state) => state.project_id);
-  const sessionsPagination = navigationStateStore(
-    (state) => state.sessionsPagination,
-  );
-  const setSessionsPagination = navigationStateStore(
-    (state) => state.setSessionsPagination,
-  );
 
   const { accessToken } = useUser();
-  let uniqueEventNamesInData: string[] = [];
-
-  const { data: uniqueEvents } = useSWR(
-    project_id
-      ? [`/api/projects/${project_id}/unique-events`, accessToken]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-  if (project_id && uniqueEvents?.events) {
-    uniqueEventNamesInData = Array.from(
-      new Set(
-        uniqueEvents.events.map((event: Event) => event.event_name as string),
-      ),
-    );
-  }
 
   // Create the columns for the data table
   const columns: ColumnDef<SessionWithEvents>[] = [
@@ -125,52 +92,10 @@ export function getColumns({
       },
       header: ({ column }) => {
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === "asc")
-                }
-              >
-                <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-                Events
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {uniqueEventNamesInData.map((eventName) => (
-                <DropdownMenuItem
-                  key={eventName}
-                  onClick={() => {
-                    column.setFilterValue(eventName);
-                    // reset the page to 0
-                    setSessionsPagination({
-                      ...sessionsPagination,
-                      pageIndex: 0,
-                    });
-                  }}
-                >
-                  {eventName}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                key="event_clear"
-                onClick={() => {
-                  column.setFilterValue(null);
-                  setSessionsPagination({
-                    ...sessionsPagination,
-                    pageIndex: 0,
-                  });
-                }}
-              >
-                <FilterX className="h-4 w-4 mr-1" />
-                Clear filter
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-            <DropdownMenu />
-          </DropdownMenu>
+          <div className="flex flex-row items-center">
+            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+            Events
+          </div>
         );
       },
       accessorKey: "events",

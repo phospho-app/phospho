@@ -155,34 +155,27 @@ async def get_dashboard_project_metrics(
 async def get_tasks_project_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
-    tasks_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
     Get aggregated metrics for the tasks of a project. Used for the Tasks dashboard.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    if tasks_filter is None:
-        tasks_filter = ProjectDataFilters(flag=None, event_name=None)
-    if isinstance(tasks_filter.event_name, str):
-        tasks_filter.event_name = [tasks_filter.event_name]
+    if filters is None:
+        filters = ProjectDataFilters(flag=None, event_name=None)
+    if isinstance(filters.event_name, str):
+        filters.event_name = [filters.event_name]
     # Convert to UNIX timestamp in seconds
-    if isinstance(tasks_filter.created_at_start, datetime.datetime):
-        tasks_filter.created_at_start = int(tasks_filter.created_at_start.timestamp())
-    if isinstance(tasks_filter.created_at_end, datetime.datetime):
-        tasks_filter.created_at_end = int(tasks_filter.created_at_end.timestamp())
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = int(filters.created_at_start.timestamp())
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = int(filters.created_at_end.timestamp())
 
     output = await get_tasks_aggregated_metrics(
         project_id=project_id,
-        flag_filter=tasks_filter.flag,
-        event_name_filter=tasks_filter.event_name,
         metrics=metrics,
-        created_at_start=tasks_filter.created_at_start,
-        created_at_end=tasks_filter.created_at_end,
-        last_eval_source_filter=tasks_filter.last_eval_source,
-        sentiment_filter=tasks_filter.sentiment,
-        language_filter=tasks_filter.language,
-        metadata_filter=tasks_filter.metadata,
+        filters=filters,
     )
     return output
 
@@ -194,32 +187,28 @@ async def get_tasks_project_metrics(
 async def get_sessions_project_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
-    sessions_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
     Get aggregated metrics for the sessions of a project. Used for the Sessions dashboard.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    logger.info(f"Sessions request: {sessions_filter}")
-    if sessions_filter is None:
-        sessions_filter = ProjectDataFilters(event_name=None)
-    if isinstance(sessions_filter.event_name, str):
-        sessions_filter.event_name = [sessions_filter.event_name]
+    logger.info(f"Sessions request: {filters}")
+    if filters is None:
+        filters = ProjectDataFilters(event_name=None)
+    if isinstance(filters.event_name, str):
+        filters.event_name = [filters.event_name]
     # Convert to UNIX timestamp in seconds
-    if isinstance(sessions_filter.created_at_start, datetime.datetime):
-        sessions_filter.created_at_start = int(
-            sessions_filter.created_at_start.timestamp()
-        )
-    if isinstance(sessions_filter.created_at_end, datetime.datetime):
-        sessions_filter.created_at_end = int(sessions_filter.created_at_end.timestamp())
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = int(filters.created_at_start.timestamp())
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = int(filters.created_at_end.timestamp())
 
     output = await get_sessions_aggregated_metrics(
         project_id=project_id,
         metrics=metrics,
-        event_name_filter=sessions_filter.event_name,
-        created_at_start=sessions_filter.created_at_start,
-        created_at_end=sessions_filter.created_at_end,
+        filters=filters,
     )
     return output
 
@@ -249,8 +238,7 @@ async def get_events_project_metrics(
     output = await get_events_aggregated_metrics(
         project_id=project_id,
         metrics=metrics,
-        created_at_start=filters.created_at_start,
-        created_at_end=filters.created_at_end,
+        filters=filters,
     )
     return output
 
@@ -263,14 +251,12 @@ async def get_events_project_metrics(
 async def get_filtered_events(
     project_id: str,
     limit: int = 1000,
-    events_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ) -> Events:
     await verify_if_propelauth_user_can_access_project(user, project_id)
 
-    events = await get_all_events(
-        project_id=project_id, limit=limit, events_filter=events_filter
-    )
+    events = await get_all_events(project_id=project_id, limit=limit, filters=filters)
     return Events(events=events)
 
 
@@ -485,8 +471,6 @@ async def get_event_detection_metrics(
     output = await get_events_aggregated_metrics(
         project_id=project_id,
         metrics=metrics,
-        event_name_filter=filters.event_name,
-        created_at_start=filters.created_at_start,
-        created_at_end=filters.created_at_end,
+        filters=filters,
     )
     return output

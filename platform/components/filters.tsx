@@ -17,6 +17,7 @@ import { MetadataFieldsToUniqueValues } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { da } from "date-fns/locale";
 import {
   Annoyed,
   Calendar,
@@ -27,6 +28,7 @@ import {
   Languages,
   ListFilter,
   Meh,
+  PenSquare,
   Smile,
   SmilePlus,
   ThumbsDown,
@@ -36,46 +38,37 @@ import {
 import React from "react";
 import useSWR from "swr";
 
-const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
-  const setTasksColumnsFilters = navigationStateStore(
-    (state) => state.setTasksColumnsFilters,
-  );
-  const tasksColumnsFilters = navigationStateStore(
-    (state) => state.tasksColumnsFilters,
-  );
+const FilterComponent = ({
+  variant = "tasks",
+}: {
+  variant: "tasks" | "sessions";
+}) => {
+  const setDataFilters = navigationStateStore((state) => state.setDataFilters);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
   const selectedProject = dataStateStore((state) => state.selectedProject);
   const { accessToken } = useUser();
   const events = selectedProject?.settings?.events;
 
-  let eventFilter: string[] | null = null;
-  let flagFilter: string | null = null;
-  let languageFilter: string | null = null;
-  let sentimentFilter: string | null = null;
-  let lastEvalSourceFilter: string | null = null;
-  let metadataFilter: Record<string, any> | null = null;
+  const setSessionsPagination = navigationStateStore(
+    (state) => state.setSessionsPagination,
+  );
+  const setTasksPagination = navigationStateStore(
+    (state) => state.setTasksPagination,
+  );
 
-  for (const [key, value] of Object.entries(tasksColumnsFilters)) {
-    if (key === "flag" && (typeof value === "string" || value === null)) {
-      flagFilter = value;
-    }
-    if (key === "event" && typeof value === "string") {
-      eventFilter = eventFilter == null ? [value] : eventFilter.concat(value);
+  const resetPagination = () => {
+    if (variant === "tasks") {
+      setTasksPagination((prev) => ({
+        ...prev,
+        pageIndex: 0,
+      }));
     } else {
-      eventFilter = null;
+      setSessionsPagination((prev) => ({
+        ...prev,
+        pageIndex: 0,
+      }));
     }
-    if (key === "language" && typeof value === "string") {
-      languageFilter = value;
-    }
-    if (key === "sentiment" && typeof value === "string") {
-      sentimentFilter = value;
-    }
-    if (key === "lastEvalSource" && typeof value === "string") {
-      lastEvalSourceFilter = value;
-    }
-    if (key === "metadata" && typeof value === "object") {
-      metadataFilter = value;
-    }
-  }
+  };
 
   // Language filters
   const { data: languages } = useSWR(
@@ -118,104 +111,137 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
   return (
     <div>
       <DropdownMenu>
-        <div className="flex align-items">
+        <div className="flex align-items space-x-2">
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
-              <ListFilter className="h-4 w-4 mr-2" />
+              <ListFilter className="h-4 w-4 mr-1" />
               Filters
             </Button>
           </DropdownMenuTrigger>
-          {flagFilter !== null && (
+          {dataFilters.flag && (
             <Button
-              className={`ml-2 color: ${flagFilter === "success" ? "green" : "red"} `}
+              className={`ml-2 color: ${dataFilters.flag === "success" ? "green" : "red"} `}
               variant="outline"
               onClick={() => {
-                setTasksColumnsFilters((prevFilters) => ({
-                  ...prevFilters,
+                setDataFilters({
+                  ...dataFilters,
                   flag: null,
-                }));
+                });
+                resetPagination();
               }}
             >
-              {flagFilter}
+              {dataFilters.flag}
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+          {dataFilters.has_notes && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDataFilters({
+                  ...dataFilters,
+                  has_notes: false,
+                });
+                resetPagination();
+              }}
+            >
+              Has notes
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
-          {eventFilter !== null && (
+          {dataFilters.event_name &&
+            dataFilters.event_name.map((event_name) => {
+              return (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDataFilters({ ...dataFilters, event_name: null });
+                    resetPagination();
+                  }}
+                >
+                  {dataFilters.event_name}
+                  <X className="h-4 w-4 ml-2" />
+                </Button>
+              );
+            })}
+          {dataFilters.language && (
             <Button
-              className="ml-2"
               variant="outline"
               onClick={() => {
-                setTasksColumnsFilters((prevFilters) => ({
-                  ...prevFilters,
-                  event: null,
-                }));
-              }}
-            >
-              {eventFilter}
-              <X className="h-4 w-4 ml-2" />
-            </Button>
-          )}
-          {languageFilter !== null && (
-            <Button
-              className="ml-2"
-              variant="outline"
-              onClick={() => {
-                setTasksColumnsFilters((prevFilters) => ({
-                  ...prevFilters,
+                setDataFilters({
+                  ...dataFilters,
                   language: null,
-                }));
+                });
+                resetPagination();
               }}
             >
-              {getLanguageLabel(languageFilter)}
+              {getLanguageLabel(dataFilters.language)}
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
-          {sentimentFilter !== null && (
+          {dataFilters.sentiment && (
             <Button
-              className="ml-2"
               variant="outline"
               onClick={() => {
-                setTasksColumnsFilters((prevFilters) => ({
-                  ...prevFilters,
+                setDataFilters({
+                  ...dataFilters,
                   sentiment: null,
-                }));
+                });
+                resetPagination();
               }}
             >
-              {sentimentFilter}
+              {dataFilters.sentiment}
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
-          {lastEvalSourceFilter !== null && (
+          {dataFilters.last_eval_source && (
             <Button
-              className="ml-2"
               variant="outline"
               onClick={() => {
-                setTasksColumnsFilters((prevFilters) => ({
-                  ...prevFilters,
-                  lastEvalSource: null,
-                }));
+                setDataFilters({
+                  ...dataFilters,
+                  last_eval_source: null,
+                });
+                resetPagination();
               }}
             >
-              {lastEvalSourceFilter}
+              {dataFilters.last_eval_source}
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
-          {metadataFilter !== null && (
+          {dataFilters.metadata &&
+            Object.entries(dataFilters.metadata).map(([key, value]) => {
+              return (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // Delete this metadata filter
+                    if (!dataFilters.metadata) {
+                      return;
+                    }
+                    delete dataFilters.metadata[key];
+                    setDataFilters({
+                      ...dataFilters,
+                    });
+                    resetPagination();
+                  }}
+                >
+                  {key}:{" "}
+                  {value.length > 20 ? value.substring(0, 20) + "..." : value}
+                  <X className="h-4 w-4 ml-2" />
+                </Button>
+              );
+            })}
+          {dataFilters && Object.keys(dataFilters).length > 0 && (
             <Button
-              className="ml-2"
-              variant="outline"
+              variant="destructive"
               onClick={() => {
-                setTasksColumnsFilters((prevFilters) => ({
-                  ...prevFilters,
-                  metadata: null,
-                }));
+                setDataFilters({});
+                resetPagination();
               }}
             >
-              {Object.entries(metadataFilter)[0][0]}:{" "}
-              {Object.entries(metadataFilter)[0][1].length > 20
-                ? Object.entries(metadataFilter)[0][1].substring(0, 20) + "..."
-                : Object.entries(metadataFilter)[0][1]}
-              <X className="h-4 w-4 ml-2" />
+              <X className="h-4 w-4 mr-1" />
+              Clear all filters
             </Button>
           )}
         </div>
@@ -232,13 +258,14 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               <DropdownMenuSubContent>
                 <DropdownMenuItem
                   onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
+                    setDataFilters({
+                      ...dataFilters,
                       flag: "success",
-                    }));
+                    });
+                    resetPagination();
                   }}
                   style={{
-                    color: flagFilter === "success" ? "green" : "inherit",
+                    color: dataFilters.flag === "success" ? "green" : "inherit",
                   }}
                 >
                   <ThumbsUp className="h-4 w-4 mr-2" />
@@ -246,17 +273,33 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
+                    setDataFilters({
+                      ...dataFilters,
                       flag: "failure",
-                    }));
+                    });
+                    resetPagination();
                   }}
                   style={{
-                    color: flagFilter === "failure" ? "red" : "inherit",
+                    color: dataFilters.flag === "failure" ? "red" : "inherit",
                   }}
                 >
                   <ThumbsDown className="h-4 w-4 mr-2" />
                   <span>Failure</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setDataFilters({
+                      ...dataFilters,
+                      has_notes: !dataFilters.has_notes,
+                    });
+                    resetPagination();
+                  }}
+                  style={{
+                    color: dataFilters.has_notes ? "green" : "inherit",
+                  }}
+                >
+                  <PenSquare className="h-4 w-4 mr-2" />
+                  <span>Has notes </span>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
@@ -275,13 +318,16 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                       <DropdownMenuItem
                         key={event.id}
                         onClick={() => {
-                          setTasksColumnsFilters((prevFilters) => ({
-                            ...prevFilters,
-                            event: event_name,
-                          }));
+                          // Override the event_name filter
+                          // TODO: Allow multiple event_name filters
+                          setDataFilters({
+                            ...dataFilters,
+                            event_name: [event_name],
+                          });
+                          resetPagination();
                         }}
                         style={{
-                          color: eventFilter?.includes(event_name)
+                          color: dataFilters?.event_name?.includes(event_name)
                             ? "green"
                             : "inherit",
                         }}
@@ -307,14 +353,15 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                       <DropdownMenuItem
                         key={languageFilterOption.value}
                         onClick={() => {
-                          setTasksColumnsFilters((prevFilters) => ({
-                            ...prevFilters,
+                          setDataFilters({
+                            ...dataFilters,
                             language: languageFilterOption.value,
-                          }));
+                          });
+                          resetPagination();
                         }}
                         style={{
                           color:
-                            languageFilter === languageFilterOption.value
+                            dataFilters.language === languageFilterOption.value
                               ? "green"
                               : "inherit",
                         }}
@@ -336,13 +383,17 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               <DropdownMenuSubContent>
                 <DropdownMenuItem
                   onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
+                    setDataFilters({
+                      ...dataFilters,
                       sentiment: "positive",
-                    }));
+                    });
+                    resetPagination();
                   }}
                   style={{
-                    color: sentimentFilter === "positive" ? "green" : "inherit",
+                    color:
+                      dataFilters.sentiment === "positive"
+                        ? "green"
+                        : "inherit",
                   }}
                 >
                   <Smile className="h-4 w-4 mr-2" />
@@ -350,13 +401,15 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
+                    setDataFilters({
+                      ...dataFilters,
                       sentiment: "neutral",
-                    }));
+                    });
+                    resetPagination();
                   }}
                   style={{
-                    color: sentimentFilter === "neutral" ? "green" : "inherit",
+                    color:
+                      dataFilters.sentiment === "neutral" ? "green" : "inherit",
                   }}
                 >
                   <Meh className="h-4 w-4 mr-2" />
@@ -364,13 +417,15 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
+                    setDataFilters({
+                      ...dataFilters,
                       sentiment: "mixed",
-                    }));
+                    });
+                    resetPagination();
                   }}
                   style={{
-                    color: sentimentFilter === "mixed" ? "green" : "inherit",
+                    color:
+                      dataFilters.sentiment === "mixed" ? "green" : "inherit",
                   }}
                 >
                   <Annoyed className="h-4 w-4 mr-2" />
@@ -378,13 +433,15 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
+                    setDataFilters({
+                      ...dataFilters,
                       sentiment: "negative",
-                    }));
+                    });
+                    resetPagination();
                   }}
                   style={{
-                    color: sentimentFilter === "negative" ? "red" : "inherit",
+                    color:
+                      dataFilters.sentiment === "negative" ? "red" : "inherit",
                   }}
                 >
                   <Frown className="h-4 w-4 mr-2" />
@@ -403,28 +460,34 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
               <DropdownMenuSubContent>
                 <DropdownMenuItem
                   onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
-                      lastEvalSource: "phospho",
-                    }));
+                    setDataFilters({
+                      ...dataFilters,
+                      last_eval_source: "phospho",
+                    });
+                    resetPagination();
                   }}
                   style={{
                     color:
-                      lastEvalSourceFilter === "phospho" ? "green" : "inherit",
+                      dataFilters.last_eval_source === "phospho"
+                        ? "green"
+                        : "inherit",
                   }}
                 >
                   phospho
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setTasksColumnsFilters((prevFilters) => ({
-                      ...prevFilters,
-                      lastEvalSource: "user",
-                    }));
+                    setDataFilters({
+                      ...dataFilters,
+                      last_eval_source: "user",
+                    });
+                    resetPagination();
                   }}
                   style={{
                     color:
-                      lastEvalSourceFilter === "user" ? "green" : "inherit",
+                      dataFilters.last_eval_source === "user"
+                        ? "green"
+                        : "inherit",
                   }}
                 >
                   user
@@ -453,12 +516,14 @@ const FilterComponent = ({}: React.HTMLAttributes<HTMLDivElement>) => {
                                 <DropdownMenuItem
                                   key={value}
                                   onClick={() => {
-                                    setTasksColumnsFilters((prevFilters) => ({
-                                      ...prevFilters,
+                                    setDataFilters({
+                                      ...dataFilters,
                                       metadata: {
+                                        ...dataFilters.metadata,
                                         [field]: value,
                                       },
-                                    }));
+                                    });
+                                    resetPagination();
                                   }}
                                 >
                                   {field !== "language"

@@ -181,3 +181,16 @@ export interface MetadataTypeToFieldsToUniqueValues {
   number: MetadataFieldsToUniqueValues;
   string: MetadataFieldsToUniqueValues;
 }
+
+export interface ProjectDataFilters {
+  created_at_start?: number | null;
+  created_at_end?: number | null;
+  event_name?: string[] | null;
+  flag?: string | null;
+  metadata?: Record<string, any> | null;
+  user_id?: string | null;
+  last_eval_source?: string | null;
+  sentiment?: string | null;
+  language?: string | null;
+  has_notes?: boolean | null;
+}

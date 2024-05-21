@@ -57,37 +57,19 @@ const SessionsDataviz: React.FC = () => {
   const { accessToken } = useUser();
 
   const project_id = navigationStateStore((state) => state.project_id);
-  const sessionsColumnsFilters = navigationStateStore(
-    (state) => state.sessionsColumnsFilters,
-  );
-  const dateRange = navigationStateStore((state) => state.dateRange);
-
-  let eventFilter: string[] | null = null;
-  for (let filter of sessionsColumnsFilters) {
-    if (filter.id === "events" && typeof filter.value === "string") {
-      eventFilter = [filter.value];
-    } else {
-      eventFilter = null;
-    }
-  }
-
-  const sessionsFilters = {
-    event_name: eventFilter,
-    created_at_start: dateRange?.created_at_start,
-    created_at_end: dateRange?.created_at_end,
-  };
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
 
   const { data: totalNbSessionsData } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/sessions`,
       accessToken,
       "total_nb_sessions",
-      JSON.stringify(sessionsFilters),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_sessions"],
-        sessions_filter: sessionsFilters,
+        filters: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -100,12 +82,12 @@ const SessionsDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/sessions`,
       accessToken,
       "average_session_length",
-      JSON.stringify(sessionsFilters),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["average_session_length"],
-        sessions_filter: sessionsFilters,
+        filters: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -119,12 +101,12 @@ const SessionsDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/sessions`,
       accessToken,
       "last_task_success_rate",
-      JSON.stringify(sessionsFilters),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["last_task_success_rate"],
-        sessions_filter: sessionsFilters,
+        filters: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -181,12 +163,12 @@ const SessionsDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/sessions`,
       accessToken,
       "nb_sessions_per_day",
-      JSON.stringify(sessionsFilters),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["nb_sessions_per_day"],
-        sessions_filter: sessionsFilters,
+        filters: dataFilters,
       }).then((data) => {
         if (!data.nb_sessions_per_day) {
           return [];
@@ -214,12 +196,12 @@ const SessionsDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/sessions`,
       accessToken,
       "session_length_histogram",
-      JSON.stringify(sessionsFilters),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken, filters]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["session_length_histogram"],
-        sessions_filter: sessionsFilters,
+        filters: dataFilters,
       }).then((data) => {
         if (!data.session_length_histogram) {
           return [];
@@ -240,12 +222,12 @@ const SessionsDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/sessions`,
       accessToken,
       "success_rate_per_task_position",
-      JSON.stringify(sessionsFilters),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["success_rate_per_task_position"],
-        sessions_filter: sessionsFilters,
+        filters: dataFilters,
       }).then((data) => {
         if (!data.success_rate_per_task_position) {
           return [];
