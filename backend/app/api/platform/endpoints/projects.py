@@ -135,7 +135,7 @@ async def post_sessions(
         project_id=project_id,
         get_events=True,
         get_tasks=False,
-        sessions_filter=query.filters,
+        filters=query.filters,
         pagination=query.pagination,
         sorting=query.sorting,
     )

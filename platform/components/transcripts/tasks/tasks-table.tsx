@@ -49,17 +49,9 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const setTasksSorting = navigationStateStore(
     (state) => state.setTasksSorting,
   );
-  const tasksColumnsFilters = navigationStateStore(
-    (state) => state.tasksColumnsFilters,
-  );
-  const setTasksColumnsFilters = navigationStateStore(
-    (state) => state.setTasksColumnsFilters,
-  );
-  const dateRange = navigationStateStore((state) => state.dateRange);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
 
-  const [query, setQuery] = useState("");
   const { accessToken } = useUser();
-  const [isLoading, setIsLoading] = useState(false);
 
   const tasksPagination = navigationStateStore(
     (state) => state.tasksPagination,
@@ -70,44 +62,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
 
   let tasksWithEvents: TaskWithEvents[] = [];
 
-  // Fetch all tasks
-  let eventFilter: string[] | null = null;
-  let flagFilter: string | null = null;
-  let lastEvalSourceFilter: string | null = null;
-  let sentimentFilter: string | null = null;
-  let languageFilter: string | null = null;
-  let metadataFilter: Record<string, any> | null = null;
-
-  for (const [key, value] of Object.entries(tasksColumnsFilters)) {
-    if (key === "flag" && (typeof value === "string" || value === null)) {
-      flagFilter = value;
-    }
-    if (key === "event" && typeof value === "string") {
-      eventFilter = eventFilter == null ? [value] : [...eventFilter, value];
-    }
-    if (key === "lastEvalSource" && typeof value === "string") {
-      lastEvalSourceFilter = value;
-    }
-    if (key === "sentiment" && typeof value === "string") {
-      sentimentFilter = value;
-    }
-    if (key === "language" && typeof value === "string") {
-      languageFilter = value;
-    }
-    if ((key === "metadata" && typeof value === "object") || value === null) {
-      metadataFilter = value;
-    }
-  }
-  let tasksFilters = {
-    flag: flagFilter,
-    event_name: eventFilter,
-    created_at_start: dateRange?.created_at_start,
-    created_at_end: dateRange?.created_at_end,
-    last_eval_source: lastEvalSourceFilter,
-    sentiment: sentimentFilter,
-    language: languageFilter,
-    metadata: metadataFilter,
-  };
+  console.log("TASKS DATA FILTERS", dataFilters);
 
   const { data: tasksData, mutate: mutateTasks } = useSWR(
     project_id
@@ -115,13 +70,13 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           `/api/projects/${project_id}/tasks`,
           accessToken,
           tasksPagination.pageIndex,
-          JSON.stringify(tasksFilters),
+          JSON.stringify(dataFilters),
           JSON.stringify(tasksSorting),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        filters: tasksFilters,
+        filters: dataFilters,
         pagination: {
           page: tasksPagination.pageIndex,
           page_size: tasksPagination.pageSize,
@@ -149,13 +104,13 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
-      JSON.stringify(tasksFilters),
+      JSON.stringify(dataFilters),
       "total_nb_tasks",
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        tasks_filter: tasksFilters,
+        tasks_filter: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -167,28 +122,6 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     ? Math.ceil(totalNbTasks / tasksPagination.pageSize)
     : 1;
 
-  const query_tasks = async () => {
-    // Call the /search endpoint
-    setIsLoading(true);
-    const response = await fetch(`/api/projects/${project_id}/search/tasks`, {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + accessToken || "",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: query,
-      }),
-    });
-    const response_json = await response.json();
-    tasksColumnsFilters.push({
-      id: "id",
-      value: response_json.task_ids,
-    });
-    table.setColumnFilters(tasksColumnsFilters);
-    setIsLoading(false);
-  };
-
   const columns = getColumns({ mutateTasks: mutateTasks });
 
   const table = useReactTable({
@@ -197,7 +130,6 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setTasksSorting,
     // getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setTasksColumnsFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: setTasksPagination,
@@ -216,88 +148,10 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
 
   return (
     <div>
-      <div className="flex flex-row gap-x-2 items-center mb-2">
-        {/* <div className="flex-grow">
-          <Input
-            placeholder="Search for a topic"
-            value={
-              // (table.getColumn("output")?.getFilterValue() as string) ?? ""
-              query
-            }
-            onChange={(event) => {
-              // table.getColumn("id")?.setFilterValue(event.target.value)
-              // Reset the filters on id :
-
-              setQuery(event.target.value);
-              if (event.target.value === "") {
-                // Remove the filters on id :
-                table.setColumnFilters(
-                  tasksColumnsFilters.filter((filter) => filter.id !== "id"),
-                );
-              }
-            }}
-            className="max-w-sm"
-          />
-        </div>
-        <div>
-          <Button
-            onClick={async () => {
-              table.setColumnFilters(
-                tasksColumnsFilters.filter((filter) => filter.id !== "id"),
-              );
-              query_tasks();
-            }}
-            variant="outline"
-          >
-            <Sparkles className="h-4 w-4" />
-            Search
-          </Button>
-        </div>
-        {isLoading && (
-          <svg
-            className="animate-spin ml-1 h-5 w-5 text-white"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="black"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="black"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            ></path>
-          </svg>
-        )} */}
-      </div>
       <div className="flex flex-row justify-between items-center mb-2 gap-x-2">
         <div className="flex flew-row  gap-x-2">
           <DatePickerWithRange />
-          <FilterComponent />
-          {tasksColumnsFilters &&
-            Object.keys(tasksColumnsFilters).length > 0 && (
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  table.setColumnFilters([]);
-                  setQuery("");
-                  eventFilter = null;
-                  flagFilter = null;
-                  lastEvalSourceFilter = null;
-                  sentimentFilter = null;
-                  languageFilter = null;
-                }}
-              >
-                <X className="h-4 w-4 mr-1" />
-                Clear all filters
-              </Button>
-            )}
+          <FilterComponent variant="tasks" />
         </div>
         <TableNavigation table={table} />
       </div>

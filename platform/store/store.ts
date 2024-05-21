@@ -3,6 +3,7 @@ import {
   HasEnoughLabelledTasks,
   OrgMetadata,
   Project,
+  ProjectDataFilters,
   Task,
 } from "@/models/models";
 import {
@@ -25,23 +26,18 @@ interface navigationState {
   project_id: string | null | undefined;
   setproject_id: (projectId: string | null) => void;
 
-  tasksColumnsFilters: ColumnFiltersState;
-  setTasksColumnsFilters: (
-    tasksColumnsFilters: Updater<ColumnFiltersState>,
-  ) => void;
   tasksPagination: PaginationState;
   setTasksPagination: (taskPagination: Updater<PaginationState>) => void;
   tasksSorting: SortingState;
   setTasksSorting: (taskSorting: Updater<SortingState>) => void;
 
-  sessionsColumnsFilters: ColumnFiltersState;
-  setSessionsColumnsFilters: (
-    sessionsColumnsFilters: Updater<ColumnFiltersState>,
-  ) => void;
   sessionsPagination: PaginationState;
   setSessionsPagination: (sessionsPagination: Updater<PaginationState>) => void;
   sessionsSorting: SortingState;
   setSessionsSorting: (sessionsSorting: Updater<SortingState>) => void;
+
+  dataFilters: ProjectDataFilters;
+  setDataFilters: (tasksColumnsFilters: ProjectDataFilters) => void;
 
   dateRangePreset: string | null;
   dateRange: CustomDateRange | undefined;
@@ -67,19 +63,10 @@ export const navigationStateStore = create(
       setproject_id: (projectId: string | null) =>
         set((state) => ({ project_id: projectId })),
 
-      tasksColumnsFilters: [],
-      setTasksColumnsFilters: (updaterOrValue: Updater<ColumnFiltersState>) =>
-        set((state) => {
-          if (typeof updaterOrValue === "function") {
-            const update = updaterOrValue(state.tasksColumnsFilters);
-            return {
-              tasksColumnsFilters: update,
-            };
-          }
-          return {
-            tasksColumnsFilters: updaterOrValue,
-          };
-        }),
+      dataFilters: {} as ProjectDataFilters,
+      setDataFilters: (filters: ProjectDataFilters) =>
+        set((state) => ({ dataFilters: filters })),
+
       tasksPagination: {
         pageSize: 10,
         pageIndex: 0,
@@ -115,21 +102,6 @@ export const navigationStateStore = create(
           };
         }),
 
-      sessionsColumnsFilters: [],
-      setSessionsColumnsFilters: (
-        updaterOrValue: Updater<ColumnFiltersState>,
-      ) =>
-        set((state) => {
-          if (typeof updaterOrValue === "function") {
-            const update = updaterOrValue(state.sessionsColumnsFilters);
-            return {
-              sessionsColumnsFilters: update,
-            };
-          }
-          return {
-            sessionsColumnsFilters: updaterOrValue,
-          };
-        }),
       sessionsPagination: {
         pageSize: 10,
         pageIndex: 0,
@@ -183,6 +155,11 @@ export const navigationStateStore = create(
           set((state) => ({
             dateRangePreset: null,
             dateRange: undefined,
+            dataFilters: {
+              ...state.dataFilters,
+              created_at_start: undefined,
+              created_at_end: undefined,
+            },
           }));
           return;
         }
@@ -230,6 +207,13 @@ export const navigationStateStore = create(
         set((state) => ({
           dateRangePreset: dateRangePreset,
           dateRange: dateRangePresetToRange.get(dateRangePreset),
+          dataFilters: {
+            ...state.dataFilters,
+            created_at_start:
+              dateRangePresetToRange.get(dateRangePreset)?.created_at_start,
+            created_at_end:
+              dateRangePresetToRange.get(dateRangePreset)?.created_at_end,
+          },
         }));
       },
       setDateRange: (dateRange: DateRange) => {
@@ -239,6 +223,15 @@ export const navigationStateStore = create(
           dateRange: {
             from: dateRange.from,
             to: dateRange.to,
+            created_at_start: dateRange.from
+              ? dateRange.from.getTime() / 1000
+              : undefined,
+            created_at_end: dateRange.to
+              ? dateRange.to.getTime() / 1000
+              : undefined,
+          },
+          dataFilters: {
+            ...state.dataFilters,
             created_at_start: dateRange.from
               ? dateRange.from.getTime() / 1000
               : undefined,

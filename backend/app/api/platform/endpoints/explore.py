@@ -194,32 +194,30 @@ async def get_tasks_project_metrics(
 async def get_sessions_project_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
-    sessions_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
     Get aggregated metrics for the sessions of a project. Used for the Sessions dashboard.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    logger.info(f"Sessions request: {sessions_filter}")
-    if sessions_filter is None:
-        sessions_filter = ProjectDataFilters(event_name=None)
-    if isinstance(sessions_filter.event_name, str):
-        sessions_filter.event_name = [sessions_filter.event_name]
+    logger.info(f"Sessions request: {filters}")
+    if filters is None:
+        filters = ProjectDataFilters(event_name=None)
+    if isinstance(filters.event_name, str):
+        filters.event_name = [filters.event_name]
     # Convert to UNIX timestamp in seconds
-    if isinstance(sessions_filter.created_at_start, datetime.datetime):
-        sessions_filter.created_at_start = int(
-            sessions_filter.created_at_start.timestamp()
-        )
-    if isinstance(sessions_filter.created_at_end, datetime.datetime):
-        sessions_filter.created_at_end = int(sessions_filter.created_at_end.timestamp())
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = int(filters.created_at_start.timestamp())
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = int(filters.created_at_end.timestamp())
 
     output = await get_sessions_aggregated_metrics(
         project_id=project_id,
         metrics=metrics,
-        event_name_filter=sessions_filter.event_name,
-        created_at_start=sessions_filter.created_at_start,
-        created_at_end=sessions_filter.created_at_end,
+        event_name_filter=filters.event_name,
+        created_at_start=filters.created_at_start,
+        created_at_end=filters.created_at_end,
     )
     return output
 

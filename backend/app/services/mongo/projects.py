@@ -693,7 +693,7 @@ async def get_all_events(
 async def get_all_sessions(
     project_id: str,
     limit: int = 1000,
-    sessions_filter: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = None,
     get_events: bool = True,
     get_tasks: bool = False,
     pagination: Optional[Pagination] = None,
@@ -703,24 +703,24 @@ async def get_all_sessions(
     collection_name = "sessions"
     # await compute_session_length(project_id)
     additional_sessions_filter: Dict[str, object] = {}
-    if sessions_filter is not None:
-        if sessions_filter.created_at_start is not None:
+    if filters is not None:
+        if filters.created_at_start is not None:
             additional_sessions_filter["created_at"] = {
                 "$gte": cast_datetime_or_timestamp_to_timestamp(
-                    sessions_filter.created_at_start
+                    filters.created_at_start
                 )
             }
-        if sessions_filter.created_at_end is not None:
+        if filters.created_at_end is not None:
             additional_sessions_filter["created_at"] = {
                 **additional_sessions_filter.get("created_at", {}),
-                "$lte": sessions_filter.created_at_end,
+                "$lte": filters.created_at_end,
             }
 
-        if sessions_filter.flag is not None:
-            additional_sessions_filter["flag"] = sessions_filter.flag
+        if filters.flag is not None:
+            additional_sessions_filter["flag"] = filters.flag
 
-        if sessions_filter.metadata is not None:
-            for key, value in sessions_filter.metadata.items():
+        if filters.metadata is not None:
+            for key, value in filters.metadata.items():
                 additional_sessions_filter[f"metadata.{key}"] = value
 
     pipeline: List[Dict[str, object]] = [
@@ -731,11 +731,9 @@ async def get_all_sessions(
             }
         },
     ]
-    if get_events or (
-        sessions_filter is not None and sessions_filter.event_name is not None
-    ):
+    if get_events or (filters is not None and filters.event_name is not None):
         collection_name = "sessions_with_events"
-        if sessions_filter is not None and sessions_filter.event_name is not None:
+        if filters is not None and filters.event_name is not None:
             pipeline.extend(
                 [
                     {
@@ -745,9 +743,7 @@ async def get_all_sessions(
                                 {
                                     "events": {
                                         "$elemMatch": {
-                                            "event_name": {
-                                                "$in": sessions_filter.event_name
-                                            }
+                                            "event_name": {"$in": filters.event_name}
                                         }
                                     }
                                 },
@@ -757,9 +753,7 @@ async def get_all_sessions(
                 ]
             )
 
-    if get_tasks or (
-        sessions_filter is not None and sessions_filter.user_id is not None
-    ):
+    if get_tasks or (filters is not None and filters.user_id is not None):
         pipeline.extend(
             [
                 {
@@ -774,14 +768,14 @@ async def get_all_sessions(
                 {"$addFields": {"tasks": {"$ifNull": ["$tasks", []]}}},
             ]
         )
-        if sessions_filter is not None and sessions_filter.user_id is not None:
-            logger.debug(f"Filtering sessions by user_id: {sessions_filter.user_id}")
+        if filters is not None and filters.user_id is not None:
+            logger.debug(f"Filtering sessions by user_id: {filters.user_id}")
             pipeline.extend(
                 [
                     {
                         "$match": {
                             # Filter the sessions to keep the ones where a tasks.metadata.user_id matches the filter
-                            "tasks.metadata.user_id": sessions_filter.user_id
+                            "tasks.metadata.user_id": filters.user_id
                         }
                     },
                 ]

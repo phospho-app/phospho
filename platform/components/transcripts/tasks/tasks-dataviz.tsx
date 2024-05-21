@@ -58,65 +58,21 @@ interface TasksMetrics {
 const TasksDataviz: React.FC = () => {
   const { accessToken } = useUser();
 
-  const tasksColumnsFilters = navigationStateStore(
-    (state) => state.tasksColumnsFilters,
-  );
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
   const hasSessions = dataStateStore((state) => state.hasSessions);
   const project_id = navigationStateStore((state) => state.project_id);
-  const dateRange = navigationStateStore((state) => state.dateRange);
-
-  let flagFilter: string | null = null;
-  let eventFilter: string[] | null = null;
-  let lastEvalSourceFilter: string | null = null;
-  let sentimentFilter: string | null = null;
-  let languageFilter: string | null = null;
-  let metadataFilter: Record<string, any> | null = null;
-
-  for (const [key, value] of Object.entries(tasksColumnsFilters)) {
-    if (key === "flag" && (typeof value === "string" || value === null)) {
-      flagFilter = value;
-    }
-    if (key === "event" && typeof value === "string") {
-      eventFilter = eventFilter == null ? [value] : eventFilter.concat(value);
-    } else {
-      eventFilter = null;
-    }
-    if (key === "language" && typeof value === "string") {
-      languageFilter = value;
-    }
-    if (key === "lastEvalSource" && typeof value === "string") {
-      lastEvalSourceFilter = value;
-    }
-    if (key === "sentiment" && typeof value === "string") {
-      sentimentFilter = value;
-    }
-    if ((key === "metadata" && typeof value === "object") || value === null) {
-      metadataFilter = value;
-    }
-  }
-
-  const tasksFilters = {
-    flag: flagFilter,
-    event_name: eventFilter,
-    created_at_start: dateRange?.created_at_start,
-    created_at_end: dateRange?.created_at_end,
-    last_eval_source: lastEvalSourceFilter,
-    sentiment: sentimentFilter,
-    language: languageFilter,
-    metadata: metadataFilter,
-  };
 
   const { data: totalNbTasksData } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
       "total_nb_tasks",
-      JSON.stringify(tasksFilters),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        tasks_filter: tasksFilters,
+        tasks_filter: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -130,12 +86,12 @@ const TasksDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
       "most_detected_event",
-      JSON.stringify(tasksFilters),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["most_detected_event"],
-        tasks_filter: tasksFilters,
+        tasks_filter: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -149,12 +105,12 @@ const TasksDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
       "global_success_rate",
-      JSON.stringify(tasksFilters),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["global_success_rate"],
-        tasks_filter: tasksFilters,
+        tasks_filter: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -171,12 +127,12 @@ const TasksDataviz: React.FC = () => {
         accessToken,
 
         "nb_daily_tasks",
-        JSON.stringify(tasksFilters),
+        JSON.stringify(dataFilters),
       ],
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["nb_daily_tasks"],
-          tasks_filter: tasksFilters,
+          tasks_filter: dataFilters,
         }).then((data) => {
           if (!data?.nb_daily_tasks) {
             return null;
@@ -200,12 +156,12 @@ const TasksDataviz: React.FC = () => {
         `/api/explore/${project_id}/aggregated/tasks`,
         accessToken,
         "events_ranking",
-        JSON.stringify(tasksFilters),
+        JSON.stringify(dataFilters),
       ],
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["events_ranking"],
-          tasks_filter: tasksFilters,
+          tasks_filter: dataFilters,
         }).then((data) => {
           if (!data?.events_ranking) {
             return null;
@@ -268,12 +224,12 @@ const TasksDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
       "success_rate_per_task_position",
-      JSON.stringify(tasksFilters),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["success_rate_per_task_position"],
-        tasks_filter: tasksFilters,
+        tasks_filter: dataFilters,
       }).then((data) => {
         if (!data?.success_rate_per_task_position) {
           return null;
