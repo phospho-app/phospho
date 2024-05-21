@@ -82,6 +82,16 @@ async def create(
             f"Customer ID not found for org_id: {org_id}. Skipping metered prediction. Will trigger a 402 error in production."
         )
 
+    # Check that the org has access to the completion service
+    if not org_metadata.get("has_completion_access", False):
+        logger.warning(
+            f"Org {org_id} does not have access to the completion service. Skipping metered prediction."
+        )
+        raise HTTPException(
+            status_code=402,
+            detail="You need to request access to this feature to the phospho team. Please contact us at contact@phospho.app",
+        )
+
     SUPPORTED_MODELS = ["openai:gpt-4o"]
     if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
