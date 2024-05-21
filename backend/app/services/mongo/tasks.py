@@ -96,15 +96,14 @@ async def flag_task(
 
     # Update the task object
     try:
+        update_payload: Dict[str, object] = {}
+        update_payload["flag"] = flag
+        if notes is not None:
+            update_payload["notes"] = notes
+        update_payload["last_eval"] = eval_data.model_dump()
         task_ref = await mongo_db["tasks"].update_one(
             {"id": task_model.id},
-            {
-                "$set": {
-                    "flag": flag,
-                    "last_eval": eval_data.model_dump(),
-                    "notes": notes,
-                }
-            },
+            {"$set": update_payload},
         )
         task_model.flag = flag
         task_model.notes = notes
