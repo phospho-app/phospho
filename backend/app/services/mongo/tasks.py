@@ -291,6 +291,13 @@ def task_filtering_pipeline_match(
             },
         ]
 
+    if filters.has_notes is not None and filters.has_notes:
+        match["$and"] = [
+            {f"{prefix}notes": {"$exists": True}},
+            {f"{prefix}notes": {"$ne": None}},
+            {f"{prefix}notes": {"$ne": ""}},
+        ]
+
     return match, collection
 
 
@@ -307,6 +314,9 @@ async def get_total_nb_of_tasks(
         project_id=project_id, filters=filters
     )
 
+    logger.info(f"Global filters: {global_filters}")
+    logger.info(f"Collection: {collection}")
+
     query_result = (
         await mongo_db[collection]
         .aggregate(
@@ -317,6 +327,8 @@ async def get_total_nb_of_tasks(
         )
         .to_list(length=1)
     )
+
+    logger.info(f"Query result: {query_result}")
     if len(query_result) == 0:
         return None
 

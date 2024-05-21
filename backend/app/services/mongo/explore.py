@@ -198,15 +198,8 @@ async def deprecated_get_dashboard_aggregated_metrics(
 
 async def get_success_rate_per_task_position(
     project_id,
+    filters: ProjectDataFilters,
     quantile_filter: Optional[float] = None,
-    flag: Optional[Literal["success", "failure"]] = None,
-    event_name: Optional[Union[str, List[str]]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    sentiment: Optional[str] = None,
-    last_eval_source: Optional[str] = None,
-    language: Optional[str] = None,
-    metadata: Optional[Dict[str, object]] = None,
     **kwargs,
 ) -> Optional[Dict[str, object]]:
     """
@@ -218,73 +211,39 @@ async def get_success_rate_per_task_position(
     mongo_db = await get_mongo_db()
     collection_name = "sessions"
 
+    # Ignore the flag filter
+    filters.flag = None
+
     main_filter: Dict[str, object] = {"project_id": project_id}
-    if created_at_start is not None:
-        main_filter["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
-        main_filter["created_at"] = {"$lte": created_at_end}
+    if filters.created_at_start is not None:
+        main_filter["created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": filters.created_at_end,
+        }
+
+    tasks_filter, task_collection = task_filtering_pipeline_match(
+        project_id=project_id, filters=filters, collection="tasks", prefix="tasks"
+    )
 
     pipeline = [
         {"$match": main_filter},
-        # Find tasks
-        {
-            "$lookup": {
-                "from": "tasks",
-                "localField": "id",
-                "foreignField": "session_id",
-                "as": "tasks",
-            }
-        },
     ]
-    task_filter: Dict[str, object] = {}
-    # Filter on the flag
-    if flag is not None:
-        task_filter["tasks.flag"] = flag
-    # Filter on language
-    if language is not None:
-        task_filter["tasks.language"] = language
-    # Filter on eval source
-    if last_eval_source is not None:
-        if last_eval_source.startswith("phospho"):
-            # We want to filter on the source starting with "phospho"
-            task_filter["tasks.last_eval.source"] = {"$regex": "^phospho"}
-        else:
-            # We want to filter on the source not starting with "phospho"
-            task_filter["tasks.last_eval.source"] = {"$regex": "^(?!phospho).*"}
-    # Filter on sentiment
-    if sentiment is not None:
-        task_filter["tasks.sentiment.label"] = sentiment
-    # Filter on task metadata
-    if metadata is not None:
-        for key, value in metadata.items():
-            task_filter[f"tasks.metadata.{key}"] = value
-
-    if task_filter != {}:
-        pipeline.append(
-            {"$match": task_filter},
-        )
-
-    if event_name is not None:
-        collection_name = "sessions_with_events"
-        pipeline.append(
+    pipeline.extend(
+        [
             {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
-                    ]
-                },
+                "$lookup": {
+                    "from": task_collection,
+                    "localField": "id",
+                    "foreignField": "session_id",
+                    "as": "tasks",
+                }
             },
-        )
-    tasks_filter: Dict[str, object] = {"tasks": {"$ne": []}}
-    # Filter on the flag
-    if flag is not None:
-        # The below filter is just "a session that has at least 1 task with the flag"
-        # tasks_filter["tasks.flag"] = flag_filter
-        logger.debug("Flag filter for success rate per task position has no effect.")
-    pipeline.append(
-        {"$match": tasks_filter},
+            {"$match": tasks_filter},
+        ]
     )
+
     result = (
         await mongo_db[collection_name]
         .aggregate(
@@ -372,14 +331,7 @@ async def get_success_rate_per_task_position(
 
 async def get_total_success_rate(
     project_id: str,
-    flag: Optional[Literal["success", "failure"]] = None,
-    event_name: Optional[Union[str, List[str]]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    sentiment: Optional[str] = None,
-    last_eval_source: Optional[str] = None,
-    language: Optional[str] = None,
-    metadata: Optional[Dict[str, object]] = None,
+    filters: ProjectDataFilters,
     **kwargs,
 ) -> Optional[float]:
     """
@@ -388,53 +340,13 @@ async def get_total_success_rate(
     """
 
     mongo_db = await get_mongo_db()
-    collection_name = "tasks"
-    main_filter: Dict[str, object] = {"project_id": project_id}
-    # Filter on the flag
-    if flag is not None:
-        main_filter["flag"] = flag
-    # Filter on the sentiment
-    if sentiment is not None:
-        main_filter["sentiment.label"] = sentiment
-    # Filter on the language
-    if language is not None:
-        main_filter["language"] = language
-    # Filter on the metadata
-    if metadata is not None:
-        for key, value in metadata.items():
-            main_filter[f"metadata.{key}"] = value
-    # Last eval source filter
-    if last_eval_source:
-        if last_eval_source.startswith("phospho"):
-            # We want to filter on the source starting with "phospho"
-            main_filter["last_eval.source"] = {"$regex": "^phospho"}
-        else:
-            # We want to filter on the source not starting with "phospho"
-            main_filter["last_eval.source"] = {"$regex": "^(?!phospho).*"}
-    # Time range filter
-    if created_at_start is not None:
-        main_filter["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
-        main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
-            "$lte": created_at_end,
-        }
+    collection = "tasks"
+    main_filter, collection = task_filtering_pipeline_match(
+        project_id=project_id, filters=filters, collection=collection
+    )
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
-    # Filter on the event name
-    if event_name is not None:
-        collection_name = "tasks_with_events"
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
-                    ]
-                },
-            },
-        )
     # Add the success rate computation
     pipeline.extend(
         [
@@ -450,7 +362,7 @@ async def get_total_success_rate(
         ]
     )
     # Query
-    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
+    result = await mongo_db[collection].aggregate(pipeline).to_list(length=1)
     logger.info(f"result: {result}")
     if len(result) == 0:
         # No tasks = success rate is None
@@ -782,13 +694,11 @@ async def get_tasks_aggregated_metrics(
 
     if "total_nb_tasks" in metrics:
         output["total_nb_tasks"] = await get_total_nb_of_tasks(
-            project_id=project_id,
-            filters=filters,
+            project_id=project_id, filters=filters
         )
     if "global_success_rate" in metrics:
         output["global_success_rate"] = await get_total_success_rate(
-            project_id=project_id,
-            **filters.model_dump(),
+            project_id=project_id, filters=filters
         )
     if "most_detected_event" in metrics:
         output["most_detected_event"] = await get_most_detected_event_name(
@@ -802,8 +712,7 @@ async def get_tasks_aggregated_metrics(
         if daily_tasks_filters.created_at_end is None:
             daily_tasks_filters.created_at_end = today_timestamp
         output["nb_daily_tasks"] = await get_nb_of_daily_tasks(
-            project_id=project_id,
-            filters=daily_tasks_filters,
+            project_id=project_id, filters=daily_tasks_filters
         )
     if "events_ranking" in metrics:
         output["events_ranking"] = await get_top_event_names_and_count(
@@ -825,8 +734,7 @@ async def get_tasks_aggregated_metrics(
         output[
             "success_rate_per_task_position"
         ] = await get_success_rate_per_task_position(
-            project_id=project_id,
-            **filters.model_dump(),
+            project_id=project_id, filters=filters
         )
     return output
 
@@ -1241,9 +1149,7 @@ async def get_sessions_aggregated_metrics(
         output[
             "success_rate_per_task_position"
         ] = await get_success_rate_per_task_position(
-            project_id=project_id,
-            quantile_filter=quantile_filter,
-            **filters.model_dump(),
+            project_id=project_id, quantile_filter=quantile_filter, filters=filters
         )
 
     return output
