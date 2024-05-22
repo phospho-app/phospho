@@ -152,10 +152,47 @@ async def store_opentelemetry_data(
         attributes = spans["attributes"]
         unpacked_attributes = {}
         for attr in attributes:
+            k = attr["key"]
+
             if "stringValue" in attr["value"]:
-                unpacked_attributes[attr["key"]] = attr["value"]["stringValue"]
+                value = attr["value"]["stringValue"]
             elif "intValue" in attr["value"]:
-                unpacked_attributes[attr["key"]] = attr["value"]["intValue"]
+                value = attr["value"]["intValue"]
+            else:
+                logger.error(f"Unknown value type: {attr['value']}")
+                continue
+
+            keys = k.split(".")
+            current_dict = unpacked_attributes
+            for i, key in enumerate(keys[:-1]):
+                if key.isdigit():
+                    # Skip if key is a digit: No need to unpack
+                    continue
+
+                # Initialize the key if it does not exist
+                if key not in current_dict:
+                    if keys[i + 1].isdigit():
+                        # If next key is a digit, then current key is a list
+                        current_dict[key] = []
+                    else:
+                        # If next key is not a digit, then current key is a dictionary
+                        current_dict[key] = {}
+
+                # Move to the next level
+                if keys[i + 1].isdigit():
+                    # If next key is a digit, then the current key is a list
+                    if len(current_dict[key]) < int(keys[i + 1]) + 1:
+                        current_dict[key].append({})
+                    try:
+                        current_dict = current_dict[key][int(keys[i + 1])]
+                    except IndexError:
+                        logger.error(
+                            f"IndexError: {key} {keys[i + 1]} {current_dict[key]}"
+                        )
+                        continue
+                else:
+                    current_dict = current_dict[key]
+            current_dict[keys[-1]] = value
 
         spans["attributes"] = unpacked_attributes
 
