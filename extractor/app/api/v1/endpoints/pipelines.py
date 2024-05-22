@@ -158,6 +158,9 @@ async def store_opentelemetry_data(
                 value = attr["value"]["stringValue"]
             elif "intValue" in attr["value"]:
                 value = attr["value"]["intValue"]
+            else:
+                logger.error(f"Unknown value type: {attr['value']}")
+                continue
 
             keys = k.split(".")
             current_dict = unpacked_attributes
