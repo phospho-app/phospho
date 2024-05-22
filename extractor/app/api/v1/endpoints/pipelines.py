@@ -155,7 +155,7 @@ async def store_opentelemetry_data(
             k = attr["key"]
 
             if "stringValue" in attr["value"]:
-                value = attr["value"]["intValue"]
+                value = attr["value"]["stringValue"]
             elif "intValue" in attr["value"]:
                 value = attr["value"]["intValue"]
 
