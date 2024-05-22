@@ -52,11 +52,6 @@ export function getColumns() {
   const columns: ColumnDef<UserMetadata>[] = [
     // id
     {
-      filterFn: (row, id, filterValue) => {
-        // if is in the filtervalue
-        if (filterValue === null) return true;
-        return filterValue.includes(row.original.user_id);
-      },
       header: ({ column }) => {
         return (
           <Button
