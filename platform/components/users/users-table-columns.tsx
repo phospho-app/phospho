@@ -1,3 +1,17 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { authFetcher } from "@/lib/fetcher";
 import { Event, UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
@@ -13,16 +27,6 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
-
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
 
 export function getColumns() {
   const router = useRouter();
@@ -65,7 +69,22 @@ export function getColumns() {
       },
       accessorKey: "user_id",
       cell: ({ row }) => {
-        return row.original.user_id;
+        return (
+          <HoverCard openDelay={0} closeDelay={0}>
+            <HoverCardTrigger asChild>
+              <div
+                className="h-10 flex items-center hover:text-green-500"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  navigator.clipboard.writeText(row.original.user_id);
+                }}
+              >
+                {row.original.user_id}
+              </div>
+            </HoverCardTrigger>
+            <HoverCardContent align="start">Copy</HoverCardContent>
+          </HoverCard>
+        );
       },
       // enableHiding: true,
     },
