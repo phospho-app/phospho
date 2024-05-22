@@ -179,7 +179,8 @@ export default function CreateEvent({
         <h2>Templates</h2>
         <div className="flex space-x-4">
           <Button
-            onClick={() => {
+            onClick={(mouseEvent) => {
+              mouseEvent.stopPropagation();
               form.setValue("event_name", "Penetration testing");
               form.setValue(
                 "description",
@@ -187,16 +188,15 @@ export default function CreateEvent({
               );
               form.setValue("detection_scope", "task");
               form.setValue("detection_engine", "llm_detection");
-              toast({
-                title: "Template selected",
-                description: "Penetration testing",
-              });
+              // Prevent the form from submitting
+              mouseEvent.preventDefault();
             }}
           >
             Penetration testing
           </Button>
           <Button
-            onClick={() => {
+            onClick={(mouseEvent) => {
+              mouseEvent.stopPropagation();
               form.setValue("event_name", "Assistant coherence");
               form.setValue(
                 "description",
@@ -204,16 +204,15 @@ export default function CreateEvent({
               );
               form.setValue("detection_scope", "session");
               form.setValue("detection_engine", "llm_detection");
-              toast({
-                title: "Template selected",
-                description: "Assistant coherence",
-              });
+              // Prevent the form from submitting
+              mouseEvent.preventDefault();
             }}
           >
             Coherence
           </Button>
           <Button
-            onClick={() => {
+            onClick={(mouseEvent) => {
+              mouseEvent.stopPropagation();
               form.setValue("event_name", "Assistant correctness");
               form.setValue(
                 "description",
@@ -221,16 +220,15 @@ export default function CreateEvent({
               );
               form.setValue("detection_scope", "task");
               form.setValue("detection_engine", "llm_detection");
-              toast({
-                title: "Template selected",
-                description: "Assistant correctness",
-              });
+              // Prevent the form from submitting
+              mouseEvent.preventDefault();
             }}
           >
             Correctness
           </Button>
           <Button
-            onClick={() => {
+            onClick={(mouseEvent) => {
+              mouseEvent.stopPropagation();
               form.setValue("event_name", "Assistant plausibility");
               form.setValue(
                 "description",
@@ -238,10 +236,8 @@ export default function CreateEvent({
               );
               form.setValue("detection_scope", "task");
               form.setValue("detection_engine", "llm_detection");
-              toast({
-                title: "Template selected",
-                description: "Assistant plausibility",
-              });
+              // Prevent the form from submitting
+              mouseEvent.preventDefault();
             }}
           >
             Plausibility
