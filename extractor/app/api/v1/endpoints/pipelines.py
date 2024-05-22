@@ -159,12 +159,14 @@ async def store_opentelemetry_data(
 
         spans["attributes"] = unpacked_attributes
 
-        background_tasks.add_task(
-            store_opentelemetry_data_in_db,
-            open_telemetry_data=spans,
-            project_id=augmented_open_telemetry_data.project_id,
-            org_id=augmented_open_telemetry_data.org_id,
-        )
+        # We only keep the spans that have the "gen_ai.system" attribute
+        if "gen_ai.system" in unpacked_attributes:
+            background_tasks.add_task(
+                store_opentelemetry_data_in_db,
+                open_telemetry_data=spans,
+                project_id=augmented_open_telemetry_data.project_id,
+                org_id=augmented_open_telemetry_data.org_id,
+            )
 
         return {"status": "ok"}
 
