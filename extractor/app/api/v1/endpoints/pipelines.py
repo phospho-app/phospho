@@ -183,7 +183,13 @@ async def store_opentelemetry_data(
                     # If next key is a digit, then the current key is a list
                     if len(current_dict[key]) < int(keys[i + 1]) + 1:
                         current_dict[key].append({})
-                    current_dict = current_dict[key][int(keys[i + 1])]
+                    try:
+                        current_dict = current_dict[key][int(keys[i + 1])]
+                    except IndexError:
+                        logger.error(
+                            f"IndexError: {key} {keys[i + 1]} {current_dict[key]}"
+                        )
+                        continue
                 else:
                     current_dict = current_dict[key]
             current_dict[keys[-1]] = value
