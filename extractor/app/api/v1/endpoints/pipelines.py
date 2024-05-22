@@ -158,6 +158,12 @@ async def store_opentelemetry_data(
                 value = attr["value"]["stringValue"]
             elif "intValue" in attr["value"]:
                 value = attr["value"]["intValue"]
+            elif "boolValue" in attr["value"]:
+                value = attr["value"]["boolValue"]
+            elif "doubleValue" in attr["value"]:
+                value = attr["value"]["doubleValue"]
+            elif "arrayValue" in attr["value"]:
+                value = attr["value"]["arrayValue"]
             else:
                 logger.error(f"Unknown value type: {attr['value']}")
                 continue
@@ -196,8 +202,10 @@ async def store_opentelemetry_data(
 
         spans["attributes"] = unpacked_attributes
 
+        logger.debug(f"Unpacked attributes: {unpacked_attributes}")
+
         # We only keep the spans that have the "gen_ai.system" attribute
-        if "gen_ai.system" in unpacked_attributes:
+        if "gen_ai" in unpacked_attributes:
             background_tasks.add_task(
                 store_opentelemetry_data_in_db,
                 open_telemetry_data=spans,
