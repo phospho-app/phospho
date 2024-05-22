@@ -26,6 +26,7 @@ import { FilterX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
+import { Input } from "../ui/input";
 import { getColumns } from "./users-table-columns";
 
 interface DataTableProps<TData, TValue> {
@@ -70,6 +71,14 @@ export function UsersTable<TData, TValue>({
   return (
     <div>
       <div className="flex flex-row gap-x-2 items-center mb-2 justify-end">
+        <Input
+          placeholder="Filter usernames"
+          value={(table.getColumn("user_id")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("user_id")?.setFilterValue(event.target.value)
+          }
+          className="max-w-sm"
+        />
         <Button
           variant="secondary"
           onClick={() => {
