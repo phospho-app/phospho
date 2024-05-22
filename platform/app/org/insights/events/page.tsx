@@ -87,7 +87,7 @@ export default function Page() {
           </span>
         </div>
         <div className="space-x-2">
-          <Button
+          {/* <Button
             variant="secondary"
             onClick={() => {
               router.push(
@@ -99,7 +99,7 @@ export default function Page() {
             }
           >
             <Wand2 className="w-4 h-4 mr-1" /> Event suggestions
-          </Button>
+          </Button> */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button
