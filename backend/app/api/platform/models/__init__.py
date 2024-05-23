@@ -33,9 +33,6 @@ from .explore import (
     QuerySessionsTasksRequest,
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
-from .projects import (
-    AddEventsQuery,
-    OnboardingSurvey,
-)
+from .projects import AddEventsQuery, OnboardingSurvey, UploadTasksRequest
 from .tasks import AddEventRequest, RemoveEventRequest
 from .topics import Topic, Topics
