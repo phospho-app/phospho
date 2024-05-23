@@ -1,3 +1,5 @@
+"use client";
+
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialogAction,
@@ -26,6 +28,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useToast } from "@/components/ui/use-toast";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -42,8 +45,6 @@ import React from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
-import { useToast } from "../ui/use-toast";
 
 const PythonIcon = () => {
   return (
@@ -126,7 +127,8 @@ const APIKeyAndProjectId = () => {
 };
 
 const formSchema = z.object({
-  file: z.instanceof(FileList),
+  // file: z.instanceof(FileList),
+  file: z.array(z.any()),
 });
 
 export default function UploadDataset({
