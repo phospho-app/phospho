@@ -1,8 +1,10 @@
 import datetime
 from typing import Dict, Optional, List
 
-from fastapi import APIRouter, BackgroundTasks, Depends
+from app.services.mongo.files import process_file_upload_into_log_events
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
 from loguru import logger
+import pandas as pd
 from propelauth_fastapi import User
 
 from app.api.platform.models import (
@@ -19,6 +21,7 @@ from app.api.platform.models import (
     Users,
     ProjectDataFilters,
     QuerySessionsTasksRequest,
+    UploadTasksRequest,
 )
 from app.security.authentification import (
     propelauth,
@@ -406,3 +409,77 @@ async def get_project_unique_events(
         unique=True,
     )
     return Events(events=events)
+
+
+@router.post(
+    "/projects/{project_id}/upload-tasks",
+    response_model=dict,
+)
+async def post_upload_tasks(
+    project_id: str,
+    file: UploadFile,
+    file_params: UploadTasksRequest,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(propelauth.require_user),
+) -> dict:
+    """
+    Upload a file with tasks to a project
+
+    Supported file formats: csv, xlsx
+
+    The file should contain the following columns:
+    - input: the input text
+    - output: the expected output text
+
+    Optional columns:
+    - task_id: the task id
+    - session_id: the session id to which the task is associated
+    - created_at: the creation date of the task
+    """
+    project = await get_project_by_id(project_id)
+    propelauth.require_org_member(user, project.org_id)
+
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Error: No file provided.")
+
+    SUPPORTED_EXTENSIONS = [".csv", ".xlsx"]  # Add the supported extensions here
+    file_extension = file.filename.split(".")[-1]
+    if file_extension not in SUPPORTED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error: The extension {file_extension} is not supported (supported: {SUPPORTED_EXTENSIONS}).",
+        )
+
+    # Read file content -> into memory
+    try:
+        if file_extension == "csv":
+            tasks_df = pd.read_csv(file.file, **file_params.pd_read_config)
+        elif file_extension == "xlsx":
+            tasks_df = pd.read_excel(file.file, **file_params.pd_read_config)
+        else:
+            # This only happens if you add a new extension and forget to update the supported extensions list
+            raise NotImplementedError(
+                f"Error: The extension {file_extension} is not supported (supported: {SUPPORTED_EXTENSIONS})."
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error: Could not read the file content. {e}"
+        )
+
+    # Verify if the required columns are present
+    required_columns = ["input", "output"]
+    missing_columns = set(required_columns) - set(tasks_df.columns)
+    if missing_columns:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Error: Missing columns: {missing_columns}",
+        )
+
+    # Process the csv file as a background task
+    background_tasks.add_task(
+        process_file_upload_into_log_events,
+        tasks_df=tasks_df,
+        project_id=project_id,
+        org_id=project.org_id,
+    )
+    return {"status": "ok"}

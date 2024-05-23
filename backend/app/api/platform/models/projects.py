@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 
 from app.db.models import EventDefinition
@@ -14,3 +14,7 @@ class OnboardingSurvey(BaseModel):
 
 class AddEventsQuery(BaseModel):
     events: List[EventDefinition]
+
+
+class UploadTasksRequest(BaseModel):
+    pd_read_config: dict = Field(default_factory=dict)

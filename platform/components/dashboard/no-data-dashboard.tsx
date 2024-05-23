@@ -1,11 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { navigationStateStore } from "@/store/store";
-import { ArrowRight, CopyIcon, MonitorPlay, X } from "lucide-react";
-import Link from "next/link";
-import React from "react";
-import { CopyBlock, dracula } from "react-code-blocks";
-
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialogAction,
   AlertDialogCancel,
@@ -14,16 +7,43 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "../ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../ui/card";
-import { Input } from "../ui/input";
-import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { navigationStateStore } from "@/store/store";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  ArrowRight,
+  CopyIcon,
+  LoaderCircle,
+  MonitorPlay,
+  Plus,
+  Upload,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import React from "react";
+import { CopyBlock, dracula } from "react-code-blocks";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { useToast } from "../ui/use-toast";
 
 const PythonIcon = () => {
   return (
@@ -104,6 +124,88 @@ const APIKeyAndProjectId = () => {
     </div>
   );
 };
+
+const formSchema = z.object({
+  file: z.instanceof(FileList),
+});
+
+export default function UploadDataset({
+  setOpen,
+}: {
+  setOpen: (open: boolean) => void;
+}) {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+  });
+  const { toast } = useToast();
+
+  const fileRef = form.register("file");
+  const [loading, setLoading] = React.useState(false);
+
+  const onSubmit = (data: z.infer<typeof formSchema>) => {
+    console.log(data);
+    setOpen(false);
+    // Call API to upload file
+    fetch(`/api/projects/{project_id}/upload-tasks`, {
+      method: "POST",
+      body: JSON.stringify({
+        file: data.file[0],
+      }),
+    });
+    toast({
+      title: "Your file is being processed ✅",
+      description: "Tasks will appear in your dashboard in a few minutes.",
+    });
+  };
+
+  return (
+    <div className="flex flex-col space-y-2">
+      <div className="text-sm mb-1">
+        Upload a file with your historical data. The file should contain the
+        following columns: <code>input</code>, <code>output</code>. Optionally,
+        you can also include <code>session_id</code> and <code>created_at</code>{" "}
+      </div>
+      <CopyBlock
+        text={`input,output,task_id,session_id,created_at
+"What's the capital of France?","The capital of France is Paris",task_1,session_1,"2021-09-01 12:00:00"`}
+        language={"text"}
+        showLineNumbers={true}
+        theme={dracula}
+        wrapLongLines={true}
+      />
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="w-full flex flex-col space-y-2"
+        >
+          <div className="flex flex-row space-x-2 items-center">
+            <Plus className="w-4 h-4 mr-1" />
+            <Input
+              type="file"
+              accept=".csv,.xlsx"
+              placeholder="Pick file to upload"
+              {...fileRef}
+            />
+          </div>
+          {/* {loading && (
+            <div className="flex flex-row space-x-2 items-center justify-content">
+              <div className="w-4 h-4 animate-spin">
+                <LoaderCircle />
+              </div>
+            </div>
+          )} */}
+          {form.getValues().file !== undefined &&
+            form.getValues().file.length > 0 && (
+              <Button type="submit">
+                <Upload className="mr-1 w-4 h-4" />
+                Confirm
+              </Button>
+            )}
+        </form>
+      </Form>
+    </div>
+  );
+}
 
 const ToggleButton = ({ children }: { children: React.ReactNode }) => {
   return <div className="text-xl flex flex-row space-x-2">{children}</div>;
@@ -283,12 +385,45 @@ phospho.log({input, output});`}
               <CardDescription>
                 Push your historical data to phospho
               </CardDescription>
-              <Link
-                href="https://docs.phospho.ai/guides/backfill"
-                target="_blank"
+              <ToggleGroup
+                type="single"
+                value={selectedTab}
+                onValueChange={(value) => setSelectedTab(value)}
+                className="justify-start"
               >
-                <Button variant="outline">Send data</Button>
-              </Link>
+                <ToggleGroupItem value="upload">
+                  <ToggleButton>
+                    <Upload className="mr-2 w-6 h-6" /> Upload dataset
+                  </ToggleButton>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="other_bottom">
+                  <ToggleButton>Other</ToggleButton>
+                </ToggleGroupItem>
+              </ToggleGroup>
+
+              {selectedTab == "upload" && (
+                <div className="flex-col space-y-4">
+                  <UploadDataset setOpen={setOpen} />
+                </div>
+              )}
+
+              {selectedTab == "other_bottom" && (
+                <div className="flex-col space-y-4">
+                  <div className="flex space-x-2">
+                    <Link
+                      href="https://docs.phospho.ai/getting-started#how-to-setup-logging"
+                      target="_blank"
+                    >
+                      <Button className="w-96">
+                        Discover all integrations
+                      </Button>
+                    </Link>
+                    <Link href="mailto:contact@phospho.app" target="_blank">
+                      <Button variant="secondary">Contact us</Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
             </CardHeader>
           </Card>
           <Alert>
