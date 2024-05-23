@@ -52,6 +52,11 @@ export default function RunEvent({
   const { toast } = useToast();
   const dateRange = navigationStateStore((state) => state.dateRange);
 
+  const { data: hasTasksData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+  );
+  const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
   const { data: totalNbTasksData } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
@@ -171,7 +176,21 @@ export default function RunEvent({
                 </FormItem>
               )}
             />
-            {totalNbTasks === undefined && <>Loading...</>}
+            {hasTasks && totalNbTasks === undefined && <>Loading...</>}
+            {!hasTasks && (
+              <div className="flex flex-row space-x-1 items-center">
+                <span>
+                  No tasks found in this project. Log some data to run event.
+                </span>
+                <Link
+                  href="https://docs.phospho.ai/getting-started"
+                  target="_blank"
+                  className="underline"
+                >
+                  Learn more.
+                </Link>
+              </div>
+            )}
             {totalNbTasks !== undefined &&
               totalNbTasks !== null &&
               totalNbTasks > 0 && (
