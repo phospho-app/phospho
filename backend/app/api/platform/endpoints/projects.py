@@ -418,7 +418,7 @@ async def get_project_unique_events(
 async def post_upload_tasks(
     project_id: str,
     file: UploadFile,
-    file_params: UploadTasksRequest,
+    # file_params: UploadTasksRequest,
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
@@ -442,7 +442,7 @@ async def post_upload_tasks(
     if not file.filename:
         raise HTTPException(status_code=400, detail="Error: No file provided.")
 
-    SUPPORTED_EXTENSIONS = [".csv", ".xlsx"]  # Add the supported extensions here
+    SUPPORTED_EXTENSIONS = ["csv", "xlsx"]  # Add the supported extensions here
     file_extension = file.filename.split(".")[-1]
     if file_extension not in SUPPORTED_EXTENSIONS:
         raise HTTPException(
@@ -451,11 +451,12 @@ async def post_upload_tasks(
         )
 
     # Read file content -> into memory
+    file_params = {}
     try:
         if file_extension == "csv":
-            tasks_df = pd.read_csv(file.file, **file_params.pd_read_config)
+            tasks_df = pd.read_csv(file.file, **file_params)
         elif file_extension == "xlsx":
-            tasks_df = pd.read_excel(file.file, **file_params.pd_read_config)
+            tasks_df = pd.read_excel(file.file, **file_params)
         else:
             # This only happens if you add a new extension and forget to update the supported extensions list
             raise NotImplementedError(
@@ -476,6 +477,7 @@ async def post_upload_tasks(
         )
 
     # Process the csv file as a background task
+    logger.info(f"File {file.filename} uploaded successfully. Processing tasks.")
     background_tasks.add_task(
         process_file_upload_into_log_events,
         tasks_df=tasks_df,

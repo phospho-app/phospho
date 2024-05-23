@@ -31,6 +31,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/components/ui/use-toast";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useUser } from "@propelauth/nextjs/client";
 import {
   ArrowRight,
   CopyIcon,
@@ -126,38 +127,61 @@ const APIKeyAndProjectId = () => {
   );
 };
 
-const formSchema = z.object({
-  // file: z.instanceof(FileList),
-  file: z.array(z.any()),
-});
-
 export default function UploadDataset({
   setOpen,
 }: {
   setOpen: (open: boolean) => void;
 }) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-  });
   const { toast } = useToast();
+  const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
 
-  const fileRef = form.register("file");
   const [loading, setLoading] = React.useState(false);
+  const [file, setFile] = React.useState<File | null>(null);
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data);
-    setOpen(false);
-    // Call API to upload file
-    fetch(`/api/projects/{project_id}/upload-tasks`, {
-      method: "POST",
-      body: JSON.stringify({
-        file: data.file[0],
-      }),
-    });
-    toast({
-      title: "Your file is being processed ✅",
-      description: "Tasks will appear in your dashboard in a few minutes.",
-    });
+  const onSubmit = () => {
+    if (!file) {
+      toast({
+        title: "Please select a file",
+      });
+      return;
+    }
+    console.log("onSubmit", file);
+    const formData = new FormData();
+    formData.set("file", file, file.name);
+    try {
+      // Call API to upload file
+      fetch(`/api/projects/${project_id}/upload-tasks`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+          // "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      }).then(async (response) => {
+        if (response.ok) {
+          toast({
+            title: "Your file is being processed ✅",
+            description:
+              "Tasks will appear in your dashboard in a few minutes.",
+          });
+          setOpen(false);
+        } else {
+          // Read the error details
+          const error = await response.text();
+          toast({
+            title: "An error occurred",
+            description: `${error}`,
+          });
+        }
+      });
+    } catch (error) {
+      console.error("An unexpected error happened:", error);
+      toast({
+        title: "An error occurred",
+        description: `${error}`,
+      });
+    }
   };
 
   return (
@@ -175,36 +199,35 @@ export default function UploadDataset({
         theme={dracula}
         wrapLongLines={true}
       />
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="w-full flex flex-col space-y-2"
-        >
-          <div className="flex flex-row space-x-2 items-center">
-            <Plus className="w-4 h-4 mr-1" />
-            <Input
-              type="file"
-              accept=".csv,.xlsx"
-              placeholder="Pick file to upload"
-              {...fileRef}
-            />
-          </div>
-          {/* {loading && (
+      {/* <form className="w-full flex flex-col space-y-2"> */}
+      <div className="flex flex-row space-x-2 items-center">
+        <Plus className="w-4 h-4 mr-1" />
+        <Input
+          type="file"
+          accept=".csv,.xlsx"
+          placeholder="Pick file to upload"
+          onChange={(e) => {
+            if (e.target.files && e.target.files.length > 0) {
+              setFile(e.target.files[0]);
+            }
+          }}
+        />
+      </div>
+
+      {/* {loading && (
             <div className="flex flex-row space-x-2 items-center justify-content">
               <div className="w-4 h-4 animate-spin">
                 <LoaderCircle />
               </div>
             </div>
           )} */}
-          {form.getValues().file !== undefined &&
-            form.getValues().file.length > 0 && (
-              <Button type="submit">
-                <Upload className="mr-1 w-4 h-4" />
-                Confirm
-              </Button>
-            )}
-        </form>
-      </Form>
+      {file !== null && (
+        <Button onClick={onSubmit}>
+          <Upload className="mr-1 w-4 h-4" />
+          Confirm
+        </Button>
+      )}
+      {/* </form> */}
     </div>
   );
 }
