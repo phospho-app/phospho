@@ -454,7 +454,7 @@ async def post_upload_tasks(
     file_params = {}
     try:
         if file_extension == "csv":
-            tasks_df = pd.read_csv(file.file, **file_params)
+            tasks_df = pd.read_csv(file.file, sep=None, **file_params)
         elif file_extension == "xlsx":
             tasks_df = pd.read_excel(file.file, **file_params)
         else:
@@ -466,6 +466,9 @@ async def post_upload_tasks(
         raise HTTPException(
             status_code=400, detail=f"Error: Could not read the file content. {e}"
         )
+
+    # Strip and lowercase the columns
+    tasks_df.columns = tasks_df.columns.str.strip().str.lower()
 
     # Verify if the required columns are present
     required_columns = ["input", "output"]
@@ -484,4 +487,4 @@ async def post_upload_tasks(
         project_id=project_id,
         org_id=project.org_id,
     )
-    return {"status": "ok"}
+    return {"status": "ok", "num_rows": tasks_df.shape[0]}

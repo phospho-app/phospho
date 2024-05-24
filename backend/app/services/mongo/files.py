@@ -126,14 +126,22 @@ async def process_file_upload_into_log_events(
 
     # session_id: if provided, concatenate with project_id to avoid collisions
     if "session_id" in tasks_df.columns:
-        tasks_df["session_id"] = tasks_df["session_id"].apply(
-            lambda x: f"{project_id}_{x}_{generate_uuid()}"
-        )
+        try:
+            tasks_df["session_id"] = tasks_df["session_id"].apply(
+                lambda x: f"{project_id}_{x}_{generate_uuid()}"
+            )
+        except Exception as e:
+            logger.error(f"Error concatenating session_id: {e}")
+            tasks_df.drop("session_id", axis=1, inplace=True)
 
     if "task_id" in tasks_df.columns:
-        tasks_df["task_id"] = tasks_df["task_id"].apply(
-            lambda x: f"{project_id}_{x}_{generate_uuid()}"
-        )
+        try:
+            tasks_df["task_id"] = tasks_df["task_id"].apply(
+                lambda x: f"{project_id}_{x}_{generate_uuid()}"
+            )
+        except Exception as e:
+            logger.error(f"Error concatenating task_id: {e}")
+            tasks_df.drop("task_id", axis=1, inplace=True)
 
     # created_at: if provided, convert to datetime, then to timestamp
     if "created_at" in tasks_df.columns:
