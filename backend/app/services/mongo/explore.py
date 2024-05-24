@@ -670,7 +670,7 @@ async def get_tasks_aggregated_metrics(
             "nb_daily_tasks",
             "events_ranking",
             "daily_success_rate",
-            "success_rate_per_task_position",
+            # "success_rate_per_task_position",
         ]
 
     today_datetime = datetime.datetime.now(datetime.timezone.utc)
