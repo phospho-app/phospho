@@ -9,6 +9,7 @@ from app.services.mongo.tasks import (
     task_filtering_pipeline_match,
 )
 import pandas as pd
+from phospho.models import Threshold
 import resend
 from app.api.platform.models import UserMetadata, Pagination
 from app.core import config
@@ -184,12 +185,13 @@ async def update_project(project: Project, **kwargs) -> Project:
 
         if "sentiment_threshold" in payload.get("settings", {}):
             try:
-                score_threshold = payload["settings"]["sentiment_threshold"]["score"]
-                magnitude_threshold = payload["settings"]["sentiment_threshold"][
-                    "magnitude"
-                ]
+                threshold = Threshold.model_validate(
+                    payload["settings"]["sentiment_threshold"]
+                )
                 await label_sentiment_analysis(
-                    project.id, score_threshold, magnitude_threshold
+                    project_id=project.id,
+                    score_threshold=threshold.score,
+                    magnitude_threshold=threshold.magnitude,
                 )
             except KeyError:
                 logger.error(
