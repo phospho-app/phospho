@@ -471,11 +471,6 @@ phospho.log({input, output});`}
             </AlertDescription>
           </Alert>
         </div>
-        <AlertDialogFooter className="col-span-5 justify-end">
-          <AlertDialogAction onClick={() => setOpen(false)}>
-            Done
-          </AlertDialogAction>
-        </AlertDialogFooter>
       </div>
     </AlertDialogContent>
   );
