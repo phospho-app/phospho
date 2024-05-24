@@ -294,9 +294,7 @@ const SessionsDataviz: React.FC = () => {
       <div className="container mx-auto mt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">
-              Nb of sessions per day (last 7d)
-            </h3>
+            <h3 className="text-slate-500 mb-2">Nb of sessions per day</h3>
             {(!nbSessionsPerDay && (
               <Skeleton className="w-[100%] h-[150px]" />
             )) ||

@@ -789,7 +789,10 @@ async def get_global_average_session_length(
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
-        main_filter["created_at"] = {"$lte": created_at_end}
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": created_at_end,
+        }
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
@@ -844,7 +847,10 @@ async def get_last_message_success_rate(
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
-        main_filter["created_at"] = {"$lte": created_at_end}
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": created_at_end,
+        }
     pipeline: List[Dict[str, object]] = [{"$match": main_filter}]
     if event_name is not None:
         collection_name = "sessions_with_events"
@@ -910,25 +916,27 @@ async def get_last_message_success_rate(
 
 async def get_nb_sessions_per_day(
     project_id: str,
-    created_at_start: int,
-    created_at_end: int,
-    event_name: Optional[List[str]] = None,
-    **kwargs,
+    filters: ProjectDataFilters,
 ) -> List[dict]:
     """
     Get the nb of sessions per day of a project.
     """
     mongo_db = await get_mongo_db()
     collection_name = "sessions"
+    main_filter = {"project_id": project_id}
+    if filters.created_at_start is not None:
+        main_filter["created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": filters.created_at_end,
+        }
+
     pipeline: List[Dict[str, object]] = [
-        {
-            "$match": {
-                "project_id": project_id,
-                "created_at": {"$gte": created_at_start, "$lte": created_at_end},
-            }
-        },
+        {"$match": main_filter},
     ]
-    if event_name is not None:
+
+    if filters.event_name is not None:
         collection_name = "sessions_with_events"
         pipeline.append(
             {
@@ -952,9 +960,20 @@ async def get_nb_sessions_per_day(
         .to_list(length=None)
     )
     df = pd.DataFrame(result)
+
+    if not df.empty:
+        # If start and end date are not provided, we take the first and last task date
+        if filters.created_at_start is None:
+            filters.created_at_start = df["created_at"].min()
+
+    if filters.created_at_end is None:
+        filters.created_at_end = datetime.datetime.now().timestamp()
+
     complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(created_at_start, datetime.timezone.utc),
-        datetime.datetime.fromtimestamp(created_at_end, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(
+            filters.created_at_start, datetime.timezone.utc
+        ),
+        datetime.datetime.fromtimestamp(filters.created_at_end, datetime.timezone.utc),
         freq="D",
     )
     complete_df = pd.DataFrame({"date": complete_date_range})
@@ -1113,14 +1132,8 @@ async def get_sessions_aggregated_metrics(
             **filters.model_dump(),
         )
     if "nb_sessions_per_day" in metrics:
-        daily_sessions_filters = filters
-        if daily_sessions_filters.created_at_start is None:
-            daily_sessions_filters.created_at_start = seven_days_ago_timestamp
-        if daily_sessions_filters.created_at_end is None:
-            daily_sessions_filters.created_at_end = today_timestamp
         output["nb_sessions_per_day"] = await get_nb_sessions_per_day(
-            project_id=project_id,
-            **filters.model_dump(),
+            project_id=project_id, filters=filters
         )
     if "session_length_histogram" in metrics:
         output["session_length_histogram"] = await get_nb_sessions_histogram(
