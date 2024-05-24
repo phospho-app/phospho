@@ -132,8 +132,14 @@ export interface ABTest {
   first_task_timestamp: number;
 }
 
+export interface SentimentThreshold {
+  score: number;
+  magnitude: number;
+}
+
 export interface ProjectSettings {
   events: Record<string, EventDefinition>;
+  sentiment_threshold: SentimentThreshold;
 }
 
 export interface Project {
