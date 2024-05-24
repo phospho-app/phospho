@@ -105,7 +105,7 @@ export const SentimentSettings = ({}: {}) => {
   }
 
   return (
-    <DropdownMenu open={thresholdOpen}>
+    <DropdownMenu open={thresholdOpen} onOpenChange={setThresholdOpen}>
       <DropdownMenuTrigger>
         <Button variant="ghost" size={"icon"} onClick={toggleButton}>
           <Settings size={18} />
@@ -115,7 +115,7 @@ export const SentimentSettings = ({}: {}) => {
         <CardHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <h2 className="text-lg font-bold">Sentiment Threshold</h2>
+              <h2 className="text-lg font-bold">Sentiment threshold</h2>
               <FormField
                 control={form.control}
                 name="score"
