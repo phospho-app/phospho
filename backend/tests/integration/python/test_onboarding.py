@@ -18,7 +18,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         json={"project_name": "test"},
         headers={"Authorization": f"Bearer {access_token}"},
     )
-    assert project.status_code == 200, project.text
+    assert project.status_code == 200, project.reason
     project_id = project.json()["id"]
 
     # Check that the project exists
@@ -26,7 +26,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         f"{backend_url}/api/organizations/{org_id}/projects",
         headers={"Authorization": f"Bearer {access_token}"},
     )
-    assert projects.status_code == 200, projects.text
+    assert projects.status_code == 200, projects.reason
     assert project_id in [p["id"] for p in projects.json()["projects"]]
 
     # Log to the project
@@ -80,7 +80,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         f"{backend_url}/api/projects/{project_id}/tasks",
         headers={"Authorization": f"Bearer {access_token}"},
     )
-    assert tasks.status_code == 200, tasks.text
+    assert tasks.status_code == 200, tasks.reason
     tasks_content = tasks.json()["tasks"]
     assert len(tasks.json()["tasks"]) == 2, tasks_content
 
@@ -106,7 +106,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         f"{backend_url}/api/projects/{project_id}/sessions",
         headers={"Authorization": f"Bearer {access_token}"},
     )
-    assert sessions.status_code == 200, sessions.text
+    assert sessions.status_code == 200, sessions.reason
     assert len(sessions.json()["sessions"]) == 1, sessions.json()
     assert sessions.json()["sessions"][0]["id"] == session_id, sessions.json()
 
@@ -115,21 +115,21 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     #     f"{backend_url}/api/explore/{project_id}/aggregated/",
     #     headers={"Authorization": f"Bearer {access_token}"},
     # )
-    # assert aggregated_metrics.status_code == 200, aggregated_metrics.text
+    # assert aggregated_metrics.status_code == 200, aggregated_metrics.reason
     aggregated_tasks = requests.post(
         f"{backend_url}/api/explore/{project_id}/aggregated/tasks",
         headers={"Authorization": f"Bearer {access_token}"},
     )
-    assert aggregated_tasks.status_code == 200, aggregated_tasks.text
+    assert aggregated_tasks.status_code == 200, aggregated_tasks.reason
     aggregated_sessions = requests.post(
         f"{backend_url}/api/explore/{project_id}/aggregated/sessions",
         headers={"Authorization": f"Bearer {access_token}"},
     )
-    assert aggregated_sessions.status_code == 200, aggregated_sessions.text
+    assert aggregated_sessions.status_code == 200, aggregated_sessions.reason
 
     # Delete project
     delete_project = requests.delete(
         f"{backend_url}/api/projects/{project_id}/delete",
         headers={"Authorization": f"Bearer {access_token}"},
     )
-    assert delete_project.status_code == 200, delete_project.text
+    assert delete_project.status_code == 200, delete_project.reason

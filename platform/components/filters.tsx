@@ -252,7 +252,7 @@ const FilterComponent = ({
               }}
             >
               <X className="h-4 w-4 mr-1" />
-              Clear all filters
+              Clear all
             </Button>
           )}
         </div>
