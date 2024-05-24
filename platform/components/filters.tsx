@@ -55,6 +55,7 @@ const FilterComponent = ({
   const setTasksPagination = navigationStateStore(
     (state) => state.setTasksPagination,
   );
+  const dateRange = navigationStateStore((state) => state.dateRange);
 
   const resetPagination = () => {
     if (variant === "tasks") {
@@ -103,6 +104,13 @@ const FilterComponent = ({
   );
   const stringFields: MetadataFieldsToUniqueValues | undefined =
     metadataFieldsToValues?.string;
+
+  // Number of active filters that are not the created_at_start and created_at_end
+  const activeFilterCount =
+    dataFilters &&
+    Object.keys(dataFilters).filter(
+      (key) => key !== "created_at_start" && key !== "created_at_end",
+    ).length;
 
   if (!selectedProject) {
     return <></>;
@@ -232,11 +240,14 @@ const FilterComponent = ({
                 </Button>
               );
             })}
-          {dataFilters && Object.keys(dataFilters).length > 0 && (
+          {dataFilters && activeFilterCount > 0 && (
             <Button
               variant="destructive"
               onClick={() => {
-                setDataFilters({});
+                setDataFilters({
+                  created_at_start: dateRange?.created_at_start,
+                  created_at_end: dateRange?.created_at_end,
+                });
                 resetPagination();
               }}
             >
