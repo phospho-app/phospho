@@ -70,7 +70,7 @@ function FetchHasTasksSessions() {
   }
 
   // Fetch the selected project from the server. This is useful when the user
-  // change the settings
+  // changes the settings
   const { data: fetchedProject } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
