@@ -476,6 +476,9 @@ async def get_nb_of_daily_tasks(
         # If start and end date are not provided, we take the first and last task date
         if filters.created_at_start is None:
             filters.created_at_start = df["created_at"].min()
+    else:
+        if filters.created_at_start is None:
+            filters.created_at_start = datetime.datetime.now().timestamp()
 
     if filters.created_at_end is None:
         filters.created_at_end = datetime.datetime.now().timestamp()
@@ -611,10 +614,15 @@ async def get_daily_success_rate(
     df = pd.DataFrame(result)
 
     # If start and end date are not provided, we take the first and last task date
-    if filters.created_at_start is None:
-        filters.created_at_start = df["created_at"].min()
+    if not df.empty:
+        if filters.created_at_start is None:
+            filters.created_at_start = df["created_at"].min()
+    else:
+        if filters.created_at_start is None:
+            filters.created_at_start = datetime.datetime.now().timestamp()
+
     if filters.created_at_end is None:
-        filters.created_at_end = df["created_at"].max()
+        filters.created_at_end = datetime.datetime.now().timestamp()
 
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
@@ -669,8 +677,8 @@ async def get_tasks_aggregated_metrics(
             "most_detected_event",
             "nb_daily_tasks",
             "events_ranking",
-            "daily_success_rate",
-            # "success_rate_per_task_position",
+            # "daily_success_rate",
+            "success_rate_per_task_position",
         ]
 
     today_datetime = datetime.datetime.now(datetime.timezone.utc)
@@ -965,6 +973,9 @@ async def get_nb_sessions_per_day(
         # If start and end date are not provided, we take the first and last task date
         if filters.created_at_start is None:
             filters.created_at_start = df["created_at"].min()
+    else:
+        if filters.created_at_start is None:
+            filters.created_at_start = datetime.datetime.now().timestamp()
 
     if filters.created_at_end is None:
         filters.created_at_end = datetime.datetime.now().timestamp()
