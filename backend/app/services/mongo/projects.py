@@ -182,12 +182,7 @@ async def update_project(project: Project, **kwargs) -> Project:
     if payload:
         updated_project = Project.from_previous(updated_project_data)
 
-        logger.debug(f"Updated project: {updated_project}")
-
         if "sentiment_threshold" in payload.get("settings", {}):
-            logger.debug(
-                f"Updating sentiment threshold to {payload['settings']['sentiment_threshold']}"
-            )
             try:
                 score_threshold = payload["settings"]["sentiment_threshold"]["score"]
                 magnitude_threshold = payload["settings"]["sentiment_threshold"][
@@ -317,7 +312,6 @@ async def add_project_events(project_id: str, events: List[EventDefinition]) -> 
         [event.model_dump() for event in events]
     )
     updated_project = await get_project_by_id(project_id)
-    logger.debug(f"Updated project: {updated_project} {updated_project.settings}")
     return updated_project
 
 

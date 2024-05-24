@@ -1,28 +1,40 @@
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SentimentThreshold } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
-import { Cog } from "lucide-react";
+import { set } from "date-fns";
+import { Settings } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useSWRConfig } from "swr";
 import { z } from "zod";
 
 export const SentimentSettings = ({}: {}) => {
+  const [thresholdOpen, setThresholdOpen] = useState(false);
+  const { mutate } = useSWRConfig();
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const tasksSorting = navigationStateStore((state) => state.tasksSorting);
+  const tasksPagination = navigationStateStore(
+    (state) => state.tasksPagination,
+  );
+
   const { accessToken } = useUser();
 
   const selectedProject = dataStateStore((state) => state.selectedProject);
@@ -45,6 +57,10 @@ export const SentimentSettings = ({}: {}) => {
     },
   });
 
+  function toggleButton() {
+    setThresholdOpen(!thresholdOpen);
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const { score, magnitude } = values;
     const threshold: SentimentThreshold = {
@@ -58,7 +74,7 @@ export const SentimentSettings = ({}: {}) => {
 
     const project_name = selectedProject.project_name;
     const settings = selectedProject.settings;
-    const response = await fetch(`/api/projects/${project_id}`, {
+    fetch(`/api/projects/${project_id}`, {
       method: "POST",
       headers: {
         Authorization: "Bearer " + accessToken,
@@ -68,6 +84,19 @@ export const SentimentSettings = ({}: {}) => {
         project_name: project_name,
         settings: settings,
       }),
+    }).then(() => {
+      mutate(
+        project_id
+          ? [
+              `/api/projects/${project_id}/tasks`,
+              accessToken,
+              tasksPagination.pageIndex,
+              JSON.stringify(dataFilters),
+              JSON.stringify(tasksSorting),
+            ]
+          : null,
+      );
+      toggleButton();
     });
   }
 
@@ -76,22 +105,16 @@ export const SentimentSettings = ({}: {}) => {
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={thresholdOpen}>
       <DropdownMenuTrigger>
-        <Cog className={"ml-1"} size={18} />
+        <Button variant="ghost" size={"icon"} onClick={toggleButton}>
+          <Settings size={18} />
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-f</HoverCardContent>ull">
-        <DropdownMenuItem
-          onClick={(mouseEvent) => {
-            mouseEvent.stopPropagation();
-          }}
-        >
+      <DropdownMenuContent className="w-full">
+        <CardHeader>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-8"
-              onClick={(mouseEvent) => mouseEvent.stopPropagation()}
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <h2 className="text-lg font-bold">Sentiment Threshold</h2>
               <FormField
                 control={form.control}
@@ -136,13 +159,19 @@ export const SentimentSettings = ({}: {}) => {
                 )}
               ></FormField>
               <div className="flex justify-center">
-                <Button type="submit" variant="outline">
+                <Button
+                  type="submit"
+                  variant="outline"
+                  onClick={() => {
+                    onSubmit(form.getValues());
+                  }}
+                >
                   Update
                 </Button>
               </div>
             </form>
           </Form>
-        </DropdownMenuItem>
+        </CardHeader>
       </DropdownMenuContent>
     </DropdownMenu>
   );
