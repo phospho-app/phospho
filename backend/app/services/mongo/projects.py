@@ -337,6 +337,8 @@ async def get_all_tasks(
         filters=filters, project_id=project_id, collection=collection
     )
 
+    logger.info(f"Get all tasks with filters: {main_filter}")
+
     if not get_tests:
         main_filter["test_id"] = None
 
