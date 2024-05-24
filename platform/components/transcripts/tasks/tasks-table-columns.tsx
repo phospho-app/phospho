@@ -2,6 +2,7 @@ import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
 } from "@/components/label-events";
+import { SentimentSettings } from "@/components/sentiment-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -315,7 +316,12 @@ export function getColumns({
     // Language
     {
       header: ({ column }) => {
-        return <div className="flex items-center">Language</div>;
+        return (
+          <div className="flex items-center">
+            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+            Language
+          </div>
+        );
       },
       accessorKey: "language",
       cell: (row) => (
@@ -336,6 +342,7 @@ export function getColumns({
           <div className="flex items-center">
             <Sparkles className="h-4 w-4 mr-1 text-green-500" />
             Sentiment
+            <SentimentSettings />
           </div>
         );
       },
@@ -343,18 +350,28 @@ export function getColumns({
       cell: (row) => {
         const sentiment_label = row.getValue() as string;
         return (
-          <Badge
-            className={
-              sentiment_label == "positive"
-                ? "border-green-500"
-                : sentiment_label == "negative"
-                  ? "border-red-500"
-                  : ""
-            }
-            variant={"secondary"}
-          >
-            {sentiment_label}
-          </Badge>
+          <div>
+            <HoverCard openDelay={80} closeDelay={30}>
+              <HoverCardTrigger>
+                <Badge
+                  className={
+                    sentiment_label == "positive"
+                      ? "border-green-500"
+                      : sentiment_label == "negative"
+                        ? "border-red-500"
+                        : ""
+                  }
+                  variant={"secondary"}
+                >
+                  {sentiment_label}
+                </Badge>
+              </HoverCardTrigger>
+              <HoverCardContent side="top" className="text-sm text-left w-50">
+                <h2 className="font-bold">Sentiment label</h2>
+                <p>We ran sentiment analysis on this task.</p>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
         );
       },
     },

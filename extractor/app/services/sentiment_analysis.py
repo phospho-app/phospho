@@ -26,7 +26,9 @@ except Exception as e:
     client = None
 
 
-async def run_sentiment_and_language_analysis(text: str) -> tuple[SentimentObject, str]:
+async def run_sentiment_and_language_analysis(
+    text: str, score_threshold: float, magnitude_threshold: float
+) -> tuple[SentimentObject, str]:
     """
     Analyzes Sentiment and Language of a given text.
 
@@ -65,12 +67,12 @@ async def run_sentiment_and_language_analysis(text: str) -> tuple[SentimentObjec
         )
 
         # We interpret the sentiment score as follows:
-        if sentiment_response.score > 0.3:
+        if sentiment_response.score > score_threshold:
             sentiment_response.label = "positive"
-        elif sentiment_response.score < -0.3:
+        elif sentiment_response.score < -score_threshold:
             sentiment_response.label = "negative"
         else:
-            if sentiment_response.magnitude < 0.6:
+            if sentiment_response.magnitude < magnitude_threshold:
                 sentiment_response.label = "neutral"
             else:
                 sentiment_response.label = "mixed"

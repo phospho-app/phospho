@@ -471,6 +471,18 @@ async def get_nb_of_daily_tasks(
     """
     tasks = await get_all_tasks(project_id=project_id, limit=None, filters=filters)
     df = pd.DataFrame([task.model_dump() for task in tasks])
+
+    if not df.empty:
+        # If start and end date are not provided, we take the first and last task date
+        if filters.created_at_start is None:
+            filters.created_at_start = df["created_at"].min()
+    else:
+        if filters.created_at_start is None:
+            filters.created_at_start = datetime.datetime.now().timestamp()
+
+    if filters.created_at_end is None:
+        filters.created_at_end = datetime.datetime.now().timestamp()
+
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
             filters.created_at_start, datetime.timezone.utc
@@ -505,15 +517,8 @@ async def get_nb_of_daily_tasks(
 
 async def get_top_event_names_and_count(
     project_id: str,
+    filters: ProjectDataFilters,
     limit: int = 3,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    flag: Optional[Literal["success", "failure"]] = None,
-    event_name: Optional[Union[str, List[str]]] = None,
-    sentiment: Optional[str] = None,
-    last_eval_source: Optional[str] = None,
-    language: Optional[str] = None,
-    metadata: Optional[Dict[str, object]] = None,
     **kwargs,
 ) -> List[Dict[str, object]]:
     """
@@ -525,19 +530,17 @@ async def get_top_event_names_and_count(
         "project_id": project_id,
         "removed": {"$ne": True},
     }
-    if event_name is not None:
-        main_filter["event_name"] = {"$in": event_name}
+    if filters.event_name is not None:
+        main_filter["event_name"] = {"$in": filters.event_name}
     # Time range filter
-    if created_at_start is not None:
-        main_filter["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
+    if filters.created_at_start is not None:
+        main_filter["created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
         main_filter["created_at"] = {
             **main_filter.get("created_at", {}),
-            "$lte": created_at_end,
+            "$lte": filters.created_at_end,
         }
 
-    # Event is not removed
-    main_filter["removed"] = {"$ne": True}
     # Either the remove filed doesn't exist, either it's not True
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
@@ -550,42 +553,28 @@ async def get_top_event_names_and_count(
             }
         },
     ]
-
-    tasks_filter: Dict[str, object] = {}
-    # Filter on flag
-    if flag is not None:
-        tasks_filter["tasks.flag"] = flag
-    # Filter on sentiment
-    if sentiment is not None:
-        tasks_filter["tasks.sentiment.label"] = sentiment
-    # Filter on language
-    if language is not None:
-        tasks_filter["tasks.language"] = language
-    # Last eval source filter
-    if last_eval_source is not None:
-        if last_eval_source.startswith("phospho"):
-            # We want to filter on the source starting with "phospho"
-            tasks_filter["tasks.last_eval.source"] = {"$regex": "^phospho"}
-        else:
-            # We want to filter on the source not starting with "phospho"
-            tasks_filter["tasks.last_eval.source"] = {"$regex": "^(?!phospho).*"}
-    # Filter on task metadata
-    if metadata is not None:
-        for key, value in metadata.items():
-            tasks_filter[f"tasks.metadata.{key}"] = value
-
-    if tasks_filter != {}:
-        pipeline.append(
-            {"$match": tasks_filter},
-        )
+    filters.event_name = None
+    task_filtering_pipeline, _ = task_filtering_pipeline_match(
+        project_id=project_id, filters=filters, prefix="tasks"
+    )
+    pipeline.append({"$match": task_filtering_pipeline})
 
     pipeline.extend(
         [
             # Deduplicate the events by task_id and event_name
-            {"$group": {"_id": {"task_id": "$task_id", "event_name": "$event_name"}}},
+            {"$unwind": "$tasks"},
+            {
+                "$group": {
+                    "_id": {
+                        "task_id": "$task_id",
+                        "event_id": "$id",
+                        "event_name": "$event_name",
+                    }
+                }
+            },
             {"$group": {"_id": "$_id.event_name", "nb_events": {"$sum": 1}}},
             {"$project": {"_id": 0, "event_name": "$_id", "nb_events": 1}},
-            {"$sort": {"count": -1}},
+            {"$sort": {"nb_events": -1}},
             {"$limit": limit},
         ]
     )
@@ -623,6 +612,17 @@ async def get_daily_success_rate(
     result = await mongo_db[collection].aggregate(pipeline).to_list(length=None)
 
     df = pd.DataFrame(result)
+
+    # If start and end date are not provided, we take the first and last task date
+    if not df.empty:
+        if filters.created_at_start is None:
+            filters.created_at_start = df["created_at"].min()
+    else:
+        if filters.created_at_start is None:
+            filters.created_at_start = datetime.datetime.now().timestamp()
+
+    if filters.created_at_end is None:
+        filters.created_at_end = datetime.datetime.now().timestamp()
 
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
@@ -677,7 +677,7 @@ async def get_tasks_aggregated_metrics(
             "most_detected_event",
             "nb_daily_tasks",
             "events_ranking",
-            "daily_success_rate",
+            # "daily_success_rate",
             "success_rate_per_task_position",
         ]
 
@@ -706,29 +706,19 @@ async def get_tasks_aggregated_metrics(
             **filters.model_dump(),
         )
     if "nb_daily_tasks" in metrics:
-        daily_tasks_filters = filters
-        if daily_tasks_filters.created_at_start is None:
-            daily_tasks_filters.created_at_start = seven_days_ago_timestamp
-        if daily_tasks_filters.created_at_end is None:
-            daily_tasks_filters.created_at_end = today_timestamp
         output["nb_daily_tasks"] = await get_nb_of_daily_tasks(
-            project_id=project_id, filters=daily_tasks_filters
+            project_id=project_id, filters=filters
         )
     if "events_ranking" in metrics:
         output["events_ranking"] = await get_top_event_names_and_count(
             project_id=project_id,
-            limit=3,
-            **filters.model_dump(),
+            limit=5,
+            filters=filters,
         )
     if "daily_success_rate" in metrics:
-        daily_tasks_filters = filters
-        if daily_tasks_filters.created_at_start is None:
-            daily_tasks_filters.created_at_start = seven_days_ago_timestamp
-        if daily_tasks_filters.created_at_end is None:
-            daily_tasks_filters.created_at_end = today_timestamp
         output["daily_success_rate"] = await get_daily_success_rate(
             project_id=project_id,
-            filters=daily_tasks_filters,
+            filters=filters,
         )
     if "success_rate_per_task_position" in metrics:
         output[
@@ -807,7 +797,10 @@ async def get_global_average_session_length(
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
-        main_filter["created_at"] = {"$lte": created_at_end}
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": created_at_end,
+        }
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
@@ -862,7 +855,10 @@ async def get_last_message_success_rate(
     if created_at_start is not None:
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
-        main_filter["created_at"] = {"$lte": created_at_end}
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": created_at_end,
+        }
     pipeline: List[Dict[str, object]] = [{"$match": main_filter}]
     if event_name is not None:
         collection_name = "sessions_with_events"
@@ -928,25 +924,27 @@ async def get_last_message_success_rate(
 
 async def get_nb_sessions_per_day(
     project_id: str,
-    created_at_start: int,
-    created_at_end: int,
-    event_name: Optional[List[str]] = None,
-    **kwargs,
+    filters: ProjectDataFilters,
 ) -> List[dict]:
     """
     Get the nb of sessions per day of a project.
     """
     mongo_db = await get_mongo_db()
     collection_name = "sessions"
+    main_filter = {"project_id": project_id}
+    if filters.created_at_start is not None:
+        main_filter["created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": filters.created_at_end,
+        }
+
     pipeline: List[Dict[str, object]] = [
-        {
-            "$match": {
-                "project_id": project_id,
-                "created_at": {"$gte": created_at_start, "$lte": created_at_end},
-            }
-        },
+        {"$match": main_filter},
     ]
-    if event_name is not None:
+
+    if filters.event_name is not None:
         collection_name = "sessions_with_events"
         pipeline.append(
             {
@@ -970,9 +968,23 @@ async def get_nb_sessions_per_day(
         .to_list(length=None)
     )
     df = pd.DataFrame(result)
+
+    if not df.empty:
+        # If start and end date are not provided, we take the first and last task date
+        if filters.created_at_start is None:
+            filters.created_at_start = df["created_at"].min()
+    else:
+        if filters.created_at_start is None:
+            filters.created_at_start = datetime.datetime.now().timestamp()
+
+    if filters.created_at_end is None:
+        filters.created_at_end = datetime.datetime.now().timestamp()
+
     complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(created_at_start, datetime.timezone.utc),
-        datetime.datetime.fromtimestamp(created_at_end, datetime.timezone.utc),
+        datetime.datetime.fromtimestamp(
+            filters.created_at_start, datetime.timezone.utc
+        ),
+        datetime.datetime.fromtimestamp(filters.created_at_end, datetime.timezone.utc),
         freq="D",
     )
     complete_df = pd.DataFrame({"date": complete_date_range})
@@ -1131,14 +1143,8 @@ async def get_sessions_aggregated_metrics(
             **filters.model_dump(),
         )
     if "nb_sessions_per_day" in metrics:
-        daily_sessions_filters = filters
-        if daily_sessions_filters.created_at_start is None:
-            daily_sessions_filters.created_at_start = seven_days_ago_timestamp
-        if daily_sessions_filters.created_at_end is None:
-            daily_sessions_filters.created_at_end = today_timestamp
         output["nb_sessions_per_day"] = await get_nb_sessions_per_day(
-            project_id=project_id,
-            **filters.model_dump(),
+            project_id=project_id, filters=filters
         )
     if "session_length_histogram" in metrics:
         output["session_length_histogram"] = await get_nb_sessions_histogram(
