@@ -467,6 +467,9 @@ async def post_upload_tasks(
             status_code=400, detail=f"Error: Could not read the file content. {e}"
         )
 
+    # Strip and lowercase the columns
+    tasks_df.columns = tasks_df.columns.str.strip().str.lower()
+
     # Verify if the required columns are present
     required_columns = ["input", "output"]
     missing_columns = set(required_columns) - set(tasks_df.columns)
