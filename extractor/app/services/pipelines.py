@@ -656,6 +656,12 @@ async def sentiment_and_language_analysis_pipeline(
             score_threshold = 0.3
             magnitude_threshold = 0.6
 
+    if score_threshold is None:
+        score_threshold = 0.3
+
+    if magnitude_threshold is None:
+        magnitude_threshold = 0.6
+
     sentiment_object, language = await run_sentiment_and_language_analysis(
         task.input, score_threshold, magnitude_threshold
     )
