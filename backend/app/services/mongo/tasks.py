@@ -347,13 +347,18 @@ async def get_total_nb_of_tasks(
 
 async def label_sentiment_analysis(
     project_id: str,
-    score_threshold: float,
-    magnitude_threshold: float,
+    score_threshold: Optional[float] = None,
+    magnitude_threshold: Optional[float] = None,
 ) -> None:
     """
     Label sentiment analysis for a project.
     """
     mongo_db = await get_mongo_db()
+
+    if score_threshold is None:
+        score_threshold = 0.5
+    if magnitude_threshold is None:
+        magnitude_threshold = 0.3
 
     _ = await mongo_db["tasks"].update_many(
         # This query matches all tasks beloging to the project_id and with a score higher than score_threshold
