@@ -336,3 +336,61 @@ async def get_total_nb_of_tasks(
 
     logger.debug(f"Total number of tasks: {total_nb_tasks}")
     return total_nb_tasks
+
+
+async def label_sentiment_analysis(
+    project_id: str,
+    score_threshold: float,
+    magnitude_threshold: float,
+) -> None:
+    """
+    Label sentiment analysis for a project.
+    """
+    mongo_db = await get_mongo_db()
+
+    _ = await mongo_db["tasks"].update_many(
+        # This query matches all tasks beloging to the project_id and with a score higher than score_threshold
+        {
+            "project_id": project_id,
+            "sentiment.score": {"$gt": score_threshold},
+        },
+        {
+            "$set": {"sentiment.label": "positive"},
+        },
+    )
+    _ = await mongo_db["tasks"].update_many(
+        # This query matches all tasks beloging to the project_id and with a score lower than -score_threshold
+        {
+            "project_id": project_id,
+            "sentiment.score": {"$lt": -score_threshold},
+        },
+        {
+            "$set": {"sentiment.label": "negative"},
+        },
+    )
+    _ = await mongo_db["tasks"].update_many(
+        # This query matches all tasks beloging to the project_id and with a score between -score_threshold and score_threshold
+        # It also filters out tasks with a magnitude higher than magnitude_threshold
+        {
+            "project_id": project_id,
+            "sentiment.score": {"$gte": -score_threshold, "$lte": score_threshold},
+            "sentiment.magnitude": {"$lt": magnitude_threshold},
+        },
+        {
+            "$set": {"sentiment.label": "neutral"},
+        },
+    )
+    _ = await mongo_db["tasks"].update_many(
+        # This query matches all tasks beloging to the project_id and with a score between -score_threshold and score_threshold
+        # It also filters out tasks with a magnitude higher than magnitude_threshold
+        {
+            "project_id": project_id,
+            "sentiment.score": {"$gte": -score_threshold, "$lte": score_threshold},
+            "sentiment.magnitude": {"$gte": magnitude_threshold},
+        },
+        {
+            "$set": {"sentiment.label": "mixed"},
+        },
+    )
+
+    return None

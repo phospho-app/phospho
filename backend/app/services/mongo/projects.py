@@ -33,8 +33,8 @@ from openai import AsyncOpenAI
 from propelauth_fastapi import User
 
 from app.services.mongo.extractor import run_recipe_on_tasks
+from app.services.mongo.tasks import label_sentiment_analysis
 
-import phospho
 from phospho.utils import filter_nonjsonable_keys
 
 
@@ -113,7 +113,6 @@ async def get_project_by_id(project_id: str) -> Project:
 
     if project_data is None or len(project_data) == 0:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
-
     project_data = project_data[0]
 
     try:
@@ -181,9 +180,21 @@ async def update_project(project: Project, **kwargs) -> Project:
     updated_project_data.update(payload)
 
     if payload:
-        logger.debug(f"Creating project from previous data: {payload}")
-
         updated_project = Project.from_previous(updated_project_data)
+
+        if "sentiment_threshold" in payload.get("settings", {}):
+            try:
+                score_threshold = payload["settings"]["sentiment_threshold"]["score"]
+                magnitude_threshold = payload["settings"]["sentiment_threshold"][
+                    "magnitude"
+                ]
+                await label_sentiment_analysis(
+                    project.id, score_threshold, magnitude_threshold
+                )
+            except KeyError:
+                logger.error(
+                    "Error updating sentiment threshold: missing score or magnitude"
+                )
 
         # Create a new recipe for each event in the payload
         for event_name, event_definition in (
@@ -301,7 +312,6 @@ async def add_project_events(project_id: str, events: List[EventDefinition]) -> 
         [event.model_dump() for event in events]
     )
     updated_project = await get_project_by_id(project_id)
-    logger.debug(f"Updated project: {updated_project} {updated_project.settings}")
     return updated_project
 
 
