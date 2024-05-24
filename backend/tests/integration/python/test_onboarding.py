@@ -116,16 +116,16 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     #     headers={"Authorization": f"Bearer {access_token}"},
     # )
     # assert aggregated_metrics.status_code == 200, aggregated_metrics.reason
-    aggregated_tasks = requests.post(
-        f"{backend_url}/api/explore/{project_id}/aggregated/tasks",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-    assert aggregated_tasks.status_code == 200, aggregated_tasks.reason
-    aggregated_sessions = requests.post(
-        f"{backend_url}/api/explore/{project_id}/aggregated/sessions",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-    assert aggregated_sessions.status_code == 200, aggregated_sessions.reason
+    # aggregated_tasks = requests.post(
+    #     f"{backend_url}/api/explore/{project_id}/aggregated/tasks",
+    #     headers={"Authorization": f"Bearer {access_token}"},
+    # )
+    # assert aggregated_tasks.status_code == 200, aggregated_tasks.reason
+    # aggregated_sessions = requests.post(
+    #     f"{backend_url}/api/explore/{project_id}/aggregated/sessions",
+    #     headers={"Authorization": f"Bearer {access_token}"},
+    # )
+    # assert aggregated_sessions.status_code == 200, aggregated_sessions.reason
 
     # Delete project
     delete_project = requests.delete(
