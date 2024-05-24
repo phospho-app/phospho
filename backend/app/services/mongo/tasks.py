@@ -1,3 +1,4 @@
+import datetime
 from typing import Dict, List, Literal, Optional, Tuple, cast
 from phospho.models import ProjectDataFilters
 from phospho.utils import filter_nonjsonable_keys
@@ -250,6 +251,12 @@ def task_filtering_pipeline_match(
         prefix += "."
 
     match: Dict[str, object] = {"project_id": project_id}
+
+    # Cast the created_at filters to int
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = int(filters.created_at_start.timestamp())
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = int(filters.created_at_end.timestamp())
 
     if filters.created_at_start is not None:
         match[f"{prefix}created_at"] = {"$gte": filters.created_at_start}
