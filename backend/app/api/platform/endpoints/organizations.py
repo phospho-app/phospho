@@ -208,6 +208,7 @@ async def post_create_checkout_session(
                 },
                 "description": "Unlock phospho's full potential.",
             },
+            allow_promotion_codes=True,
         )
     except Exception as e:
         return {"error": f"Unexpected error: {e}"}
