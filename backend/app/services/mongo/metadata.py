@@ -614,18 +614,24 @@ async def breakdown_by_sum_of_metadata_field(
                 detail="Metric 'avg' is only supported for number metadata fields",
             )
 
-    pipeline += [
-        {"$match": {"_id": {"$ne": None}}},
-        {
-            "$project": {
-                breakdown_by: "$_id",
-                metric: 1,
-                f"{metric}{metadata_field}": 1,
-                "_id": 0,
+    pipeline.extend(
+        [
+            {"$match": {"_id": {"$ne": None}}},
+            {
+                "$project": {
+                    breakdown_by: "$_id",
+                    metric: 1,
+                    f"{metric}{metadata_field}": 1,
+                    "_id": 0,
+                },
             },
-        },
-        {"$sort": {f"{metric}{metadata_field}": -1, metric: -1}},
-    ]
+        ]
+    )
+    if breakdown_by == "task_position":
+        pipeline.append({"$sort": {f"{breakdown_by}": 1}})
+    else:
+        pipeline.append({"$sort": {f"{metric}{metadata_field}": -1, metric: -1}})
+
     result = await mongo_db["tasks_with_events"].aggregate(pipeline).to_list(length=200)
 
     return result
