@@ -127,6 +127,8 @@ class Task(ProjectElementBaseModel):
     test_id: Optional[str] = None
     # Topics : a list of topics
     topics: Optional[List[str]] = Field(default_factory=list)
+    # Position of the task in the session
+    task_position: Optional[int] = None
 
     def preview(self):
         # Return a string representation of the input and output

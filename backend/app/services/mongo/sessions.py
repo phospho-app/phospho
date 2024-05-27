@@ -1,11 +1,13 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 from app.db.models import Session, Project, Task
 from app.db.mongo import get_mongo_db
 
+from app.services.mongo.tasks import task_filtering_pipeline_match
 from loguru import logger
 from fastapi import HTTPException
 from app.db.models import Session, Event, EventDefinition
 
+from phospho.models import ProjectDataFilters
 from phospho.utils import is_jsonable
 
 
@@ -142,6 +144,72 @@ async def compute_session_length(project_id: str):
     ]
 
     await mongo_db["sessions"].aggregate(session_pipeline).to_list(length=None)
+
+
+async def compute_task_position(
+    project_id: str, filters: Optional[ProjectDataFilters] = None
+):
+    """
+    Executes an aggregation pipeline to compute the task position for each task.
+    """
+    mongo_db = await get_mongo_db()
+
+    if filters is None:
+        filters = ProjectDataFilters()
+
+    main_filter: Dict[str, object] = {"project_id": project_id}
+    if filters.created_at_start is not None:
+        main_filter["created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
+        main_filter["created_at"] = {
+            **main_filter.get("created_at", {}),
+            "$lte": filters.created_at_end,
+        }
+
+    tasks_filter, task_collection = task_filtering_pipeline_match(
+        project_id=project_id, filters=filters, collection="tasks", prefix="tasks"
+    )
+    pipeline = [
+        {"$match": main_filter},
+        {
+            "$lookup": {
+                "from": task_collection,
+                "localField": "id",
+                "foreignField": "session_id",
+                "as": "tasks",
+            }
+        },
+        {"$match": tasks_filter},
+        {
+            "$set": {
+                "tasks": {
+                    "$sortArray": {
+                        "input": "$tasks",
+                        "sortBy": {"tasks.created_at": 1},
+                    },
+                }
+            }
+        },
+        # Transform to get 1 doc = 1 task. We also add the task position.
+        {"$unwind": {"path": "$tasks", "includeArrayIndex": "task_position"}},
+        {
+            "$project": {
+                "id": "$tasks.id",
+                "task_position": {"$add": ["$task_position", 1]},
+                "_id": 0,
+            }
+        },
+        {
+            "$merge": {
+                "into": "tasks",
+                "on": "id",
+                "whenMatched": "merge",
+                "whenNotMatched": "discard",
+            }
+        },
+    ]
+
+    await mongo_db["sessions"].aggregate(pipeline).to_list(length=None)
 
 
 async def get_project_id_from_session(session_id: str) -> str:
