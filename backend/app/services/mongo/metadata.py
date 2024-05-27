@@ -2,9 +2,10 @@ from typing import Dict, List, Literal, Optional
 from app.api.v2.models.projects import UserMetadata
 from fastapi import HTTPException
 from loguru import logger
-from app.services.mongo.sessions import compute_session_length
+from app.services.mongo.sessions import compute_session_length, compute_task_position
 
 from app.db.mongo import get_mongo_db
+from phospho.models import ProjectDataFilters
 
 
 async def fetch_count(
@@ -441,12 +442,14 @@ async def breakdown_by_sum_of_metadata_field(
     number_metadata_fields: List[str],
     category_metadata_fields: List[str],
     breakdown_by: Optional[str] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
+    filters: Optional[ProjectDataFilters] = None,
 ):
     """
     Get the sum of a metadata field, grouped by another metadata field if provided.
     """
+
+    if filters is None:
+        filters = ProjectDataFilters()
 
     if breakdown_by in category_metadata_fields:
         breakdown_by_col = f"metadata.{breakdown_by}"
@@ -459,12 +462,12 @@ async def breakdown_by_sum_of_metadata_field(
     main_filter: Dict[str, object] = {
         "project_id": project_id,
     }
-    if created_at_start is not None:
-        main_filter["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
+    if filters.created_at_start is not None:
+        main_filter["created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
         main_filter["created_at"] = {
             **main_filter.get("created_at", {}),
-            "$lte": created_at_end,
+            "$lte": filters.created_at_end,
         }
 
     pipeline: list[dict[str, object]] = [
@@ -509,6 +512,10 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
         breakdown_by_col = "events.event_name"
+
+    if breakdown_by == "task_position":
+        await compute_task_position(project_id=project_id, filters=filters)
+        breakdown_by_col = "task_position"
 
     if metric.lower() == "nb tasks":
         pipeline += [

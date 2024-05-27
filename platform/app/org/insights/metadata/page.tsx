@@ -232,6 +232,13 @@ const MetadataForm: React.FC<{}> = ({}) => {
             >
               flag
             </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedGroupBy("task_position");
+              }}
+            >
+              task_position
+            </DropdownMenuItem>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>metadata</DropdownMenuSubTrigger>
               <DropdownMenuPortal>
