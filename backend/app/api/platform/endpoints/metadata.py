@@ -224,7 +224,6 @@ async def post_metadata_pivot(
         breakdown_by=pivot_query.breakdown_by,
         number_metadata_fields=pivot_query.number_metadata_fields,
         category_metadata_fields=pivot_query.category_metadata_fields,
-        created_at_start=pivot_query.filters.created_at_start,
-        created_at_end=pivot_query.filters.created_at_end,
+        filters=pivot_query.filters,
     )
     return MetadataPivotResponse(pivot_table=pivot_table)
