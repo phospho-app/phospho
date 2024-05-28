@@ -2,6 +2,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -14,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Check, Trash } from "lucide-react";
+import { Check, PlusIcon, Trash } from "lucide-react";
 
 import { Badge } from "./ui/badge";
 
@@ -102,10 +103,14 @@ export const AddEventDropdownForTasks = ({
   task,
   setTask,
   className,
+  setSheetOpen,
+  setSheetToOpen,
 }: {
   task: TaskWithEvents;
   setTask: (task: TaskWithEvents) => void;
   className?: string;
+  setSheetOpen?: (open: boolean) => void;
+  setSheetToOpen?: (sheet: string | null) => void;
 }) => {
   if (!task) {
     return <></>;
@@ -187,6 +192,21 @@ export const AddEventDropdownForTasks = ({
             </HoverCard>
           );
         })}
+        {setSheetOpen !== undefined && setSheetToOpen !== undefined && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+                setSheetToOpen("edit");
+                setSheetOpen(true);
+              }}
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              Add a new event
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -9,6 +9,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -24,16 +26,20 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
-import { Event, TaskWithEvents } from "@/models/models";
-import { navigationStateStore } from "@/store/store";
+import { Event, EventDefinition, TaskWithEvents } from "@/models/models";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
+import { set } from "date-fns";
 import {
   ArrowDown,
   ArrowUp,
   Check,
   ChevronRight,
+  EllipsisVertical,
   PenSquare,
+  Play,
+  PlusIcon,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
@@ -79,18 +85,27 @@ async function flagTask({
 
 export function getColumns({
   mutateTasks,
+  setSheetOpen,
+  setSheetToOpen,
+  setEventDefinition,
 }: {
   mutateTasks: KeyedMutator<any>;
+  setSheetOpen: (open: boolean) => void;
+  setSheetToOpen: (sheet: string | null) => void;
+  setEventDefinition: (event: EventDefinition | null) => void;
 }): ColumnDef<TaskWithEvents>[] {
   const project_id = navigationStateStore((state) => state.project_id);
+  const selectedProject = dataStateStore((state) => state.selectedProject);
   const tasksPagination = navigationStateStore(
     (state) => state.tasksPagination,
   );
   const setTasksPagination = navigationStateStore(
     (state) => state.setTasksPagination,
   );
-
   const { accessToken } = useUser();
+
+  const events = selectedProject?.settings?.events || {};
+  const eventArray = Object.entries(events);
 
   let uniqueEventNamesInData: string[] = [];
   const { data: uniqueEvents } = useSWR(
@@ -257,9 +272,55 @@ export function getColumns({
     {
       header: ({ column }) => {
         return (
-          <div className="flex items-center">
-            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-            Events
+          <div className="flex items-center space-x-2 justify-between">
+            <div className="flex flex-row items-center space-x-1">
+              <Sparkles className="h-4 w-4 text-green-500" />
+              <div>Events</div>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <EllipsisVertical className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>
+                  <div className="flex flex-row space-x-2 items-center">
+                    <Play className="w-4 h-4" />
+                    <div>Run event detection</div>
+                  </div>
+                </DropdownMenuLabel>
+                {eventArray.map(([event_name, event_definition]) => {
+                  return (
+                    <DropdownMenuItem
+                      key={event_definition.event_name}
+                      onClick={(mouseEvent) => {
+                        // This is used to avoid clicking on the row as well
+                        mouseEvent.stopPropagation();
+                        setEventDefinition(event_definition);
+                        setSheetOpen(true);
+                        setSheetToOpen("run");
+                      }}
+                    >
+                      {event_definition.event_name}
+                    </DropdownMenuItem>
+                  );
+                })}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={(mouseEvent) => {
+                    // This is used to avoid clicking on the row as well
+                    mouseEvent.stopPropagation();
+                    setSheetToOpen("edit");
+                    setSheetOpen(true);
+                    setEventDefinition(null);
+                  }}
+                >
+                  <PlusIcon className="w-4 h-4 mr-2" />
+                  Add new event
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       },
@@ -313,6 +374,8 @@ export function getColumns({
                   return data;
                 });
               }}
+              setSheetOpen={setSheetOpen}
+              setSheetToOpen={setSheetToOpen}
             />
           </div>
         </div>
