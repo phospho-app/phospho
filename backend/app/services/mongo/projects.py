@@ -362,21 +362,21 @@ async def get_all_tasks(
         collection = "tasks"
 
     # To avoid the sort to OOM on Serverless MongoDB executor, we restrain the pipeline to the necessary fields...
-    pipeline.append(
-        {
-            "$project": {
-                "id": 1,
-                "created_at": 1,
-            }
-        },
-    )
-    if sorting is not None and len(sorting) > 0:
-        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
-        pipeline.append(
-            {"$sort": sorting_dict},
-        )
+    if sorting is None:
+        sorting_dict = {"created_at": -1}
     else:
-        pipeline.append({"$sort": {"created_at": -1}})
+        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+    pipeline.extend(
+        [
+            {
+                "$project": {
+                    "id": 1,
+                    **{sort_key: 1 for sort_key in sorting_dict.keys()},
+                }
+            },
+            {"$sort": sorting_dict},
+        ]
+    )
 
     # Add pagination
     if pagination:
@@ -727,19 +727,21 @@ async def get_all_sessions(
             )
 
     # To avoid the sort to OOM on Serverless MongoDB executor, we restrain the pipeline to the necessary fields...
-    pipeline.append(
-        {
-            "$project": {
-                "id": 1,
-                "created_at": 1,
-            }
-        },
-    )
-    if sorting is not None and len(sorting) > 0:
-        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
-        pipeline.append({"$sort": sorting_dict})
+    if sorting is None:
+        sorting_dict = {"created_at": -1}
     else:
-        pipeline.append({"$sort": {"created_at": -1}})
+        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+    pipeline.extend(
+        [
+            {
+                "$project": {
+                    "id": 1,
+                    **{sort_key: 1 for sort_key in sorting_dict.keys()},
+                }
+            },
+            {"$sort": sorting_dict},
+        ]
+    )
 
     # Add pagination
     if pagination:

@@ -55,20 +55,25 @@ export function getColumns({
     {
       header: ({ column }) => {
         return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
+          <div className="flex flex-row items-center justify-between space-x-2">
             Date
-            {
-              // Show the sorting icon based on the current sorting state
-              column.getIsSorted() === "desc" ? (
-                <ArrowUp className="ml-2 h-4 w-4" />
-              ) : (
-                <ArrowDown className="ml-2 h-4 w-4" />
-              )
-            }
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              {
+                // Show the sorting icon based on the current sorting state
+                column.getIsSorted() === "desc" ? (
+                  <ArrowUp className="h-4 w-4" />
+                ) : (
+                  <ArrowDown className="h-4 w-4" />
+                )
+              }
+            </Button>
+          </div>
         );
       },
       accessorKey: "created_at",
@@ -153,13 +158,25 @@ export function getColumns({
     {
       header: ({ column }) => {
         return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
+          <div className="flex flex-row justify-between space-x-2 items-center">
             Session Length
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              {
+                // Show the sorting icon based on the current sorting state
+                column.getIsSorted() === "desc" ? (
+                  <ArrowUp className="h-4 w-4" />
+                ) : (
+                  <ArrowDown className="h-4 w-4" />
+                )
+              }
+            </Button>
+          </div>
         );
       },
       accessorKey: "session_length",
@@ -210,7 +227,9 @@ export function getColumns({
           <Link
             href={`/org/transcripts/sessions/${encodeURIComponent(session.id)}`}
           >
-            <ChevronRight />
+            <Button variant="ghost" size="icon">
+              <ChevronRight />
+            </Button>
           </Link>
         );
       },

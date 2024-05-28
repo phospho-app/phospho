@@ -20,7 +20,7 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { set } from "date-fns";
-import { Settings } from "lucide-react";
+import { EllipsisVertical, Settings } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSWRConfig } from "swr";
@@ -108,14 +108,17 @@ export const SentimentSettings = ({}: {}) => {
     <DropdownMenu open={thresholdOpen} onOpenChange={setThresholdOpen}>
       <DropdownMenuTrigger>
         <Button variant="ghost" size={"icon"} onClick={toggleButton}>
-          <Settings size={18} />
+          <EllipsisVertical className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-full">
         <CardHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <h2 className="text-lg font-bold">Sentiment threshold</h2>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <h2 className="text-lg font-bold flex flex-row items-center space-x-2">
+                <Settings />
+                <div>Sentiment threshold</div>
+              </h2>
               <FormField
                 control={form.control}
                 name="score"
@@ -158,17 +161,15 @@ export const SentimentSettings = ({}: {}) => {
                   </FormItem>
                 )}
               ></FormField>
-              <div className="flex justify-center">
-                <Button
-                  type="submit"
-                  variant="outline"
-                  onClick={() => {
-                    onSubmit(form.getValues());
-                  }}
-                >
-                  Update
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                onClick={() => {
+                  onSubmit(form.getValues());
+                }}
+                className="w-full"
+              >
+                Update
+              </Button>
             </form>
           </Form>
         </CardHeader>
