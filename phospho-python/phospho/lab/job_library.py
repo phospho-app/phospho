@@ -4,7 +4,9 @@ Each job is a function that takes a message and a set of parameters and returns 
 The result is a JobResult object.
 """
 
+from collections import defaultdict
 import logging
+import math
 import os
 import random
 import time
@@ -146,6 +148,9 @@ async def event_detection(
     Detects if an event is present in a message.
     """
 
+    # Identifier of the source of the evaluation, with the version of the model if phospho
+    EVALUATION_SOURCE = "phospho-5"
+
     # Check if some Env variables override the default model and LLM provider
     provider, model_name = get_provider_and_model(model)
     async_openai_client = get_async_client(provider)
@@ -262,6 +267,8 @@ Did the event '{event_name}' happen during the interaction? Respond with only on
             ],
             max_tokens=5,
             temperature=0,
+            logprobs=True,
+            top_logprobs=20,
         )
     except Exception as e:
         logger.error(f"event_detection call to OpenAI API failed : {e}")
@@ -276,25 +283,72 @@ Did the event '{event_name}' happen during the interaction? Respond with only on
     logger.debug(f"event_detection call to OpenAI API ({api_call_time} sec)")
 
     # Parse the response
-    llm_response = response.choices[0].message.content
-    logger.debug(f"event_detection llm_response : {llm_response}")
-    if llm_response is not None:
-        llm_response = llm_response.strip()
+    if (
+        response.choices is None
+        or len(response.choices) == 0
+        or response.choices[0].message.content is None
+    ):
+        return JobResult(
+            result_type=ResultType.error,
+            value=None,
+            logs=[prompt, "No response from the API"],
+        )
 
-    # Validate the output
-    result_type = ResultType.error
-    detected_event = None
-    if llm_response is not None:
-        llm_response = llm_response.lower().strip()
+    if (
+        response.choices[0].logprobs is None
+        or response.choices[0].logprobs.content is None
+    ):
+        llm_response = response.choices[0].message.content
+        llm_response = llm_response.strip().lower()
         if "yes" in llm_response:
             result_type = ResultType.bool
             detected_event = True
         elif "no" in llm_response:
             result_type = ResultType.bool
             detected_event = False
+        else:
+            result_type = ResultType.error
+            detected_event = None
+        return JobResult(
+            result_type=result_type,
+            value=detected_event,
+            logs=[prompt, llm_response],
+            metadata={
+                "api_call_time": api_call_time,
+                "evaluation_source": EVALUATION_SOURCE,
+                "llm_call": {
+                    "model": model_name,
+                    "prompt": prompt,
+                    "llm_output": llm_response,
+                    "api_call_time": api_call_time,
+                    "evaluation_source": EVALUATION_SOURCE,
+                },
+            },
+        )
 
-    # Identifier of the source of the evaluation, with the version of the model if phospho
-    evaluation_source = "phospho-4"
+    first_logprobs = response.choices[0].logprobs.content[0].top_logprobs
+    llm_response = response.choices[0].message.content
+    logprob_score: dict[str, float] = defaultdict(float)
+    for logprob in first_logprobs:
+        if logprob.token.lower().strip() == "no":
+            logprob_score["no"] += math.exp(logprob.logprob)
+        if logprob.token.lower().strip() == "yes":
+            logprob_score["yes"] += math.exp(logprob.logprob)
+        print(logprob.token, math.exp(logprob.logprob))
+
+    # Normalize the scores
+    total_score = logprob_score["yes"] + logprob_score["no"]
+    if total_score > 0:
+        logprob_score["yes"] /= total_score
+        logprob_score["no"] /= total_score
+    result_type = ResultType.bool
+    # The response is the token with the highest logprob
+    if logprob_score["yes"] > logprob_score["no"]:
+        detected_event = True
+        score = logprob_score["yes"]
+    else:
+        detected_event = False
+        score = logprob_score["no"]
 
     logger.debug(f"event_detection detected event {event_name} : {detected_event}")
     # Return the result
@@ -304,13 +358,16 @@ Did the event '{event_name}' happen during the interaction? Respond with only on
         logs=[prompt, llm_response],
         metadata={
             "api_call_time": api_call_time,
-            "evaluation_source": evaluation_source,
+            "evaluation_source": EVALUATION_SOURCE,
             "llm_call": {
                 "model": model_name,
                 "prompt": prompt,
                 "llm_output": llm_response,
                 "api_call_time": api_call_time,
-                "evaluation_source": evaluation_source,
+                "evaluation_source": EVALUATION_SOURCE,
+                "logprob_score": logprob_score,
+                "all_logprobs": first_logprobs,
+                "score": score,
             },
         },
     )
