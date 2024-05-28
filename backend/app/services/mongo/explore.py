@@ -1493,9 +1493,7 @@ async def compute_session_length_per_metadata(
 
 async def get_success_rate_by_event_name(
     project_id: str,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    **kwargs,
+    filters: Optional[ProjectDataFilters] = None,
 ) -> Dict[str, float]:
     """
     Get the success rate by event name of a project.
@@ -1505,24 +1503,34 @@ async def get_success_rate_by_event_name(
         "project_id": project_id,
         "removed": {"$ne": True},
     }
-    if created_at_start is not None:
-        main_filter["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
+    if not filters:
+        filters = ProjectDataFilters()
+
+    if filters.created_at_start is not None:
+        main_filter["created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
         main_filter["created_at"] = {
             **main_filter.get("created_at", {}),
-            "$lte": created_at_end,
+            "$lte": filters.created_at_end,
         }
+
+    tasks_filters, task_collection = task_filtering_pipeline_match(
+        project_id=project_id, filters=filters, prefix="tasks"
+    )
+    logger.debug(tasks_filters)
+
     pipeline = [
         {"$match": main_filter},
         {
             "$lookup": {
-                "from": "tasks",
+                "from": task_collection,
                 "localField": "task_id",
                 "foreignField": "id",
                 "as": "tasks",
             }
         },
         {"$unwind": "$tasks"},
+        {"$match": tasks_filters},
         # Deduplicate based on event.event_name x task.id
         {
             "$group": {
@@ -1594,13 +1602,11 @@ async def get_events_aggregated_metrics(
     output: Dict[str, object] = {}
     if "success_rate_by_event_name" in metrics:
         output["success_rate_by_event_name"] = await get_success_rate_by_event_name(
-            project_id=project_id,
-            **filters.model_dump(),
+            project_id=project_id, filters=filters
         )
     if "total_nb_events" in metrics:
         output["total_nb_events"] = await get_total_nb_of_detections(
-            project_id=project_id,
-            **filters.model_dump(),
+            project_id=project_id, filters=filters
         )
     return output
 
