@@ -114,8 +114,11 @@ export const SentimentSettings = ({}: {}) => {
       <DropdownMenuContent className="w-full">
         <CardHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <h2 className="text-lg font-bold">Sentiment threshold</h2>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <h2 className="text-lg font-bold flex flex-row items-center space-x-2">
+                <Settings />
+                <div>Sentiment threshold</div>
+              </h2>
               <FormField
                 control={form.control}
                 name="score"
@@ -160,7 +163,6 @@ export const SentimentSettings = ({}: {}) => {
               ></FormField>
               <Button
                 type="submit"
-                variant="outline"
                 onClick={() => {
                   onSubmit(form.getValues());
                 }}
