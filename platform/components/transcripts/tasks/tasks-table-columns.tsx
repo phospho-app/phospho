@@ -345,8 +345,10 @@ export function getColumns({
       header: ({ column }) => {
         return (
           <div className="flex justify-between items-center space-x-2">
-            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-            Sentiment
+            <div className="flex flex-row items-center">
+              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+              Sentiment
+            </div>
             <SentimentSettings />
           </div>
         );

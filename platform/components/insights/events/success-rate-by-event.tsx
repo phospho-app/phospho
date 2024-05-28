@@ -1,9 +1,11 @@
 import { DatePickerWithRange } from "@/components/date-range";
+import FilterComponent from "@/components/filters";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { Filter } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -22,8 +24,7 @@ interface SuccessRate {
 function SuccessRateByEvent() {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-
-  const dateRange = navigationStateStore((state) => state.dateRange);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
 
   const {
     data: successRateByEvent,
@@ -34,16 +35,13 @@ function SuccessRateByEvent() {
       ? [
           `/api/explore/${project_id}/aggregated/events`,
           accessToken,
-          JSON.stringify(dateRange),
+          JSON.stringify(dataFilters),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["success_rate_by_event_name"],
-        filters: {
-          created_at_start: dateRange?.created_at_start,
-          created_at_end: dateRange?.created_at_end,
-        },
+        filters: dataFilters,
       }).then((response) => {
         return response?.success_rate_by_event_name?.map((event: any) => {
           // Round the success rate to 2 decimal places
@@ -79,7 +77,10 @@ function SuccessRateByEvent() {
 
   return (
     <div className="flex flex-col space-y-2">
-      <DatePickerWithRange />
+      <div className="flex flex-row space-x-2">
+        <DatePickerWithRange />
+        <FilterComponent variant="tasks" />
+      </div>
       <Card className="col-span-full lg:col-span-5">
         <CardHeader>Success Rate (%) by Event</CardHeader>
         <CardContent>
