@@ -86,6 +86,7 @@ class ScoreRange(BaseModel):
     min: float
     max: float
     value: float
+    score_type: Literal["confidence"] = "confidence"
 
 
 class Event(ProjectElementBaseModel):

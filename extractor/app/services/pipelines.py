@@ -103,7 +103,10 @@ async def run_event_detection_pipeline(
                     event_definition=event,
                     task=message.metadata["task"],
                     score=ScoreRange(
-                        min=0, max=1, value=result.metadata.get("score", 1)
+                        min=0,
+                        max=1,
+                        value=result.metadata.get("score", 1),
+                        score_type="confidence",
                     ),
                 )
 
