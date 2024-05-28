@@ -288,19 +288,18 @@ async def extract_langsmith_data(
                 f"Error processing langsmith run for project id: {user_data['project_id']}, {e}"
             )
 
-    await store_tasks(tasks_to_analyze)
-    await change_last_langsmith_extract(
-        project_id=user_data["project_id"],
-        new_last_extract_date=str(datetime.now()),
-    )
-
-    # We get the user's plan from propelauth to know if we bill the analysis
-
-    for task in tasks_to_analyze:
-        background_tasks.add_task(
-            task_main_pipeline,
-            task=task,
-            save_task=True,
+    if len(tasks_to_analyze) > 0:
+        await store_tasks(tasks_to_analyze)
+        await change_last_langsmith_extract(
+            project_id=user_data["project_id"],
+            new_last_extract_date=str(datetime.now()),
         )
+
+        for task in tasks_to_analyze:
+            background_tasks.add_task(
+                task_main_pipeline,
+                task=task,
+                save_task=True,
+            )
 
     return {"status": "ok"}

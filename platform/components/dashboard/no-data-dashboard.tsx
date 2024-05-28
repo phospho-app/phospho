@@ -291,7 +291,7 @@ export const SendDataAlertDialog = ({
       const responseBody = await response.json();
       if (response.ok) {
         toast.toast({
-          title: "🦜🔗LangSmith Connection",
+          title: "LangSmith import",
           description: responseBody.message,
         });
       }
@@ -487,10 +487,12 @@ phospho.log({input, output});`}
               {selectedTab == "lang_smith" && (
                 <div className="flex-col space-y-4">
                   <div className="text-sm">
-                    Use LangSmith to push your historical data to phospho.
+                    Import your historical data from LangSmith to phospho. We
+                    won't periodically sync your data. You can come back here to
+                    update it.
                   </div>
-                  <div>
-                    Find your API key{" "}
+                  <div className="text-sm">
+                    Find your LangSmith API key{" "}
                     <Link
                       className="underline hover:text-green-500"
                       href="https://smith.langchain.com/o/b864875a-2a0c-537e-92f1-5df713478975/settings"
@@ -526,7 +528,7 @@ phospho.log({input, output});`}
                           <FormItem>
                             <FormControl>
                               <Input
-                                placeholder="Project name"
+                                placeholder="LangSmith project name"
                                 {...field}
                                 className="font-normal"
                               />
@@ -540,7 +542,7 @@ phospho.log({input, output});`}
                           type="submit"
                           disabled={!form.formState.isValid}
                         >
-                          Transfer data from Lang Smith
+                          Transfer data from LangSmith
                         </Button>
                       </div>
                     </form>
