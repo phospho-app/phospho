@@ -126,20 +126,25 @@ export function getColumns({
     {
       header: ({ column }) => {
         return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
+          <div className="flex flex-row items-center space-x-2 justify-between">
             Date
-            {
-              // Show the sorting icon based on the current sorting state
-              column.getIsSorted() === "desc" ? (
-                <ArrowUp className="ml-2 h-4 w-4" />
-              ) : (
-                <ArrowDown className="ml-2 h-4 w-4" />
-              )
-            }
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              {
+                // Show the sorting icon based on the current sorting state
+                column.getIsSorted() === "desc" ? (
+                  <ArrowUp className="h-4 w-4" />
+                ) : (
+                  <ArrowDown className="h-4 w-4" />
+                )
+              }
+            </Button>
+          </div>
         );
       },
       accessorKey: "created_at",
@@ -339,7 +344,7 @@ export function getColumns({
     {
       header: ({ column }) => {
         return (
-          <div className="flex items-center">
+          <div className="flex justify-between items-center space-x-2">
             <Sparkles className="h-4 w-4 mr-1 text-green-500" />
             Sentiment
             <SentimentSettings />

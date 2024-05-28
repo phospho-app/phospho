@@ -1,5 +1,6 @@
 from typing import Dict, List, Literal, Optional
 from app.api.v2.models.projects import UserMetadata
+from app.services.mongo.tasks import task_filtering_pipeline_match
 from fastapi import HTTPException
 from loguru import logger
 from app.services.mongo.sessions import compute_session_length, compute_task_position
@@ -451,28 +452,22 @@ async def breakdown_by_sum_of_metadata_field(
     if filters is None:
         filters = ProjectDataFilters()
 
+    mongo_db = await get_mongo_db()
+
+    main_filter, collection_name = task_filtering_pipeline_match(
+        project_id=project_id, filters=filters
+    )
+
+    pipeline: List[Dict[str, object]] = [
+        {"$match": main_filter},
+    ]
+
     if breakdown_by in category_metadata_fields:
         breakdown_by_col = f"metadata.{breakdown_by}"
     elif breakdown_by == "None":
         breakdown_by_col = "id"
     else:
         breakdown_by_col = breakdown_by
-
-    mongo_db = await get_mongo_db()
-    main_filter: Dict[str, object] = {
-        "project_id": project_id,
-    }
-    if filters.created_at_start is not None:
-        main_filter["created_at"] = {"$gte": filters.created_at_start}
-    if filters.created_at_end is not None:
-        main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
-            "$lte": filters.created_at_end,
-        }
-
-    pipeline: list[dict[str, object]] = [
-        {"$match": main_filter},
-    ]
 
     if breakdown_by == "event_name":
         pipeline += [
@@ -632,6 +627,6 @@ async def breakdown_by_sum_of_metadata_field(
     else:
         pipeline.append({"$sort": {f"{metric}{metadata_field}": -1, metric: -1}})
 
-    result = await mongo_db["tasks_with_events"].aggregate(pipeline).to_list(length=200)
+    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=200)
 
     return result
