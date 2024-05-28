@@ -170,6 +170,7 @@ class Threshold(BaseModel):
 class ProjectSettings(BaseModel):
     events: Dict[str, EventDefinition] = Field(default_factory=dict)
     sentiment_threshold: Optional[Threshold] = Field(default_factory=Threshold)
+    last_langsmith_extract: Optional[str] = None
 
 
 class Project(DatedBaseModel):
@@ -197,17 +198,17 @@ class Project(DatedBaseModel):
         ):
             for event_name, event in project_data["settings"]["events"].items():
                 if "event_name" not in event.keys():
-                    project_data["settings"]["events"][event_name][
-                        "event_name"
-                    ] = event_name
+                    project_data["settings"]["events"][event_name]["event_name"] = (
+                        event_name
+                    )
                 if "org_id" not in event.keys():
-                    project_data["settings"]["events"][event_name][
-                        "org_id"
-                    ] = project_data["org_id"]
+                    project_data["settings"]["events"][event_name]["org_id"] = (
+                        project_data["org_id"]
+                    )
                 if "project_id" not in event.keys():
-                    project_data["settings"]["events"][event_name][
-                        "project_id"
-                    ] = project_data["id"]
+                    project_data["settings"]["events"][event_name]["project_id"] = (
+                        project_data["id"]
+                    )
 
         return cls(**project_data)
 

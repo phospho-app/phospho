@@ -177,7 +177,7 @@ async def verify_if_propelauth_user_can_access_project(
     return org_id
 
 
-def raise_error_if_not_in_pro_tier(org: dict, enforce: bool = False) -> None:
+def raise_error_if_not_in_pro_tier(org: dict, enforce: bool = True) -> None:
     """Raise an HTTPException if the org is not in the pro tier."""
     if not config.ENVIRONMENT == "production":
         return

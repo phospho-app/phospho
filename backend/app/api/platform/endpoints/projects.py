@@ -21,11 +21,11 @@ from app.api.platform.models import (
     Users,
     ProjectDataFilters,
     QuerySessionsTasksRequest,
-    UploadTasksRequest,
 )
 from app.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
+    raise_error_if_not_in_pro_tier,
 )
 from app.services.mongo.projects import (
     delete_project_from_id,
@@ -47,6 +47,8 @@ from app.services.mongo.search import (
     search_tasks_in_project,
     search_sessions_in_project,
 )
+
+from app.services.mongo.extractor import collect_langsmith_data
 
 router = APIRouter(tags=["Projects"])
 
@@ -488,3 +490,30 @@ async def post_upload_tasks(
         org_id=project.org_id,
     )
     return {"status": "ok", "num_rows": tasks_df.shape[0]}
+
+
+@router.post(
+    "/projects/{project_id}/connect-langsmith",
+    response_model=dict,
+)
+async def connect_langsmith(
+    project_id: str,
+    credentials: dict,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(propelauth.require_user),
+) -> dict:
+    """
+    Import data from Langsmith to a Phospho project
+    """
+    org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
+    raise_error_if_not_in_pro_tier(propelauth.fetch_org(org_id))
+
+    project = await get_project_by_id(project_id)
+    propelauth.require_org_member(user, project.org_id)
+    background_tasks.add_task(
+        collect_langsmith_data,
+        project_id=project_id,
+        org_id=project.org_id,
+        langsmith_credentials=credentials,
+    )
+    return {"status": "ok", "message": "🦜🔗Langsmith connected successfully."}

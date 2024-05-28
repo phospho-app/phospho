@@ -329,3 +329,35 @@ async def store_open_telemetry_data(
             error_id = generate_uuid()
             error_message = f"Caught error while storing opentelemetry data (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)
+
+
+async def collect_langsmith_data(
+    project_id: str, org_id: str, langsmith_credentials: dict
+):
+    async with httpx.AsyncClient() as client:
+        logger.debug(
+            f"Calling the extractor API for collecting langsmith data: {config.EXTRACTOR_URL}/v1/pipelines/langsmith"
+        )
+        try:
+            response = await client.post(
+                f"{config.EXTRACTOR_URL}/v1/pipelines/langsmith",  # WARNING: hardcoded API version
+                json={
+                    "langsmith_credentials": langsmith_credentials,
+                    "project_id": project_id,
+                    "org_id": org_id,
+                },
+                headers={
+                    "Authorization": f"Bearer {config.EXTRACTOR_SECRET_KEY}",
+                    "Content-Type": "application/json",
+                },
+                timeout=60,
+            )
+            if response.status_code != 200:
+                logger.error(
+                    f"Error returned when collecting langsmith data (status code: {response.status_code}): {response.text}"
+                )
+
+        except Exception as e:
+            error_id = generate_uuid()
+            error_message = f"Caught error while collecting langsmith data (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            logger.error(error_message)

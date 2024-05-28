@@ -18,10 +18,15 @@ from app.services.pipelines import (
     recipe_pipeline,
     task_main_pipeline,
     store_opentelemetry_data_in_db,
+    store_tasks,
+    get_last_langsmith_extract,
+    change_last_langsmith_extract,
 )
 from app.services.projects import get_project_by_id
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
+from phospho.models import Task
+from datetime import datetime
 
 router = APIRouter()
 
@@ -218,3 +223,83 @@ async def store_opentelemetry_data(
     except KeyError as e:
         logger.error(f"KeyError: {e}")
         return {"status": "error", "message": f"KeyError: {e}"}
+
+
+@router.post(
+    "/pipelines/langsmith",
+    description="Run the langsmith pipeline on a task",
+)
+async def extract_langsmith_data(
+    user_data: dict,
+    background_tasks: BackgroundTasks,
+):
+    logger.debug(
+        f"Received Langsmith connection data for org id: {user_data['org_id']}"
+    )
+
+    last_langsmith_extract = await get_last_langsmith_extract(user_data["project_id"])
+
+    from langsmith import Client
+
+    client = Client(api_key=user_data["langsmith_credentials"]["lang_smith_api_key"])
+    if last_langsmith_extract is None:
+        runs = client.list_runs(
+            project_name=user_data["langsmith_credentials"]["project_name"],
+            run_type="llm",
+        )
+
+    else:
+        runs = client.list_runs(
+            project_name=user_data["langsmith_credentials"]["project_name"],
+            run_type="llm",
+            start_time=datetime.strptime(str(datetime.now()), "%Y-%m-%d %H:%M:%S.%f"),
+        )
+
+    tasks_to_analyze = []
+
+    for run in runs:
+        try:
+            input = ""
+            for message in run.inputs["messages"]:
+                if "HumanMessage" in message["id"]:
+                    input += message["kwargs"]["content"]
+
+            output = ""
+            for generation in run.outputs["generations"]:
+                output += generation["text"]
+
+            if input == "" or output == "":
+                continue
+
+            task = Task(
+                created_at=str(int(run.end_time.timestamp())),
+                input=input,
+                output=output,
+                session_id=str(run.session_id),
+                org_id=user_data["org_id"],
+                project_id=user_data["project_id"],
+                metadata={"langsmith_run_id": run.id},
+            )
+
+            tasks_to_analyze.append(task)
+
+        except Exception as e:
+            logger.error(
+                f"Error processing langsmith run for project id: {user_data['project_id']}, {e}"
+            )
+
+    if len(tasks_to_analyze) > 0:
+        await store_tasks(tasks_to_analyze)
+        await change_last_langsmith_extract(
+            project_id=user_data["project_id"],
+            new_last_extract_date=str(datetime.now()),
+        )
+
+        for task in tasks_to_analyze:
+            background_tasks.add_task(
+                task_main_pipeline,
+                task=task,
+                save_task=True,
+            )
+
+    return {"status": "ok"}
