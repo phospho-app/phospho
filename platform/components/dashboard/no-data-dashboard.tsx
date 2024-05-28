@@ -487,9 +487,12 @@ phospho.log({input, output});`}
               {selectedTab == "lang_smith" && (
                 <div className="flex-col space-y-4">
                   <div className="text-sm">
-                    Import your historical data from LangSmith to phospho. We
-                    won't periodically sync your data. You can come back here to
-                    update it.
+                    Import your historical data from LangSmith to phospho.
+                  </div>
+                  <div className="text-sm">
+                    We don't store your api key. This is a one time transfer, if
+                    you want to update your data, come back here, we will fetch
+                    the updated data.
                   </div>
                   <div className="text-sm">
                     Find your LangSmith API key{" "}
