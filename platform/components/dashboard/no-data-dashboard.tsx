@@ -32,6 +32,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
+import { Toggle } from "@radix-ui/react-toggle";
 import {
   ArrowRight,
   CopyIcon,
@@ -249,6 +250,54 @@ export const SendDataAlertDialog = ({
     undefined,
   );
 
+  const { accessToken } = useUser();
+  const toast = useToast();
+
+  const formSchema = z.object({
+    lang_smith_api_key: z
+      .string()
+      .min(50, {
+        message: "Your API key should be longer than 50 characters.",
+      })
+      .max(60, {
+        message: "Your API key should be shorter than 60 characters.",
+      }),
+    project_name: z
+      .string()
+      .min(2, {
+        message: "Project name should be at least 2 characters.",
+      })
+      .max(32, {
+        message: "Project name should be at most 30 characters.",
+      }),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    fetch(`/api/projects/${project_id}/connect-langsmith`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        project_name: values.project_name,
+        lang_smith_api_key: values.lang_smith_api_key,
+      }),
+    }).then(async (response) => {
+      const responseBody = await response.json();
+      if (response.ok) {
+        toast.toast({
+          title: "🦜🔗LangSmith Connection",
+          description: responseBody.message,
+        });
+      }
+    });
+  }
+
   if (!project_id) {
     return <></>;
   }
@@ -421,6 +470,9 @@ phospho.log({input, output});`}
                     <Upload className="mr-2 w-6 h-6" /> Upload dataset
                   </ToggleButton>
                 </ToggleGroupItem>
+                <ToggleGroupItem value="lang_smith">
+                  <ToggleButton>🦜🔗 LangSmith</ToggleButton>
+                </ToggleGroupItem>
                 <ToggleGroupItem value="other_bottom">
                   <ToggleButton>Other</ToggleButton>
                 </ToggleGroupItem>
@@ -429,6 +481,70 @@ phospho.log({input, output});`}
               {selectedTab == "upload" && (
                 <div className="flex-col space-y-4">
                   <UploadDataset setOpen={setOpen} />
+                </div>
+              )}
+
+              {selectedTab == "lang_smith" && (
+                <div className="flex-col space-y-4">
+                  <div className="text-sm">
+                    Use LangSmith to push your historical data to phospho.
+                  </div>
+                  <div>
+                    Find your API key{" "}
+                    <Link
+                      className="underline hover:text-green-500"
+                      href="https://smith.langchain.com/o/b864875a-2a0c-537e-92f1-5df713478975/settings"
+                    >
+                      here
+                    </Link>
+                  </div>
+                  <Form {...form}>
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-8"
+                    >
+                      <FormField
+                        control={form.control}
+                        name="lang_smith_api_key"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                placeholder="Your LangSmith API key"
+                                {...field}
+                                className="font-normal"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="project_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                placeholder="Project name"
+                                {...field}
+                                className="font-normal"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          type="submit"
+                          disabled={!form.formState.isValid}
+                        >
+                          Transfer data from Lang Smith
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
                 </div>
               )}
 

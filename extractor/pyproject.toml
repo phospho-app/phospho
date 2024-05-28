@@ -24,6 +24,7 @@ qdrant-client = "^1.7.3"
 langdetect = "^1.0.9"
 google-cloud-language = "^2.13.3"
 google-cloud = "^0.34.0"
+langsmith = "^0.1.63"
 
 [tool.poetry.group.dev]
 optional = true
