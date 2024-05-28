@@ -501,15 +501,15 @@ async def connect_langsmith(
     project_id: str,
     credentials: dict,
     background_tasks: BackgroundTasks,
-    org: dict = Depends(propelauth.require_org),
+    user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
     Import data from Langsmith to a Phospho project
     """
-
-    await verify_propelauth_org_owns_project_id(org, project_id)
     project = await get_project_by_id(project_id)
-    raise_error_if_not_in_pro_tier(propelauth.fetch_org(project.org_id))
+    propelauth.require_org_member(user, project.org_id)
+    org = {"org": propelauth.fetch_org(project.org_id)}
+    raise_error_if_not_in_pro_tier(org)
 
     background_tasks.add_task(
         collect_langsmith_data,

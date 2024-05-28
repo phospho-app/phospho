@@ -291,8 +291,13 @@ export const SendDataAlertDialog = ({
       const responseBody = await response.json();
       if (response.ok) {
         toast.toast({
-          title: "LangSmith import",
-          description: responseBody.message,
+          title: "🦜🔗 LangSmith import successful",
+          description: "Your data is being imported to phospho.",
+        });
+      } else {
+        toast.toast({
+          title: "🦜🔗 LangSmith import failed",
+          description: "This feature is only available to usage based plans.",
         });
       }
     });
