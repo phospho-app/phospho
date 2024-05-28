@@ -82,6 +82,12 @@ class EventDefinition(DatedBaseModel):
     removed: bool = False
 
 
+class ScoreRange(BaseModel):
+    min: float
+    max: float
+    value: float
+
+
 class Event(ProjectElementBaseModel):
     # The name of the event (as defined in the project settings)
     event_name: str
@@ -96,6 +102,7 @@ class Event(ProjectElementBaseModel):
     messages: Optional[List["Message"]] = Field(default_factory=list)
     removal_reason: Optional[str] = None
     removed: bool = False
+    score: Optional[ScoreRange] = None
 
 
 class SentimentObject(BaseModel):
@@ -198,17 +205,17 @@ class Project(DatedBaseModel):
         ):
             for event_name, event in project_data["settings"]["events"].items():
                 if "event_name" not in event.keys():
-                    project_data["settings"]["events"][event_name]["event_name"] = (
-                        event_name
-                    )
+                    project_data["settings"]["events"][event_name][
+                        "event_name"
+                    ] = event_name
                 if "org_id" not in event.keys():
-                    project_data["settings"]["events"][event_name]["org_id"] = (
-                        project_data["org_id"]
-                    )
+                    project_data["settings"]["events"][event_name][
+                        "org_id"
+                    ] = project_data["org_id"]
                 if "project_id" not in event.keys():
-                    project_data["settings"]["events"][event_name]["project_id"] = (
-                        project_data["id"]
-                    )
+                    project_data["settings"]["events"][event_name][
+                        "project_id"
+                    ] = project_data["id"]
 
         return cls(**project_data)
 

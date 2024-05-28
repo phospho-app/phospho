@@ -12,7 +12,7 @@ from app.services.projects import get_project_by_id
 # from app.services.topics import extract_topics  # TODO
 from app.services.webhook import trigger_webhook
 from phospho import lab
-from phospho.models import SentimentObject, JobResult
+from phospho.models import ResultType, ScoreRange, SentimentObject, JobResult
 
 from app.api.v1.models.pipelines import PipelineResults
 
@@ -89,7 +89,7 @@ async def run_event_detection_pipeline(
                 )
                 # Get back the event definition from the job metadata
                 metadata = workload.jobs[result.job_id].metadata
-                event = EventDefinition(**metadata)
+                event = EventDefinition.model_validate(metadata)
                 # Push event to db
                 detected_event_data = Event(
                     event_name=event_name,
@@ -102,6 +102,9 @@ async def run_event_detection_pipeline(
                     org_id=message.metadata["task"].org_id,
                     event_definition=event,
                     task=message.metadata["task"],
+                    score=ScoreRange(
+                        min=0, max=1, value=result.metadata.get("score", 1)
+                    ),
                 )
 
                 # Update the task object with the event
@@ -690,8 +693,10 @@ async def sentiment_and_language_analysis_pipeline(
         project_id=task.project_id,
         job_id="sentiment_analysis",
         value=sentiment_object.model_dump(),
-        result_type="dict",
-        input=task.input,
+        result_type=ResultType.dict,
+        metadata={
+            "input": task.input,
+        },
     )
 
     mongo_db["job_results"].insert_one(jobresult.model_dump())
