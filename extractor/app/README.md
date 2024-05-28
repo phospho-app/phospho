@@ -19,6 +19,12 @@ ENVIRONMENT="test"
 EXTRACTOR_SECRET_KEY=""
 ```
 
+## Adding dependancies
+
+```bash
+poetry add <module-name>
+```
+
 ## Running the server
 
 > Make sure to use the right port, so you can have 2 servers running at the same time.
