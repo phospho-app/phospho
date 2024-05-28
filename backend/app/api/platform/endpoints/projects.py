@@ -27,6 +27,7 @@ from app.security.authentification import (
     verify_if_propelauth_user_can_access_project,
     raise_error_if_not_in_pro_tier,
 )
+from app.security import verify_propelauth_org_owns_project_id
 from app.services.mongo.projects import (
     delete_project_from_id,
     delete_project_related_resources,
@@ -505,11 +506,11 @@ async def connect_langsmith(
     """
     Import data from Langsmith to a Phospho project
     """
-    org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
-    raise_error_if_not_in_pro_tier(propelauth.fetch_org(org_id))
-
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
+    org = {"org": propelauth.fetch_org(project.org_id)}
+    raise_error_if_not_in_pro_tier(org)
+
     background_tasks.add_task(
         collect_langsmith_data,
         project_id=project_id,
