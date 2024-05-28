@@ -1,6 +1,7 @@
 "use client";
 
 import { DatePickerWithRange } from "@/components/date-range";
+import FilterComponent from "@/components/filters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -44,11 +45,6 @@ const MetadataForm: React.FC<{}> = ({}) => {
   const hasTasks = dataStateStore((state) => state.hasTasks);
   const project_id = navigationStateStore((state) => state.project_id);
 
-  // const [selectedMetric, setSelectedMetric] = useState<string>("Nb tasks");
-  // const [selectedMetricMetadata, setSelectedMetricMetadata] = useState<
-  //   string | null
-  // >(null);
-  // const [selectedGroupBy, setSelectedGroupBy] = useState<string>("flag");
   const selectedMetric = navigationStateStore((state) => state.selectedMetric);
   const selectedMetricMetadata = navigationStateStore(
     (state) => state.selectedMetricMetadata,
@@ -66,7 +62,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
     (state) => state.setSelectedGroupBy,
   );
 
-  const dateRange = navigationStateStore((state) => state.dateRange);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
 
   // Fetch metadata unique metadata fields from the API
   const { data } = useSWR(
@@ -91,7 +87,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
       selectedGroupBy,
       numberMetadataFields,
       categoryMetadataFields,
-      JSON.stringify(dateRange),
+      JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
@@ -100,167 +96,164 @@ const MetadataForm: React.FC<{}> = ({}) => {
         breakdown_by: selectedGroupBy,
         number_metadata_fields: numberMetadataFields,
         category_metadata_fields: categoryMetadataFields,
-        filters: {
-          created_at_start: dateRange?.created_at_start,
-          created_at_end: dateRange?.created_at_end,
-        },
+        filters: dataFilters,
       }).then((response) => {
         return response?.pivot_table;
       }),
     {
       keepPreviousData: true,
     },
-    // {
-    //   revalidateIfStale: false,
-    //   revalidateOnFocus: false,
-    //   revalidateOnReconnect: false,
-    // }
   );
 
   return (
     <>
-      <div className="flex flex-row space-x-2 items-center">
-        <DatePickerWithRange />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              Metric: {selectedMetric} {selectedMetricMetadata ?? ""}{" "}
-              <ChevronDown className="h-4 w-4 ml-2" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => {
-                setSelectedMetric("Nb tasks");
-                setSelectedMetricMetadata(null);
-              }}
-            >
-              Nb tasks
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setSelectedMetric("Avg session length");
-                setSelectedMetricMetadata(null);
-              }}
-            >
-              Avg session length
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setSelectedMetric("Avg Success rate");
-                setSelectedMetricMetadata(null);
-              }}
-            >
-              Success rate
-            </DropdownMenuItem>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Avg of metadata</DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                  {numberMetadataFields?.length === 0 && (
-                    <DropdownMenuItem disabled>
-                      No numeric metadata found
-                    </DropdownMenuItem>
-                  )}
-                  {numberMetadataFields?.map((field) => (
-                    // TODO : Add a way to indicate this is a sum
-                    <DropdownMenuItem
-                      key={field}
-                      onClick={() => {
-                        setSelectedMetric("Avg");
-                        setSelectedMetricMetadata(field);
-                      }}
-                    >
-                      {`${field}_avg`}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Sum of metadata</DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                  {numberMetadataFields?.length === 0 && (
-                    <DropdownMenuItem disabled>
-                      No numeric metadata found
-                    </DropdownMenuItem>
-                  )}
-                  {numberMetadataFields?.map((field) => (
-                    // TODO : Add a way to indicate this is a sum
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedMetric("Sum");
-                        setSelectedMetricMetadata(field);
-                      }}
-                      key={`${field}_sum`}
-                    >
-                      {field}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              Breakdown by: {selectedGroupBy}{" "}
-              <ChevronDown className="h-4 w-4 ml-2" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => {
-                setSelectedGroupBy("None");
-              }}
-            >
-              None
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setSelectedGroupBy("event_name");
-              }}
-            >
-              event_name
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setSelectedGroupBy("flag");
-              }}
-            >
-              flag
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                setSelectedGroupBy("task_position");
-              }}
-            >
-              task_position
-            </DropdownMenuItem>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>metadata</DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                  {categoryMetadataFields?.length === 0 && (
-                    <DropdownMenuItem disabled>
-                      No categorical metadata found
-                    </DropdownMenuItem>
-                  )}
-                  {categoryMetadataFields?.map((field) => (
-                    <DropdownMenuItem
-                      onClick={() => setSelectedGroupBy(field)}
-                      key={`${field}_metadata`}
-                    >
-                      {field}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="flex flex-col space-y-2">
+        <div className="flex flex-row space-x-2 items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Metric: {selectedMetric} {selectedMetricMetadata ?? ""}{" "}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedMetric("Nb tasks");
+                  setSelectedMetricMetadata(null);
+                }}
+              >
+                Nb tasks
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedMetric("Avg session length");
+                  setSelectedMetricMetadata(null);
+                }}
+              >
+                Avg session length
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedMetric("Avg Success rate");
+                  setSelectedMetricMetadata(null);
+                }}
+              >
+                Success rate
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Avg of metadata</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    {numberMetadataFields?.length === 0 && (
+                      <DropdownMenuItem disabled>
+                        No numeric metadata found
+                      </DropdownMenuItem>
+                    )}
+                    {numberMetadataFields?.map((field) => (
+                      // TODO : Add a way to indicate this is a sum
+                      <DropdownMenuItem
+                        key={field}
+                        onClick={() => {
+                          setSelectedMetric("Avg");
+                          setSelectedMetricMetadata(field);
+                        }}
+                      >
+                        {`${field}_avg`}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Sum of metadata</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    {numberMetadataFields?.length === 0 && (
+                      <DropdownMenuItem disabled>
+                        No numeric metadata found
+                      </DropdownMenuItem>
+                    )}
+                    {numberMetadataFields?.map((field) => (
+                      // TODO : Add a way to indicate this is a sum
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedMetric("Sum");
+                          setSelectedMetricMetadata(field);
+                        }}
+                        key={`${field}_sum`}
+                      >
+                        {field}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Breakdown by: {selectedGroupBy}{" "}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedGroupBy("None");
+                }}
+              >
+                None
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedGroupBy("event_name");
+                }}
+              >
+                event_name
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedGroupBy("flag");
+                }}
+              >
+                flag
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedGroupBy("task_position");
+                }}
+              >
+                task_position
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>metadata</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    {categoryMetadataFields?.length === 0 && (
+                      <DropdownMenuItem disabled>
+                        No categorical metadata found
+                      </DropdownMenuItem>
+                    )}
+                    {categoryMetadataFields?.map((field) => (
+                      <DropdownMenuItem
+                        onClick={() => setSelectedGroupBy(field)}
+                        key={`${field}_metadata`}
+                      >
+                        {field}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="flex flex-row space-x-2 items-center">
+          <DatePickerWithRange />
+          <FilterComponent variant="tasks" />
+        </div>
       </div>
       <div className="w-full h-screen max-h-3/4">
         {!pivotData && pivotLoading && <p>Loading...</p>}

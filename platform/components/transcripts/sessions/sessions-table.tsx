@@ -115,6 +115,7 @@ export function SessionsTable<TData, TValue>({
 
   const columns = getColumns({ mutateSessions: mutateSessions });
 
+  console.log("SESSIONS SORTING", sessionsSorting);
   const table = useReactTable({
     data: sessionsWithEvents,
     columns,

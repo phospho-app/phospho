@@ -20,7 +20,7 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { set } from "date-fns";
-import { Settings } from "lucide-react";
+import { EllipsisVertical, Settings } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSWRConfig } from "swr";
@@ -108,7 +108,7 @@ export const SentimentSettings = ({}: {}) => {
     <DropdownMenu open={thresholdOpen} onOpenChange={setThresholdOpen}>
       <DropdownMenuTrigger>
         <Button variant="ghost" size={"icon"} onClick={toggleButton}>
-          <Settings size={18} />
+          <EllipsisVertical className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-full">
@@ -158,17 +158,16 @@ export const SentimentSettings = ({}: {}) => {
                   </FormItem>
                 )}
               ></FormField>
-              <div className="flex justify-center">
-                <Button
-                  type="submit"
-                  variant="outline"
-                  onClick={() => {
-                    onSubmit(form.getValues());
-                  }}
-                >
-                  Update
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                variant="outline"
+                onClick={() => {
+                  onSubmit(form.getValues());
+                }}
+                className="w-full"
+              >
+                Update
+              </Button>
             </form>
           </Form>
         </CardHeader>
