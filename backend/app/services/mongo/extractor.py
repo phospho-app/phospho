@@ -332,7 +332,11 @@ async def store_open_telemetry_data(
 
 
 async def collect_langsmith_data(
-    project_id: str, org_id: str, langsmith_credentials: dict
+    project_id: str,
+    org_id: str,
+    langsmith_credentials: dict,
+    current_usage: int,
+    max_usage: int,
 ):
     async with httpx.AsyncClient() as client:
         logger.debug(
@@ -345,6 +349,8 @@ async def collect_langsmith_data(
                     "langsmith_credentials": langsmith_credentials,
                     "project_id": project_id,
                     "org_id": org_id,
+                    "current_usage": current_usage,
+                    "max_usage": max_usage,
                 },
                 headers={
                     "Authorization": f"Bearer {config.EXTRACTOR_SECRET_KEY}",

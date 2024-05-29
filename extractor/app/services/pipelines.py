@@ -726,16 +726,6 @@ async def store_opentelemetry_data_in_db(
     return {"status": "ok"}
 
 
-async def store_tasks(
-    tasks: list[Task],
-):
-    """
-    Store a task in the database
-    """
-    mongo_db = await get_mongo_db()
-    await mongo_db["tasks"].insert_many([task.model_dump() for task in tasks])
-
-
 async def get_last_langsmith_extract(
     project_id: str,
 ):

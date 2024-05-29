@@ -25,9 +25,7 @@ from app.api.platform.models import (
 from app.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
-    raise_error_if_not_in_pro_tier,
 )
-from app.security import verify_propelauth_org_owns_project_id
 from app.services.mongo.projects import (
     delete_project_from_id,
     delete_project_related_resources,
@@ -50,6 +48,8 @@ from app.services.mongo.search import (
 )
 
 from app.services.mongo.extractor import collect_langsmith_data
+from app.security.authorization import get_quota
+from app.core import config
 
 router = APIRouter(tags=["Projects"])
 
@@ -526,10 +526,16 @@ async def connect_langsmith(
             status_code=400, detail=f"Error: Could not connect to Langsmith. {e}"
         )
 
+    org_plan = await get_quota(project_id)
+    current_usage = org_plan.get("current_usage", 0)
+    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+
     background_tasks.add_task(
         collect_langsmith_data,
         project_id=project_id,
         org_id=project.org_id,
         langsmith_credentials=credentials,
+        current_usage=current_usage,
+        max_usage=max_usage,
     )
     return {"status": "ok", "message": "Langsmith connected successfully."}
