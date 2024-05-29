@@ -162,7 +162,7 @@ async def run_event_detection_pipeline(
 
 
 async def task_event_detection_pipeline(
-    task: Task, save_task: bool = True
+    task: Task, save_task: bool = False
 ) -> List[Event]:
     """
     Run the event detection pipeline for a given task
@@ -223,7 +223,7 @@ async def task_event_detection_pipeline(
             logger.info(f"Event {event_name} detected for task {task_data.id}")
             # Get back the event definition from the job metadata
             metadata = workload.jobs[result.job_id].metadata
-            event = EventDefinition(**metadata)
+            event_definition = EventDefinition.model_validate(metadata)
             # Push event to db
             detected_event_data = Event(
                 event_name=event_name,
@@ -232,10 +232,10 @@ async def task_event_detection_pipeline(
                 session_id=task_data.session_id,
                 project_id=project_id,
                 source=result.metadata.get("source", "phospho-unknown"),
-                webhook=event.webhook,
+                webhook=event_definition.webhook,
                 org_id=task_data.org_id,
-                event_definition=event,
-                task=task_data if not save_task else None,
+                event_definition=event_definition,
+                task=task_data if save_task else None,
             )
             detected_events.append(detected_event_data)
             # Update the task object with the event
@@ -246,17 +246,18 @@ async def task_event_detection_pipeline(
                     {"$push": {"events": detected_event_data.model_dump()}},
                 )
             # Trigger the webhook if it exists
-            if event.webhook is not None:
+            if event_definition.webhook is not None:
                 await trigger_webhook(
-                    url=event.webhook,
+                    url=event_definition.webhook,
                     json=detected_event_data.model_dump(),
-                    headers=event.webhook_headers,
+                    headers=event_definition.webhook_headers,
                 )
 
         result.task_id = task.id
         if result.job_metadata.get("recipe_id") is None:
             logger.error(f"No recipe_id found for event {event_name}")
 
+        logger.debug(f"Result for {event_name}: {result}")
         mongo_db["job_results"].insert_one(result.model_dump())
 
     if len(detected_events) > 0:

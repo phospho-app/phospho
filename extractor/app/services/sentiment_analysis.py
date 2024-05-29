@@ -1,3 +1,4 @@
+from typing import Optional
 from google.cloud import language_v2
 from phospho.models import SentimentObject
 from loguru import logger
@@ -7,28 +8,31 @@ import json
 from base64 import b64decode
 from langdetect import detect
 
+client = None
+
 try:
     credentials_natural_language = os.getenv(
         "GCP_JSON_CREDENTIALS_NATURAL_LANGUAGE_PROCESSING"
     )
-    if credentials_natural_language is None:
+    if credentials_natural_language is not None:
+        credentials_dict = json.loads(
+            b64decode(credentials_natural_language).decode("utf-8")
+        )
+        credentials = service_account.Credentials.from_service_account_info(
+            credentials_dict
+        )
+        client = language_v2.LanguageServiceClient(credentials=credentials)
+        logger.info("Sentiment analysis active")
+    else:
         logger.error("No GCP_JSON_CREDENTIALS environment variable found")
-    credentials_dict = json.loads(
-        b64decode(credentials_natural_language).decode("utf-8")
-    )
-    credentials = service_account.Credentials.from_service_account_info(
-        credentials_dict
-    )
-    client = language_v2.LanguageServiceClient(credentials=credentials)
-    logger.info("Sentiment analysis active")
+
 except Exception as e:
     logger.error(f"Error connecting to sentiment analysis: {e}")
-    client = None
 
 
 async def run_sentiment_and_language_analysis(
     text: str, score_threshold: float, magnitude_threshold: float
-) -> tuple[SentimentObject, str]:
+) -> tuple[SentimentObject, Optional[str]]:
     """
     Analyzes Sentiment and Language of a given text.
 
@@ -39,6 +43,10 @@ async def run_sentiment_and_language_analysis(
     Args:
       text_content: The text content to analyze.
     """
+    if client is None:
+        logger.warning("No client available for sentiment analysis")
+        return SentimentObject(), None
+
     try:
         # Available types: PLAIN_TEXT, HTML
         document_type_in_plain_text = language_v2.Document.Type.PLAIN_TEXT
@@ -67,12 +75,16 @@ async def run_sentiment_and_language_analysis(
         )
 
         # We interpret the sentiment score as follows:
-        if sentiment_response.score > score_threshold:
+        if sentiment_response.score is None:
+            sentiment_response.label = None
+        elif sentiment_response.score > score_threshold:
             sentiment_response.label = "positive"
         elif sentiment_response.score < -score_threshold:
             sentiment_response.label = "negative"
         else:
-            if sentiment_response.magnitude < magnitude_threshold:
+            if sentiment_response.magnitude is None:
+                sentiment_response.label = None
+            elif sentiment_response.magnitude < magnitude_threshold:
                 sentiment_response.label = "neutral"
             else:
                 sentiment_response.label = "mixed"

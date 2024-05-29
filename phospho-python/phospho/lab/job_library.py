@@ -321,7 +321,6 @@ Did the event '{event_name}' happen during the interaction? Respond with only on
                     "prompt": prompt,
                     "llm_output": llm_response,
                     "api_call_time": api_call_time,
-                    "evaluation_source": EVALUATION_SOURCE,
                 },
             },
         )
@@ -364,11 +363,10 @@ Did the event '{event_name}' happen during the interaction? Respond with only on
                 "prompt": prompt,
                 "llm_output": llm_response,
                 "api_call_time": api_call_time,
-                "evaluation_source": EVALUATION_SOURCE,
-                "logprob_score": logprob_score,
-                "all_logprobs": first_logprobs,
-                "score": score,
             },
+            "logprob_score": logprob_score,
+            "all_logprobs": [logprob.model_dump() for logprob in first_logprobs],
+            "score": score,
         },
     )
 
