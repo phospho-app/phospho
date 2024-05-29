@@ -102,7 +102,7 @@ async def run_event_detection_pipeline(
                     org_id=message.metadata["task"].org_id,
                     event_definition=event,
                     task=message.metadata["task"],
-                    score=ScoreRange(
+                    score_range=ScoreRange(
                         min=0,
                         max=1,
                         value=result.metadata.get("score", 1),
@@ -231,11 +231,12 @@ async def task_event_detection_pipeline(
                 task_id=task_data.id,
                 session_id=task_data.session_id,
                 project_id=project_id,
-                source=result.metadata.get("source", "phospho-unknown"),
+                source=result.metadata.get("evaluation_source", "phospho-unknown"),
                 webhook=event_definition.webhook,
                 org_id=task_data.org_id,
                 event_definition=event_definition,
                 task=task_data if save_task else None,
+                score_range=result.metadata.get("score_range", None),
             )
             detected_events.append(detected_event_data)
             # Update the task object with the event
@@ -638,20 +639,24 @@ async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
 
 async def sentiment_and_language_analysis_pipeline(
     task: Task,
-) -> tuple[SentimentObject, str]:
+) -> tuple[SentimentObject, Optional[str]]:
     """
     Run the sentiment analysis on the input of a task
     """
     mongo_db = await get_mongo_db()
-
     project = await get_project_by_id(task.project_id)
 
+    # Default values
+    score_threshold = 0.3
+    magnitude_threshold = 0.6
+    # Try to replace with project settings
     try:
         score_threshold = project.settings.sentiment_threshold.score
         magnitude_threshold = project.settings.sentiment_threshold.magnitude
     except AttributeError:
         try:
-            await mongo_db["projects"].update_one(
+            # Update the project settings with the default values
+            mongo_db["projects"].update_one(
                 {"id": task.project_id},
                 {
                     "$set": {
@@ -662,14 +667,6 @@ async def sentiment_and_language_analysis_pipeline(
             )
         except Exception as e:
             logger.error(f"Error updating threshold settings: {e}")
-            score_threshold = 0.3
-            magnitude_threshold = 0.6
-
-    if score_threshold is None:
-        score_threshold = 0.3
-
-    if magnitude_threshold is None:
-        magnitude_threshold = 0.6
 
     sentiment_object, language = await run_sentiment_and_language_analysis(
         task.input, score_threshold, magnitude_threshold

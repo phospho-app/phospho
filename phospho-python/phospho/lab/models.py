@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from phospho.models import (
     EventDefinition,
     Project,
+    ScoreRangeSettings,
     Task,
     Session,
     DetectionScope,
@@ -81,17 +82,14 @@ class EvalConfig(JobConfig):
 
 class EventConfig(JobConfig):
     event_name: str
-    event_description: str
-    event_scope: DetectionScope
+    event_description: Optional[str] = None
+    event_scope: DetectionScope = "task"
+    score_range_settings: ScoreRangeSettings = Field(default_factory=ScoreRangeSettings)
 
 
-class EventConfigForKeywords(JobConfig):
-    event_name: str
+class EventConfigForKeywords(EventConfig):
     keywords: str
-    event_scope: DetectionScope
 
 
-class EvenConfigForRegex(JobConfig):
-    event_name: str
+class EvenConfigForRegex(EventConfig):
     regex_pattern: str
-    event_scope: DetectionScope

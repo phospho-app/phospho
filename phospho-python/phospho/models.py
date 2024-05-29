@@ -66,6 +66,12 @@ DetectionEngine = Literal[
 ]
 
 
+class ScoreRangeSettings(BaseModel):
+    min: float = 0
+    max: float = 1
+    score_type: Literal["confidence"] = "confidence"
+
+
 class EventDefinition(DatedBaseModel):
     org_id: Optional[str] = None
     project_id: Optional[str] = None
@@ -80,13 +86,14 @@ class EventDefinition(DatedBaseModel):
     recipe_id: Optional[str] = None  # Associated Recipe id
     recipe_type: RecipeType = "event_detection"
     removed: bool = False
+    score_range_settings: ScoreRangeSettings = Field(default_factory=ScoreRangeSettings)
 
 
 class ScoreRange(BaseModel):
     min: float
     max: float
     value: float
-    score_type: Literal["confidence"] = "confidence"
+    score_type: Literal["confidence"]
 
 
 class Event(ProjectElementBaseModel):
@@ -103,7 +110,7 @@ class Event(ProjectElementBaseModel):
     messages: Optional[List["Message"]] = Field(default_factory=list)
     removal_reason: Optional[str] = None
     removed: bool = False
-    score: Optional[ScoreRange] = None
+    score_range: Optional[ScoreRange] = None
 
 
 class SentimentObject(BaseModel):

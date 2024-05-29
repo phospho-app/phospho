@@ -402,34 +402,39 @@ class Workload:
         return cls.from_config(config)
 
     @classmethod
-    def from_phospho_events(cls, events: List[EventDefinition]) -> "Workload":
+    def from_phospho_events(
+        cls, event_definitions: List[EventDefinition]
+    ) -> "Workload":
         workload = cls()
 
-        for event in events:
-            event_name = event.event_name
-            workload.project_id = event.project_id
+        for event_definition in event_definitions:
+            event_name = event_definition.event_name
+            workload.project_id = event_definition.project_id
 
-            logger.debug(f"Add event detection job for event {event.event_name}")
+            logger.debug(
+                f"Add event detection job for event {event_definition.event_name}"
+            )
 
             # We stick to the LLM detection engine
-            if event.detection_engine == "llm_detection":
+            if event_definition.detection_engine == "llm_detection":
                 workload.add_job(
                     Job(
                         id=event_name,
                         job_function=job_library.event_detection,
                         config=EventConfig(
                             event_name=event_name,
-                            event_description=event.description,
-                            event_scope=event.detection_scope,
+                            event_description=event_definition.description,
+                            event_scope=event_definition.detection_scope,
+                            score_range_settings=event_definition.score_range_settings,
                         ),
-                        metadata=event.model_dump(),
+                        metadata=event_definition.model_dump(),
                     )
                 )
 
             # We use a keyword detection engine
             elif (
-                event.detection_engine == "keyword_detection"
-                and event.keywords is not None
+                event_definition.detection_engine == "keyword_detection"
+                and event_definition.keywords is not None
             ):
                 workload.add_job(
                     Job(
@@ -437,17 +442,18 @@ class Workload:
                         job_function=job_library.keyword_event_detection,
                         config=EventConfigForKeywords(
                             event_name=event_name,
-                            keywords=event.keywords,
-                            event_scope=event.detection_scope,
+                            keywords=event_definition.keywords,
+                            event_scope=event_definition.detection_scope,
+                            score_range_settings=event_definition.score_range_settings,
                         ),
-                        metadata=event.model_dump(),
+                        metadata=event_definition.model_dump(),
                     )
                 )
 
             # We use a regex pattern to detect the event
             elif (
-                event.detection_engine == "regex_detection"
-                and event.regex_pattern is not None
+                event_definition.detection_engine == "regex_detection"
+                and event_definition.regex_pattern is not None
             ):
                 workload.add_job(
                     Job(
@@ -455,16 +461,17 @@ class Workload:
                         job_function=job_library.regex_event_detection,
                         config=EvenConfigForRegex(
                             event_name=event_name,
-                            regex_pattern=event.regex_pattern,
-                            event_scope=event.detection_scope,
+                            regex_pattern=event_definition.regex_pattern,
+                            event_scope=event_definition.detection_scope,
+                            score_range_settings=event_definition.score_range_settings,
                         ),
-                        metadata=event.model_dump(),
+                        metadata=event_definition.model_dump(),
                     )
                 )
 
             else:
                 logger.warning(
-                    f"Skipping unsupported detection engine {event.detection_engine} for event {event_name}"
+                    f"Skipping unsupported detection engine {event_definition.detection_engine} for event {event_name}"
                 )
 
         return workload
