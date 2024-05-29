@@ -39,16 +39,21 @@ export const EventDetectionDescription = ({
     <div className="p-1">
       <div className="flex flex-row justify-between mb-2 items-center">
         <h2 className="font-bold">{event.event_name}</h2>
-        <Badge className="bg-green-500">{event.source}</Badge>
+        <HoverCard openDelay={0} closeDelay={0}>
+          <HoverCardTrigger>
+            <Badge className="bg-green-500">{event.source}</Badge>
+          </HoverCardTrigger>
+          <HoverCardContent>Source</HoverCardContent>
+        </HoverCard>
       </div>
       <div className="flex flex-col space-y-1">
         {eventDefinition?.description && (
           <p className="text-muted-foreground">{eventDefinition.description}</p>
         )}
         {roundedScore && scoreType && (
-          <p>
-            <span>{scoreType}:</span> {roundedScore}
-          </p>
+          <div>
+            <span>{scoreType}:</span> <span>{roundedScore}</span>
+          </div>
         )}
       </div>
     </div>
