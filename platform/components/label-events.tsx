@@ -50,9 +50,9 @@ export const EventDetectionDescription = ({
         {eventDefinition?.description && (
           <p className="text-muted-foreground">{eventDefinition.description}</p>
         )}
-        {roundedScore && scoreType && (
+        {roundedScore && scoreType == "Confidence" && (
           <div>
-            <span>{scoreType}:</span> <span>{roundedScore}</span>
+            {scoreType}: {roundedScore * 100}%
           </div>
         )}
       </div>
