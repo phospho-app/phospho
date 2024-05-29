@@ -145,6 +145,7 @@ async def event_detection(
     score_range_settings: Optional[ScoreRangeSettings] = None,
     event_scope: DetectionScope = "task",
     model: str = "openai:gpt-4o",
+    **kwargs,
 ) -> JobResult:
     """
     Detects if an event is present in a message.
@@ -388,6 +389,7 @@ async def evaluate_task(
     few_shot_min_number_of_examples: int = 5,
     few_shot_max_number_of_examples: int = 10,
     model: str = "openai:gpt-4o",
+    **kwargs,
 ) -> JobResult:
     """
     Evaluate a task:
@@ -667,6 +669,7 @@ async def keyword_event_detection(
     event_name: str,
     keywords: str,
     event_scope: DetectionScope = "task",
+    **kwargs,
 ) -> JobResult:
     """
     Uses regexes to detect if an event is present in a message.
@@ -739,6 +742,7 @@ async def regex_event_detection(
     event_name: str,
     regex_pattern: str,
     event_scope: DetectionScope = "task",
+    **kwargs,
 ) -> JobResult:
     """
     Uses regexes to detect if an event is present in a message.
