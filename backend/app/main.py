@@ -1,7 +1,7 @@
 import logging
 
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 
 import phospho
@@ -10,6 +10,10 @@ from app.db.mongo import close_mongo_db, connect_and_init_db
 from app.db.qdrant import close_qdrant, init_qdrant
 from app.services.mongo.extractor import check_health
 from app.services.mongo.ai_hub import check_health_ai_hub
+from app.api.v2.endpoints.cron import run_langsmith_sync_pipeline
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.jobstores.memory import MemoryJobStore
 
 logging.info(f"ENVIRONMENT : {config.ENVIRONMENT}")
 
@@ -188,3 +192,18 @@ api_platform.include_router(explore.router)
 api_platform.include_router(metadata.router)
 
 app.mount("/api", api_platform)
+
+# Scheduler for cron jobs
+
+jobstores = {
+    "default": MemoryJobStore(),
+}
+
+scheduler = AsyncIOScheduler(jobstores=jobstores, timezone="Europe/Paris")
+scheduler.start()
+
+
+# We sync langsmith data every hour
+@scheduler.scheduled_job("interval", seconds=3600)
+async def run_cron_job():
+    await run_langsmith_sync_pipeline()
