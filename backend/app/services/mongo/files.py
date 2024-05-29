@@ -4,10 +4,8 @@ from app.security.authorization import get_quota
 from app.services.mongo.emails import send_quota_exceeded_email
 from app.services.mongo.extractor import run_log_process
 import pandas as pd
-from fastapi import UploadFile
 from loguru import logger
 from typing import List
-from phospho.models import Task
 from pydantic import ValidationError
 
 from app.db.models import DatasetRow
@@ -165,7 +163,7 @@ async def process_file_upload_into_log_events(
     current_usage = org_plan.get("current_usage", 0)
     max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
 
-    for index, row in tasks_df.iterrows():
+    for _, row in tasks_df.iterrows():
         # Create a task for each row
         try:
             valid_log_event = LogEvent(
