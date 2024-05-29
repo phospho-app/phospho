@@ -12,7 +12,7 @@ from app.services.projects import get_project_by_id
 # from app.services.topics import extract_topics  # TODO
 from app.services.webhook import trigger_webhook
 from phospho import lab
-from phospho.models import SentimentObject, JobResult
+from phospho.models import ResultType, ScoreRange, SentimentObject, JobResult
 
 from app.api.v1.models.pipelines import PipelineResults
 
@@ -47,8 +47,6 @@ async def run_event_detection_pipeline(
         messages=messages,
         executor_type="parallel_jobs",
     )
-
-    logger.debug("Workload finished")
 
     # Display the workload results
     logger.info(f"Workload results : {workload.results}")
@@ -89,7 +87,7 @@ async def run_event_detection_pipeline(
                 )
                 # Get back the event definition from the job metadata
                 metadata = workload.jobs[result.job_id].metadata
-                event = EventDefinition(**metadata)
+                event = EventDefinition.model_validate(metadata)
                 # Push event to db
                 detected_event_data = Event(
                     event_name=event_name,
@@ -102,6 +100,12 @@ async def run_event_detection_pipeline(
                     org_id=message.metadata["task"].org_id,
                     event_definition=event,
                     task=message.metadata["task"],
+                    score_range=ScoreRange(
+                        min=0,
+                        max=1,
+                        value=result.metadata.get("score", 1),
+                        score_type="confidence",
+                    ),
                 )
 
                 # Update the task object with the event
@@ -156,7 +160,7 @@ async def run_event_detection_pipeline(
 
 
 async def task_event_detection_pipeline(
-    task: Task, save_task: bool = True
+    task: Task, save_task: bool = False
 ) -> List[Event]:
     """
     Run the event detection pipeline for a given task
@@ -217,7 +221,7 @@ async def task_event_detection_pipeline(
             logger.info(f"Event {event_name} detected for task {task_data.id}")
             # Get back the event definition from the job metadata
             metadata = workload.jobs[result.job_id].metadata
-            event = EventDefinition(**metadata)
+            event_definition = EventDefinition.model_validate(metadata)
             # Push event to db
             detected_event_data = Event(
                 event_name=event_name,
@@ -225,11 +229,12 @@ async def task_event_detection_pipeline(
                 task_id=task_data.id,
                 session_id=task_data.session_id,
                 project_id=project_id,
-                source=result.metadata.get("source", "phospho-unknown"),
-                webhook=event.webhook,
+                source=result.metadata.get("evaluation_source", "phospho-unknown"),
+                webhook=event_definition.webhook,
                 org_id=task_data.org_id,
-                event_definition=event,
-                task=task_data if not save_task else None,
+                event_definition=event_definition,
+                task=task_data if save_task else None,
+                score_range=result.metadata.get("score_range", None),
             )
             detected_events.append(detected_event_data)
             # Update the task object with the event
@@ -240,11 +245,11 @@ async def task_event_detection_pipeline(
                     {"$push": {"events": detected_event_data.model_dump()}},
                 )
             # Trigger the webhook if it exists
-            if event.webhook is not None:
+            if event_definition.webhook is not None:
                 await trigger_webhook(
-                    url=event.webhook,
+                    url=event_definition.webhook,
                     json=detected_event_data.model_dump(),
-                    headers=event.webhook_headers,
+                    headers=event_definition.webhook_headers,
                 )
 
         result.task_id = task.id
@@ -631,20 +636,24 @@ async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
 
 async def sentiment_and_language_analysis_pipeline(
     task: Task,
-) -> tuple[SentimentObject, str]:
+) -> tuple[SentimentObject, Optional[str]]:
     """
     Run the sentiment analysis on the input of a task
     """
     mongo_db = await get_mongo_db()
-
     project = await get_project_by_id(task.project_id)
 
+    # Default values
+    score_threshold = 0.3
+    magnitude_threshold = 0.6
+    # Try to replace with project settings
     try:
         score_threshold = project.settings.sentiment_threshold.score
         magnitude_threshold = project.settings.sentiment_threshold.magnitude
     except AttributeError:
         try:
-            await mongo_db["projects"].update_one(
+            # Update the project settings with the default values
+            mongo_db["projects"].update_one(
                 {"id": task.project_id},
                 {
                     "$set": {
@@ -655,14 +664,6 @@ async def sentiment_and_language_analysis_pipeline(
             )
         except Exception as e:
             logger.error(f"Error updating threshold settings: {e}")
-            score_threshold = 0.3
-            magnitude_threshold = 0.6
-
-    if score_threshold is None:
-        score_threshold = 0.3
-
-    if magnitude_threshold is None:
-        magnitude_threshold = 0.6
 
     sentiment_object, language = await run_sentiment_and_language_analysis(
         task.input, score_threshold, magnitude_threshold
@@ -690,8 +691,10 @@ async def sentiment_and_language_analysis_pipeline(
         project_id=task.project_id,
         job_id="sentiment_analysis",
         value=sentiment_object.model_dump(),
-        result_type="dict",
-        input=task.input,
+        result_type=ResultType.dict,
+        metadata={
+            "input": task.input,
+        },
     )
 
     mongo_db["job_results"].insert_one(jobresult.model_dump())
