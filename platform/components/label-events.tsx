@@ -61,6 +61,23 @@ export const EventDetectionDescription = ({
   );
 };
 
+export const EventBadge = ({ event }: { event: Event }) => {
+  const roundedScore = event.score_range?.value
+    ? Math.round(event.score_range?.value * 100) / 100
+    : null;
+
+  return (
+    <Badge variant="outline" className="border hover:border-green-500">
+      {event.score_range?.score_type !== "range" && event.event_name}
+      {event.score_range?.score_type === "range" && (
+        <p>
+          {event.event_name} {roundedScore}/{event.score_range.max}
+        </p>
+      )}
+    </Badge>
+  );
+};
+
 export const InteractiveEventBadgeForTasks = ({
   event,
   task,
@@ -87,9 +104,7 @@ export const InteractiveEventBadgeForTasks = ({
       <DropdownMenuTrigger>
         <HoverCard openDelay={0} closeDelay={0}>
           <HoverCardTrigger>
-            <Badge variant="outline" className="border hover:border-green-500">
-              {event.event_name}
-            </Badge>
+            <EventBadge event={event} />
           </HoverCardTrigger>
           <HoverCardContent className="text-sm text-left w-96">
             <EventDetectionDescription
@@ -279,9 +294,7 @@ export const InteractiveEventBadgeForSessions = ({
       <DropdownMenuTrigger>
         <HoverCard openDelay={0} closeDelay={0}>
           <HoverCardTrigger>
-            <Badge variant="outline" className="border hover:border-green-500">
-              {event.event_name}
-            </Badge>
+            <EventBadge event={event} />
           </HoverCardTrigger>
           <HoverCardContent className="text-sm text-left w-64">
             <EventDetectionDescription

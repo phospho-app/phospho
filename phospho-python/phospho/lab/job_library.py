@@ -392,6 +392,7 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
         # In range mode, the event is always marked as detected
         detected_event = True
         # The score is the weighted average of the token * logprob
+        logger.debug(f"logprob_score : {logprob_score}")
         score = sum(
             float(key) * logprob_score[key] for key in logprob_score if key.isdigit()
         )
