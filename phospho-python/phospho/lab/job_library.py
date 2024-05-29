@@ -362,7 +362,13 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
         for logprob in first_logprobs:
             stripped_token = logprob.token.lower().strip()
             if stripped_token.isdigit():
-                logprob_score[stripped_token] += math.exp(logprob.logprob)
+                if (
+                    int(stripped_token) >= score_range_settings.min
+                    and int(stripped_token) <= score_range_settings.max
+                ):
+                    # Only keep the tokens in the range
+                    # Note: Only works with 1-5 range!
+                    logprob_score[stripped_token] += math.exp(logprob.logprob)
     else:
         raise ValueError(
             f"Unknown score_type : {score_range_settings.score_type}. Valid values are: ['confidence', 'range']"
