@@ -25,14 +25,11 @@ export const EventDetectionDescription = ({
   event: Event;
   eventDefinition: any;
 }) => {
+  const roundedConfidenceScore = event.score_range?.value
+    ? Math.round(event.score_range?.value * 100)
+    : null;
   const roundedScore = event.score_range?.value
     ? Math.round(event.score_range?.value * 100) / 100
-    : null;
-
-  // Create scoreType, a capitalized string of score_type
-  const scoreType = event.score_range?.score_type
-    ? event.score_range?.score_type.charAt(0).toUpperCase() +
-      event.score_range?.score_type.slice(1)
     : null;
 
   return (
@@ -50,13 +47,34 @@ export const EventDetectionDescription = ({
         {eventDefinition?.description && (
           <p className="text-muted-foreground">{eventDefinition.description}</p>
         )}
-        {roundedScore && scoreType == "Confidence" && (
+        {roundedConfidenceScore &&
+          event.score_range?.score_type == "confidence" && (
+            <div>Confidence: {roundedConfidenceScore}%</div>
+          )}
+        {roundedConfidenceScore && event.score_range?.score_type == "range" && (
           <div>
-            {scoreType}: {roundedScore * 100}%
+            Score: {roundedScore}/{event.score_range.max}
           </div>
         )}
       </div>
     </div>
+  );
+};
+
+export const EventBadge = ({ event }: { event: Event }) => {
+  const roundedScore = event.score_range?.value
+    ? Math.round(event.score_range?.value * 100) / 100
+    : null;
+
+  return (
+    <Badge variant="outline" className="border hover:border-green-500">
+      {event.score_range?.score_type !== "range" && event.event_name}
+      {event.score_range?.score_type === "range" && (
+        <p>
+          {event.event_name} {roundedScore}/{event.score_range.max}
+        </p>
+      )}
+    </Badge>
   );
 };
 
@@ -86,9 +104,7 @@ export const InteractiveEventBadgeForTasks = ({
       <DropdownMenuTrigger>
         <HoverCard openDelay={0} closeDelay={0}>
           <HoverCardTrigger>
-            <Badge variant="outline" className="border hover:border-green-500">
-              {event.event_name}
-            </Badge>
+            <EventBadge event={event} />
           </HoverCardTrigger>
           <HoverCardContent className="text-sm text-left w-96">
             <EventDetectionDescription
@@ -278,9 +294,7 @@ export const InteractiveEventBadgeForSessions = ({
       <DropdownMenuTrigger>
         <HoverCard openDelay={0} closeDelay={0}>
           <HoverCardTrigger>
-            <Badge variant="outline" className="border hover:border-green-500">
-              {event.event_name}
-            </Badge>
+            <EventBadge event={event} />
           </HoverCardTrigger>
           <HoverCardContent className="text-sm text-left w-64">
             <EventDetectionDescription

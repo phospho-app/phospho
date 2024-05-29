@@ -95,7 +95,7 @@ function EventRow({
         )}
       </TableCell>
       <TableCell className="text-right">
-        <div className="flex flex-row items-center">
+        <div className="flex flex-row items-center justify-end">
           <Sheet
             open={open}
             onOpenChange={setOpen}
@@ -192,7 +192,7 @@ function EventRow({
               </AlertDialogContent>
             </AlertDialog>
             <SheetContent
-              className="md:w-1/2"
+              className="md:w-1/2 overflow-auto"
               onOpenAutoFocus={(mouseEvent) => {
                 mouseEvent.stopPropagation();
                 setTableIsClickable(false);
@@ -281,7 +281,7 @@ function EventsList() {
                   <TableHead className="w-[100px]">Name</TableHead>
                   <TableHead className="text-left">Description</TableHead>
                   <TableHead className="text-left">Webhook</TableHead>
-                  <TableHead className="text-right"></TableHead>
+                  <TableHead className="text-right justify-end"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
