@@ -25,14 +25,11 @@ export const EventDetectionDescription = ({
   event: Event;
   eventDefinition: any;
 }) => {
+  const roundedConfidenceScore = event.score_range?.value
+    ? Math.round(event.score_range?.value * 100)
+    : null;
   const roundedScore = event.score_range?.value
     ? Math.round(event.score_range?.value * 100) / 100
-    : null;
-
-  // Create scoreType, a capitalized string of score_type
-  const scoreType = event.score_range?.score_type
-    ? event.score_range?.score_type.charAt(0).toUpperCase() +
-      event.score_range?.score_type.slice(1)
     : null;
 
   return (
@@ -50,9 +47,13 @@ export const EventDetectionDescription = ({
         {eventDefinition?.description && (
           <p className="text-muted-foreground">{eventDefinition.description}</p>
         )}
-        {roundedScore && scoreType == "Confidence" && (
+        {roundedConfidenceScore &&
+          event.score_range?.score_type == "confidence" && (
+            <div>Confidence: {roundedConfidenceScore}%</div>
+          )}
+        {roundedConfidenceScore && event.score_range?.score_type == "range" && (
           <div>
-            {scoreType}: {roundedScore * 100}%
+            Score: {roundedScore}/{event.score_range.max}
           </div>
         )}
       </div>
