@@ -163,16 +163,21 @@ async def event_detection(
         score_range_settings = ScoreRangeSettings.model_validate(score_range_settings)
 
     # Build the prompt
-    prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
+    if score_range_settings.score_type == "confidence":
+        prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
 and you want to say if the event '{event_name}' happened during the latest interaction.
 This conversation is between a User and a Assistant.
 """
+    elif score_range_settings.score_type == "range":
+        prompt = f"""You are an impartial judge reading a conversation between a user and an assistant,
+and during the latest interaction you want to evaluate the event '{event_name}'.
+This conversation is between a User and a Assistant.
+"""
+
     if event_description is not None and len(event_description) > 0:
-        prompt += (
-            f"The description of the event '{event_name}' is: '{event_description}'\n"
-        )
+        prompt += f"The description of the event '{event_name}' is:\n<event_description>{event_description}</event_description>\n"
     else:
-        prompt += f"You don't have any description of the event '{event_name}'.\n"
+        prompt += f"You don't have any description for what is '{event_name}'. Make your best guess.\n"
 
     if len(message.previous_messages) > 1 and "task" in event_scope:
         truncated_context = shorten_text(
@@ -183,16 +188,16 @@ This conversation is between a User and a Assistant.
         )
         prompt += f"""
 To help you label the interaction, here are the previous messages leading to the interaction:
-[START CONTEXT]
+<context>
 {truncated_context}
-[END CONTEXT]
+</context>
 """
 
     if event_scope == "task":
         prompt += f"""Now, the interaction you have to label is the following:
-[START INTERACTION]
+<interaction>
 {message.latest_interaction()}
-[END INTERACTION]
+</interaction>
 """
     elif event_scope == "task_input_only":
         message_list = message.as_list()
@@ -213,9 +218,9 @@ To help you label the interaction, here are the previous messages leading to the
 
         prompt += f"""
 Now, you have to label the following interaction, which only contains the user message:
-[START INTERACTION]
+<interaction>
 User: {truncated_context}
-[END INTERACTION]
+</interaction>
 """
     elif event_scope == "task_output_only":
         message_list = message.as_list()
@@ -235,9 +240,9 @@ User: {truncated_context}
             )
         prompt += f"""
 Now, you have to label the following interaction, which only contains the assistant message:
-[START INTERACTION]
+<interaction>
 Assistant: {truncated_context}
-[END INTERACTION]
+</interaction>
 """
     elif event_scope == "session":
         truncated_context = shorten_text(
@@ -247,28 +252,34 @@ Assistant: {truncated_context}
             how="right",
         )
         prompt += f"""
-Now, you have the full conversation to label. If the event '{event_name}' at any point during the conversation, respond with 'Yes'.
-[START INTERACTION]
+Now, you have the full conversation to label. The event '{event_name}' can happen at any point during the conversation.
+<interaction>
 {truncated_context}
-[END INTERACTION]
+</interaction>
 """
     else:
         raise ValueError(
             f"Unknown event_scope : {event_scope}. Valid values are: {DetectionScope.__args__}"
         )
 
-    prompt += f"""
+    if score_range_settings.score_type == "confidence":
+        prompt += f"""
 Did the event '{event_name}' happen during the interaction? Respond with only one word: Yes or No."""
-    logger.debug(f"event_detection prompt : {prompt}")
+    elif score_range_settings.score_type == "range":
+        prompt += f"""
+How would you assess the '{event_name}' during the interaction? Respond with a whole number between {score_range_settings.min} and {score_range_settings.max}.
+"""
 
     # Call the API
     start_time = time.time()
-
     try:
         response = await async_openai_client.chat.completions.create(
             model=model_name,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant and an expert evaluator. Follow the instructions.",
+                },
                 {"role": "user", "content": prompt},
             ],
             max_tokens=5,
@@ -283,70 +294,91 @@ Did the event '{event_name}' happen during the interaction? Respond with only on
             value=None,
             logs=[prompt, str(e)],
         )
-
     api_call_time = time.time() - start_time
+    llm_response = response.choices[0].message.content
+    llm_call = {
+        "model": model_name,
+        "prompt": prompt,
+        "llm_output": llm_response,
+        "api_call_time": api_call_time,
+    }
+    metadata = {
+        "api_call_time": api_call_time,
+        "evaluation_source": EVALUATION_SOURCE,
+        "llm_call": llm_call,
+    }
 
-    logger.debug(f"event_detection call to OpenAI API ({api_call_time} sec)")
-
-    # Parse the response
-    if (
-        response.choices is None
-        or len(response.choices) == 0
-        or response.choices[0].message.content is None
-    ):
+    # If no response
+    if response.choices is None or len(response.choices) == 0 or llm_response is None:
         return JobResult(
             result_type=ResultType.error,
             value=None,
             logs=[prompt, "No response from the API"],
+            metadata=metadata,
         )
 
-    if score_range_settings.score_type == "confidence":
-        if (
-            response.choices[0].logprobs is None
-            or response.choices[0].logprobs.content is None
-        ):
-            llm_response = response.choices[0].message.content
-            llm_response = llm_response.strip().lower()
-            if "yes" in llm_response:
+    # If no logits, read the response
+    if (
+        response.choices[0].logprobs is None
+        or response.choices[0].logprobs.content is None
+    ):
+        stripped_llm_response = llm_response.strip().lower()
+        result_type = ResultType.error
+        detected_event = None
+        if score_range_settings.score_type == "confidence":
+            if "yes" in stripped_llm_response:
                 result_type = ResultType.bool
                 detected_event = True
-            elif "no" in llm_response:
+            elif "no" in stripped_llm_response:
                 result_type = ResultType.bool
                 detected_event = False
             else:
                 result_type = ResultType.error
                 detected_event = None
-            return JobResult(
-                result_type=result_type,
-                value=detected_event,
-                logs=[prompt, llm_response],
-                metadata={
-                    "api_call_time": api_call_time,
-                    "evaluation_source": EVALUATION_SOURCE,
-                    "llm_call": {
-                        "model": model_name,
-                        "prompt": prompt,
-                        "llm_output": llm_response,
-                        "api_call_time": api_call_time,
-                    },
-                },
-            )
+        elif score_range_settings.score_type == "range":
+            if stripped_llm_response.isdigit():
+                result_type = ResultType.bool
+                detected_event = True
+                score = float(stripped_llm_response)
+                metadata["score_range"] = ScoreRange(
+                    score_type="range",
+                    max=score_range_settings.max,
+                    min=score_range_settings.min,
+                    value=score,
+                )
+        return JobResult(
+            result_type=result_type, value=detected_event, metadata=metadata
+        )
 
-        first_logprobs = response.choices[0].logprobs.content[0].top_logprobs
-        llm_response = response.choices[0].message.content
-        logprob_score: dict[str, float] = defaultdict(float)
+    # Interpret the logprobs to compute the Score
+    first_logprobs = response.choices[0].logprobs.content[0].top_logprobs
+    logprob_score: dict[str, float] = defaultdict(float)
+    result_type = ResultType.bool
+    # Parse the logprobs for relevant tokens
+    if score_range_settings.score_type == "confidence":
         for logprob in first_logprobs:
-            if logprob.token.lower().strip() == "no":
+            stripped_token = logprob.token.lower().strip()
+            if stripped_token == "no":
                 logprob_score["no"] += math.exp(logprob.logprob)
-            if logprob.token.lower().strip() == "yes":
+            if stripped_token == "yes":
                 logprob_score["yes"] += math.exp(logprob.logprob)
-
-        # Normalize the scores
-        total_score = logprob_score["yes"] + logprob_score["no"]
-        if total_score > 0:
-            logprob_score["yes"] /= total_score
-            logprob_score["no"] /= total_score
-        result_type = ResultType.bool
+    elif score_range_settings.score_type == "range":
+        for logprob in first_logprobs:
+            stripped_token = logprob.token.lower().strip()
+            if stripped_token.isdigit():
+                logprob_score[stripped_token] += math.exp(logprob.logprob)
+    else:
+        raise ValueError(
+            f"Unknown score_type : {score_range_settings.score_type}. Valid values are: ['confidence', 'range']"
+        )
+    # Normalize the scores so that they sum to 1
+    total_score = sum(logprob_score.values())
+    if total_score > 0:
+        for key in logprob_score:
+            logprob_score[key] /= total_score
+    # Interpret the score and if the event is detected
+    score = score_range_settings.min
+    if score_range_settings.score_type == "confidence":
         # The response is the token with the highest logprob
         if logprob_score["yes"] > logprob_score["no"]:
             detected_event = True
@@ -354,32 +386,26 @@ Did the event '{event_name}' happen during the interaction? Respond with only on
         else:
             detected_event = False
             score = logprob_score["no"]
-    else:
-        logger.error(
-            f"Unknown score_range_settings.score_type: {score_range_settings.score_type}"
-        )
+    elif score_range_settings.score_type == "range":
+        # In range mode, the event is always marked as detected
+        detected_event = True
+        score = float(max(logprob_score, key=logprob_score.get))
 
-    logger.debug(f"event_detection detected event {event_name} : {detected_event}")
+    metadata["logprob_score"] = logprob_score
+    metadata["all_logprobs"] = [logprob.model_dump() for logprob in first_logprobs]
+    metadata["score_range"] = ScoreRange(
+        score_type=score_range_settings.score_type,
+        max=score_range_settings.max,
+        min=score_range_settings.min,
+        value=score,
+    )
+
     # Return the result
     return JobResult(
         result_type=result_type,
         value=detected_event,
         logs=[prompt, llm_response],
-        metadata={
-            "api_call_time": api_call_time,
-            "evaluation_source": EVALUATION_SOURCE,
-            "llm_call": {
-                "model": model_name,
-                "prompt": prompt,
-                "llm_output": llm_response,
-                "api_call_time": api_call_time,
-            },
-            "logprob_score": logprob_score,
-            "all_logprobs": [logprob.model_dump() for logprob in first_logprobs],
-            "score_range": ScoreRange(
-                score_type="confidence", max=1, min=0, value=score
-            ),
-        },
+        metadata=metadata,
     )
 
 
@@ -726,6 +752,12 @@ async def keyword_event_detection(
             result_type=ResultType.bool,
             value=found,
             logs=[text, regex_pattern],
+            metadata={
+                "evaluation_source": "phospho-keywords",
+                "score_range": ScoreRange(
+                    score_type="confidence", max=1, min=0, value=1 if found else 0
+                ),
+            },
         )
 
     except Exception as e:
@@ -781,6 +813,12 @@ async def regex_event_detection(
             result_type=ResultType.bool,
             value=found,
             logs=[text, regex_pattern],
+            metadata={
+                "evaluation_source": "phospho-regex",
+                "score_range": ScoreRange(
+                    score_type="confidence", max=1, min=0, value=1 if found else 0
+                ),
+            },
         )
 
     except Exception as e:
