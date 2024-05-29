@@ -251,7 +251,7 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           </Alert>
         )}
         <SheetContent
-          className="md:w-1/2"
+          className="md:w-1/2 overflow-auto"
           onOpenAutoFocus={(mouseEvent) => {
             mouseEvent.stopPropagation();
             setTableIsClickable(false);

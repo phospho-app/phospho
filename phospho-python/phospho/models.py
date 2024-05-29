@@ -69,7 +69,7 @@ DetectionEngine = Literal[
 class ScoreRangeSettings(BaseModel):
     min: float = 0
     max: float = 1
-    score_type: Literal["confidence"] = "confidence"
+    score_type: Literal["confidence", "range"] = "confidence"
 
 
 class EventDefinition(DatedBaseModel):
@@ -93,7 +93,7 @@ class ScoreRange(BaseModel):
     min: float
     max: float
     value: float
-    score_type: Literal["confidence"]
+    score_type: Literal["confidence", "range"]
 
 
 class Event(ProjectElementBaseModel):

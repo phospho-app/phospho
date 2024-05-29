@@ -88,7 +88,7 @@ export interface ScoreRange {
   min: number;
   max: number;
   value: number;
-  score_type: string;
+  score_type: ScoreRangeType;
 }
 
 export interface Event {
@@ -116,6 +116,17 @@ export enum DetectionScope {
   TaskOutputOnly = "task_output_only",
 }
 
+export enum ScoreRangeType {
+  confidence = "confidence",
+  range = "range",
+}
+
+export interface ScoreRangeSettings {
+  min: number;
+  max: number;
+  score_type: ScoreRangeType;
+}
+
 export interface EventDefinition {
   id?: string;
   created_at?: number;
@@ -130,6 +141,7 @@ export interface EventDefinition {
   keywords?: string;
   regex_pattern?: string;
   job_id?: string;
+  score_range_settings?: ScoreRangeSettings;
 }
 
 export interface ABTest {
