@@ -48,8 +48,6 @@ async def run_event_detection_pipeline(
         executor_type="parallel_jobs",
     )
 
-    logger.debug("Workload finished")
-
     # Display the workload results
     logger.info(f"Workload results : {workload.results}")
 

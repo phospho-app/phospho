@@ -84,6 +84,13 @@ export interface UserMetadata {
   sessions: Session[];
 }
 
+export interface ScoreRange {
+  min: number;
+  max: number;
+  value: number;
+  score_type: string;
+}
+
 export interface Event {
   id: string;
   created_at: number;
@@ -93,6 +100,7 @@ export interface Event {
   project_id: string;
   webhook?: string;
   source: string;
+  score_range?: ScoreRange;
 }
 
 export enum DetectionEngine {
