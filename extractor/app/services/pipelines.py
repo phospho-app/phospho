@@ -19,6 +19,11 @@ from app.api.v1.models.pipelines import PipelineResults
 from app.services.sentiment_analysis import run_sentiment_and_language_analysis
 
 from phospho.models import Project
+from Crypto.Cipher import AES
+from Crypto.Hash import SHA256
+from Crypto import Random
+import os
+import base64
 
 
 class EventConfig(lab.JobConfig):
@@ -765,3 +770,75 @@ async def change_last_langsmith_extract(
         {"id": project_id},
         {"$set": {"settings.last_langsmith_extract": new_last_extract_date}},
     )
+
+
+async def encrypt_and_store_langsmith_credentials(
+    project_id: str,
+    langsmith_api_key: str,
+    langsmith_project_name: str,
+):
+    """
+    Store the encrypted Langsmith credentials in the database
+    """
+
+    mongo_db = await get_mongo_db()
+
+    encryption_key = os.getenv("EXTRACTOR_ENCRYPTION_KEY")
+    api_key_as_bytes = langsmith_api_key.encode("utf-8")
+
+    # Encrypt the credentials
+    key = SHA256.new(
+        encryption_key
+    ).digest()  # use SHA-256 over our key to get a proper-sized AES key
+
+    IV = Random.new().read(AES.block_size)  # generate IV
+    encryptor = AES.new(key, AES.MODE_CBC, IV)
+    padding = (
+        AES.block_size - len(api_key_as_bytes) % AES.block_size
+    )  # calculate needed padding
+    api_key_as_bytes += bytes([padding]) * padding
+    data = IV + encryptor.encrypt(
+        api_key_as_bytes
+    )  # store the IV at the beginning and encrypt
+
+    # Store the encrypted credentials in the database
+    await mongo_db["keys"].update_one(
+        {"project_id": project_id},
+        {
+            "$set": {
+                "langsmith_api_key": base64.b64encode(data).decode("latin-1"),
+                "langsmith_project_name": langsmith_project_name,
+            },
+        },
+        upsert=True,
+    )
+
+
+async def fetch_and_decrypt_langsmith_credentials(
+    project_id: str,
+):
+    """
+    Fetch and decrypt the Langsmith credentials from the database
+    """
+
+    mongo_db = await get_mongo_db()
+    encryption_key = os.getenv("EXTRACTOR_ENCRYPTION_KEY")
+
+    # Fetch the encrypted credentials from the database
+    credentials = await mongo_db["keys"].find_one(
+        {"project_id": project_id},
+    )
+
+    # Decrypt the credentials
+    source = base64.b64decode(credentials["langsmith_api_key"].encode("latin-1"))
+    key = SHA256.new(
+        encryption_key
+    ).digest()  # use SHA-256 over our key to get a proper-sized AES key
+    IV = source[: AES.block_size]  # extract the IV from the beginning
+    decryptor = AES.new(key, AES.MODE_CBC, IV)
+    data = decryptor.decrypt(source[AES.block_size :])  # decrypt the data
+    padding = data[-1]  # extract the padding length
+    return {
+        "langsmith_api_key": data[:-padding].decode("utf-8"),
+        "langsmith_project_name": credentials["langsmith_project_name"],
+    }
