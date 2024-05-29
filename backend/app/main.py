@@ -193,11 +193,6 @@ api_platform.include_router(metadata.router)
 
 app.mount("/api", api_platform)
 
-from app.services.mongo.cron import (
-    fetch_and_decrypt_langsmith_credentials,
-    encrypt_and_store_langsmith_credentials,
-)
-
 # Scheduler for cron jobs
 
 jobstores = {
