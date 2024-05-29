@@ -18,15 +18,18 @@ from app.services.pipelines import (
     recipe_pipeline,
     task_main_pipeline,
     store_opentelemetry_data_in_db,
-    store_tasks,
     get_last_langsmith_extract,
     change_last_langsmith_extract,
+    encrypt_and_store_langsmith_credentials,
 )
 from app.services.projects import get_project_by_id
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
-from phospho.models import Task
+from app.api.v1.models import LogEvent
 from datetime import datetime
+from langsmith import Client
+from langsmith.utils import LangSmithError
+from typing import List
 
 router = APIRouter()
 
@@ -234,14 +237,12 @@ async def extract_langsmith_data(
     background_tasks: BackgroundTasks,
 ):
     logger.debug(
-        f"Received Langsmith connection data for org id: {user_data['org_id']}"
+        f"Received Langsmith connection data for org id: {user_data['org_id']}, {user_data}"
     )
 
     last_langsmith_extract = await get_last_langsmith_extract(user_data["project_id"])
 
-    from langsmith import Client
-
-    client = Client(api_key=user_data["langsmith_credentials"]["lang_smith_api_key"])
+    client = Client(api_key=user_data["langsmith_credentials"]["langsmith_api_key"])
     if last_langsmith_extract is None:
         runs = client.list_runs(
             project_name=user_data["langsmith_credentials"]["project_name"],
@@ -255,51 +256,72 @@ async def extract_langsmith_data(
             start_time=datetime.strptime(str(datetime.now()), "%Y-%m-%d %H:%M:%S.%f"),
         )
 
-    tasks_to_analyze = []
+    logs_to_process: List[LogEvent] = []
+    extra_logs_to_save: List[LogEvent] = []
+    current_usage = user_data["current_usage"]
+    max_usage = user_data["max_usage"]
 
-    for run in runs:
-        try:
-            input = ""
-            for message in run.inputs["messages"]:
-                if "HumanMessage" in message["id"]:
-                    input += message["kwargs"]["content"]
+    try:
+        for run in runs:
+            try:
+                input = ""
+                for message in run.inputs["messages"]:
+                    if "HumanMessage" in message["id"]:
+                        input += message["kwargs"]["content"]
 
-            output = ""
-            for generation in run.outputs["generations"]:
-                output += generation["text"]
+                output = ""
+                for generation in run.outputs["generations"]:
+                    output += generation["text"]
 
-            if input == "" or output == "":
-                continue
+                if input == "" or output == "":
+                    continue
 
-            task = Task(
-                created_at=str(int(run.end_time.timestamp())),
-                input=input,
-                output=output,
-                session_id=str(run.session_id),
-                org_id=user_data["org_id"],
-                project_id=user_data["project_id"],
-                metadata={"langsmith_run_id": run.id},
-            )
+                log_event = LogEvent(
+                    created_at=str(int(run.end_time.timestamp())),
+                    input=input,
+                    output=output,
+                    session_id=str(run.session_id),
+                    org_id=user_data["org_id"],
+                    project_id=user_data["project_id"],
+                    metadata={"langsmith_run_id": run.id},
+                )
 
-            tasks_to_analyze.append(task)
+                if max_usage is None or (
+                    max_usage is not None and current_usage < max_usage
+                ):
+                    logs_to_process.append(log_event)
+                    current_usage += 1
+                else:
+                    extra_logs_to_save.append(log_event)
+            except Exception as e:
+                logger.error(
+                    f"Error processing langsmith run for project id: {user_data['project_id']}, {e}"
+                )
 
-        except Exception as e:
-            logger.error(
-                f"Error processing langsmith run for project id: {user_data['project_id']}, {e}"
-            )
+    except LangSmithError as e:
+        logger.error(f"Error getting langsmith runs: {e}")
 
-    if len(tasks_to_analyze) > 0:
-        await store_tasks(tasks_to_analyze)
-        await change_last_langsmith_extract(
-            project_id=user_data["project_id"],
-            new_last_extract_date=str(datetime.now()),
-        )
+    await change_last_langsmith_extract(
+        project_id=user_data["project_id"],
+        new_last_extract_date=str(datetime.now()),
+    )
 
-        for task in tasks_to_analyze:
-            background_tasks.add_task(
-                task_main_pipeline,
-                task=task,
-                save_task=True,
-            )
+    background_tasks.add_task(
+        process_log,
+        project_id=user_data["project_id"],
+        org_id=user_data["org_id"],
+        logs_to_process=logs_to_process,
+        extra_logs_to_save=extra_logs_to_save,
+    )
+
+    logger.debug(
+        f"Finished processing langsmith runs for project id: {user_data['project_id']}"
+    )
+
+    await encrypt_and_store_langsmith_credentials(
+        project_id=user_data["project_id"],
+        langsmith_api_key=user_data["langsmith_credentials"]["langsmith_api_key"],
+        langsmith_project_name=user_data["langsmith_credentials"]["project_name"],
+    )
 
     return {"status": "ok"}

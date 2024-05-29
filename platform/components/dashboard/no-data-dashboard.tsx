@@ -26,6 +26,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/components/ui/use-toast";
@@ -37,6 +42,7 @@ import {
   ArrowRight,
   CopyIcon,
   LoaderCircle,
+  Lock,
   MonitorPlay,
   Plus,
   Upload,
@@ -47,6 +53,8 @@ import React from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
+import { PasswordInput } from "../password-input";
 
 const PythonIcon = () => {
   return (
@@ -285,7 +293,7 @@ export const SendDataAlertDialog = ({
       },
       body: JSON.stringify({
         project_name: values.project_name,
-        lang_smith_api_key: values.lang_smith_api_key,
+        langsmith_api_key: values.lang_smith_api_key,
       }),
     }).then(async (response) => {
       const responseBody = await response.json();
@@ -297,7 +305,8 @@ export const SendDataAlertDialog = ({
       } else {
         toast.toast({
           title: "🦜🔗 LangSmith import failed",
-          description: "This feature is only available to usage based plans.",
+          description:
+            "Please double-check your LangSmith API key and project name",
         });
       }
     });
@@ -492,21 +501,8 @@ phospho.log({input, output});`}
               {selectedTab == "lang_smith" && (
                 <div className="flex-col space-y-4">
                   <div className="text-sm">
-                    Import your historical data from LangSmith to phospho.
-                  </div>
-                  <div className="text-sm">
-                    We don't store your api key. This is a one time transfer, if
-                    you want to update your data, come back here, we will fetch
-                    the updated data.
-                  </div>
-                  <div className="text-sm">
-                    Find your LangSmith API key{" "}
-                    <Link
-                      className="underline hover:text-green-500"
-                      href="https://smith.langchain.com/o/b864875a-2a0c-537e-92f1-5df713478975/settings"
-                    >
-                      here
-                    </Link>
+                    Synchronise your data from LangSmith to phospho. We will
+                    fetch the data periodically.
                   </div>
                   <Form {...form}>
                     <form
@@ -518,13 +514,42 @@ phospho.log({input, output});`}
                         name="lang_smith_api_key"
                         render={({ field }) => (
                           <FormItem>
-                            <FormControl>
-                              <Input
-                                placeholder="Your LangSmith API key"
-                                {...field}
-                                className="font-normal"
-                              />
-                            </FormControl>
+                            <FormLabel>
+                              Your LangSmith API key,{" "}
+                              <Link
+                                className="underline hover:text-green-500"
+                                href="https://smith.langchain.com/o/b864875a-2a0c-537e-92f1-5df713478975/settings"
+                              >
+                                learn more here
+                              </Link>
+                            </FormLabel>
+                            <div className="flex justify-center">
+                              <HoverCard openDelay={80} closeDelay={30}>
+                                <HoverCardTrigger>
+                                  <Lock className="mr-2 mt-2" />
+                                </HoverCardTrigger>
+                                <HoverCardContent
+                                  side="top"
+                                  className="text-sm text-center"
+                                >
+                                  <div>
+                                    This key is encrypted and stored securely.
+                                  </div>
+                                  <div>
+                                    We only use it to fetch your data from
+                                    LangSmith.
+                                  </div>
+                                </HoverCardContent>
+                              </HoverCard>
+
+                              <FormControl>
+                                <PasswordInput
+                                  placeholder="lsv2_..."
+                                  {...field}
+                                  className="font-normal flex"
+                                />
+                              </FormControl>
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -534,9 +559,10 @@ phospho.log({input, output});`}
                         name="project_name"
                         render={({ field }) => (
                           <FormItem>
+                            <FormLabel>LangSmith project name</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="LangSmith project name"
+                                placeholder="My LangSmith project"
                                 {...field}
                                 className="font-normal"
                               />
