@@ -95,17 +95,12 @@ async def run_event_detection_pipeline(
                     task_id=message.metadata["task"].id,
                     session_id=message.metadata["task"].session_id,
                     project_id=message.metadata["task"].project_id,
-                    source=result.metadata.get("source", "phospho-unknown"),
+                    source=result.metadata.get("evaluation_source", "phospho-unknown"),
                     webhook=event.webhook,
                     org_id=message.metadata["task"].org_id,
                     event_definition=event,
                     task=message.metadata["task"],
-                    score_range=ScoreRange(
-                        min=0,
-                        max=1,
-                        value=result.metadata.get("score", 1),
-                        score_type="confidence",
-                    ),
+                    score_range=result.metadata.get("score_range", None),
                 )
 
                 # Update the task object with the event
