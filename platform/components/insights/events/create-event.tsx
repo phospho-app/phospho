@@ -325,38 +325,6 @@ export default function CreateEvent({
                 </FormItem>
               )}
             />
-
-            <h2 className="text-lg font-semibold pt-4">Advanced settings</h2>
-            <Separator />
-            <div className="flex flex-row space-x-2 w-full">
-              <FormField
-                control={form.control}
-                name="webhook"
-                render={({ field }) => (
-                  <FormItem className="flex-grow">
-                    <FormLabel>Webhook (optional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://your-api.com/webhook"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="webhook_auth_header"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Authorization Header</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Bearer sk-..." {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
             <FormField
               control={form.control}
               name="detection_engine"
@@ -488,6 +456,43 @@ export default function CreateEvent({
                 )}
               />
             )}
+            <h2 className="text-sm font-semibold pt-4">
+              Advanced settings (optional)
+            </h2>
+            <Separator />
+            <div className="flex flex-row space-x-2 w-full">
+              <FormField
+                control={form.control}
+                name="webhook"
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormLabel className="text-muted-foreground">
+                      Webhook URL
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://your-api.com/webhook"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="webhook_auth_header"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-muted-foreground">
+                      Authorization Header
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Bearer sk-..." {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
           <SheetFooter>
             <Button
