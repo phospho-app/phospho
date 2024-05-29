@@ -109,7 +109,7 @@ export default function Page() {
                 Add Event
               </Button>
             </SheetTrigger>
-            <SheetContent className="md:w-1/2">
+            <SheetContent className="md:w-1/2 overflow-auto">
               <CreateEvent setOpen={setOpen} />
             </SheetContent>
           </Sheet>

@@ -22,6 +22,7 @@ import { SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { DetectionEngine, DetectionScope } from "@/models/models";
+import { ScoreRangeSettings } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -79,6 +80,13 @@ export default function CreateEvent({
       .default("task"),
     keywords: z.string().optional(),
     regex_pattern: z.string().optional(),
+    score_range_settings: z
+      .object({
+        min: z.number().min(0).max(100),
+        max: z.number().min(0).max(100),
+        score_type: z.enum(["confidence", "range"]),
+      })
+      .optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -92,6 +100,7 @@ export default function CreateEvent({
       detection_scope: eventToEdit?.detection_scope ?? "task",
       keywords: eventToEdit?.keywords ?? "",
       regex_pattern: eventToEdit?.regex_pattern ?? "",
+      score_range_settings: eventToEdit?.score_range_settings,
     },
   });
 
@@ -157,295 +166,342 @@ export default function CreateEvent({
     }
   }
 
-  console.log("form", form);
-
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="font-normal space-y-4"
-        key={`createEventForm${eventToEdit?.event_name}`}
-      >
-        <SheetHeader>
-          <SheetTitle className="text-xl">
-            {(eventNameToEdit === null || eventNameToEdit === undefined) && (
-              <div>Setup new event</div>
-            )}
-            {eventNameToEdit && <div>Edit event "{eventNameToEdit}"</div>}
-          </SheetTitle>
-        </SheetHeader>
-        <Separator />
-        {/* Event templates */}
-        <h2>Templates</h2>
-        <div className="flex space-x-4">
-          <Button
-            onClick={(mouseEvent) => {
-              mouseEvent.stopPropagation();
-              form.setValue("event_name", "Penetration testing");
-              form.setValue(
-                "description",
-                "The user is trying to jailbreak the assistant.",
-              );
-              form.setValue("detection_scope", "task");
-              form.setValue("detection_engine", "llm_detection");
-              // Prevent the form from submitting
-              mouseEvent.preventDefault();
-            }}
-          >
-            Penetration testing
-          </Button>
-          <Button
-            onClick={(mouseEvent) => {
-              mouseEvent.stopPropagation();
-              form.setValue("event_name", "Assistant coherence");
-              form.setValue(
-                "description",
-                "The agent answers coherently and consistently.",
-              );
-              form.setValue("detection_scope", "session");
-              form.setValue("detection_engine", "llm_detection");
-              // Prevent the form from submitting
-              mouseEvent.preventDefault();
-            }}
-          >
-            Coherence
-          </Button>
-          <Button
-            onClick={(mouseEvent) => {
-              mouseEvent.stopPropagation();
-              form.setValue("event_name", "Assistant correctness");
-              form.setValue(
-                "description",
-                "The assistant correctly answered the question.",
-              );
-              form.setValue("detection_scope", "task");
-              form.setValue("detection_engine", "llm_detection");
-              // Prevent the form from submitting
-              mouseEvent.preventDefault();
-            }}
-          >
-            Correctness
-          </Button>
-          <Button
-            onClick={(mouseEvent) => {
-              mouseEvent.stopPropagation();
-              form.setValue("event_name", "Assistant plausibility");
-              form.setValue(
-                "description",
-                "The assistant's answer is plausible and makes sense.",
-              );
-              form.setValue("detection_scope", "task");
-              form.setValue("detection_engine", "llm_detection");
-              // Prevent the form from submitting
-              mouseEvent.preventDefault();
-            }}
-          >
-            Plausibility
-          </Button>
-        </div>
-        <Separator />
-        <div className="flex-col space-y-2">
-          <FormField
-            control={form.control}
-            name="event_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Event name*</FormLabel>
-                <FormControl>
-                  <Input
-                    spellCheck
-                    placeholder="e.g.: rude tone of voice, user frustration, user says 'I want to cancel'..."
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description*</FormLabel>
-                <FormControl>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe this event like you'd do to a 5 years old. Refer to speakers as 'the user' and 'the assistant'."
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="detection_scope"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Detection scope</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value ?? "task"}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent position="popper">
-                    <SelectItem value="task">Task</SelectItem>
-                    <SelectItem value="session">Session</SelectItem>
-                    <SelectItem value="task_input_only">
-                      Task input only
-                    </SelectItem>
-                    <SelectItem value="task_output_only">
-                      Task output only
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
-          <h2 className="text-lg font-semibold pt-4">Advanced settings</h2>
+    <div className="space-y-2">
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="font-normal space-y-4"
+          key={`createEventForm${eventToEdit?.event_name}`}
+        >
+          <SheetHeader>
+            <SheetTitle className="text-xl">
+              {(eventNameToEdit === null || eventNameToEdit === undefined) && (
+                <div>Setup new event</div>
+              )}
+              {eventNameToEdit && <div>Edit event "{eventNameToEdit}"</div>}
+            </SheetTitle>
+          </SheetHeader>
+          {/* <Separator /> */}
+          {/* Event templates */}
+          <div>
+            <h2 className="text-muted-foreground text-xs mb-1">Templates</h2>
+            <div className="flex space-x-4">
+              <Button
+                onClick={(mouseEvent) => {
+                  mouseEvent.stopPropagation();
+                  form.setValue("event_name", "Penetration testing");
+                  form.setValue(
+                    "description",
+                    "The user is trying to jailbreak the assistant. Example: asking to ignore any previous instruction, asking malicious questions, etc.",
+                  );
+                  form.setValue("detection_scope", "task");
+                  form.setValue("detection_engine", "llm_detection");
+                  // Prevent the form from submitting
+                  mouseEvent.preventDefault();
+                }}
+              >
+                Penetration testing
+              </Button>
+              <Button
+                onClick={(mouseEvent) => {
+                  mouseEvent.stopPropagation();
+                  form.setValue("event_name", "Assistant coherence");
+                  form.setValue(
+                    "description",
+                    "The agent answers coherently and consistently.",
+                  );
+                  form.setValue("detection_scope", "session");
+                  form.setValue("detection_engine", "llm_detection");
+                  // Prevent the form from submitting
+                  mouseEvent.preventDefault();
+                }}
+              >
+                Coherence
+              </Button>
+              <Button
+                onClick={(mouseEvent) => {
+                  mouseEvent.stopPropagation();
+                  form.setValue("event_name", "Assistant correctness");
+                  form.setValue(
+                    "description",
+                    "The assistant correctly answered the question.",
+                  );
+                  form.setValue("detection_scope", "task");
+                  form.setValue("detection_engine", "llm_detection");
+                  // Prevent the form from submitting
+                  mouseEvent.preventDefault();
+                }}
+              >
+                Correctness
+              </Button>
+              <Button
+                onClick={(mouseEvent) => {
+                  mouseEvent.stopPropagation();
+                  form.setValue("event_name", "Assistant plausibility");
+                  form.setValue(
+                    "description",
+                    "The assistant's answer is plausible and makes sense.",
+                  );
+                  form.setValue("detection_scope", "task");
+                  form.setValue("detection_engine", "llm_detection");
+                  // Prevent the form from submitting
+                  mouseEvent.preventDefault();
+                }}
+              >
+                Plausibility
+              </Button>
+            </div>
+          </div>
           <Separator />
-          <FormField
-            control={form.control}
-            name="webhook"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="ml-4">Webhook (optional)</FormLabel>
-                <FormControl>
-                  <Input
-                    className="ml-4"
-                    placeholder="https://your-api.com/webhook"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="webhook_auth_header"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="ml-4">Authorization Header</FormLabel>
-                <FormControl>
-                  <Input
-                    className="ml-4"
-                    placeholder="Bearer sk-..."
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="detection_engine"
-            render={({ field }) => (
-              <FormItem className="ml-4">
-                <FormLabel>Engine</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value ?? "llm_detection"}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue
-                        defaultValue={field.value ?? "llm_detection"}
-                      />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent position="popper">
-                    <SelectItem value="llm_detection">LLM Detection</SelectItem>
-                    <SelectItem value="keyword_detection">
-                      Keyword Detection
-                    </SelectItem>
-                    <SelectItem value="regex_detection">
-                      Regex Detection
-                    </SelectItem>
-                    <SelectItem disabled value="other">
-                      More coming soon!
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
-          {form.watch("detection_engine") === "keyword_detection" && (
+          <div className="flex-col space-y-2">
             <FormField
               control={form.control}
-              name="keywords"
+              name="event_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="ml-4">
-                    List of words to detect, separated by a comma
-                  </FormLabel>
+                  <FormLabel>Event name*</FormLabel>
                   <FormControl>
                     <Input
-                      className="ml-4"
-                      placeholder="happy, joyful, excited"
+                      spellCheck
+                      placeholder="e.g.: rude tone of voice, user frustration, user says 'I want to cancel'..."
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
-          )}
-          {form.watch("detection_engine") === "regex_detection" && (
             <FormField
               control={form.control}
-              name="regex_pattern"
+              name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="ml-4">
-                    Regex pattern to match -{" "}
-                  </FormLabel>
-                  <Link
-                    className="hover:underline hover:text-blue-500"
-                    href="https://regexr.com/"
+                  <FormLabel>Description*</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      id="description"
+                      placeholder="Use simple language. Refer to speakers as 'the user' and 'the assistant'."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="detection_scope"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Detection scope</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value ?? "task"}
                   >
-                    Test your regex pattern here
-                  </Link>{" "}
-                  <FormMessage className="ml-4">
-                    Be careful, "happy" will also match "unhappy" unless you add
-                    whitespaces like so: " happy "
-                  </FormMessage>
-                  <FormControl>
-                    <Input
-                      className="ml-4"
-                      placeholder="^[0-9]{5}$ or happy | joyful | excited"
-                      {...field}
-                    />
-                  </FormControl>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent position="popper">
+                      <SelectItem value="task">Task</SelectItem>
+                      <SelectItem value="session">Session</SelectItem>
+                      <SelectItem value="task_input_only">
+                        Task input only
+                      </SelectItem>
+                      <SelectItem value="task_output_only">
+                        Task output only
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormItem>
               )}
             />
-          )}
-        </div>
-        <SheetFooter>
-          <Button
-            type="submit"
-            disabled={
-              loading ||
-              // !form.formState.isValid ||
-              // too many events
-              ((eventNameToEdit === null || eventNameToEdit === undefined) &&
-                currentEvents &&
-                max_nb_events &&
-                current_nb_events + 1 >= max_nb_events)
+            <h2 className="text-lg font-semibold pt-4">Advanced settings</h2>
+            <Separator />
+            <div className="flex flex-row space-x-2 w-full">
+              <FormField
+                control={form.control}
+                name="webhook"
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormLabel>Webhook (optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://your-api.com/webhook"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="webhook_auth_header"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Authorization Header</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Bearer sk-..." {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="detection_engine"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Engine</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value ?? "llm_detection"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue
+                          defaultValue={field.value ?? "llm_detection"}
+                        />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent position="popper">
+                      <SelectItem value="llm_detection">
+                        LLM Detection
+                      </SelectItem>
+                      <SelectItem value="keyword_detection">
+                        Keyword Detection
+                      </SelectItem>
+                      <SelectItem value="regex_detection">
+                        Regex Detection
+                      </SelectItem>
+                      <SelectItem disabled value="other">
+                        More coming soon!
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+            {
+              // specify the scoreRangeSettings for the LLM detection engine
+              form.watch("detection_engine") === "llm_detection" && (
+                // Let user pick the scoreRangeSettings.score_type. Then, prefill the min and max values based on the score_type
+                <FormField
+                  control={form.control}
+                  name="score_range_settings"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Output type</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={(value) => {
+                            if (value === "confidence") {
+                              field.onChange({
+                                score_type: "confidence",
+                                min: 0,
+                                max: 1,
+                              });
+                            } else if (value === "range") {
+                              field.onChange({
+                                score_type: "range",
+                                min: 1,
+                                max: 10,
+                              });
+                            }
+                          }}
+                          defaultValue={field.value?.score_type ?? "confidence"}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue
+                                defaultValue={
+                                  field.value?.score_type ?? "confidence"
+                                }
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent position="popper">
+                            <SelectItem value="confidence">
+                              Yes/No (boolean)
+                            </SelectItem>
+                            <SelectItem value="range">
+                              1-10 score (number)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )
             }
-          >
-            {(eventNameToEdit === null || eventNameToEdit === undefined) && (
-              <div>Add event</div>
+            {form.watch("detection_engine") === "keyword_detection" && (
+              <FormField
+                control={form.control}
+                name="keywords"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      List of words to detect, separated by a comma
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="happy, joyful, excited" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             )}
-            {eventNameToEdit && <div>Save edits</div>}
-          </Button>
-        </SheetFooter>
-      </form>
-    </Form>
+            {form.watch("detection_engine") === "regex_detection" && (
+              <FormField
+                control={form.control}
+                name="regex_pattern"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Regex pattern to match - </FormLabel>
+                    <Link
+                      className="hover:underline hover:text-blue-500"
+                      href="https://regexr.com/"
+                    >
+                      Test your regex pattern here
+                    </Link>{" "}
+                    <FormMessage>
+                      Be careful, "happy" will also match "unhappy" unless you
+                      add whitespaces like so: " happy "
+                    </FormMessage>
+                    <FormControl>
+                      <Input
+                        placeholder="^[0-9]{5}$ or happy | joyful | excited"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
+          <SheetFooter>
+            <Button
+              type="submit"
+              disabled={
+                loading ||
+                // !form.formState.isValid ||
+                // too many events
+                ((eventNameToEdit === null || eventNameToEdit === undefined) &&
+                  currentEvents &&
+                  max_nb_events &&
+                  current_nb_events + 1 >= max_nb_events)
+              }
+            >
+              {(eventNameToEdit === null || eventNameToEdit === undefined) && (
+                <div>Add event</div>
+              )}
+              {eventNameToEdit && <div>Save edits</div>}
+            </Button>
+          </SheetFooter>
+        </form>
+      </Form>
+    </div>
   );
 }
