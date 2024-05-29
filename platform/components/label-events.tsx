@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +18,47 @@ import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, PlusIcon, Trash } from "lucide-react";
 
-import { Badge } from "./ui/badge";
+export const EventDetectionDescription = ({
+  event,
+  eventDefinition,
+}: {
+  event: Event;
+  eventDefinition: any;
+}) => {
+  const roundedScore = event.score_range?.value
+    ? Math.round(event.score_range?.value * 100) / 100
+    : null;
+
+  // Create scoreType, a capitalized string of score_type
+  const scoreType = event.score_range?.score_type
+    ? event.score_range?.score_type.charAt(0).toUpperCase() +
+      event.score_range?.score_type.slice(1)
+    : null;
+
+  return (
+    <div className="p-1">
+      <div className="flex flex-row justify-between mb-2 items-center">
+        <h2 className="font-bold">{event.event_name}</h2>
+        <HoverCard openDelay={0} closeDelay={0}>
+          <HoverCardTrigger>
+            <Badge className="bg-green-500">{event.source}</Badge>
+          </HoverCardTrigger>
+          <HoverCardContent>Source</HoverCardContent>
+        </HoverCard>
+      </div>
+      <div className="flex flex-col space-y-1">
+        {eventDefinition?.description && (
+          <p className="text-muted-foreground">{eventDefinition.description}</p>
+        )}
+        {roundedScore && scoreType == "Confidence" && (
+          <div>
+            {scoreType}: {roundedScore * 100}%
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const InteractiveEventBadgeForTasks = ({
   event,
@@ -49,12 +90,11 @@ export const InteractiveEventBadgeForTasks = ({
               {event.event_name}
             </Badge>
           </HoverCardTrigger>
-          <HoverCardContent side="top" className="text-sm text-left w-64">
-            <h2 className="font-bold">{event.event_name}</h2>
-            <p>Source: {event.source}</p>
-            {eventDefinition?.description && (
-              <p>{eventDefinition.description}</p>
-            )}
+          <HoverCardContent side="top" className="text-sm text-left max-w-96">
+            <EventDetectionDescription
+              event={event}
+              eventDefinition={eventDefinition}
+            />
           </HoverCardContent>
         </HoverCard>
       </DropdownMenuTrigger>
@@ -243,11 +283,10 @@ export const InteractiveEventBadgeForSessions = ({
             </Badge>
           </HoverCardTrigger>
           <HoverCardContent side="top" className="text-sm text-left w-64">
-            <h2 className="font-bold">{event.event_name}</h2>
-            <p>Source: {event.source}</p>
-            {eventDefinition?.description && (
-              <p>{eventDefinition.description}</p>
-            )}
+            <EventDetectionDescription
+              event={event}
+              eventDefinition={eventDefinition}
+            />
           </HoverCardContent>
         </HoverCard>
       </DropdownMenuTrigger>
