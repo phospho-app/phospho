@@ -258,7 +258,6 @@ async def task_event_detection_pipeline(
         if result.job_metadata.get("recipe_id") is None:
             logger.error(f"No recipe_id found for event {event_name}")
 
-        logger.debug(f"Result for {event_name}: {result}")
         mongo_db["job_results"].insert_one(result.model_dump())
 
     if len(detected_events) > 0:

@@ -149,14 +149,15 @@ async def event_detection(
     """
     Detects if an event is present in a message.
     """
-
     # Identifier of the source of the evaluation, with the version of the model if phospho
     EVALUATION_SOURCE = "phospho-5"
-
+    MAX_TOKENS = 128_000
     # Check if some Env variables override the default model and LLM provider
     provider, model_name = get_provider_and_model(model)
     async_openai_client = get_async_client(provider)
-    MAX_TOKENS = 128_000
+
+    if isinstance(score_range_settings, dict):
+        score_range_settings = ScoreRangeSettings.model_validate(score_range_settings)
 
     # Build the prompt
     prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
