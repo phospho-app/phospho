@@ -642,23 +642,42 @@ async def sentiment_and_language_analysis_pipeline(
     score_threshold = 0.3
     magnitude_threshold = 0.6
     # Try to replace with project settings
-    try:
-        score_threshold = project.settings.sentiment_threshold.score
-        magnitude_threshold = project.settings.sentiment_threshold.magnitude
-    except AttributeError:
-        try:
-            # Update the project settings with the default values
+    if project.settings.sentiment_threshold is not None:
+        if project.settings.sentiment_threshold.score is not None:
+            score_threshold = project.settings.sentiment_threshold.score
+        else:
             mongo_db["projects"].update_one(
                 {"id": task.project_id},
                 {
                     "$set": {
                         "settings.sentiment_threshold.score": 0.3,
+                    }
+                },
+            )
+
+        if project.settings.sentiment_threshold.magnitude is not None:
+            magnitude_threshold = project.settings.sentiment_threshold.magnitude
+        else:
+            mongo_db["projects"].update_one(
+                {"id": task.project_id},
+                {
+                    "$set": {
                         "settings.sentiment_threshold.magnitude": 0.6,
                     }
                 },
             )
-        except Exception as e:
-            logger.error(f"Error updating threshold settings: {e}")
+    else:
+        mongo_db["projects"].update_one(
+            {"id": task.project_id},
+            {
+                "$set": {
+                    "settings.sentiment_threshold": {
+                        "score": 0.3,
+                        "magnitude": 0.6,
+                    }
+                }
+            },
+        )
 
     sentiment_object, language = await run_sentiment_and_language_analysis(
         task.input, score_threshold, magnitude_threshold

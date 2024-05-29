@@ -75,16 +75,12 @@ async def run_sentiment_and_language_analysis(
         )
 
         # We interpret the sentiment score as follows:
-        if sentiment_response.score is None:
-            sentiment_response.label = None
-        elif sentiment_response.score > score_threshold:
+        if sentiment_response.score > score_threshold:
             sentiment_response.label = "positive"
         elif sentiment_response.score < -score_threshold:
             sentiment_response.label = "negative"
         else:
-            if sentiment_response.magnitude is None:
-                sentiment_response.label = None
-            elif sentiment_response.magnitude < magnitude_threshold:
+            if sentiment_response.magnitude < magnitude_threshold:
                 sentiment_response.label = "neutral"
             else:
                 sentiment_response.label = "mixed"
