@@ -21,7 +21,11 @@ import { Separator } from "@/components/ui/separator";
 import { SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { DetectionEngine, DetectionScope } from "@/models/models";
+import {
+  DetectionEngine,
+  DetectionScope,
+  ScoreRangeType,
+} from "@/models/models";
 import { ScoreRangeSettings } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -138,6 +142,7 @@ export default function CreateEvent({
       detection_scope: values.detection_scope as DetectionScope,
       keywords: values.keywords,
       regex_pattern: values.regex_pattern,
+      score_range_settings: values.score_range_settings as ScoreRangeSettings,
     };
     console.log("Updated selected project:", selectedProject);
 
@@ -255,23 +260,54 @@ export default function CreateEvent({
           </div>
           <Separator />
           <div className="flex-col space-y-2">
-            <FormField
-              control={form.control}
-              name="event_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Event name*</FormLabel>
-                  <FormControl>
-                    <Input
-                      spellCheck
-                      placeholder="e.g.: rude tone of voice, user frustration, user says 'I want to cancel'..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="flex flex-row items-center space-x-2">
+              <FormField
+                control={form.control}
+                name="event_name"
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormLabel>Event name*</FormLabel>
+                    <FormControl>
+                      <Input
+                        spellCheck
+                        placeholder="e.g.: rude tone of voice, user frustration, user says 'I want to cancel'..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="detection_scope"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Detection scope</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value ?? "task"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent position="popper">
+                        <SelectItem value="task">Task</SelectItem>
+                        <SelectItem value="session">Session</SelectItem>
+                        <SelectItem value="task_input_only">
+                          Task input only
+                        </SelectItem>
+                        <SelectItem value="task_output_only">
+                          Task output only
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="description"
@@ -289,35 +325,7 @@ export default function CreateEvent({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="detection_scope"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Detection scope</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value ?? "task"}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent position="popper">
-                      <SelectItem value="task">Task</SelectItem>
-                      <SelectItem value="session">Session</SelectItem>
-                      <SelectItem value="task_input_only">
-                        Task input only
-                      </SelectItem>
-                      <SelectItem value="task_output_only">
-                        Task output only
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )}
-            />
+
             <h2 className="text-lg font-semibold pt-4">Advanced settings</h2>
             <Separator />
             <div className="flex flex-row space-x-2 w-full">
@@ -407,7 +415,7 @@ export default function CreateEvent({
                               field.onChange({
                                 score_type: "range",
                                 min: 1,
-                                max: 10,
+                                max: 5,
                               });
                             }
                           }}
@@ -427,7 +435,7 @@ export default function CreateEvent({
                               Yes/No (boolean)
                             </SelectItem>
                             <SelectItem value="range">
-                              1-10 score (number)
+                              1-5 score (number)
                             </SelectItem>
                           </SelectContent>
                         </Select>

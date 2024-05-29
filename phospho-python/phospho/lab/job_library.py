@@ -385,10 +385,10 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
     elif score_range_settings.score_type == "range":
         # In range mode, the event is always marked as detected
         detected_event = True
-        # The response is the token with the highest logprob
-        for key in logprob_score:
-            if logprob_score[key] > score:
-                score = logprob_score[key]
+        # The score is the weighted average of the token * logprob
+        score = sum(
+            float(key) * logprob_score[key] for key in logprob_score if key.isdigit()
+        )
 
     metadata["logprob_score"] = logprob_score
     metadata["all_logprobs"] = [logprob.model_dump() for logprob in first_logprobs]
