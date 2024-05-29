@@ -142,7 +142,7 @@ async def event_detection(
     message: Message,
     event_name: str,
     event_description: str,
-    score_range_settings: ScoreRangeSettings,
+    score_range_settings: Optional[ScoreRangeSettings] = None,
     event_scope: DetectionScope = "task",
     model: str = "openai:gpt-4o",
 ) -> JobResult:
@@ -156,6 +156,8 @@ async def event_detection(
     provider, model_name = get_provider_and_model(model)
     async_openai_client = get_async_client(provider)
 
+    if score_range_settings is None:
+        score_range_settings = ScoreRangeSettings()
     if isinstance(score_range_settings, dict):
         score_range_settings = ScoreRangeSettings.model_validate(score_range_settings)
 
