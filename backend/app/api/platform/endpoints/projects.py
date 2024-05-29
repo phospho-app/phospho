@@ -508,8 +508,23 @@ async def connect_langsmith(
     """
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
-    org = {"org": propelauth.fetch_org(project.org_id)}
-    raise_error_if_not_in_pro_tier(org)
+
+    logger.debug(f"Connecting Langsmith to project {project_id}")
+
+    try:
+        # This snippet is used to test the connection with Langsmith and verify the API key/project name
+        from langsmith import Client
+
+        client = Client(api_key=credentials["langsmith_api_key"])
+        runs = client.list_runs(
+            project_name=credentials["project_name"],
+            start_time=datetime.datetime.now() - datetime.timedelta(seconds=1),
+        )
+        _ = [run for run in runs]
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error: Could not connect to Langsmith. {e}"
+        )
 
     background_tasks.add_task(
         collect_langsmith_data,
@@ -517,4 +532,4 @@ async def connect_langsmith(
         org_id=project.org_id,
         langsmith_credentials=credentials,
     )
-    return {"status": "ok", "message": "🦜🔗Langsmith connected successfully."}
+    return {"status": "ok", "message": "Langsmith connected successfully."}

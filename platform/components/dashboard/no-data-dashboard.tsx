@@ -293,7 +293,7 @@ export const SendDataAlertDialog = ({
       },
       body: JSON.stringify({
         project_name: values.project_name,
-        lang_smith_api_key: values.lang_smith_api_key,
+        langsmith_api_key: values.lang_smith_api_key,
       }),
     }).then(async (response) => {
       const responseBody = await response.json();
@@ -305,7 +305,8 @@ export const SendDataAlertDialog = ({
       } else {
         toast.toast({
           title: "🦜🔗 LangSmith import failed",
-          description: "This feature is only available to usage based plans.",
+          description:
+            "Please double-check your LangSmith API key and project name",
         });
       }
     });
