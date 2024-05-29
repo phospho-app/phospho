@@ -340,7 +340,6 @@ Did the event '{event_name}' happen during the interaction? Respond with only on
                 logprob_score["no"] += math.exp(logprob.logprob)
             if logprob.token.lower().strip() == "yes":
                 logprob_score["yes"] += math.exp(logprob.logprob)
-            print(logprob.token, math.exp(logprob.logprob))
 
         # Normalize the scores
         total_score = logprob_score["yes"] + logprob_score["no"]

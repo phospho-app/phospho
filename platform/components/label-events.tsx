@@ -84,13 +84,13 @@ export const InteractiveEventBadgeForTasks = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <HoverCard openDelay={80} closeDelay={30}>
+        <HoverCard openDelay={0} closeDelay={0}>
           <HoverCardTrigger>
             <Badge variant="outline" className="border hover:border-green-500">
               {event.event_name}
             </Badge>
           </HoverCardTrigger>
-          <HoverCardContent side="top" className="text-sm text-left max-w-96">
+          <HoverCardContent className="text-sm text-left w-96">
             <EventDetectionDescription
               event={event}
               eventDefinition={eventDefinition}
@@ -225,7 +225,7 @@ export const AddEventDropdownForTasks = ({
                   {event_name}
                 </DropdownMenuItem>
               </HoverCardTrigger>
-              <HoverCardContent side="right" className="text-sm w-64">
+              <HoverCardContent side="right" className="text-sm w-96">
                 <h2 className="font-bold">{event_name}</h2>
                 <div>{event.description}</div>
               </HoverCardContent>
@@ -276,13 +276,13 @@ export const InteractiveEventBadgeForSessions = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>
-        <HoverCard openDelay={80} closeDelay={30}>
+        <HoverCard openDelay={0} closeDelay={0}>
           <HoverCardTrigger>
             <Badge variant="outline" className="border hover:border-green-500">
               {event.event_name}
             </Badge>
           </HoverCardTrigger>
-          <HoverCardContent side="top" className="text-sm text-left w-64">
+          <HoverCardContent className="text-sm text-left w-64">
             <EventDetectionDescription
               event={event}
               eventDefinition={eventDefinition}
