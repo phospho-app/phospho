@@ -151,7 +151,7 @@ async def event_detection(
     Detects if an event is present in a message.
     """
     # Identifier of the source of the evaluation, with the version of the model if phospho
-    EVALUATION_SOURCE = "phospho-5"
+    EVALUATION_SOURCE = "phospho-6"
     MAX_TOKENS = 128_000
     # Check if some Env variables override the default model and LLM provider
     provider, model_name = get_provider_and_model(model)
@@ -296,6 +296,7 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
         )
     api_call_time = time.time() - start_time
     llm_response = response.choices[0].message.content
+    # Metadata
     llm_call = {
         "model": model_name,
         "prompt": prompt,
@@ -310,12 +311,7 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
 
     # If no response
     if response.choices is None or len(response.choices) == 0 or llm_response is None:
-        return JobResult(
-            result_type=ResultType.error,
-            value=None,
-            logs=[prompt, "No response from the API"],
-            metadata=metadata,
-        )
+        return JobResult(result_type=ResultType.error, value=None, metadata=metadata)
 
     # If no logits, read the response
     if (
@@ -389,7 +385,10 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
     elif score_range_settings.score_type == "range":
         # In range mode, the event is always marked as detected
         detected_event = True
-        score = float(max(logprob_score, key=logprob_score.get))
+        # The response is the token with the highest logprob
+        for key in logprob_score:
+            if logprob_score[key] > score:
+                score = logprob_score[key]
 
     metadata["logprob_score"] = logprob_score
     metadata["all_logprobs"] = [logprob.model_dump() for logprob in first_logprobs]
@@ -401,12 +400,7 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
     )
 
     # Return the result
-    return JobResult(
-        result_type=result_type,
-        value=detected_event,
-        logs=[prompt, llm_response],
-        metadata=metadata,
-    )
+    return JobResult(result_type=result_type, value=detected_event, metadata=metadata)
 
 
 async def evaluate_task(
