@@ -1257,7 +1257,7 @@ async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
                 {"$replaceRoot": {"newRoot": "$topic"}},
             ]
         )
-        .limit(None)
+        .limit(limit)
     )
     valid_topics = [Topic.model_validate(topic) for topic in topics]
     return valid_topics

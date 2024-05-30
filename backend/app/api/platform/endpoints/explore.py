@@ -1,5 +1,7 @@
 import datetime
 from typing import List, Optional
+from app.api.v2.models.clustering import ClusteringRequest
+from app.services.mongo.ai_hub import clustering
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 from phospho.models import Topic
@@ -332,12 +334,13 @@ async def post_single_topic(
 async def post_detect_topics(
     project_id: str,
     user: User = Depends(propelauth.require_user),
-) -> None:
+) -> dict:
     """
     Run the topic detection algorithm on a project
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    raise NotImplementedError("Not implemented yet")
+    await clustering(clustering_request=ClusteringRequest(project_id=project_id))
+    return {"status": "ok"}
 
 
 @router.get(

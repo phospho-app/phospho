@@ -40,3 +40,4 @@ from .tasks import (
 )
 from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest
 from .train import TrainRequest
+from .clustering import ClusteringRequest
