@@ -6,12 +6,16 @@ function ComingSoonAlert({ customMessage }: { customMessage?: string }) {
     return (
       <>
         <Alert>
-          <TrafficCone className="h-4 w-4" />
-          <AlertTitle>Coming soon!</AlertTitle>
-          <AlertDescription>
-            We'll be shipping this feature shortly.{" "}
-            <span className="italic">We're about to blow your mind.</span>
-          </AlertDescription>
+          <div className="flex flex-row items-center space-x-1">
+            <TrafficCone className="h-4 w-4 mr-1" />
+            <span className="text-sm font-semibold">Coming soon!</span>
+            <span className="text-sm">
+              We'll be shipping this feature shortly.
+            </span>
+            <span className="italic text-sm">
+              We're about to blow your mind.
+            </span>
+          </div>
         </Alert>
       </>
     );
@@ -20,9 +24,11 @@ function ComingSoonAlert({ customMessage }: { customMessage?: string }) {
   return (
     <>
       <Alert>
-        <TrafficCone className="h-4 w-4" />
-        <AlertTitle>Work in progress!</AlertTitle>
-        <AlertDescription>{customMessage}</AlertDescription>
+        <div className="flex flex-row items-center space-x-1">
+          <TrafficCone className="h-4 w-4 mr-1" />
+          <span className="text-sm font-semibold">Work in progress!</span>
+          <span className="text-sm">{customMessage}</span>
+        </div>
       </Alert>
     </>
   );

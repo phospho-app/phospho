@@ -303,20 +303,36 @@ async def post_all_topics(
 
 @router.post(
     "/explore/{project_id}/topics/{topic_id}",
-    response_model=Topic,
+    response_model=Optional[Topic],
     description="Get the different topics of a project",
 )
 async def post_single_topic(
     project_id: str,
     topic_id: str,
     user: User = Depends(propelauth.require_user),
-) -> Topics:
+) -> Optional[Topic]:
     """
     Get a topic data
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
     topic = await fetch_single_topic(project_id=project_id, topic_id=topic_id)
     return topic
+
+
+@router.post(
+    "/explore/{project_id}/detect-topics",
+    response_model=None,
+    description="Run the topic detection algorithm on a project",
+)
+async def post_detect_topics(
+    project_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> None:
+    """
+    Run the topic detection algorithm on a project
+    """
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    raise NotImplementedError("Not implemented yet")
 
 
 @router.get(
