@@ -13,10 +13,13 @@ export default function Page({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const topic_id = decodeURIComponent(params.id);
 
   // todo: fetch from server
   const { data: topic } = useSWR(
-    project_id ? [`/api/projects/${project_id}/tasks`, accessToken] : null,
+    project_id
+      ? [`/api/explore/${project_id}/topics/${topic_id}`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     { keepPreviousData: true },
   );

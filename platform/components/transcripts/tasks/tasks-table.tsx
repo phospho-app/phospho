@@ -69,6 +69,7 @@ export function TasksTable<TData, TValue>({
   let tasksWithEvents: TaskWithEvents[] = [];
 
   console.log("TASKS DATA FILTERS", dataFilters);
+  console.log("TASKS_IDS", tasks_ids);
 
   const { data: tasksData, mutate: mutateTasks } = useSWR(
     project_id
@@ -120,7 +121,10 @@ export function TasksTable<TData, TValue>({
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        filters: dataFilters,
+        filters: {
+          ...dataFilters,
+          tasks_ids: tasks_ids,
+        },
       }),
     {
       keepPreviousData: true,

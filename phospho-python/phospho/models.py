@@ -599,6 +599,7 @@ class ProjectDataFilters(BaseModel):
     sentiment: Optional[str] = None
     language: Optional[str] = None
     has_notes: Optional[bool] = None
+    tasks_ids: Optional[List[str]] = None
 
 
 class Topic(ProjectElementBaseModel):

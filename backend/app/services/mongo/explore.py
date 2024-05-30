@@ -1252,7 +1252,7 @@ async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
             "name": "Topic 1",
             "description": "Description of the topic 1",
             "size": 33,
-            "tasks_ids": ["1", "2", "3"],
+            "tasks_ids": ["d90fd4484adc41309deee1542890c771"],
         }
     ]
 
@@ -1275,7 +1275,7 @@ async def fetch_single_topic(project_id: str, topic_id: str) -> Optional[Topic]:
         "name": "Topic 1",
         "description": "Description of the topic 1",
         "size": 33,
-        "tasks_ids": ["1", "2", "3"],
+        "tasks_ids": ["d90fd4484adc41309deee1542890c771"],
     }
 
     valid_topic = Topic.model_validate(topic)
