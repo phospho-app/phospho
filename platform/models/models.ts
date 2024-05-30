@@ -190,7 +190,7 @@ export interface Test {
 
 export interface Topic {
   id: string;
-  cluster_id: string;
+  clustering_id: string;
   project_id: string;
   org_id: string;
   created_at: number;

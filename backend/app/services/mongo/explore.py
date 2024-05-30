@@ -1245,7 +1245,7 @@ async def fetch_topics(project_id: str, limit: int = 100) -> List[Topic]:
     topics = [
         {
             "id": "1",
-            "cluster_id": "1",
+            "clustering_id": "1",
             "project_id": project_id,
             "org_id": "1",
             "name": "Topic 1",
