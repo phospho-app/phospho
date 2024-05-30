@@ -6,6 +6,7 @@ import datetime
 from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
+from app.api.platform.models.topics import Topic
 import pandas as pd
 import pydantic
 
@@ -1235,29 +1236,45 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
     return valid_ab_tests
 
 
-async def fetch_topics(project_id: str, limit: int = 100) -> Topics:
+async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
     """
     Fetch the topics of a project
     """
-    # Create an aggregated table
     mongo_db = await get_mongo_db()
+    topics = (
+        await mongo_db["private-clusterings"]
+        .aggregate(
+            [
+                {
+                    "$match": {
+                        "project_id": project_id,
+                    }
+                },
+                # Sort: most recent first
+                {"$sort": {"created_at": -1}},
+                # Deduplicate the topics by clustering_id, to keep only the most recent one
+                {"$group": {"_id": "$clustering_id", "topic": {"$first": "$$ROOT"}}},
+                {"$replaceRoot": {"newRoot": "$topic"}},
+            ]
+        )
+        .limit(limit)
+    )
+    valid_topics = [Topic.model_validate(topic) for topic in topics]
+    return valid_topics
 
-    # Aggregation pipeline
-    pipeline = [
-        {"$match": {"project_id": project_id}},  # Filters documents by project_id
-        {"$unwind": "$topics"},  # Deconstructs the topics array
-        {
-            "$group": {"_id": "$topics", "count": {"$sum": 1}}
-        },  # Groups by topic and counts
-        {
-            "$project": {"topic_name": "$_id", "_id": 0, "count": 1}
-        },  # Renames _id to topicName
-        {"$sort": {"count": -1}},  # Sorts by count in descending order
-    ]
-    # Query Mongo
-    topics = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
 
-    return Topics(topics=topics)
+async def fetch_single_topic(project_id: str, topic_id: str) -> Optional[Topic]:
+    """
+    Fetch a single topic from a project
+    """
+    mongo_db = await get_mongo_db()
+    topic = await mongo_db["private-clusterings"].find_one(
+        {"project_id": project_id, "id": topic_id}
+    )
+    if topic is None:
+        return None
+    valid_topic = Topic.model_validate(topic)
+    return valid_topic
 
 
 async def nb_items_with_a_metadata_field(

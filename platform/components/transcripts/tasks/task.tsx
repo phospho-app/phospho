@@ -1,6 +1,6 @@
 "use client";
 
-import SmallSpinner from "@/components/small-spinner";
+import { CenteredSpinner } from "@/components/small-spinner";
 import TaskBox from "@/components/task-box";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,7 +73,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
     setTask(creation_response_json);
   };
 
-  if (task === null || task === undefined) return <SmallSpinner />;
+  if (task === null || task === undefined) return <CenteredSpinner />;
 
   // To re-render the component when the flag is updated, we need to use a state
   // For the flag. This is because just having the task as a prop doesn't trigger
@@ -166,7 +166,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
         <CardFooter className="flex justify-around ">
           {tasksWithoutHumanLabel && tasksWithoutHumanLabel.length > 0 && (
             <div className="flex-col justify-items-center">
-              <div className="text-gray-500 mb-1">
+              <div className="text-muted-foreground mb-1">
                 Override evaluation and show next task
               </div>
               <div className="flex space-x-4 justify-center">
@@ -190,7 +190,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
             </div>
           )}
           {tasksWithoutHumanLabel && tasksWithoutHumanLabel.length === 0 && (
-            <div className="flex space-x-4 items-center text-gray-500">
+            <div className="flex space-x-4 items-center text-muted-foreground">
               You labeled all the tasks! 🎉
             </div>
           )}

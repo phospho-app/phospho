@@ -13,6 +13,7 @@ from app.api.v2.models import (
     PredictRequest,
     PredictResponse,
     TrainRequest,
+    ClusteringRequest,
 )
 from app.core import config
 from app.services.mongo.files import process_and_save_examples
@@ -165,3 +166,29 @@ async def predict(predict_request: PredictRequest) -> PredictResponse | None:
                 await slack_notification(slack_message)
 
             return None
+
+
+async def clustering(clustering_request: ClusteringRequest) -> None:
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{config.PHOSPHO_AI_HUB_URL}/v1/clusterings",
+                json=clustering_request.model_dump(),
+                headers={
+                    "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                timeout=60,
+            )
+
+        except Exception as e:
+            errror_id = generate_uuid()
+            error_message = f"Caught error while calling clustering (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
+            logger.error(error_message)
+            traceback.print_exc()
+            if config.ENVIRONMENT == "production":
+                if len(error_message) > 200:
+                    slack_message = error_message[:200]
+                else:
+                    slack_message = error_message
+                await slack_notification(slack_message)

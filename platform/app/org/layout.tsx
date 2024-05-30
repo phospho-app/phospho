@@ -76,7 +76,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
               Switch your mobile browser to desktop mode or use a computer to
               access phospho
             </p>
-            <div className="text-gray-500 items-center flex flex-col">
+            <div className="text-muted-foreground items-center flex flex-col">
               <p>Are you a frontend developer?</p>
               <div>
                 <Link href="mailto:contact@phospho.app">

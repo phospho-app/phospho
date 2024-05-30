@@ -178,7 +178,7 @@ function PricingCard({
             <p className="font-semibold">{tier.tagline}</p>
           </div>
         )}
-        <p className="font-light text-gray-500"> {tier.price}</p>
+        <p className="font-light text-muted-foreground"> {tier.price}</p>
       </CardHeader>
       <CardContent className="mt-0">
         <div>

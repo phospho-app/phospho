@@ -60,7 +60,7 @@ export default function OnboardingLayout({
           <div>
             <Button
               variant="link"
-              className="text-gray-500"
+              className="text-muted-foreground"
               onClick={async () => {
                 // Reset the navigation store
                 setSelectedOrgId(null);

@@ -1,7 +1,10 @@
 import datetime
 from typing import List, Optional
+from app.api.v2.models.clustering import ClusteringRequest
+from app.services.mongo.ai_hub import clustering
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
+from phospho.models import Topic
 from propelauth_fastapi import User
 
 from app.api.platform.models import (
@@ -18,6 +21,7 @@ from app.security.authentification import propelauth
 from app.security import verify_if_propelauth_user_can_access_project
 from app.services.mongo.explore import (
     deprecated_get_dashboard_aggregated_metrics,
+    fetch_single_topic,
     get_sessions_aggregated_metrics,
     get_tasks_aggregated_metrics,
     get_events_aggregated_metrics,
@@ -25,7 +29,7 @@ from app.services.mongo.explore import (
     project_has_sessions,
     project_has_enough_labelled_tasks,
     create_ab_tests_table,
-    fetch_topics,
+    fetch_all_topics,
     nb_items_with_a_metadata_field,
     compute_nb_items_with_metadata_field,
     compute_session_length_per_metadata,
@@ -280,27 +284,63 @@ async def get_ab_tests(
     return ABTests(abtests=ab_tests)
 
 
-@router.get(
+@router.post(
     "/explore/{project_id}/topics",
     response_model=Topics,
     description="Get the different topics of a project",
 )
-async def get_topics(
+async def post_all_topics(
     project_id: str,
     user: User = Depends(propelauth.require_user),
 ) -> Topics:
     """
-    Get the different topics of a project.
+    Get all the topics of a project.
 
-    Topics are labels that can be assigned to tasks.
+    Topics are clusters of tasks.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
+    topics = await fetch_all_topics(project_id=project_id)
+    return Topics(topics=topics)
 
-    topics = await fetch_topics(project_id=project_id)
 
-    logger.debug(f"Topics: {topics}")
+@router.post(
+    "/explore/{project_id}/topics/{topic_id}",
+    response_model=Topic,
+    description="Get the different topics of a project",
+)
+async def post_single_topic(
+    project_id: str,
+    topic_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> Topic:
+    """
+    Get a topic data
+    """
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    topic = await fetch_single_topic(project_id=project_id, topic_id=topic_id)
+    if topic is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Topic {topic_id} not found in project {project_id}",
+        )
+    return topic
 
-    return topics
+
+@router.post(
+    "/explore/{project_id}/detect-topics",
+    response_model=None,
+    description="Run the topic detection algorithm on a project",
+)
+async def post_detect_topics(
+    project_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> dict:
+    """
+    Run the topic detection algorithm on a project
+    """
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    await clustering(clustering_request=ClusteringRequest(project_id=project_id))
+    return {"status": "ok"}
 
 
 @router.get(

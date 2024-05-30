@@ -3,7 +3,7 @@ from loguru import logger
 
 # Function to test
 from app.services.mongo.explore import (
-    fetch_topics,
+    fetch_all_topics,
     nb_items_with_a_metadata_field,
     compute_successrate_metadata_quantiles,
     compute_nb_items_with_metadata_field,
@@ -17,7 +17,7 @@ async def test_main_pipeline(db, populated_project):
         test_project_id = populated_project.id
 
         # Run the function
-        topics = await fetch_topics(test_project_id)
+        topics = await fetch_all_topics(test_project_id)
 
         logger.debug(f"Topics: {topics}")
 

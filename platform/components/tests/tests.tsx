@@ -37,7 +37,7 @@ const Tests: React.FC = () => {
                   Test your app before deploying
                 </CardTitle>
                 <CardDescription>
-                  <p className="text-gray-500">
+                  <p className="text-muted-foreground">
                     Run offline tests to measure the success rate of your app.
                   </p>
                 </CardDescription>

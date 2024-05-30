@@ -327,7 +327,7 @@ export default function AddEvents({
                 />
               ))}
           </div>
-          <div className="text-gray-500">
+          <div className="text-muted-foreground">
             Did you know? You can later setup events to trigger webhooks (slack,
             email, etc.)
           </div>
