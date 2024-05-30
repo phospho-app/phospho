@@ -210,6 +210,13 @@ async def connect_and_init_db():
                 "event_name", background=True
             )
 
+            mongo_db[MONGODB_NAME]["private-clusters"].create_index(
+                "id", unique=True, background=True
+            )
+            mongo_db[MONGODB_NAME]["private-clusters"].create_index(
+                "project_id", background=True
+            )
+
         except Exception as e:
             logger.warning(f"Error while connecting to Mongo: {e}")
             raise e
