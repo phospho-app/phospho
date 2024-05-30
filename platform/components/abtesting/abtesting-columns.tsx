@@ -55,7 +55,7 @@ export function getColumns() {
       },
       accessorKey: "score",
       cell: ({ row }) => {
-        return <div>{row.original.score}</div>;
+        return <div>{row.original.score}%</div>;
       },
     },
 
@@ -79,7 +79,7 @@ export function getColumns() {
       },
       accessorKey: "score_std",
       cell: ({ row }) => {
-        return <div>{row.original.score_std}</div>;
+        return <div>{row.original.score_std}%</div>;
       },
     },
 
