@@ -3,11 +3,6 @@
 // Shadcn ui
 import { Button } from "@/components/ui/button";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import {
   Table,
   TableBody,
   TableCell,
@@ -19,7 +14,6 @@ import { authFetcher } from "@/lib/fetcher";
 import { ABTest } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import {
   flexRender,
   getCoreRowModel,
@@ -30,7 +24,7 @@ import {
 } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { TableNavigation } from "../table-navigation";
@@ -43,8 +37,13 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const router = useRouter();
-  const [sorting, setSorting] = React.useState([]);
-  const [filters, setFilters] = React.useState([]);
+  const [sorting, setSorting] = useState([]);
+  const [filters, setFilters] = useState([]);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Fetch ABTests
   const { data: abTests } = useSWR(
@@ -74,6 +73,10 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
+
+  if (!isClient) {
+    return <></>;
+  }
 
   return (
     <>
