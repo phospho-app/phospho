@@ -1,7 +1,7 @@
 "use client";
 
 import { SelectOrgButton } from "@/components/settings/select-org-dropdown";
-import SmallSpinner from "@/components/small-spinner";
+import { CenteredSpinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import UpgradeButton from "@/components/upgrade-button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
@@ -21,7 +21,7 @@ export default function Page() {
   const plan = selectedOrgMetadata?.plan ?? "hobby";
 
   if (loading) {
-    return <SmallSpinner />;
+    return <CenteredSpinner />;
   }
 
   return (

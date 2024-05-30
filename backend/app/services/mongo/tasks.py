@@ -252,6 +252,9 @@ def task_filtering_pipeline_match(
 
     match: Dict[str, object] = {"project_id": project_id}
 
+    if filters.tasks_ids is not None:
+        match[f"{prefix}id"] = {"$in": filters.tasks_ids}
+
     # Cast the created_at filters to int
     if isinstance(filters.created_at_start, datetime.datetime):
         filters.created_at_start = int(filters.created_at_start.timestamp())

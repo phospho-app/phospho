@@ -1,9 +1,7 @@
 from pydantic import BaseModel
 from typing import List
+from phospho.models import Topic
 
-class Topic(BaseModel):
-    topic_name: str
-    count: int
 
 class Topics(BaseModel):
     topics: List[Topic]

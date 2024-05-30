@@ -189,8 +189,15 @@ export interface Test {
 }
 
 export interface Topic {
-  topic_name: string;
-  count: number;
+  id: string;
+  clustering_id: string;
+  project_id: string;
+  org_id: string;
+  created_at: number;
+  name: string;
+  description: string;
+  size: number;
+  tasks_ids: string[];
 }
 
 export interface CustomDateRange {
