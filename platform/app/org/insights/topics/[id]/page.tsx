@@ -30,6 +30,11 @@ export default function Page({ params }: { params: { id: string } }) {
       <Button onClick={() => router.back()}>
         <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
+      {topic?.name && (
+        <div className="text-3xl font-bold tracking-tight mr-8">
+          Topic '{topic.name}'
+        </div>
+      )}
       <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
         <TasksTable tasks_ids={tasks_ids} />
       </div>

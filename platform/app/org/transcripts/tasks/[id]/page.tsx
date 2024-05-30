@@ -11,8 +11,12 @@ export default function Page({ params }: { params: { id: string } }) {
 
   return (
     <>
-      <Button onClick={() => router.push("/org/transcripts/tasks/")}>
-        <ChevronLeft className="w-4 h-4 mr-1" /> Back to Tasks
+      <Button
+        onClick={() => {
+          router.back();
+        }}
+      >
+        <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
       <TaskOverview key={params.id} task_id={task_id}></TaskOverview>
     </>
