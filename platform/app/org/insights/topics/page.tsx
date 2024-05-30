@@ -6,7 +6,6 @@ import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
 
 const Page: React.FC<{}> = ({}) => {
-  const { accessToken } = useUser();
   return (
     <>
       <ComingSoon customMessage="This feature is still in alpha." />

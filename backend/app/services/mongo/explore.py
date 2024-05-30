@@ -1236,7 +1236,7 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
     return valid_ab_tests
 
 
-async def fetch_topics(project_id: str, limit: int = 100) -> List[Topic]:
+async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
     """
     Fetch the topics of a project
     """
@@ -1246,6 +1246,7 @@ async def fetch_topics(project_id: str, limit: int = 100) -> List[Topic]:
         {
             "id": "1",
             "clustering_id": "1",
+            "created_at": 1612137600,
             "project_id": project_id,
             "org_id": "1",
             "name": "Topic 1",
@@ -1255,10 +1256,30 @@ async def fetch_topics(project_id: str, limit: int = 100) -> List[Topic]:
         }
     ]
 
-    # Cast to Topic models
     valid_topics = [Topic.model_validate(topic) for topic in topics]
-
     return valid_topics
+
+
+async def fetch_single_topic(project_id: str, topic_id: str) -> Optional[Topic]:
+    """
+    Fetch a single topic from a project
+    """
+
+    # Placeholder (replace with actual data fetching from the database)
+    topic = {
+        "id": "1",
+        "clustering_id": "1",
+        "created_at": 1612137600,
+        "project_id": project_id,
+        "org_id": "1",
+        "name": "Topic 1",
+        "description": "Description of the topic 1",
+        "size": 33,
+        "tasks_ids": ["1", "2", "3"],
+    }
+
+    valid_topic = Topic.model_validate(topic)
+    return valid_topic
 
 
 async def nb_items_with_a_metadata_field(

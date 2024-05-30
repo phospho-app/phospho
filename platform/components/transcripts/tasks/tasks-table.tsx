@@ -37,9 +37,12 @@ import { getColumns } from "./tasks-table-columns";
 
 interface DataTableProps<TData, TValue> {
   // columns: any[]; // ColumnDef<TData, TValue>[];
+  tasks_ids?: string[];
 }
 
-export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
+export function TasksTable<TData, TValue>({
+  tasks_ids,
+}: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
   const setTasksWithoutHumanLabel = dataStateStore(
     (state) => state.setTasksWithoutHumanLabel,
@@ -75,11 +78,15 @@ export function TasksTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
           tasksPagination.pageIndex,
           JSON.stringify(dataFilters),
           JSON.stringify(tasksSorting),
+          JSON.stringify(tasks_ids),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        filters: dataFilters,
+        filters: {
+          ...dataFilters,
+          tasks_ids: tasks_ids,
+        },
         pagination: {
           page: tasksPagination.pageIndex,
           page_size: tasksPagination.pageSize,
