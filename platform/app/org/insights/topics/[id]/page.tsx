@@ -17,7 +17,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const topic_id = decodeURIComponent(params.id);
 
   // todo: fetch from server
-  const { data: topic }: { data: Topic | undefined } = useSWR(
+  const { data: topic }: { data: Topic | undefined | null } = useSWR(
     project_id
       ? [`/api/explore/${project_id}/topics/${topic_id}`, accessToken]
       : null,
@@ -41,9 +41,11 @@ export default function Page({ params }: { params: { id: string } }) {
           <div className="text-muted-foreground">{topic.description}</div>
         )}
       </div>
-      <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
-        <TasksTable tasks_ids={tasks_ids} />
-      </div>
+      {tasks_ids && (
+        <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
+          <TasksTable tasks_ids={tasks_ids} />
+        </div>
+      )}
     </>
   );
 }
