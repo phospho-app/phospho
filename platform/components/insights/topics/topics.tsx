@@ -86,25 +86,33 @@ const Topics: React.FC = () => {
                 variant="default"
                 onClick={async () => {
                   setDetectionRunTimestamp(Date.now() / 1000);
-                  await fetch(`/api/explore/${project_id}/detect-topics`, {
-                    method: "POST",
-                    headers: {
-                      Authorization: "Bearer " + accessToken,
-                    },
-                  }).then((response) => {
-                    if (response.status == 200) {
-                      toast({
-                        title: "Topic detection started",
-                        description: "This may take a few seconds.",
-                      });
-                    } else {
-                      toast({
-                        title: "Error when starting detection",
-                        description: response.text(),
-                      });
-                      setDetectionRunTimestamp(null);
-                    }
-                  });
+                  try {
+                    await fetch(`/api/explore/${project_id}/detect-topics`, {
+                      method: "POST",
+                      headers: {
+                        Authorization: "Bearer " + accessToken,
+                      },
+                    }).then((response) => {
+                      if (response.status == 200) {
+                        toast({
+                          title: "Topic detection started",
+                          description: "This may take a few seconds.",
+                        });
+                      } else {
+                        toast({
+                          title: "Error when starting detection",
+                          description: response.text(),
+                        });
+                        setDetectionRunTimestamp(null);
+                      }
+                    });
+                  } catch (e) {
+                    toast({
+                      title: "Error when starting detection",
+                      description: JSON.stringify(e),
+                    });
+                    setDetectionRunTimestamp(null);
+                  }
                 }}
                 disabled={detectionRunTimestamp !== null}
               >
