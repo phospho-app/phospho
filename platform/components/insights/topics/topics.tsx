@@ -10,11 +10,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import {
-  formatUnixTimestampToLiteralDatetime,
-  formatUnixTimestampToLiteralShortDate,
-  formatUnixTimestampToShortDate,
-} from "@/lib/time";
+import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Topic } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -45,6 +41,7 @@ const Topics: React.FC = () => {
       ),
     {
       keepPreviousData: true,
+      refreshInterval: detectionRunTimestamp ? 3 : 30,
     },
   );
 
@@ -87,11 +84,26 @@ const Topics: React.FC = () => {
             <div className="flex flex-col space-y-1 justify-center items-center">
               <Button
                 variant="default"
-                onClick={() => {
+                onClick={async () => {
                   setDetectionRunTimestamp(Date.now() / 1000);
-                  toast({
-                    title: "Topic detection started",
-                    description: "This may take a few seconds.",
+                  await fetch(`/api/explore/${project_id}/detect-topics`, {
+                    method: "POST",
+                    headers: {
+                      Authorization: "Bearer " + accessToken,
+                    },
+                  }).then((response) => {
+                    if (response.status == 200) {
+                      toast({
+                        title: "Topic detection started",
+                        description: "This may take a few seconds.",
+                      });
+                    } else {
+                      toast({
+                        title: "Error when starting detection",
+                        description: response.text(),
+                      });
+                      setDetectionRunTimestamp(null);
+                    }
                   });
                 }}
                 disabled={detectionRunTimestamp !== null}
