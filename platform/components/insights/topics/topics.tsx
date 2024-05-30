@@ -12,6 +12,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { Topic } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { Play } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
@@ -30,7 +31,7 @@ const Topics: React.FC = () => {
   } = useSWR(
     [`/api/explore/${project_id}/topics`, accessToken],
     ([url, accessToken]) =>
-      authFetcher(url, accessToken, "GET").then((res) =>
+      authFetcher(url, accessToken, "POST").then((res) =>
         res?.topics.sort((a: Topic, b: Topic) => b.size - a.size),
       ),
   );
@@ -50,17 +51,20 @@ const Topics: React.FC = () => {
               </CardTitle>
               <CardDescription>
                 <p className="text-gray-500">
-                  Automatically analyze your data to detect recurring
-                  conversation topics, outliers, and trends.
+                  Detect recurring conversation topics, outliers, and trends,
+                  using unsupervized machine learning algorithms.
                 </p>
               </CardDescription>
             </div>
 
-            <Button variant="default">Run topic detection</Button>
+            <Button variant="default">
+              <Play className="w-4 h-4 mr-2 text-green-500" /> Run topic
+              detection
+            </Button>
           </div>
         </CardHeader>
       </Card>
-      <div className="hidden h-full flex-1 flex-col space-y-2 md:flex ">
+      <div className="h-full flex-1 flex-col space-y-2 md:flex ">
         <TopicsTable topicsData={topicsData} />
       </div>
     </>

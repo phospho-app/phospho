@@ -280,27 +280,23 @@ async def get_ab_tests(
     return ABTests(abtests=ab_tests)
 
 
-@router.get(
+@router.post(
     "/explore/{project_id}/topics",
     response_model=Topics,
     description="Get the different topics of a project",
 )
-async def get_topics(
+async def post_topics(
     project_id: str,
     user: User = Depends(propelauth.require_user),
 ) -> Topics:
     """
     Get the different topics of a project.
 
-    Topics are labels that can be assigned to tasks.
+    Topics are clusters of tasks.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-
     topics = await fetch_topics(project_id=project_id)
-
-    logger.debug(f"Topics: {topics}")
-
-    return topics
+    return Topics(topics=topics)
 
 
 @router.get(

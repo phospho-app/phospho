@@ -80,7 +80,9 @@ export function getColumns() {
         if (!topic_id) return <></>;
         return (
           <Link href={`/org/insights/topics/${encodeURIComponent(topic_id)}`}>
-            <ChevronRight />
+            <Button variant="ghost" size="icon">
+              <ChevronRight />
+            </Button>
           </Link>
         );
       },

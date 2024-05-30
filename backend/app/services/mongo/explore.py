@@ -6,6 +6,7 @@ import datetime
 from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
+from app.api.platform.models.topics import Topic
 import pandas as pd
 import pydantic
 
@@ -1235,29 +1236,29 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
     return valid_ab_tests
 
 
-async def fetch_topics(project_id: str, limit: int = 100) -> Topics:
+async def fetch_topics(project_id: str, limit: int = 100) -> List[Topic]:
     """
     Fetch the topics of a project
     """
-    # Create an aggregated table
-    mongo_db = await get_mongo_db()
 
-    # Aggregation pipeline
-    pipeline = [
-        {"$match": {"project_id": project_id}},  # Filters documents by project_id
-        {"$unwind": "$topics"},  # Deconstructs the topics array
+    # Placeholder (replace with actual data fetching from the database)
+    topics = [
         {
-            "$group": {"_id": "$topics", "count": {"$sum": 1}}
-        },  # Groups by topic and counts
-        {
-            "$project": {"topic_name": "$_id", "_id": 0, "count": 1}
-        },  # Renames _id to topicName
-        {"$sort": {"count": -1}},  # Sorts by count in descending order
+            "id": "1",
+            "cluster_id": "1",
+            "project_id": project_id,
+            "org_id": "1",
+            "name": "Topic 1",
+            "description": "Description of the topic 1",
+            "size": 33,
+            "tasks_ids": ["1", "2", "3"],
+        }
     ]
-    # Query Mongo
-    topics = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
 
-    return Topics(topics=topics)
+    # Cast to Topic models
+    valid_topics = [Topic.model_validate(topic) for topic in topics]
+
+    return valid_topics
 
 
 async def nb_items_with_a_metadata_field(

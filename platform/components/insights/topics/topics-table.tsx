@@ -64,24 +64,9 @@ export function TopicsTable<TData, TValue>({
     return <></>;
   }
 
-  if (topicsData === undefined) {
-    return <></>;
-  }
-
   return (
     <div>
       <div className="flex flex-row gap-x-2 items-center mb-2 justify-end">
-        <Button
-          variant="secondary"
-          onClick={() => {
-            if (!table) return;
-            table.setColumnFilters([]);
-          }}
-          disabled={filters.length === 0}
-        >
-          <FilterX className="h-4 w-4 mr-1" />
-          Clear
-        </Button>
         <TableNavigation table={table} />
       </div>
 

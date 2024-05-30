@@ -1,3 +1,7 @@
+import {
+  EventBadge,
+  EventDetectionDescription,
+} from "@/components/label-events";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +18,7 @@ import {
 } from "@/components/ui/hover-card";
 import { authFetcher } from "@/lib/fetcher";
 import { Event, UserMetadata } from "@/models/models";
-import { navigationStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -33,6 +37,7 @@ export function getColumns() {
 
   let uniqueEventNamesInData: string[] = [];
   const project_id = navigationStateStore((state) => state.project_id);
+  const selectedProject = dataStateStore((state) => state.selectedProject);
   const { accessToken } = useUser();
 
   const { data: uniqueEvents } = useSWR(
@@ -207,19 +212,31 @@ export function getColumns() {
         );
       },
       accessorKey: "events",
-      cell: (row) => (
-        <span>
-          {(row.getValue() as Event[]).map((event: Event) => (
-            <Badge
-              key={event.id}
-              variant="secondary"
-              className="ml-2 mt-1 mb-1"
-            >
-              {event.event_name as string}
-            </Badge>
-          ))}
-        </span>
-      ),
+      cell: (row) => {
+        return (
+          <>
+            {(row.getValue() as Event[]).map((event: Event) => {
+              // Find the event definition for this event based on the event_name and selectedProject.settings.events
+              const eventDefinition =
+                selectedProject?.settings?.events[event.event_name];
+
+              return (
+                <HoverCard openDelay={0} closeDelay={0} key={event.id}>
+                  <HoverCardTrigger asChild>
+                    <EventBadge key={event.id} event={event} />
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    <EventDetectionDescription
+                      event={event}
+                      eventDefinition={eventDefinition}
+                    />
+                  </HoverCardContent>
+                </HoverCard>
+              );
+            })}
+          </>
+        );
+      },
     },
     {
       header: "",
@@ -231,7 +248,9 @@ export function getColumns() {
         if (!user_id) return <></>;
         return (
           <Link href={`/org/users/${encodeURIComponent(user_id)}`}>
-            <ChevronRight />
+            <Button variant="ghost" size="icon">
+              <ChevronRight />
+            </Button>
           </Link>
         );
       },
