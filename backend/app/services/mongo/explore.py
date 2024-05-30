@@ -1241,21 +1241,24 @@ async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
     Fetch the topics of a project
     """
     mongo_db = await get_mongo_db()
+    # Get the latest clustering
+    get_latest_clustering = (
+        await mongo_db["private-clusterings"]
+        .find({"project_id": project_id})
+        .sort([("created_at", -1)])
+        .to_list(length=1)
+    )
+    if len(get_latest_clustering) == 0:
+        return []
+    latest_clustering = get_latest_clustering[0]
+    # Retrieve the topics of this clustering
     topics = (
         await mongo_db["private-clusters"]
-        .aggregate(
-            [
-                {
-                    "$match": {
-                        "project_id": project_id,
-                    }
-                },
-                # Sort: most recent first
-                {"$sort": {"created_at": -1}},
-                # Deduplicate the topics by clustering_id, to keep only the most recent one
-                {"$group": {"_id": "$clustering_id", "topic": {"$first": "$$ROOT"}}},
-                {"$replaceRoot": {"newRoot": "$topic"}},
-            ]
+        .find(
+            {
+                "project_id": project_id,
+                "clustering_id": latest_clustering.get("id"),
+            }
         )
         .to_list(length=limit)
     )
