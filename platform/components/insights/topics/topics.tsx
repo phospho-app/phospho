@@ -34,6 +34,9 @@ const Topics: React.FC = () => {
       authFetcher(url, accessToken, "POST").then((res) =>
         res?.topics.sort((a: Topic, b: Topic) => b.size - a.size),
       ),
+    {
+      keepPreviousData: true,
+    },
   );
 
   if (!project_id) {
