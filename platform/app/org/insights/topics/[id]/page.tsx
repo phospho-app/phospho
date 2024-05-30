@@ -3,6 +3,7 @@
 import { TasksTable } from "@/components/transcripts/tasks/tasks-table";
 import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
+import { Topic } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronLeft } from "lucide-react";
@@ -16,7 +17,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const topic_id = decodeURIComponent(params.id);
 
   // todo: fetch from server
-  const { data: topic } = useSWR(
+  const { data: topic }: { data: Topic | undefined } = useSWR(
     project_id
       ? [`/api/explore/${project_id}/topics/${topic_id}`, accessToken]
       : null,
@@ -30,11 +31,16 @@ export default function Page({ params }: { params: { id: string } }) {
       <Button onClick={() => router.back()}>
         <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
-      {topic?.name && (
-        <div className="text-3xl font-bold tracking-tight mr-8">
-          Topic '{topic.name}'
-        </div>
-      )}
+      <div>
+        {topic?.name && (
+          <div className="text-3xl font-bold tracking-tight mr-8">
+            Topic '{topic.name}'
+          </div>
+        )}
+        {topic?.description && (
+          <div className="text-muted-foreground">{topic.description}</div>
+        )}
+      </div>
       <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
         <TasksTable tasks_ids={tasks_ids} />
       </div>
