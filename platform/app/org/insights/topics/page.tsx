@@ -1,6 +1,7 @@
 "use client";
 
 import ComingSoon from "@/components/coming-soon";
+import Topics from "@/components/insights/topics/topics";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,64 +23,16 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
-const Topics: React.FC<{}> = ({}) => {
+const Page: React.FC<{}> = ({}) => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const {
-    data: topics,
-  }: {
-    data: Topic[] | null | undefined;
-  } = useSWR(
-    [`/api/explore/${project_id}/topics`, accessToken],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "GET").then((res) =>
-        res?.topics.sort((a: Topic, b: Topic) => b.count - a.count),
-      ),
-  );
-
   return (
-    <ComingSoon customMessage="This feature is being overhauled. We'll be back soon!" />
+    <>
+      <ComingSoon />
+      <Topics />
+    </>
   );
-
-  //   return (
-  //     <>
-  //       <Alert>
-  //         <MessageCircleIcon className="h-4 w-4" />
-  //         <AlertTitle>Get a vibe of what people say.</AlertTitle>
-  //         <AlertDescription>
-  //           Topics are automatically extracted from tasks logged to phospho.
-  //         </AlertDescription>
-  //       </Alert>
-  //       {topics !== null && topics?.length && topics?.length > 0 ? (
-  //         <>
-  //           <Table>
-  //             <TableHeader>
-  //               <TableRow>
-  //                 <TableHead>Name</TableHead>
-  //                 <TableHead className="text-right">Count</TableHead>
-  //               </TableRow>
-  //             </TableHeader>
-  //             <TableBody>
-  //               {topics.map((topic) => (
-  //                 <TableRow key={topic.topic_name}>
-  //                   <TableCell>{topic.topic_name}</TableCell>
-  //                   <TableCell className="text-right">{topic.count}</TableCell>
-  //                 </TableRow>
-  //               ))}
-  //             </TableBody>
-  //           </Table>
-  //         </>
-  //       ) : (
-  //         <div className="flex flex-col justify-center items-center">
-  //           <p className="text-gray-500 mb-4">No task found</p>
-  //           <Link href="https://docs.phospho.ai/getting-started" target="_blank">
-  //             <Button>Setup phospho in your app</Button>
-  //           </Link>
-  //         </div>
-  //       )}
-  //     </>
-  //   );
 };
 
-export default Topics;
+export default Page;
