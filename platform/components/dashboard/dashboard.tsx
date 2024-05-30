@@ -4,7 +4,7 @@ import EventsLast7Days from "@/components/dashboard/events-last7days";
 import EventsLast30m from "@/components/dashboard/events-last30m";
 import OverviewLast7Days from "@/components/dashboard/overview-last7days";
 import UsageLast30m from "@/components/dashboard/usage-last30m";
-import SmallSpinner from "@/components/small-spinner";
+import { CenteredSpinner } from "@/components/small-spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import React from "react";
@@ -65,7 +65,7 @@ const Dashboard: React.FC = () => {
   return (
     <>
       <div className="hidden h-full flex-1 flex-col space-y-8 p-8 md:flex mx-10">
-        {hasTasks === null && <SmallSpinner />}
+        {hasTasks === null && <CenteredSpinner />}
         {normalDashboard}
       </div>
     </>

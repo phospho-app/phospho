@@ -1,6 +1,6 @@
 "use client";
 
-import SmallSpinner from "@/components/small-spinner";
+import { CenteredSpinner } from "@/components/small-spinner";
 import { SessionsTable } from "@/components/transcripts/sessions/sessions-table";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
@@ -27,7 +27,7 @@ const User = ({ params }: { params: { id: string } }) => {
 
   return (
     <>
-      {(userMetadata === null && <SmallSpinner />) || (
+      {(userMetadata === null && <CenteredSpinner />) || (
         <div>
           <SessionsTable userFilter={user_id} />
         </div>

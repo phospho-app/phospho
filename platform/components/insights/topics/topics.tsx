@@ -1,6 +1,6 @@
 "use client";
 
-import SessionsDataviz from "@/components/transcripts/sessions/session-dataviz";
+import { Spinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,21 +8,30 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
+import {
+  formatUnixTimestampToLiteralDatetime,
+  formatUnixTimestampToLiteralShortDate,
+  formatUnixTimestampToShortDate,
+} from "@/lib/time";
 import { Topic } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Play } from "lucide-react";
-import Link from "next/link";
 import React from "react";
+import { useEffect } from "react";
 import useSWR from "swr";
 
 import { TopicsTable } from "./topics-table";
 
 const Topics: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
-  const hasSessions = dataStateStore((state) => state.hasSessions);
   const { accessToken } = useUser();
+  const [detectionRunTimestamp, setDetectionRunTimestamp] = React.useState<
+    number | null
+  >(null);
+  const { toast } = useToast();
 
   const {
     data: topicsData,
@@ -39,6 +48,22 @@ const Topics: React.FC = () => {
     },
   );
 
+  // if Topic.created_at > detectionRunTimestamp, then set detectionRunTimestamp to null
+  const maxCreatedAt = topicsData?.reduce((acc, topic) => {
+    return topic.created_at > acc ? topic.created_at : acc;
+  }, 0);
+  const lastUpdateLabel = maxCreatedAt ? new Date(maxCreatedAt * 1000) : null;
+
+  useEffect(() => {
+    if (
+      detectionRunTimestamp !== null &&
+      maxCreatedAt !== undefined &&
+      maxCreatedAt > detectionRunTimestamp
+    ) {
+      setDetectionRunTimestamp(null);
+    }
+  }, [maxCreatedAt, detectionRunTimestamp]);
+
   if (!project_id) {
     return <></>;
   }
@@ -47,7 +72,7 @@ const Topics: React.FC = () => {
     <>
       <Card className="bg-secondary">
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-start">
             <div>
               <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
                 Automatic topic detection
@@ -59,11 +84,38 @@ const Topics: React.FC = () => {
                 </p>
               </CardDescription>
             </div>
-
-            <Button variant="default">
-              <Play className="w-4 h-4 mr-2 text-green-500" /> Run topic
-              detection
-            </Button>
+            <div className="flex flex-col space-y-1 justify-center items-center">
+              <Button
+                variant="default"
+                onClick={() => {
+                  setDetectionRunTimestamp(Date.now() / 1000);
+                  toast({
+                    title: "Topic detection started",
+                    description: "This may take a few seconds.",
+                  });
+                }}
+                disabled={detectionRunTimestamp !== null}
+              >
+                {detectionRunTimestamp === null && (
+                  <>
+                    <Play className="w-4 h-4 mr-2 text-green-500" /> Run topic
+                    detection
+                  </>
+                )}
+                {detectionRunTimestamp !== null && (
+                  <>
+                    <Spinner className="mr-1" />
+                    Detection in progress...
+                  </>
+                )}
+              </Button>
+              <div className="text-muted-foreground text-xs">
+                Last update:{" "}
+                {maxCreatedAt
+                  ? formatUnixTimestampToLiteralDatetime(maxCreatedAt)
+                  : "Never"}
+              </div>
+            </div>
           </div>
         </CardHeader>
       </Card>

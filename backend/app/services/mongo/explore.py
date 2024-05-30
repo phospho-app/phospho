@@ -1246,7 +1246,7 @@ async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
         {
             "id": "1",
             "clustering_id": "1",
-            "created_at": 1612137600,
+            "created_at": 1717067900,
             "project_id": project_id,
             "org_id": "1",
             "name": "Topic 1",
@@ -1269,7 +1269,7 @@ async def fetch_single_topic(project_id: str, topic_id: str) -> Optional[Topic]:
     topic = {
         "id": "1",
         "clustering_id": "1",
-        "created_at": 1612137600,
+        "created_at": 1717067900,
         "project_id": project_id,
         "org_id": "1",
         "name": "Topic 1",

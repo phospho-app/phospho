@@ -1,6 +1,6 @@
 "use client";
 
-import SmallSpinner from "@/components/small-spinner";
+import { CenteredSpinner } from "@/components/small-spinner";
 import TaskBox from "@/components/task-box";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,7 +73,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
     setTask(creation_response_json);
   };
 
-  if (task === null || task === undefined) return <SmallSpinner />;
+  if (task === null || task === undefined) return <CenteredSpinner />;
 
   // To re-render the component when the flag is updated, we need to use a state
   // For the flag. This is because just having the task as a prop doesn't trigger

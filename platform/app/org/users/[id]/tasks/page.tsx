@@ -1,6 +1,6 @@
 "use client";
 
-import SmallSpinner from "@/components/small-spinner";
+import { CenteredSpinner } from "@/components/small-spinner";
 import TaskOverview from "@/components/transcripts/tasks/task";
 import { authFetcher } from "@/lib/fetcher";
 import { UserMetadata } from "@/models/models";
@@ -27,7 +27,7 @@ const User = ({ params }: { params: { id: string } }) => {
 
   return (
     <>
-      {(userMetadata === null && <SmallSpinner />) || (
+      {(userMetadata === null && <CenteredSpinner />) || (
         <div>
           {userMetadata?.tasks_id.map((task_id) => {
             return <TaskOverview task_id={task_id} />;

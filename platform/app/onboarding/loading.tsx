@@ -1,5 +1,5 @@
-import SmallSpinner from "@/components/small-spinner";
+import { CenteredSpinner } from "@/components/small-spinner";
 
 export default function Loading() {
-  return <SmallSpinner />;
+  return <CenteredSpinner />;
 }
