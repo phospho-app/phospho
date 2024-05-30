@@ -1242,7 +1242,7 @@ async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
     """
     mongo_db = await get_mongo_db()
     topics = (
-        await mongo_db["private-clusterings"]
+        await mongo_db["private-clusters"]
         .aggregate(
             [
                 {
@@ -1268,7 +1268,7 @@ async def fetch_single_topic(project_id: str, topic_id: str) -> Optional[Topic]:
     Fetch a single topic from a project
     """
     mongo_db = await get_mongo_db()
-    topic = await mongo_db["private-clusterings"].find_one(
+    topic = await mongo_db["private-clusters"].find_one(
         {"project_id": project_id, "id": topic_id}
     )
     if topic is None:
