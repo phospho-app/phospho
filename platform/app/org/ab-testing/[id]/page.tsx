@@ -2,13 +2,10 @@
 
 import { TasksTable } from "@/components/transcripts/tasks/tasks-table";
 import { Button } from "@/components/ui/button";
-import { authFetcher } from "@/lib/fetcher";
-import { Topic } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
-import { useUser } from "@propelauth/nextjs/client";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import useSWR from "swr";
+import { use, useEffect } from "react";
 
 export default function Page({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -24,6 +21,16 @@ export default function Page({ params }: { params: { id: string } }) {
       },
     });
   }
+
+  // On component unmount, remove the version_id filter
+  useEffect(() => {
+    return () => {
+      delete dataFilters.metadata?.version_id;
+      setDataFilters({
+        ...dataFilters,
+      });
+    };
+  }, []);
 
   return (
     <>

@@ -303,19 +303,24 @@ async def post_all_topics(
 
 @router.post(
     "/explore/{project_id}/topics/{topic_id}",
-    response_model=Optional[Topic],
+    response_model=Topic,
     description="Get the different topics of a project",
 )
 async def post_single_topic(
     project_id: str,
     topic_id: str,
     user: User = Depends(propelauth.require_user),
-) -> Optional[Topic]:
+) -> Topic:
     """
     Get a topic data
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
     topic = await fetch_single_topic(project_id=project_id, topic_id=topic_id)
+    if topic is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Topic {topic_id} not found in project {project_id}",
+        )
     return topic
 
 

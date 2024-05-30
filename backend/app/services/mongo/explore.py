@@ -1240,22 +1240,25 @@ async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
     """
     Fetch the topics of a project
     """
-
-    # Placeholder (replace with actual data fetching from the database)
-    topics = [
-        {
-            "id": "1",
-            "clustering_id": "1",
-            "created_at": 1717067900,
-            "project_id": project_id,
-            "org_id": "1",
-            "name": "Topic 1",
-            "description": "Description of the topic 1",
-            "size": 33,
-            "tasks_ids": ["d90fd4484adc41309deee1542890c771"],
-        }
-    ]
-
+    mongo_db = await get_mongo_db()
+    topics = (
+        await mongo_db["private-clusterings"]
+        .aggregate(
+            [
+                {
+                    "$match": {
+                        "project_id": project_id,
+                    }
+                },
+                # Sort: most recent first
+                {"$sort": {"created_at": -1}},
+                # Deduplicate the topics by clustering_id, to keep only the most recent one
+                {"$group": {"_id": "$clustering_id", "topic": {"$first": "$$ROOT"}}},
+                {"$replaceRoot": {"newRoot": "$topic"}},
+            ]
+        )
+        .limit(None)
+    )
     valid_topics = [Topic.model_validate(topic) for topic in topics]
     return valid_topics
 
@@ -1264,20 +1267,12 @@ async def fetch_single_topic(project_id: str, topic_id: str) -> Optional[Topic]:
     """
     Fetch a single topic from a project
     """
-
-    # Placeholder (replace with actual data fetching from the database)
-    topic = {
-        "id": "1",
-        "clustering_id": "1",
-        "created_at": 1717067900,
-        "project_id": project_id,
-        "org_id": "1",
-        "name": "Topic 1",
-        "description": "Description of the topic 1",
-        "size": 33,
-        "tasks_ids": ["d90fd4484adc41309deee1542890c771"],
-    }
-
+    mongo_db = await get_mongo_db()
+    topic = await mongo_db["private-clusterings"].find_one(
+        {"project_id": project_id, "id": topic_id}
+    )
+    if topic is None:
+        return None
     valid_topic = Topic.model_validate(topic)
     return valid_topic
 

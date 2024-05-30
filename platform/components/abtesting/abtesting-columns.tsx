@@ -21,7 +21,7 @@ export function getColumns() {
       header: "Version ID",
       accessorKey: "version_id",
       cell: ({ row }) => {
-        return <>{row.original.version_id}</>;
+        return <div>{row.original.version_id}</div>;
       },
     },
     // size
@@ -29,7 +29,7 @@ export function getColumns() {
       header: "Sample size",
       accessorKey: "nb_tasks",
       cell: ({ row }) => {
-        return <>{row.original.nb_tasks}</>;
+        return <div>{row.original.nb_tasks}</div>;
       },
     },
     // name
@@ -55,7 +55,7 @@ export function getColumns() {
       },
       accessorKey: "score",
       cell: ({ row }) => {
-        return <>{row.original.score}</>;
+        return <div>{row.original.score}</div>;
       },
     },
 
@@ -79,7 +79,7 @@ export function getColumns() {
       },
       accessorKey: "score_std",
       cell: ({ row }) => {
-        return <>{row.original.score_std}</>;
+        return <div>{row.original.score_std}</div>;
       },
     },
 
