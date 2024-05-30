@@ -1,7 +1,6 @@
 "use client";
 
-import { CenteredSpinner } from "@/components/small-spinner";
-import TaskOverview from "@/components/transcripts/tasks/task";
+import { TasksTable } from "@/components/transcripts/tasks/tasks-table";
 import { authFetcher } from "@/lib/fetcher";
 import { UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
@@ -27,11 +26,9 @@ const User = ({ params }: { params: { id: string } }) => {
 
   return (
     <>
-      {(userMetadata === null && <CenteredSpinner />) || (
-        <div>
-          {userMetadata?.tasks_id.map((task_id) => {
-            return <TaskOverview task_id={task_id} />;
-          })}
+      {userMetadata?.tasks_id && (
+        <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
+          <TasksTable tasks_ids={userMetadata.tasks_id} />
         </div>
       )}
     </>

@@ -40,7 +40,6 @@ export function TopicsTable<TData, TValue>({
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [filters, setFilters] = React.useState<ColumnFiltersState>([]);
-
   const router = useRouter();
 
   const columns = getColumns();

@@ -1,0 +1,40 @@
+"use client";
+
+import { TasksTable } from "@/components/transcripts/tasks/tasks-table";
+import { Button } from "@/components/ui/button";
+import { authFetcher } from "@/lib/fetcher";
+import { Topic } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
+import { ChevronLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import useSWR from "swr";
+
+export default function Page({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const version_id = decodeURIComponent(params.id);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const setDataFilters = navigationStateStore((state) => state.setDataFilters);
+
+  if (dataFilters.metadata?.version_id !== version_id) {
+    setDataFilters({
+      ...dataFilters,
+      metadata: {
+        version_id: version_id,
+      },
+    });
+  }
+
+  return (
+    <>
+      <Button onClick={() => router.back()}>
+        <ChevronLeft className="w-4 h-4 mr-1" /> Back
+      </Button>
+      {
+        <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
+          <TasksTable />
+        </div>
+      }
+    </>
+  );
+}

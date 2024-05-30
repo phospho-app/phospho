@@ -20,15 +20,31 @@ import { ABTest } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React from "react";
 import useSWR from "swr";
 
+import { TableNavigation } from "../table-navigation";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { getColumns } from "./abtesting-columns";
 
-const ABTesting: React.FC = () => {
+interface DataTableProps<TData, TValue> {}
+
+export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const router = useRouter();
+  const [sorting, setSorting] = React.useState([]);
+  const [filters, setFilters] = React.useState([]);
 
   // Fetch ABTests
   const { data: abTests } = useSWR(
@@ -47,6 +63,17 @@ const ABTesting: React.FC = () => {
       keepPreviousData: true,
     },
   );
+
+  const columns = getColumns();
+
+  const table = useReactTable({
+    data: abTests ?? [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
 
   return (
     <>
@@ -75,65 +102,77 @@ const ABTesting: React.FC = () => {
           </CardHeader>
         </Card>
       )}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Version id</TableHead>
-            <TableHead>Sample size</TableHead>
-            <TableHead>
-              <div className="md:flex items-center align-items ">
-                <div className="mr-1">Average Success Rate</div>
-                <HoverCard openDelay={50} closeDelay={50}>
-                  <HoverCardTrigger>
-                    <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    <div>
-                      The average success rate is (nb of "success" tasks)/(total
-                      nb of tasks).{" "}
-                    </div>
-                    <div>Higher is better.</div>
-                  </HoverCardContent>
-                </HoverCard>
-              </div>
-            </TableHead>
-            <TableHead>
-              <div className="md:flex items-center align-items ">
-                <div className="mr-1">Succes Rate Std</div>
-                <HoverCard openDelay={50} closeDelay={50}>
-                  <HoverCardTrigger>
-                    <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    The estimated standard deviation of the success rate. Lower
-                    is better.
-                  </HoverCardContent>
-                </HoverCard>
-              </div>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {abTests?.map((abttest) => (
-            <TableRow key={abttest.version_id}>
-              <TableCell>
-                <span className="ml-3">{abttest.version_id}</span>
-              </TableCell>
-              <TableCell>
-                <span className="ml-3">{abttest.nb_tasks}</span>
-              </TableCell>
-              <TableCell>
-                <span className="ml-3">{abttest.score} %</span>
-              </TableCell>
-              <TableCell>
-                <span className="ml-3">{abttest.score_std} %</span>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div>
+        <div className="flex flex-row gap-x-2 items-center mb-2 justify-end">
+          <TableNavigation table={table} />
+        </div>
+
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table !== null &&
+                table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead
+                          key={header.id}
+                          colSpan={header.colSpan}
+                          style={{
+                            width: header.getSize(),
+                          }}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+            </TableHeader>
+            <TableBody>
+              {table !== null && table?.getRowModel()?.rows?.length ? (
+                table?.getRowModel()?.rows?.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    onClick={() => {
+                      router.push(
+                        `/org/ab-testing/${encodeURIComponent(row.original.version_id)}`,
+                      );
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No AB test found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </>
   );
-};
+}
 
 export default ABTesting;
