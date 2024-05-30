@@ -166,7 +166,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
         <CardFooter className="flex justify-around ">
           {tasksWithoutHumanLabel && tasksWithoutHumanLabel.length > 0 && (
             <div className="flex-col justify-items-center">
-              <div className="text-gray-500 mb-1">
+              <div className="text-muted-foreground mb-1">
                 Override evaluation and show next task
               </div>
               <div className="flex space-x-4 justify-center">
@@ -190,7 +190,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
             </div>
           )}
           {tasksWithoutHumanLabel && tasksWithoutHumanLabel.length === 0 && (
-            <div className="flex space-x-4 items-center text-gray-500">
+            <div className="flex space-x-4 items-center text-muted-foreground">
               You labeled all the tasks! 🎉
             </div>
           )}

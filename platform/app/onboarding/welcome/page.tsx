@@ -58,16 +58,18 @@ function WhatAreTasks() {
               </div>
               <User className="w-6 h-6 ml-2 text-primary" />
             </div>
-            <div className="w-full flex justify-end items-center text-gray-500 text-xs italic">
+            <div className="w-full flex justify-end items-center text-muted-foreground text-xs italic">
               Task input
             </div>
             <div className="w-full flex justify-start items-center">
               <Bot className="w-6 h-6 mr-2 text-primary" />
-              <div className=" p-2 text-gray-500">(thinking...)</div>
+              <div className=" p-2 text-muted-foreground">(thinking...)</div>
             </div>
             <div className="w-full flex justify-start items-center">
               <Bot className="w-6 h-6 mr-2 text-primary" />
-              <div className=" p-2 text-gray-500">(intermediate steps...)</div>
+              <div className=" p-2 text-muted-foreground">
+                (intermediate steps...)
+              </div>
             </div>
             <div className="w-full flex justify-start items-center">
               <Bot className="w-6 h-6 mr-2 text-primary" />
@@ -75,11 +77,11 @@ function WhatAreTasks() {
                 The capital of France is Paris.
               </div>
             </div>
-            <div className="w-full flex justify-start items-center text-gray-500 text-xs italic">
+            <div className="w-full flex justify-start items-center text-muted-foreground text-xs italic">
               Task output
             </div>
           </div>
-          <div className="flex flex-grow justify-center text-gray-500 font-normal text-sm italic text-center">
+          <div className="flex flex-grow justify-center text-muted-foreground font-normal text-sm italic text-center">
             This a task! It can be anything, not just a question or a
             conversation.
           </div>
@@ -103,7 +105,7 @@ function WhatIsEvaluation() {
             <span className="text-green-500">good</span> or{" "}
             <span className="text-red-500">bad</span>.
           </div>
-          <div className="flex items-center font-normal text-gray-500">
+          <div className="flex items-center font-normal text-muted-foreground">
             Improve automatic evaluation by collecting user feedback, using the
             API, and adding labels.
           </div>
@@ -138,7 +140,7 @@ function WhatIsEvaluation() {
               </HoverCard>
             </div>
           </div>
-          <div className="flex justify-center flex-grow text-gray-500 font-normal text-sm italic">
+          <div className="flex justify-center flex-grow text-muted-foreground font-normal text-sm italic">
             Add labels to improve automatic evaluation.
           </div>
         </CardContent>
@@ -184,7 +186,7 @@ function WhatAreSessions() {
               <div className="rounded-sm bg-gray-300 p-2 text-gray-800 w-40 h-4"></div>
             </div>
           </div>
-          <div className="flex flex-grow justify-center text-gray-500 font-normal text-sm italic text-center">
+          <div className="flex flex-grow justify-center text-muted-foreground font-normal text-sm italic text-center">
             For example, a conversation is a session.
           </div>
         </CardContent>

@@ -76,7 +76,7 @@ export default function Page() {
           <h2 className="text-2xl font-bold tracking-tight pt-4">
             Tracked events
           </h2>
-          <span className="text-gray-500 text-sm">
+          <span className="text-muted-foreground text-sm">
             Set up events to be automatically detected in logs.{" "}
             <Link
               className="underline "
@@ -117,7 +117,7 @@ export default function Page() {
       </div>
 
       <EventsList />
-      <div className="flex justify-center text-gray-500">
+      <div className="flex justify-center text-muted-foreground">
         {
           // current number of events
           events && max_nb_events && current_nb_events < max_nb_events && (

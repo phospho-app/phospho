@@ -29,7 +29,7 @@ const HobbyPlanWarning = () => {
               <X className="h-6 w-6 text-red-500" />
               Automatic evaluation and event detection are currently disabled
             </div>
-            <div className="text-gray-500">
+            <div className="text-muted-foreground">
               Your tasks are saved and we temporarily enabled event detection to
               help you get started.
             </div>

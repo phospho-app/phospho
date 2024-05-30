@@ -363,7 +363,7 @@ const TasksDataviz: React.FC = () => {
             {!hasSessions && !successRatePerTaskPosition && (
               // Add a button in the center with a CTA "setup session tracking"
               <div className="flex flex-col text-center items-center h-full">
-                <p className="text-gray-500 mb-2 text-sm pt-6">
+                <p className="text-muted-foreground mb-2 text-sm pt-6">
                   Only available with session tracking
                 </p>
                 <Link

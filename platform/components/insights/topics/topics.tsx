@@ -53,7 +53,7 @@ const Topics: React.FC = () => {
                 Automatic topic detection
               </CardTitle>
               <CardDescription>
-                <p className="text-gray-500">
+                <p className="text-muted-foreground">
                   Detect recurring conversation topics, outliers, and trends,
                   using unsupervized machine learning algorithms.
                 </p>

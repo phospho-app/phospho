@@ -373,7 +373,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
               Start logging tasks to get the most out of Phospho. Pass metadata
               to get custom insights.
             </p>

@@ -52,7 +52,7 @@ const Tasks: React.FC = () => {
                 </div>
               </CardTitle>
               <CardDescription className="flex justify-between">
-                <div className="flex-col text-gray-500 space-y-0.5">
+                <div className="flex-col text-muted-foreground space-y-0.5">
                   <p>
                     Automatic evaluations are made with your labels. We only
                     found {hasLabelledTasks.currently_labelled_tasks}/
