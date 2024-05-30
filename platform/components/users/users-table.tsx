@@ -85,7 +85,7 @@ export function UsersTable<TData, TValue>({
             if (!table) return;
             table.setColumnFilters([]);
           }}
-          disabled={filters.length === 0}
+          disabled={filters?.length === 0}
         >
           <FilterX className="h-4 w-4 mr-1" />
           Clear

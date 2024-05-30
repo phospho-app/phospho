@@ -9,8 +9,7 @@ import { use, useEffect } from "react";
 
 export default function Page({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const version_id =
-    params.id === "None" ? null : decodeURIComponent(params.id);
+  const version_id = decodeURIComponent(params.id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
 
