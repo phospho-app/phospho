@@ -43,7 +43,7 @@ export function getColumns() {
                 <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
               </HoverCardTrigger>
               <HoverCardContent>
-                <div>
+                <div className="w-96">
                   The average success rate is (nb of "success" tasks)/(total nb
                   of tasks).{" "}
                 </div>
@@ -58,7 +58,42 @@ export function getColumns() {
         return <div>{row.original.score}%</div>;
       },
     },
-
+    {
+      header: ({ column }) => {
+        return (
+          <div className="md:flex items-center align-items space-x-2">
+            <div>95% Confidence interval</div>
+            <HoverCard openDelay={50} closeDelay={50}>
+              <HoverCardTrigger>
+                <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+              </HoverCardTrigger>
+              <HoverCardContent>
+                <div className="w-96">
+                  The 95% confidence interval indicates the likely range of the
+                  true success rate. The smaller the interval, the more
+                  confident we are in the estimate.
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
+        );
+      },
+      accessorKey: "confidence_interval",
+      cell: ({ row }) => {
+        if (!row.original.confidence_interval) {
+          return <div>-</div>;
+        }
+        const left =
+          Math.round(row.original.confidence_interval[0] * 10000) / 100;
+        const right =
+          Math.round(row.original.confidence_interval[1] * 10000) / 100;
+        return (
+          <div>
+            [{left}%, {right}%]
+          </div>
+        );
+      },
+    },
     // description
     {
       header: ({ column }) => {
@@ -70,8 +105,10 @@ export function getColumns() {
                 <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
               </HoverCardTrigger>
               <HoverCardContent>
-                The estimated standard deviation of the success rate. Lower is
-                better.
+                <div className="w-96">
+                  The estimated standard deviation of the success rate. Lower is
+                  better.
+                </div>
               </HoverCardContent>
             </HoverCard>
           </div>
@@ -82,7 +119,6 @@ export function getColumns() {
         return <div>{row.original.score_std}%</div>;
       },
     },
-
     {
       header: "",
       accessorKey: "view",

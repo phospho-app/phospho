@@ -1,7 +1,6 @@
 import datetime
 import io
-import time
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 from app.api.platform.models.explore import Sorting
 from app.services.mongo.tasks import (
@@ -30,7 +29,6 @@ from app.services.slack import slack_notification
 from app.utils import generate_timestamp
 from fastapi import HTTPException
 from loguru import logger
-from openai import AsyncOpenAI
 from propelauth_fastapi import User
 
 from app.services.mongo.extractor import run_recipe_on_tasks
