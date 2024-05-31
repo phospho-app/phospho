@@ -4,6 +4,7 @@ Explore metrics service
 
 import datetime
 from collections import defaultdict
+import math
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
 from app.api.platform.models.topics import Topic
@@ -1163,6 +1164,9 @@ async def get_sessions_aggregated_metrics(
 
 
 async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTest]:
+    """
+    Compute the AB tests of a project. Used for the AB Tests dashboard.
+    """
     # Create an aggregated table
     mongo_db = await get_mongo_db()
 
@@ -1201,11 +1205,11 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
                         },
                         "nb_tasks": {"$sum": 1},
                         "first_task_timestamp": {"$min": "$created_at"},
-                        "score_std": {
-                            "$stdDevSamp": {
-                                "$cond": [{"$eq": ["$flag", "success"]}, 1, 0]
-                            }
-                        },
+                        # "score_std": {
+                        #     "$stdDevSamp": {
+                        #         "$cond": [{"$eq": ["$flag", "success"]}, 1, 0]
+                        #     }
+                        # },
                     }
                 },
                 {
@@ -1232,6 +1236,23 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
             valid_ab_tests.append(valid_ab_test)
         except pydantic.ValidationError:
             logger.debug(f"Skipping invalid ab_test: {ab_test}")
+
+    # Compute the standard deviation and the 95% confidence interval
+    for ab_test in valid_ab_tests:
+        ab_test.score_std = math.sqrt(ab_test.score * (1 - ab_test.score))
+        if ab_test.nb_tasks > 0:
+            ab_test.confidence_interval = [
+                max(
+                    ab_test.score
+                    - 1.96 * ab_test.score_std / math.sqrt(ab_test.nb_tasks),
+                    0,
+                ),
+                min(
+                    ab_test.score
+                    + 1.96 * ab_test.score_std / math.sqrt(ab_test.nb_tasks),
+                    1,
+                ),
+            ]
 
     return valid_ab_tests
 
