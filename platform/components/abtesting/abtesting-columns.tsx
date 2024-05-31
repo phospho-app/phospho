@@ -116,6 +116,9 @@ export function getColumns() {
       },
       accessorKey: "score_std",
       cell: ({ row }) => {
+        if (!row.original.score_std) {
+          return <div>-</div>;
+        }
         return <div>{row.original.score_std}%</div>;
       },
     },
