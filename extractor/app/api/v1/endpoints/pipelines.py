@@ -1,4 +1,5 @@
 # Models
+from app.db.mongo import get_mongo_db
 from app.api.v1.models import (
     LogProcessRequest,
     PipelineResults,
@@ -21,6 +22,7 @@ from app.services.pipelines import (
     get_last_langsmith_extract,
     change_last_langsmith_extract,
     encrypt_and_store_langsmith_credentials,
+    task_scoring_pipeline,
 )
 from app.services.projects import get_project_by_id
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -46,8 +48,42 @@ async def post_main_pipeline_on_task(
     logger.debug(f"task: {request_body.task}")
     pipeline_results = await task_main_pipeline(
         task=request_body.task,
-        save_task=False,
+        save_task=request_body.save_results,
     )
+    return pipeline_results
+
+
+@router.post(
+    "/pipelines/eval/task",
+    description="Eval extractor pipeline",
+    response_model=PipelineResults,
+)
+async def post_eval_pipeline_on_task(
+    request_body: RunMainPipelineOnTaskRequest,
+    is_request_authenticated: bool = Depends(authenticate_key),
+) -> PipelineResults:
+    logger.debug(f"task: {request_body.task}")
+    # Do the session scoring -> success, failure
+    mongo_db = await get_mongo_db()
+
+    if request_body.save_results:
+        task_in_db = await mongo_db["tasks"].find_one({"id": request_body.task.id})
+        if task_in_db.get("flag") is None:
+            flag = await task_scoring_pipeline(
+                request_body.task, save_task=request_body.save_results
+            )
+        else:
+            flag = task_in_db.get("flag")
+    else:
+        flag = await task_scoring_pipeline(
+            request_body.task, save_task=request_body.save_results
+        )
+
+    pipeline_results = PipelineResults(
+        events=[],
+        flag=flag,
+    )
+
     return pipeline_results
 
 
