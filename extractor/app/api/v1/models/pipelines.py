@@ -19,8 +19,8 @@ class RunMainPipelineOnMessagesRequest(BaseModel):
 class PipelineResults(BaseModel):
     events: List[Event]
     flag: Optional[Literal["success", "failure"]]
-    language: Optional[str]
-    sentiment: SentimentObject
+    language: Optional[str] = None
+    sentiment: Optional[SentimentObject] = None
 
 
 class RunRecipeOnTaskRequest(BaseModel):
