@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Topic } from "@/models/models";
+import { Cluster } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import {
   ColumnFiltersState,
@@ -30,11 +30,11 @@ import React from "react";
 import { getColumns } from "./topics-table-columns";
 
 interface DataTableProps<TData, TValue> {
-  topicsData: Topic[] | null | undefined;
+  clustersData: Cluster[] | null | undefined;
 }
 
-export function TopicsTable<TData, TValue>({
-  topicsData,
+export function ClustersTable<TData, TValue>({
+  clustersData,
 }: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
 
@@ -45,7 +45,7 @@ export function TopicsTable<TData, TValue>({
   const columns = getColumns();
 
   const table = useReactTable({
-    data: topicsData ?? [],
+    data: clustersData ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
@@ -104,7 +104,7 @@ export function TopicsTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                   onClick={() => {
                     router.push(
-                      `/org/insights/topics/${encodeURIComponent(row.original.id)}`,
+                      `/org/insights/clusters/${encodeURIComponent(row.original.id)}`,
                     );
                   }}
                   className="cursor-pointer"
@@ -125,7 +125,7 @@ export function TopicsTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No topic found.
+                  No cluster found.
                 </TableCell>
               </TableRow>
             )}

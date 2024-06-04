@@ -14,7 +14,6 @@ export interface Task {
   sentiment?: SentimentObject;
   language?: string;
   notes?: string;
-  topics?: string[];
 }
 
 export interface SentimentObject {
@@ -189,7 +188,7 @@ export interface Test {
   summary?: Record<string, any>;
 }
 
-export interface Topic {
+export interface Cluster {
   id: string;
   clustering_id: string;
   project_id: string;

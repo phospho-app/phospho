@@ -36,5 +36,5 @@ class QuerySessionsTasksRequest(BaseModel):
     sorting: Optional[List[Sorting]] = None
 
 
-class DetectTopicsRequest(BaseModel):
+class DetectClustersRequest(BaseModel):
     limit: int = 2000

@@ -17,8 +17,8 @@ const Insights = ({ children }: { children: React.ReactNode }) => {
           <Link href="/org/insights/metadata">
             <TabsTrigger value="metadata">Metadata</TabsTrigger>
           </Link>
-          <Link href="/org/insights/topics">
-            <TabsTrigger value="topics">Topics</TabsTrigger>
+          <Link href="/org/insights/clusters">
+            <TabsTrigger value="clusters">Clusters</TabsTrigger>
           </Link>
           {/* <Link href="/org/insights/kpis">
             <TabsTrigger value="kpis">KPIs</TabsTrigger>

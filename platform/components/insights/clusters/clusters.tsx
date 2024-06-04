@@ -11,7 +11,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Topic } from "@/models/models";
+import { Cluster } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Play } from "lucide-react";
@@ -19,9 +19,9 @@ import React from "react";
 import { useEffect } from "react";
 import useSWR from "swr";
 
-import { TopicsTable } from "./topics-table";
+import { ClustersTable } from "./clusters-table";
 
-const Topics: React.FC = () => {
+const Clusters: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
   const [detectionRunTimestamp, setDetectionRunTimestamp] = React.useState<
@@ -30,14 +30,14 @@ const Topics: React.FC = () => {
   const { toast } = useToast();
 
   const {
-    data: topicsData,
+    data: clustersData,
   }: {
-    data: Topic[] | null | undefined;
+    data: Cluster[] | null | undefined;
   } = useSWR(
-    [`/api/explore/${project_id}/topics`, accessToken],
+    [`/api/explore/${project_id}/clusters`, accessToken],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST").then((res) =>
-        res?.topics.sort((a: Topic, b: Topic) => b.size - a.size),
+        res?.clusters.sort((a: Cluster, b: Cluster) => b.size - a.size),
       ),
     {
       keepPreviousData: true,
@@ -45,9 +45,9 @@ const Topics: React.FC = () => {
     },
   );
 
-  // if Topic.created_at > detectionRunTimestamp, then set detectionRunTimestamp to null
-  const maxCreatedAt = topicsData?.reduce((acc, topic) => {
-    return topic.created_at > acc ? topic.created_at : acc;
+  // if Cluster.created_at > detectionRunTimestamp, then set detectionRunTimestamp to null
+  const maxCreatedAt = clustersData?.reduce((acc, cluster) => {
+    return cluster.created_at > acc ? cluster.created_at : acc;
   }, 0);
   const lastUpdateLabel = maxCreatedAt ? new Date(maxCreatedAt * 1000) : null;
 
@@ -72,12 +72,12 @@ const Topics: React.FC = () => {
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-                Automatic topic detection
+                Automatic cluster detection
               </CardTitle>
               <CardDescription>
                 <p className="text-muted-foreground">
-                  Detect recurring conversation topics, outliers, and trends,
-                  using unsupervized machine learning algorithms.
+                  Detect recurring topics, trends, and outliers using
+                  unsupervized machine learning.
                 </p>
               </CardDescription>
             </div>
@@ -87,7 +87,7 @@ const Topics: React.FC = () => {
                 onClick={async () => {
                   setDetectionRunTimestamp(Date.now() / 1000);
                   try {
-                    await fetch(`/api/explore/${project_id}/detect-topics`, {
+                    await fetch(`/api/explore/${project_id}/detect-clusters`, {
                       method: "POST",
                       headers: {
                         Authorization: "Bearer " + accessToken,
@@ -95,13 +95,15 @@ const Topics: React.FC = () => {
                     }).then((response) => {
                       if (response.status == 200) {
                         toast({
-                          title: "Topic detection started",
-                          description: "This may take a few seconds.",
+                          title: "Cluster detection started",
+                          description: "This may take a few minutes.",
                         });
                       } else {
                         toast({
                           title: "Error when starting detection",
-                          description: response.text(),
+                          description: response
+                            .text()
+                            .then((text: string) => JSON.parse(text).details),
                         });
                         setDetectionRunTimestamp(null);
                       }
@@ -118,7 +120,7 @@ const Topics: React.FC = () => {
               >
                 {detectionRunTimestamp === null && (
                   <>
-                    <Play className="w-4 h-4 mr-2 text-green-500" /> Run topic
+                    <Play className="w-4 h-4 mr-2 text-green-500" /> Run cluster
                     detection
                   </>
                 )}
@@ -140,10 +142,10 @@ const Topics: React.FC = () => {
         </CardHeader>
       </Card>
       <div className="h-full flex-1 flex-col space-y-2 md:flex ">
-        <TopicsTable topicsData={topicsData} />
+        <ClustersTable clustersData={clustersData} />
       </div>
     </>
   );
 };
 
-export default Topics;
+export default Clusters;

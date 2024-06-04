@@ -126,12 +126,12 @@ export function getColumns() {
       header: "",
       accessorKey: "view",
       cell: ({ row }) => {
-        const topic_id = row.original.version_id;
+        const abtest_id = row.original.version_id;
         // Match the task object with this key
         // Handle undefined edge case
-        if (!topic_id) return <></>;
+        if (!abtest_id) return <></>;
         return (
-          <Link href={`/org/ab-testing/${encodeURIComponent(topic_id)}`}>
+          <Link href={`/org/ab-testing/${encodeURIComponent(abtest_id)}`}>
             <Button variant="ghost" size="icon">
               <ChevronRight />
             </Button>
