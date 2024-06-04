@@ -1,20 +1,18 @@
 "use client";
 
+import { PasswordInput } from "@/components/password-input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -34,27 +32,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/components/ui/use-toast";
-import { navigationStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
-import { Toggle } from "@radix-ui/react-toggle";
-import {
-  ArrowRight,
-  CopyIcon,
-  LoaderCircle,
-  Lock,
-  MonitorPlay,
-  Plus,
-  Upload,
-  X,
-} from "lucide-react";
+import { CopyIcon, Lock, MonitorPlay, Plus, Upload, X } from "lucide-react";
+import { Unplug } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
-import { PasswordInput } from "../password-input";
 
 const PythonIcon = () => {
   return (
@@ -625,5 +612,48 @@ phospho.log({input, output});`}
         </div>
       </div>
     </AlertDialogContent>
+  );
+};
+
+export const SendDataCallout = () => {
+  const hasTasks = dataStateStore((state) => state.hasTasks);
+
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <>
+      {hasTasks === false && (
+        <Card className="bg-secondary">
+          <CardHeader>
+            <div className="flex">
+              <Unplug className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+              <div className="flex flex-grow justify-between items-center">
+                <div>
+                  <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+                    Start sending data to phospho
+                  </CardTitle>
+                  <CardDescription className="flex justify-between">
+                    <div>We'll show you how to get started</div>
+                  </CardDescription>
+                </div>
+                <AlertDialog open={open}>
+                  <AlertDialogTrigger>
+                    <Button
+                      variant="default"
+                      onClick={() => {
+                        setOpen(true);
+                      }}
+                    >
+                      Start sending data
+                    </Button>
+                  </AlertDialogTrigger>
+                  <SendDataAlertDialog setOpen={setOpen} />
+                </AlertDialog>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
+    </>
   );
 };

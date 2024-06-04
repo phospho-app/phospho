@@ -1,10 +1,9 @@
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { navigationStateStore } from "@/store/store";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
-import { Download, MailIcon } from "lucide-react";
-import React, { useState } from "react";
+import { Download } from "lucide-react";
+import React from "react";
 
 interface DownloadButtonProps {}
 const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
