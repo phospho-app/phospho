@@ -33,11 +33,9 @@ async def test_main_pipeline(db, org_id, dummy_project):
         logger.info("Main pipeline finished")
 
         # Check there is a flag
-        # Query the db to check the topic field of the task
         task = await mongo_db["tasks"].find_one({"id": dummy_task.id})
 
         assert task["flag"] in ["success", "failure"]
-        # Check the topic field is not empty
 
         # Cleanup
         cleanup(mongo_db, {"tasks": [dummy_task.id]})

@@ -4,7 +4,6 @@ This is the extractor service for the phospho project. It is responsible for ext
 
 - evaluations
 - events
-- topics
 
 ## Installation
 

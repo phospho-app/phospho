@@ -1,10 +1,7 @@
-from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class ClusteringRequest(BaseModel):
-    project_id: str  # Project identifier
+    project_id: str
     org_id: str
-    limit: Optional[int] = Field(
-        default=2000, description="Limit the number of messages, defaults to 2000"
-    )
+    limit: int = 2000

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Topic } from "@/models/models";
+import { Cluster } from "@/models/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -9,7 +9,7 @@ export function getColumns() {
   const router = useRouter();
 
   // Create the columns for the data table
-  const columns: ColumnDef<Topic>[] = [
+  const columns: ColumnDef<Cluster>[] = [
     // id
     {
       header: ({ column }) => {
@@ -54,12 +54,14 @@ export function getColumns() {
       header: "",
       accessorKey: "view",
       cell: ({ row }) => {
-        const topic_id = row.original.id;
+        const cluster_id = row.original.id;
         // Match the task object with this key
         // Handle undefined edge case
-        if (!topic_id) return <></>;
+        if (!cluster_id) return <></>;
         return (
-          <Link href={`/org/insights/topics/${encodeURIComponent(topic_id)}`}>
+          <Link
+            href={`/org/insights/clusters/${encodeURIComponent(cluster_id)}`}
+          >
             <Button variant="ghost" size="icon">
               <ChevronRight />
             </Button>
