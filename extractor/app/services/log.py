@@ -511,10 +511,10 @@ async def process_log_with_session_id(
                 insert_result = await mongo_db["sessions"].insert_many(
                     sessions_to_create_dump, ordered=False
                 )
+                logger.info(f"Created {len(insert_result.inserted_ids)} sessions")
             except Exception as e:
                 error_mesagge = f"Error saving sessions to the database: {e}"
                 logger.error(error_mesagge)
-            logger.info(f"Created {len(insert_result.inserted_ids)} sessions")
     else:
         logger.info("Logevent: no session to create")
 
