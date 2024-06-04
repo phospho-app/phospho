@@ -3,16 +3,15 @@ Explore metrics service
 """
 
 import datetime
-from collections import defaultdict
 import math
+from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
-from app.api.platform.models.topics import Topic
 import pandas as pd
 import pydantic
 
 # Models
-from app.api.platform.models import ABTest, Topics, ProjectDataFilters
+from app.api.platform.models import ABTest, ProjectDataFilters
 from app.db.models import Eval, FlattenedTask
 from app.db.mongo import get_mongo_db
 from app.services.mongo.projects import (
@@ -27,6 +26,8 @@ from app.utils import generate_timestamp, get_last_week_timestamps
 from fastapi import HTTPException
 from loguru import logger
 from pymongo import InsertOne, UpdateOne
+
+from phospho.models import Cluster
 
 
 async def project_has_tasks(project_id: str) -> bool:
@@ -953,7 +954,13 @@ async def get_nb_sessions_per_day(
                 "$match": {
                     "$and": [
                         {"events": {"$ne": []}},
-                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
+                        {
+                            "events": {
+                                "$elemMatch": {
+                                    "event_name": {"$in": filters.event_name}
+                                }
+                            }
+                        },
                     ]
                 },
             },
@@ -1257,9 +1264,9 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
     return valid_ab_tests
 
 
-async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
+async def fetch_all_clusters(project_id: str, limit: int = 100) -> List[Cluster]:
     """
-    Fetch the topics of a project
+    Fetch the clusters of a project
     """
     mongo_db = await get_mongo_db()
     # Get the latest clustering
@@ -1272,8 +1279,8 @@ async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
     if len(get_latest_clustering) == 0:
         return []
     latest_clustering = get_latest_clustering[0]
-    # Retrieve the topics of this clustering
-    topics = (
+    # Retrieve the clusters of this clustering
+    clusters = (
         await mongo_db["private-clusters"]
         .find(
             {
@@ -1283,22 +1290,22 @@ async def fetch_all_topics(project_id: str, limit: int = 100) -> List[Topic]:
         )
         .to_list(length=limit)
     )
-    valid_topics = [Topic.model_validate(topic) for topic in topics]
-    return valid_topics
+    valid_clusters = [Cluster.model_validate(cluster) for cluster in clusters]
+    return valid_clusters
 
 
-async def fetch_single_topic(project_id: str, topic_id: str) -> Optional[Topic]:
+async def fetch_single_cluster(project_id: str, cluster_id: str) -> Optional[Cluster]:
     """
-    Fetch a single topic from a project
+    Fetch a single cluster from a project
     """
     mongo_db = await get_mongo_db()
-    topic = await mongo_db["private-clusters"].find_one(
-        {"project_id": project_id, "id": topic_id}
+    cluster = await mongo_db["private-clusters"].find_one(
+        {"project_id": project_id, "id": cluster_id}
     )
-    if topic is None:
+    if cluster is None:
         return None
-    valid_topic = Topic.model_validate(topic)
-    return valid_topic
+    valid_cluster = Cluster.model_validate(cluster)
+    return valid_cluster
 
 
 async def nb_items_with_a_metadata_field(

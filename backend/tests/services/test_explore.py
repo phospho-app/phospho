@@ -3,7 +3,7 @@ from loguru import logger
 
 # Function to test
 from app.services.mongo.explore import (
-    fetch_all_topics,
+    fetch_all_clusters,
     nb_items_with_a_metadata_field,
     compute_successrate_metadata_quantiles,
     compute_nb_items_with_metadata_field,
@@ -17,9 +17,9 @@ async def test_main_pipeline(db, populated_project):
         test_project_id = populated_project.id
 
         # Run the function
-        topics = await fetch_all_topics(test_project_id)
+        clusters = await fetch_all_clusters(test_project_id)
 
-        logger.debug(f"Topics: {topics}")
+        logger.debug(f"Clusters: {clusters}")
 
         count = await nb_items_with_a_metadata_field(
             test_project_id, "tasks", "user_id"

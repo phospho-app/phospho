@@ -104,7 +104,6 @@ def populated_project(mongo_db, org_id):
         project_id=populated_project.id,
         input="What is the weather like today?",
         output="Sunny and warm.",
-        topics=["Weather"],
         flag="success",
         metadata={"user_id": "user_id_1"},
         org_id=org_id,
@@ -117,7 +116,6 @@ def populated_project(mongo_db, org_id):
         project_id=populated_project.id,
         input="What is the weather like today and can I have a cheeseburger?",
         output="Sunny and warm.",
-        topics=["Weather", "Food"],
         flag="failure",
         metadata={"user_id": "user_id_1"},
         org_id=org_id,
@@ -130,7 +128,6 @@ def populated_project(mongo_db, org_id):
         project_id=populated_project.id,
         input="Trigger the webhook please.",
         output="Done!",
-        topics=[],
         metadata={"user_id": "user_id_2"},
         org_id=org_id,
         flag="success",
@@ -143,7 +140,6 @@ def populated_project(mongo_db, org_id):
         project_id=populated_project.id,
         input="What is the weather like today and can I have a cheeseburger?",
         output="Sunny and warm.",
-        topics=["Weather", "Food"],
         org_id=org_id,
     )
     mongo_db["tasks"].insert_one(dummy_task.model_dump())

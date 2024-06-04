@@ -9,10 +9,9 @@ from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
 
-# from app.services.topics import extract_topics  # TODO
 from app.services.webhook import trigger_webhook
 from phospho import lab
-from phospho.models import ResultType, ScoreRange, SentimentObject, JobResult
+from phospho.models import ResultType, SentimentObject, JobResult
 
 from app.api.v1.models.pipelines import PipelineResults
 
@@ -447,45 +446,6 @@ async def task_scoring_pipeline(
     return flag
 
 
-# async def topic_extraction_pipeline(task_id: str) -> None:
-#     mongo_db = await get_mongo_db()
-
-#     task_data = await mongo_db["tasks"].find_one({"id": task_id})
-
-#     task_input = task_data.get("input", None)
-#     task_output = task_data.get("output", None)
-
-#     # Build the text to extract topics from
-#     text_input = f"{task_input} {task_output}"
-
-#     detected_topics = extract_topics(text_input)
-
-#     if len(detected_topics) == 0:
-#         logger.debug(f"No topics detected for task {task_id}")
-#         # Stop the execution of the pipeline
-#         return
-
-#     logger.debug(f"Detected topics for task {task_id} : {detected_topics}")
-
-#     # Save the detected topics in the MongoDB document
-#     update_result = await mongo_db["tasks"].update_one(
-#         {"id": task_id}, {"$set": {"topics": detected_topics}}
-#     )
-
-#     # Check if the operation matched and modified any document
-#     if update_result.matched_count == 0:
-#         raise ValueError(f"Task with id {task_id} not found in the database.")
-
-#     elif update_result.modified_count == 0:
-#         logger.warning(
-#             "Document found, but no changes were made (it might already have the same topics data)."
-#         )
-
-#     else:
-#         # The document was not changed in the DB
-#         logger.info(f"Detected topics for task {task_id} saved in the database")
-
-
 async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResults:
     """
     Main pipeline to run on a task.
@@ -522,10 +482,7 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
     else:
         flag = await task_scoring_pipeline(task, save_task=save_task)
 
-    # Optional: later add the moderation pipeline on input and outputs
-
-    # Do the topic extraction
-    # await topic_extraction_pipeline(task_id)
+    # Optional: add moderation pipeline on input and outputs
 
     # Log the completion of the pipeline and the time it took
     logger.info(

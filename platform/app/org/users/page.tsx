@@ -101,23 +101,25 @@ const Users = () => {
       {userCount === 0 && (
         <Card className="bg-secondary">
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-                  Breakdown tasks and sessions by user{" "}
-                  <HeartHandshake className="ml-2 h-6 w-6" />
-                </CardTitle>
-                <CardDescription>
-                  Add a user_id in metadata when logging tasks to group them by
-                  user.
-                </CardDescription>
+            <div className="flex">
+              <HeartHandshake className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+              <div className="flex flex-grow justify-between items-center">
+                <div>
+                  <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
+                    Analyze user activity
+                  </CardTitle>
+                  <CardDescription>
+                    Group your tasks by user by adding a <code>user_id</code> in
+                    metadata when logging.
+                  </CardDescription>
+                </div>
+                <Link
+                  href="https://docs.phospho.ai/guides/sessions-and-users#users"
+                  target="_blank"
+                >
+                  <Button variant="default">Set up user tracking</Button>
+                </Link>
               </div>
-              <Link
-                href="https://docs.phospho.ai/guides/sessions-and-users#users"
-                target="_blank"
-              >
-                <Button variant="default">Set up user tracking</Button>
-              </Link>
             </div>
           </CardHeader>
         </Card>

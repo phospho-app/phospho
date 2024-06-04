@@ -1,4 +1,4 @@
-import { SendDataAlertDialog } from "@/components/dashboard/no-data-dashboard";
+import { SendDataAlertDialog } from "@/components/callouts/import-data";
 import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {

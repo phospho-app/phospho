@@ -1,10 +1,13 @@
 import datetime
 from typing import List, Optional
 from app.api.v2.models.clustering import ClusteringRequest
+from app.security.authorization import get_quota
 from app.services.mongo.ai_hub import clustering
+from app.services.mongo.extractor import bill_on_stripe
+from app.services.mongo.tasks import get_total_nb_of_tasks
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from loguru import logger
-from phospho.models import Topic
+from phospho.models import Cluster
 from propelauth_fastapi import User
 
 from app.api.platform.models import (
@@ -12,16 +15,17 @@ from app.api.platform.models import (
     ProjectDataFilters,
     Events,
     ABTests,
-    Topics,
+    Clusters,
     EventsMetricsFilter,
     DashboardMetricsFilter,
+    DetectClustersRequest,
 )
 from app.services.mongo.events import get_event_definition_from_event_id
 from app.security.authentification import propelauth
 from app.security import verify_if_propelauth_user_can_access_project
 from app.services.mongo.explore import (
     deprecated_get_dashboard_aggregated_metrics,
-    fetch_single_topic,
+    fetch_single_cluster,
     get_sessions_aggregated_metrics,
     get_tasks_aggregated_metrics,
     get_events_aggregated_metrics,
@@ -29,7 +33,7 @@ from app.services.mongo.explore import (
     project_has_sessions,
     project_has_enough_labelled_tasks,
     create_ab_tests_table,
-    fetch_all_topics,
+    fetch_all_clusters,
     nb_items_with_a_metadata_field,
     compute_nb_items_with_metadata_field,
     compute_session_length_per_metadata,
@@ -285,63 +289,83 @@ async def get_ab_tests(
 
 
 @router.post(
-    "/explore/{project_id}/topics",
-    response_model=Topics,
-    description="Get the different topics of a project",
+    "/explore/{project_id}/clusters",
+    response_model=Clusters,
+    description="Get the different clusters of a project",
 )
-async def post_all_topics(
+async def post_all_clusters(
     project_id: str,
     user: User = Depends(propelauth.require_user),
-) -> Topics:
+) -> Clusters:
     """
-    Get all the topics of a project.
+    Get all the clusters of a project.
 
-    Topics are clusters of tasks.
+    Clusters are groups of tasks.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    topics = await fetch_all_topics(project_id=project_id)
-    return Topics(topics=topics)
+    clusters = await fetch_all_clusters(project_id=project_id)
+    return Clusters(clusters=clusters)
 
 
 @router.post(
-    "/explore/{project_id}/topics/{topic_id}",
-    response_model=Topic,
-    description="Get the different topics of a project",
+    "/explore/{project_id}/clusters/{cluster_id}",
+    response_model=Cluster,
+    description="Get the different clusters of a project",
 )
-async def post_single_topic(
+async def post_single_cluster(
     project_id: str,
-    topic_id: str,
+    cluster_id: str,
     user: User = Depends(propelauth.require_user),
-) -> Topic:
+) -> Cluster:
     """
-    Get a topic data
+    Get a cluster data
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    topic = await fetch_single_topic(project_id=project_id, topic_id=topic_id)
-    if topic is None:
+    cluster = await fetch_single_cluster(project_id=project_id, cluster_id=cluster_id)
+    if cluster is None:
         raise HTTPException(
             status_code=404,
-            detail=f"Topic {topic_id} not found in project {project_id}",
+            detail=f"Cluster {cluster_id} not found in project {project_id}",
         )
-    return topic
+    return cluster
 
 
 @router.post(
-    "/explore/{project_id}/detect-topics",
+    "/explore/{project_id}/detect-clusters",
     response_model=None,
-    description="Run the topic detection algorithm on a project",
+    description="Run the clusters detection algorithm on a project",
 )
-async def post_detect_topics(
+async def post_detect_clusters(
     project_id: str,
-    background_tasks: BackgroundTasks,
+    query: Optional[DetectClustersRequest] = None,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
-    Run the topic detection algorithm on a project
+    Run the clusters detection algorithm on a project
     """
     org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
+    org_plan = await get_quota(project_id)
+    current_usage = org_plan.get("current_usage", 0)
+    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+
+    if query is None:
+        query = DetectClustersRequest()
+
+    total_nb_tasks = await get_total_nb_of_tasks(project_id)
+    clustering_sample_size = min(total_nb_tasks, query.limit)
+
+    if org_plan.get("plan") == "hobby" or org_plan.get("plan") is None:
+        if current_usage + clustering_sample_size >= max_usage:
+            raise HTTPException(
+                status_code=403,
+                detail="Payment details required to run the cluster detection algorithm.",
+            )
+
+    await bill_on_stripe(org_id=org_id, nb_credits_used=clustering_sample_size * 2)
     await clustering(
-        clustering_request=ClusteringRequest(project_id=project_id, org_id=org_id)
+        clustering_request=ClusteringRequest(
+            project_id=project_id, org_id=org_id, limit=query.limit
+        )
     )
     return {"status": "ok"}
 

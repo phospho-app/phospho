@@ -42,17 +42,6 @@ export function Sidebar() {
               Transcripts
             </Button>
           </Link>
-          <Link href="/org/users">
-            <Button
-              variant={
-                pathname.startsWith("/org/users") ? "secondary" : "ghost"
-              }
-              className="w-full justify-start"
-            >
-              <Users size={16} className="mr-2" />
-              Users
-            </Button>
-          </Link>
           <Link href="/org/insights">
             <Button
               variant={
@@ -62,6 +51,17 @@ export function Sidebar() {
             >
               <TextSearch size={16} className="mr-2" />
               Insights
+            </Button>
+          </Link>
+          <Link href="/org/users">
+            <Button
+              variant={
+                pathname.startsWith("/org/users") ? "secondary" : "ghost"
+              }
+              className="w-full justify-start"
+            >
+              <Users size={16} className="mr-2" />
+              Users
             </Button>
           </Link>
           <Separator />
