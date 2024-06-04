@@ -1930,8 +1930,8 @@ async def fetch_flattened_tasks(
         )
         return_columns = {
             **return_columns,
-            "event_name": "$event_name",
-            "event_created_at": "$event_created_at",
+            "event_name": "$events.event_name",
+            "event_created_at": "$events.event_created_at",
         }
     if with_sessions:
         pipeline.extend(
