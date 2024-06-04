@@ -361,9 +361,7 @@ async def post_detect_clusters(
                 detail="Payment details required to run the cluster detection algorithm.",
             )
 
-    await bill_on_stripe(
-        org_id=org_id, project_id=project_id, nb_tasks=clustering_sample_size * 2
-    )
+    await bill_on_stripe(org_id=org_id, nb_credits_used=clustering_sample_size * 2)
     await clustering(
         clustering_request=ClusteringRequest(
             project_id=project_id, org_id=org_id, limit=query.limit

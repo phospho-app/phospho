@@ -23,11 +23,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { FilterX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-import { getColumns } from "./topics-table-columns";
+import { getColumns } from "./clusters-table-columns";
 
 interface DataTableProps<TData, TValue> {
   clustersData: Cluster[] | null | undefined;

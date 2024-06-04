@@ -101,9 +101,13 @@ const Clusters: React.FC = () => {
                       } else {
                         toast({
                           title: "Error when starting detection",
-                          description: response
-                            .text()
-                            .then((text: string) => JSON.parse(text).details),
+                          description: response.text().then((text: string) => {
+                            try {
+                              JSON.parse(text).details;
+                            } catch (e) {
+                              return text;
+                            }
+                          }),
                         });
                         setDetectionRunTimestamp(null);
                       }
