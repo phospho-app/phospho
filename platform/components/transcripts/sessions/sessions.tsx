@@ -34,8 +34,8 @@ const Sessions: React.FC = () => {
                 </CardTitle>
                 <CardDescription>
                   <p className="text-muted-foreground">
-                    Add a session_id when logging tasks to group them into
-                    sessions.
+                    Group your tasks into sessions by adding a{" "}
+                    <code>session_id</code> when logging.
                   </p>
                 </CardDescription>
               </div>
