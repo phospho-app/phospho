@@ -2,19 +2,12 @@
 
 import { SendDataCallout } from "@/components/callouts/import-data";
 import { RunClusteringCallout } from "@/components/callouts/run-clustering";
-import { navigationStateStore } from "@/store/store";
 import React from "react";
 
 import TasksDataviz from "./tasks-dataviz";
 import { TasksTable } from "./tasks-table";
 
 const Tasks: React.FC = () => {
-  const project_id = navigationStateStore((state) => state.project_id);
-
-  if (!project_id) {
-    return <></>;
-  }
-
   return (
     <>
       <SendDataCallout />
