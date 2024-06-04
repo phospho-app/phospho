@@ -1,6 +1,7 @@
 "use client";
 
 import { SendDataCallout } from "@/components/callouts/import-data";
+import { RunClusteringCallout } from "@/components/callouts/run-clustering";
 import { navigationStateStore } from "@/store/store";
 import React from "react";
 
@@ -17,6 +18,7 @@ const Tasks: React.FC = () => {
   return (
     <>
       <SendDataCallout />
+      <RunClusteringCallout />
       <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
         <TasksDataviz />
         <TasksTable />
