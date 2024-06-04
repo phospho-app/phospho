@@ -82,6 +82,8 @@ async def post_eval_pipeline_on_task(
     pipeline_results = PipelineResults(
         events=[],
         flag=flag,
+        language=None,
+        sentiment=None,
     )
 
     return pipeline_results
