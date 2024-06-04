@@ -98,8 +98,8 @@ async def run_event_detection_on_timeframe(
     tasks = await get_all_tasks(
         project_id=project_id,
         filters=ProjectDataFilters(
-            created_at_start=event_backfill_request.created_at_start,
-            created_at_end=event_backfill_request.created_at_end,
+            created_at_start=round(event_backfill_request.created_at_start),
+            created_at_end=round(event_backfill_request.created_at_end),
         ),
         sample_rate=event_backfill_request.sample_rate,
     )
