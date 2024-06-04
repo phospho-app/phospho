@@ -31,6 +31,7 @@ from .explore import (
     ProjectDataFilters,
     Pagination,
     QuerySessionsTasksRequest,
+    DetectTopicsRequest,
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
 from .projects import AddEventsQuery, OnboardingSurvey, UploadTasksRequest

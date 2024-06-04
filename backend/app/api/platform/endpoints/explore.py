@@ -1,7 +1,10 @@
 import datetime
 from typing import List, Optional
 from app.api.v2.models.clustering import ClusteringRequest
+from app.security.authorization import get_quota
 from app.services.mongo.ai_hub import clustering
+from app.services.mongo.extractor import bill_on_stripe
+from app.services.mongo.tasks import get_total_nb_of_tasks
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from loguru import logger
 from phospho.models import Topic
@@ -15,6 +18,7 @@ from app.api.platform.models import (
     Topics,
     EventsMetricsFilter,
     DashboardMetricsFilter,
+    DetectTopicsRequest,
 )
 from app.services.mongo.events import get_event_definition_from_event_id
 from app.security.authentification import propelauth
@@ -333,15 +337,37 @@ async def post_single_topic(
 )
 async def post_detect_topics(
     project_id: str,
-    background_tasks: BackgroundTasks,
+    query: Optional[DetectTopicsRequest] = None,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
     Run the topic detection algorithm on a project
     """
     org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
+    org_plan = await get_quota(project_id)
+    current_usage = org_plan.get("current_usage", 0)
+    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+
+    if query is None:
+        query = DetectTopicsRequest()
+
+    total_nb_tasks = await get_total_nb_of_tasks(project_id)
+    clustering_sample_size = min(total_nb_tasks, query.limit)
+
+    if org_plan.get("plan") == "hobby" or org_plan.get("plan") is None:
+        if current_usage + clustering_sample_size >= max_usage:
+            raise HTTPException(
+                status_code=403,
+                detail="Payment details required to run the topic detection algorithm.",
+            )
+
+    await bill_on_stripe(
+        org_id=org_id, project_id=project_id, nb_tasks=clustering_sample_size * 2
+    )
     await clustering(
-        clustering_request=ClusteringRequest(project_id=project_id, org_id=org_id)
+        clustering_request=ClusteringRequest(
+            project_id=project_id, org_id=org_id, limit=query.limit
+        )
     )
     return {"status": "ok"}
 

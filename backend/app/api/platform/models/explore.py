@@ -34,3 +34,7 @@ class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     pagination: Optional[Pagination] = None
     sorting: Optional[List[Sorting]] = None
+
+
+class DetectTopicsRequest(BaseModel):
+    limit: int = 2000
