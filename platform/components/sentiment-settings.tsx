@@ -10,6 +10,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
@@ -112,13 +113,13 @@ export const SentimentSettings = ({}: {}) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-full">
-        <CardHeader>
+        <DropdownMenuLabel className="flex flex-row items-center">
+          <Settings className="w-4 h-4 mr-1" />
+          Sentiment settings
+        </DropdownMenuLabel>
+        <div className="p-2">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <h2 className="text-lg font-bold flex flex-row items-center space-x-2">
-                <Settings />
-                <div>Sentiment threshold</div>
-              </h2>
               <FormField
                 control={form.control}
                 name="score"
@@ -172,7 +173,7 @@ export const SentimentSettings = ({}: {}) => {
               </Button>
             </form>
           </Form>
-        </CardHeader>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -8,6 +8,7 @@ from phospho.models import SentimentObject
 
 class RunMainPipelineOnTaskRequest(BaseModel):
     task: Task
+    save_results: bool = False
 
 
 class RunMainPipelineOnMessagesRequest(BaseModel):
