@@ -65,6 +65,7 @@ async def create(
     Generate a chat completion
     """
     # Get customer_id
+    logger.debug(f"Creating chat completion: {create_request}")
     org_metadata = org["org"].get("metadata", {})
     org_id = org["org"]["org_id"]
     customer_id = None
