@@ -55,7 +55,7 @@ export function NavBarSettings() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-muted-foreground hover:text-primary"
+                    className="text-muted-foreground hover:text-primary h-8 w-8"
                   >
                     <Settings />
                   </Button>

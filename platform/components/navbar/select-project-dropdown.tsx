@@ -51,13 +51,15 @@ export function SelectProjectButton() {
       onValueChange={handleValueChange}
       defaultValue={selectedProjectName}
     >
-      <SelectTrigger>
-        <span className="mr-1">Project</span>
-        <SelectValue
-          asChild={true}
-          children={<div>{selectedProjectName}</div>}
-          id={project_id}
-        />
+      <SelectTrigger className="py-1 h-8">
+        <span className="flex mr-1">
+          <span className="mr-1">Project</span>
+          <SelectValue
+            asChild={true}
+            children={<div>{selectedProjectName}</div>}
+            id={project_id}
+          />
+        </span>
       </SelectTrigger>
       <SelectContent
         position="popper"
@@ -70,6 +72,9 @@ export function SelectProjectButton() {
               key={project.id}
               value={project.project_name}
               // onSelect={() => handleProjectChange(project.id)}
+              onClick={(mousEvent) => {
+                mousEvent.stopPropagation();
+              }}
             >
               {project.project_name}
             </SelectItem>

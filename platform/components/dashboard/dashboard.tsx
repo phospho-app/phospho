@@ -64,7 +64,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <>
-      <div className="hidden h-full flex-1 flex-col space-y-8 p-8 md:flex mx-10">
+      <div className="flex flex-1 flex-col space-y-4">
         {hasTasks === null && <CenteredSpinner />}
         {normalDashboard}
       </div>
