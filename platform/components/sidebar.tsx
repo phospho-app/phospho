@@ -70,7 +70,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col border-r py-4 overflow-y-auto border-secondary h-full">
+    <div className="flex flex-col py-4 overflow-y-auto border-secondary h-full">
       <div>
         <SideBarElement
           href="/org/transcripts/"

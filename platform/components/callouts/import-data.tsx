@@ -312,7 +312,7 @@ export const SendDataAlertDialog = ({
   }
 
   return (
-    <AlertDialogContent className="h-3/4 max-w-3/4">
+    <AlertDialogContent className="md:h-3/4 md:max-w-3/4">
       <AlertDialogHeader>
         <div className="flex justify-between">
           <div>
@@ -329,9 +329,9 @@ export const SendDataAlertDialog = ({
           />
         </div>
       </AlertDialogHeader>
-      <div className="grid grid-cols-5 gap-2 overflow-y-auto">
+      <div className="overflow-y-auto">
         <SidebarSendData setOpen={setOpen} />
-        <div className="col-span-4 overflow-y-auto space-y-2 flex flex-col justify-between">
+        <div className="space-y-2 flex flex-col">
           <Card>
             <CardHeader>
               <CardTitle className="text-xl">I need to log messages.</CardTitle>

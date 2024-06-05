@@ -12,10 +12,8 @@ const Tasks: React.FC = () => {
     <>
       <SendDataCallout />
       <RunClusteringCallout />
-      <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
-        <TasksDataviz />
-        <TasksTable />
-      </div>
+      <TasksDataviz />
+      <TasksTable />
     </>
   );
 };
