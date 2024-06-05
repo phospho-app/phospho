@@ -96,9 +96,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
       <FetchHasTasksSessions />
       <div className="max-h-screen h-screen overflow-hidden">
         <div className="h-full">
-          <div className="w-full">
-            <Navbar />
-          </div>
+          <Navbar />
           <div className="grid grid-cols-8 gap-2 w-full h-full">
             <Sidebar />
             <div className="space-y-4 py-4 px-10 col-span-7 overflow-y-auto">

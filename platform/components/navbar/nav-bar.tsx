@@ -29,11 +29,8 @@ export function Navbar({
 
   return (
     <div>
-      <nav
-        className={cn("flex items-center space-x-4 lg:space-x-6", className)}
-        {...props}
-      >
-        <div className="container flex flex-row items-center justify-between space-y-1 py-1.5 sm:space-y-0">
+      <nav className={cn("flex flex-row justify-center", className)} {...props}>
+        <div className="flex flex-row items-center justify-between space-y-1 py-1.5 sm:space-y-0 w-10/12">
           <div className="flex flex-row items-baseline align-items">
             <Link href="/">
               <h2 className="text-xl font-semibold text-green-500 flex-none">
@@ -41,7 +38,7 @@ export function Navbar({
               </h2>
             </Link>
           </div>
-          <div className="ml-auto flex space-x-2 sm:justify-end items-center">
+          <div className="flex space-x-2 sm:justify-end items-center">
             {/* <Link
                 href="https://forms.gle/KP3oPc9KaHvDsyuE6"
                 className="text-sm font-medium text-muted-foreground hover:text-primary mr-4"
@@ -62,7 +59,7 @@ export function Navbar({
               >
                 Blog
               </Link> */}
-            <div className="hidden md:flex items-center align-items "></div>
+            {/* <div className="hidden md:flex items-center align-items "></div> */}
             <NavBarHelp />
             <NavBarSettings />
             <NavBarProject />
