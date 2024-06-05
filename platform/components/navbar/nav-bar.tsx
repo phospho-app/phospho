@@ -45,7 +45,12 @@ export function Navbar({
                     <Menu className="h-6 w-6 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent onClick={() => setOpen(false)}>
+                <DropdownMenuContent
+                  onClick={(mouseEvent) => {
+                    mouseEvent.stopPropagation();
+                    setOpen(false);
+                  }}
+                >
                   <Sidebar />
                 </DropdownMenuContent>
               </DropdownMenu>

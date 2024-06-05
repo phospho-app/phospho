@@ -72,6 +72,9 @@ export function SelectProjectButton() {
               key={project.id}
               value={project.project_name}
               // onSelect={() => handleProjectChange(project.id)}
+              onClick={(mousEvent) => {
+                mousEvent.stopPropagation();
+              }}
             >
               {project.project_name}
             </SelectItem>

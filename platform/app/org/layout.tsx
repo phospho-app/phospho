@@ -7,7 +7,7 @@ import { Sidebar } from "@/components/sidebar";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import "@radix-ui/react-dropdown-menu";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 export default function OrgLayout({ children }: { children: React.ReactNode }) {
   const selectedOrgMetadata = dataStateStore(
