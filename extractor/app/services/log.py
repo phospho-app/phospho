@@ -442,7 +442,7 @@ async def process_log_with_session_id(
             sessions_to_create[log_event.session_id]["session_length"] += 1
         elif log_event.session_id is not None and session_is_in_db:
             # Increment the session length in the database
-            await mongo_db["sessions"].update_one(
+            mongo_db["sessions"].update_one(
                 {"id": log_event.session_id},
                 {"$inc": {"session_length": 1}},
             )
@@ -496,7 +496,7 @@ async def process_log_with_session_id(
                 # Increment the session length in the database
                 await mongo_db["sessions"].update_one(
                     {"id": session_id},
-                    {"$inc": {"session_length": 1}},
+                    {"$inc": {"session_length": session_data["session_length"]}},
                 )
             else:
                 session = Session(
