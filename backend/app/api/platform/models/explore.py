@@ -38,3 +38,8 @@ class QuerySessionsTasksRequest(BaseModel):
 
 class DetectClustersRequest(BaseModel):
     limit: int = 2000
+
+
+class FetchClustersRequest(BaseModel):
+    clustering_id: Optional[str] = None
+    limit: int = 100

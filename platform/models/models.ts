@@ -200,6 +200,18 @@ export interface Cluster {
   tasks_ids: string[];
 }
 
+export interface Clustering {
+  id: string;
+  clustering_id: string;
+  project_id: string;
+  org_id: string;
+  created_at: number;
+  type?: string;
+  nb_clusters?: number;
+  clusters_ids: string[];
+  status?: "started" | "summaries" | "completed";
+}
+
 export interface CustomDateRange {
   from: Date | undefined;
   to: Date | undefined;

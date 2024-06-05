@@ -27,7 +27,7 @@ from fastapi import HTTPException
 from loguru import logger
 from pymongo import InsertOne, UpdateOne
 
-from phospho.models import Cluster
+from phospho.models import Cluster, Clustering
 
 
 async def project_has_tasks(project_id: str) -> bool:
@@ -1264,28 +1264,57 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
     return valid_ab_tests
 
 
-async def fetch_all_clusters(project_id: str, limit: int = 100) -> List[Cluster]:
+async def fetch_all_clusterings(project_id: str, limit: int = 100) -> List[Clustering]:
     """
-    Fetch the clusters of a project
+    Fetch all the clusterings of a project. The clusterings are sorted by creation date.
+
+    Each clustering contains clusters.
     """
     mongo_db = await get_mongo_db()
     # Get the latest clustering
-    get_latest_clustering = (
+    clusterings = (
         await mongo_db["private-clusterings"]
         .find({"project_id": project_id})
         .sort([("created_at", -1)])
-        .to_list(length=1)
+        .to_list(length=limit)
     )
-    if len(get_latest_clustering) == 0:
+    if not clusterings:
         return []
-    latest_clustering = get_latest_clustering[0]
-    # Retrieve the clusters of this clustering
+    valid_clusterings = [
+        Clustering.model_validate(clustering) for clustering in clusterings
+    ]
+    return valid_clusterings
+
+
+async def fetch_all_clusters(
+    project_id: str, clustering_id: Optional[str] = None, limit: int = 100
+) -> List[Cluster]:
+    """
+    Fetch the clusters of a project.
+
+    If the clustering (group of clusters) is not specified, the latest clustering is used.
+    """
+    mongo_db = await get_mongo_db()
+    # Get the latest clustering
+    if clustering_id is None:
+        get_latest_clustering = (
+            await mongo_db["private-clusterings"]
+            .find({"project_id": project_id})
+            .sort([("created_at", -1)])
+            .to_list(length=1)
+        )
+        if len(get_latest_clustering) == 0:
+            return []
+        latest_clustering = get_latest_clustering[0]
+        clustering_id = latest_clustering.get("id")
+
+    # Retrieve the clusters of the clustering
     clusters = (
         await mongo_db["private-clusters"]
         .find(
             {
                 "project_id": project_id,
-                "clustering_id": latest_clustering.get("id"),
+                "clustering_id": clustering_id,
             }
         )
         .to_list(length=limit)

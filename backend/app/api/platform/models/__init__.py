@@ -32,8 +32,9 @@ from .explore import (
     Pagination,
     QuerySessionsTasksRequest,
     DetectClustersRequest,
+    FetchClustersRequest,
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
 from .projects import AddEventsQuery, OnboardingSurvey, UploadTasksRequest
 from .tasks import AddEventRequest, RemoveEventRequest
-from .clusters import Cluster, Clusters
+from .clusters import Cluster, Clusters, Clustering, Clusterings, ClusteringRequest
