@@ -352,7 +352,13 @@ async def post_detect_clusters(
         query = DetectClustersRequest()
 
     total_nb_tasks = await get_total_nb_of_tasks(project_id)
-    clustering_sample_size = min(total_nb_tasks, query.limit)
+    if total_nb_tasks:
+        clustering_sample_size = min(total_nb_tasks, query.limit)
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail="No tasks found in the project.",
+        )
 
     if org_plan.get("plan") == "hobby" or org_plan.get("plan") is None:
         if current_usage + clustering_sample_size >= max_usage:

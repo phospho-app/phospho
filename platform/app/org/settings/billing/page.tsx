@@ -44,24 +44,27 @@ export default function Page() {
 
   return (
     <>
-      <div className="flex-col">
-        <div className="mb-4">
-          {plan === "hobby" && (
-            <Pricing
-              currentPlan={null}
-              selectedPlan="usage_based"
-              proPlanTagline="Add payment method"
-              displayHobbyCTA={true}
-            />
-          )}
-          {plan === "usage_based" && <Pricing currentPlan="usage_based" />}
-          {plan === "pro" && <Pricing currentPlan="pro" />}
-          {plan && plan !== "hobby" && (
-            <Button variant="secondary" onClick={onBillingPortalClick}>
-              Manage subscription
-            </Button>
-          )}
-        </div>
+      <div className="flex flex-col space-y-2">
+        {plan && plan !== "hobby" && (
+          <Button
+            variant="secondary"
+            onClick={onBillingPortalClick}
+            className="w-80"
+          >
+            Manage subscription
+          </Button>
+        )}
+        {plan === "hobby" && (
+          <Pricing
+            currentPlan={null}
+            selectedPlan="usage_based"
+            proPlanTagline="Add payment method"
+            displayHobbyCTA={true}
+          />
+        )}
+        {plan === "usage_based" && <Pricing currentPlan="usage_based" />}
+        {plan === "pro" && <Pricing currentPlan="pro" />}
+        <div className="h-20"></div>
       </div>
     </>
   );
