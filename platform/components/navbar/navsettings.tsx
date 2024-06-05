@@ -20,9 +20,9 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { navigationStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useLogoutFunction, useUser } from "@propelauth/nextjs/client";
-import { FileUp, Moon, Settings, Sun, Upload } from "lucide-react";
+import { FileUp, Moon, Settings, Star, Sun, Upload } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -31,6 +31,10 @@ export function NavBarSettings() {
   const { setTheme } = useTheme();
   const { user } = useUser();
   const router = useRouter();
+  const selectedOrgMetadata = dataStateStore(
+    (state) => state.selectedOrgMetadata,
+  );
+  const hasTasks = dataStateStore((state) => state.hasTasks);
 
   const logoutFn = useLogoutFunction();
   const setSelectedOrgId = navigationStateStore(
@@ -69,7 +73,26 @@ export function NavBarSettings() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>
               <div>{user?.email}</div>
+              {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
+                <div className="flex items-center text-xs text-muted-foreground hover:text-green-500 font-normal">
+                  Hobby user
+                </div>
+              )}
+              {selectedOrgMetadata && selectedOrgMetadata?.plan === "pro" && (
+                <div className="flex items-center text-xs text-muted-foreground hover:text-green-500 font-normal">
+                  <Star className="mr-1 h-4 w-4" />
+                  Pro plan member
+                </div>
+              )}
+              {selectedOrgMetadata &&
+                selectedOrgMetadata?.plan === "usage_based" && (
+                  <div className="flex items-center text-xs text-muted-foreground hover:text-green-500 font-normal">
+                    <Star className="mr-1 h-4 w-4" />
+                    Usage based billing
+                  </div>
+                )}
             </DropdownMenuLabel>
+
             <DropdownMenuItem
               onClick={() => router.push("/org/settings/account")}
             >

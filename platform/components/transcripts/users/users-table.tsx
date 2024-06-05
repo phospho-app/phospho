@@ -2,6 +2,7 @@
 
 import { TableNavigation } from "@/components/table-navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -26,7 +27,6 @@ import { FilterX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-import { Input } from "../ui/input";
 import { getColumns } from "./users-table-columns";
 
 interface DataTableProps<TData, TValue> {
