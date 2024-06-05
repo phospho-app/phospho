@@ -37,7 +37,7 @@ const Clusters: React.FC = () => {
     latestClustering = clusteringsData?.clusterings[0];
   }
 
-  const maxCreatedAt = clusteringsData?.[0]?.created_at;
+  const maxCreatedAt = latestClustering?.created_at;
 
   if (!project_id) {
     return <></>;
