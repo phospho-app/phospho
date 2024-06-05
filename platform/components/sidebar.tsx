@@ -40,33 +40,23 @@ function SideBarElement({
 }) {
   const pathname = usePathname();
 
-  if (!collapsible) {
-    return (
-      <Link href={href}>
-        <Button
-          variant={pathname.startsWith(href) ? "secondary" : "ghost"}
-          className="w-full justify-start"
-        >
-          {icon}
-          {children}
-        </Button>
-      </Link>
-    );
-  }
+  return (
+    <Link href={href}>
+      <Button
+        variant={
+          pathname.startsWith(href) && !collapsible ? "secondary" : "ghost"
+        }
+        className="w-full justify-start h-min"
+      >
+        {icon}
+        {children}
+      </Button>
+    </Link>
+  );
+}
 
-  if (collapsible) {
-    return (
-      <Link href={href}>
-        <Button variant="ghost" className="w-full justify-between">
-          <div className="flex justify-start items-center">
-            {icon}
-            {children}
-          </div>
-          <Button variant="ghost" size="icon" asChild></Button>
-        </Button>
-      </Link>
-    );
-  }
+function WhiteSpaceSeparator() {
+  return <div className="h-4" />;
 }
 
 export function Sidebar() {
@@ -102,7 +92,7 @@ export function Sidebar() {
               </SideBarElement>
             </div>
           )}
-          <Separator />
+          <WhiteSpaceSeparator />
           <SideBarElement
             href="/org/insights/clusters"
             icon={<Boxes size={16} className="mr-2" />}
@@ -121,7 +111,7 @@ export function Sidebar() {
           >
             Dataviz
           </SideBarElement>
-          <Separator />
+          <WhiteSpaceSeparator />
           <SideBarElement
             href="/org/ab-testing"
             icon={<Shuffle size={16} className="mr-2" />}
@@ -134,7 +124,7 @@ export function Sidebar() {
           >
             Tests
           </SideBarElement>
-          <Separator />
+          <WhiteSpaceSeparator />
           <SideBarElement
             href="/org/settings"
             icon={<Settings size={16} className="mr-2" />}
