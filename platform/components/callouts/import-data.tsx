@@ -195,9 +195,14 @@ export default function UploadDataset({
         following columns: <code>input</code>, <code>output</code>. Optionally,
         you can also include <code>session_id</code> and <code>created_at</code>{" "}
       </div>
+      <u>
+        <a href="/files/example_csv_phospho.csv" download="example_csv_phospho">
+          Download example CSV
+        </a>
+      </u>
       <CopyBlock
-        text={`input,output,task_id,session_id,created_at
-"What's the capital of France?","The capital of France is Paris",task_1,session_1,"2021-09-01 12:00:00"`}
+        text={`input;output;task_id;session_id;created_at
+"What's the capital of France?";"The capital of France is Paris";task_1;session_1;"2021-09-01 12:00:00"`}
         language={"text"}
         showLineNumbers={true}
         theme={dracula}

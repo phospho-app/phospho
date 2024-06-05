@@ -1,0 +1,4 @@
+input;output;task_id;session_id;created_at
+What's the capital of France?;The capital of France is Paris.;task_1;session_1;2024-05-31 12:00:00
+How tall is the Eiffel Tower?;The Eiffel Tower is 330 meters tall, tip included.;task_2;session_1;2024-05-31 12:24:00
+Where is the Louvre located?;The Louvre Museum is located in Paris.;task_3;session_2;2024-05-31 12:26:00
