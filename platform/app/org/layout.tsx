@@ -67,7 +67,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
           <h2 className="text-3xl font-semibold text-green-500 mb-4">
             phospho
           </h2>
-          <div className="text-center space-y-4 py-4 px-10 overflow-y-auto max-h-[calc(100vh-4rem)]">
+          <div className="text-center space-y-4 py-4 px-10 overflow-y-auto">
             <div className="text-3xl font-bold mb-10 flex items-center justify-center">
               <LucideSmartphone size={30} className="mr-2" />
               <p>Your screen is too narrow</p>
@@ -101,7 +101,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
           </div>
           <div className="grid grid-cols-8 gap-2 w-full h-full">
             <Sidebar />
-            <div className="space-y-4 py-4 px-10 col-span-7 overflow-y-auto max-h-[calc(100vh-4rem)]">
+            <div className="space-y-4 py-4 px-10 col-span-7 overflow-y-auto">
               {children}
               <div className="h-4"></div>
             </div>

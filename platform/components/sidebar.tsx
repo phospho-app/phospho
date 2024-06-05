@@ -41,17 +41,21 @@ function SideBarElement({
   const pathname = usePathname();
 
   return (
-    <Link href={href}>
-      <Button
-        variant={
-          pathname.startsWith(href) && !collapsible ? "secondary" : "ghost"
-        }
-        className="w-full justify-start h-min"
-      >
-        {icon}
-        {children}
-      </Button>
-    </Link>
+    <>
+      {(!pathname.startsWith(href) || collapsible) && (
+        <Link href={href}>
+          <Button variant={"ghost"} className="w-full justify-start h-min py-1">
+            {icon}
+            {children}
+          </Button>
+        </Link>
+      )}
+      {pathname.startsWith(href) && !collapsible && (
+        <div className="flex justify-start items-center bg-secondary rounded-md text-sm font-medium h-min px-4 py-1">
+          {icon} {children}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -64,10 +68,11 @@ export function Sidebar() {
     (state) => state.selectedOrgMetadata,
   );
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
 
   return (
     <>
-      <div className="relative flex-grow max-h-[calc(100vh-6rem)] flex flex-col border-r py-4 overflow-y-auto border-secondary">
+      <div className="relative flex-grow flex flex-col border-r py-4 overflow-y-auto border-secondary">
         <div>
           <SideBarElement
             href="/org/transcripts/"

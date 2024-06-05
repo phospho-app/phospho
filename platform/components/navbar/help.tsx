@@ -53,7 +53,7 @@ export function NavBarHelp() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-primary"
+                  className="text-muted-foreground hover:text-primary h-8 w-8"
                 >
                   {/* // Add a red dot on the top right of the help icon */}
                   <div className="relative h-6 w-6">

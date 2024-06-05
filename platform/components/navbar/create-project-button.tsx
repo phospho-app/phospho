@@ -22,7 +22,7 @@ export function CreateProjectButton() {
         <div>
           <HoverCard openDelay={50} closeDelay={50}>
             <HoverCardTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" className="py-1 h-8 w-8">
                 <PlusIcon className="h-4 w-4" />
               </Button>
             </HoverCardTrigger>

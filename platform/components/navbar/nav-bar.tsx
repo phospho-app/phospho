@@ -33,7 +33,7 @@ export function Navbar({
         className={cn("flex items-center space-x-4 lg:space-x-6", className)}
         {...props}
       >
-        <div className="container flex flex-row items-center justify-between space-y-1 py-2 sm:space-y-0">
+        <div className="container flex flex-row items-center justify-between space-y-1 py-1.5 sm:space-y-0">
           <div className="flex flex-row items-baseline align-items">
             <Link href="/">
               <h2 className="text-xl font-semibold text-green-500 flex-none">
