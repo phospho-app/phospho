@@ -35,7 +35,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
-import { CopyIcon, Lock, MonitorPlay, Plus, Upload, X } from "lucide-react";
+import {
+  BarChartBig,
+  CopyIcon,
+  Lock,
+  MonitorPlay,
+  Plus,
+  Upload,
+  X,
+} from "lucide-react";
 import { Unplug } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -634,6 +642,49 @@ export const SendDataCallout = () => {
                   </CardTitle>
                   <CardDescription className="flex justify-between">
                     <div>We'll show you how to get started</div>
+                  </CardDescription>
+                </div>
+                <AlertDialog open={open}>
+                  <AlertDialogTrigger>
+                    <Button
+                      variant="default"
+                      onClick={() => {
+                        setOpen(true);
+                      }}
+                    >
+                      Start sending data
+                    </Button>
+                  </AlertDialogTrigger>
+                  <SendDataAlertDialog setOpen={setOpen} />
+                </AlertDialog>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
+    </>
+  );
+};
+
+export const DatavizCallout = () => {
+  const hasTasks = dataStateStore((state) => state.hasTasks);
+
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <>
+      {hasTasks === false && (
+        <Card className="bg-secondary">
+          <CardHeader>
+            <div className="flex">
+              <BarChartBig className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+              <div className="flex flex-grow justify-between items-center">
+                <div>
+                  <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+                    Visualize your augmented data
+                  </CardTitle>
+                  <CardDescription className="flex justify-between">
+                    <div>Quickly make plots and graphs with your data</div>
                   </CardDescription>
                 </div>
                 <AlertDialog open={open}>

@@ -63,6 +63,9 @@ const Insights = ({ children }: { children: React.ReactNode }) => {
           <Link href="/org/transcripts/sessions">
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
           </Link>
+          <Link href="/org/transcripts/users">
+            <TabsTrigger value="users">Users</TabsTrigger>
+          </Link>
           <Link href="/org/transcripts/dashboard">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           </Link>
