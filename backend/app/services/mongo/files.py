@@ -125,9 +125,19 @@ async def process_file_upload_into_log_events(
     # session_id: if provided, concatenate with project_id to avoid collisions
     if "session_id" in tasks_df.columns:
         try:
-            tasks_df["session_id"] = tasks_df["session_id"].apply(
-                lambda x: f"{project_id}_{x}_{generate_uuid()}"
+            unique_sessions = tasks_df["session_id"].unique()
+            # Add a unique identifier to the session_id
+            new_unique_sessions = [
+                f"{project_id}_{session_id}_{generate_uuid()}"
+                for session_id in unique_sessions
+            ]
+            unique_sessions_df = pd.DataFrame(
+                {"session_id": unique_sessions, "new_session_id": new_unique_sessions}
             )
+            tasks_df = tasks_df.merge(unique_sessions_df, on="session_id", how="left")
+            tasks_df["session_id"] = tasks_df["new_session_id"]
+            tasks_df.drop("new_session_id", axis=1, inplace=True)
+
         except Exception as e:
             logger.error(f"Error concatenating session_id: {e}")
             tasks_df.drop("session_id", axis=1, inplace=True)
