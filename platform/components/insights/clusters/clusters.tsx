@@ -11,12 +11,11 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Cluster, Clustering } from "@/models/models";
+import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Play } from "lucide-react";
 import React from "react";
-import { useEffect } from "react";
 import useSWR from "swr";
 
 import { ClustersTable } from "./clusters-table";
@@ -37,24 +36,6 @@ const Clusters: React.FC = () => {
   if (clusteringsData) {
     latestClustering = clusteringsData?.clusterings[0];
   }
-
-  const {
-    data: clustersData,
-  }: {
-    data: Cluster[] | null | undefined;
-  } = useSWR(
-    project_id ? [`/api/explore/${project_id}/clusters`, accessToken] : null,
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        clustering_id: null, // latestClustering?.id,
-        limit: 100,
-      }).then((res) =>
-        res?.clusters.sort((a: Cluster, b: Cluster) => b.size - a.size),
-      ),
-    {
-      keepPreviousData: true,
-    },
-  );
 
   const maxCreatedAt = clusteringsData?.[0]?.created_at;
 
@@ -84,20 +65,18 @@ const Clusters: React.FC = () => {
                 onClick={async () => {
                   mutateClusterings((data: any) => {
                     // Add a new clustering to the list
-                    console.log("clustering data", data);
                     const newClustering: Clustering = {
                       id: "",
                       clustering_id: "",
                       project_id: project_id,
                       org_id: "",
-                      created_at: Date.now(),
+                      created_at: Date.now() / 1000,
                       status: "started",
                       clusters_ids: [],
                     };
                     const newData = {
                       clusterings: [newClustering, ...data?.clusterings],
                     };
-                    console.log("new clustering data", newData?.clusterings);
                     return newData;
                   });
                   try {
@@ -158,7 +137,7 @@ const Clusters: React.FC = () => {
         </CardHeader>
       </Card>
       <div className="h-full flex-1 flex-col space-y-2 md:flex ">
-        <ClustersTable clustersData={clustersData} />
+        <ClustersTable clusterings={clusteringsData?.clusterings} />
       </div>
     </>
   );
