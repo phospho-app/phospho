@@ -1,5 +1,6 @@
 "use client";
 
+import { DatavizCallout } from "@/components/callouts/import-data";
 import { DatePickerWithRange } from "@/components/date-range";
 import FilterComponent from "@/components/filters";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
   return (
     <>
       <div className="flex flex-col space-y-2">
+        <DatavizCallout />
         <div className="flex flex-row space-x-2 items-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -365,29 +367,6 @@ const MetadataForm: React.FC<{}> = ({}) => {
           </ResponsiveContainer>
         )}
       </div>
-      {hasTasks === false && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold tracking-tight">
-              Here is where you'd analyze your tasks. If you logged some.
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Start logging tasks to get the most out of Phospho. Pass metadata
-              to get custom insights.
-            </p>
-            <div className="flex flex-col justify-center items-center m-2">
-              <Link
-                href="https://docs.phospho.ai/getting-started"
-                target="_blank"
-              >
-                <Button variant="default">Get started</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </>
   );
 };

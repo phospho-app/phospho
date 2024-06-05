@@ -99,9 +99,9 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
           <div className="w-full">
             <Navbar />
           </div>
-          <div className="grid grid-cols-6 gap-2 w-full h-full">
+          <div className="grid grid-cols-8 gap-2 w-full h-full">
             <Sidebar />
-            <div className="space-y-4 py-4 px-10 col-span-5 overflow-y-auto max-h-[calc(100vh-4rem)]">
+            <div className="space-y-4 py-4 px-10 col-span-7 overflow-y-auto max-h-[calc(100vh-4rem)]">
               {children}
               <div className="h-4"></div>
             </div>
