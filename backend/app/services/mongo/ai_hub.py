@@ -13,8 +13,8 @@ from app.api.v2.models import (
     PredictRequest,
     PredictResponse,
     TrainRequest,
-    ClusteringRequest,
 )
+from app.api.platform.models import ClusteringRequest
 from app.core import config
 from app.services.mongo.files import process_and_save_examples
 from app.utils import generate_uuid

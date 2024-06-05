@@ -4,6 +4,13 @@ import { TableNavigation } from "@/components/table-navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -11,8 +18,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Cluster } from "@/models/models";
+import { authFetcher } from "@/lib/fetcher";
+import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
+import { Cluster, Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import {
   ColumnFiltersState,
   SortingState,
@@ -25,21 +35,51 @@ import {
 } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import React from "react";
+import useSWR from "swr";
 
 import { getColumns } from "./clusters-table-columns";
 
 interface DataTableProps<TData, TValue> {
-  clustersData: Cluster[] | null | undefined;
+  clusterings?: Clustering[];
 }
 
 export function ClustersTable<TData, TValue>({
-  clustersData,
+  clusterings = [],
 }: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
+  const { accessToken } = useUser();
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [filters, setFilters] = React.useState<ColumnFiltersState>([]);
   const router = useRouter();
+
+  let latestClustering = undefined;
+  if (clusterings.length > 0) {
+    console.log("clusterings", clusterings);
+    latestClustering = clusterings[0];
+  }
+
+  const [selectedClustering, setSelectedClustering] = React.useState<
+    Clustering | undefined
+  >(latestClustering);
+
+  const {
+    data: clustersData,
+  }: {
+    data: Cluster[] | null | undefined;
+  } = useSWR(
+    project_id ? [`/api/explore/${project_id}/clusters`, accessToken] : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        clustering_id: selectedClustering?.id,
+        limit: 100,
+      }).then((res) =>
+        res?.clusters.sort((a: Cluster, b: Cluster) => b.size - a.size),
+      ),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const columns = getColumns();
 
@@ -64,7 +104,45 @@ export function ClustersTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex flex-row gap-x-2 items-center mb-2 justify-end">
+      <div className="flex flex-row gap-x-2 items-center mb-2 justify-between">
+        <div>
+          <Select onValueChange={(value: string) => {}}>
+            <SelectTrigger>
+              <div>
+                {clusterings?.length > 0 && (
+                  <span>
+                    {formatUnixTimestampToLiteralDatetime(
+                      selectedClustering?.created_at ??
+                        latestClustering?.created_at ??
+                        0,
+                    )}
+                  </span>
+                )}
+                {clusterings?.length === 0 && (
+                  <span className="text-muted-foreground">
+                    No clustering available
+                  </span>
+                )}
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {clusterings.map((clustering) => (
+                  <SelectItem key={clustering.id} value={clustering.id}>
+                    {formatUnixTimestampToLiteralDatetime(
+                      clustering.created_at,
+                    )}
+                  </SelectItem>
+                ))}
+                {clusterings.length === 0 && (
+                  <SelectItem value="no-clustering">
+                    No clustering available
+                  </SelectItem>
+                )}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
         <TableNavigation table={table} />
       </div>
 

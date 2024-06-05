@@ -11,12 +11,11 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Cluster } from "@/models/models";
+import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Play } from "lucide-react";
 import React from "react";
-import { useEffect } from "react";
 import useSWR from "swr";
 
 import { ClustersTable } from "./clusters-table";
@@ -24,42 +23,21 @@ import { ClustersTable } from "./clusters-table";
 const Clusters: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
-  const [detectionRunTimestamp, setDetectionRunTimestamp] = React.useState<
-    number | null
-  >(null);
   const { toast } = useToast();
 
-  const {
-    data: clustersData,
-  }: {
-    data: Cluster[] | null | undefined;
-  } = useSWR(
-    [`/api/explore/${project_id}/clusters`, accessToken],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST").then((res) =>
-        res?.clusters.sort((a: Cluster, b: Cluster) => b.size - a.size),
-      ),
+  const { data: clusteringsData, mutate: mutateClusterings } = useSWR(
+    project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {
       keepPreviousData: true,
-      refreshInterval: detectionRunTimestamp ? 3 : 30,
     },
   );
+  let latestClustering = undefined;
+  if (clusteringsData) {
+    latestClustering = clusteringsData?.clusterings[0];
+  }
 
-  // if Cluster.created_at > detectionRunTimestamp, then set detectionRunTimestamp to null
-  const maxCreatedAt = clustersData?.reduce((acc, cluster) => {
-    return cluster.created_at > acc ? cluster.created_at : acc;
-  }, 0);
-  const lastUpdateLabel = maxCreatedAt ? new Date(maxCreatedAt * 1000) : null;
-
-  useEffect(() => {
-    if (
-      detectionRunTimestamp !== null &&
-      maxCreatedAt !== undefined &&
-      maxCreatedAt > detectionRunTimestamp
-    ) {
-      setDetectionRunTimestamp(null);
-    }
-  }, [maxCreatedAt, detectionRunTimestamp]);
+  const maxCreatedAt = latestClustering?.created_at;
 
   if (!project_id) {
     return <></>;
@@ -85,7 +63,22 @@ const Clusters: React.FC = () => {
               <Button
                 variant="default"
                 onClick={async () => {
-                  setDetectionRunTimestamp(Date.now() / 1000);
+                  mutateClusterings((data: any) => {
+                    // Add a new clustering to the list
+                    const newClustering: Clustering = {
+                      id: "",
+                      clustering_id: "",
+                      project_id: project_id,
+                      org_id: "",
+                      created_at: Date.now() / 1000,
+                      status: "started",
+                      clusters_ids: [],
+                    };
+                    const newData = {
+                      clusterings: [newClustering, ...data?.clusterings],
+                    };
+                    return newData;
+                  });
                   try {
                     await fetch(`/api/explore/${project_id}/detect-clusters`, {
                       method: "POST",
@@ -103,7 +96,6 @@ const Clusters: React.FC = () => {
                           title: "Error when starting detection",
                           description: response.text(),
                         });
-                        setDetectionRunTimestamp(null);
                       }
                     });
                   } catch (e) {
@@ -111,23 +103,28 @@ const Clusters: React.FC = () => {
                       title: "Error when starting detection",
                       description: JSON.stringify(e),
                     });
-                    setDetectionRunTimestamp(null);
                   }
                 }}
-                disabled={detectionRunTimestamp !== null}
+                disabled={
+                  latestClustering?.status !== "completed" &&
+                  latestClustering?.status !== undefined
+                }
               >
-                {detectionRunTimestamp === null && (
+                {(latestClustering?.status === "completed" ||
+                  latestClustering?.status === undefined) && (
                   <>
                     <Play className="w-4 h-4 mr-2 text-green-500" /> Run cluster
                     detection
                   </>
                 )}
-                {detectionRunTimestamp !== null && (
-                  <>
-                    <Spinner className="mr-1" />
-                    Detection in progress...
-                  </>
-                )}
+                {latestClustering &&
+                  latestClustering?.status !== "completed" &&
+                  latestClustering?.status !== undefined && (
+                    <>
+                      <Spinner className="mr-1" />
+                      Detection in progress: {latestClustering?.status}...
+                    </>
+                  )}
               </Button>
               <div className="text-muted-foreground text-xs">
                 Last update:{" "}
@@ -140,7 +137,7 @@ const Clusters: React.FC = () => {
         </CardHeader>
       </Card>
       <div className="h-full flex-1 flex-col space-y-2 md:flex ">
-        <ClustersTable clustersData={clustersData} />
+        <ClustersTable clusterings={clusteringsData?.clusterings} />
       </div>
     </>
   );

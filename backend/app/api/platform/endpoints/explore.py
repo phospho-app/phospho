@@ -1,48 +1,50 @@
 import datetime
 from typing import List, Optional
-from app.api.v2.models.clustering import ClusteringRequest
-from app.security.authorization import get_quota
-from app.services.mongo.ai_hub import clustering
-from app.services.mongo.extractor import bill_on_stripe
-from app.services.mongo.tasks import get_total_nb_of_tasks
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
-from phospho.models import Cluster
 from propelauth_fastapi import User
 
 from app.api.platform.models import (
-    AggregateMetricsRequest,
-    ProjectDataFilters,
-    Events,
     ABTests,
+    AggregateMetricsRequest,
+    Cluster,
+    Clusterings,
     Clusters,
-    EventsMetricsFilter,
     DashboardMetricsFilter,
     DetectClustersRequest,
+    Events,
+    FetchClustersRequest,
+    ProjectDataFilters,
+    ClusteringRequest,
 )
-from app.services.mongo.events import get_event_definition_from_event_id
-from app.security.authentification import propelauth
+from app.core import config
 from app.security import verify_if_propelauth_user_can_access_project
+from app.security.authentification import propelauth
+from app.security.authorization import get_quota
+from app.services.mongo.ai_hub import clustering
+from app.services.mongo.events import get_event_definition_from_event_id
 from app.services.mongo.explore import (
-    deprecated_get_dashboard_aggregated_metrics,
-    fetch_single_cluster,
-    get_sessions_aggregated_metrics,
-    get_tasks_aggregated_metrics,
-    get_events_aggregated_metrics,
-    project_has_tasks,
-    project_has_sessions,
-    project_has_enough_labelled_tasks,
-    create_ab_tests_table,
-    fetch_all_clusters,
-    nb_items_with_a_metadata_field,
     compute_nb_items_with_metadata_field,
     compute_session_length_per_metadata,
     compute_successrate_metadata_quantiles,
+    create_ab_tests_table,
+    deprecated_get_dashboard_aggregated_metrics,
+    fetch_all_clusterings,
+    fetch_all_clusters,
+    fetch_single_cluster,
     get_dashboard_aggregated_metrics,
+    get_events_aggregated_metrics,
+    get_sessions_aggregated_metrics,
+    get_tasks_aggregated_metrics,
+    nb_items_with_a_metadata_field,
+    project_has_enough_labelled_tasks,
+    project_has_sessions,
+    project_has_tasks,
 )
+from app.services.mongo.extractor import bill_on_stripe
 from app.services.mongo.projects import get_all_events
-from app.core import config
-
+from app.services.mongo.tasks import get_total_nb_of_tasks
 
 router = APIRouter(tags=["Explore"])
 
@@ -289,12 +291,32 @@ async def get_ab_tests(
 
 
 @router.post(
+    "/explore/{project_id}/clusterings",
+    response_model=Clusterings,
+    description="Get the all the clusterings of a project",
+)
+async def post_all_clusterings(
+    project_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> Clusterings:
+    """
+    Get all the clusterings of a project.
+
+    Clusterings are groups of clusters.
+    """
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    clusterings = await fetch_all_clusterings(project_id=project_id)
+    return Clusterings(clusterings=clusterings)
+
+
+@router.post(
     "/explore/{project_id}/clusters",
     response_model=Clusters,
     description="Get the different clusters of a project",
 )
 async def post_all_clusters(
     project_id: str,
+    query: Optional[FetchClustersRequest] = None,
     user: User = Depends(propelauth.require_user),
 ) -> Clusters:
     """
@@ -303,7 +325,13 @@ async def post_all_clusters(
     Clusters are groups of tasks.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    clusters = await fetch_all_clusters(project_id=project_id)
+    if query is None:
+        query = FetchClustersRequest()
+    clusters = await fetch_all_clusters(
+        project_id=project_id,
+        clustering_id=query.clustering_id,
+        limit=query.limit,
+    )
     return Clusters(clusters=clusters)
 
 
