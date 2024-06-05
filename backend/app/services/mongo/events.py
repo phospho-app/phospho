@@ -95,11 +95,19 @@ async def run_event_detection_on_timeframe(
         )
         return
     recipe = await get_recipe_by_id(recipe_id=event_definition.recipe_id)
+    if event_backfill_request.created_at_end is not None:
+        event_backfill_request.created_at_end = round(
+            event_backfill_request.created_at_end
+        )
+    if event_backfill_request.created_at_start is not None:
+        event_backfill_request.created_at_start = round(
+            event_backfill_request.created_at_start
+        )
     tasks = await get_all_tasks(
         project_id=project_id,
         filters=ProjectDataFilters(
-            created_at_start=round(event_backfill_request.created_at_start),
-            created_at_end=round(event_backfill_request.created_at_end),
+            created_at_start=event_backfill_request.created_at_start,
+            created_at_end=event_backfill_request.created_at_end,
         ),
         sample_rate=event_backfill_request.sample_rate,
     )
