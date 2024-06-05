@@ -385,7 +385,7 @@ async def process_log_with_session_id(
 
     mongo_db = await get_mongo_db()
 
-    sessions_id_already_in_db = (
+    sessions_ids_already_in_db = (
         await mongo_db["sessions"]
         .aggregate(
             [
@@ -403,8 +403,8 @@ async def process_log_with_session_id(
         )
         .to_list(length=len(list_of_log_event))
     )
-    sessions_id_already_in_db = [
-        str(session["id"]) for session in sessions_id_already_in_db
+    sessions_ids_already_in_db = [
+        str(session["id"]) for session in sessions_ids_already_in_db
     ]
 
     for log_event in list_of_log_event:
@@ -412,13 +412,17 @@ async def process_log_with_session_id(
             log_event.project_id = project_id
 
         # Only create a new session if the session doesn't exist in db
-        existing_session = log_event.session_id in sessions_id_already_in_db
+        session_is_in_db = log_event.session_id in sessions_ids_already_in_db
 
         session_project_id = project_id
         if log_event.project_id is not None:
             session_project_id = log_event.project_id
 
-        if not existing_session and log_event.session_id is not None:
+        if (
+            log_event.session_id is not None
+            and not session_is_in_db
+            and log_event.session_id not in sessions_to_create.keys()
+        ):
             # Add to sessions to create
             session_data: Dict[str, Any] = {
                 "id": log_event.session_id,
@@ -426,21 +430,26 @@ async def process_log_with_session_id(
                 # Note: there is no metadata and data
                 "metadata": {},
                 "data": {},
+                "session_length": 1,
             }
             # The sessions will be created later, once we know the earliest task creation time
             sessions_to_create[log_event.session_id] = session_data
+        elif (
+            log_event.session_id is not None
+            and log_event.session_id in sessions_to_create.keys()
+        ):
+            # Increment the session length of the session to create
+            sessions_to_create[log_event.session_id]["session_length"] += 1
+        elif log_event.session_id is not None and session_is_in_db:
+            # Increment the session length in the database
+            await mongo_db["sessions"].update_one(
+                {"id": log_event.session_id},
+                {"$inc": {"session_length": 1}},
+            )
         else:
-            if log_event.session_id is not None:
-                # Fetch the session data from the database and increment the session length
-                if log_event.session_id is not None:
-                    await mongo_db["sessions"].update_one(
-                        {"id": log_event.session_id},
-                        {"$inc": {"session_length": 1}},
-                    )
-            else:
-                logger.info(
-                    "Log event: session with no session_id, skipping session creation"
-                )
+            logger.info(
+                "Log event: session with no session_id, skipping session creation"
+            )
 
         task = create_task_from_logevent(
             org_id=org_id,
@@ -482,10 +491,9 @@ async def process_log_with_session_id(
             #     f"Logevent: creating session with session_id {session_id} from log event"
             # )
             # Verify if the session already exists
-            existing_session = session_id in sessions_id_already_in_db
-            if existing_session:
-                # Fetch the session data from the database and increment the session length
-
+            session_is_in_db = session_id in sessions_ids_already_in_db
+            if session_is_in_db:
+                # Increment the session length in the database
                 await mongo_db["sessions"].update_one(
                     {"id": session_id},
                     {"$inc": {"session_length": 1}},
@@ -499,7 +507,7 @@ async def process_log_with_session_id(
                     metadata=session_data["metadata"],
                     data=session_data["data"],
                     preview=sessions_to_earliest_task[session_id].preview(),
-                    session_length=1,
+                    session_length=session_data["session_length"],
                 )
                 sessions_to_create_dump.append(session.model_dump())
 
