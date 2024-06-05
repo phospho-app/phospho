@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader } from "./ui/card";
 import UpgradeButton from "./upgrade-button";
@@ -68,6 +68,22 @@ export function Sidebar() {
     (state) => state.selectedOrgMetadata,
   );
   const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      // Update the state based on the window width
+      setIsMobile(window.innerWidth < 768); // Adjust the threshold according to your design
+    };
+    // Set the initial state
+    handleResize();
+    // Add event listener for window resize
+    window.addEventListener("resize", handleResize);
+    // Clean up the event listener when the component is unmounted
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col py-4 overflow-y-auto border-secondary h-full">
@@ -79,7 +95,7 @@ export function Sidebar() {
         >
           Transcripts
         </SideBarElement>
-        {pathname.startsWith("/org/transcripts") && (
+        {(pathname.startsWith("/org/transcripts") || isMobile) && (
           <div className="ml-6 text-muted-foreground">
             <SideBarElement href="/org/transcripts/tasks">Tasks</SideBarElement>
             <SideBarElement href="/org/transcripts/sessions">
