@@ -68,101 +68,94 @@ export function Sidebar() {
     (state) => state.selectedOrgMetadata,
   );
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
 
   return (
-    <>
-      <div className="relative flex-grow flex flex-col border-r py-4 overflow-y-auto border-secondary">
-        <div>
-          <SideBarElement
-            href="/org/transcripts/"
-            icon={<BookOpenText size={16} className="mr-2" />}
-            collapsible={true}
-          >
-            Transcripts
-          </SideBarElement>
-          {pathname.startsWith("/org/transcripts") && (
-            <div className="ml-6 text-muted-foreground">
-              <SideBarElement href="/org/transcripts/tasks">
-                Tasks
-              </SideBarElement>
-              <SideBarElement href="/org/transcripts/sessions">
-                Sessions
-              </SideBarElement>
-              <SideBarElement href="/org/transcripts/users">
-                Users
-              </SideBarElement>
-              <SideBarElement href="/org/transcripts/dashboard">
-                Dashboard
-              </SideBarElement>
-            </div>
-          )}
-          <WhiteSpaceSeparator />
-          <SideBarElement
-            href="/org/insights/clusters"
-            icon={<Boxes size={16} className="mr-2" />}
-          >
-            Clusters
-          </SideBarElement>
-          <SideBarElement
-            href="/org/insights/events"
-            icon={<TextSearch size={16} className="mr-2" />}
-          >
-            Events
-          </SideBarElement>
-          <SideBarElement
-            href="/org/insights/dataviz"
-            icon={<BarChartBig size={16} className="mr-2" />}
-          >
-            Dataviz
-          </SideBarElement>
-          <WhiteSpaceSeparator />
-          <SideBarElement
-            href="/org/ab-testing"
-            icon={<Shuffle size={16} className="mr-2" />}
-          >
-            AB Testing
-          </SideBarElement>
-          <SideBarElement
-            href="/org/tests"
-            icon={<TestTubeDiagonal size={16} className="mr-2" />}
-          >
-            Tests
-          </SideBarElement>
-          <WhiteSpaceSeparator />
-          <SideBarElement
-            href="/org/settings"
-            icon={<Settings size={16} className="mr-2" />}
-          >
-            Settings
-          </SideBarElement>
-        </div>
-
-        <div className="flex justify-center mx-2 mb-4 mt-4">
-          {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
-            <Card>
-              <CardContent className="flex justify-center mb-0">
-                <div>
-                  <div className="flex items-baseline">
-                    <Sparkles className="h-4 w-4 text-green-500 mr-1" />
-                    <h2 className="font-semibold mt-4 mb-1">Complete setup</h2>
-                  </div>
-                  <p className="mb-2 text-sm">
-                    Enable automatic evaluation and event detection
-                  </p>
-                  <div className="flex justify-center">
-                    <UpgradeButton
-                      tagline="Add payment method"
-                      enlarge={false}
-                      green={false}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+    <div className="flex flex-col border-r py-4 overflow-y-auto border-secondary h-full">
+      <div>
+        <SideBarElement
+          href="/org/transcripts/"
+          icon={<BookOpenText size={16} className="mr-2" />}
+          collapsible={true}
+        >
+          Transcripts
+        </SideBarElement>
+        {pathname.startsWith("/org/transcripts") && (
+          <div className="ml-6 text-muted-foreground">
+            <SideBarElement href="/org/transcripts/tasks">Tasks</SideBarElement>
+            <SideBarElement href="/org/transcripts/sessions">
+              Sessions
+            </SideBarElement>
+            <SideBarElement href="/org/transcripts/users">Users</SideBarElement>
+            <SideBarElement href="/org/transcripts/dashboard">
+              Dashboard
+            </SideBarElement>
+          </div>
+        )}
+        <WhiteSpaceSeparator />
+        <SideBarElement
+          href="/org/insights/clusters"
+          icon={<Boxes size={16} className="mr-2" />}
+        >
+          Clusters
+        </SideBarElement>
+        <SideBarElement
+          href="/org/insights/events"
+          icon={<TextSearch size={16} className="mr-2" />}
+        >
+          Events
+        </SideBarElement>
+        <SideBarElement
+          href="/org/insights/dataviz"
+          icon={<BarChartBig size={16} className="mr-2" />}
+        >
+          Dataviz
+        </SideBarElement>
+        <WhiteSpaceSeparator />
+        <SideBarElement
+          href="/org/ab-testing"
+          icon={<Shuffle size={16} className="mr-2" />}
+        >
+          AB Testing
+        </SideBarElement>
+        <SideBarElement
+          href="/org/tests"
+          icon={<TestTubeDiagonal size={16} className="mr-2" />}
+        >
+          Tests
+        </SideBarElement>
+        <WhiteSpaceSeparator />
+        <SideBarElement
+          href="/org/settings"
+          icon={<Settings size={16} className="mr-2" />}
+        >
+          Settings
+        </SideBarElement>
       </div>
-    </>
+
+      {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
+        <div className="flex justify-center mx-2 mb-4 mt-4">
+          <Card>
+            <CardContent className="flex justify-center mb-0">
+              <div>
+                <div className="flex items-baseline">
+                  <Sparkles className="h-4 w-4 text-green-500 mr-1" />
+                  <h2 className="font-semibold mt-4 mb-1">Complete setup</h2>
+                </div>
+                <p className="mb-2 text-sm">
+                  Enable automatic evaluation and event detection
+                </p>
+                <div className="flex justify-center">
+                  <UpgradeButton
+                    tagline="Add payment method"
+                    enlarge={false}
+                    green={false}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 }

@@ -4,10 +4,8 @@ import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
 import FetchHasTasksSessions from "@/components/fetch-data/fetch-tasks-sessions";
 import Navbar from "@/components/navbar/nav-bar";
 import { Sidebar } from "@/components/sidebar";
-import { Button } from "@/components/ui/button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
-import { LucideSmartphone } from "lucide-react";
-import Link from "next/link";
+import "@radix-ui/react-dropdown-menu";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
@@ -42,53 +40,53 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
     }
   }
 
-  useEffect(() => {
-    const handleResize = () => {
-      // Update the state based on the window width
-      setIsMobile(window.innerWidth < 600); // Adjust the threshold according to your design
-    };
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     // Update the state based on the window width
+  //     setIsMobile(window.innerWidth < 600); // Adjust the threshold according to your design
+  //   };
 
-    // Set the initial state
-    handleResize();
+  //   // Set the initial state
+  //   handleResize();
 
-    // Add event listener for window resize
-    window.addEventListener("resize", handleResize);
+  //   // Add event listener for window resize
+  //   window.addEventListener("resize", handleResize);
 
-    // Clean up the event listener when the component is unmounted
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
+  //   // Clean up the event listener when the component is unmounted
+  //   return () => {
+  //     window.removeEventListener("resize", handleResize);
+  //   };
+  // }, []);
 
-  if (isMobile) {
-    return (
-      <>
-        <div className="flex flex-col items-center justify-center h-screen">
-          <h2 className="text-3xl font-semibold text-green-500 mb-4">
-            phospho
-          </h2>
-          <div className="text-center space-y-4 py-4 px-10 overflow-y-auto">
-            <div className="text-3xl font-bold mb-10 flex items-center justify-center">
-              <LucideSmartphone size={30} className="mr-2" />
-              <p>Your screen is too narrow</p>
-            </div>
-            <p className="text-xl">
-              Switch your mobile browser to desktop mode or use a computer to
-              access phospho
-            </p>
-            <div className="text-muted-foreground items-center flex flex-col">
-              <p>Are you a frontend developer?</p>
-              <div>
-                <Link href="mailto:contact@phospho.app">
-                  <Button variant="outline">Help us out!</Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
+  // if (isMobile) {
+  //   return (
+  //     <>
+  //       <div className="flex flex-col items-center justify-center h-screen">
+  //         <h2 className="text-3xl font-semibold text-green-500 mb-4">
+  //           phospho
+  //         </h2>
+  //         <div className="text-center space-y-4 py-4 px-10 overflow-y-auto">
+  //           <div className="text-3xl font-bold mb-10 flex items-center justify-center">
+  //             <LucideSmartphone size={30} className="mr-2" />
+  //             <p>Your screen is too narrow</p>
+  //           </div>
+  //           <p className="text-xl">
+  //             Switch your mobile browser to desktop mode or use a computer to
+  //             access phospho
+  //           </p>
+  //           <div className="text-muted-foreground items-center flex flex-col">
+  //             <p>Are you a frontend developer?</p>
+  //             <div>
+  //               <Link href="mailto:contact@phospho.app">
+  //                 <Button variant="outline">Help us out!</Button>
+  //               </Link>
+  //             </div>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </>
+  //   );
+  // }
 
   return (
     <section>
@@ -98,8 +96,10 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
         <div className="h-full">
           <Navbar />
           <div className="grid grid-cols-8 gap-2 w-full h-full">
-            <Sidebar />
-            <div className="space-y-4 py-4 px-10 col-span-7 overflow-y-auto">
+            <div className="hidden md:block">
+              <Sidebar />
+            </div>
+            <div className="space-y-4 py-4 px-4 col-span-8 md:col-span-7 overflow-y-auto">
               {children}
               <div className="h-4"></div>
             </div>
