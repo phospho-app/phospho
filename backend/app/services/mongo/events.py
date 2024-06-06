@@ -1,5 +1,7 @@
+from app.api.platform.models.explore import Pagination
 from app.db.models import EventDefinition, Recipe
 from app.db.mongo import get_mongo_db
+from app.services.mongo.tasks import get_total_nb_of_tasks
 from fastapi import HTTPException
 from loguru import logger
 from app.services.mongo.extractor import run_recipe_on_tasks
@@ -103,13 +105,30 @@ async def run_event_detection_on_timeframe(
         event_backfill_request.created_at_start = round(
             event_backfill_request.created_at_start
         )
-    tasks = await get_all_tasks(
-        project_id=project_id,
-        filters=ProjectDataFilters(
-            created_at_start=event_backfill_request.created_at_start,
-            created_at_end=event_backfill_request.created_at_end,
-        ),
-        sample_rate=event_backfill_request.sample_rate,
+
+    filters = ProjectDataFilters(
+        created_at_start=event_backfill_request.created_at_start,
+        created_at_end=event_backfill_request.created_at_end,
     )
-    await run_recipe_on_tasks(tasks=tasks, recipe=recipe, org_id=org_id)
+    total_nb_tasks = await get_total_nb_of_tasks(
+        project_id=project_id,
+        filters=filters,
+    )
+    if event_backfill_request.sample_rate is not None:
+        sample_size = int(total_nb_tasks * event_backfill_request.sample_rate)
+    else:
+        sample_size = total_nb_tasks
+
+    # Batch the tasks to avoid memory issues
+    batch_size = 256
+    nb_batches = sample_size // batch_size
+
+    for i in range(nb_batches + 1):
+        tasks = await get_all_tasks(
+            project_id=project_id,
+            filters=filters,
+            pagination=Pagination(page=i, per_page=batch_size),
+        )
+        await run_recipe_on_tasks(tasks=tasks, recipe=recipe, org_id=org_id)
+
     return None
