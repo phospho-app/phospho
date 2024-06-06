@@ -82,6 +82,9 @@ export function ClustersTable<TData, TValue>({
       }).then((res) =>
         res?.clusters.sort((a: Cluster, b: Cluster) => b.size - a.size),
       ),
+    {
+      keepPreviousData: true,
+    },
   );
 
   const columns = getColumns();
@@ -109,7 +112,13 @@ export function ClustersTable<TData, TValue>({
     <div>
       <div className="flex flex-row gap-x-2 items-center mb-2 justify-between">
         <div>
-          <Select onValueChange={(value: string) => {}}>
+          <Select
+            onValueChange={(value: string) => {
+              setSelectedClustering(
+                clusterings.find((clustering) => clustering.id === value),
+              );
+            }}
+          >
             <SelectTrigger>
               <div>
                 {clusterings?.length > 0 && (
