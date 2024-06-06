@@ -136,6 +136,12 @@ async def connect_and_init_db():
             )
 
             try:
+                # if the view exists, delete it
+                if (
+                    "sessions_with_events"
+                    in await mongo_db[MONGODB_NAME].list_collection_names()
+                ):
+                    await mongo_db[MONGODB_NAME]["sessions_with_events"].drop()
                 await mongo_db[MONGODB_NAME].command(
                     {
                         "create": "sessions_with_events",
@@ -160,12 +166,45 @@ async def connect_and_init_db():
                                     }
                                 }
                             },
+                            # Remove duplicates
+                            {
+                                "$set": {
+                                    "events": {
+                                        "$reduce": {
+                                            "input": "$events",
+                                            "initialValue": [],
+                                            "in": {
+                                                "$concatArrays": [
+                                                    "$$value",
+                                                    {
+                                                        "$cond": [
+                                                            {
+                                                                "$in": [
+                                                                    "$$this.event_definition.id",
+                                                                    "$$value.event_definition.id",
+                                                                ]
+                                                            },
+                                                            [],
+                                                            ["$$this"],
+                                                        ]
+                                                    },
+                                                ]
+                                            },
+                                        }
+                                    },
+                                }
+                            },
                         ],
                     }
                 )
             except Exception as e:
                 logger.info("sessions_with_events already exists")
             try:
+                if (
+                    "tasks_with_events"
+                    in await mongo_db[MONGODB_NAME].list_collection_names()
+                ):
+                    await mongo_db[MONGODB_NAME]["tasks_with_events"].drop()
                 await mongo_db[MONGODB_NAME].command(
                     {
                         "create": "tasks_with_events",
@@ -188,6 +227,33 @@ async def connect_and_init_db():
                                             "cond": {"$ne": ["$$event.removed", True]},
                                         }
                                     }
+                                }
+                            },
+                            {
+                                "$set": {
+                                    "events": {
+                                        "$reduce": {
+                                            "input": "$events",
+                                            "initialValue": [],
+                                            "in": {
+                                                "$concatArrays": [
+                                                    "$$value",
+                                                    {
+                                                        "$cond": [
+                                                            {
+                                                                "$in": [
+                                                                    "$$this.event_definition.id",
+                                                                    "$$value.event_definition.id",
+                                                                ]
+                                                            },
+                                                            [],
+                                                            ["$$this"],
+                                                        ]
+                                                    },
+                                                ]
+                                            },
+                                        }
+                                    },
                                 }
                             },
                         ],

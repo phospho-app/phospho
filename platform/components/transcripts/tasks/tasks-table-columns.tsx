@@ -127,16 +127,16 @@ export function getColumns({
 
   const columns: ColumnDef<TaskWithEvents>[] = [
     // id
-    {
-      header: ({ column }) => {
-        return <></>;
-      },
-      accessorKey: "id",
-      cell: ({ row }) => {
-        return <></>;
-      },
-      enableHiding: true,
-    },
+    // {
+    //   header: ({ column }) => {
+    //     return <></>;
+    //   },
+    //   accessorKey: "id",
+    //   cell: ({ row }) => {
+    //     return <></>;
+    //   },
+    //   enableHiding: true,
+    // },
     // Date
     {
       header: ({ column }) => {
@@ -402,6 +402,7 @@ export function getColumns({
           </HoverCardContent>
         </HoverCard>
       ),
+      maxSize: 10,
     },
     // Sentiment Analysis
     {
@@ -444,6 +445,7 @@ export function getColumns({
           </div>
         );
       },
+      maxSize: 10,
     },
     {
       header: "Input",
@@ -459,8 +461,8 @@ export function getColumns({
               className="text-left"
             >
               {input
-                ? input.length > 50
-                  ? input.substring(0, 50) + "..."
+                ? input.length > 80
+                  ? input.substring(0, 80) + "..."
                   : input
                 : "-"}
             </PopoverTrigger>
@@ -468,6 +470,7 @@ export function getColumns({
           </Popover>
         );
       },
+      minSize: 100,
     },
     {
       header: "Output",
@@ -483,8 +486,8 @@ export function getColumns({
               className="text-left"
             >
               {output
-                ? output.length > 50
-                  ? output.substring(0, 50) + "..."
+                ? output.length > 80
+                  ? output.substring(0, 80) + "..."
                   : output
                 : "-"}
             </PopoverTrigger>
@@ -492,6 +495,7 @@ export function getColumns({
           </Popover>
         );
       },
+      minSize: 100,
     },
     {
       header: "",
