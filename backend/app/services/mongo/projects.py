@@ -324,7 +324,6 @@ async def get_all_tasks(
     limit: Optional[int] = None,
     pagination: Optional[Pagination] = None,
     sorting: Optional[List[Sorting]] = None,
-    sample_rate: Optional[float] = None,
 ) -> List[Task]:
     """
     Get all the tasks of a project.
@@ -403,46 +402,6 @@ async def get_all_tasks(
             {"$replaceRoot": {"newRoot": "$tasks"}},
         ]
     )
-
-    # Deduplicate events names. We want the unique event_names of the task
-    pipeline.append(
-        {
-            "$addFields": {
-                "events": {
-                    "$reduce": {
-                        "input": "$events",
-                        "initialValue": [],
-                        "in": {
-                            "$concatArrays": [
-                                "$$value",
-                                {
-                                    "$cond": [
-                                        {
-                                            "$in": [
-                                                "$$this.event_name",
-                                                "$$value.event_name",
-                                            ]
-                                        },
-                                        [],
-                                        ["$$this"],
-                                    ]
-                                },
-                            ]
-                        },
-                    }
-                }
-            }
-        },
-    )
-
-    if sample_rate is not None:
-        total_nb_tasks = await get_total_nb_of_tasks(
-            project_id=project_id,
-            filters=filters,
-        )
-        if total_nb_tasks is not None:
-            sample_size = int(total_nb_tasks * sample_rate)
-            pipeline.append({"$sample": {"size": sample_size}})
 
     tasks = await mongo_db[collection].aggregate(pipeline).to_list(length=limit)
 
