@@ -180,8 +180,8 @@ async def connect_and_init_db():
                                                         "$cond": [
                                                             {
                                                                 "$in": [
-                                                                    "$$this.event_name",
-                                                                    "$$value.event_name",
+                                                                    "$$this.event_definition.id",
+                                                                    "$$value.event_definition.id",
                                                                 ]
                                                             },
                                                             [],
@@ -242,8 +242,8 @@ async def connect_and_init_db():
                                                         "$cond": [
                                                             {
                                                                 "$in": [
-                                                                    "$$this.event_name",
-                                                                    "$$value.event_name",
+                                                                    "$$this.event_definition.id",
+                                                                    "$$value.event_definition.id",
                                                                 ]
                                                             },
                                                             [],
