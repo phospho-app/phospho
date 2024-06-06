@@ -30,6 +30,8 @@ const Clusters: React.FC = () => {
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {
       keepPreviousData: true,
+      revalidateIfStale: false,
+      refreshInterval: 10,
     },
   );
   let latestClustering = undefined;
@@ -121,7 +123,6 @@ const Clusters: React.FC = () => {
                 )}
                 {latestClustering &&
                   latestClustering?.status !== "completed" &&
-                  latestClustering?.status !== null &&
                   latestClustering?.status !== undefined && (
                     <>
                       <Spinner className="mr-1" />
