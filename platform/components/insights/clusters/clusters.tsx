@@ -107,10 +107,12 @@ const Clusters: React.FC = () => {
                 }}
                 disabled={
                   latestClustering?.status !== "completed" &&
+                  latestClustering?.status !== null &&
                   latestClustering?.status !== undefined
                 }
               >
                 {(latestClustering?.status === "completed" ||
+                  latestClustering?.status === null ||
                   latestClustering?.status === undefined) && (
                   <>
                     <Play className="w-4 h-4 mr-2 text-green-500" /> Run cluster
@@ -119,6 +121,7 @@ const Clusters: React.FC = () => {
                 )}
                 {latestClustering &&
                   latestClustering?.status !== "completed" &&
+                  latestClustering?.status !== null &&
                   latestClustering?.status !== undefined && (
                     <>
                       <Spinner className="mr-1" />
