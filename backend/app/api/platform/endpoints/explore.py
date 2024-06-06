@@ -567,11 +567,13 @@ async def get_event_detection_metrics(
 
     # Override the event_name filter
     # TODO : Use event_id instead of event_name
-    filters.event_name = [event.event_name]
+    # filters.event_id = [event.id]
+    filters.event_id = [event.id]
 
     output = await get_events_aggregated_metrics(
         project_id=project_id,
         metrics=metrics,
         filters=filters,
     )
+    logger.info(f"Event output: {output}")
     return output
