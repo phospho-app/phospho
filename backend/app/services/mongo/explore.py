@@ -1635,9 +1635,7 @@ async def get_success_rate_by_event_name(
 
 async def get_total_nb_of_detections(
     project_id: str,
-    event_name: Optional[List[str]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
+    filters: ProjectDataFilters,
     **kwargs,
 ) -> int:
     """
@@ -1647,12 +1645,12 @@ async def get_total_nb_of_detections(
     mongo_db = await get_mongo_db()
     main_filter: Dict[str, object] = {"project_id": project_id}
     # Time range filter
-    if created_at_start is not None:
-        main_filter["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
-        main_filter["created_at"] = {"$lte": created_at_end}
-    if event_name is not None:
-        main_filter["job_metadata.event_name"] = {"$in": event_name}
+    if filters.created_at_start is not None:
+        main_filter["created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
+        main_filter["created_at"] = {"$lte": filters.created_at_end}
+    if filters.event_id is not None:
+        main_filter["job_metadata.id"] = {"$in": filters.event_id}
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
         {"$count": "nb_detections"},

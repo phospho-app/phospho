@@ -62,7 +62,9 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                 <CardDescription>Total Nb of detections</CardDescription>
               </CardHeader>
               <CardContent>
-                {(!totalNbDetections?.total_nb_events && <p>...</p>) || (
+                {(totalNbDetections?.total_nb_events === undefined && (
+                  <p>...</p>
+                )) || (
                   <p className="text-xl">
                     {totalNbDetections?.total_nb_events}
                   </p>
