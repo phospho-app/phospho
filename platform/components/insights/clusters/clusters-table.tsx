@@ -114,10 +114,15 @@ export function ClustersTable<TData, TValue>({
         <div>
           <Select
             onValueChange={(value: string) => {
+              if (value === "no-clustering") {
+                setSelectedClustering(undefined);
+                return;
+              }
               setSelectedClustering(
                 clusterings.find((clustering) => clustering.id === value),
               );
             }}
+            defaultValue={selectedClustering?.id ?? "no-clustering"}
           >
             <SelectTrigger>
               <div>

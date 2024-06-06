@@ -48,6 +48,7 @@ async def get_event_from_name_and_project_id(
     """
     Utility function to get an event from a given project_id and event_name
     """
+
     mongo_db = await get_mongo_db()
     event_definition = (
         await mongo_db["projects"]
