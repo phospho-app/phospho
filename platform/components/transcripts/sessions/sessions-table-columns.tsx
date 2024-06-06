@@ -36,21 +36,21 @@ export function getColumns({
   // Create the columns for the data table
   const columns: ColumnDef<SessionWithEvents>[] = [
     // id
-    {
-      filterFn: (row, id, filterValue) => {
-        // if is in the filtervalue
-        if (filterValue === null) return true;
-        return filterValue.includes(row.original.id);
-      },
-      header: ({ column }) => {
-        return <></>;
-      },
-      accessorKey: "id",
-      cell: ({ row }) => {
-        return <></>;
-      },
-      enableHiding: true,
-    },
+    // {
+    //   filterFn: (row, id, filterValue) => {
+    //     // if is in the filtervalue
+    //     if (filterValue === null) return true;
+    //     return filterValue.includes(row.original.id);
+    //   },
+    //   header: ({ column }) => {
+    //     return <></>;
+    //   },
+    //   accessorKey: "id",
+    //   cell: ({ row }) => {
+    //     return <></>;
+    //   },
+    //   enableHiding: true,
+    // },
     // Date
     {
       header: ({ column }) => {
