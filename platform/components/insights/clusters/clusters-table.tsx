@@ -68,7 +68,13 @@ export function ClustersTable<TData, TValue>({
   }: {
     data: Cluster[] | null | undefined;
   } = useSWR(
-    project_id ? [`/api/explore/${project_id}/clusters`, accessToken] : null,
+    project_id
+      ? [
+          `/api/explore/${project_id}/clusters`,
+          accessToken,
+          selectedClustering?.id,
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         clustering_id: selectedClustering?.id,
