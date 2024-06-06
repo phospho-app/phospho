@@ -82,9 +82,6 @@ export function ClustersTable<TData, TValue>({
       }).then((res) =>
         res?.clusters.sort((a: Cluster, b: Cluster) => b.size - a.size),
       ),
-    {
-      keepPreviousData: true,
-    },
   );
 
   const columns = getColumns();
