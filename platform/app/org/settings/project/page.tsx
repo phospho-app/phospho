@@ -70,6 +70,7 @@ export default function Page() {
           <Button
             variant="outline"
             className="ml-2"
+            size="icon"
             onClick={() => {
               navigator.clipboard.writeText(project_id);
             }}

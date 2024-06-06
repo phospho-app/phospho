@@ -46,6 +46,7 @@ export default function Page() {
           <p>Your organization id: {selectedOrgId}</p>
           <Button
             variant="outline"
+            size="icon"
             onClick={() => {
               if (selectedOrgId) {
                 navigator.clipboard.writeText(selectedOrgId);

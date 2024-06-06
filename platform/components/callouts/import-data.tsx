@@ -120,6 +120,7 @@ const APIKeyAndProjectId = () => {
         <Button
           variant="outline"
           className="ml-2 p-3"
+          size="icon"
           onClick={() => {
             navigator.clipboard.writeText(project_id);
           }}
