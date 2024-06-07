@@ -13,6 +13,8 @@ from app.api.v2.models import (
     PredictRequest,
     PredictResponse,
     TrainRequest,
+    Embedding,
+    EmbeddingRequest,
 )
 from app.api.platform.models import ClusteringRequest
 from app.core import config
@@ -192,3 +194,23 @@ async def clustering(clustering_request: ClusteringRequest) -> None:
                 else:
                     slack_message = error_message
                 await slack_notification(slack_message)
+
+
+async def generate_embeddings(embedding_request: EmbeddingRequest) -> Embedding | None:
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{config.PHOSPHO_AI_HUB_URL}/v1/embeddings",
+                json=embedding_request.model_dump(),
+                headers={
+                    "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                timeout=60,
+            )
+            # Parse the response
+            return Embedding(**response.json())
+
+        except Exception as e:
+            logger.error(e)
+            return None
