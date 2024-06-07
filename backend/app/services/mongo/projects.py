@@ -15,7 +15,6 @@ from app.db.models import (
     Session,
     Task,
     Test,
-    Event,
 )
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
@@ -26,7 +25,6 @@ from app.services.mongo.tasks import (
     get_all_tasks,
     label_sentiment_analysis,
 )
-from app.services.mongo.events import get_all_events
 from app.services.slack import slack_notification
 from app.utils import (
     cast_datetime_or_timestamp_to_timestamp,
@@ -718,11 +716,29 @@ async def populate_default(
         target_project_id = "6a6323d1447a44ddac2dae42d7c39749"
     else:
         target_project_id = "5383b5ce54314a76a9bb1774839e8417"
-
-    target_project = await get_project_by_id(target_project_id)
+    target_project = await get_project_by_id(
+        target_project_id,
+    )
     target_project.org_id = org_id
     target_project.id = project_id
     await update_project(target_project)
+
+    # Add events to the project
+    default_event_defintiions = (
+        await mongo_db["event_definitions"]
+        .find({"project_id": target_project_id})
+        .to_list(length=10)
+    )
+    event_definitions = []
+    for event_definition in default_event_defintiions:
+        validated_event_definition = EventDefinition.model_validate(event_definition)
+        validated_event_definition.id = generate_uuid()
+        validated_event_definition.project_id = project_id
+        validated_event_definition.org_id = org_id
+        event_definitions.append(validated_event_definition)
+    await mongo_db["event_definitions"].insert_many(
+        [event_definition.model_dump() for event_definition in event_definitions]
+    )
 
     # Add tasks to the project
     default_tasks = await get_all_tasks(target_project_id)
