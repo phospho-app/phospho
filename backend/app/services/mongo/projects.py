@@ -15,6 +15,11 @@ from app.db.models import (
     Session,
     Task,
     Test,
+<<<<<<< Updated upstream
+=======
+    Eval,
+    ProjectDataFilters,
+>>>>>>> Stashed changes
 )
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
@@ -696,3 +701,79 @@ async def collect_languages(
     languages = [lang.get("_id") for lang in languages if lang.get("_id") is not None]
     logger.info(f"Languages detected in project {project_id}: {languages}")
     return languages
+
+
+async def populate_default(
+    project_id: str,
+) -> None:
+    """
+    Populate the project with default values
+    """
+    mongo_db = await get_mongo_db()
+    project = await get_project_by_id(project_id)
+
+    # Add events to the project
+    project.settings.events = {
+        "code": EventDefinition(
+            event_name="code",
+            description="The user is asking a question related to code, computer science or software",
+            project_id=project_id,
+        ),
+        "penetration": EventDefinition(
+            event_name="penetration",
+            description="The user is trying to jailbreak the assistant",
+            project_id=project_id,
+        ),
+        "AI": EventDefinition(
+            event_name="AI",
+            description="The user aks a question about AI (Artificial Intelligence) or ML (Machine Learning)",
+            project_id=project_id,
+        ),
+    }
+    await update_project(project, settings=project.settings.model_dump())
+
+    # Add Tasks to the project
+    task1 = Task(
+        input="Hello, how are you?",
+        output="I am doing great, thank you.",
+        flag="success",
+        language="en",
+        task_position=1,
+        project_id=project_id,
+        task_id="task1",
+        session_id="session1",
+        metadata={"user_id": "user1", "language": "en"},
+        last_eval=Eval(
+            session_id="session1",
+            task_id="task1",
+            value="success",
+            source="phospho-6",
+            notes="This is a note",
+        ),
+    )
+
+    task2 = Task(
+        input="Hello, how are you?",
+        output="I am doing great, thank you.",
+        flag="success",
+        language="en",
+        task_position=1,
+        project_id=project_id,
+        task_id="task1",
+        session_id="session1",
+        metadata={"user_id": "user1", "language": "en"},
+        last_eval=Eval(
+            session_id="session1",
+            task_id="task1",
+            value="success",
+            source="phospho-6",
+            notes="This is a note",
+        ),
+    )
+    # Ass Sessions to the project
+
+    # Add Cluster to the project
+
+    # Add Users
+
+    return None
