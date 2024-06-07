@@ -391,6 +391,8 @@ async def email_project_tasks(
         # TODO : Add .parquet file export for large datasets
         try:
             parquet_buffer = io.BytesIO()
+            # For the parquet export, convert task_metadata to a string
+            tasks_df["task_metadata"] = tasks_df["task_metadata"].apply(str)
             tasks_df.to_parquet(parquet_buffer, index=False)
             parquet_data = parquet_buffer.getvalue()
             exports.append(
