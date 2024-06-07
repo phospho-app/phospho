@@ -336,6 +336,7 @@ async def add_event_to_session(
         webhook=event.webhook,
         org_id=session.org_id,
         event_definition=event,
+        confirmed=True,
     )
     _ = await mongo_db["events"].insert_one(detected_event_data.model_dump())
 

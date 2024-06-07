@@ -191,6 +191,7 @@ async def add_event_to_task(
         webhook=event.webhook,
         org_id=task.org_id,
         event_definition=event,
+        confirmed=True,
     )
     _ = await mongo_db["events"].insert_one(detected_event_data.model_dump())
 
