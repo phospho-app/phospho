@@ -14,7 +14,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,7 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { navigationStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
@@ -48,6 +47,9 @@ export default function Page() {
   const router = useRouter();
   const { user, loading, accessToken } = useUser();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
+  const setHasTasks = dataStateStore((state) => state.setHasTasks);
+  const setHasSessions = dataStateStore((state) => state.setHasSessions);
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
@@ -61,6 +63,44 @@ export default function Page() {
     //   project_name: "Default project",
     // },
   });
+
+  async function defaultProject() {
+    if (creatingProject) {
+      return;
+    }
+    if (!selectedOrgId) {
+      // fetch the org id from the user
+      const orgId = user?.getOrgs()[0].orgId;
+      if (orgId) {
+        setSelectedOrgId(orgId);
+      } else {
+        // if the user has no orgs, redirect to the auth
+        router.push("/");
+      }
+    }
+    //Create default project for orgID
+    fetch(`/api/organizations/${selectedOrgId}/create-default-project`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "Content-Type": "application/json",
+      },
+    }).then(async (response) => {
+      const responseBody = await response.json();
+      if (responseBody.id !== undefined) {
+        setHasTasks(null);
+        setHasSessions(null);
+        setproject_id(responseBody.id);
+        router.push(`/org`);
+      } else {
+        toast.toast({
+          title: "Error when creating project",
+          description: responseBody.error,
+        });
+      }
+      // setCreatingProject(false);
+    });
+  }
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -113,7 +153,7 @@ export default function Page() {
       <FetchOrgProject />
       <Card className="lg:w-1/3 md:w-1/2">
         <CardHeader className="pb-0">
-          <CardTitle>First, let's create your phospho project.</CardTitle>
+          <CardTitle>Create your phospho project.</CardTitle>
           <CardDescription>
             You can create multiple projects to keep your app ordered.
           </CardDescription>
@@ -154,6 +194,41 @@ export default function Page() {
               </div>
             </form>
           </Form>
+        </CardContent>
+        <div className="relative flex items-center">
+          <div className="flex-grow border-t text-muted-foreground"></div>
+          <span className="flex-shrink mx-4 text-muted-foreground">Or</span>
+          <div className="flex-grow border-t text-muted-foreground"></div>
+        </div>
+        <div>
+          <CardHeader className="pb-4">
+            <CardTitle>Explore sample data</CardTitle>
+            <CardDescription>
+              Get a feel for Phospho by exploring a sample project.
+            </CardDescription>
+          </CardHeader>
+        </div>
+        <CardContent className="space-y-8">
+          <div className="flex justify-center flex-col">
+            <img
+              src="/image/onboarding.svg"
+              alt="Onboarding Image"
+              className="mx-4"
+            />
+          </div>
+          <div className="flex justify-end mr-4">
+            <Button
+              onClick={() => {
+                defaultProject();
+              }}
+              disabled={loading || creatingProject}
+            >
+              {creatingProject && (
+                <Icons.spinner className="w-4 h-4 animate-spin" />
+              )}
+              Explore sample data
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </>

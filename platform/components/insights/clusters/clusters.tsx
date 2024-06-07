@@ -40,6 +40,22 @@ const Clusters: React.FC = () => {
   }
 
   const maxCreatedAt = latestClustering?.created_at;
+  const { data: totalNbTasksData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/tasks`,
+      accessToken,
+      "total_nb_tasks",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_tasks"],
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const totalNbTasks: number | null | undefined =
+    totalNbTasksData?.total_nb_tasks;
 
   if (!project_id) {
     return <></>;
@@ -65,6 +81,14 @@ const Clusters: React.FC = () => {
               <Button
                 variant="default"
                 onClick={async () => {
+                  if (totalNbTasks == null || totalNbTasks < 5) {
+                    toast({
+                      title: "Not enough data",
+                      description:
+                        "You need at least 5 tasks to detect clusters.",
+                    });
+                    return;
+                  }
                   mutateClusterings((data: any) => {
                     // Add a new clustering to the list
                     const newClustering: Clustering = {
