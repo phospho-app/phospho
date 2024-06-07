@@ -52,7 +52,7 @@ async def create_task(
 
 async def get_task_by_id(task_id: str) -> Task:
     mongo_db = await get_mongo_db()
-    task = await mongo_db["tasks"].find_one({"id": task_id})
+    task = await mongo_db["tasks_with_events"].find_one({"id": task_id})
     if task is None:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
 

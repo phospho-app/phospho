@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Task, TaskWithEvents } from "@/models/models";
 import { dataStateStore } from "@/store/store";
@@ -19,6 +20,7 @@ import { ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import useSWR from "swr";
 
 interface TaskProps {
   task_id: string;
@@ -26,7 +28,6 @@ interface TaskProps {
 
 const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
   const { user, loading, accessToken } = useUser();
-  const [task, setTask] = useState<TaskWithEvents | null>(null);
   const [refresh, setRefresh] = useState(false);
 
   const router = useRouter();
@@ -37,21 +38,14 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
     (state) => state.setTasksWithoutHumanLabel,
   );
 
-  useEffect(() => {
-    // Get Task
-    (async () => {
-      const headers = {
-        Authorization: "Bearer " + accessToken || "",
-        "Content-Type": "application/json",
-      };
-      const task_response = await fetch(`/api/tasks/${task_id}`, {
-        method: "GET",
-        headers: headers,
-      });
-      const task_response_json = await task_response.json();
-      setTask(task_response_json);
-    })();
-  }, [task_id, loading]);
+  const { data: taskData, mutate: mutateTask } = useSWR(
+    [`/api/tasks/${task_id}`, accessToken],
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const task = taskData as TaskWithEvents;
 
   const flagTask = async (flag: string) => {
     if (user === null || user === undefined) return;
@@ -70,7 +64,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
       }),
     });
     const creation_response_json = await creation_response.json();
-    setTask(creation_response_json);
+    mutateTask(creation_response_json);
   };
 
   if (task === null || task === undefined) return <CenteredSpinner />;
@@ -80,7 +74,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
   // a re-render when the flag is updated (passage via reference)
   const flag = task.flag;
   const setFlag = (flag: string) => {
-    setTask({ ...task, flag: flag });
+    mutateTask({ ...task, flag: flag });
     setRefresh(!refresh);
   };
 
@@ -157,11 +151,11 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
           <TaskBox
             task={task}
             setTask={(task: Task | null) => {
-              setTask(task as TaskWithEvents);
+              mutateTask(task as TaskWithEvents);
             }}
             setFlag={setFlag}
             refresh={refresh}
-          ></TaskBox>
+          />
         </CardContent>
         <CardFooter className="flex justify-around ">
           {tasksWithoutHumanLabel && tasksWithoutHumanLabel.length > 0 && (

@@ -213,11 +213,12 @@ async def confirm_event(
 
     event_model = Event.model_validate(event)
 
-    # Edit the event
-    result = await mongo_db["events"].update_one(
+    # Edit the event. Note: this always confirm the event.
+    result = await mongo_db["events"].update_many(
         {"project_id": project_id, "id": event_id},
         {"$set": {"confirmed": True, "source": "user"}},
     )
+
     event_model.confirmed = True
     event_model.source = "user"
 
