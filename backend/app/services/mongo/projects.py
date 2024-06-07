@@ -2,49 +2,36 @@ import datetime
 import io
 from typing import Dict, List, Optional, Union
 
-from app.api.platform.models.explore import Sorting
-from app.services.mongo.explore import fetch_flattened_tasks
-from app.services.mongo.tasks import (
-    get_total_nb_of_tasks,
-    task_filtering_pipeline_match,
-)
 import pandas as pd
-from phospho.models import Threshold
 import resend
-from app.api.platform.models import UserMetadata, Pagination
+from app.api.platform.models import Pagination, UserMetadata
+from app.api.platform.models.explore import Sorting
 from app.core import config
 from app.db.models import (
-    Event,
     EventDefinition,
-    Recipe,
     Project,
+    ProjectDataFilters,
+    Recipe,
     Session,
     Task,
     Test,
-    ProjectDataFilters,
 )
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
+from app.services.mongo.explore import fetch_flattened_tasks
+from app.services.mongo.extractor import run_recipe_on_tasks
 from app.services.mongo.metadata import fetch_user_metadata
+from app.services.mongo.tasks import (
+    get_all_tasks,
+    label_sentiment_analysis,
+)
 from app.services.slack import slack_notification
-from app.utils import generate_timestamp
+from app.utils import cast_datetime_or_timestamp_to_timestamp, generate_timestamp
 from fastapi import HTTPException
 from loguru import logger
 from propelauth_fastapi import User
 
-from app.services.mongo.extractor import run_recipe_on_tasks
-from app.services.mongo.tasks import label_sentiment_analysis
-
-from phospho.utils import filter_nonjsonable_keys
-
-
-def cast_datetime_or_timestamp_to_timestamp(
-    date_or_ts: Union[datetime.datetime, int],
-) -> int:
-    if isinstance(date_or_ts, datetime.datetime):
-        return int(date_or_ts.timestamp())
-    else:
-        return date_or_ts
+from phospho.models import Threshold
 
 
 async def get_project_by_id(project_id: str) -> Project:
@@ -316,108 +303,6 @@ async def add_project_events(project_id: str, events: List[EventDefinition]) -> 
     return updated_project
 
 
-async def get_all_tasks(
-    project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-    get_events: bool = True,
-    get_tests: bool = False,
-    validate_metadata: bool = False,
-    limit: Optional[int] = None,
-    pagination: Optional[Pagination] = None,
-    sorting: Optional[List[Sorting]] = None,
-) -> List[Task]:
-    """
-    Get all the tasks of a project.
-    """
-
-    mongo_db = await get_mongo_db()
-    collection = "tasks"
-
-    main_filter, collection = task_filtering_pipeline_match(
-        filters=filters, project_id=project_id, collection=collection
-    )
-
-    logger.info(f"Get all tasks with filters: {main_filter}")
-
-    if not get_tests:
-        main_filter["test_id"] = None
-
-    pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
-    ]
-
-    # Get rid of the raw_input and raw_output fields
-    pipeline.append(
-        {
-            "$project": {
-                "additional_input": 0,
-                "additional_output": 0,
-            }
-        }
-    )
-
-    if not get_events:
-        collection = "tasks"
-
-    # To avoid the sort to OOM on Serverless MongoDB executor, we restrain the pipeline to the necessary fields...
-    if sorting is None:
-        sorting_dict = {"created_at": -1}
-    else:
-        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
-    pipeline.extend(
-        [
-            {
-                "$project": {
-                    "id": 1,
-                    **{sort_key: 1 for sort_key in sorting_dict.keys()},
-                }
-            },
-            {"$sort": sorting_dict},
-        ]
-    )
-
-    # Add pagination
-    if pagination:
-        pipeline.extend(
-            [
-                {"$skip": pagination.page * pagination.per_page},
-                {"$limit": pagination.per_page},
-            ]
-        )
-        limit = None
-
-    # ... and then we add the lookup and the deduplication
-    pipeline.extend(
-        [
-            {
-                "$lookup": {
-                    "from": "tasks_with_events",
-                    "localField": "id",
-                    "foreignField": "id",
-                    "as": "tasks",
-                }
-            },
-            # unwind the tasks array
-            {"$unwind": "$tasks"},
-            # Replace the root with the tasks
-            {"$replaceRoot": {"newRoot": "$tasks"}},
-        ]
-    )
-
-    tasks = await mongo_db[collection].aggregate(pipeline).to_list(length=limit)
-
-    # Cast to tasks
-    valid_tasks = [Task.model_validate(data) for data in tasks]
-
-    if validate_metadata:
-        for task in valid_tasks:
-            # Remove the _id field from the task metadata
-            if task.metadata is not None:
-                task.metadata = filter_nonjsonable_keys(task.metadata)
-
-    return valid_tasks
-
-
 async def email_project_tasks(
     project_id: str,
     uid: str,
@@ -546,66 +431,6 @@ async def email_project_tasks(
             await slack_notification(error_message)
     else:
         logger.warning("Preview environment: emails disabled")
-
-
-async def get_all_events(
-    project_id: str,
-    limit: Optional[int] = None,
-    filters: Optional[ProjectDataFilters] = None,
-    include_removed: bool = False,
-    unique: bool = False,
-) -> List[Event]:
-    mongo_db = await get_mongo_db()
-    additional_event_filters: Dict[str, object] = {}
-    pipeline: List[Dict[str, object]] = []
-    if filters is not None:
-        if filters.event_name is not None:
-            if isinstance(filters.event_name, str):
-                additional_event_filters["event_name"] = filters.event_name
-            if isinstance(filters.event_name, list):
-                additional_event_filters["event_name"] = {"$in": filters.event_name}
-        if filters.created_at_start is not None:
-            additional_event_filters["created_at"] = {
-                "$gt": cast_datetime_or_timestamp_to_timestamp(filters.created_at_start)
-            }
-        if filters.created_at_end is not None:
-            additional_event_filters["created_at"] = {
-                **additional_event_filters.get("created_at", {}),
-                "$lt": cast_datetime_or_timestamp_to_timestamp(filters.created_at_end),
-            }
-    if not include_removed:
-        additional_event_filters["removed"] = {"$ne": True}
-
-    pipeline.append(
-        {
-            "$match": {
-                "project_id": project_id,
-                **additional_event_filters,
-            }
-        }
-    )
-
-    if unique:
-        # Deduplicate the events based on event name
-        pipeline.extend(
-            [
-                {
-                    "$group": {
-                        "_id": "$event_name",
-                        "doc": {"$first": "$$ROOT"},
-                    }
-                },
-                {"$replaceRoot": {"newRoot": "$doc"}},
-            ]
-        )
-
-    pipeline.append({"$sort": {"created_at": -1}})
-
-    events = await mongo_db["events"].aggregate(pipeline).to_list(length=limit)
-
-    # Cast to model
-    events = [Event.model_validate(data) for data in events]
-    return events
 
 
 async def get_all_sessions(

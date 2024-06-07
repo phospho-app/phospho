@@ -16,9 +16,10 @@ from app.api.platform.models.explore import ProjectDataFilters
 from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
 from app.services.mongo.projects import (
     get_all_sessions,
-    get_all_tasks,
     backcompute_recipes,
 )
+from app.services.mongo.tasks import get_all_tasks
+
 from app.services.mongo.explore import (
     fetch_flattened_tasks,
     update_from_flattened_tasks,

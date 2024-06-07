@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union
 import uuid
 import time
 import re
@@ -65,3 +65,12 @@ def get_last_week_timestamps() -> Tuple[int, int]:
     )
     seven_days_ago_timestamp = int(seven_days_ago_datetime.timestamp())
     return seven_days_ago_timestamp, today_timestamp
+
+
+def cast_datetime_or_timestamp_to_timestamp(
+    date_or_ts: Union[datetime.datetime, int],
+) -> int:
+    if isinstance(date_or_ts, datetime.datetime):
+        return int(date_or_ts.timestamp())
+    else:
+        return date_or_ts

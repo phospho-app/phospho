@@ -30,9 +30,7 @@ from app.services.mongo.projects import (
     delete_project_from_id,
     delete_project_related_resources,
     email_project_tasks,
-    get_all_events,
     get_all_sessions,
-    get_all_tasks,
     get_all_tests,
     get_project_by_id,
     get_all_users_metadata,
@@ -41,6 +39,9 @@ from app.services.mongo.projects import (
     store_onboarding_survey,
     collect_languages,
 )
+from app.services.mongo.tasks import get_all_tasks
+from app.services.mongo.events import get_all_events
+
 
 from app.services.mongo.search import (
     search_tasks_in_project,
