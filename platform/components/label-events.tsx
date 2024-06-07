@@ -66,10 +66,9 @@ export const EventBadge = ({ event }: { event: Event }) => {
     ? Math.round(event.score_range?.value * 100) / 100
     : null;
 
-  let badgeStyle = "border hover:border-green-500";
-  if (event.confirmed) {
-    badgeStyle = "border bg-green-500 hover:border-green-500";
-  }
+  const badgeStyle = event.confirmed
+    ? "border bg-green-500 hover:border-green-500"
+    : "border hover:border-green-500";
 
   return (
     <Badge variant="outline" className={badgeStyle}>
@@ -125,7 +124,7 @@ export const InteractiveEventBadgeForTasks = ({
             mouseEvent.stopPropagation();
             // Call the API to remove the event from the task
             const response = await fetch(
-              `/api/events/${eventDefinition?.project_id}/confirm/${event.id}`,
+              `/api/events/${event.project_id}/confirm/${event.id}`,
               {
                 method: "POST",
                 headers: {
