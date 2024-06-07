@@ -335,7 +335,6 @@ async def email_project_tasks(
             # Convert task list to Pandas DataFrame
             flattened_tasks = fetch_flattened_tasks(
                 project_id=project_id,
-                filters=None,
                 limit=limit,
                 with_events=True,
                 with_sessions=True,
