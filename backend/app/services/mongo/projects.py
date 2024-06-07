@@ -15,11 +15,7 @@ from app.db.models import (
     Session,
     Task,
     Test,
-<<<<<<< Updated upstream
-=======
-    Eval,
-    ProjectDataFilters,
->>>>>>> Stashed changes
+    Event,
 )
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
@@ -30,8 +26,13 @@ from app.services.mongo.tasks import (
     get_all_tasks,
     label_sentiment_analysis,
 )
+from app.services.mongo.events import get_all_events
 from app.services.slack import slack_notification
-from app.utils import cast_datetime_or_timestamp_to_timestamp, generate_timestamp
+from app.utils import (
+    cast_datetime_or_timestamp_to_timestamp,
+    generate_timestamp,
+    generate_uuid,
+)
 from fastapi import HTTPException
 from loguru import logger
 from propelauth_fastapi import User
@@ -705,75 +706,46 @@ async def collect_languages(
 
 async def populate_default(
     project_id: str,
+    org_id: str,
 ) -> None:
     """
     Populate the project with default values
     """
+    logger.info(f"Populating project {project_id} with default values")
     mongo_db = await get_mongo_db()
-    project = await get_project_by_id(project_id)
 
-    # Add events to the project
-    project.settings.events = {
-        "code": EventDefinition(
-            event_name="code",
-            description="The user is asking a question related to code, computer science or software",
-            project_id=project_id,
-        ),
-        "penetration": EventDefinition(
-            event_name="penetration",
-            description="The user is trying to jailbreak the assistant",
-            project_id=project_id,
-        ),
-        "AI": EventDefinition(
-            event_name="AI",
-            description="The user aks a question about AI (Artificial Intelligence) or ML (Machine Learning)",
-            project_id=project_id,
-        ),
-    }
-    await update_project(project, settings=project.settings.model_dump())
+    if config.ENVIRONMENT == "production":
+        target_project_id = "6a6323d1447a44ddac2dae42d7c39749"
+    else:
+        target_project_id = "5383b5ce54314a76a9bb1774839e8417"
 
-    # Add Tasks to the project
-    task1 = Task(
-        input="Hello, how are you?",
-        output="I am doing great, thank you.",
-        flag="success",
-        language="en",
-        task_position=1,
-        project_id=project_id,
-        task_id="task1",
-        session_id="session1",
-        metadata={"user_id": "user1", "language": "en"},
-        last_eval=Eval(
-            session_id="session1",
-            task_id="task1",
-            value="success",
-            source="phospho-6",
-            notes="This is a note",
-        ),
+    target_project = await get_project_by_id(target_project_id)
+    target_project.org_id = org_id
+    target_project.id = project_id
+    await update_project(target_project)
+
+    # Add tasks to the project
+    default_tasks = await get_all_tasks(target_project_id)
+    tasks = []
+    for task in default_tasks:
+        task.id = generate_uuid()
+        task.created_at = generate_timestamp()
+        task.project_id = project_id
+        task.org_id = org_id
+        tasks.append(task)
+    await mongo_db["tasks"].insert_many([task.model_dump() for task in tasks])
+
+    # Add sessions to the project
+    default_sessions = await get_all_sessions(target_project_id)
+    sessions = []
+    for session in default_sessions:
+        session.id = generate_uuid()
+        session.created_at = generate_timestamp()
+        session.project_id = project_id
+        session.org_id = org_id
+        sessions.append(session)
+    await mongo_db["sessions"].insert_many(
+        [session.model_dump() for session in sessions]
     )
-
-    task2 = Task(
-        input="Hello, how are you?",
-        output="I am doing great, thank you.",
-        flag="success",
-        language="en",
-        task_position=1,
-        project_id=project_id,
-        task_id="task1",
-        session_id="session1",
-        metadata={"user_id": "user1", "language": "en"},
-        last_eval=Eval(
-            session_id="session1",
-            task_id="task1",
-            value="success",
-            source="phospho-6",
-            notes="This is a note",
-        ),
-    )
-    # Ass Sessions to the project
-
-    # Add Cluster to the project
-
-    # Add Users
 
     return None

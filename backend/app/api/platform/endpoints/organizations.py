@@ -82,8 +82,7 @@ async def post_create_default_project(
     project = await create_project_by_org(
         org_id=org_id, user_id=user.user_id, project_name="Default Project"
     )
-    await populate_default(project.id)
-
+    await populate_default(project_id=project.id, org_id=org_id)
     # Send a notification if it's not a phospho project
     if (
         config.ENVIRONMENT == "production"
