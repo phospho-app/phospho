@@ -3,8 +3,11 @@ from app.services.mongo.extractor import bill_on_stripe
 from app.db.mongo import get_mongo_db
 from app.db.models import JobResult
 from loguru import logger
+import tiktoken
 
 from phospho.lab.models import ResultType
+
+encoding = tiktoken.get_encoding("cl100k_base")
 
 
 async def metered_prediction(
@@ -16,6 +19,7 @@ async def metered_prediction(
 ) -> None:
     """
     Make a prediction using a model from the AI Hub and bill the organization accordingly
+    model_id: "{provider}:{model_name}"
     """
     logger.debug(f"Making predictions for org_id {org_id} with model_id {model_id}")
 
@@ -63,6 +67,20 @@ async def metered_prediction(
             org_id,
             (input_tokens + 3 * completion_tokens) * 250,  # 2.5$ / 1M tokens
             meter_event_name="phospho_token_based_meter",
+        )
+    elif model_id == "phospho:intent-embed":
+        # Compute token count of input texts
+        inputs_token_count = sum([len(encoding.encode(input)) for input in inputs])
+
+        logger.debug(f"input_token_count: {inputs_token_count}")
+        # We bill through stripe, $0.50 / 1M input tokens
+        await bill_on_stripe(
+            org_id,
+            inputs_token_count * 50,  # $0.50 / 1M input tokens
+            meter_event_name="phospho_token_based_meter",
+        )
+        logger.debug(
+            f"Bill for org_id {org_id} with model_id {model_id} completed, {inputs_token_count} tokens billed"
         )
     else:
         logger.error(f"Model {model_id} not supported for metered billing")
