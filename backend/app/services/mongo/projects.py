@@ -339,7 +339,9 @@ async def email_project_tasks(
                 with_events=True,
                 with_sessions=True,
             )
-            tasks_df = pd.DataFrame(flattened_tasks)
+            tasks_df = pd.DataFrame(
+                [flat_task.model_dump() for flat_task in flattened_tasks]
+            )
 
             # Convert timestamps to datetime
             for col in [
