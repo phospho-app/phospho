@@ -11,6 +11,7 @@ from app.api.platform.models import (
 from app.core import config
 from app.security.authentification import propelauth
 from app.services.mongo.emails import email_user_onboarding, send_payment_issue_email
+from app.services.mongo.projects import populate_default
 from app.services.mongo.organizations import (
     create_project_by_org,
     get_projects_from_org_id,
@@ -65,6 +66,34 @@ async def post_create_project(
             + f" id {user.email} in organization {org_member_info.org_name}"
         )
 
+    return project
+
+
+@router.post(
+    "/organizations/{org_id}/create-default-project",
+    response_model=Project,
+    description="Create a new default project",
+)
+async def post_create_default_project(
+    org_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> Project:
+    org_member_info = propelauth.require_org_member(user, org_id)
+    project = await create_project_by_org(
+        org_id=org_id, user_id=user.user_id, project_name="Default Project"
+    )
+    await populate_default(project_id=project.id, org_id=org_id)
+    # Send a notification if it's not a phospho project
+    if (
+        config.ENVIRONMENT == "production"
+        and org_member_info.org_id != "e4M5ZDH2pwXz8ddEbVIR"
+    ):
+        # Get the user info
+        logger.info(f"New default project created : {project.project_name}")
+        await slack_notification(
+            f"Default project {project.project_name} {project.id} created by user with"
+            + f" id {user.email} in organization {org_member_info.org_name}"
+        )
     return project
 
 
