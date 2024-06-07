@@ -1,5 +1,6 @@
 import datetime
 from typing import Dict, List, Literal, Optional, Tuple, cast
+from app.api.platform.models.explore import Pagination, Sorting
 from phospho.models import ProjectDataFilters
 from phospho.utils import filter_nonjsonable_keys
 
@@ -409,3 +410,105 @@ async def label_sentiment_analysis(
     )
 
     return None
+
+
+async def get_all_tasks(
+    project_id: str,
+    filters: Optional[ProjectDataFilters] = None,
+    get_events: bool = True,
+    get_tests: bool = False,
+    validate_metadata: bool = False,
+    limit: Optional[int] = None,
+    pagination: Optional[Pagination] = None,
+    sorting: Optional[List[Sorting]] = None,
+) -> List[Task]:
+    """
+    Get all the tasks of a project.
+    """
+
+    mongo_db = await get_mongo_db()
+    collection = "tasks"
+
+    main_filter, collection = task_filtering_pipeline_match(
+        filters=filters, project_id=project_id, collection=collection
+    )
+
+    logger.info(f"Get all tasks with filters: {main_filter}")
+
+    if not get_tests:
+        main_filter["test_id"] = None
+
+    pipeline: List[Dict[str, object]] = [
+        {"$match": main_filter},
+    ]
+
+    # Get rid of the raw_input and raw_output fields
+    pipeline.append(
+        {
+            "$project": {
+                "additional_input": 0,
+                "additional_output": 0,
+            }
+        }
+    )
+
+    if not get_events:
+        collection = "tasks"
+
+    # To avoid the sort to OOM on Serverless MongoDB executor, we restrain the pipeline to the necessary fields...
+    if sorting is None:
+        sorting_dict = {"created_at": -1}
+    else:
+        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+    pipeline.extend(
+        [
+            {
+                "$project": {
+                    "id": 1,
+                    **{sort_key: 1 for sort_key in sorting_dict.keys()},
+                }
+            },
+            {"$sort": sorting_dict},
+        ]
+    )
+
+    # Add pagination
+    if pagination:
+        pipeline.extend(
+            [
+                {"$skip": pagination.page * pagination.per_page},
+                {"$limit": pagination.per_page},
+            ]
+        )
+        limit = None
+
+    # ... and then we add the lookup and the deduplication
+    pipeline.extend(
+        [
+            {
+                "$lookup": {
+                    "from": "tasks_with_events",
+                    "localField": "id",
+                    "foreignField": "id",
+                    "as": "tasks",
+                }
+            },
+            # unwind the tasks array
+            {"$unwind": "$tasks"},
+            # Replace the root with the tasks
+            {"$replaceRoot": {"newRoot": "$tasks"}},
+        ]
+    )
+
+    tasks = await mongo_db[collection].aggregate(pipeline).to_list(length=limit)
+
+    # Cast to tasks
+    valid_tasks = [Task.model_validate(data) for data in tasks]
+
+    if validate_metadata:
+        for task in valid_tasks:
+            # Remove the _id field from the task metadata
+            if task.metadata is not None:
+                task.metadata = filter_nonjsonable_keys(task.metadata)
+
+    return valid_tasks

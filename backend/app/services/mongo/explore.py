@@ -14,10 +14,8 @@ import pydantic
 from app.api.platform.models import ABTest, ProjectDataFilters
 from app.db.models import Eval, FlattenedTask
 from app.db.mongo import get_mongo_db
-from app.services.mongo.projects import (
-    get_all_events,
-    get_all_tasks,
-)
+from app.services.mongo.events import get_all_events
+from app.services.mongo.tasks import get_all_tasks
 from app.services.mongo.tasks import (
     get_total_nb_of_tasks,
     task_filtering_pipeline_match,

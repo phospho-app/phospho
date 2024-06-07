@@ -1,13 +1,17 @@
+from typing import Dict, List, Optional
+
+from app.api.platform.models import EventBackfillRequest
 from app.api.platform.models.explore import Pagination
 from app.db.models import EventDefinition, Recipe
 from app.db.mongo import get_mongo_db
+from app.services.mongo.extractor import run_recipe_on_tasks
+from app.services.mongo.tasks import get_all_tasks
 from app.services.mongo.tasks import get_total_nb_of_tasks
+from app.utils import cast_datetime_or_timestamp_to_timestamp
 from fastapi import HTTPException
 from loguru import logger
-from app.services.mongo.extractor import run_recipe_on_tasks
-from app.services.mongo.projects import get_all_tasks
-from app.api.platform.models import EventBackfillRequest
-from phospho.models import ProjectDataFilters
+
+from phospho.models import Event, ProjectDataFilters
 
 
 async def get_event_definition_from_event_id(
@@ -133,3 +137,63 @@ async def run_event_detection_on_timeframe(
         await run_recipe_on_tasks(tasks=tasks, recipe=recipe, org_id=org_id)
 
     return None
+
+
+async def get_all_events(
+    project_id: str,
+    limit: Optional[int] = None,
+    filters: Optional[ProjectDataFilters] = None,
+    include_removed: bool = False,
+    unique: bool = False,
+) -> List[Event]:
+    mongo_db = await get_mongo_db()
+    additional_event_filters: Dict[str, object] = {}
+    pipeline: List[Dict[str, object]] = []
+    if filters is not None:
+        if filters.event_name is not None:
+            if isinstance(filters.event_name, str):
+                additional_event_filters["event_name"] = filters.event_name
+            if isinstance(filters.event_name, list):
+                additional_event_filters["event_name"] = {"$in": filters.event_name}
+        if filters.created_at_start is not None:
+            additional_event_filters["created_at"] = {
+                "$gt": cast_datetime_or_timestamp_to_timestamp(filters.created_at_start)
+            }
+        if filters.created_at_end is not None:
+            additional_event_filters["created_at"] = {
+                **additional_event_filters.get("created_at", {}),
+                "$lt": cast_datetime_or_timestamp_to_timestamp(filters.created_at_end),
+            }
+    if not include_removed:
+        additional_event_filters["removed"] = {"$ne": True}
+
+    pipeline.append(
+        {
+            "$match": {
+                "project_id": project_id,
+                **additional_event_filters,
+            }
+        }
+    )
+
+    if unique:
+        # Deduplicate the events based on event name
+        pipeline.extend(
+            [
+                {
+                    "$group": {
+                        "_id": "$event_name",
+                        "doc": {"$first": "$$ROOT"},
+                    }
+                },
+                {"$replaceRoot": {"newRoot": "$doc"}},
+            ]
+        )
+
+    pipeline.append({"$sort": {"created_at": -1}})
+
+    events = await mongo_db["events"].aggregate(pipeline).to_list(length=limit)
+
+    # Cast to model
+    events = [Event.model_validate(data) for data in events]
+    return events

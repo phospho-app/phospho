@@ -43,7 +43,7 @@ from app.services.mongo.explore import (
     project_has_tasks,
 )
 from app.services.mongo.extractor import bill_on_stripe
-from app.services.mongo.projects import get_all_events
+from app.services.mongo.events import get_all_events
 from app.services.mongo.tasks import get_total_nb_of_tasks
 
 router = APIRouter(tags=["Explore"])
