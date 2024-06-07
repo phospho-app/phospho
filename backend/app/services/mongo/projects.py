@@ -376,7 +376,7 @@ async def email_project_tasks(
         # Get the excel file buffer
         try:
             excel_buffer = io.BytesIO()
-            tasks_df.to_excel(excel_buffer, index=False)
+            tasks_df.to_excel(excel_buffer, index=False, engine="xlsxwriter")
             excel_data = excel_buffer.getvalue()
             # encoded_excel = base64.b64encode(excel_data).decode()
             exports.append(
