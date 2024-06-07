@@ -201,7 +201,13 @@ async def generate_embeddings(embedding_request: EmbeddingRequest) -> Embedding 
         try:
             response = await client.post(
                 f"{config.PHOSPHO_AI_HUB_URL}/v1/embeddings",
-                json=embedding_request.model_dump(),
+                json={
+                    "text": embedding_request.input,
+                    "model": embedding_request.model,
+                    "org_id": embedding_request.org_id,
+                    "project_id": embedding_request.project_id,
+                    "task_id": embedding_request.task_id,
+                },
                 headers={
                     "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
                     "Content-Type": "application/json",

@@ -17,7 +17,7 @@ class Embedding(BaseModel):
 
 
 class EmbeddingRequest(BaseModel):
-    text: str  # The text used to generate the embedding
+    input: str  # The text used to generate the embedding
     model: str  # The model used to generate the embedding (a model represent the full piepline and might be user facing, ex: embed-english-v3.0)
     org_id: Optional[str] = None  # Organization identifier, optional
     project_id: Optional[str] = None  # Project identifier, optional
