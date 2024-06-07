@@ -3,6 +3,7 @@ import io
 from typing import Dict, List, Optional, Union
 
 from app.api.platform.models.explore import Sorting
+from app.services.mongo.explore import fetch_flattened_tasks
 from app.services.mongo.tasks import (
     get_total_nb_of_tasks,
     task_filtering_pipeline_match,
@@ -420,7 +421,7 @@ async def get_all_tasks(
 async def email_project_tasks(
     project_id: str,
     uid: str,
-    limit: Optional[int] = 1000,
+    limit: Optional[int] = 5_000,
 ):
     def send_error_message():
         # Send an error message to the user
@@ -439,8 +440,6 @@ async def email_project_tasks(
         logger.debug(f"Sent error message to user: {user.get('email')}")
 
     if config.ENVIRONMENT != "preview":
-        tasks_list = await get_all_tasks(project_id=project_id)
-
         # Get the user email
         user = propelauth.fetch_user_metadata_by_user_id(uid, include_orgs=False)
 
@@ -449,7 +448,24 @@ async def email_project_tasks(
 
         try:
             # Convert task list to Pandas DataFrame
-            df = pd.DataFrame([task.model_dump() for task in tasks_list])
+            flattened_tasks = fetch_flattened_tasks(
+                project_id=project_id,
+                filters=None,
+                limit=limit,
+                with_events=True,
+                with_sessions=True,
+            )
+            tasks_df = pd.DataFrame(flattened_tasks)
+
+            # Convert timestamps to datetime
+            for col in [
+                "task_created_at",
+                "task_eval_at",
+                "event_created_at",
+            ]:
+                if col in tasks_df.columns:
+                    tasks_df[col] = pd.to_datetime(tasks_df[col], unit="s")
+
         except Exception as e:
             error_message = f"Error converting tasks to DataFrame for {user.get('email')} project id {project_id}: {e}"
             logger.error(error_message)
@@ -458,7 +474,7 @@ async def email_project_tasks(
         exports = []
         # Convert the DataFrame to a CSV string, then to bytes
         try:
-            csv_string = df.to_csv(index=False)
+            csv_string = tasks_df.to_csv(index=False)
             csv_bytes = csv_string.encode()
             exports.append(
                 {
@@ -474,7 +490,7 @@ async def email_project_tasks(
         # Get the excel file buffer
         try:
             excel_buffer = io.BytesIO()
-            df.to_excel(excel_buffer, index=False)
+            tasks_df.to_excel(excel_buffer, index=False)
             excel_data = excel_buffer.getvalue()
             # encoded_excel = base64.b64encode(excel_data).decode()
             exports.append(
@@ -491,7 +507,7 @@ async def email_project_tasks(
         # TODO : Add .parquet file export for large datasets
         try:
             parquet_buffer = io.BytesIO()
-            df.to_parquet(parquet_buffer, index=False)
+            tasks_df.to_parquet(parquet_buffer, index=False)
             parquet_data = parquet_buffer.getvalue()
             exports.append(
                 {
