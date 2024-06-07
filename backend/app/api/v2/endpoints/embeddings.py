@@ -20,7 +20,21 @@ async def post_embeddings(
     request_body: EmbeddingRequest,
     org: dict = Depends(authenticate_org_key),
 ):
+    org_metadata = org["org"].get("metadata", {})
     org_id = org["org"]["org_id"]
+
+    # Check if the organization has a payment method
+    customer_id = None
+
+    if "customer_id" in org_metadata.keys():
+        customer_id = org_metadata.get("customer_id", None)
+
+    if not customer_id and org_id != config.PHOSPHO_ORG_ID:
+        raise HTTPException(
+            status_code=402,
+            detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
+        )
+
     # Handle the emebedding model in the request
     if request_body.model != "intent-embed":
         raise HTTPException(
