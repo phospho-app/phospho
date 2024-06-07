@@ -119,7 +119,7 @@ async def post_add_event_to_sessions(
     response_model=Session,
     description="Remove an event from a Session",
 )
-async def post_remove_event_from_task(
+async def post_remove_event_from_session(
     session_id: str,
     remove_event: RemoveEventRequest,
     user: User = Depends(propelauth.require_user),
