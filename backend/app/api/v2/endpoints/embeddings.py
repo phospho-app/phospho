@@ -42,7 +42,7 @@ async def post_embeddings(
 
     # Bill the organization for the request
     # background_tasks.add_task(save_embedding, embeddings)
-    if org_id != config.PHOSPHO_ORG_ID:  # and config.ENVIRONMENT == "production":
+    if org_id != config.PHOSPHO_ORG_ID and config.ENVIRONMENT == "production":
         background_tasks.add_task(
             metered_prediction,
             org_id=org["org"]["org_id"],
