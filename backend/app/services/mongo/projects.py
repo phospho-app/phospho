@@ -333,7 +333,7 @@ async def email_project_tasks(
 
         try:
             # Convert task list to Pandas DataFrame
-            flattened_tasks = fetch_flattened_tasks(
+            flattened_tasks = await fetch_flattened_tasks(
                 project_id=project_id,
                 limit=limit,
                 with_events=True,
