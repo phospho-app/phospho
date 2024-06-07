@@ -197,3 +197,28 @@ async def get_all_events(
     # Cast to model
     events = [Event.model_validate(data) for data in events]
     return events
+
+
+async def confirm_event(
+    project_id: str,
+    event_id: str,
+) -> Event:
+    mongo_db = await get_mongo_db()
+    # Get the event
+    event = await mongo_db["events"].find_one(
+        {"project_id": project_id, "id": event_id}
+    )
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    event_model = Event.model_validate(event)
+
+    # Edit the event
+    result = await mongo_db["events"].update_one(
+        {"project_id": project_id, "id": event_id},
+        {"$set": {"confirmed": True, "source": "user"}},
+    )
+    event_model.confirmed = True
+    event_model.source = "user"
+
+    return event_model

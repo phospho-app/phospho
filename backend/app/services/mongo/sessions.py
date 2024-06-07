@@ -7,7 +7,7 @@ from loguru import logger
 from fastapi import HTTPException
 from app.db.models import Session, Event, EventDefinition
 
-from phospho.models import ProjectDataFilters
+from phospho.models import ProjectDataFilters, JobResult
 from phospho.utils import is_jsonable
 
 
@@ -362,19 +362,18 @@ async def remove_event_from_session(session: Session, event_name: str) -> Sessio
         e.event_name for e in session.events
     ]:
         # Mark the event as removed in the events database
-        _ = await mongo_db["events"].update_many(
+        await mongo_db["events"].update_many(
             {"session_id": session.id, "event_name": event_name},
-            {"$set": {"removed": True}},
+            {
+                "$set": {
+                    "removed": True,
+                    "removal_reason": "removed_by_user_from_session",
+                }
+            },
         )
 
         # Remove the event from the session
         session.events = [e for e in session.events if e.event_name != event_name]
-
-        # Update the session object
-        _ = await mongo_db["sessions"].update_one(
-            {"id": session.id, "project_id": session.project_id},
-            {"$set": session.model_dump()},
-        )
         return session
     else:
         raise HTTPException(

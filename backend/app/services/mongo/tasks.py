@@ -216,15 +216,15 @@ async def remove_event_from_task(task: Task, event_name: str) -> Task:
         # Mark the event as removed in the events database
         event_ref = await mongo_db["events"].update_many(
             {"task_id": task.id, "event_name": event_name},
-            {"$set": {"removed": True}},
+            {
+                "$set": {
+                    "removed": True,
+                    "removal_reason": "removed_by_user_from_session",
+                }
+            },
         )
         # Remove the event from the task
         task.events = [e for e in task.events if e.event_name != event_name]
-
-        # Update the task object
-        task_ref = await mongo_db["tasks"].update_one(
-            {"id": task.id, "project_id": task.project_id}, {"$set": task.model_dump()}
-        )
 
     return task
 

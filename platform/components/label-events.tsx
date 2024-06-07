@@ -66,8 +66,13 @@ export const EventBadge = ({ event }: { event: Event }) => {
     ? Math.round(event.score_range?.value * 100) / 100
     : null;
 
+  let badgeStyle = "border hover:border-green-500";
+  if (event.confirmed) {
+    badgeStyle = "border bg-green-500 hover:border-green-500";
+  }
+
   return (
-    <Badge variant="outline" className="border hover:border-green-500">
+    <Badge variant="outline" className={badgeStyle}>
       {event.score_range?.score_type !== "range" && event.event_name}
       {event.score_range?.score_type === "range" && (
         <p>
@@ -116,12 +121,31 @@ export const InteractiveEventBadgeForTasks = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem
-          onClick={(mouseEvent) => {
+          onClick={async (mouseEvent) => {
             mouseEvent.stopPropagation();
-            toast({
-              title: "Coming soon 🛠️",
-              description:
-                "This feature is still being developed. Your changes were not saved.",
+            // Call the API to remove the event from the task
+            const response = await fetch(
+              `/api/events/${eventDefinition?.project_id}/confirm/${event.id}`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: "Bearer " + accessToken,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  event_name: event.event_name,
+                }),
+              },
+            );
+            const response_json = await response.json();
+            setTask({
+              ...task,
+              events: task.events.map((e) => {
+                if (e.id === event.id) {
+                  return response_json;
+                }
+                return e;
+              }),
             });
           }}
         >
@@ -306,12 +330,31 @@ export const InteractiveEventBadgeForSessions = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem
-          onClick={(mouseEvent) => {
+          onClick={async (mouseEvent) => {
             mouseEvent.stopPropagation();
-            toast({
-              title: "Coming soon 🛠️",
-              description:
-                "This feature is still being developed. Your changes were not saved.",
+            // Call the API to remove the event from the task
+            const response = await fetch(
+              `/api/events/${eventDefinition?.project_id}/confirm/${event.id}`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: "Bearer " + accessToken,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  event_name: event.event_name,
+                }),
+              },
+            );
+            const response_json = await response.json();
+            setSession({
+              ...session,
+              events: session.events.map((e) => {
+                if (e.id === event.id) {
+                  return response_json;
+                }
+                return e;
+              }),
             });
           }}
         >

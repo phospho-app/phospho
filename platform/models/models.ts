@@ -100,6 +100,7 @@ export interface Event {
   webhook?: string;
   source: string;
   score_range?: ScoreRange;
+  confirmed: boolean;
 }
 
 export enum DetectionEngine {

@@ -111,6 +111,7 @@ class Event(ProjectElementBaseModel):
     removal_reason: Optional[str] = None
     removed: bool = False
     score_range: Optional[ScoreRange] = None
+    confirmed: bool = False
 
 
 class SentimentObject(BaseModel):
