@@ -447,6 +447,27 @@ async def breakdown_by_sum_of_metadata_field(
 ):
     """
     Get the sum of a metadata field, grouped by another metadata field if provided.
+
+    The metric can be one of the following:
+    - "sum": Sum of the metadata field
+    - "avg": Average of the metadata field
+    - "nb tasks": Number of tasks
+    - "avg success rate": Average success rate
+    - "avg session length": Average session length
+    - "event distribution": Distribution of events
+
+    The breakdown_by field can be one of the following:
+    - A metadata field
+    - "event_name"
+    - "task_position"
+    - "None"
+
+    The output is a list of dictionaries, each containing:
+    - breakdown_by: str
+    - metric: float
+    - stack: Dict[str, float] (only for "event distribution") containing the event_name and its count
+
+    The output stack can be used to create a stacked bar chart.
     """
 
     if filters is None:
@@ -455,7 +476,7 @@ async def breakdown_by_sum_of_metadata_field(
     mongo_db = await get_mongo_db()
 
     main_filter, collection_name = task_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+        project_id=project_id, filters=filters, collection="tasks_with_events"
     )
 
     pipeline: List[Dict[str, object]] = [
@@ -471,40 +492,7 @@ async def breakdown_by_sum_of_metadata_field(
 
     if breakdown_by == "event_name":
         pipeline += [
-            # Deduplicate the event by event_name and task_id
-            {
-                "$addFields": {
-                    "events": {
-                        "$reduce": {
-                            "input": "$events",
-                            "initialValue": [],
-                            "in": {
-                                "$concatArrays": [
-                                    "$$value",
-                                    {
-                                        "$cond": [
-                                            {
-                                                "$in": [
-                                                    "$$this.event_name",
-                                                    "$$value.event_name",
-                                                ]
-                                            },
-                                            [],
-                                            ["$$this"],
-                                        ]
-                                    },
-                                ]
-                            },
-                        }
-                    }
-                }
-            },
             {"$unwind": "$events"},
-            {
-                "$match": {
-                    "events.removed": {"$ne": True},
-                }
-            },
         ]
         breakdown_by_col = "events.event_name"
 
@@ -517,8 +505,14 @@ async def breakdown_by_sum_of_metadata_field(
             {
                 "$group": {
                     "_id": f"${breakdown_by_col}",
-                    metric: {"$sum": 1},
+                    "metric": {"$sum": 1},
                 },
+            },
+            {
+                "$project": {
+                    "breakdown_by": "$_id",
+                    "metric": 1,
+                }
             },
         ]
 
@@ -533,8 +527,14 @@ async def breakdown_by_sum_of_metadata_field(
             {
                 "$group": {
                     "_id": f"${breakdown_by_col}",
-                    metric: {"$avg": "$is_success"},
+                    "metric": {"$avg": "$is_success"},
                 },
+            },
+            {
+                "$project": {
+                    "breakdown_by": "$_id",
+                    "metric": 1,
+                }
             },
         ]
 
@@ -559,10 +559,86 @@ async def breakdown_by_sum_of_metadata_field(
             {
                 "$group": {
                     "_id": f"${breakdown_by_col}",
-                    metric: {"$avg": "$session.session_length"},
+                    "metric": {"$avg": "$session.session_length"},
                 },
             },
+            {
+                "$project": {
+                    "breakdown_by": "$_id",
+                    "metric": 1,
+                }
+            },
         ]
+
+    if metric.lower() == "event count" or metric.lower() == "event distribution":
+        # Count the number of events for each event_name
+        pipeline += [
+            {"$unwind": "$events"},
+            {
+                "$group": {
+                    "_id": {
+                        "breakdown_by": f"${breakdown_by_col}",
+                        "event_name": "$events.event_name",
+                    },
+                    "metric": {"$sum": 1},
+                },
+            },
+            {
+                "$group": {
+                    "_id": "$_id.breakdown_by",
+                    "events": {
+                        "$push": {"event_name": "$_id.event_name", "metric": "$metric"}
+                    },
+                    "total": {"$sum": "$metric"},
+                }
+            },
+        ]
+
+        if metric.lower() == "event count":
+            pipeline += [
+                {
+                    "$project": {
+                        "_id": 0,
+                        "breakdown_by": "$_id",
+                        "stack": {
+                            "$arrayToObject": {
+                                "$map": {
+                                    "input": "$events",
+                                    "as": "event",
+                                    "in": {
+                                        "k": "$$event.event_name",
+                                        "v": "$$event.metric",
+                                    },
+                                }
+                            }
+                        },
+                    }
+                },
+                {"$unwind": "$stack"},
+            ]
+        if metric.lower() == "event distribution":
+            # Same as event count, but normalize the count by the total number of events for each breakdown_by
+            pipeline += [
+                {
+                    "$project": {
+                        "_id": 0,
+                        "breakdown_by": "$_id",
+                        "stack": {
+                            "$arrayToObject": {
+                                "$map": {
+                                    "input": "$events",
+                                    "as": "event",
+                                    "in": {
+                                        "k": "$$event.event_name",
+                                        "v": {"$divide": ["$$event.metric", "$total"]},
+                                    },
+                                }
+                            }
+                        },
+                    }
+                },
+                {"$unwind": "$stack"},
+            ]
 
     if metric.lower() == "sum":
         if metadata_field in number_metadata_fields:
@@ -575,10 +651,16 @@ async def breakdown_by_sum_of_metadata_field(
                 {
                     "$group": {
                         "_id": f"${breakdown_by_col}",
-                        f"{metric}{metadata_field}": {
-                            "$sum": f"$metadata.{metadata_field}"
+                        "metric": {
+                            "$sum": f"$metadata.{metadata_field}",
                         },
                     },
+                },
+                {
+                    "$project": {
+                        "breakdown_by": "$_id",
+                        "metric": 1,
+                    }
                 },
             ]
         else:
@@ -597,10 +679,14 @@ async def breakdown_by_sum_of_metadata_field(
                 {
                     "$group": {
                         "_id": f"${breakdown_by_col}",
-                        f"{metric}{metadata_field}": {
-                            "$avg": f"$metadata.{metadata_field}"
-                        },
+                        "metric": {"$avg": f"$metadata.{metadata_field}"},
                     },
+                },
+                {
+                    "$project": {
+                        "breakdown_by": "$_id",
+                        "metric": 1,
+                    }
                 },
             ]
         else:
@@ -611,22 +697,16 @@ async def breakdown_by_sum_of_metadata_field(
 
     pipeline.extend(
         [
-            {"$match": {"_id": {"$ne": None}}},
-            {
-                "$project": {
-                    breakdown_by: "$_id",
-                    metric: 1,
-                    f"{metric}{metadata_field}": 1,
-                    "_id": 0,
-                },
-            },
+            # {"$match": {"breakdown_by": {"$ne": None}}},
         ]
     )
     if breakdown_by == "task_position":
-        pipeline.append({"$sort": {f"{breakdown_by}": 1}})
+        pipeline.append({"$sort": {"breakdown_by": 1}})
     else:
-        pipeline.append({"$sort": {f"{metric}{metadata_field}": -1, metric: -1}})
+        pipeline.append({"$sort": {"breakdown_by": -1, "metric": 1}})
 
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=200)
+
+    # logger.debug(f"Breakdown by sum of metadata field: {result}")
 
     return result
