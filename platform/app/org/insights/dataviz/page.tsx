@@ -42,9 +42,9 @@ const MetadataForm: React.FC<{}> = ({}) => {
 
   const { toast } = useToast();
 
-  const { accessToken, loading } = useUser();
-  const hasTasks = dataStateStore((state) => state.hasTasks);
+  const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const selectedProject = dataStateStore((state) => state.selectedProject);
 
   const selectedMetric = navigationStateStore((state) => state.selectedMetric);
   const selectedMetricMetadata = navigationStateStore(
@@ -106,6 +106,9 @@ const MetadataForm: React.FC<{}> = ({}) => {
     },
   );
 
+  const graphColors = ["#22c55e", "#ff7c7c", "#ffbb43", "#4a90e2", "#a259ff"];
+  const isStacked = pivotData?.length > 1 && "stack" in pivotData[0];
+
   return (
     <>
       <div className="flex flex-col space-y-2">
@@ -129,11 +132,11 @@ const MetadataForm: React.FC<{}> = ({}) => {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
-                  setSelectedMetric("Avg session length");
+                  setSelectedMetric("Event distribution");
                   setSelectedMetricMetadata(null);
                 }}
               >
-                Avg session length
+                Event distribution
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -142,6 +145,14 @@ const MetadataForm: React.FC<{}> = ({}) => {
                 }}
               >
                 Success rate
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedMetric("Avg session length");
+                  setSelectedMetricMetadata(null);
+                }}
+              >
+                Avg session length
               </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>Avg of metadata</DropdownMenuSubTrigger>
@@ -268,7 +279,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
               <CardHeader>
                 <CardTitle className="text-xl font-light tracking-tight">
                   Breakdown by {selectedGroupBy}:{" "}
-                  {pivotData[selectedGroupBy] ?? "None"}
+                  {pivotData["breakdown_by"] ?? "None"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-xl font-extrabold">
@@ -296,8 +307,41 @@ const MetadataForm: React.FC<{}> = ({}) => {
               }}
             >
               <CartesianGrid />
+              <Tooltip
+                formatter={(value) => {
+                  if (typeof value === "string") return value;
+                  if (typeof value === "number")
+                    return `${Math.round(value * 100) / 100}`;
+                }}
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-primary shadow-md p-2 rounded-md">
+                        <p className="text-secondary font-semibold">{`${selectedGroupBy}: ${label}`}</p>
+                        <p className="text-green-500">
+                          {payload.map((item: any) => {
+                            const itemName = item.name.split(".")[1]
+                              ? item.name.split(".")[1]
+                              : item.name;
+                            const formatedValue =
+                              typeof item.value === "number"
+                                ? Math.round(item.value * 1000) / 1000
+                                : item.value;
+
+                            return (
+                              <p key={item.name}>
+                                {itemName}: {formatedValue}
+                              </p>
+                            );
+                          })}
+                        </p>
+                      </div>
+                    );
+                  }
+                }}
+              />
               <YAxis
-                dataKey={selectedGroupBy}
+                dataKey={"breakdown_by"}
                 stroke="#888888"
                 fontSize={12}
                 tickLine={false}
@@ -321,48 +365,51 @@ const MetadataForm: React.FC<{}> = ({}) => {
                 // axisLine={false}
                 tickFormatter={(value) => `${Math.round(value * 100) / 100}`}
               />
-              <Bar
-                dataKey={`${selectedMetric}${selectedMetricMetadata ?? ""}`}
-                fill="#22c55e"
-                radius={[0, 20, 20, 0]}
-                onClick={(data) => {
-                  // Copy the Y value to the clipboard
-                  navigator.clipboard.writeText(data[selectedGroupBy]);
-                  toast({
-                    title: "Copied to clipboard",
-                    description: data[selectedGroupBy],
-                  });
-                }}
-              />
-              <Tooltip
-                formatter={(value) => {
-                  if (typeof value === "string") return value;
-                  if (typeof value === "number")
-                    return `${Math.round(value * 100) / 100}`;
-                }}
-                content={({ active, payload, label }) => {
-                  if (active && payload && payload.length) {
-                    const formatedValue =
-                      typeof payload[0].value === "number"
-                        ? Math.round(payload[0].value * 1000) / 1000
-                        : payload[0].value;
-                    return (
-                      <div className="bg-primary shadow-md p-2 rounded-md">
-                        <p className="text-secondary font-semibold">{`${label}`}</p>
-                        <p className="text-green-500">
-                          {payload.map((item: any) => {
-                            return (
-                              <p key={item.name}>
-                                {item.name}: {formatedValue}
-                              </p>
-                            );
-                          })}
-                        </p>
-                      </div>
+              {!isStacked && (
+                <Bar
+                  dataKey={"metric"}
+                  fill="#22c55e"
+                  stackId="a"
+                  // radius={[0, 20, 20, 0]}
+                  onClick={(data) => {
+                    // Copy the Y value to the clipboard
+                    navigator.clipboard.writeText(data["_id"]);
+                    toast({
+                      title: "Copied to clipboard",
+                      description: data["_id"],
+                    });
+                  }}
+                />
+              )}
+              {isStacked &&
+                // Loop over the keys of the dict and create a bar for each key
+                Object.keys(selectedProject?.settings?.events ?? {}).map(
+                  (key, index) => {
+                    console.log(
+                      "TEST ",
+                      key,
+                      index,
+                      graphColors[index % graphColors.length],
                     );
-                  }
-                }}
-              />
+                    return (
+                      <Bar
+                        key={key}
+                        dataKey={`stack.${key}`}
+                        fill={graphColors[index % graphColors.length]}
+                        stackId="a"
+                        // radius={[0, 20, 20, 0]}
+                        onClick={(data) => {
+                          // Copy the Y value to the clipboard
+                          navigator.clipboard.writeText(data["_id"]);
+                          toast({
+                            title: "Copied to clipboard",
+                            description: data["_id"],
+                          });
+                        }}
+                      />
+                    );
+                  },
+                )}
             </BarChart>
           </ResponsiveContainer>
         )}
