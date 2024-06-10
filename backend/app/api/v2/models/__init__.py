@@ -40,4 +40,10 @@ from .tasks import (
 )
 from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest
 from .train import TrainRequest
-from .embeddings import Embedding, EmbeddingRequest
+from .embeddings import (
+    Embedding,
+    EmbeddingRequest,
+    EmbeddingResponseData,
+    EmbeddingUsage,
+    EmbeddingResponse,
+)
