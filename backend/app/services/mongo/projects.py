@@ -15,6 +15,7 @@ from app.db.models import (
     Session,
     Task,
     Test,
+    Event,
 )
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
@@ -712,6 +713,11 @@ async def populate_default(
     logger.info(f"Populating project {project_id} with default values")
     mongo_db = await get_mongo_db()
 
+    event_definition_pairs = {}
+    event_pairs = {}
+    task_pairs = {}
+    session_ids = []
+
     if config.ENVIRONMENT == "production":
         target_project_id = "6a6323d1447a44ddac2dae42d7c39749"
     else:
@@ -723,7 +729,20 @@ async def populate_default(
     target_project.id = project_id
     await update_project(target_project)
 
-    # Add events to the project
+    # Add sessions to the project
+    default_sessions = await get_all_sessions(target_project_id, get_events=True)
+    sessions = []
+    for session in default_sessions:
+        session.id = generate_uuid()
+        session.created_at = generate_timestamp()
+        session.project_id = project_id
+        session.org_id = org_id
+        session_ids.append(session.id)
+        sessions.append(session.model_dump())
+    await mongo_db["sessions"].insert_many(sessions)
+
+    # Add events definitions to the project
+
     default_event_defintiions = (
         await mongo_db["event_definitions"]
         .find({"project_id": target_project_id})
@@ -735,33 +754,82 @@ async def populate_default(
         validated_event_definition.id = generate_uuid()
         validated_event_definition.project_id = project_id
         validated_event_definition.org_id = org_id
+        event_definition_pairs[validated_event_definition.event_name] = (
+            validated_event_definition
+        )
         event_definitions.append(validated_event_definition)
     await mongo_db["event_definitions"].insert_many(
         [event_definition.model_dump() for event_definition in event_definitions]
     )
 
     # Add tasks to the project
-    default_tasks = await get_all_tasks(target_project_id)
+    default_tasks = await get_all_tasks(target_project_id, get_events=True)
     tasks = []
+    i = 0
     for task in default_tasks:
+        old_task_id = task.id
         task.id = generate_uuid()
         task.created_at = generate_timestamp()
-        task.project_id = project_id
         task.org_id = org_id
+        task.project_id = project_id
+        task.metadata = {}
+        task.last_eval.id = generate_uuid()
+        task.last_eval.created_at = generate_timestamp()
+        task.last_eval.project_id = project_id = project_id
+        task.last_eval.org_id = org_id
+        task.last_eval.task_id = task.id
+        if i < 4:
+            task.session_id = session_ids[0]
+            task.last_eval.session_id = session_ids[0]
+        elif i < 7:
+            task.session_id = session_ids[1]
+            task.last_eval.session_id = session_ids[1]
+        else:
+            task.session_id = session_ids[2]
+            task.last_eval.session_id = session_ids[2]
+        task_pairs[old_task_id] = task
+        i += 1
         tasks.append(task)
-    await mongo_db["tasks"].insert_many([task.model_dump() for task in tasks])
 
-    # Add sessions to the project
-    default_sessions = await get_all_sessions(target_project_id)
-    sessions = []
-    for session in default_sessions:
-        session.id = generate_uuid()
-        session.created_at = generate_timestamp()
-        session.project_id = project_id
-        session.org_id = org_id
-        sessions.append(session)
-    await mongo_db["sessions"].insert_many(
-        [session.model_dump() for session in sessions]
+    # Add events to the project
+    default_events = (
+        await mongo_db["events"]
+        .find({"project_id": target_project_id})
+        .to_list(length=10)
     )
 
+    events = []
+    for event in default_events:
+        validated_event = Event.model_validate(event)
+        if validated_event.task_id not in task_pairs:
+            logger.warning(
+                f"Default project has been modified, task {validated_event.task_id} not found in task_pairs. Skipping event {validated_event.event_name}"
+            )
+            continue
+        validated_event.id = generate_uuid()
+        validated_event.created_at = generate_timestamp()
+        validated_event.project_id = project_id
+        validated_event.org_id = org_id
+        validated_event.task_id = task_pairs.get(validated_event.task_id).id
+        validated_event.event_definition = event_definition_pairs.get(
+            validated_event.event_definition.event_name
+        )
+        validated_event.task = task_pairs.get(validated_event.task_id)
+        events.append(validated_event)
+        event_pairs[validated_event.event_name] = validated_event
+    await mongo_db["events"].insert_many([event.model_dump() for event in events])
+
+    # Redefine events on tasks
+    for index in range(len(tasks)):
+        task = tasks[index]
+        task = Task.model_validate(task)
+        for number in range(len(task.events)):
+            task.events[number] = event_pairs.get(task.events[number].event_name)
+        tasks[index] = task
+
+    await mongo_db["tasks"].insert_many([task.model_dump() for task in tasks])
+
+    logger.debug(
+        f"Populated project {project_id} with event definitions {event_definition_pairs}"
+    )
     return None
