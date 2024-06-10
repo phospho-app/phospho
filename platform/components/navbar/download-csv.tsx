@@ -46,7 +46,7 @@ const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
 
   return (
     <div onClick={handleButtonClick} className="flex flex-row items-center">
-      <Download className="mr-2 h-6 w-6" />
+      <Download className="mr-1 h-4 w-4" />
       Export Data
     </div>
   );

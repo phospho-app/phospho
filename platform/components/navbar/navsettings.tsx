@@ -92,29 +92,47 @@ export function NavBarSettings() {
                   </div>
                 )}
             </DropdownMenuLabel>
-
             <DropdownMenuItem
               onClick={() => router.push("/org/settings/account")}
             >
-              Account settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => router.push("/org/settings/project")}
-            >
-              Project settings
+              Account
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => router.push("/org/settings/billing")}
             >
-              Billing settings
+              Billing
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Project</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => router.push("/org/settings/project")}
+            >
+              <div className="flex flex-row items-center">
+                <Settings className="w-4 h-4 mr-1" />
+                Project settings
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <AlertDialogTrigger
+                onClick={() => {
+                  setOpen(true);
+                }}
+              >
+                <div className="flex flex-row items-center">
+                  <FileUp className="w-4 h-4 mr-1" />
+                  Import data
+                </div>
+              </AlertDialogTrigger>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <DownloadButton />
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <Sun className="h-6 w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                 <Moon className="absolute h-6 w-6 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                <span className="ml-2">Theme</span>
+                <span className="ml-1">Theme</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 <DropdownMenuItem onClick={() => setTheme("light")}>
@@ -128,22 +146,6 @@ export function NavBarSettings() {
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <AlertDialogTrigger
-                onClick={() => {
-                  setOpen(true);
-                }}
-              >
-                <div className="flex flex-row items-center">
-                  <FileUp className="w-6 h-6 mr-2" />
-                  Import data
-                </div>
-              </AlertDialogTrigger>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <DownloadButton />
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={async () => {

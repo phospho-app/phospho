@@ -86,7 +86,7 @@ export function NavBarHelp() {
               }
             >
               <div className="flex items-center">
-                <LifeBuoy className="w-6 h-6 mr-2" />
+                <LifeBuoy className="w-4 h-4 mr-1" />
                 <span> Documentation</span>
               </div>
             </Link>
@@ -102,7 +102,7 @@ export function NavBarHelp() {
                   }}
                 >
                   <div className="flex flex-row items-center">
-                    <FolderInput className="w-4 h-4 mr-2" />
+                    <FolderInput className="w-4 h-4 mr-1" />
                     Start sending data
                   </div>
                 </AlertDialogTrigger>
@@ -129,7 +129,7 @@ export function NavBarHelp() {
           <DropdownMenuItem>
             <Link href="https://discord.gg/MXqBJ9pBsx" target="_blank">
               <div className="flex items-center">
-                <DiscordLogoIcon className="w-6 h-6 mr-2" />
+                <DiscordLogoIcon className="w-4 h-4 mr-1" />
                 Join Discord
               </div>
             </Link>
@@ -137,7 +137,7 @@ export function NavBarHelp() {
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <div className="flex items-center">
-                <MailIcon className="w-6 h-6 mr-2" />
+                <MailIcon className="w-4 h-4 mr-1" />
                 Contact us
               </div>
             </DropdownMenuSubTrigger>

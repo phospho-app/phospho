@@ -143,9 +143,23 @@ export function Sidebar() {
         <SideBarElement
           href="/org/settings"
           icon={<Settings size={16} className="mr-2" />}
+          collapsible={true}
         >
           Settings
         </SideBarElement>
+        {(pathname.startsWith("/org/settings") || isMobile) && (
+          <div className="ml-6 text-muted-foreground">
+            <SideBarElement href="/org/settings/project">
+              Project
+            </SideBarElement>
+            <SideBarElement href="/org/settings/account">
+              Account
+            </SideBarElement>
+            <SideBarElement href="/org/settings/billing">
+              Billing
+            </SideBarElement>
+          </div>
+        )}
       </div>
 
       {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
