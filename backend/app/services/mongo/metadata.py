@@ -490,11 +490,10 @@ async def breakdown_by_sum_of_metadata_field(
     else:
         breakdown_by_col = breakdown_by
 
-    if breakdown_by == "event_name" or metric.lower() == "event distribution":
+    if breakdown_by == "event_name":
         pipeline += [
             {"$unwind": "$events"},
         ]
-    if breakdown_by == "event_name":
         breakdown_by_col = "events.event_name"
 
     if breakdown_by == "task_position":
@@ -571,10 +570,10 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
-    if metric.lower() == "event distribution":
+    if metric.lower() == "event count" or metric.lower() == "event distribution":
         # Count the number of events for each event_name
-        logger.debug(f"Breakdown by : {breakdown_by_col}")
         pipeline += [
+            {"$unwind": "$events"},
             {
                 "$group": {
                     "_id": {
@@ -590,28 +589,56 @@ async def breakdown_by_sum_of_metadata_field(
                     "events": {
                         "$push": {"event_name": "$_id.event_name", "metric": "$metric"}
                     },
+                    "total": {"$sum": "$metric"},
                 }
             },
-            {
-                "$project": {
-                    "_id": 0,
-                    "breakdown_by": "$_id",
-                    "stack": {
-                        "$arrayToObject": {
-                            "$map": {
-                                "input": "$events",
-                                "as": "event",
-                                "in": {
-                                    "k": "$$event.event_name",
-                                    "v": "$$event.metric",
-                                },
-                            }
-                        }
-                    },
-                }
-            },
-            {"$unwind": "$stack"},
         ]
+
+        if metric.lower() == "event count":
+            pipeline += [
+                {
+                    "$project": {
+                        "_id": 0,
+                        "breakdown_by": "$_id",
+                        "stack": {
+                            "$arrayToObject": {
+                                "$map": {
+                                    "input": "$events",
+                                    "as": "event",
+                                    "in": {
+                                        "k": "$$event.event_name",
+                                        "v": "$$event.metric",
+                                    },
+                                }
+                            }
+                        },
+                    }
+                },
+                {"$unwind": "$stack"},
+            ]
+        if metric.lower() == "event distribution":
+            # Same as event count, but normalize the count by the total number of events for each breakdown_by
+            pipeline += [
+                {
+                    "$project": {
+                        "_id": 0,
+                        "breakdown_by": "$_id",
+                        "stack": {
+                            "$arrayToObject": {
+                                "$map": {
+                                    "input": "$events",
+                                    "as": "event",
+                                    "in": {
+                                        "k": "$$event.event_name",
+                                        "v": {"$divide": ["$$event.metric", "$total"]},
+                                    },
+                                }
+                            }
+                        },
+                    }
+                },
+                {"$unwind": "$stack"},
+            ]
 
     if metric.lower() == "sum":
         if metadata_field in number_metadata_fields:
@@ -670,10 +697,9 @@ async def breakdown_by_sum_of_metadata_field(
 
     pipeline.extend(
         [
-            {"$match": {"breakdown_by": {"$ne": None}}},
+            # {"$match": {"breakdown_by": {"$ne": None}}},
         ]
     )
-    logger.debug(pipeline)
     if breakdown_by == "task_position":
         pipeline.append({"$sort": {"breakdown_by": 1}})
     else:
@@ -681,6 +707,6 @@ async def breakdown_by_sum_of_metadata_field(
 
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=200)
 
-    logger.debug(f"Breakdown by sum of metadata field: {result}")
+    # logger.debug(f"Breakdown by sum of metadata field: {result}")
 
     return result

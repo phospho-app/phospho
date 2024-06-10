@@ -140,6 +140,14 @@ const MetadataForm: React.FC<{}> = ({}) => {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
+                  setSelectedMetric("Event count");
+                  setSelectedMetricMetadata(null);
+                }}
+              >
+                Event count
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
                   setSelectedMetric("Avg Success rate");
                   setSelectedMetricMetadata(null);
                 }}
