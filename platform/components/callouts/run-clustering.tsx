@@ -5,16 +5,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { dataStateStore } from "@/store/store";
+import { authFetcher } from "@/lib/fetcher";
+import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { Boxes } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import useSWR from "swr";
 
 export function RunClusteringCallout() {
-  const hasTasks = dataStateStore((state) => state.hasTasks);
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
+
+  const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
+
+  const { data: hasTasksData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
+  );
+  const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
 
   return (
     <>

@@ -1,4 +1,9 @@
+from app.services.mongo.recipes import (
+    get_recipe_from_event_id,
+    run_recipe_on_tasks_batched,
+)
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from phospho.models import ProjectDataFilters
 from propelauth_fastapi import User
 
 from app.api.platform.models import EventBackfillRequest, Event
@@ -6,7 +11,7 @@ from app.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
 )
-from app.services.mongo.events import confirm_event, run_event_detection_on_timeframe
+from app.services.mongo.events import confirm_event
 from app.core import config
 
 router = APIRouter(tags=["Events"])
@@ -40,11 +45,29 @@ async def post_backfill_event(
             detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
         )
 
+    if event_backfill_request.created_at_end is not None:
+        event_backfill_request.created_at_end = round(
+            event_backfill_request.created_at_end
+        )
+    if event_backfill_request.created_at_start is not None:
+        event_backfill_request.created_at_start = round(
+            event_backfill_request.created_at_start
+        )
+    filters = ProjectDataFilters(
+        created_at_start=event_backfill_request.created_at_start,
+        created_at_end=event_backfill_request.created_at_end,
+    )
+    recipe = await get_recipe_from_event_id(
+        project_id=project_id, event_id=event_backfill_request.event_id
+    )
+
     background_tasks.add_task(
-        run_event_detection_on_timeframe,
-        org_id=org_id,
+        run_recipe_on_tasks_batched,
         project_id=project_id,
-        event_backfill_request=event_backfill_request,
+        recipe=recipe,
+        org_id=org_id,
+        filters=filters,
+        sample_rate=event_backfill_request.sample_rate,
     )
     return {"status": "ok"}
 

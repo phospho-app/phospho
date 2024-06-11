@@ -19,8 +19,6 @@ export function SelectProjectButton() {
   const projects = dataStateStore((state) => state.projects);
 
   const selectedProjectName = selectedProject?.project_name ?? "loading...";
-  const setHasTasks = dataStateStore((state) => state.setHasTasks);
-  const setHasSessions = dataStateStore((state) => state.setHasSessions);
 
   if (projects === null) {
     return <></>;
@@ -35,8 +33,6 @@ export function SelectProjectButton() {
 
     if (selectedProjectInForm) {
       if (selectedProjectInForm.id != "project_id") {
-        setHasTasks(null);
-        setHasSessions(null);
         setproject_id(selectedProjectInForm.id);
       }
     }

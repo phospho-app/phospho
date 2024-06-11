@@ -1,13 +1,12 @@
 from typing import Dict, List, Optional
-from app.db.models import Session, Project, Task
+
+from app.db.models import Event, EventDefinition, Project, Session, Task
 from app.db.mongo import get_mongo_db
-
 from app.services.mongo.tasks import task_filtering_pipeline_match
-from loguru import logger
 from fastapi import HTTPException
-from app.db.models import Session, Event, EventDefinition
+from loguru import logger
 
-from phospho.models import ProjectDataFilters, JobResult
+from phospho.models import ProjectDataFilters
 from phospho.utils import is_jsonable
 
 
@@ -247,9 +246,10 @@ async def event_suggestion(
     Fetches the messages from a session ID and sends them to the LLM model to get an event suggestion.
     This will suggest an event that is most likely to have happened during the session.
     """
-    from phospho.utils import shorten_text
-    from phospho.lab.language_models import get_provider_and_model, get_sync_client
     from re import search
+
+    from phospho.lab.language_models import get_provider_and_model, get_sync_client
+    from phospho.utils import shorten_text
 
     session = await get_session_by_id(session_id)
     transcript = await format_session_transcript(session)

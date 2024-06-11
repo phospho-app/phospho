@@ -50,8 +50,6 @@ export default function Page() {
   const { user, loading, accessToken } = useUser();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
-  const setHasTasks = dataStateStore((state) => state.setHasTasks);
-  const setHasSessions = dataStateStore((state) => state.setHasSessions);
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
@@ -99,8 +97,6 @@ export default function Page() {
         await delay(1000);
         mutate([`/api/organizations/${selectedOrgId}/projects`, accessToken]);
         await delay(1000);
-        setHasTasks(null);
-        setHasSessions(null);
         setproject_id(responseBody.id);
         router.push(`/org`);
       } else {

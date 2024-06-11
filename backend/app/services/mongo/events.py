@@ -1,12 +1,7 @@
 from typing import Dict, List, Optional
 
-from app.api.platform.models import EventBackfillRequest
-from app.api.platform.models.explore import Pagination
-from app.db.models import EventDefinition, Recipe
+from app.db.models import EventDefinition
 from app.db.mongo import get_mongo_db
-from app.services.mongo.extractor import run_recipe_on_tasks
-from app.services.mongo.tasks import get_all_tasks
-from app.services.mongo.tasks import get_total_nb_of_tasks
 from app.utils import cast_datetime_or_timestamp_to_timestamp
 from fastapi import HTTPException
 from loguru import logger
@@ -75,70 +70,6 @@ async def get_event_from_name_and_project_id(
     return validated_event
 
 
-async def get_recipe_by_id(recipe_id: str) -> Recipe:
-    """
-    Get a recipe by its id
-    """
-    mongo_db = await get_mongo_db()
-    recipe = await mongo_db["recipes"].find_one({"id": recipe_id})
-    if not recipe:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    validated_recipe = Recipe.model_validate(recipe)
-    return validated_recipe
-
-
-async def run_event_detection_on_timeframe(
-    org_id: str, project_id: str, event_backfill_request: EventBackfillRequest
-) -> None:
-    """
-    Run event detection on a given event_id and event_data
-    """
-    event_definition = await get_event_definition_from_event_id(
-        project_id, event_backfill_request.event_id
-    )
-    if event_definition.recipe_id is None:
-        logger.error(
-            f"Event {event_definition.event_name} has no recipe_id for project {project_id}. Canceling."
-        )
-        return
-    recipe = await get_recipe_by_id(recipe_id=event_definition.recipe_id)
-    if event_backfill_request.created_at_end is not None:
-        event_backfill_request.created_at_end = round(
-            event_backfill_request.created_at_end
-        )
-    if event_backfill_request.created_at_start is not None:
-        event_backfill_request.created_at_start = round(
-            event_backfill_request.created_at_start
-        )
-
-    filters = ProjectDataFilters(
-        created_at_start=event_backfill_request.created_at_start,
-        created_at_end=event_backfill_request.created_at_end,
-    )
-    total_nb_tasks = await get_total_nb_of_tasks(
-        project_id=project_id,
-        filters=filters,
-    )
-    if event_backfill_request.sample_rate is not None:
-        sample_size = int(total_nb_tasks * event_backfill_request.sample_rate)
-    else:
-        sample_size = total_nb_tasks
-
-    # Batch the tasks to avoid memory issues
-    batch_size = 256
-    nb_batches = sample_size // batch_size
-
-    for i in range(nb_batches + 1):
-        tasks = await get_all_tasks(
-            project_id=project_id,
-            filters=filters,
-            pagination=Pagination(page=i, per_page=batch_size),
-        )
-        await run_recipe_on_tasks(tasks=tasks, recipe=recipe, org_id=org_id)
-
-    return None
-
-
 async def get_all_events(
     project_id: str,
     limit: Optional[int] = None,
@@ -202,7 +133,6 @@ async def get_all_events(
 async def confirm_event(
     project_id: str,
     event_id: str,
-    event_source: str = "owner",
 ) -> Event:
     mongo_db = await get_mongo_db()
     # Get the event

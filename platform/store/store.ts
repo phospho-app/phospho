@@ -7,7 +7,6 @@ import {
   Task,
 } from "@/models/models";
 import {
-  ColumnFiltersState,
   PaginationState,
   SortingState,
   Updater,
@@ -272,10 +271,6 @@ interface dataState {
   selectedProject: Project | null;
   setSelectedProject: (project: Project | null) => void;
 
-  hasTasks: boolean | null;
-  setHasTasks: (hasTasks: boolean | null) => void;
-  hasSessions: boolean | null;
-  setHasSessions: (hasSessions: boolean | null) => void;
   hasLabelledTasks: HasEnoughLabelledTasks | null;
   setHasLabelledTasks: (
     hasLabelledTasks: HasEnoughLabelledTasks | null,
@@ -297,12 +292,6 @@ export const dataStateStore = create<dataState>((set) => ({
   setSelectedProject: (project: Project | null) =>
     set((state) => ({ selectedProject: project })),
 
-  hasTasks: null,
-  setHasTasks: (hasTasks: boolean | null) =>
-    set((state) => ({ hasTasks: hasTasks })),
-  hasSessions: null,
-  setHasSessions: (hasSessions: boolean | null) =>
-    set((state) => ({ hasSessions: hasSessions })),
   hasLabelledTasks: null,
   setHasLabelledTasks: (hasLabelledTasks: HasEnoughLabelledTasks | null) =>
     set((state) => ({ hasLabelledTasks: hasLabelledTasks })),

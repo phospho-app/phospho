@@ -46,7 +46,6 @@ export default function RunEvent({
   // Component to create an event or edit an existing event
 
   const project_id = navigationStateStore((state) => state.project_id);
-  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const selectedProject = dataStateStore((state) => state.selectedProject);
   const { loading, accessToken } = useUser();
   const { toast } = useToast();
@@ -55,6 +54,7 @@ export default function RunEvent({
   const { data: hasTasksData } = useSWR(
     project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
   );
   const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
   const { data: totalNbTasksData } = useSWR(

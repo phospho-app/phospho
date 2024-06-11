@@ -13,8 +13,6 @@ function FetchHasTasksSessions() {
 
   const project_id = navigationStateStore((state) => state.project_id);
   const hasLabelledTasks = dataStateStore((state) => state.hasLabelledTasks);
-  const setHasSessions = dataStateStore((state) => state.setHasSessions);
-  const setHasTasks = dataStateStore((state) => state.setHasTasks);
   const setHasLabelledTasks = dataStateStore(
     (state) => state.setHasLabelledTasks,
   );
@@ -24,26 +22,6 @@ function FetchHasTasksSessions() {
   );
 
   console.log("Rendering FetchHasTasksSessions");
-
-  // Fetch the has session
-  const { data: hasSessionData } = useSWR(
-    project_id
-      ? [`/api/explore/${project_id}/has-sessions`, accessToken]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
-  );
-  if (hasSessionData) {
-    setHasSessions(hasSessionData.has_sessions);
-  }
-
-  // Fetch has tasks
-  const { data: hasTasksData } = useSWR(
-    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
-  );
-  if (hasTasksData) {
-    setHasTasks(hasTasksData.has_tasks);
-  }
 
   // Fetch has enough labelled tasks
   const { data: hasLabelledTasksData } = useSWR(

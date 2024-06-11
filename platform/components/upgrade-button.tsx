@@ -34,10 +34,11 @@ const UpgradeButton = ({
   //posthog
   const posthog = usePostHog();
   // PropelAuth
-  const { user, loading, accessToken } = useUser();
+  const { user, accessToken } = useUser();
   const router = useRouter();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const toast = useToast();
+  const project_id = navigationStateStore((state) => state.project_id);
 
   // const stripeUrl = useMemo(() => {
   //   const stripe_test_url =
@@ -63,6 +64,9 @@ const UpgradeButton = ({
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
+          body: JSON.stringify({
+            project_id: project_id ? encodeURIComponent(project_id) : null,
+          }),
         },
       );
       if (!response.ok) {
