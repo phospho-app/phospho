@@ -191,7 +191,6 @@ export default function UploadDataset({
             description:
               "Tasks will appear in your dashboard in a few minutes.",
           });
-          setOpen(false);
         } else {
           // Read the error details
           const error = await response.text();
@@ -397,6 +396,15 @@ export const SendDataAlertDialog = ({
     });
   }
 
+  function handleClose() {
+    if (showModal) {
+      setShowModal(false);
+      setButtonPressed(true);
+    } else {
+      setOpen(false);
+    }
+  }
+
   function handleSkip() {
     setOpen(false);
     setButtonPressed(false);
@@ -423,10 +431,7 @@ export const SendDataAlertDialog = ({
                   </p>
                 </AlertDialogDescription>
               </div>
-              <X
-                onClick={() => setOpen(false)}
-                className="cursor-pointer h-8 w-8"
-              />
+              <X onClick={handleClose} className="cursor-pointer h-8 w-8" />
             </div>
           </AlertDialogHeader>
           <div className="overflow-y-auto">
@@ -788,10 +793,10 @@ phospho.log({input, output});`}
           </div>
 
           <div className="flex justify-between">
-            <UpgradeButton tagline="Enable Analytics" />
             <Button onClick={() => handleSkip()} variant={"link"}>
               Ignore
             </Button>
+            <UpgradeButton tagline="Enable Analytics" />
           </div>
         </AlertDialogContent>
       )}
