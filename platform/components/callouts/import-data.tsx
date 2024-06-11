@@ -39,8 +39,11 @@ import {
   BarChartBig,
   CopyIcon,
   Lock,
+  Mail,
   MonitorPlay,
+  NotebookText,
   Plus,
+  Telescope,
   Upload,
   X,
 } from "lucide-react";
@@ -671,6 +674,7 @@ phospho.log({input, output});`}
                 target="_blank"
               >
                 <Button variant="ghost" className="text-xs">
+                  <NotebookText className="h-4 w-4 mr-2" />
                   Example Colab notebook
                 </Button>
               </Link>
@@ -679,6 +683,7 @@ phospho.log({input, output});`}
                 className="text-xs"
                 onClick={() => createDefaultProject()}
               >
+                <Telescope className="h-4 w-4 mr-2" />
                 Explore sample data
               </Button>
               <Button
@@ -686,6 +691,7 @@ phospho.log({input, output});`}
                 className="text-xs"
                 onClick={() => router.push("mailto:paul-louis@phospho.app")}
               >
+                <Mail className="h-4 w-4 mr-2" />
                 Contact us to create your own LLM app
               </Button>
             </AlertDescription>
