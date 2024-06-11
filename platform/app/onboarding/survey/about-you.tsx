@@ -89,10 +89,8 @@ const CARD_STYLE =
   "flex flex-col items-left justify-center p-6 text-xl font-semibold space-y-4";
 
 export default function AboutYou({
-  project_id,
   setAboutYouValues,
 }: {
-  project_id: string;
   setAboutYouValues: (values: any) => void;
   setCustomEvents: (values: EventDefinition[]) => void;
   setPhosphoTaskId: (taskId: string) => void;
@@ -133,7 +131,7 @@ export default function AboutYou({
       }
       console.log("plan", response_json.plan);
     })();
-  }, [project_id, loading, selectedOrgId, accessToken, project]);
+  }, [loading, selectedOrgId, accessToken, project]);
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
@@ -145,7 +143,8 @@ export default function AboutYou({
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    fetch(`/api/projects/${project_id}/log-onboarding-survey`, {
+    router.push("/onboarding/create-project");
+    fetch(`/api/onboarding/log-onboarding-survey`, {
       method: "POST",
       headers: {
         Authorization: "Bearer " + accessToken,
@@ -162,30 +161,6 @@ export default function AboutYou({
 
     setAboutYouValues(values);
   }
-
-  useEffect(() => {
-    // Fetch the project from the server
-    (async () => {
-      if (!accessToken) return;
-      console.log("Fetching project from server in onboarding:", project_id);
-      const response = await fetch(`/api/projects/${project_id}`, {
-        headers: {
-          Authorization: "Bearer " + accessToken,
-        },
-      });
-      const responseBody = await response.json();
-      if (!response.ok) {
-        // This project doesn't exist or the user doesn't have access to it.
-        // Redirect the user to the home page.
-        console.log(
-          "Project doesn't exist or the user doesn't have access to it",
-        );
-        router.push("/");
-        return;
-      }
-      setProject(responseBody);
-    })();
-  }, [accessToken, loading]);
 
   return (
     <>
