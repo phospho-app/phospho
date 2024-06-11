@@ -12,6 +12,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Protocol,
     Tuple,
     Union,
 )
@@ -33,6 +34,7 @@ from .models import (
     ResultType,
     Recipe,
 )
+from phospho.utils import generate_uuid
 
 
 logger = logging.getLogger(__name__)
@@ -302,6 +304,15 @@ class Job:
 )"""
 
 
+class MessageCallable(Protocol):
+    """
+    A function whose first argument is a Message.
+    """
+
+    def __call__(self, message: Message, *args: Any, **kwargs: Any) -> Any:
+        ...
+
+
 class Workload:
     # Jobs is a mapping of job_id -> Job
     jobs: Dict[str, Job]
@@ -313,21 +324,18 @@ class Workload:
     project_id: Optional[str] = None
     org_id: Optional[str] = None
 
-    def __init__(self, jobs: Optional[List[Job]] = None):
+    def __init__(self, jobs: Optional[List[Union[Job, MessageCallable]]] = None):
         """
         A Workload is a set of jobs to be performed on messages.
 
         ```python
         from phospho import lab
 
-        job = lab.Job(
-            id="job_id",
-            job_function=lab.job_library.event_detection,
-            config=lab.EventConfig(event_name="event_name", event_description="event_description"),
-        )
-
         workload = lab.Workload()
-        workload.add_job(job)
+        workload.add_job(
+            job=lab.job_library.event_detection,
+            job_config=lab.EventConfig(event_name="event_name", event_description="event_description")
+        )
 
         messages = [lab.Message(content="Hello world!")]
 
@@ -341,12 +349,45 @@ class Workload:
             for job in jobs:
                 self.add_job(job)
 
-    def add_job(self, job: Job):
+    def add_job(
+        self,
+        job: Union[Job, MessageCallable],
+        job_config: Optional[Union[JobConfig, dict]] = None,
+        job_id: Optional[str] = None,
+        job_metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """
         Add a job to the workload.
+
+        job: A Job object or a callable function that takes a Message as first argument.
+        job_config: The configuration of the job. If not provided, the job will run with an empty config.
+        job_id: The id of the job. If not provided, it will be the name of the job_function.
+        job_metadata: Extra metadata to store with the job.
         """
-        # Add a reference to the workload to the job
-        job.workload = self
+
+        if callable(job):
+            job = Job(job_function=job)
+
+        if isinstance(job, Job):
+            job.workload = self
+        else:
+            raise ValueError(
+                "Please provide a Job object or a callable function to add_job."
+            )
+
+        if job_id is not None:
+            job.id = job_id
+        else:
+            job.id = job.id + "_" + generate_uuid()
+
+        if job_config is not None:
+            if isinstance(job_config, dict):
+                job_config = JobConfig(**job_config)
+            job.config = job_config
+
+        if job_metadata is not None:
+            job.metadata = job_metadata
+
         self.jobs[job.id] = job
 
     @classmethod
@@ -482,8 +523,14 @@ class Workload:
         recipe: Recipe,
     ):
         """
-        Create a workload from a phospho job (as defined is the database).
+        Create a workload for Event detection from a single phospho recipe
+        (as defined in the database).
         """
+        if recipe.recipe_type != "event_detection":
+            raise NotImplementedError(
+                f"Recipe type {recipe.recipe_type} is not supported. Only 'event_detection' is supported."
+            )
+
         parameters = {
             **recipe.parameters,
             "recipe_id": recipe.id,
@@ -555,7 +602,7 @@ class Workload:
         :param messages: The messages to run the jobs on.
         :param executor_type: The type of executor to use. Can be "parallel" or "sequential".
         :param max_parallelism: The maximum number of parallel jobs to run per seconds.
-            Use this to adhere to rate limits. Only used if executor_type is "parallel".
+            Use this to adhere to rate limits. Only used if executor_type is "parallel" or "parallel_jobs".
 
         Returns: a mapping of message.id -> job_id -> job_result
         """
