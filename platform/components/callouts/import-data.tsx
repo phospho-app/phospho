@@ -762,7 +762,7 @@ phospho.log({input, output});`}
                   One more thing...
                 </AlertDialogTitle>
                 <Card className="w-full border-red-500 bg-red-100">
-                  <CardTitle className="text-xl mt-2 ml-2">
+                  <CardTitle className="text-xl mt-2 ml-2 text-black">
                     <div className="flex align-center">
                       <TriangleAlert className="mr-2" />
                       Your account is missing billing information
