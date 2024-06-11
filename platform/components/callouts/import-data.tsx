@@ -32,7 +32,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/components/ui/use-toast";
-import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -52,7 +51,6 @@ import React from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
 import { useSWRConfig } from "swr";
-import { isAwaitKeyword } from "typescript";
 import { z } from "zod";
 
 const PythonIcon = () => {
@@ -145,7 +143,7 @@ export default function UploadDataset({
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const [loading, setLoading] = React.useState(false);
+  const [loading] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
 
   const onSubmit = () => {
