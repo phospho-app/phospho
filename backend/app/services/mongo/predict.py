@@ -73,10 +73,10 @@ async def metered_prediction(
         inputs_token_count = sum([len(encoding.encode(input)) for input in inputs])
 
         logger.debug(f"input_token_count: {inputs_token_count}")
-        # We bill through stripe, $0.50 / 1M input tokens
+        # We bill through stripe, $0.94 / 1M input tokens
         await bill_on_stripe(
             org_id,
-            inputs_token_count * 50,  # $0.50 / 1M input tokens
+            inputs_token_count * 94,  # $0.94 / 1M input tokens
             meter_event_name="phospho_token_based_meter",
         )
         logger.debug(

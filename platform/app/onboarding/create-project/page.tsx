@@ -27,6 +27,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useSWRConfig } from "swr";
 import { z } from "zod";
 
 const formSchema = z.object({
@@ -45,6 +46,7 @@ const CARD_STYLE =
 
 export default function Page() {
   const router = useRouter();
+  const { mutate } = useSWRConfig();
   const { user, loading, accessToken } = useUser();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
@@ -53,6 +55,8 @@ export default function Page() {
   );
   const [creatingProject, setCreatingProject] = useState(false);
   const toast = useToast();
+
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
@@ -86,6 +90,13 @@ export default function Page() {
     }).then(async (response) => {
       const responseBody = await response.json();
       if (responseBody.id !== undefined) {
+        toast.toast({
+          title: "We are creating your project.",
+          description: "You will be redirected in a couple seconds.",
+        });
+        await delay(1000);
+        mutate([`/api/organizations/${selectedOrgId}/projects`, accessToken]);
+        await delay(1000);
         setproject_id(responseBody.id);
         router.push(`/org`);
       } else {

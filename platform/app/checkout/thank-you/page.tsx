@@ -14,7 +14,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -29,11 +28,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { toast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import { da } from "date-fns/locale";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -44,7 +42,7 @@ const FormSchema = z.object({
   recipe_type_list: z.array(z.string()),
 });
 
-export function RunAnalyticsForm({
+function RunAnalyticsForm({
   selectedProject,
   totalNbTasks,
 }: {

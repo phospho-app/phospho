@@ -1,3 +1,4 @@
 secrets.toml
 env/
 .env
+.venv/
