@@ -152,25 +152,15 @@ async def post_run_job_on_task(
         logger.debug("No tasks to process.")
         return {"status": "no tasks to process", "nb_job_results": 0}
     # Run the valid recipes
-    if request.recipe.recipe_type in [
-        "event_detection",
-        "evaluation",
-        "sentiment_and_language",
-    ]:
-        logger.info(
-            f"Running job {request.recipe.recipe_type} on {len(request.tasks)} tasks."
-        )
-        background_tasks.add_task(
-            recipe_pipeline,
-            tasks=request.tasks,
-            recipe=request.recipe,
-        )
-        return {"status": "ok", "nb_job_results": len(request.tasks)}
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported recipe type: {request.recipe.recipe_type}",
-        )
+    logger.info(
+        f"Running job {request.recipe.recipe_type} on {len(request.tasks)} tasks."
+    )
+    background_tasks.add_task(
+        recipe_pipeline,
+        tasks=request.tasks,
+        recipe=request.recipe,
+    )
+    return {"status": "ok", "nb_job_results": len(request.tasks)}
 
 
 @router.post(
