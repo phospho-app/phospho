@@ -6,12 +6,22 @@ import OverviewLast7Days from "@/components/dashboard/overview-last7days";
 import UsageLast30m from "@/components/dashboard/usage-last30m";
 import { CenteredSpinner } from "@/components/small-spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
+import useSWR from "swr";
 
 const Dashboard: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
-  const hasTasks = dataStateStore((state) => state.hasTasks);
+  const { accessToken } = useUser();
+
+  const { data: hasTasksData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
+  );
+  const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
 
   if (!project_id) {
     return <></>;

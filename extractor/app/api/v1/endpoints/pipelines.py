@@ -140,19 +140,23 @@ async def post_log(
 
 @router.post(
     "/pipelines/recipes",
-    description="Run a recipe on a task",
+    description="Run a recipe on tasks",
 )
 async def post_run_job_on_task(
-    background_tasks: BackgroundTasks,
     request: RunRecipeOnTaskRequest,
+    background_tasks: BackgroundTasks,
     is_request_authenticated: bool = Depends(authenticate_key),
 ):
-    # If there is no tasks to process, return
+    # If there are no tasks to process, return
     if len(request.tasks) == 0:
         logger.debug("No tasks to process.")
-        return {"status": "no tasks to process"}
-
-    if request.recipe.recipe_type == "event_detection":
+        return {"status": "no tasks to process", "nb_job_results": 0}
+    # Run the valid recipes
+    if request.recipe.recipe_type in [
+        "event_detection",
+        "evaluation",
+        "sentiment_and_language",
+    ]:
         logger.info(
             f"Running job {request.recipe.recipe_type} on {len(request.tasks)} tasks."
         )
@@ -162,11 +166,10 @@ async def post_run_job_on_task(
             recipe=request.recipe,
         )
         return {"status": "ok", "nb_job_results": len(request.tasks)}
-
     else:
         raise HTTPException(
             status_code=400,
-            detail="Invalid job type. Only 'event_detection' is supported.",
+            detail=f"Unsupported recipe type: {request.recipe.recipe_type}",
         )
 
 

@@ -1,9 +1,10 @@
 import stripe
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Header, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from loguru import logger
 from propelauth_fastapi import User
 
 from app.api.platform.models import (
+    CreateCheckoutRequest,
     Project,
     ProjectCreationRequest,
     Projects,
@@ -11,13 +12,13 @@ from app.api.platform.models import (
 from app.core import config
 from app.security.authentification import propelauth
 from app.services.mongo.emails import email_user_onboarding, send_payment_issue_email
-from app.services.mongo.projects import populate_default
 from app.services.mongo.organizations import (
+    change_organization_plan,
     create_project_by_org,
     get_projects_from_org_id,
     get_usage_quota,
-    change_organization_plan,
 )
+from app.services.mongo.projects import populate_default
 from app.services.slack import slack_notification
 
 router = APIRouter(tags=["Organizations"])
@@ -202,12 +203,14 @@ async def get_org_metadata(
 )
 async def post_create_checkout_session(
     org_id: str,
+    create_checkout_request: CreateCheckoutRequest,
     user: User = Depends(propelauth.require_user),
 ):
     _ = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_id)
     org_metadata = org.get("metadata", {})
     org_plan = org_metadata.get("plan", "hobby")
+
     if org_plan == "pro":
         # Organization already has a pro plan
         return {"error": "Organization already has a pro plan"}
@@ -218,6 +221,10 @@ async def post_create_checkout_session(
             f"Creating checkout session for org {org_id} and user {user.email}"
         )
 
+        success_url = f"{config.PHOSPHO_FRONTEND_URL}/checkout/thank-you"
+        if create_checkout_request.project_id:
+            success_url += f"?project_id={create_checkout_request.project_id}"
+
         checkout_session = stripe.checkout.Session.create(
             line_items=[
                 {
@@ -227,7 +234,7 @@ async def post_create_checkout_session(
                 },
             ],
             mode="subscription",
-            success_url=f"{config.PHOSPHO_FRONTEND_URL}/checkout/thank-you",
+            success_url=success_url,
             cancel_url=f"{config.PHOSPHO_FRONTEND_URL}/checkout/cancel",
             customer_email=user.email,
             metadata={"org_id": org_id},

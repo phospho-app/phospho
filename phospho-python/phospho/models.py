@@ -14,7 +14,12 @@ from phospho.utils import (
 )
 import json
 
-RecipeType = Literal["evaluation", "event_detection"]  # Add other job types here
+# Add other job types here
+RecipeType = Literal[
+    "evaluation",
+    "event_detection",
+    "sentiment_language",
+]
 
 
 class ResultType(str, Enum):
@@ -214,17 +219,17 @@ class Project(DatedBaseModel):
         ):
             for event_name, event in project_data["settings"]["events"].items():
                 if "event_name" not in event.keys():
-                    project_data["settings"]["events"][event_name]["event_name"] = (
-                        event_name
-                    )
+                    project_data["settings"]["events"][event_name][
+                        "event_name"
+                    ] = event_name
                 if "org_id" not in event.keys():
-                    project_data["settings"]["events"][event_name]["org_id"] = (
-                        project_data["org_id"]
-                    )
+                    project_data["settings"]["events"][event_name][
+                        "org_id"
+                    ] = project_data["org_id"]
                 if "project_id" not in event.keys():
-                    project_data["settings"]["events"][event_name]["project_id"] = (
-                        project_data["id"]
-                    )
+                    project_data["settings"]["events"][event_name][
+                        "project_id"
+                    ] = project_data["id"]
 
         return cls(**project_data)
 

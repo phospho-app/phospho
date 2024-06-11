@@ -32,6 +32,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/components/ui/use-toast";
+import { authFetcher } from "@/lib/fetcher";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -53,7 +55,8 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
+import { isAwaitKeyword } from "typescript";
 import { z } from "zod";
 
 const PythonIcon = () => {
@@ -261,8 +264,6 @@ export const SendDataAlertDialog = ({
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
-  const setHasTasks = dataStateStore((state) => state.setHasTasks);
-  const setHasSessions = dataStateStore((state) => state.setHasSessions);
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
@@ -356,8 +357,6 @@ export const SendDataAlertDialog = ({
         await delay(1000);
         mutate([`/api/organizations/${selectedOrgId}/projects`, accessToken]);
         await delay(1000);
-        setHasTasks(null);
-        setHasSessions(null);
         setproject_id(responseBody.id);
         router.push(`/org`);
       } else {
@@ -703,7 +702,15 @@ phospho.log({input, output});`}
 };
 
 export const SendDataCallout = () => {
-  const hasTasks = dataStateStore((state) => state.hasTasks);
+  const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
+
+  const { data: hasTasksData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
+  );
+  const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
 
   const [open, setOpen] = React.useState(false);
 
@@ -746,7 +753,15 @@ export const SendDataCallout = () => {
 };
 
 export const DatavizCallout = () => {
-  const hasTasks = dataStateStore((state) => state.hasTasks);
+  const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
+
+  const { data: hasTasksData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
+  );
+  const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
 
   const [open, setOpen] = React.useState(false);
 

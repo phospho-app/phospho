@@ -38,6 +38,8 @@ async def run_event_detection_pipeline(
     `webhook_url` is the URL to trigger when an event is detected. If None, no webhook is triggered.
     job_id can be found for each job of the workload in the job metadata
     """
+    logger.info(f"Running event detection with jobs: {workload.jobs}")
+
     mongo_db = await get_mongo_db()
     # Create the list of messages
     messages = []
@@ -53,7 +55,7 @@ async def run_event_detection_pipeline(
     )
 
     # Display the workload results
-    logger.info(f"Workload results : {workload.results}")
+    # logger.debug(f"Workload results : {workload.results}")
 
     # Iter over the results
     for message in messages:
@@ -568,29 +570,6 @@ async def messages_main_pipeline(
     )
 
 
-async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
-    """
-    Run a job on a task
-    """
-
-    if recipe.recipe_type == "event_detection":
-        logger.info(
-            f"PIPELINE: Running event detection job {recipe.id} on {len(tasks)} tasks"
-        )
-
-        workload = lab.Workload.from_phospho_recipe(recipe)
-        workload.org_id = recipe.org_id
-        workload.project_id = recipe.project_id
-
-        # display the jobs
-        logger.info(f"Jobs for the workload: {workload.jobs}")
-
-        await run_event_detection_pipeline(workload, tasks)
-
-    else:
-        raise ValueError(f"Job type {recipe.recipe_type} not supported")
-
-
 async def sentiment_and_language_analysis_pipeline(
     task: Task,
 ) -> tuple[SentimentObject, Optional[str]]:
@@ -678,6 +657,33 @@ async def sentiment_and_language_analysis_pipeline(
     logger.info(f"Sentiment analysis for task {task.id} : {sentiment_object}")
 
     return sentiment_object, language
+
+
+async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
+    """
+    Run a recipe on a task
+    """
+    logger.info(f"PIPELINE: Running recipe {recipe.id} on {len(tasks)} tasks")
+    if recipe.recipe_type == "event_detection":
+        workload = lab.Workload.from_phospho_recipe(recipe)
+        workload.org_id = recipe.org_id
+        workload.project_id = recipe.project_id
+        await run_event_detection_pipeline(workload, tasks)
+    elif recipe.recipe_type == "evaluation":
+        # Only label the tasks that have not been labeled yet
+        mongo_db = await get_mongo_db()
+        tasks_without_flag = (
+            await mongo_db["tasks"]
+            .find({"id": {"$in": [task.id for task in tasks]}, "flag": None})
+            .to_list(length=None)
+        )
+        for task in tasks_without_flag:
+            await task_scoring_pipeline(task, save_task=True)
+    elif recipe.recipe_type == "sentiment_language":
+        for task in tasks:
+            await sentiment_and_language_analysis_pipeline(task)
+    else:
+        raise NotImplementedError(f"Recipe type {recipe.recipe_type} not implemented")
 
 
 async def store_opentelemetry_data_in_db(

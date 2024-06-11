@@ -180,6 +180,7 @@ from app.api.platform.endpoints import (
     projects,
     sessions,
     tasks,
+    recipes,
     onboarding,
 )
 
@@ -193,6 +194,7 @@ api_platform.include_router(sessions.router)
 api_platform.include_router(events.router)
 api_platform.include_router(explore.router)
 api_platform.include_router(metadata.router)
+api_platform.include_router(recipes.router)
 api_platform.include_router(onboarding.router)
 
 app.mount("/api", api_platform)

@@ -35,7 +35,10 @@ export function Navbar({
 
   return (
     <div>
-      <nav className={cn("flex flex-row justify-center", className)} {...props}>
+      <nav
+        className={cn("relative flex flex-row justify-center", className)}
+        {...props}
+      >
         <div className="flex flex-row items-center justify-between py-1.5 md:w-10/12">
           <div className="flex flex-row items-center space-x-2">
             <div className="block md:hidden">
