@@ -1,13 +1,7 @@
 from typing import Dict, List, Optional
 
-from app.api.platform.models import EventBackfillRequest
-from app.api.platform.models.explore import Pagination
-from app.db.models import EventDefinition, Recipe
+from app.db.models import EventDefinition
 from app.db.mongo import get_mongo_db
-from app.services.mongo.extractor import run_recipe_on_tasks
-from app.services.mongo.recipe import run_recipe_on_tasks_batched
-from app.services.mongo.tasks import get_all_tasks
-from app.services.mongo.tasks import get_total_nb_of_tasks
 from app.utils import cast_datetime_or_timestamp_to_timestamp
 from fastapi import HTTPException
 from loguru import logger
@@ -76,43 +70,6 @@ async def get_event_from_name_and_project_id(
     return validated_event
 
 
-async def run_event_detection_on_timeframe(
-    org_id: str, project_id: str, event_backfill_request: EventBackfillRequest
-) -> None:
-    """
-    Run event detection on a given event_id and event_data
-    """
-    event_definition = await get_event_definition_from_event_id(
-        project_id, event_backfill_request.event_id
-    )
-    if event_definition.recipe_id is None:
-        logger.error(
-            f"Event {event_definition.event_name} has no recipe_id for project {project_id}. Canceling."
-        )
-        return
-    if event_backfill_request.created_at_end is not None:
-        event_backfill_request.created_at_end = round(
-            event_backfill_request.created_at_end
-        )
-    if event_backfill_request.created_at_start is not None:
-        event_backfill_request.created_at_start = round(
-            event_backfill_request.created_at_start
-        )
-    filters = ProjectDataFilters(
-        created_at_start=event_backfill_request.created_at_start,
-        created_at_end=event_backfill_request.created_at_end,
-    )
-    await run_recipe_on_tasks_batched(
-        project_id=project_id,
-        recipe_id=event_definition.recipe_id,
-        org_id=org_id,
-        filters=filters,
-        sample_rate=event_backfill_request.sample_rate,
-    )
-
-    return None
-
-
 async def get_all_events(
     project_id: str,
     limit: Optional[int] = None,
@@ -176,7 +133,6 @@ async def get_all_events(
 async def confirm_event(
     project_id: str,
     event_id: str,
-    event_source: str = "owner",
 ) -> Event:
     mongo_db = await get_mongo_db()
     # Get the event

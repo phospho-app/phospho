@@ -16,7 +16,9 @@ import json
 
 # Add other job types here
 RecipeType = Literal[
-    "evaluation", "event_detection", "sentiment_language", "clustering"
+    "evaluation",
+    "event_detection",
+    "sentiment_language",
 ]
 
 
