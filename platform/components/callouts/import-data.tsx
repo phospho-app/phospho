@@ -39,16 +39,21 @@ import {
   BarChartBig,
   CopyIcon,
   Lock,
+  Mail,
   MonitorPlay,
+  NotebookText,
   Plus,
+  Telescope,
   Upload,
   X,
 } from "lucide-react";
 import { Unplug } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
+import { useSWRConfig } from "swr";
 import { z } from "zod";
 
 const PythonIcon = () => {
@@ -141,7 +146,7 @@ export default function UploadDataset({
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const [loading, setLoading] = React.useState(false);
+  const [loading] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
 
   const onSubmit = () => {
@@ -251,15 +256,24 @@ export const SendDataAlertDialog = ({
 }: {
   setOpen: (open: boolean) => void;
 }) => {
+  const router = useRouter();
+  const { mutate } = useSWRConfig();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
+  const setHasTasks = dataStateStore((state) => state.setHasTasks);
+  const setHasSessions = dataStateStore((state) => state.setHasSessions);
+  const setSelectedOrgId = navigationStateStore(
+    (state) => state.setSelectedOrgId,
+  );
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
   // NULL OR STR VALUE
   const [selectedTab, setSelectedTab] = React.useState<string | undefined>(
     undefined,
   );
 
-  const { accessToken } = useUser();
+  const { user, accessToken } = useUser();
   const toast = useToast();
 
   const formSchema = z.object({
@@ -308,6 +322,48 @@ export const SendDataAlertDialog = ({
           title: "🦜🔗 LangSmith import failed",
           description:
             "Please double-check your LangSmith API key and project name",
+        });
+      }
+    });
+  }
+
+  async function createDefaultProject() {
+    setOpen(false);
+    if (!selectedOrgId) {
+      // fetch the org id from the user
+      const orgId = user?.getOrgs()[0].orgId;
+      if (orgId) {
+        setSelectedOrgId(orgId);
+      } else {
+        // if the user has no orgs, redirect to the auth
+        router.push("/");
+      }
+    }
+    //Create default project for orgID
+    fetch(`/api/organizations/${selectedOrgId}/create-default-project`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "Content-Type": "application/json",
+      },
+    }).then(async (response) => {
+      const responseBody = await response.json();
+      if (responseBody.id !== undefined) {
+        toast.toast({
+          title: "We are creating your default project",
+          description: "You will be redirected in a few seconds.",
+        });
+        await delay(1000);
+        mutate([`/api/organizations/${selectedOrgId}/projects`, accessToken]);
+        await delay(1000);
+        setHasTasks(null);
+        setHasSessions(null);
+        setproject_id(responseBody.id);
+        router.push(`/org`);
+      } else {
+        toast.toast({
+          title: "Error when creating project",
+          description: responseBody.error,
         });
       }
     });
@@ -618,9 +674,26 @@ phospho.log({input, output});`}
                 target="_blank"
               >
                 <Button variant="ghost" className="text-xs">
+                  <NotebookText className="h-4 w-4 mr-2" />
                   Example Colab notebook
                 </Button>
               </Link>
+              <Button
+                variant="ghost"
+                className="text-xs"
+                onClick={() => createDefaultProject()}
+              >
+                <Telescope className="h-4 w-4 mr-2" />
+                Explore sample data
+              </Button>
+              <Button
+                variant="ghost"
+                className="text-xs"
+                onClick={() => router.push("mailto:paul-louis@phospho.app")}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Contact us to create your own LLM app
+              </Button>
             </AlertDescription>
           </Alert>
         </div>
