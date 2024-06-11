@@ -7,7 +7,6 @@ from app.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
 )
-from app.services.mongo.events import confirm_event, run_event_detection_on_timeframe
 from app.core import config
 
 router = APIRouter(tags=["Recipes"])
