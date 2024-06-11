@@ -52,6 +52,7 @@ export function RunAnalyticsForm({
   totalNbTasks: number | null | undefined;
 }) {
   const router = useRouter();
+  const { accessToken } = useUser();
 
   // Create a list from the keys of the selectedProject.settings.event mapping {event_name: event}
   // The list should be comma separated
@@ -87,8 +88,30 @@ export function RunAnalyticsForm({
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    // call the API endpoint
+    const response = await fetch(`/api/recipes/${selectedProject.id}/run`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        recipe_type_list: data.recipe_type_list,
+      }),
+    });
+
+    // Redirect to the home page
     router.push("/");
+
+    if (!response.ok) {
+      console.log("Error: ", response);
+      toast({
+        title: "Checkout Error - Please try again later",
+        description: `Details: ${response.status} - ${response.statusText}`,
+      });
+      return;
+    }
 
     toast({
       title: "Your analytics are running 🚀",
@@ -170,7 +193,10 @@ export function RunAnalyticsForm({
               Later
             </Button>
           </Link>
-          <Button type="submit" disabled={form.formState.isSubmitting}>
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitted || form.formState.isSubmitting}
+          >
             Run now
           </Button>
         </div>

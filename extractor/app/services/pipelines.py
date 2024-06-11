@@ -55,7 +55,7 @@ async def run_event_detection_pipeline(
     )
 
     # Display the workload results
-    logger.info(f"Workload results : {workload.results}")
+    # logger.debug(f"Workload results : {workload.results}")
 
     # Iter over the results
     for message in messages:

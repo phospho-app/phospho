@@ -79,11 +79,14 @@ async def run_recipe_types_on_tasks(
     project_id: str,
     recipe_types: str,
     org_id: str,
-    filters: ProjectDataFilters,
+    filters: Optional[ProjectDataFilters],
 ) -> None:
     """
     Run multiple recipes of different types on tasks of a project
     """
+    if filters is None:
+        filters = ProjectDataFilters()
+
     for recipe_type in recipe_types:
         if recipe_type == "event_detection":
             # TODO: Fetch recipes from events
