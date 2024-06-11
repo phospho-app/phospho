@@ -1,12 +1,15 @@
 "use client";
 
+import { EventDefinition } from "@/models/models";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import AddEvents from "./add-events";
+import AboutYou from "./about-you";
 
 export default function Page({ params }: { params: { id: string } }) {
-  const [phosphoTaskId] = useState<string | null>(null);
+  const [aboutYouValues, setAboutYouValues] = useState(null);
+  const [, setCustomEvents] = useState<EventDefinition[] | null>(null);
+  const [phosphoTaskId, setPhosphoTaskId] = useState<string | null>(null);
 
   // This page is called during onboarding, but also when the users clicks the
   // "Add suggested events" in the dashboard. In the latter case, there is
@@ -14,14 +17,13 @@ export default function Page({ params }: { params: { id: string } }) {
   // to the correct page after the onboarding is complete.
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
-  const redirectTo = redirect == "events" ? "/org/insights/events" : "/org";
 
   return (
     <>
-      <AddEvents
-        project_id={params.id}
-        phosphoTaskId={phosphoTaskId}
-        redirectTo={redirectTo}
+      <AboutYou
+        setAboutYouValues={setAboutYouValues}
+        setCustomEvents={setCustomEvents}
+        setPhosphoTaskId={setPhosphoTaskId}
       />
     </>
   );

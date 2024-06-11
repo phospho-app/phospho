@@ -17,7 +17,6 @@ from app.api.platform.models import (
     Tasks,
     Tests,
     AddEventsQuery,
-    OnboardingSurvey,
     Users,
     ProjectDataFilters,
     QuerySessionsTasksRequest,
@@ -36,7 +35,6 @@ from app.services.mongo.projects import (
     get_all_users_metadata,
     update_project,
     add_project_events,
-    store_onboarding_survey,
     collect_languages,
 )
 from app.services.mongo.tasks import get_all_tasks
@@ -333,25 +331,6 @@ async def get_tests(
     propelauth.require_org_member(user, project.org_id)
     tests = await get_all_tests(project_id=project_id, limit=limit)
     return Tests(tests=tests)
-
-
-@router.post(
-    "/projects/{project_id}/log-onboarding-survey",
-    description="Logs the onboarding survey answers",
-    response_model=dict,
-)
-async def suggest_events(
-    project_id: str,
-    survey: OnboardingSurvey,
-    user: User = Depends(propelauth.require_user),
-) -> dict:
-    """
-    Logs the onboarding survey answers
-    """
-    project = await get_project_by_id(project_id)
-    propelauth.require_org_member(user, project.org_id)
-    await store_onboarding_survey(project_id, user, survey.model_dump())
-    return {"status": "ok"}
 
 
 @router.post(
