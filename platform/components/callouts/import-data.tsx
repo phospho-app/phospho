@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/components/ui/use-toast";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -46,9 +47,12 @@ import {
 } from "lucide-react";
 import { Unplug } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
+import { useSWRConfig } from "swr";
+import { isAwaitKeyword } from "typescript";
 import { z } from "zod";
 
 const PythonIcon = () => {
@@ -251,15 +255,24 @@ export const SendDataAlertDialog = ({
 }: {
   setOpen: (open: boolean) => void;
 }) => {
+  const router = useRouter();
+  const { mutate } = useSWRConfig();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
+  const setHasTasks = dataStateStore((state) => state.setHasTasks);
+  const setHasSessions = dataStateStore((state) => state.setHasSessions);
+  const setSelectedOrgId = navigationStateStore(
+    (state) => state.setSelectedOrgId,
+  );
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
   // NULL OR STR VALUE
   const [selectedTab, setSelectedTab] = React.useState<string | undefined>(
     undefined,
   );
 
-  const { accessToken } = useUser();
+  const { user, accessToken } = useUser();
   const toast = useToast();
 
   const formSchema = z.object({
@@ -308,6 +321,48 @@ export const SendDataAlertDialog = ({
           title: "🦜🔗 LangSmith import failed",
           description:
             "Please double-check your LangSmith API key and project name",
+        });
+      }
+    });
+  }
+
+  async function createDefaultProject() {
+    setOpen(false);
+    if (!selectedOrgId) {
+      // fetch the org id from the user
+      const orgId = user?.getOrgs()[0].orgId;
+      if (orgId) {
+        setSelectedOrgId(orgId);
+      } else {
+        // if the user has no orgs, redirect to the auth
+        router.push("/");
+      }
+    }
+    //Create default project for orgID
+    fetch(`/api/organizations/${selectedOrgId}/create-default-project`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "Content-Type": "application/json",
+      },
+    }).then(async (response) => {
+      const responseBody = await response.json();
+      if (responseBody.id !== undefined) {
+        toast.toast({
+          title: "We are creating your default project",
+          description: "You will be redirected in a few seconds.",
+        });
+        await delay(1000);
+        mutate([`/api/organizations/${selectedOrgId}/projects`, accessToken]);
+        await delay(1000);
+        setHasTasks(null);
+        setHasSessions(null);
+        setproject_id(responseBody.id);
+        router.push(`/org`);
+      } else {
+        toast.toast({
+          title: "Error when creating project",
+          description: responseBody.error,
         });
       }
     });
@@ -621,6 +676,16 @@ phospho.log({input, output});`}
                   Example Colab notebook
                 </Button>
               </Link>
+              <Button
+                variant="ghost"
+                className="text-xs"
+                onClick={() => createDefaultProject()}
+              >
+                Explore sample data
+              </Button>
+              <Button variant="ghost" className="text-xs">
+                <Link href="mailto:" />
+              </Button>
             </AlertDescription>
           </Alert>
         </div>
