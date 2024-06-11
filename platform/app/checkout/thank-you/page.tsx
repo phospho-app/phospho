@@ -170,7 +170,9 @@ export function RunAnalyticsForm({
               Later
             </Button>
           </Link>
-          <Button type="submit">Run now</Button>
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            Run now
+          </Button>
         </div>
       </form>
     </Form>
@@ -196,7 +198,7 @@ export default function Page() {
   const { accessToken } = useUser();
 
   const { data: selectedProject } = useSWR(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    [`/api/projects/${project_id}`, accessToken],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "GET").then((data) => {
         // if data?.detail is not null, it means the project was not found
@@ -252,9 +254,7 @@ export default function Page() {
   return (
     <>
       {selectedProject === undefined && <CenteredSpinner />}
-      {(hasTasks === false ||
-        project_id === null ||
-        selectedProject === null) && (
+      {(hasTasks === false || selectedProject === null) && (
         <Card className={"container w-96"}>
           <CardHeader>
             <CardTitle className="font-bold">Welcome to phospho.</CardTitle>
