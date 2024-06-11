@@ -678,7 +678,8 @@ async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
             .to_list(length=None)
         )
         for task in tasks_without_flag:
-            await task_scoring_pipeline(task, save_task=True)
+            valid_task = Task.model_validate(task)
+            await task_scoring_pipeline(valid_task, save_task=True)
     elif recipe.recipe_type == "sentiment_language":
         for task in tasks:
             await sentiment_and_language_analysis_pipeline(task)
