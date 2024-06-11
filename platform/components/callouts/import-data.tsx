@@ -683,8 +683,12 @@ phospho.log({input, output});`}
               >
                 Explore sample data
               </Button>
-              <Button variant="ghost" className="text-xs">
-                <Link href="mailto:" />
+              <Button
+                variant="ghost"
+                className="text-xs"
+                onClick={() => router.push("mailto:paul-louis@phospho.app")}
+              >
+                Contact us to create your own LLM app
               </Button>
             </AlertDescription>
           </Alert>
