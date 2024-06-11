@@ -121,5 +121,8 @@ async def run_recipe_types_on_tasks(
                 sample_rate=None,
                 filters=filters,
             )
+        elif recipe_type == "clustering":
+            # TODO: Implement clustering
+            logger.warning("Clustering not implemented yet. Skipping.")
         else:
             logger.warning(f"Recipe type {recipe_type} not found. Skipping.")
