@@ -7,7 +7,6 @@ import {
   Task,
 } from "@/models/models";
 import {
-  ColumnFiltersState,
   PaginationState,
   SortingState,
   Updater,

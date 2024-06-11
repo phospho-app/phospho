@@ -44,6 +44,7 @@ import {
   NotebookText,
   Plus,
   Telescope,
+  TriangleAlert,
   Upload,
   X,
 } from "lucide-react";
@@ -55,6 +56,8 @@ import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
 import { useSWRConfig } from "swr";
 import { z } from "zod";
+
+import UpgradeButton from "../upgrade-button";
 
 const PythonIcon = () => {
   return (
@@ -139,8 +142,14 @@ const APIKeyAndProjectId = () => {
 
 export default function UploadDataset({
   setOpen,
+  showModal,
+  setShowModal,
+  setButtonPressed,
 }: {
   setOpen: (open: boolean) => void;
+  showModal: boolean;
+  setShowModal: (modal: boolean) => void;
+  setButtonPressed: (buttonPressed: boolean) => void;
 }) {
   const { toast } = useToast();
   const { accessToken } = useUser();
@@ -150,6 +159,10 @@ export default function UploadDataset({
   const [file, setFile] = React.useState<File | null>(null);
 
   const onSubmit = () => {
+    if (showModal) {
+      setShowModal(false);
+      setButtonPressed(true);
+    }
     if (!file) {
       toast({
         title: "Please select a file",
@@ -266,6 +279,18 @@ export const SendDataAlertDialog = ({
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
+  const selectedOrgMetadata = dataStateStore(
+    (state) => state.selectedOrgMetadata,
+  );
+
+  const [showModal, setShowModal] = React.useState(true);
+
+  React.useEffect(() => {
+    setShowModal(selectedOrgMetadata?.plan === "hobby");
+  }, [selectedOrgMetadata?.plan]);
+
+  //const [buttonPressed, setButtonPressed] = React.useState(false);
+  const [buttonPressed, setButtonPressed] = React.useState(false);
   const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
   // NULL OR STR VALUE
@@ -300,6 +325,10 @@ export const SendDataAlertDialog = ({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (showModal) {
+      setButtonPressed(true);
+      setShowModal(false);
+    }
     fetch(`/api/projects/${project_id}/connect-langsmith`, {
       method: "POST",
       headers: {
@@ -369,336 +398,405 @@ export const SendDataAlertDialog = ({
     });
   }
 
+  function handleSkip() {
+    setOpen(false);
+    setButtonPressed(false);
+    setShowModal(false);
+  }
+
   if (!project_id) {
     return <></>;
   }
 
   return (
-    <AlertDialogContent className="md:h-3/4 md:max-w-3/4">
-      <AlertDialogHeader>
-        <div className="flex justify-between">
-          <div>
-            <AlertDialogTitle className="text-2xl font-bold tracking-tight mb-1">
-              Start sending data to phospho
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              <p>phospho detects events in the text data of your LLM app.</p>
-            </AlertDialogDescription>
-          </div>
-          <X
-            onClick={() => setOpen(false)}
-            className="cursor-pointer h-8 w-8"
-          />
-        </div>
-      </AlertDialogHeader>
-      <div className="overflow-y-auto">
-        <SidebarSendData setOpen={setOpen} />
-        <div className="space-y-2 flex flex-col">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">I need to log messages.</CardTitle>
-              <CardDescription>
-                What's your app's backend language?
-              </CardDescription>
-              <ToggleGroup
-                type="single"
-                value={selectedTab}
-                onValueChange={(value) => setSelectedTab(value)}
-                className="justify-start"
-              >
-                <ToggleGroupItem value="python">
-                  <ToggleButton>
-                    <PythonIcon />
-                    Python
-                  </ToggleButton>
-                </ToggleGroupItem>
-                <ToggleGroupItem value="javascript">
-                  <ToggleButton>
-                    <JavaScriptIcon />
-                    JavaScript
-                  </ToggleButton>
-                </ToggleGroupItem>
-                <ToggleGroupItem value="api">
-                  <ToggleButton>API</ToggleButton>
-                </ToggleGroupItem>
-                <ToggleGroupItem value="other">
-                  <ToggleButton>Other</ToggleButton>
-                </ToggleGroupItem>
-              </ToggleGroup>
+    <>
+      {!buttonPressed && (
+        <AlertDialogContent className="md:h-3/4 md:max-w-3/4">
+          <AlertDialogHeader>
+            <div className="flex justify-between">
+              <div>
+                <AlertDialogTitle className="text-2xl font-bold tracking-tight mb-1">
+                  Start sending data to phospho
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  <p>
+                    phospho detects events in the text data of your LLM app.
+                  </p>
+                </AlertDialogDescription>
+              </div>
+              <X
+                onClick={() => setOpen(false)}
+                className="cursor-pointer h-8 w-8"
+              />
+            </div>
+          </AlertDialogHeader>
+          <div className="overflow-y-auto">
+            <SidebarSendData setOpen={setOpen} />
+            <div className="space-y-2 flex flex-col">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">
+                    I need to log messages.
+                  </CardTitle>
+                  <CardDescription>
+                    What's your app's backend language?
+                  </CardDescription>
+                  <ToggleGroup
+                    type="single"
+                    value={selectedTab}
+                    onValueChange={(value) => setSelectedTab(value)}
+                    className="justify-start"
+                  >
+                    <ToggleGroupItem value="python">
+                      <ToggleButton>
+                        <PythonIcon />
+                        Python
+                      </ToggleButton>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="javascript">
+                      <ToggleButton>
+                        <JavaScriptIcon />
+                        JavaScript
+                      </ToggleButton>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="api">
+                      <ToggleButton>API</ToggleButton>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="other">
+                      <ToggleButton>Other</ToggleButton>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
 
-              {selectedTab == "python" && (
-                <div className="flex-col space-y-4">
-                  <div className="text-sm">
-                    Use the following code snippets to log your app messages to
-                    phospho.
-                  </div>
-                  <CopyBlock
-                    text={`pip install --upgrade phospho`}
-                    language={"shell"}
-                    showLineNumbers={false}
-                    theme={dracula}
-                  />
-                  <CopyBlock
-                    text={`import phospho
+                  {selectedTab == "python" && (
+                    <div className="flex-col space-y-4">
+                      <div className="text-sm">
+                        Use the following code snippets to log your app messages
+                        to phospho.
+                      </div>
+                      <CopyBlock
+                        text={`pip install --upgrade phospho`}
+                        language={"shell"}
+                        showLineNumbers={false}
+                        theme={dracula}
+                      />
+                      <CopyBlock
+                        text={`import phospho
               
 phospho.init(api_key="YOUR_API_KEY", project_id="${project_id}")
 
 input_str = "Hello! This is what the user asked to the system"
 output_str = "This is the response showed to the user by the app."
 phospho.log(input=input_str, output=output_str)`}
-                    language={"python"}
-                    showLineNumbers={false}
-                    theme={dracula}
-                    wrapLongLines={true}
-                  />
-                  <APIKeyAndProjectId />
-                </div>
-              )}
-              {selectedTab == "javascript" && (
-                <div className="flex-col space-y-4">
-                  <div className="text-sm">
-                    Use the following code snippets to log your app messages to
-                    phospho.
-                  </div>
-                  <CopyBlock
-                    text={`npm i phospho`}
-                    language={"shell"}
-                    showLineNumbers={false}
-                    theme={dracula}
-                  />
-                  <CopyBlock
-                    text={`import { phospho } from "phospho";
+                        language={"python"}
+                        showLineNumbers={false}
+                        theme={dracula}
+                        wrapLongLines={true}
+                      />
+                      <APIKeyAndProjectId />
+                    </div>
+                  )}
+                  {selectedTab == "javascript" && (
+                    <div className="flex-col space-y-4">
+                      <div className="text-sm">
+                        Use the following code snippets to log your app messages
+                        to phospho.
+                      </div>
+                      <CopyBlock
+                        text={`npm i phospho`}
+                        language={"shell"}
+                        showLineNumbers={false}
+                        theme={dracula}
+                      />
+                      <CopyBlock
+                        text={`import { phospho } from "phospho";
 
 phospho.init({apiKey: "YOUR_API_KEY", projectId: "${project_id}"});
 
 const input = "Hello! This is what the user asked to the system";
 const output = "This is the response showed to the user by the app.";
 phospho.log({input, output});`}
-                    language={"javascript"}
-                    showLineNumbers={false}
-                    theme={dracula}
-                    wrapLongLines={true}
-                  />
-                  <APIKeyAndProjectId />
-                </div>
-              )}
-              {selectedTab == "api" && (
-                <div className="flex-col space-y-4">
-                  <div className="text-sm">
-                    Use the following code snippets to log your app messages to
-                    phospho.
-                  </div>
-                  <CopyBlock
-                    text={`curl -X POST https://api.phospho.ai/v2/log/${project_id} \\
+                        language={"javascript"}
+                        showLineNumbers={false}
+                        theme={dracula}
+                        wrapLongLines={true}
+                      />
+                      <APIKeyAndProjectId />
+                    </div>
+                  )}
+                  {selectedTab == "api" && (
+                    <div className="flex-col space-y-4">
+                      <div className="text-sm">
+                        Use the following code snippets to log your app messages
+                        to phospho.
+                      </div>
+                      <CopyBlock
+                        text={`curl -X POST https://api.phospho.ai/v2/log/${project_id} \\
 -H "Authorization: Bearer $PHOSPHO_API_KEY" \\
 -H "Content-Type: application/json" \\
 -d '{"batched_log_events": [
       {"input": "your_input", "output": "your_output"}
 ]}'`}
-                    language={"bash"}
-                    showLineNumbers={false}
-                    theme={dracula}
-                    wrapLongLines={true}
-                  />
-                  <APIKeyAndProjectId />
-                </div>
-              )}
-              {selectedTab == "other" && (
-                <div className="flex-col space-y-4">
-                  <div className="flex space-x-2">
-                    <Link
-                      href="https://docs.phospho.ai/getting-started#how-to-setup-logging"
-                      target="_blank"
-                    >
-                      <Button className="w-96">
-                        Discover all integrations
-                      </Button>
-                    </Link>
-                    <Link href="mailto:contact@phospho.app" target="_blank">
-                      <Button variant="secondary">Contact us</Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">
-                I already store messages.
-              </CardTitle>
-              <CardDescription>
-                Push your historical data to phospho
-              </CardDescription>
-              <ToggleGroup
-                type="single"
-                value={selectedTab}
-                onValueChange={(value) => setSelectedTab(value)}
-                className="justify-start"
-              >
-                <ToggleGroupItem value="upload">
-                  <ToggleButton>
-                    <Upload className="mr-2 w-6 h-6" /> Upload dataset
-                  </ToggleButton>
-                </ToggleGroupItem>
-                <ToggleGroupItem value="lang_smith">
-                  <ToggleButton>🦜🔗 LangSmith</ToggleButton>
-                </ToggleGroupItem>
-                <ToggleGroupItem value="other_bottom">
-                  <ToggleButton>Other</ToggleButton>
-                </ToggleGroupItem>
-              </ToggleGroup>
-
-              {selectedTab == "upload" && (
-                <div className="flex-col space-y-4">
-                  <UploadDataset setOpen={setOpen} />
-                </div>
-              )}
-
-              {selectedTab == "lang_smith" && (
-                <div className="flex-col space-y-4">
-                  <div className="text-sm">
-                    Synchronise your data from LangSmith to phospho. We will
-                    fetch the data periodically.
-                  </div>
-                  <Form {...form}>
-                    <form
-                      onSubmit={form.handleSubmit(onSubmit)}
-                      className="space-y-8"
-                    >
-                      <FormField
-                        control={form.control}
-                        name="lang_smith_api_key"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              Your LangSmith API key,{" "}
-                              <Link
-                                className="underline hover:text-green-500"
-                                href="https://smith.langchain.com/o/b864875a-2a0c-537e-92f1-5df713478975/settings"
-                              >
-                                learn more here
-                              </Link>
-                            </FormLabel>
-                            <div className="flex justify-center">
-                              <HoverCard openDelay={80} closeDelay={30}>
-                                <HoverCardTrigger>
-                                  <Lock className="mr-2 mt-2" />
-                                </HoverCardTrigger>
-                                <HoverCardContent
-                                  side="top"
-                                  className="text-sm text-center"
-                                >
-                                  <div>
-                                    This key is encrypted and stored securely.
-                                  </div>
-                                  <div>
-                                    We only use it to fetch your data from
-                                    LangSmith.
-                                  </div>
-                                </HoverCardContent>
-                              </HoverCard>
-
-                              <FormControl>
-                                <PasswordInput
-                                  placeholder="lsv2_..."
-                                  {...field}
-                                  className="font-normal flex"
-                                />
-                              </FormControl>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        language={"bash"}
+                        showLineNumbers={false}
+                        theme={dracula}
+                        wrapLongLines={true}
                       />
-                      <FormField
-                        control={form.control}
-                        name="project_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>LangSmith project name</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="My LangSmith project"
-                                {...field}
-                                className="font-normal"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex justify-end">
-                        <Button
-                          type="submit"
-                          disabled={!form.formState.isValid}
+                      <APIKeyAndProjectId />
+                    </div>
+                  )}
+                  {selectedTab == "other" && (
+                    <div className="flex-col space-y-4">
+                      <div className="flex space-x-2">
+                        <Link
+                          href="https://docs.phospho.ai/getting-started#how-to-setup-logging"
+                          target="_blank"
                         >
-                          Transfer data from LangSmith
-                        </Button>
+                          <Button className="w-96">
+                            Discover all integrations
+                          </Button>
+                        </Link>
+                        <Link href="mailto:contact@phospho.app" target="_blank">
+                          <Button variant="secondary">Contact us</Button>
+                        </Link>
                       </div>
-                    </form>
-                  </Form>
-                </div>
-              )}
+                    </div>
+                  )}
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">
+                    I already store messages.
+                  </CardTitle>
+                  <CardDescription>
+                    Push your historical data to phospho
+                  </CardDescription>
+                  <ToggleGroup
+                    type="single"
+                    value={selectedTab}
+                    onValueChange={(value) => setSelectedTab(value)}
+                    className="justify-start"
+                  >
+                    <ToggleGroupItem value="upload">
+                      <ToggleButton>
+                        <Upload className="mr-2 w-6 h-6" /> Upload dataset
+                      </ToggleButton>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="lang_smith">
+                      <ToggleButton>🦜🔗 LangSmith</ToggleButton>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="other_bottom">
+                      <ToggleButton>Other</ToggleButton>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
 
-              {selectedTab == "other_bottom" && (
-                <div className="flex-col space-y-4">
-                  <div className="flex space-x-2">
-                    <Link
-                      href="https://docs.phospho.ai/getting-started#how-to-setup-logging"
-                      target="_blank"
-                    >
-                      <Button className="w-96">
-                        Discover all integrations
-                      </Button>
-                    </Link>
-                    <Link href="mailto:contact@phospho.app" target="_blank">
-                      <Button variant="secondary">Contact us</Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </CardHeader>
-          </Card>
-          <Alert>
-            <AlertTitle className="text-sm">I don't have an LLM app</AlertTitle>
-            <AlertDescription className="flex flex-row items-center">
-              <Link href="https://www.youtube.com/watch?v=yQrRULUEiYM">
-                <Button variant="ghost" className="text-xs">
-                  <MonitorPlay className="h-4 w-4 mr-2" />
-                  Watch demo
-                </Button>
-              </Link>
-              <Link
-                href="https://colab.research.google.com/drive/1Wv9KHffpfHlQCxK1VGvP_ofnMiOGK83Q"
-                target="_blank"
-              >
-                <Button variant="ghost" className="text-xs">
-                  <NotebookText className="h-4 w-4 mr-2" />
-                  Example Colab notebook
-                </Button>
-              </Link>
-              <Button
-                variant="ghost"
-                className="text-xs"
-                onClick={() => createDefaultProject()}
-              >
-                <Telescope className="h-4 w-4 mr-2" />
-                Explore sample data
-              </Button>
-              <Button
-                variant="ghost"
-                className="text-xs"
-                onClick={() => router.push("mailto:paul-louis@phospho.app")}
-              >
-                <Mail className="h-4 w-4 mr-2" />
-                Contact us to create your own LLM app
-              </Button>
-            </AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    </AlertDialogContent>
+                  {selectedTab == "upload" && (
+                    <div className="flex-col space-y-4">
+                      <UploadDataset
+                        setOpen={setOpen}
+                        showModal={showModal}
+                        setShowModal={setShowModal}
+                        setButtonPressed={setButtonPressed}
+                      />
+                    </div>
+                  )}
+
+                  {selectedTab == "lang_smith" && (
+                    <div className="flex-col space-y-4">
+                      <div className="text-sm">
+                        Synchronise your data from LangSmith to phospho. We will
+                        fetch the data periodically.
+                      </div>
+                      <Form {...form}>
+                        <form
+                          onSubmit={form.handleSubmit(onSubmit)}
+                          className="space-y-8"
+                        >
+                          <FormField
+                            control={form.control}
+                            name="lang_smith_api_key"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Your LangSmith API key,{" "}
+                                  <Link
+                                    className="underline hover:text-green-500"
+                                    href="https://smith.langchain.com/o/b864875a-2a0c-537e-92f1-5df713478975/settings"
+                                  >
+                                    learn more here
+                                  </Link>
+                                </FormLabel>
+                                <div className="flex justify-center">
+                                  <HoverCard openDelay={80} closeDelay={30}>
+                                    <HoverCardTrigger>
+                                      <Lock className="mr-2 mt-2" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="top"
+                                      className="text-sm text-center"
+                                    >
+                                      <div>
+                                        This key is encrypted and stored
+                                        securely.
+                                      </div>
+                                      <div>
+                                        We only use it to fetch your data from
+                                        LangSmith.
+                                      </div>
+                                    </HoverCardContent>
+                                  </HoverCard>
+
+                                  <FormControl>
+                                    <PasswordInput
+                                      placeholder="lsv2_..."
+                                      {...field}
+                                      className="font-normal flex"
+                                    />
+                                  </FormControl>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="project_name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>LangSmith project name</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="My LangSmith project"
+                                    {...field}
+                                    className="font-normal"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex justify-end">
+                            <Button
+                              type="submit"
+                              disabled={!form.formState.isValid}
+                            >
+                              Transfer data from LangSmith
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </div>
+                  )}
+
+                  {selectedTab == "other_bottom" && (
+                    <div className="flex-col space-y-4">
+                      <div className="flex space-x-2">
+                        <Link
+                          href="https://docs.phospho.ai/getting-started#how-to-setup-logging"
+                          target="_blank"
+                        >
+                          <Button className="w-96">
+                            Discover all integrations
+                          </Button>
+                        </Link>
+                        <Link href="mailto:contact@phospho.app" target="_blank">
+                          <Button variant="secondary">Contact us</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </CardHeader>
+              </Card>
+              <Alert>
+                <AlertTitle className="text-sm">
+                  I don't have an LLM app
+                </AlertTitle>
+                <AlertDescription className="flex flex-row items-center">
+                  <Link href="https://www.youtube.com/watch?v=yQrRULUEiYM">
+                    <Button variant="ghost" className="text-xs">
+                      <MonitorPlay className="h-4 w-4 mr-2" />
+                      Watch demo
+                    </Button>
+                  </Link>
+                  <Link
+                    href="https://colab.research.google.com/drive/1Wv9KHffpfHlQCxK1VGvP_ofnMiOGK83Q"
+                    target="_blank"
+                  >
+                    <Button variant="ghost" className="text-xs">
+                      <NotebookText className="h-4 w-4 mr-2" />
+                      Example Colab notebook
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    className="text-xs"
+                    onClick={() => createDefaultProject()}
+                  >
+                    <Telescope className="h-4 w-4 mr-2" />
+                    Explore sample data
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="text-xs"
+                    onClick={() => router.push("mailto:paul-louis@phospho.app")}
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Contact us to create your own LLM app
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </div>
+          </div>
+        </AlertDialogContent>
+      )}
+      {buttonPressed && (
+        <AlertDialogContent className=" md:max-w-1/2 flex flex-col justify-between">
+          <AlertDialogHeader>
+            <div className="flex justify-between">
+              <div className="flex flex-col space-y-2 w-full">
+                <AlertDialogTitle className="text-2xl font-bold tracking-tight mb-1">
+                  One more thing...
+                </AlertDialogTitle>
+                <Card className="w-full border-red-500 bg-red-100">
+                  <CardTitle className="text-xl mt-2 ml-2">
+                    <div className="flex align-center">
+                      <TriangleAlert className="mr-2" />
+                      Your account is missing billing information
+                    </div>
+                  </CardTitle>
+                  <CardHeader>
+                    <CardDescription>
+                      Please add payment information to enable data analytics
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </div>
+            </div>
+          </AlertDialogHeader>
+
+          <div className="text-muted-foreground mx-[10%]">
+            <p>
+              By adding your information, you'll have access to advanced
+              analytics features like:
+            </p>
+            <ul>
+              <li> - Sentiment Analytics</li>
+              <li> - Success/Failure flags</li>
+              <li> - Custom event detection </li>
+              <li> - Language Detection</li>
+              <li> - Data Clustering</li>
+            </ul>
+          </div>
+
+          <div className="flex justify-between">
+            <UpgradeButton tagline="Enable Analytics" />
+            <Button onClick={() => handleSkip()} variant={"link"}>
+              Ignore
+            </Button>
+          </div>
+        </AlertDialogContent>
+      )}
+    </>
   );
 };
 
