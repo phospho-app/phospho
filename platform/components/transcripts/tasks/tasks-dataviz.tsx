@@ -59,8 +59,17 @@ const TasksDataviz: React.FC = () => {
   const { accessToken } = useUser();
 
   const dataFilters = navigationStateStore((state) => state.dataFilters);
-  const hasSessions = dataStateStore((state) => state.hasSessions);
   const project_id = navigationStateStore((state) => state.project_id);
+
+  // Fetch the has session
+  const { data: hasSessionData } = useSWR(
+    project_id
+      ? [`/api/explore/${project_id}/has-sessions`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
+  );
+  const hasSessions: boolean = hasSessionData?.has_sessions;
 
   const { data: totalNbTasksData } = useSWR(
     [

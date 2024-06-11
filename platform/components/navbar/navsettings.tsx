@@ -20,12 +20,14 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useLogoutFunction, useUser } from "@propelauth/nextjs/client";
 import { FileUp, Moon, Settings, Star, Sun, Upload } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import useSWR from "swr";
 
 export function NavBarSettings() {
   const { setTheme } = useTheme();
@@ -34,7 +36,6 @@ export function NavBarSettings() {
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
-  const hasTasks = dataStateStore((state) => state.hasTasks);
 
   const logoutFn = useLogoutFunction();
   const setSelectedOrgId = navigationStateStore(

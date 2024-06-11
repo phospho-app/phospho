@@ -48,8 +48,6 @@ export default function Page() {
   const { user, loading, accessToken } = useUser();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
-  const setHasTasks = dataStateStore((state) => state.setHasTasks);
-  const setHasSessions = dataStateStore((state) => state.setHasSessions);
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
@@ -88,8 +86,6 @@ export default function Page() {
     }).then(async (response) => {
       const responseBody = await response.json();
       if (responseBody.id !== undefined) {
-        setHasTasks(null);
-        setHasSessions(null);
         setproject_id(responseBody.id);
         router.push(`/org`);
       } else {

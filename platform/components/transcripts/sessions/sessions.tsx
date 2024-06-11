@@ -8,15 +8,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import Link from "next/link";
 import React from "react";
+import useSWR from "swr";
 
 import { SessionsTable } from "./sessions-table";
 
 const Sessions: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
-  const hasSessions = dataStateStore((state) => state.hasSessions);
+  const { accessToken } = useUser();
+
+  // Fetch the has session
+  const { data: hasSessionData } = useSWR(
+    project_id
+      ? [`/api/explore/${project_id}/has-sessions`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
+  );
+  const hasSessions: boolean = hasSessionData?.has_sessions;
 
   if (!project_id) {
     return <></>;
