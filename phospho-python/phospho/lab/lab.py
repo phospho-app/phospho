@@ -377,8 +377,6 @@ class Workload:
 
         if job_id is not None:
             job.id = job_id
-        else:
-            job.id = job.id + "_" + generate_uuid()
 
         if job_config is not None:
             if isinstance(job_config, dict):
