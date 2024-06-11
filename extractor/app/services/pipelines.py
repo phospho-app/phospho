@@ -663,7 +663,9 @@ async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
     """
     Run a recipe on a task
     """
-    logger.info(f"PIPELINE: Running recipe {recipe.id} on {len(tasks)} tasks")
+    logger.info(
+        f"RECIPE PIPELINE: Running recipe {recipe.recipe_type} {recipe.id} on {len(tasks)} tasks"
+    )
     if recipe.recipe_type == "event_detection":
         workload = lab.Workload.from_phospho_recipe(recipe)
         workload.org_id = recipe.org_id
