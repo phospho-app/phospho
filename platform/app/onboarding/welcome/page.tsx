@@ -207,7 +207,7 @@ function WhatAreEvents() {
           <div>They are customizable.</div>
           <div className="flex justify-center pt-6">
             <Button
-              onClick={() => router.push("/onboarding/create-project")}
+              onClick={() => router.push("/onboarding/survey")}
               className="bg-green-500 text-2xl p-10"
               variant="outline"
             >

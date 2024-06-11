@@ -597,20 +597,15 @@ async def get_all_tests(project_id: str, limit: int = 1000) -> List[Test]:
     return tests
 
 
-async def store_onboarding_survey(project_id: str, user: User, survey: dict):
+async def store_onboarding_survey(user: User, survey: dict):
     mongo_db = await get_mongo_db()
-    project = await get_project_by_id(project_id)
     doc = {
-        "project_id": project_id,
-        "project": project.model_dump(),
-        "user_id": user.user_id,
+        "user_email": user.email,
         "created_at": generate_timestamp(),
         "survey": survey,
     }
     mongo_db["onboarding_surveys"].insert_one(doc)
-    await slack_notification(
-        f"New onboarding survey from {user.email} for project {project.project_name} {project_id}: {survey}"
-    )
+    await slack_notification(f"New onboarding survey: {survey}")
     return
 
 
