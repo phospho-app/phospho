@@ -57,7 +57,7 @@ async def post_backfill_event(
         created_at_start=event_backfill_request.created_at_start,
         created_at_end=event_backfill_request.created_at_end,
     )
-    recipe = get_recipe_from_event_id(
+    recipe = await get_recipe_from_event_id(
         project_id=project_id, event_id=event_backfill_request.event_id
     )
 
