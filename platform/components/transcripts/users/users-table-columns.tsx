@@ -246,7 +246,7 @@ export function getColumns() {
         // Handle undefined edge case
         if (!user_id) return <></>;
         return (
-          <Link href={`/org/users/${encodeURIComponent(user_id)}`}>
+          <Link href={`/org/transcripts/users/${encodeURIComponent(user_id)}`}>
             <Button variant="ghost" size="icon">
               <ChevronRight />
             </Button>

@@ -128,7 +128,7 @@ export function UsersTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                   onClick={() => {
                     router.push(
-                      `/org/users/${encodeURIComponent(row.original.user_id)}`,
+                      `/org/transcripts/users/${encodeURIComponent(row.original.user_id)}`,
                     );
                   }}
                   className="cursor-pointer"
