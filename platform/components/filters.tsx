@@ -18,12 +18,9 @@ import { Clustering, MetadataFieldsToUniqueValues } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { data } from "autoprefixer";
 import {
   Annoyed,
   Boxes,
-  Calendar,
-  CandlestickChart,
   Code,
   FilterX,
   Flag,
@@ -37,7 +34,6 @@ import {
   TextSearch,
   ThumbsDown,
   ThumbsUp,
-  Trash,
   User,
   X,
 } from "lucide-react";

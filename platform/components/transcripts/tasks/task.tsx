@@ -124,27 +124,27 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
             </div>
           </CardTitle>
           <CardDescription>
-            <div>
-              <div>
+            <ul>
+              <li>
                 <span className="font-bold">Task ID:</span> {task.id}
-              </div>
-              <div>
+              </li>
+              <li>
                 <span className="font-bold">Created at:</span>{" "}
                 {formatUnixTimestampToLiteralDatetime(task.created_at)}
-              </div>
-              <div>
+              </li>
+              <li>
                 <span className="font-bold">Last eval source:</span>{" "}
                 {task?.last_eval?.source ?? "None"}
-              </div>
-              <div>
+              </li>
+              <li>
                 <span className="font-bold">Last eval date:</span>{" "}
                 {task?.last_eval?.created_at
                   ? formatUnixTimestampToLiteralDatetime(
                       task?.last_eval?.created_at,
                     )
                   : "Never"}
-              </div>
-            </div>
+              </li>
+            </ul>
           </CardDescription>
         </CardHeader>
         <CardContent>

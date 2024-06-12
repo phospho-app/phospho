@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/sheet";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Pencil, Play, Trash } from "lucide-react";
+import { ChevronRight, Pencil, Sparkles, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
@@ -110,8 +110,9 @@ function EventRow({
                     setSheetToOpen("run");
                   }}
                 >
-                  <Play className="w-4 h-4 mr-2" />
+                  <Sparkles className="text-green-500 h-4 w-4 mr-2" />
                   Detect
+                  <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
               </SheetTrigger>
               <DropdownMenu>

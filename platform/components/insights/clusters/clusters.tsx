@@ -70,11 +70,9 @@ const Clusters: React.FC = () => {
               <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
                 Automatic cluster detection
               </CardTitle>
-              <CardDescription>
-                <p className="text-muted-foreground">
-                  Detect recurring topics, trends, and outliers using
-                  unsupervized machine learning.
-                </p>
+              <CardDescription className="text-muted-foreground">
+                Detect recurring topics, trends, and outliers using unsupervized
+                machine learning.
               </CardDescription>
             </div>
             <div className="flex flex-col space-y-1 justify-center items-center">

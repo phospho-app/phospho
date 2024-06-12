@@ -34,6 +34,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
@@ -51,6 +52,10 @@ function RunAnalyticsForm({
 }) {
   const router = useRouter();
   const { accessToken } = useUser();
+  const [checkedEval, setCheckedEval] = useState(true);
+  const [checkedEvent, setCheckedEvent] = useState(true);
+  const [checkedLangSent, setCheckedLangSent] = useState(true);
+  const [totalAnalytics, setTotalAnalytics] = useState(0);
 
   // Create a list from the keys of the selectedProject.settings.event mapping {event_name: event}
   // The list should be comma separated
@@ -58,24 +63,43 @@ function RunAnalyticsForm({
     selectedProject?.settings?.events || {},
   );
   const formatedEventList = eventList.join(", ");
+  const nbrEvents = eventList.length;
+
+  React.useEffect(() => {
+    if (totalNbTasks) {
+      setTotalAnalytics(
+        ((checkedEval ? 1 : 0) +
+          (checkedEvent ? nbrEvents : 0) +
+          (checkedLangSent ? 2 : 0)) *
+          totalNbTasks,
+      );
+    } else {
+      setTotalAnalytics(0);
+    }
+  }, [checkedEval, checkedEvent, checkedLangSent, nbrEvents, totalNbTasks]);
 
   const form_choices = [
     {
       id: "evaluation",
       label: "Evaluation",
-      description: "Automatically label task as a Success or Failure.",
+      description:
+        "Automatically label tasks as a Success or Failure. 1 credit per task.",
     },
     {
       id: "event_detection",
       label: "Event detection",
       description:
-        "Detect if the setup events are present: " + formatedEventList,
+        "Detect if the setup events are present: " +
+        formatedEventList +
+        ". " +
+        nbrEvents +
+        " credits per tasks, one per event.",
     },
     {
       id: "sentiment_language",
       label: "Sentiment & language",
       description:
-        "Recognize the sentiment (positive, negative) and the language of the user's task input.",
+        "Recognize the sentiment (positive, negative) and the language of the user's task input. 2 credits per task.",
     },
   ] as const;
 
@@ -147,13 +171,33 @@ function RunAnalyticsForm({
                           <Checkbox
                             checked={field.value?.includes(item.id)}
                             onCheckedChange={(checked) => {
-                              return checked
-                                ? field.onChange([...field.value, item.id])
-                                : field.onChange(
-                                    field.value?.filter(
-                                      (value) => value !== item.id,
-                                    ),
-                                  );
+                              if (checked) {
+                                field.onChange([...field.value, item.id]);
+                                if (item.id === "evaluation") {
+                                  setCheckedEval(true);
+                                }
+                                if (item.id === "event_detection") {
+                                  setCheckedEvent(true);
+                                }
+                                if (item.id === "sentiment_language") {
+                                  setCheckedLangSent(true);
+                                }
+                              } else {
+                                field.onChange(
+                                  field.value?.filter(
+                                    (value) => value !== item.id,
+                                  ),
+                                );
+                                if (item.id === "evaluation") {
+                                  setCheckedEval(false);
+                                }
+                                if (item.id === "event_detection") {
+                                  setCheckedEvent(false);
+                                }
+                                if (item.id === "sentiment_language") {
+                                  setCheckedLangSent(false);
+                                }
+                              }
                             }}
                           />
                         </FormControl>
@@ -183,13 +227,17 @@ function RunAnalyticsForm({
           )}
         />
         {totalNbTasks && (
-          <div>The analytics will run on {totalNbTasks} tasks.</div>
+          <div>
+            We will run {totalAnalytics} analytics, on {totalNbTasks} tasks, for
+            a total of {totalAnalytics} credits.
+          </div>
         )}
         <div className="flex justify-between">
           <Link href="/">
             <Button variant="link" className="px-0">
               Later
             </Button>
+            <div className="text-xs">you can run this later</div>
           </Link>
           <Button
             type="submit"

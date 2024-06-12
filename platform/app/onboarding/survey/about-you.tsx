@@ -171,8 +171,10 @@ export default function AboutYou({
             {project && <span>{project.project_name}</span>}
           </CardTitle>
           <CardDescription>
-            <div>We just want to know a bit more about you.</div>
-            <div>This will help us setup event detection.</div>
+            We just want to know a bit more about you.
+          </CardDescription>
+          <CardDescription>
+            This will help us setup event detection.
           </CardDescription>
         </CardHeader>
         <CardContent className={CARD_STYLE}>
