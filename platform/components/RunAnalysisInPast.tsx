@@ -276,6 +276,9 @@ const RunAnalysisInPast = ({
                   }
                 >
                   {loading && <Spinner className="mr-2" />}
+                  {!loading && (
+                    <PlayIcon className="h-4 w-4 mr-2 text-green-500" />
+                  )}
                   Run now
                 </Button>
               </div>

@@ -475,7 +475,7 @@ async def breakdown_by_sum_of_metadata_field(
 
     mongo_db = await get_mongo_db()
 
-    main_filter, collection_name = task_filtering_pipeline_match(
+    main_filter, collection_name = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters, collection="tasks_with_events"
     )
 

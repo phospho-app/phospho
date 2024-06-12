@@ -165,7 +165,7 @@ async def compute_task_position(
             "$lte": filters.created_at_end,
         }
 
-    tasks_filter, task_collection = task_filtering_pipeline_match(
+    tasks_filter, task_collection = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters, collection="tasks", prefix="tasks"
     )
     pipeline = [
