@@ -230,7 +230,7 @@ async def remove_event_from_task(task: Task, event_name: str) -> Task:
     return task
 
 
-def task_filtering_pipeline_match(
+async def task_filtering_pipeline_match(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
     prefix: str = "",
@@ -310,6 +310,31 @@ def task_filtering_pipeline_match(
             {f"{prefix}events": {"$elemMatch": {"id": {"$in": filters.event_id}}}},
         ]
 
+    if filters.clustering_id is not None:
+        # Fetch the clusterings
+        mongo_db = await get_mongo_db()
+        clustering = await mongo_db["private-clusterings"].find_one(
+            {"id": filters.clustering_id}
+        )
+        if clustering:
+            if filters.clusters_ids is None:
+                filters.clusters_ids = []
+            filters.clusters_ids.extend(clustering.get("clusters_ids", []))
+
+    if filters.clusters_ids is not None:
+        # Fetch the cluster
+        mongo_db = await get_mongo_db()
+        clusters = (
+            await mongo_db["private-clusters"]
+            .find({"id": {"$in": filters.clusters_ids}})
+            .to_list(length=None)
+        )
+        if clusters:
+            current_task_ids = match.get("id", {"$in": []}).get("$in", [])
+            for cluster in clusters:
+                current_task_ids.extend(cluster.get("tasks_ids", []))
+            match["id"] = {"$in": current_task_ids}
+
     if filters.has_notes is not None and filters.has_notes:
         match["$and"] = [
             {f"{prefix}notes": {"$exists": True}},
@@ -329,7 +354,7 @@ async def get_total_nb_of_tasks(
     """
     mongo_db = await get_mongo_db()
     # Time range filter
-    global_filters, collection = task_filtering_pipeline_match(
+    global_filters, collection = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters
     )
 
@@ -437,7 +462,7 @@ async def get_all_tasks(
     mongo_db = await get_mongo_db()
     collection = "tasks"
 
-    main_filter, collection = task_filtering_pipeline_match(
+    main_filter, collection = await task_filtering_pipeline_match(
         filters=filters, project_id=project_id, collection=collection
     )
 

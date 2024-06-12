@@ -224,7 +224,7 @@ async def get_success_rate_per_task_position(
             "$lte": filters.created_at_end,
         }
 
-    tasks_filter, task_collection = task_filtering_pipeline_match(
+    tasks_filter, task_collection = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters, collection="tasks", prefix="tasks"
     )
 
@@ -342,7 +342,7 @@ async def get_total_success_rate(
 
     mongo_db = await get_mongo_db()
     collection = "tasks"
-    main_filter, collection = task_filtering_pipeline_match(
+    main_filter, collection = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters, collection=collection
     )
     pipeline: List[Dict[str, object]] = [
@@ -555,7 +555,7 @@ async def get_top_event_names_and_count(
         },
     ]
     filters.event_name = None
-    task_filtering_pipeline, _ = task_filtering_pipeline_match(
+    task_filtering_pipeline, _ = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters, prefix="tasks"
     )
     pipeline.append({"$match": task_filtering_pipeline})
@@ -594,7 +594,7 @@ async def get_daily_success_rate(
     """
     mongo_db = await get_mongo_db()
 
-    main_filter, collection = task_filtering_pipeline_match(
+    main_filter, collection = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters
     )
     # Add the success rate computation
@@ -1611,7 +1611,7 @@ async def get_success_rate_by_event_name(
             "$lte": filters.created_at_end,
         }
 
-    tasks_filters, task_collection = task_filtering_pipeline_match(
+    tasks_filters, task_collection = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters, prefix="tasks"
     )
     logger.debug(tasks_filters)
