@@ -54,6 +54,7 @@ import { z } from "zod";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { toast } from "./ui/use-toast";
+import UpgradeButton from "./upgrade-button";
 
 const FormSchema = z.object({
   recipe_type_list: z.array(z.string()),
@@ -64,6 +65,14 @@ const RunAnalysisInPast = ({
 }: {
   totalNbTasks: number | null | undefined;
 }) => {
+  if (
+    totalNbTasks === null ||
+    totalNbTasks === undefined ||
+    totalNbTasks === 0
+  ) {
+    return null;
+  }
+
   const router = useRouter();
   const { accessToken } = useUser();
   const [checkedEval, setCheckedEval] = useState(true);
@@ -71,6 +80,8 @@ const RunAnalysisInPast = ({
   const [checkedLangSent, setCheckedLangSent] = useState(true);
   const [totalAnalytics, setTotalAnalytics] = useState(0);
   const selectedProject = dataStateStore((state) => state.selectedProject);
+  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const hobby = orgMetadata?.plan === "hobby";
 
   const project_id = selectedProject?.id;
   const eventList: string[] = Object.keys(
@@ -261,16 +272,23 @@ const RunAnalysisInPast = ({
                 for a total of {totalAnalytics} credits.
               </div>
             )}
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={
-                  form.formState.isSubmitted || form.formState.isSubmitting
-                }
-              >
-                Run now
-              </Button>
-            </div>
+            {hobby && (
+              <div className="flex justify-end">
+                <UpgradeButton tagline="Run now" green={false} />
+              </div>
+            )}
+            {!hobby && (
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={
+                    form.formState.isSubmitted || form.formState.isSubmitting
+                  }
+                >
+                  Run now
+                </Button>
+              </div>
+            )}
           </form>
         </Form>
       </SheetContent>
