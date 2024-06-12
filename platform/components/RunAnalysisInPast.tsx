@@ -171,7 +171,7 @@ const RunAnalysisInPast = ({
     <Sheet>
       <SheetTrigger>
         <Button variant={"outline"}>
-          <PlayIcon className="h-4 w-4 mr-2" />
+          <PlayIcon className="text-green-500 h-4 w-4 mr-2" />
           Run
         </Button>
       </SheetTrigger>
