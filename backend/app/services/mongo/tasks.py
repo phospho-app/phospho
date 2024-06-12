@@ -329,9 +329,15 @@ async def task_filtering_pipeline_match(
             .to_list(length=None)
         )
         if clusters:
-            current_task_ids = match.get(f"{prefix}id", {"$in": []})["$in"]
+            new_task_ids = []
             for cluster in clusters:
-                current_task_ids.extend(cluster.get("tasks_ids", []))
+                new_task_ids.extend(cluster.get("tasks_ids", []))
+            current_task_ids = match.get(f"{prefix}id", {"$in": []})["$in"]
+            if current_task_ids:
+                # Do the intersection of the current task ids and the new task ids
+                current_task_ids = list(
+                    set(current_task_ids).intersection(new_task_ids)
+                )
             match[f"{prefix}id"] = {"$in": current_task_ids}
 
     if filters.has_notes is not None and filters.has_notes:
