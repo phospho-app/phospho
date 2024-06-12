@@ -303,6 +303,13 @@ def task_filtering_pipeline_match(
             },
         ]
 
+    if filters.event_id is not None:
+        collection = "tasks_with_events"
+        match["$and"] = [
+            {f"{prefix}events": {"$ne": []}},
+            {f"{prefix}events": {"$elemMatch": {"id": {"$in": filters.event_id}}}},
+        ]
+
     if filters.has_notes is not None and filters.has_notes:
         match["$and"] = [
             {f"{prefix}notes": {"$exists": True}},
