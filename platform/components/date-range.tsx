@@ -72,14 +72,12 @@ export function DatePickerWithRange({
             id="date"
             variant={"outline"}
             className={cn(
-              "justify-between text-left font-normal flex",
+              "justify-between text-left flex",
               !dateRange && "text-muted-foreground",
             )}
           >
-            <div className="flex flex-row">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRangeLabel}
-            </div>
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {dateRangeLabel}
             <ChevronDown className="ml-2 h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>

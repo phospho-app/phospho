@@ -171,9 +171,9 @@ export function TasksTable<TData, TValue>({
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className="flex flex-row justify-between items-center mb-2 gap-x-2">
           <div className="flex flew-row  gap-x-2">
-            <RunAnalysisInPast totalNbTasks={totalNbTasks} />
             <DatePickerWithRange />
             <FilterComponent variant="tasks" />
+            <RunAnalysisInPast totalNbTasks={totalNbTasks} />
           </div>
           <TableNavigation table={table} />
         </div>

@@ -12,16 +12,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authFetcher } from "@/lib/fetcher";
+import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
-import { MetadataFieldsToUniqueValues } from "@/models/models";
+import { Clustering, MetadataFieldsToUniqueValues } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   Annoyed,
-  Calendar,
-  CandlestickChart,
+  Boxes,
   Code,
+  FilterX,
   Flag,
   Frown,
   Languages,
@@ -30,12 +31,16 @@ import {
   PenSquare,
   Smile,
   SmilePlus,
+  TextSearch,
   ThumbsDown,
   ThumbsUp,
+  User,
   X,
 } from "lucide-react";
 import React from "react";
 import useSWR from "swr";
+
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 
 const FilterComponent = ({
   variant = "tasks",
@@ -103,6 +108,18 @@ const FilterComponent = ({
   );
   const stringFields: MetadataFieldsToUniqueValues | undefined =
     metadataFieldsToValues?.string;
+
+  // Clusterings filters
+  const { data: clusteringsData } = useSWR(
+    selectedProject?.id
+      ? [`/api/explore/${selectedProject?.id}/clusterings`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const clusterings = clusteringsData?.clusterings as Clustering[];
 
   // Number of active filters that are not the created_at_start and created_at_end
   const activeFilterCount =
@@ -239,20 +256,84 @@ const FilterComponent = ({
                 </Button>
               );
             })}
-          {dataFilters && activeFilterCount > 0 && (
+          {dataFilters.clustering_id && (
             <Button
-              variant="destructive"
+              variant="outline"
               onClick={() => {
                 setDataFilters({
-                  created_at_start: dateRange?.created_at_start,
-                  created_at_end: dateRange?.created_at_end,
+                  ...dataFilters,
+                  clustering_id: null,
+                  clusters_ids: null,
                 });
                 resetPagination();
               }}
             >
-              <X className="h-4 w-4 mr-1" />
-              Clear all
+              clustering:{" "}
+              {formatUnixTimestampToLiteralDatetime(
+                clusterings?.find(
+                  (clustering) => clustering.id === dataFilters.clustering_id,
+                )?.created_at ?? 0,
+              )}
+              <X className="h-4 w-4 ml-2" />
             </Button>
+          )}
+          {dataFilters.clusters_ids &&
+            dataFilters.clusters_ids.map((cluster_id) => {
+              const clustering = clusterings?.find((clustering) =>
+                clustering.clusters?.find(
+                  (cluster) => cluster.id === cluster_id,
+                ),
+              );
+              const cluster = clustering?.clusters?.find(
+                (cluster) => cluster.id === cluster_id,
+              ) ?? { name: "" };
+
+              return (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const currentClustersIds = dataFilters.clusters_ids ?? [];
+                    setDataFilters({
+                      ...dataFilters,
+                      clusters_ids: currentClustersIds.filter(
+                        (id) => id !== cluster_id,
+                      ),
+                    });
+                    resetPagination();
+                  }}
+                >
+                  cluster: {""}
+                  {cluster?.name.length > 20
+                    ? cluster?.name.substring(0, 20) + "..."
+                    : cluster?.name}
+                  <X className="h-4 w-4 ml-2" />
+                </Button>
+              );
+            })}
+          {dataFilters && activeFilterCount > 0 && (
+            <HoverCard openDelay={0} closeDelay={0}>
+              <HoverCardTrigger>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => {
+                    setDataFilters({
+                      created_at_start: dateRange?.created_at_start,
+                      created_at_end: dateRange?.created_at_end,
+                    });
+                    resetPagination();
+                  }}
+                >
+                  <FilterX className="h-4 w-4" />
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent
+                className="m-0 text-xs text-background bg-foreground"
+                align="center"
+              >
+                Clear all filters
+              </HoverCardContent>
+            </HoverCard>
           )}
         </div>
         <DropdownMenuContent className="w-56" align="start">
@@ -311,13 +392,58 @@ const FilterComponent = ({
                   <PenSquare className="h-4 w-4 mr-2" />
                   <span>Has notes </span>
                 </DropdownMenuItem>
+                {/* Last Eval Source */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <User className="h-4 w-4 mr-2" />
+                    <span>Source</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setDataFilters({
+                            ...dataFilters,
+                            last_eval_source: "phospho",
+                          });
+                          resetPagination();
+                        }}
+                        style={{
+                          color:
+                            dataFilters.last_eval_source === "phospho"
+                              ? "green"
+                              : "inherit",
+                        }}
+                      >
+                        phospho
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setDataFilters({
+                            ...dataFilters,
+                            last_eval_source: "user",
+                          });
+                          resetPagination();
+                        }}
+                        style={{
+                          color:
+                            dataFilters.last_eval_source === "user"
+                              ? "green"
+                              : "inherit",
+                        }}
+                      >
+                        user
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
           {/* Events */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Calendar className="h-4 w-4 mr-2" />
+              <TextSearch className="h-4 w-4 mr-2" />
               <span>Events</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -357,6 +483,11 @@ const FilterComponent = ({
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
+                {languageFilterOptions && languageFilterOptions.length == 0 && (
+                  <DropdownMenuItem disabled>
+                    No language available
+                  </DropdownMenuItem>
+                )}
                 {languageFilterOptions &&
                   languageFilterOptions.map((languageFilterOption: any) => {
                     return (
@@ -460,51 +591,7 @@ const FilterComponent = ({
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
-          {/* Last Eval Source */}
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <CandlestickChart className="h-4 w-4 mr-2" />
-              <span>Last Eval Source</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setDataFilters({
-                      ...dataFilters,
-                      last_eval_source: "phospho",
-                    });
-                    resetPagination();
-                  }}
-                  style={{
-                    color:
-                      dataFilters.last_eval_source === "phospho"
-                        ? "green"
-                        : "inherit",
-                  }}
-                >
-                  phospho
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setDataFilters({
-                      ...dataFilters,
-                      last_eval_source: "user",
-                    });
-                    resetPagination();
-                  }}
-                  style={{
-                    color:
-                      dataFilters.last_eval_source === "user"
-                        ? "green"
-                        : "inherit",
-                  }}
-                >
-                  user
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
+
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Code className="h-4 w-4 mr-2" />
@@ -512,6 +599,11 @@ const FilterComponent = ({
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                {stringFields && Object.entries(stringFields).length == 0 && (
+                  <DropdownMenuItem disabled>
+                    No metadata available
+                  </DropdownMenuItem>
+                )}
                 {stringFields &&
                   Object.entries(stringFields).map(([field, values]) => {
                     return (
@@ -543,6 +635,67 @@ const FilterComponent = ({
                                         : value
                                       : "-"
                                     : getLanguageLabel(value)}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    );
+                  })}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Boxes className="h-4 w-4 mr-2" />
+              <span>Clusterings</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                {clusterings && clusterings.length == 0 && (
+                  <DropdownMenuItem disabled>
+                    No clusterings available
+                  </DropdownMenuItem>
+                )}
+                {clusterings &&
+                  clusterings.map((clustering) => {
+                    return (
+                      <DropdownMenuSub key={clustering.id}>
+                        <DropdownMenuSubTrigger>
+                          {formatUnixTimestampToLiteralDatetime(
+                            clustering.created_at,
+                          )}
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setDataFilters({
+                                  ...dataFilters,
+                                  clustering_id: clustering.id,
+                                  clusters_ids: null,
+                                });
+                                resetPagination();
+                              }}
+                            >
+                              <Boxes className="h-4 w-4 mr-2" />
+                              <span>All clusters</span>
+                            </DropdownMenuItem>
+                            {clustering.clusters?.map((cluster) => {
+                              return (
+                                <DropdownMenuItem
+                                  key={cluster.id}
+                                  onClick={() => {
+                                    setDataFilters({
+                                      ...dataFilters,
+                                      clustering_id: clustering.id,
+                                      clusters_ids: [cluster.id],
+                                    });
+                                    resetPagination();
+                                  }}
+                                >
+                                  {cluster.name}
                                 </DropdownMenuItem>
                               );
                             })}
