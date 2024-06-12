@@ -1406,13 +1406,13 @@ files = [
 
 [[package]]
 name = "langsmith"
-version = "0.1.76"
+version = "0.1.77"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.76-py3-none-any.whl", hash = "sha256:4b8cb14f2233d9673ce9e6e3d545359946d9690a2c1457ab01e7459ec97b964e"},
-    {file = "langsmith-0.1.76.tar.gz", hash = "sha256:5829f997495c0f9a39f91fe0a57e0cb702e8642e6948945f5bb9f46337db7732"},
+    {file = "langsmith-0.1.77-py3-none-any.whl", hash = "sha256:2202cc21b1ed7e7b9e5d2af2694be28898afa048c09fdf09f620cbd9301755ae"},
+    {file = "langsmith-0.1.77.tar.gz", hash = "sha256:4ace09077a9a4e412afeb4b517ca68e7de7b07f36e4792dc8236ac5207c0c0c7"},
 ]
 
 [package.dependencies]
@@ -1644,13 +1644,13 @@ llama-index-program-openai = ">=0.1.1,<0.2.0"
 
 [[package]]
 name = "llama-index-readers-file"
-version = "0.1.23"
+version = "0.1.25"
 description = "llama-index readers file integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_readers_file-0.1.23-py3-none-any.whl", hash = "sha256:32450d0a3edc6ef6af575f814beec39cd3a3351eaf0e3c97045bdd72a7a7b38d"},
-    {file = "llama_index_readers_file-0.1.23.tar.gz", hash = "sha256:fde8ecb588e703849e51dc0f075f56d1f5db3bc1479dd00c21b42e93b81b6267"},
+    {file = "llama_index_readers_file-0.1.25-py3-none-any.whl", hash = "sha256:bc659e432d441c445e110580340675aa60abae1d82add4f65e559dfe8add541b"},
+    {file = "llama_index_readers_file-0.1.25.tar.gz", hash = "sha256:238ddd98aa377d6a44322013eb848056037c80ad84571ea5bf451a640fff4d5c"},
 ]
 
 [package.dependencies]
@@ -2445,26 +2445,26 @@ tests = ["pytest (>=5.4.1)", "pytest-cov (>=2.8.1)", "pytest-mypy (>=0.8.0)", "p
 
 [[package]]
 name = "propelauth-fastapi"
-version = "2.1.14"
+version = "2.1.15"
 description = "A FastAPI library for managing authentication, backed by PropelAuth"
 optional = false
 python-versions = "*"
 files = [
-    {file = "propelauth-fastapi-2.1.14.tar.gz", hash = "sha256:8e70e9b6e4c76383474cf48a822878f9fceb03a8cfeeb56eaf456e4155c766d3"},
+    {file = "propelauth-fastapi-2.1.15.tar.gz", hash = "sha256:bf79ca9385d2897de15526aa229739cc64c217ff49caef9147cee7fcc67aad13"},
 ]
 
 [package.dependencies]
-propelauth-py = "3.1.14"
+propelauth-py = "3.1.15"
 requests = "*"
 
 [[package]]
 name = "propelauth-py"
-version = "3.1.14"
+version = "3.1.15"
 description = "A python authentication library"
 optional = false
 python-versions = "*"
 files = [
-    {file = "propelauth-py-3.1.14.tar.gz", hash = "sha256:83182e4763ab86033e6f83707ac3490a67178c0540dbbb449600bd56fb7aad9f"},
+    {file = "propelauth-py-3.1.15.tar.gz", hash = "sha256:9c8e9ff6c3f7ae2f093ea5ac7828e4cbd456fccc9d3107db9fe8a94ce6df04a9"},
 ]
 
 [package.dependencies]
