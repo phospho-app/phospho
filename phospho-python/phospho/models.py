@@ -598,6 +598,7 @@ class ProjectDataFilters(BaseModel):
     created_at_start: Optional[Union[int, datetime.datetime]] = None
     created_at_end: Optional[Union[int, datetime.datetime]] = None
     event_name: Optional[List[str]] = None
+    event_id: Optional[List[str]] = None
     flag: Optional[str] = None
     metadata: Optional[dict] = None
     user_id: Optional[str] = None

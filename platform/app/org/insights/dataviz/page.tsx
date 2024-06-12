@@ -106,7 +106,28 @@ const MetadataForm: React.FC<{}> = ({}) => {
     },
   );
 
-  const graphColors = ["#22c55e", "#ff7c7c", "#ffbb43", "#4a90e2", "#a259ff"];
+  const graphColors = [
+    "#22c55e",
+    "#ff7c7c",
+    "#ffbb43",
+    "#4a90e2",
+    "#a259ff",
+    "#FFDE82",
+    "#CBA74E",
+    "#917319",
+    "#E2E3D8",
+    "#68EDCB",
+    "#00C4FF",
+    "#9FAFA1",
+    "#EB6D00",
+    "#D3D663",
+    "#92CF56",
+    "#FFDE82",
+    "#FA003C",
+    "#9FA8DF",
+    "#005400",
+    "#505C8D",
+  ];
   const isStacked = pivotData?.length > 1 && "stack" in pivotData[0];
 
   return (
@@ -324,9 +345,9 @@ const MetadataForm: React.FC<{}> = ({}) => {
                 content={({ active, payload, label }) => {
                   if (active && payload && payload.length) {
                     return (
-                      <div className="bg-primary shadow-md p-2 rounded-md">
-                        <p className="text-secondary font-semibold">{`${selectedGroupBy}: ${label}`}</p>
-                        <p className="text-green-500">
+                      <div className="bg-primary shadow-md p-2 rounded-md space-y-1">
+                        <div className="text-secondary font-semibold">{`${selectedGroupBy}: ${label}`}</div>
+                        <div>
                           {payload.map((item: any) => {
                             const itemName = item.name.split(".")[1]
                               ? item.name.split(".")[1]
@@ -336,13 +357,30 @@ const MetadataForm: React.FC<{}> = ({}) => {
                                 ? Math.round(item.value * 1000) / 1000
                                 : item.value;
 
+                            // Get the color of the bar
+                            let index = 0;
+                            if (isStacked) {
+                              // use Object.keys(selectedProject?.settings?.events to get the index color
+                              index = Object.keys(
+                                selectedProject?.settings?.events ?? {},
+                              ).indexOf(item.name.split(".")[1]);
+                            }
+                            const color =
+                              graphColors[index % graphColors.length];
+
                             return (
-                              <p key={item.name}>
-                                {itemName}: {formatedValue}
-                              </p>
+                              <div className="flex flex-row space-x-2 items-center">
+                                <div
+                                  className="w-4 h-4"
+                                  style={{ backgroundColor: color }}
+                                ></div>
+                                <div key={item.name} className="text-secondary">
+                                  {itemName}: {formatedValue}
+                                </div>
+                              </div>
                             );
                           })}
-                        </p>
+                        </div>
                       </div>
                     );
                   }
