@@ -652,7 +652,7 @@ const FilterComponent = ({
               <span>Clusterings</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent>
+              <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
                 {clusterings && clusterings.length == 0 && (
                   <DropdownMenuItem disabled>
                     No clusterings available
@@ -668,7 +668,7 @@ const FilterComponent = ({
                           )}
                         </DropdownMenuSubTrigger>
                         <DropdownMenuPortal>
-                          <DropdownMenuSubContent>
+                          <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
                             <DropdownMenuItem
                               onClick={() => {
                                 setDataFilters({
