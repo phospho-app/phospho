@@ -580,7 +580,7 @@ const FilterComponent = ({
           </DropdownMenuSub>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <CandlestickChart className="h-4 w-4 mr-2" />
+              <Boxes className="h-4 w-4 mr-2" />
               <span>Clusterings</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -612,7 +612,7 @@ const FilterComponent = ({
                               }}
                             >
                               <Boxes className="h-4 w-4 mr-2" />
-                              Select all
+                              <span>Select all</span>
                             </DropdownMenuItem>
                             {clustering.clusters?.map((cluster) => {
                               return (
