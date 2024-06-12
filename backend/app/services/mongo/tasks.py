@@ -310,15 +310,14 @@ async def task_filtering_pipeline_match(
             {f"{prefix}events": {"$elemMatch": {"id": {"$in": filters.event_id}}}},
         ]
 
-    if filters.clustering_id is not None:
+    if filters.clustering_id is not None and filters.clusters_ids is None:
         # Fetch the clusterings
         mongo_db = await get_mongo_db()
         clustering = await mongo_db["private-clusterings"].find_one(
             {"id": filters.clustering_id}
         )
         if clustering:
-            if filters.clusters_ids is None:
-                filters.clusters_ids = []
+            filters.clusters_ids = []
             filters.clusters_ids.extend(clustering.get("clusters_ids", []))
 
     if filters.clusters_ids is not None:
