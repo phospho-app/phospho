@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import React from "react";
 
+import { Spinner } from "./small-spinner";
 import { useToast } from "./ui/use-toast";
 
 const UpgradeButton = ({
@@ -40,6 +41,8 @@ const UpgradeButton = ({
   const toast = useToast();
   const project_id = navigationStateStore((state) => state.project_id);
 
+  const [loading, setLoading] = React.useState(false);
+
   // const stripeUrl = useMemo(() => {
   //   const stripe_test_url =
   //     "https://billing.phospho.ai/b/test_dR6aG0eT5exi448dQQ";
@@ -51,6 +54,7 @@ const UpgradeButton = ({
   // }, []);
 
   const upgradeButtonClick = async () => {
+    setLoading(true);
     try {
       posthog.capture("upgrade_click", {
         propelauthUserId: user?.userId,
@@ -119,6 +123,7 @@ const UpgradeButton = ({
       className={buttonClass}
       onClick={upgradeButtonClick}
     >
+      {loading && <Spinner className="mr-2" />}
       {tagline}
     </Button>
   );
