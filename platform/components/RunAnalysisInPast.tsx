@@ -1,18 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Form,
   FormControl,
   FormField,
@@ -32,27 +20,25 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { authFetcher } from "@/lib/fetcher";
-import { getLanguageLabel } from "@/lib/utils";
-import { MetadataFieldsToUniqueValues } from "@/models/models";
-import { Project } from "@/models/models";
-import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import { CircleHelpIcon, PlayIcon } from "lucide-react";
-import { PlusIcon } from "lucide-react";
-import Link from "next/link";
+import {
+  ChevronRight,
+  PlayIcon,
+  Sparkle,
+  SparkleIcon,
+  Sparkles,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import useSWR from "swr";
 import { z } from "zod";
 
-import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Spinner } from "./small-spinner";
 import { toast } from "./ui/use-toast";
 import UpgradeButton from "./upgrade-button";
 
@@ -82,6 +68,8 @@ const RunAnalysisInPast = ({
   const selectedProject = dataStateStore((state) => state.selectedProject);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const hobby = orgMetadata?.plan === "hobby";
+
+  const [loading, setLoading] = React.useState(false);
 
   const project_id = selectedProject?.id;
   const eventList: string[] = Object.keys(
@@ -136,6 +124,7 @@ const RunAnalysisInPast = ({
   });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
+    setLoading(true);
     // call the API endpoint
     const response = await fetch(`/api/recipes/${project_id}/run`, {
       method: "POST",
@@ -171,8 +160,9 @@ const RunAnalysisInPast = ({
     <Sheet>
       <SheetTrigger>
         <Button variant={"outline"}>
-          <PlayIcon className="text-green-500 h-4 w-4 mr-2" />
-          Run
+          <Sparkles className="text-green-500 h-4 w-4 mr-2" />
+          Detect
+          <ChevronRight className="h-4 w-4 ml-2" />
         </Button>
       </SheetTrigger>
       <SheetContent className="md:w-1/2 overflow-auto">
@@ -285,6 +275,7 @@ const RunAnalysisInPast = ({
                     form.formState.isSubmitted || form.formState.isSubmitting
                   }
                 >
+                  {loading && <Spinner className="mr-2" />}
                   Run now
                 </Button>
               </div>
