@@ -12,14 +12,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authFetcher } from "@/lib/fetcher";
+import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
-import { MetadataFieldsToUniqueValues } from "@/models/models";
+import { Clustering, MetadataFieldsToUniqueValues } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { da } from "date-fns/locale";
 import {
   Annoyed,
+  Boxes,
   Calendar,
   CandlestickChart,
   Code,
@@ -104,6 +105,18 @@ const FilterComponent = ({
   );
   const stringFields: MetadataFieldsToUniqueValues | undefined =
     metadataFieldsToValues?.string;
+
+  // Clusterings filters
+  const { data: clusteringsData } = useSWR(
+    selectedProject?.id
+      ? [`/api/explore/${selectedProject?.id}/clusterings`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const clusterings = clusteringsData?.clusterings as Clustering[];
 
   // Number of active filters that are not the created_at_start and created_at_end
   const activeFilterCount =
@@ -358,6 +371,11 @@ const FilterComponent = ({
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
+                {languageFilterOptions && languageFilterOptions.length == 0 && (
+                  <DropdownMenuItem disabled>
+                    No language available
+                  </DropdownMenuItem>
+                )}
                 {languageFilterOptions &&
                   languageFilterOptions.map((languageFilterOption: any) => {
                     return (
@@ -513,6 +531,11 @@ const FilterComponent = ({
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                {stringFields && Object.entries(stringFields).length == 0 && (
+                  <DropdownMenuItem disabled>
+                    No metadata available
+                  </DropdownMenuItem>
+                )}
                 {stringFields &&
                   Object.entries(stringFields).map(([field, values]) => {
                     return (
@@ -544,6 +567,67 @@ const FilterComponent = ({
                                         : value
                                       : "-"
                                     : getLanguageLabel(value)}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    );
+                  })}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <CandlestickChart className="h-4 w-4 mr-2" />
+              <span>Clusterings</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                {clusterings && clusterings.length == 0 && (
+                  <DropdownMenuItem disabled>
+                    No clusterings available
+                  </DropdownMenuItem>
+                )}
+                {clusterings &&
+                  clusterings.map((clustering) => {
+                    return (
+                      <DropdownMenuSub key={clustering.id}>
+                        <DropdownMenuSubTrigger>
+                          {formatUnixTimestampToLiteralDatetime(
+                            clustering.created_at,
+                          )}
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setDataFilters({
+                                  ...dataFilters,
+                                  clustering_id: clustering.id,
+                                  clusters_ids: null,
+                                });
+                                resetPagination();
+                              }}
+                            >
+                              <Boxes className="h-4 w-4 mr-2" />
+                              Select all
+                            </DropdownMenuItem>
+                            {clustering.clusters?.map((cluster) => {
+                              return (
+                                <DropdownMenuItem
+                                  key={cluster.id}
+                                  onClick={() => {
+                                    setDataFilters({
+                                      ...dataFilters,
+                                      clustering_id: clustering.id,
+                                      clusters_ids: [cluster.id],
+                                    });
+                                    resetPagination();
+                                  }}
+                                >
+                                  {cluster.name}
                                 </DropdownMenuItem>
                               );
                             })}

@@ -607,6 +607,8 @@ class ProjectDataFilters(BaseModel):
     language: Optional[str] = None
     has_notes: Optional[bool] = None
     tasks_ids: Optional[List[str]] = None
+    clustering_id: Optional[str] = None  # A group of clusters
+    clusters_ids: Optional[List[str]] = None  # A list of clusters
 
 
 class Cluster(ProjectElementBaseModel):
@@ -622,3 +624,4 @@ class Clustering(ProjectElementBaseModel):
     nb_clusters: Optional[int] = None
     clusters_ids: List[str]
     status: Optional[Literal["started", "summaries", "completed"]] = None
+    clusters: Optional[List[Cluster]] = None

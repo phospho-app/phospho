@@ -1262,25 +1262,47 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
     return valid_ab_tests
 
 
-async def fetch_all_clusterings(project_id: str, limit: int = 100) -> List[Clustering]:
+async def fetch_all_clusterings(
+    project_id: str,
+    limit: int = 100,
+    with_cluster_names: bool = True,
+) -> List[Clustering]:
     """
     Fetch all the clusterings of a project. The clusterings are sorted by creation date.
 
     Each clustering contains clusters.
     """
     mongo_db = await get_mongo_db()
-    # Get the latest clustering
+
+    pipeline = [
+        {"$match": {"project_id": project_id}},
+    ]
+    if with_cluster_names:
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "private-clusters",
+                        "localField": "id",
+                        "foreignField": "clustering_id",
+                        "as": "clusters",
+                    }
+                },
+            ]
+        )
+
+    pipeline += [
+        {"$sort": {"created_at": -1}},
+    ]
     clusterings = (
-        await mongo_db["private-clusterings"]
-        .find({"project_id": project_id})
-        .sort([("created_at", -1)])
-        .to_list(length=limit)
+        await mongo_db["private-clusterings"].aggregate(pipeline).to_list(length=limit)
     )
     if not clusterings:
         return []
     valid_clusterings = [
         Clustering.model_validate(clustering) for clustering in clusterings
     ]
+    logger.info(valid_clusterings)
     return valid_clusterings
 
 
