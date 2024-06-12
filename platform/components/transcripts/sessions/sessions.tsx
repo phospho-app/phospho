@@ -45,11 +45,9 @@ const Sessions: React.FC = () => {
                 <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
                   Group tasks into sessions
                 </CardTitle>
-                <CardDescription>
-                  <p className="text-muted-foreground">
-                    Group your tasks into sessions by adding a{" "}
-                    <code>session_id</code> when logging.
-                  </p>
+                <CardDescription className="text-muted-foreground">
+                  Group your tasks into sessions by adding a{" "}
+                  <code>session_id</code> when logging.
                 </CardDescription>
               </div>
               <Link

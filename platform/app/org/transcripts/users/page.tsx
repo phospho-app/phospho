@@ -5,7 +5,6 @@ import { UsersTable } from "@/components/transcripts/users/users-table";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,

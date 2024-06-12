@@ -238,6 +238,7 @@ function RunAnalyticsForm({
             <Button variant="link" className="px-0">
               Later
             </Button>
+            <div className="text-xs">you can run this later</div>
           </Link>
           <Button
             type="submit"

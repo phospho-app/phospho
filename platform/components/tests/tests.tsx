@@ -36,10 +36,8 @@ const Tests: React.FC = () => {
                 <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
                   Test your app before deploying
                 </CardTitle>
-                <CardDescription>
-                  <p className="text-muted-foreground">
-                    Run offline tests to measure the success rate of your app.
-                  </p>
+                <CardDescription className="text-muted-foreground">
+                  Run offline tests to measure the success rate of your app.
                 </CardDescription>
               </div>
               <Link

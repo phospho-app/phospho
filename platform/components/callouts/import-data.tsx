@@ -33,7 +33,6 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -57,7 +56,6 @@ import React from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
-import { isAwaitKeyword } from "typescript";
 import { z } from "zod";
 
 import UpgradeButton from "../upgrade-button";
@@ -830,7 +828,7 @@ export const SendDataCallout = () => {
                     Start sending data to phospho
                   </CardTitle>
                   <CardDescription className="flex justify-between">
-                    <div>We'll show you how to get started</div>
+                    We'll show you how to get started
                   </CardDescription>
                 </div>
                 <AlertDialog open={open}>
@@ -881,7 +879,7 @@ export const DatavizCallout = () => {
                     Visualize your augmented data
                   </CardTitle>
                   <CardDescription className="flex justify-between">
-                    <div>Quickly make plots and graphs with your data</div>
+                    Quickly make plots and graphs with your data.
                   </CardDescription>
                 </div>
                 <AlertDialog open={open}>

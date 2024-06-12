@@ -45,13 +45,11 @@ export function RunClusteringCallout() {
                         Discover patterns in your data with clustering
                       </div>
                     </CardTitle>
-                    <CardDescription className="flex justify-between">
-                      <div className="flex-col text-muted-foreground space-y-0.5">
-                        <p>
-                          The clustering tool groups your data based on similar
-                          features.
-                        </p>
-                      </div>
+                    <CardDescription className="flex justify-between flex-col text-muted-foreground space-y-0.5">
+                      <p>
+                        The clustering tool groups your data based on similar
+                        features.
+                      </p>
                     </CardDescription>
                   </div>
                   <Link href="/org/insights/clusters">
