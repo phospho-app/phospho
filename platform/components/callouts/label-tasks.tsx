@@ -48,18 +48,15 @@ export function LabelTasksCallout() {
                   <ThumbsDown size={24} /> <ThumbsUp size={24} />
                 </div>
               </CardTitle>
-              <CardDescription className="flex justify-between">
-                <div className="flex-col text-muted-foreground space-y-0.5">
-                  <p>
-                    Automatic evaluations are made with your labels. We only
-                    found {hasLabelledTasks.currently_labelled_tasks}/
-                    {hasLabelledTasks.enough_labelled_tasks} labels.
-                  </p>
-                  <p>
-                    Go to a task to label it or automate the process with the
-                    API.
-                  </p>
-                </div>
+              <CardDescription className="flex justify-between flex-col text-muted-foreground space-y-0.5">
+                <p>
+                  Automatic evaluations are made with your labels. We only found{" "}
+                  {hasLabelledTasks.currently_labelled_tasks}/
+                  {hasLabelledTasks.enough_labelled_tasks} labels.
+                </p>
+                <p>
+                  Go to a task to label it or automate the process with the API.
+                </p>
                 <Link
                   href="https://docs.phospho.ai/guides/evaluation"
                   target="_blank"

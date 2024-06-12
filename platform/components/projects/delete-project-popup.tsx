@@ -9,7 +9,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
@@ -35,11 +34,9 @@ const AlertDialogDeleteProject = () => {
   return (
     selectedProject && (
       <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button variant="destructive" className="justify-start">
-            Delete project
-          </Button>
-        </AlertDialogTrigger>
+        <Button variant="destructive" className="justify-start">
+          Delete project
+        </Button>
         <AlertDialogContent className="md:w-1/3">
           <AlertDialogHeader>
             <AlertDialogTitle>

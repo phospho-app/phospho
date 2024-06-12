@@ -278,13 +278,11 @@ export default function AddEvents({
         <CardHeader>
           <CardTitle>Setup events for this project</CardTitle>
           <CardDescription>
-            <div>
-              Phospho helps you monitor your application by tracking events, we
-              can setup events to get you started.
-            </div>
-            <div className="pt-2">
-              You can add more events later in Events/Manage section.
-            </div>
+            Phospho helps you monitor your application by tracking events, we
+            can setup events to get you started.
+          </CardDescription>
+          <CardDescription className="pt-2">
+            You can add more events later in Events/Manage section.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col space-y-2 border-gray-500">
