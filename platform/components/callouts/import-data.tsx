@@ -832,16 +832,14 @@ export const SendDataCallout = () => {
                   </CardDescription>
                 </div>
                 <AlertDialog open={open}>
-                  <AlertDialogTrigger>
-                    <Button
-                      variant="default"
-                      onClick={() => {
-                        setOpen(true);
-                      }}
-                    >
-                      Start sending data
-                    </Button>
-                  </AlertDialogTrigger>
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      setOpen(true);
+                    }}
+                  >
+                    Start sending data
+                  </Button>
                   <SendDataAlertDialog setOpen={setOpen} />
                 </AlertDialog>
               </div>
@@ -883,16 +881,14 @@ export const DatavizCallout = () => {
                   </CardDescription>
                 </div>
                 <AlertDialog open={open}>
-                  <AlertDialogTrigger>
-                    <Button
-                      variant="default"
-                      onClick={() => {
-                        setOpen(true);
-                      }}
-                    >
-                      Start sending data
-                    </Button>
-                  </AlertDialogTrigger>
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      setOpen(true);
+                    }}
+                  >
+                    Start sending data
+                  </Button>
                   <SendDataAlertDialog setOpen={setOpen} />
                 </AlertDialog>
               </div>

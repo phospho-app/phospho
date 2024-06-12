@@ -1,5 +1,6 @@
 "use client";
 
+import RunAnalysisInPast from "@/components/RunAnalysisInPast";
 import { DatePickerWithRange } from "@/components/date-range";
 import FilterComponent from "@/components/filters";
 import CreateEvent from "@/components/insights/events/create-event";
@@ -170,6 +171,7 @@ export function TasksTable<TData, TValue>({
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className="flex flex-row justify-between items-center mb-2 gap-x-2">
           <div className="flex flew-row  gap-x-2">
+            <RunAnalysisInPast />
             <DatePickerWithRange />
             <FilterComponent variant="tasks" />
           </div>
