@@ -1,10 +1,10 @@
 "use client";
 
-import RunAnalysisInPast from "@/components/RunAnalysisInPast";
 import { DatePickerWithRange } from "@/components/date-range";
 import FilterComponent from "@/components/filters";
 import CreateEvent from "@/components/insights/events/create-event";
 import RunEvent from "@/components/insights/events/run-event";
+import RunAnalysisInPast from "@/components/run-analysis-past";
 import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
