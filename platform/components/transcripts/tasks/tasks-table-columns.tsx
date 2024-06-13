@@ -30,7 +30,6 @@ import { Event, EventDefinition, TaskWithEvents } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { set } from "date-fns";
 import {
   ArrowDown,
   ArrowUp,
@@ -96,12 +95,6 @@ export function getColumns({
 }): ColumnDef<TaskWithEvents>[] {
   const project_id = navigationStateStore((state) => state.project_id);
   const selectedProject = dataStateStore((state) => state.selectedProject);
-  const tasksPagination = navigationStateStore(
-    (state) => state.tasksPagination,
-  );
-  const setTasksPagination = navigationStateStore(
-    (state) => state.setTasksPagination,
-  );
   const { accessToken } = useUser();
 
   const events = selectedProject?.settings?.events || {};
