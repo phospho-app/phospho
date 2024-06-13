@@ -19,8 +19,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { ChevronDown } from "lucide-react";
-import Link from "next/link";
+import {
+  ChevronDown,
+  Code,
+  Flag,
+  List,
+  MessagesSquare,
+  TextSearch,
+} from "lucide-react";
 import React from "react";
 import {
   Bar,
@@ -149,15 +155,8 @@ const MetadataForm: React.FC<{}> = ({}) => {
                   setSelectedMetricMetadata(null);
                 }}
               >
-                Nb tasks
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setSelectedMetric("Event distribution");
-                  setSelectedMetricMetadata(null);
-                }}
-              >
-                Event distribution
+                <MessagesSquare className="h-4 w-4 mr-2" />
+                Tasks count
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -165,7 +164,17 @@ const MetadataForm: React.FC<{}> = ({}) => {
                   setSelectedMetricMetadata(null);
                 }}
               >
+                <TextSearch className="h-4 w-4 mr-2" />
                 Event count
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedMetric("Event distribution");
+                  setSelectedMetricMetadata(null);
+                }}
+              >
+                <TextSearch className="h-4 w-4 mr-2" />
+                Event distribution
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
@@ -173,6 +182,7 @@ const MetadataForm: React.FC<{}> = ({}) => {
                   setSelectedMetricMetadata(null);
                 }}
               >
+                <Flag className="h-4 w-4 mr-2" />
                 Success rate
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -181,10 +191,14 @@ const MetadataForm: React.FC<{}> = ({}) => {
                   setSelectedMetricMetadata(null);
                 }}
               >
+                <List className="h-4 w-4 mr-2" />
                 Avg session length
               </DropdownMenuItem>
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Avg of metadata</DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger>
+                  <Code className="h-4 w-4 mr-2" />
+                  Avg of metadata
+                </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent>
                     {numberMetadataFields?.length === 0 && (
@@ -208,7 +222,10 @@ const MetadataForm: React.FC<{}> = ({}) => {
                 </DropdownMenuPortal>
               </DropdownMenuSub>
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Sum of metadata</DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger>
+                  <Code className="h-4 w-4 mr-2" />
+                  Sum of metadata
+                </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent>
                     {numberMetadataFields?.length === 0 && (
@@ -253,24 +270,30 @@ const MetadataForm: React.FC<{}> = ({}) => {
                   setSelectedGroupBy("event_name");
                 }}
               >
-                event_name
+                <TextSearch className="h-4 w-4 mr-2" />
+                Event name
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setSelectedGroupBy("flag");
                 }}
               >
-                flag
+                <Flag className="h-4 w-4 mr-2" />
+                Eval
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setSelectedGroupBy("task_position");
                 }}
               >
-                task_position
+                <List className="h-4 w-4 mr-2" />
+                Task position
               </DropdownMenuItem>
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>metadata</DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger>
+                  <Code className="h-4 w-4 mr-2" />
+                  Metadata
+                </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent>
                     {categoryMetadataFields?.length === 0 && (

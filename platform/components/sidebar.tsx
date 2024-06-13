@@ -9,7 +9,9 @@ import {
   Boxes,
   ChevronDown,
   ChevronUp,
+  List,
   ListChecks,
+  MessagesSquare,
   Monitor,
   Settings,
   Shuffle,
@@ -17,6 +19,7 @@ import {
   Star,
   TestTubeDiagonal,
   TextSearch,
+  User,
   User2,
   Users,
 } from "lucide-react";
@@ -97,11 +100,18 @@ export function Sidebar() {
         </SideBarElement>
         {(pathname.startsWith("/org/transcripts") || isMobile) && (
           <div className="ml-6 text-muted-foreground">
-            <SideBarElement href="/org/transcripts/tasks">Tasks</SideBarElement>
+            <SideBarElement href="/org/transcripts/tasks">
+              <MessagesSquare className="h-4 w-4 mr-2" />
+              Tasks
+            </SideBarElement>
             <SideBarElement href="/org/transcripts/sessions">
+              <List className="h-4 w-4 mr-2" />
               Sessions
             </SideBarElement>
-            <SideBarElement href="/org/transcripts/users">Users</SideBarElement>
+            <SideBarElement href="/org/transcripts/users">
+              <Users className="h-4 w-4 mr-2" />
+              Users
+            </SideBarElement>
             <SideBarElement href="/org/transcripts/dashboard">
               Dashboard
             </SideBarElement>

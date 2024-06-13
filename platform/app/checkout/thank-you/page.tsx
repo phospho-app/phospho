@@ -32,6 +32,7 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
+import { PlayIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
@@ -243,6 +244,7 @@ function RunAnalyticsForm({
             type="submit"
             disabled={form.formState.isSubmitted || form.formState.isSubmitting}
           >
+            <PlayIcon className="h-4 w-4 mr-2 text-green-500" />
             Run now
           </Button>
         </div>

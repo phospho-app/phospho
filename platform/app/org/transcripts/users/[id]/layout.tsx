@@ -38,13 +38,15 @@ export default function Page({
     const target = event.target as HTMLButtonElement;
     if (!target?.textContent) return;
     setSelected(target.textContent);
-    router.push(`/org/users/${user_id}/${target.textContent.toLowerCase()}`);
+    router.push(
+      `/org/transcripts/users/${user_id}/${target.textContent.toLowerCase()}`,
+    );
   };
 
   return (
     <>
       <div>
-        <Button onClick={() => router.push("/org/users")}>
+        <Button onClick={() => router.push("/org/transcripts/users")}>
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Users
         </Button>
       </div>

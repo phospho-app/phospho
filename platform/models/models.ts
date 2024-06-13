@@ -211,6 +211,7 @@ export interface Clustering {
   nb_clusters?: number;
   clusters_ids: string[];
   status?: "started" | "summaries" | "completed";
+  clusters?: Cluster[] | null;
 }
 
 export interface CustomDateRange {
@@ -239,4 +240,7 @@ export interface ProjectDataFilters {
   sentiment?: string | null;
   language?: string | null;
   has_notes?: boolean | null;
+  tasks_ids?: string[] | null;
+  clustering_id?: string | null;
+  clusters_ids?: string[] | null;
 }

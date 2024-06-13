@@ -285,9 +285,9 @@ export function getColumns({
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuLabel>
-                  <div className="flex flex-row space-x-2 items-center">
-                    <Play className="w-4 h-4" />
-                    <div>Run event detection</div>
+                  <div className="flex flex-row items-center">
+                    <Sparkles className="w-4 h-4 text-green-500 mr-1" />
+                    <div>Detect event</div>
                   </div>
                 </DropdownMenuLabel>
                 {eventArray.map(([event_name, event_definition]) => {
@@ -316,7 +316,7 @@ export function getColumns({
                     setEventDefinition(null);
                   }}
                 >
-                  <PlusIcon className="w-4 h-4 mr-2" />
+                  <PlusIcon className="w-4 h-4 mr-1" />
                   Add new event
                 </DropdownMenuItem>
               </DropdownMenuContent>
