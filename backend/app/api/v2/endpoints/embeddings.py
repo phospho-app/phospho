@@ -111,7 +111,7 @@ async def post_embeddings(
             metered_prediction,
             org_id=org["org"]["org_id"],
             model_id=f"phospho:{request_body.model}",
-            inputs=[request_body.text],
+            inputs=[request_body.input],
             predictions=[embedding.model_dump()],
             project_id=request_body.project_id,
         )
