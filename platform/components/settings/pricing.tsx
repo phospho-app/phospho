@@ -248,7 +248,7 @@ export default function Pricing({
         label: "Pricing",
         tiers: {
           hobby: "Free",
-          usage_based: "1$ / 1K logs",
+          usage_based: "1$ / 1K analytics",
           pro: "Unlimited",
           enterprise: "Custom",
         },
