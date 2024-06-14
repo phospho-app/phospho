@@ -8,7 +8,7 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Boxes } from "lucide-react";
+import { Boxes, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
@@ -53,7 +53,10 @@ export function RunClusteringCallout() {
                     </CardDescription>
                   </div>
                   <Link href="/org/insights/clusters">
-                    <Button variant="default">Cluster data</Button>
+                    <Button variant="default">
+                      Cluster data
+                      <ChevronRight className="ml-2" />
+                    </Button>
                   </Link>
                 </div>
               </div>

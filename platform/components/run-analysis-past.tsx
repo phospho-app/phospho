@@ -1,3 +1,4 @@
+import { DatePickerWithRange } from "@/components/date-range";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -21,23 +22,19 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { dataStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import {
-  ChevronRight,
-  PlayIcon,
-  Sparkle,
-  SparkleIcon,
-  Sparkles,
-} from "lucide-react";
+import { ChevronRight, PlayIcon, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import FilterComponent from "./filters";
 import { Spinner } from "./small-spinner";
 import { toast } from "./ui/use-toast";
 import UpgradeButton from "./upgrade-button";
@@ -51,14 +48,6 @@ const RunAnalysisInPast = ({
 }: {
   totalNbTasks: number | null | undefined;
 }) => {
-  if (
-    totalNbTasks === null ||
-    totalNbTasks === undefined ||
-    totalNbTasks === 0
-  ) {
-    return null;
-  }
-
   const router = useRouter();
   const { accessToken } = useUser();
   const [checkedEval, setCheckedEval] = useState(true);
@@ -70,6 +59,7 @@ const RunAnalysisInPast = ({
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
 
   const project_id = selectedProject?.id;
   const eventList: string[] = Object.keys(
@@ -134,6 +124,7 @@ const RunAnalysisInPast = ({
       },
       body: JSON.stringify({
         recipe_type_list: data.recipe_type_list,
+        filters: dataFilters,
       }),
     });
 
@@ -159,7 +150,7 @@ const RunAnalysisInPast = ({
   return (
     <Sheet>
       <SheetTrigger>
-        <Button variant={"outline"}>
+        <Button variant={"outline"} className="mt-2">
           <Sparkles className="text-green-500 h-4 w-4 mr-2" />
           Detect
           <ChevronRight className="h-4 w-4 ml-2" />
@@ -184,6 +175,10 @@ const RunAnalysisInPast = ({
                       {selectedProject?.project_name}'
                     </FormLabel>
                   </div>
+                  <div className="flex flex-wrap">
+                    <DatePickerWithRange className="mr-2" />
+                    <FilterComponent variant="tasks" />
+                  </div>
                   {form_choices.map((item) => (
                     <FormField
                       key={item.id}
@@ -193,11 +188,12 @@ const RunAnalysisInPast = ({
                         return (
                           <FormItem
                             key={item.id}
-                            className="flex flex-row items-center space-x-3 space-y-0 py-1"
+                            className="flex flex-row items-center space-x-3 space-y-4 py-1"
                           >
                             <FormControl>
                               <Checkbox
                                 checked={field.value?.includes(item.id)}
+                                className="mt-4"
                                 onCheckedChange={(checked) => {
                                   if (checked) {
                                     field.onChange([...field.value, item.id]);
@@ -231,14 +227,14 @@ const RunAnalysisInPast = ({
                             </FormControl>
                             <FormLabel className="font-normal">
                               <HoverCard openDelay={0} closeDelay={0}>
-                                <HoverCardTrigger>
-                                  <div className="flex flex-row space-x-2">
-                                    <span>{item.label}</span>
+                                <div className="flex flex-row space-x-2">
+                                  <span>{item.label}</span>
+                                  <HoverCardTrigger>
                                     <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5" />
-                                  </div>
-                                </HoverCardTrigger>
+                                  </HoverCardTrigger>
+                                </div>
                                 <HoverCardContent side="right" className="w-96">
-                                  <div className="p-1 flex flex-col space-y-1">
+                                  <div className="p-1 flex flex-col space-y-0">
                                     <div className="font-bold">
                                       {item.label}
                                     </div>
@@ -267,7 +263,7 @@ const RunAnalysisInPast = ({
                 <UpgradeButton tagline="Run now" green={false} />
               </div>
             )}
-            {!hobby && (
+            {!hobby && totalNbTasks && totalNbTasks > 0 && (
               <div className="flex justify-end">
                 <Button
                   type="submit"
@@ -281,6 +277,11 @@ const RunAnalysisInPast = ({
                   )}
                   Run now
                 </Button>
+              </div>
+            )}
+            {!totalNbTasks && (
+              <div>
+                <div>No tasks selected</div>
               </div>
             )}
           </form>

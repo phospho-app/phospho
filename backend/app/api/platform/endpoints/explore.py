@@ -365,7 +365,7 @@ async def post_single_cluster(
 )
 async def post_detect_clusters(
     project_id: str,
-    query: Optional[DetectClustersRequest] = None,
+    query: DetectClustersRequest,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
@@ -398,7 +398,10 @@ async def post_detect_clusters(
     await bill_on_stripe(org_id=org_id, nb_credits_used=clustering_sample_size * 2)
     await clustering(
         clustering_request=ClusteringRequest(
-            project_id=project_id, org_id=org_id, limit=query.limit
+            project_id=project_id,
+            org_id=org_id,
+            limit=query.limit,
+            filters=query.filters,
         )
     )
     return {"status": "ok"}
