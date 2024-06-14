@@ -9,9 +9,10 @@ import {
 } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
+import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import React from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { ClustersTable } from "./clusters-table";
@@ -21,8 +22,7 @@ const Clusters: React.FC = () => {
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const { accessToken } = useUser();
 
-  const [clusteringUnavailable, setClusteringUnavailable] =
-    React.useState(true);
+  const [clusteringUnavailable, setClusteringUnavailable] = useState(true);
 
   const { data: clusteringsData, mutate: mutateClusterings } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
@@ -33,19 +33,10 @@ const Clusters: React.FC = () => {
       refreshInterval: 10,
     },
   );
-  let latestClustering = undefined;
+  let latestClustering: Clustering | undefined = undefined;
   if (clusteringsData) {
     latestClustering = clusteringsData?.clusterings[0];
   }
-
-  React.useEffect(() => {
-    if (latestClustering?.status === "completed") {
-      setClusteringUnavailable(false);
-    }
-    if (latestClustering?.status === undefined) {
-      setClusteringUnavailable(false);
-    }
-  }, [latestClustering?.status]);
 
   const maxCreatedAt = latestClustering?.created_at;
   const { data: totalNbTasksData } = useSWR(
@@ -66,6 +57,15 @@ const Clusters: React.FC = () => {
   );
   const totalNbTasks: number | null | undefined =
     totalNbTasksData?.total_nb_tasks;
+
+  useEffect(() => {
+    if (latestClustering?.status === "completed") {
+      setClusteringUnavailable(false);
+    }
+    if (latestClustering?.status === undefined) {
+      setClusteringUnavailable(false);
+    }
+  }, [latestClustering?.status]);
 
   if (!project_id) {
     return <></>;

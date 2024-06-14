@@ -16,8 +16,7 @@ import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
-import { Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronRight, Sparkles } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
 
@@ -30,7 +29,6 @@ const RunClusters = ({
   mutateClusterings: any;
   clusteringUnavailable: boolean;
 }) => {
-  const router = useRouter();
   const { accessToken } = useUser();
   const [clusteringCost, setClusteringCost] = useState(0);
   const selectedProject = dataStateStore((state) => state.selectedProject);
@@ -42,15 +40,15 @@ const RunClusters = ({
 
   const project_id = selectedProject?.id;
 
-  if (!project_id) {
-    return <></>;
-  }
-
   useEffect(() => {
     if (totalNbTasks) {
       setClusteringCost(totalNbTasks * 2);
     }
   }, [totalNbTasks]);
+
+  if (!project_id) {
+    return <></>;
+  }
 
   async function runClusterAnalysis() {
     setLoading(true);
@@ -105,6 +103,7 @@ const RunClusters = ({
       <SheetTrigger>
         <Button className="default">
           <Sparkles className="w-4 h-4 mr-2 text-green-500" /> Detect clusters
+          <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
       </SheetTrigger>
       <SheetContent className="md:w-1/2 overflow-auto">
@@ -140,7 +139,9 @@ const RunClusters = ({
               onClick={runClusterAnalysis}
               disabled={clusteringUnavailable || loading}
             >
-              {loading && <Spinner className="mr-2" />}
+              {(loading || clusteringUnavailable) && (
+                <Spinner className="mr-2" />
+              )}
               Run cluster analysis
             </Button>
           </div>

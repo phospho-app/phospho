@@ -69,9 +69,6 @@ export function TasksTable<TData, TValue>({
 
   let tasksWithEvents: TaskWithEvents[] = [];
 
-  console.log("TASKS DATA FILTERS", dataFilters);
-  console.log("TASKS_IDS", tasks_ids);
-
   const { data: tasksData, mutate: mutateTasks } = useSWR(
     project_id
       ? [
