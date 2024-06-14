@@ -173,7 +173,7 @@ async def predict(predict_request: PredictRequest) -> PredictResponse | None:
 async def clustering(clustering_request: ClusteringRequest) -> None:
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(
+            _ = await client.post(
                 f"{config.PHOSPHO_AI_HUB_URL}/v1/clusterings",
                 json=clustering_request.model_dump(),
                 headers={
