@@ -24,7 +24,7 @@ async def fetch_and_decrypt_langsmith_credentials(
     """
 
     mongo_db = await get_mongo_db()
-    encryption_key = os.getenv("EXTRACTOR_ENCRYPTION_KEY")
+    encryption_key = os.getenv("EXTRACTOR_SECRET_KEY")
 
     # Fetch the encrypted credentials from the database
     credentials = await mongo_db["keys"].find_one(
@@ -61,7 +61,7 @@ async def encrypt_and_store_langsmith_credentials(
 
     mongo_db = await get_mongo_db()
 
-    encryption_key = os.getenv("EXTRACTOR_ENCRYPTION_KEY")
+    encryption_key = os.getenv("EXTRACTOR_SECRET_KEY")
     api_key_as_bytes = langsmith_api_key.encode("utf-8")
 
     # Encrypt the credentials
