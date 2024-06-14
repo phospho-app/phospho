@@ -1,8 +1,6 @@
 "use client";
 
 import { TableNavigation } from "@/components/table-navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,

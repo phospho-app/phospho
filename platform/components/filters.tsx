@@ -135,16 +135,15 @@ const FilterComponent = ({
   return (
     <div>
       <DropdownMenu>
-        <div className="flex align-items space-x-2">
+        <div className="flex flex-wrap align-content space-x-2 space-y-2">
           <DropdownMenuTrigger asChild>
-            <Button variant="outline">
+            <Button variant="outline" className="mt-2">
               <ListFilter className="h-4 w-4 mr-1" />
               Filters
             </Button>
           </DropdownMenuTrigger>
           {dataFilters.flag && (
             <Button
-              className={`ml-2 color: ${dataFilters.flag === "success" ? "green" : "red"} `}
               variant="outline"
               onClick={() => {
                 setDataFilters({
