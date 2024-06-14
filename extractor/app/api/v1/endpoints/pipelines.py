@@ -292,45 +292,41 @@ async def extract_langsmith_data(
     current_usage = user_data["current_usage"]
     max_usage = user_data["max_usage"]
 
-    try:
-        for run in runs:
-            try:
-                input = ""
-                for message in run.inputs["messages"]:
-                    if "HumanMessage" in message["id"]:
-                        input += message["kwargs"]["content"]
+    for run in runs:
+        try:
+            input = ""
+            for message in run.inputs["messages"]:
+                if "HumanMessage" in message["id"]:
+                    input += message["kwargs"]["content"]
 
-                output = ""
-                for generation in run.outputs["generations"]:
-                    output += generation["text"]
+            output = ""
+            for generation in run.outputs["generations"]:
+                output += generation["text"]
 
-                if input == "" or output == "":
-                    continue
+            if input == "" or output == "":
+                continue
 
-                log_event = LogEvent(
-                    created_at=str(int(run.end_time.timestamp())),
-                    input=input,
-                    output=output,
-                    session_id=str(run.session_id),
-                    org_id=user_data["org_id"],
-                    project_id=user_data["project_id"],
-                    metadata={"langsmith_run_id": run.id},
-                )
+            log_event = LogEvent(
+                created_at=str(int(run.end_time.timestamp())),
+                input=input,
+                output=output,
+                session_id=str(run.session_id),
+                org_id=user_data["org_id"],
+                project_id=user_data["project_id"],
+                metadata={"langsmith_run_id": run.id},
+            )
 
-                if max_usage is None or (
-                    max_usage is not None and current_usage < max_usage
-                ):
-                    logs_to_process.append(log_event)
-                    current_usage += 1
-                else:
-                    extra_logs_to_save.append(log_event)
-            except Exception as e:
-                logger.error(
-                    f"Error processing langsmith run for project id: {user_data['project_id']}, {e}"
-                )
-
-    except LangSmithError as e:
-        logger.error(f"Error getting langsmith runs: {e}")
+            if max_usage is None or (
+                max_usage is not None and current_usage < max_usage
+            ):
+                logs_to_process.append(log_event)
+                current_usage += 1
+            else:
+                extra_logs_to_save.append(log_event)
+        except Exception as e:
+            logger.error(
+                f"Error processing langsmith run for project id: {user_data['project_id']}, {e}"
+            )
 
     await change_last_langsmith_extract(
         project_id=user_data["project_id"],
