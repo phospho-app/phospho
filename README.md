@@ -127,3 +127,7 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE file](.
 - [phospho Javascript client](https://github.com/phospho-app/phosphojs)
 - [phospho UI React components](https://github.com/phospho-app/phospho-ui-react)
 - [phospho fastassert constrained inference](https://github.com/phospho-app/fastassert)
+
+## Contributing
+
+We welcome contributions from the community. Please refer to our [contributing guidelines](./CONTRIBUTE.md) for more information.
