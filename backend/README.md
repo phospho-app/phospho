@@ -5,9 +5,15 @@
 This project uses Poetry and Python 3.11
 
 ```bash
+# 1 - enter backend
 cd backend
+# 2 first option - create a virtual environment
 conda create -n phospho-env python=3.11
+# 2 second option - create a virtual environment
+python -m venv
+# 3 - install poetry
 pip install poetry
+# 4 - install backend dependancies
 poetry install
 ```
 

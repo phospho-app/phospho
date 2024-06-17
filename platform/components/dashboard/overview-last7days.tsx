@@ -3,9 +3,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { useUser } from "@propelauth/nextjs/client";
-// PostHog
-import { usePostHog } from "posthog-js/react";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Area,
   AreaChart,

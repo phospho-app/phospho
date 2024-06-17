@@ -1,7 +1,7 @@
 import logging
 
 import sentry_sdk
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import phospho
