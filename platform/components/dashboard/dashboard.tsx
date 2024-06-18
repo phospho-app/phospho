@@ -35,7 +35,7 @@ const Dashboard: React.FC = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-full lg:col-span-3">
           <CardHeader>
-            <CardTitle>Number of Tasks per event</CardTitle>
+            <CardTitle>Average number of Tokens per event</CardTitle>
           </CardHeader>
           <CardContent className="pl-2 mx-2">
             <DatavizForDashboard

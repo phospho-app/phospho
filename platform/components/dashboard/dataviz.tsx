@@ -3,10 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { ProjectDataFilters } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { stat } from "fs";
 import React from "react";
 import {
   Bar,
@@ -99,20 +97,37 @@ const DatavizForDashboard = ({
   ];
   const isStacked = pivotData?.length > 1 && "stack" in pivotData[0];
 
-  console.log("pivotData", pivotData);
+  if (!numberMetadataFields || !categoryMetadataFields) {
+    return <></>;
+  }
+
+  if (
+    breakdown_by === "language" &&
+    !categoryMetadataFields.includes("language")
+  ) {
+    return <></>;
+  }
+  if (
+    selectedMetricMetadata === "sentiment_score" &&
+    !numberMetadataFields.includes("sentiment_score")
+  ) {
+    return <></>;
+  }
 
   // Display the data or "Loading..."
   return (
     <div className="flex flex-col space-y-2">
       {!pivotData && pivotLoading && <p>Loading...</p>}
-      {(pivotData === null || pivotData?.length == 0) && <p>Unavailable</p>}
+      {(pivotData === null || pivotData?.length == 0) && <></>}
       {pivotData?.length == 1 && (
         <>
           <Card>
             <CardHeader>
               <CardTitle className="text-xl font-light tracking-tight">
-                Breakdown by {breakdown_by}:{" "}
-                {pivotData["breakdown_by"] ?? "None"}
+                {!pivotData[0]["breakdown_by"] && (
+                  <p>{pivotData[0]["breakdown_by"]}</p>
+                )}
+                {pivotData[0]["breakdown_by"] === "NaN" && <p>No breakdown</p>}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-xl font-extrabold">
@@ -233,12 +248,6 @@ const DatavizForDashboard = ({
               // Loop over the keys of the dict and create a bar for each key
               Object.keys(selectedProject?.settings?.events ?? {}).map(
                 (key, index) => {
-                  console.log(
-                    "TEST ",
-                    key,
-                    index,
-                    graphColors[index % graphColors.length],
-                  );
                   return (
                     <Bar
                       key={key}
