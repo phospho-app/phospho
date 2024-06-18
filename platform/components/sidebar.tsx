@@ -9,6 +9,7 @@ import {
   Boxes,
   ChevronDown,
   ChevronUp,
+  LayoutDashboard,
   List,
   ListChecks,
   MessagesSquare,
@@ -113,6 +114,7 @@ export function Sidebar() {
               Users
             </SideBarElement>
             <SideBarElement href="/org/transcripts/dashboard">
+              <LayoutDashboard className="h-4 w-4 mr-2" />
               Dashboard
             </SideBarElement>
           </div>

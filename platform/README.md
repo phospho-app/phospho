@@ -35,7 +35,7 @@ PROPELAUTH_VERIFIER_KEY=-----BEGIN PUBLIC KEY-----
 
 ## Install dependencies
 
-Using Node 18.11.0
+Using Node 18.20.1
 
 ```
 npm i
