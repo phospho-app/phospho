@@ -77,7 +77,7 @@ export default function CreateEvent({
     webhook: z.string().optional(),
     webhook_auth_header: z.string().optional(),
     detection_engine: z
-      .enum(["llm_detection", "regex_detection", "keyword_detection"])
+      .enum(["llm_detection", "regex_detection", "keyword_detection", "tf_detection"])
       .default("llm_detection"),
     detection_scope: z
       .enum(["task", "session", "task_input_only", "task_output_only"])
@@ -351,6 +351,9 @@ export default function CreateEvent({
                       </SelectItem>
                       <SelectItem value="regex_detection">
                         Regex Detection
+                      </SelectItem>
+                      <SelectItem value="tf_detection">
+                        TF-IDF Detection
                       </SelectItem>
                       <SelectItem disabled value="other">
                         More coming soon!
