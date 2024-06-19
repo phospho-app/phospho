@@ -65,9 +65,7 @@ DetectionScope = Literal[
 ]
 
 DetectionEngine = Literal[
-    "llm_detection",
-    "keyword_detection",
-    "regex_detection",
+    "llm_detection", "keyword_detection", "regex_detection", "tf_detection"
 ]
 
 

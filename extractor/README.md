@@ -28,7 +28,7 @@ poetry install --with dev
 # Running the server
 
 ```bash
-poetry run uvicorn app.main:app --reload --port 7605
+poetry run uvicorn app.main:app --reload --port 8001
 ```
 
 ## Security

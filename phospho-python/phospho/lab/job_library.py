@@ -14,6 +14,9 @@ from typing import List, Literal, Optional, cast
 
 from phospho.models import ScoreRange, ScoreRangeSettings
 from phospho.utils import get_number_of_tokens, shorten_text
+import joblib
+from sklearn.feature_extraction.text import TfidfVectorizer
+from typing import List
 
 try:
     from openai import AsyncOpenAI, OpenAI
@@ -21,6 +24,7 @@ except ImportError:
     pass
 
 from phospho import config
+from phospho.models import ScoreRange
 
 from .language_models import get_async_client, get_provider_and_model, get_sync_client
 from .models import JobResult, Message, ResultType, DetectionScope
@@ -816,6 +820,76 @@ async def regex_event_detection(
             logs=[text, regex_pattern],
             metadata={
                 "evaluation_source": "phospho-regex",
+                "score_range": ScoreRange(
+                    score_type="confidence", max=1, min=0, value=1 if found else 0
+                ),
+            },
+        )
+
+    except Exception as e:
+        return JobResult(
+            result_type=ResultType.error,
+            value=None,
+            logs=[str(e)],
+        )
+
+
+# Load the model and vectorizer (ensure the paths are correct)
+
+model_path = (
+    "/Users/kyoto/git/phospho/phospho-python/phospho/lab/text_classifier.joblib"
+)
+model = joblib.load(model_path)
+vectorizer = model.named_steps["tfidfvectorizer"]
+
+
+async def tf_event_detection(
+    message: Message,
+    event_name: str,
+    event_scope: DetectionScope = "task",
+    **kwargs,
+) -> JobResult:
+    """
+    Uses a TF-IDF and XGBoost model to detect if an event is present in a message.
+    """
+    listExchangeToSearch: List[str] = []
+
+    if event_scope == "task":
+        listExchangeToSearch = [message.latest_interaction()]
+
+    elif event_scope == "task_input_only":
+        message_list = message.as_list()
+        listExchangeToSearch = [
+            " " + m.content + " " for m in message_list if m.role == "User"
+        ]
+
+    elif event_scope == "task_output_only":
+        message_list = message.as_list()
+        listExchangeToSearch = [
+            " " + m.content + " " for m in message_list if m.role == "Assistant"
+        ]
+
+    elif event_scope == "session":
+        listExchangeToSearch = [
+            message.transcript(with_role=True, with_previous_messages=True)
+        ]
+
+    text = " ".join(listExchangeToSearch)
+
+    try:
+        # Transform the text data using the vectorizer
+        text_transformed = vectorizer.transform([text])
+
+        # Predict using the loaded model
+        prediction = model.predict(text_transformed)
+        found = prediction.any()
+
+        return JobResult(
+            result_type=ResultType.bool,
+            value=found,
+            logs=[text],
+            metadata={
+                "evaluation_source": "phospho-tf-idf-xgboost",
                 "score_range": ScoreRange(
                     score_type="confidence", max=1, min=0, value=1 if found else 0
                 ),

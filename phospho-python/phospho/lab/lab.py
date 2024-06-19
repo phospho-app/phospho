@@ -309,8 +309,7 @@ class MessageCallable(Protocol):
     A function whose first argument is a Message.
     """
 
-    def __call__(self, message: Message, *args: Any, **kwargs: Any) -> Any:
-        ...
+    def __call__(self, message: Message, *args: Any, **kwargs: Any) -> Any: ...
 
 
 class Workload:
@@ -503,6 +502,19 @@ class Workload:
                             regex_pattern=event_definition.regex_pattern,
                             event_scope=event_definition.detection_scope,
                             score_range_settings=event_definition.score_range_settings,
+                        ),
+                        metadata=event_definition.model_dump(),
+                    )
+                )
+
+            elif event_definition.detection_engine == "tf_detection":
+                workload.add_job(
+                    Job(
+                        id=event_name,
+                        job_function=job_library.tf_event_detection,
+                        config=EventConfig(
+                            event_name=event_name,
+                            event_scope=event_definition.detection_scope,
                         ),
                         metadata=event_definition.model_dump(),
                     )

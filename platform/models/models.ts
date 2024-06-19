@@ -107,6 +107,7 @@ export enum DetectionEngine {
   LLM = "llm_detection",
   KEYWORD = "keyword_detection",
   REGEX = "regex_detection",
+  TF = "tf_detection"
 }
 
 export enum DetectionScope {
