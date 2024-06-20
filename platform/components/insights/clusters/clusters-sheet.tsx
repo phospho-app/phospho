@@ -118,34 +118,44 @@ const RunClusters = ({
         </div>
         {(!totalNbTasks || totalNbTasks < 5) && (
           <div className="mt-4">
-            You need at least 5 tasks to run a cluster analysis.
+            You need at least 5 tasks to run a cluster analysis, there are
+            currently {totalNbTasks ? totalNbTasks : 0} tasks.
           </div>
         )}
-        {totalNbTasks && totalNbTasks >= 5 && (
+        {totalNbTasks && totalNbTasks >= 5 && totalNbTasks <= 2000 && (
           <div className="mt-4">
             We will clusterize {totalNbTasks} tasks for a total of{" "}
             {clusteringCost} credits.
           </div>
         )}
+        {!hobby && totalNbTasks && totalNbTasks > 2000 && (
+          <div className="mt-4">
+            Please filter your selection to less than 2000 tasks. There are
+            currently {totalNbTasks} tasks to clusterize.
+          </div>
+        )}
         {hobby && (
-          <div className="flex justify-end">
+          <div className="flex justify-end mt-4">
             <UpgradeButton tagline="Run cluster analysis" green={false} />
           </div>
         )}
-        {!hobby && totalNbTasks && totalNbTasks >= 5 && (
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              onClick={runClusterAnalysis}
-              disabled={clusteringUnavailable || loading}
-            >
-              {(loading || clusteringUnavailable) && (
-                <Spinner className="mr-2" />
-              )}
-              Run cluster analysis
-            </Button>
-          </div>
-        )}
+        {!hobby &&
+          totalNbTasks &&
+          totalNbTasks >= 5 &&
+          totalNbTasks <= 2000 && (
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                onClick={runClusterAnalysis}
+                disabled={clusteringUnavailable || loading}
+              >
+                {(loading || clusteringUnavailable) && (
+                  <Spinner className="mr-2" />
+                )}
+                Run cluster analysis
+              </Button>
+            </div>
+          )}
       </SheetContent>
     </Sheet>
   );
