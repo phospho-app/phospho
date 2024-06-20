@@ -16,11 +16,16 @@ import { ArrowBigDown, Bot, ThumbsDown, ThumbsUp, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import * as React from "react";
+import Intercom from '@intercom/messenger-js-sdk';
 
 const CARD_STYLE =
   "flex flex-col aspect-square items-left justify-center p-6 text-xl font-semibold space-y-4";
 
 function WhatIsPhospho() {
+  Intercom({
+    app_id: process.env.NEXT_PUBLIC_INTERCOM_APP_ID || '',
+  });
+  
   return (
     <div className="p-1">
       <Card>

@@ -29,6 +29,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useSWRConfig } from "swr";
 import { z } from "zod";
+import React from 'react';
+import Intercom from '@intercom/messenger-js-sdk';
 
 const formSchema = z.object({
   project_name: z
@@ -45,6 +47,9 @@ const CARD_STYLE =
   "flex flex-col items-left justify-center p-6 text-xl font-semibold space-y-4";
 
 export default function Page() {
+  Intercom({
+    app_id: process.env.NEXT_PUBLIC_INTERCOM_APP_ID || '',
+  });
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const { user, loading, accessToken } = useUser();

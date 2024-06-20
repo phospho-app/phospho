@@ -4,8 +4,13 @@ import Session from "@/components/transcripts/sessions/session";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import React from 'react';
+import Intercom from '@intercom/messenger-js-sdk';
 
 export default function Page({ params }: { params: { id: string } }) {
+  Intercom({
+    app_id: process.env.NEXT_PUBLIC_INTERCOM_APP_ID || '',
+  });
   const session_id = decodeURIComponent(params.id);
   const router = useRouter();
 

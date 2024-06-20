@@ -6,8 +6,13 @@ import { navigationStateStore } from "@/store/store";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useEffect } from "react";
+import React from 'react';
+import Intercom from '@intercom/messenger-js-sdk';
 
 export default function Page({ params }: { params: { id: string } }) {
+  Intercom({
+    app_id: process.env.NEXT_PUBLIC_INTERCOM_APP_ID || '',
+  }); 
   const router = useRouter();
   const version_id = decodeURIComponent(params.id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);

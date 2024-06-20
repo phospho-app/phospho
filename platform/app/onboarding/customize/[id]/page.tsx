@@ -2,6 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import React from 'react';
+import Intercom from '@intercom/messenger-js-sdk';
 
 import AddEvents from "./add-events";
 
@@ -15,6 +17,10 @@ export default function Page({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
   const redirectTo = redirect == "events" ? "/org/insights/events" : "/org";
+
+  Intercom({
+    app_id: 'sp332i1r',
+  });
 
   return (
     <>

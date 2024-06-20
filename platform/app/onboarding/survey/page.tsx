@@ -3,6 +3,8 @@
 import { EventDefinition } from "@/models/models";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import React from 'react';
+import Intercom from '@intercom/messenger-js-sdk';
 
 import AboutYou from "./about-you";
 
@@ -17,6 +19,10 @@ export default function Page({ params }: { params: { id: string } }) {
   // to the correct page after the onboarding is complete.
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
+
+  Intercom({
+    app_id: 'sp332i1r',
+  });
 
   return (
     <>

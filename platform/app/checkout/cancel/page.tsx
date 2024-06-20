@@ -12,8 +12,13 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import React from 'react';
+import Intercom from '@intercom/messenger-js-sdk';
 
 export default function Page() {
+  Intercom({
+    app_id: process.env.NEXT_PUBLIC_INTERCOM_APP_ID || '',
+  });
   // This page is displayed when the user canceled checkout
   const toast = useToast();
   const router = useRouter();
