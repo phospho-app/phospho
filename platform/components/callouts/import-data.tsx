@@ -714,7 +714,7 @@ phospho.log({input, output});`}
                   I don't have an LLM app
                 </AlertTitle>
                 <AlertDescription className="flex flex-row items-center">
-                  <Link href="https://www.youtube.com/watch?v=yQrRULUEiYM">
+                  <Link href="https://www.youtube.com/watch?v=4QeNPa4xOc8">
                     <Button variant="ghost" className="text-xs">
                       <MonitorPlay className="h-4 w-4 mr-2" />
                       Watch demo
