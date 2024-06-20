@@ -19,7 +19,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const redirectTo = redirect == "events" ? "/org/insights/events" : "/org";
 
   Intercom({
-    app_id: 'sp332i1r',
+    app_id: process.env.NEXT_PUBLIC_INTERCOM_APP_ID || '',
   });
 
   return (

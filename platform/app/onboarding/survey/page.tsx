@@ -21,7 +21,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const redirect = searchParams.get("redirect");
 
   Intercom({
-    app_id: 'sp332i1r',
+    app_id: process.env.NEXT_PUBLIC_INTERCOM_APP_ID || '',
   });
 
   return (
