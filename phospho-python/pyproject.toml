@@ -10,7 +10,7 @@ keywords = ['LLM', 'Agents', 'gen ai', 'phospho', 'analytics', 'nlp']
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
-requests = "^2.31.0"
+requests = "^2.32.3"
 pydantic = "^2.5.2"
 tqdm = "^4.66.2"
 
