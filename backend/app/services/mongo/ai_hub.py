@@ -144,7 +144,7 @@ async def predict(predict_request: PredictRequest) -> PredictResponse | None:
         try:
             response = await client.post(
                 f"{config.PHOSPHO_AI_HUB_URL}/v1/predict",
-                json=predict_request.model_dump(),
+                json=predict_request.model_dump(mode="json"),
                 headers={
                     "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
                     "Content-Type": "application/json",
@@ -175,7 +175,7 @@ async def clustering(clustering_request: ClusteringRequest) -> None:
         try:
             _ = await client.post(
                 f"{config.PHOSPHO_AI_HUB_URL}/v1/clusterings",
-                json=clustering_request.model_dump(),
+                json=clustering_request.model_dump(mode="json"),
                 headers={
                     "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
                     "Content-Type": "application/json",
