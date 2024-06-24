@@ -192,6 +192,7 @@ class ProjectSettings(BaseModel):
     events: Dict[str, EventDefinition] = Field(default_factory=dict)
     sentiment_threshold: Optional[Threshold] = Field(default_factory=Threshold)
     last_langsmith_extract: Optional[str] = None
+    last_langfuse_extract: Optional[str] = None
 
 
 class Project(DatedBaseModel):

@@ -23,6 +23,8 @@ from app.services.pipelines import (
     change_last_langsmith_extract,
     encrypt_and_store_langsmith_credentials,
     task_scoring_pipeline,
+    change_last_langfuse_extract,
+    encrypt_and_store_langfuse_credentials,
 )
 from app.services.projects import get_project_by_id
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -30,7 +32,7 @@ from loguru import logger
 from app.api.v1.models import LogEvent
 from datetime import datetime
 from langsmith import Client
-from langsmith.utils import LangSmithError
+from langfuse import Langfuse
 from typing import List
 
 router = APIRouter()
@@ -284,7 +286,9 @@ async def extract_langsmith_data(
         runs = client.list_runs(
             project_name=user_data["langsmith_credentials"]["project_name"],
             run_type="llm",
-            start_time=datetime.strptime(str(datetime.now()), "%Y-%m-%d %H:%M:%S.%f"),
+            start_time=datetime.strptime(
+                last_langsmith_extract, "%Y-%m-%d %H:%M:%S.%f"
+            ),
         )
 
     logs_to_process: List[LogEvent] = []
@@ -349,6 +353,95 @@ async def extract_langsmith_data(
         project_id=user_data["project_id"],
         langsmith_api_key=user_data["langsmith_credentials"]["langsmith_api_key"],
         langsmith_project_name=user_data["langsmith_credentials"]["project_name"],
+    )
+
+    return {"status": "ok"}
+
+
+@router.post(
+    "/pipelines/langfuse",
+    description="Run the langfuse pipeline on a task",
+)
+async def extract_langfuse_data(
+    user_data: dict,
+    background_tasks: BackgroundTasks,
+):
+    logger.debug(
+        f"Received LangFuse connection data for org id: {user_data['org_id']}, {user_data}"
+    )
+
+    last_langfuse_extract = await get_last_langsmith_extract(user_data["project_id"])
+
+    langfuse = Langfuse(
+        public_key=user_data["langfuse_credentials"]["langfuse_public_key"],
+        secret_key=user_data["langfuse_credentials"]["langfuse_secret_key"],
+    )
+    if last_langfuse_extract is None:
+        observations = langfuse.client.observations.get_many(type="GENERATION")
+
+    else:
+        observations = langfuse.client.observations.get_many(
+            type="GENERATION",
+            from_start_time=datetime.strptime(
+                last_langfuse_extract, "%Y-%m-%d %H:%M:%S.%f"
+            ),
+        )
+
+    logs_to_process: List[LogEvent] = []
+    extra_logs_to_save: List[LogEvent] = []
+    current_usage = user_data["current_usage"]
+    max_usage = user_data["max_usage"]
+
+    for observation in observations.data:
+        try:
+            input = observation.input
+            output = observation.output
+
+            log_event = LogEvent(
+                created_at=str(int(observation.start_time.timestamp())),
+                input=input,
+                output=output,
+                session_id=str(observation.trace_id),
+                org_id=user_data["org_id"],
+                project_id=user_data["project_id"],
+                metadata={"langsfuse_run_id": observation.id},
+            )
+
+            if max_usage is None or (
+                max_usage is not None and current_usage < max_usage
+            ):
+                logs_to_process.append(log_event)
+                current_usage += 1
+            else:
+                extra_logs_to_save.append(log_event)
+        except Exception as e:
+            logger.error(
+                f"Error processing langfuse run for project id: {user_data['project_id']}, {e}"
+            )
+
+    langfuse.shutdown()
+
+    await change_last_langfuse_extract(
+        project_id=user_data["project_id"],
+        new_last_extract_date=str(datetime.now()),
+    )
+
+    background_tasks.add_task(
+        process_log,
+        project_id=user_data["project_id"],
+        org_id=user_data["org_id"],
+        logs_to_process=logs_to_process,
+        extra_logs_to_save=extra_logs_to_save,
+    )
+
+    logger.debug(
+        f"Finished processing langsmith runs for project id: {user_data['project_id']}"
+    )
+
+    await encrypt_and_store_langfuse_credentials(
+        project_id=user_data["project_id"],
+        langfuse_secret_key=user_data["langfuse_credentials"]["langfuse_secret_key"],
+        langfuse_public_key=user_data["langfuse_credentials"]["langfuse_public_key"],
     )
 
     return {"status": "ok"}

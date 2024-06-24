@@ -364,6 +364,42 @@ async def collect_langsmith_data(
                 )
 
         except Exception as e:
-            error_id = generate_uuid()
-            error_message = f"Caught error while collecting langsmith data (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            error_message = f"Caught error while collecting langsmith data: {e}\n{traceback.format_exception(e)}"
+            logger.error(error_message)
+
+
+async def collect_langfuse_data(
+    project_id: str,
+    org_id: str,
+    langfuse_credentials: dict,
+    current_usage: int,
+    max_usage: int,
+):
+    async with httpx.AsyncClient() as client:
+        logger.debug(
+            f"Calling the extractor API for collecting langfuse data: {config.EXTRACTOR_URL}/v1/pipelines/langfuse"
+        )
+        try:
+            response = await client.post(
+                f"{config.EXTRACTOR_URL}/v1/pipelines/langfuse",  # WARNING: hardcoded API version
+                json={
+                    "langfuse_credentials": langfuse_credentials,
+                    "project_id": project_id,
+                    "org_id": org_id,
+                    "current_usage": current_usage,
+                    "max_usage": max_usage,
+                },
+                headers={
+                    "Authorization": f"Bear {config.EXTRACTOR_SECRET_KEY}",
+                    "Content-Type": "application/json",
+                },
+                timeout=60,
+            )
+            if response.status_code != 200:
+                logger.error(
+                    f"Error returned when collecting langfuse data (status code: {response.status_code}): {response.text}"
+                )
+
+        except Exception as e:
+            error_message = f"Caught error while collecting langfuse data: {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)
