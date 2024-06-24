@@ -46,7 +46,7 @@ from app.services.mongo.search import (
     search_sessions_in_project,
 )
 
-from app.services.mongo.extractor import collect_langsmith_data
+from app.services.mongo.extractor import collect_langsmith_data, collect_langfuse_data
 from app.security.authorization import get_quota
 from app.core import config
 
@@ -503,7 +503,7 @@ async def connect_langsmith(
         _ = [run for run in runs]
     except Exception as e:
         raise HTTPException(
-            status_code=400, detail=f"Error: Could not connect to Langsmith. {e}"
+            status_code=400, detail=f"Error: Could not connect to Langsmith: {e}"
         )
 
     org_plan = await get_quota(project_id)
@@ -519,3 +519,54 @@ async def connect_langsmith(
         max_usage=max_usage,
     )
     return {"status": "ok", "message": "Langsmith connected successfully."}
+
+
+@router.post(
+    "/projects/{project_id}/connect-langfuse",
+    response_model=dict,
+)
+async def connect_langfuse(
+    project_id: str,
+    credentials: dict,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(propelauth.require_user),
+) -> dict:
+    """
+    Import data from Langfuse to a Phospho project
+    """
+    project = await get_project_by_id(project_id)
+    propelauth.require_org_member(user, project.org_id)
+
+    logger.debug(f"Connecting LangFuse to project {project_id}")
+
+    try:
+        # This snippet is used to test the connection with Langsmith and verify the API key/project name
+        from langfuse import Langfuse
+
+        langfuse = Langfuse(
+            public_key=credentials["langfuse_public_key"],
+            secret_key=credentials["langfuse_secret_key"],
+            host="https://cloud.langfuse.com",
+        )
+        langfuse.auth_check()
+        langfuse.shutdown()
+        logger.debug("LangFuse connected successfully.")
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error: Could not connect to LangFuse: {e}"
+        )
+
+    org_plan = await get_quota(project_id)
+    current_usage = org_plan.get("current_usage", 0)
+    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+
+    background_tasks.add_task(
+        collect_langfuse_data,
+        project_id=project_id,
+        org_id=project.org_id,
+        langfuse_credentials=credentials,
+        current_usage=current_usage,
+        max_usage=max_usage,
+    )
+    return {"status": "ok", "message": "LangFuse connected successfully."}
