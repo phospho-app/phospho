@@ -48,6 +48,8 @@ const CreateProjectDialog = ({
   const [isCreating, setIsCreating] = useState(false);
   const [isCreated, setIsCreated] = useState(false);
 
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
   const router = useRouter();
 
   const FormSchema = z.object({
@@ -84,13 +86,16 @@ const CreateProjectDialog = ({
     const responseBody = await creation_response.json();
     if (responseBody.project_name === projectName) {
       // Change the selected project
-      setproject_id(responseBody.id);
+
+      await delay(1000);
       mutate(
         [`/api/organizations/${selectedOrgId}/projects`, accessToken],
         async (data: any) => {
           return { projects: [responseBody, data.projects] };
         },
       );
+      await delay(1000);
+      setproject_id(responseBody.id);
       setIsCreated(true);
       setIsCreating(false);
       setOpen(false);
@@ -205,6 +210,7 @@ const CreateProjectDialog = ({
             {isCreating && (
               <AlertDialogAction disabled>
                 <Icons.spinner className="mr-1 h-4 w-4 animate-spin" />
+                Create project
               </AlertDialogAction>
             )}
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Icons } from "@/components/small-spinner";
+import { Spinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,17 +15,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 import { DetectionScope, EventDefinition } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { set } from "date-fns";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { sendUserFeedback } from "phospho";
@@ -331,7 +326,12 @@ export default function AddEvents({
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="link" onClick={() => router.push(redirectTo)}>
+          <Button
+            variant="link"
+            onClick={() => {
+              router.push(redirectTo);
+            }}
+          >
             Skip
           </Button>
           <Button
@@ -349,11 +349,8 @@ export default function AddEvents({
             }}
             disabled={loading || customEvents === null}
           >
-            {sendEventsLoading ? (
-              <Icons.spinner className="w-4 h-4 animate-spin" />
-            ) : (
-              "Save and continue"
-            )}
+            {sendEventsLoading && <Spinner className="mr-1" />}
+            Save and continue
           </Button>
         </CardFooter>
       </Card>
