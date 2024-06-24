@@ -10,7 +10,10 @@ from app.db.mongo import close_mongo_db, connect_and_init_db
 from app.db.qdrant import close_qdrant, init_qdrant
 from app.services.mongo.extractor import check_health
 from app.services.mongo.ai_hub import check_health_ai_hub
-from app.api.v2.endpoints.cron import run_langsmith_sync_pipeline
+from app.api.v2.endpoints.cron import (
+    run_langsmith_sync_pipeline,
+    run_langfuse_sync_pipeline,
+)
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.memory import MemoryJobStore
@@ -213,3 +216,4 @@ scheduler.start()
 @scheduler.scheduled_job("interval", seconds=3600)
 async def run_cron_job():
     await run_langsmith_sync_pipeline()
+    await run_langfuse_sync_pipeline()

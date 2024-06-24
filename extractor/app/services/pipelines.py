@@ -800,6 +800,7 @@ async def encrypt_and_store_langsmith_credentials(
         {"project_id": project_id},
         {
             "$set": {
+                "type": "langsmith",
                 "langsmith_api_key": base64.b64encode(data).decode("latin-1"),
                 "langsmith_project_name": langsmith_project_name,
             },
@@ -857,6 +858,7 @@ async def encrypt_and_store_langfuse_credentials(
         {"project_id": project_id},
         {
             "$set": {
+                "type": "langfuse",
                 "langfuse_secret_key": base64.b64encode(data).decode("latin-1"),
                 "langfuse_public_key": langfuse_public_key,
             },
