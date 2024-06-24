@@ -110,10 +110,12 @@ async def run_log_process(
                 f"{config.EXTRACTOR_URL}/v1/pipelines/log",  # WARNING: hardcoded API version
                 json={
                     "logs_to_process": [
-                        log_event.model_dump() for log_event in logs_to_process
+                        log_event.model_dump(mode="json")
+                        for log_event in logs_to_process
                     ],
                     "extra_logs_to_save": [
-                        log_event.model_dump() for log_event in extra_logs_to_save
+                        log_event.model_dump(mode="json")
+                        for log_event in extra_logs_to_save
                     ],
                     "project_id": project_id,
                     "org_id": org_id,
@@ -164,7 +166,7 @@ async def run_main_pipeline_on_task(task: Task) -> PipelineResults:
             response = await client.post(
                 f"{config.EXTRACTOR_URL}/v1/pipelines/main/task",  # WARNING: hardcoded API version
                 json={
-                    "task": task.model_dump(),
+                    "task": task.model_dump(mode="json"),
                 },
                 headers={
                     "Authorization": f"Bearer {config.EXTRACTOR_SECRET_KEY}",
@@ -218,7 +220,9 @@ async def run_main_pipeline_on_messages(
             response = await client.post(
                 f"{config.EXTRACTOR_URL}/v1/pipelines/main/messages",  # WARNING: hardcoded API version
                 json={
-                    "messages": [message.model_dump() for message in messages],
+                    "messages": [
+                        message.model_dump(mode="json") for message in messages
+                    ],
                     "project_id": project_id,
                 },
                 headers={
@@ -271,8 +275,8 @@ async def run_recipe_on_tasks(
             response = await client.post(
                 f"{config.EXTRACTOR_URL}/v1/pipelines/recipes",  # WARNING: hardcoded API version
                 json={
-                    "tasks": [task.model_dump() for task in tasks],
-                    "recipe": recipe.model_dump(),
+                    "tasks": [task.model_dump(mode="json") for task in tasks],
+                    "recipe": recipe.model_dump(mode="json"),
                 },
                 headers={
                     "Authorization": f"Bearer {config.EXTRACTOR_SECRET_KEY}",

@@ -176,9 +176,14 @@ async def process_file_upload_into_log_events(
     for _, row in tasks_df.iterrows():
         # Create a task for each row
         try:
+            row_as_dict = row.to_dict()
+            # Replace NaN values with None
+            row_as_dict = {
+                k: v if pd.notnull(v) else None for k, v in row_as_dict.items()
+            }
             valid_log_event = LogEvent(
                 project_id=project_id,
-                **row.to_dict(),
+                **row_as_dict,
             )
 
             if max_usage is None or (
