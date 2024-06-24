@@ -2,7 +2,7 @@
 
 import Authenticate from "@/components/authenticate";
 import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
-import { Icons } from "@/components/small-spinner";
+import { Icons, Spinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -56,6 +56,8 @@ export default function Page() {
   const [creatingProject, setCreatingProject] = useState(false);
   const toast = useToast();
 
+  const [redirecting, setRedirecting] = useState(false);
+
   const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
   // 1. Define your form.
@@ -67,6 +69,7 @@ export default function Page() {
   });
 
   async function defaultProject() {
+    setRedirecting(true);
     if (creatingProject) {
       return;
     }
@@ -125,6 +128,7 @@ export default function Page() {
       }
     }
     setCreatingProject(true);
+    setRedirecting(true);
 
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
@@ -193,10 +197,8 @@ export default function Page() {
                     loading || creatingProject || !form.formState.isValid
                   }
                 >
+                  {redirecting && <Spinner className="mr-1" />}
                   {!creatingProject && <>Create project</>}
-                  {creatingProject && (
-                    <Icons.spinner className="w-4 h-4 animate-spin" />
-                  )}
                 </Button>
               </div>
             </form>
@@ -228,11 +230,9 @@ export default function Page() {
               onClick={() => {
                 defaultProject();
               }}
-              disabled={loading || creatingProject}
+              disabled={loading || creatingProject || redirecting}
             >
-              {creatingProject && (
-                <Icons.spinner className="w-4 h-4 animate-spin" />
-              )}
+              {redirecting && <Spinner className="mr-1" />}
               Explore sample data
             </Button>
           </div>

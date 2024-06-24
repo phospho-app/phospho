@@ -1,5 +1,6 @@
 "use client";
 
+import { Spinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,60 +31,36 @@ import { z } from "zod";
 // empty, or min 4
 const myString = z
   .string()
-  .min(5, {
-    message: "Description must be at least 5 characters.",
+  .min(3, {
+    message: "Description must be at least 3 characters.",
   })
   .max(200, { message: "Description must be at most 200 characters." })
   .optional();
 
-const formSchema = z
-  .object({
-    code: z.union([z.literal("yes"), z.literal("no")]).optional(),
-    customer: z
-      .union([
-        z.literal("software"),
-        z.literal("data"),
-        z.literal("manager"),
-        z.literal("founder"),
-        z.literal("other"),
-      ])
-      .optional(),
-    contact: z
-      .union([
-        z.literal("friends"),
-        z.literal("socials"),
-        z.literal("blog"),
-        z.literal("conference"),
-        z.literal("other"),
-      ])
-      .optional(),
-    // if build is "other", then customBuild is required
-    customCustomer: myString.optional(),
-    customContact: myString.optional(),
-  })
-  //   .partial()
-  .refine(
-    (data) => {
-      if (data.customer === "other" && !data.customCustomer) {
-        return false;
-      }
-      if (data.contact === "other" && !data.customContact) {
-        return false;
-      }
-      if (data.customer !== "other") {
-        return true;
-      }
-      if (data.contact !== "other") {
-        return true;
-      }
-
-      return true;
-    },
-    {
-      message: "Custom customer and custom purpose are required.",
-      path: ["customCustomer", "customPurpose"],
-    },
-  );
+const formSchema = z.object({
+  code: z.union([z.literal("yes"), z.literal("no")]).optional(),
+  customer: z
+    .union([
+      z.literal("software"),
+      z.literal("data"),
+      z.literal("manager"),
+      z.literal("founder"),
+      z.literal("other"),
+    ])
+    .optional(),
+  contact: z
+    .union([
+      z.literal("friends"),
+      z.literal("socials"),
+      z.literal("blog"),
+      z.literal("conference"),
+      z.literal("other"),
+    ])
+    .optional(),
+  // if build is "other", then customBuild is required
+  customCustomer: myString.optional(),
+  customContact: myString.optional(),
+});
 
 const CARD_STYLE =
   "flex flex-col items-left justify-center p-6 text-xl font-semibold space-y-4";
@@ -99,6 +76,7 @@ export default function AboutYou({
   const [project, setProject] = useState<Project | null>(null);
   const { loading, accessToken } = useUser();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const [redirect, setRedirect] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -143,6 +121,7 @@ export default function AboutYou({
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setRedirect(true);
     router.push("/onboarding/create-project");
     fetch(`/api/onboarding/log-onboarding-survey`, {
       method: "POST",
@@ -300,7 +279,8 @@ export default function AboutYou({
 
               <div className="flex justify-end">
                 {/* Button is only accessible when the form is complete */}
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={redirect}>
+                  {redirect && <Spinner className=" mr-1" />}
                   Next
                 </Button>
               </div>
