@@ -379,14 +379,6 @@ async def post_detect_clusters(
     if query is None:
         query = DetectClustersRequest()
 
-    # Convert to UNIX timestamp in seconds for JSON serialization
-    if query.filters.created_at_start is not None:
-        query.filters.created_at_start = round(
-            query.filters.created_at_start.timestamp()
-        )
-    if query.filters.created_at_end is not None:
-        query.filters.created_at_end = round(query.filters.created_at_end.timestamp())
-
     total_nb_tasks = await get_total_nb_of_tasks(project_id)
     if total_nb_tasks:
         clustering_sample_size = min(total_nb_tasks, query.limit)
