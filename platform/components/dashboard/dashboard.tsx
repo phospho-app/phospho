@@ -12,7 +12,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
 import useSWR from "swr";
 
-import DatavizForDashboard from "./dataviz";
+import DatavizGraph from "../dataviz";
 
 const Dashboard: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
@@ -32,13 +32,13 @@ const Dashboard: React.FC = () => {
   // The normal dashboard displays a session overview
   const normalDashboard = (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <Card className="col-span-full lg:col-span-3">
           <CardHeader>
             <CardTitle>Average number of Tokens per event</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2 mx-2">
-            <DatavizForDashboard
+          <CardContent className="h-72">
+            <DatavizGraph
               project_id={project_id}
               metric="Avg"
               selectedMetricMetadata="total_tokens"
@@ -46,12 +46,12 @@ const Dashboard: React.FC = () => {
             />
           </CardContent>
         </Card>
-        <Card className="col-span-full lg:col-span-4">
+        <Card className="col-span-full lg:col-span-3">
           <CardHeader>
             <CardTitle>Average sentiment score per task position</CardTitle>
           </CardHeader>
-          <CardContent>
-            <DatavizForDashboard
+          <CardContent className="h-72">
+            <DatavizGraph
               project_id={project_id}
               metric="Avg"
               selectedMetricMetadata="sentiment_score"
@@ -60,13 +60,13 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-full lg:col-span-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+        <Card className="col-span-full lg:col-span-3">
           <CardHeader>
             <CardTitle>Average success rate per event name</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2 mx-2">
-            <DatavizForDashboard
+          <CardContent className="h-72">
+            <DatavizGraph
               project_id={project_id}
               metric="Avg Success rate"
               selectedMetricMetadata=""
@@ -78,8 +78,8 @@ const Dashboard: React.FC = () => {
           <CardHeader>
             <CardTitle>Success rate per language</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2">
-            <DatavizForDashboard
+          <CardContent className="h-72">
+            <DatavizGraph
               project_id={project_id}
               metric="Avg Success rate"
               selectedMetricMetadata=""
@@ -88,12 +88,12 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-full lg:col-span-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+        <Card className="col-span-full lg:col-span-4">
           <CardHeader>
             <CardTitle>Number of Daily Tasks</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2 mx-2">
+          <CardContent>
             <OverviewLast7Days project_id={project_id} />
           </CardContent>
         </Card>
@@ -101,17 +101,17 @@ const Dashboard: React.FC = () => {
           <CardHeader>
             <CardTitle>Last 30 min</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2">
+          <CardContent>
             <UsageLast30m project_id={project_id} />
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-full lg:col-span-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+        <Card className="col-span-full lg:col-span-4">
           <CardHeader>
             <CardTitle>Number of Daily Events</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2 mx-2">
+          <CardContent>
             <EventsLast7Days project_id={project_id} />
           </CardContent>
         </Card>
@@ -120,7 +120,7 @@ const Dashboard: React.FC = () => {
           <CardHeader>
             <CardTitle>Last 30 min</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2">
+          <CardContent>
             <EventsLast30m project_id={project_id} />
           </CardContent>
         </Card>

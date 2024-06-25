@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
+import { cn } from "@/lib/utils";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
@@ -17,15 +18,15 @@ import {
 } from "recharts";
 import useSWR from "swr";
 
-const DatavizForDashboard = ({
+const DatavizGraph = ({
   project_id,
   metric,
   selectedMetricMetadata,
   breakdown_by,
 }: {
-  project_id: string;
+  project_id?: string | null;
   metric: string;
-  selectedMetricMetadata: string;
+  selectedMetricMetadata: string | null;
   breakdown_by: string;
 }) => {
   const { accessToken } = useUser();
@@ -38,9 +39,7 @@ const DatavizForDashboard = ({
     [`/api/metadata/${project_id}/fields`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
+      keepPreviousData: true,
     },
   );
   const numberMetadataFields: string[] | undefined = data?.number;
@@ -116,7 +115,7 @@ const DatavizForDashboard = ({
 
   // Display the data or "Loading..."
   return (
-    <div className="flex flex-col space-y-2">
+    <>
       {!pivotData && pivotLoading && <p>Loading...</p>}
       {(pivotData === null || pivotData?.length == 0) && <></>}
       {pivotData?.length == 1 && (
@@ -142,15 +141,15 @@ const DatavizForDashboard = ({
         </>
       )}
       {pivotData?.length > 1 && (
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height={"100%"}>
           <BarChart
             data={pivotData}
             layout="vertical"
             margin={{
-              top: 20,
-              right: 100,
-              bottom: 20,
-              left: 100,
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
             }}
           >
             <CartesianGrid />
@@ -217,7 +216,7 @@ const DatavizForDashboard = ({
                 }
                 return value;
               }}
-              width={150}
+              width={100}
             />
             <XAxis
               stroke="#888888"
@@ -270,8 +269,8 @@ const DatavizForDashboard = ({
           </BarChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </>
   );
 };
 
-export default DatavizForDashboard;
+export default DatavizGraph;
