@@ -6,14 +6,21 @@ import OverviewLast7Days from "@/components/dashboard/overview-last7days";
 import UsageLast30m from "@/components/dashboard/usage-last30m";
 import DatavizGraph from "@/components/dataviz";
 import { CenteredSpinner } from "@/components/small-spinner";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { ca } from "date-fns/locale";
 import { GridStack } from "gridstack";
 import "gridstack/dist/gridstack-extra.min.css";
 import "gridstack/dist/gridstack.min.css";
+import { EllipsisVertical, Pencil, Trash, X } from "lucide-react";
 import React, { useEffect } from "react";
 import useSWR from "swr";
 
@@ -21,17 +28,61 @@ interface DashboardCardProps {
   children: React.ReactNode;
   cardTitle: string;
   className?: string;
+  grid: GridStack | null;
+  id: number;
 }
 
 const DashboardCard: React.FC<DashboardCardProps> = ({
   children,
   cardTitle,
+  grid,
+  id,
 }) => {
   return (
-    <Card className="grid-stack-item" gs-w={"4"} gs-h={"2"}>
+    <Card
+      className="grid-stack-item"
+      gs-w={"4"}
+      gs-h={"2"}
+      id={`gridstackitem-${id}`} // this id is used to remove the card from the grid
+    >
       <div className="grid-stack-item-content">
-        <CardHeader>
+        <CardHeader className="flex flex-row justify-between items-center py-1">
           <CardTitle>{cardTitle}</CardTitle>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <EllipsisVertical />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem className="flex flex-row space-x-2 items-center">
+                <Pencil className="w-4 h-4" /> <span>Edit</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-red-500 flex flex-row items-center space-x-2"
+                onClick={(event) => {
+                  // Remove the card from the grid
+                  // Get this card's parent gridstack item using the id
+                  const closestParentGridStackItem = document.getElementById(
+                    `gridstackitem-${id}`,
+                  );
+                  console.log(
+                    "closestParentGridStackItem",
+                    closestParentGridStackItem,
+                  );
+                  if (grid && closestParentGridStackItem) {
+                    grid.removeWidget(
+                      closestParentGridStackItem as HTMLElement,
+                      true,
+                    );
+                    // TODO : remove it from the data to be rendered (global state)
+                  }
+                }}
+              >
+                <Trash className="w-4 h-4" /> <span>Remove</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </CardHeader>
         <CardContent className="h-4/5">{children}</CardContent>
       </div>
@@ -50,19 +101,23 @@ const Dashboard: React.FC = () => {
   );
   const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
 
+  const [grid, setGrid] = React.useState<GridStack | null>(null);
+
   useEffect(() => {
-    var grid = GridStack.init({
+    const initializedGrid = GridStack.init({
       column: 8,
       minRow: 1,
       margin: 12,
-      removable: true,
+      // removable: true,
     });
-  });
+    setGrid(initializedGrid);
+  }, []);
 
   if (!project_id) {
     return <></>;
   }
 
+  // TODO : turn this into a global state
   const customDashboardTiles = [
     {
       cardTitle: "Success rate per task position",
@@ -80,7 +135,6 @@ const Dashboard: React.FC = () => {
       selectedMetricMetadata: "sentiment_score",
       breakdown_by: "task_position",
     },
-
     {
       cardTitle: "Success rate per language",
       metric: "Avg Success rate",
@@ -93,7 +147,12 @@ const Dashboard: React.FC = () => {
     <>
       <div className="grid-stack">
         {customDashboardTiles.map((tile, index) => (
-          <DashboardCard key={index} cardTitle={tile.cardTitle}>
+          <DashboardCard
+            key={index}
+            cardTitle={tile.cardTitle}
+            grid={grid}
+            id={index}
+          >
             <DatavizGraph
               metric={tile.metric}
               selectedMetricMetadata={tile.selectedMetricMetadata}
