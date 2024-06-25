@@ -20,12 +20,13 @@ class Consumer(Thread):
         log_queue: LogQueue,
         client: Client,
         tick: float = 0.5,  # How often to try to send logs
-        **kwargs,
+        raise_error_on_fail_to_send: bool = False,
     ) -> None:
         self.running = True
         self.log_queue = log_queue
         self.client = client
         self.tick = tick
+        self.raise_error_on_fail_to_send = raise_error_on_fail_to_send
         self.nb_consecutive_errors = 0
 
         Thread.__init__(self, daemon=True)
@@ -78,6 +79,8 @@ class Consumer(Thread):
                 # If the error is a client-side error, we don't want to retry
                 raise e
             except Exception as e:
+                if self.raise_error_on_fail_to_send:
+                    raise e
                 # Retry with an exponential backoff
                 self.nb_consecutive_errors += 1
                 logger.warning(
