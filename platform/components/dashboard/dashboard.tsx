@@ -33,7 +33,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
         <CardHeader>
           <CardTitle>{cardTitle}</CardTitle>
         </CardHeader>
-        <CardContent>{children}</CardContent>
+        <CardContent className="h-4/5">{children}</CardContent>
       </div>
     </Card>
   );
@@ -54,7 +54,8 @@ const Dashboard: React.FC = () => {
     var grid = GridStack.init({
       column: 8,
       minRow: 1,
-      margin: 10,
+      margin: 12,
+      removable: true,
     });
   });
 

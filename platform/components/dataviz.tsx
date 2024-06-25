@@ -140,7 +140,14 @@ const DatavizGraph = ({
         </>
       )}
       {pivotData?.length > 1 && (
-        <ResponsiveContainer width="100%" height="100%" minHeight="14rem">
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          // minHeight="rem"
+          onResize={(w, h) => {
+            console.log("onResize", w, h);
+          }}
+        >
           <BarChart
             data={pivotData}
             layout="vertical"
