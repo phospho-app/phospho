@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authFetcher } from "@/lib/fetcher";
-import { navigationStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { GridStack } from "gridstack";
 import "gridstack/dist/gridstack-extra.min.css";
@@ -93,6 +93,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
 const Dashboard: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
+  const selectedProject = dataStateStore((state) => state.selectedProject);
 
   const { data: hasTasksData } = useSWR(
     project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
@@ -100,7 +101,6 @@ const Dashboard: React.FC = () => {
     { keepPreviousData: true },
   );
   const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
-
   const [grid, setGrid] = React.useState<GridStack | null>(null);
 
   useEffect(() => {
@@ -118,29 +118,11 @@ const Dashboard: React.FC = () => {
   }
 
   // TODO : turn this into a global state
-  const customDashboardTiles = [
-    {
-      cardTitle: "Success rate per task position",
-      metric: "Avg Success rate",
-      breakdown_by: "task_position",
-    },
-    {
-      cardTitle: "Average success rate per event name",
-      metric: "Avg Success rate",
-      breakdown_by: "event_name",
-    },
-    {
-      cardTitle: "Average sentiment score per task position",
-      metric: "Avg",
-      selectedMetricMetadata: "sentiment_score",
-      breakdown_by: "task_position",
-    },
-    {
-      cardTitle: "Success rate per language",
-      metric: "Avg Success rate",
-      breakdown_by: "language",
-    },
-  ];
+  const customDashboardTiles = selectedProject?.settings?.dashboard_tiles;
+
+  if (!customDashboardTiles) {
+    return <></>;
+  }
 
   // The normal dashboard displays a session overview
   const normalDashboard = (

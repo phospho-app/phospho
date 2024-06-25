@@ -158,9 +158,17 @@ export interface SentimentThreshold {
   magnitude: number;
 }
 
+export interface DashboardTile {
+  cardTitle: string;
+  metric: string;
+  breakdown_by: string;
+  selectedMetricMetadata?: string;
+}
+
 export interface ProjectSettings {
   events: Record<string, EventDefinition>;
   sentiment_threshold: SentimentThreshold;
+  dashboard_tiles: DashboardTile[];
 }
 
 export interface Project {

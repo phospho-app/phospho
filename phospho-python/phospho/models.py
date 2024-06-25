@@ -188,10 +188,42 @@ class Threshold(BaseModel):
     magnitude: Optional[float] = None
 
 
+class DashboardTile(BaseModel):
+    cardTitle: str
+    metric: str
+    breakdown_by: str
+    selectedMetricMetadata: Optional[str] = None
+
+
 class ProjectSettings(BaseModel):
     events: Dict[str, EventDefinition] = Field(default_factory=dict)
     sentiment_threshold: Optional[Threshold] = Field(default_factory=Threshold)
     last_langsmith_extract: Optional[str] = None
+    dashboard_tiles: List[DashboardTile] = Field(
+        default_factory=lambda: [
+            DashboardTile(
+                cardTitle="Success rate per task position",
+                metric="Avg Success rate",
+                breakdown_by="task_position",
+            ),
+            DashboardTile(
+                cardTitle="Average success rate per event name",
+                metric="Avg Success rate",
+                breakdown_by="event_name",
+            ),
+            DashboardTile(
+                cardTitle="Average sentiment score per task position",
+                metric="Avg",
+                selectedMetricMetadata="sentiment_score",
+                breakdown_by="task_position",
+            ),
+            DashboardTile(
+                cardTitle="Success rate per language",
+                metric="Avg Success rate",
+                breakdown_by="language",
+            ),
+        ]
+    )
 
 
 class Project(DatedBaseModel):
@@ -213,23 +245,25 @@ class Project(DatedBaseModel):
             raise ValueError("org_id is required in project_data")
 
         # If event_name not in project_data.settings.events.values(), add it based on the key
-        if (
-            "settings" in project_data.keys()
-            and "events" in project_data["settings"].keys()
-        ):
-            for event_name, event in project_data["settings"]["events"].items():
-                if "event_name" not in event.keys():
-                    project_data["settings"]["events"][event_name]["event_name"] = (
-                        event_name
-                    )
-                if "org_id" not in event.keys():
-                    project_data["settings"]["events"][event_name]["org_id"] = (
-                        project_data["org_id"]
-                    )
-                if "project_id" not in event.keys():
-                    project_data["settings"]["events"][event_name]["project_id"] = (
-                        project_data["id"]
-                    )
+        if "settings" in project_data.keys():
+            if "events" in project_data["settings"].keys():
+                for event_name, event in project_data["settings"]["events"].items():
+                    if "event_name" not in event.keys():
+                        project_data["settings"]["events"][event_name][
+                            "event_name"
+                        ] = event_name
+                    if "org_id" not in event.keys():
+                        project_data["settings"]["events"][event_name][
+                            "org_id"
+                        ] = project_data["org_id"]
+                    if "project_id" not in event.keys():
+                        project_data["settings"]["events"][event_name][
+                            "project_id"
+                        ] = project_data["id"]
+
+            if "dashboard_tiles" in project_data["settings"].keys():
+                if project_data["settings"]["dashboard_tiles"] is None:
+                    del project_data["settings"]["dashboard_tiles"]
 
         return cls(**project_data)
 
