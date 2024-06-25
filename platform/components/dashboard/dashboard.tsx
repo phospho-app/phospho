@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { ca } from "date-fns/locale";
 import { GridStack } from "gridstack";
 import "gridstack/dist/gridstack-extra.min.css";
 import "gridstack/dist/gridstack.min.css";
@@ -25,7 +26,6 @@ interface DashboardCardProps {
 const DashboardCard: React.FC<DashboardCardProps> = ({
   children,
   cardTitle,
-  className,
 }) => {
   return (
     <Card className="grid-stack-item" gs-w={"4"} gs-h={"2"}>
@@ -63,34 +63,44 @@ const Dashboard: React.FC = () => {
     return <></>;
   }
 
+  const customDashboardTiles = [
+    {
+      cardTitle: "Success rate per task position",
+      metric: "Avg Success rate",
+      breakdown_by: "task_position",
+    },
+    {
+      cardTitle: "Average success rate per event name",
+      metric: "Avg Success rate",
+      breakdown_by: "event_name",
+    },
+    {
+      cardTitle: "Average sentiment score per task position",
+      metric: "Avg",
+      selectedMetricMetadata: "sentiment_score",
+      breakdown_by: "task_position",
+    },
+
+    {
+      cardTitle: "Success rate per language",
+      metric: "Avg Success rate",
+      breakdown_by: "language",
+    },
+  ];
+
   // The normal dashboard displays a session overview
   const normalDashboard = (
     <>
       <div className="grid-stack">
-        <DashboardCard cardTitle="Average sentiment score per task position">
-          <DatavizGraph
-            metric="Avg"
-            selectedMetricMetadata="sentiment_score"
-            breakdown_by="task_position"
-          />
-        </DashboardCard>
-        <DashboardCard cardTitle="Average success rate per event name">
-          <DatavizGraph
-            metric="Avg Success rate"
-            breakdown_by="event_name"
-            selectedMetricMetadata=""
-          />
-        </DashboardCard>
-        <DashboardCard cardTitle="Success rate per language">
-          <DatavizGraph metric="Avg Success rate" breakdown_by="language" />
-        </DashboardCard>
-        <DashboardCard cardTitle="Success rate per task position">
-          <DatavizGraph
-            metric="Avg Success rate"
-            breakdown_by="task_position"
-            selectedMetricMetadata=""
-          />
-        </DashboardCard>
+        {customDashboardTiles.map((tile, index) => (
+          <DashboardCard key={index} cardTitle={tile.cardTitle}>
+            <DatavizGraph
+              metric={tile.metric}
+              selectedMetricMetadata={tile.selectedMetricMetadata}
+              breakdown_by={tile.breakdown_by}
+            />
+          </DashboardCard>
+        ))}
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <Card className="col-span-full lg:col-span-4">

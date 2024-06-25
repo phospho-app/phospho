@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { cn } from "@/lib/utils";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
@@ -33,6 +32,10 @@ const DatavizGraph = ({
 
   const selectedProject = dataStateStore((state) => state.selectedProject);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+
+  if (!selectedMetricMetadata) {
+    selectedMetricMetadata = "";
+  }
 
   const { data } = useSWR(
     [`/api/metadata/${project_id}/fields`, accessToken],
@@ -103,7 +106,7 @@ const DatavizGraph = ({
     breakdown_by === "language" &&
     !categoryMetadataFields.includes("language")
   ) {
-    return <>No language metadata found</>;
+    return <></>;
   }
   if (
     selectedMetricMetadata === "sentiment_score" &&
