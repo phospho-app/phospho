@@ -2,6 +2,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
 import {
@@ -23,8 +24,9 @@ interface DailyDate {
   undefined: number;
 }
 
-const OverviewLast7Days = ({ project_id }: { project_id: string }) => {
+const OverviewLast7Days = () => {
   const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
 
   const { data: sevenDaysData } = useSWR(
     project_id

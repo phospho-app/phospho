@@ -2,17 +2,15 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import useSWR from "swr";
 
-interface UsageLast7DaysProps {
-  project_id: string;
-}
-
-const UsageLast30m: React.FC<UsageLast7DaysProps> = ({ project_id }) => {
+const UsageLast30m: React.FC = () => {
   const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
 
   const { data: thirtyMinData } = useSWR(
     project_id

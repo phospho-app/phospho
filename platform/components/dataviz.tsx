@@ -19,18 +19,17 @@ import {
 import useSWR from "swr";
 
 const DatavizGraph = ({
-  project_id,
   metric,
   selectedMetricMetadata,
   breakdown_by,
 }: {
-  project_id?: string | null;
   metric: string;
-  selectedMetricMetadata: string | null;
+  selectedMetricMetadata?: string | null;
   breakdown_by: string;
 }) => {
   const { accessToken } = useUser();
   const { toast } = useToast();
+  const project_id = navigationStateStore((state) => state.project_id);
 
   const selectedProject = dataStateStore((state) => state.selectedProject);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
@@ -104,7 +103,7 @@ const DatavizGraph = ({
     breakdown_by === "language" &&
     !categoryMetadataFields.includes("language")
   ) {
-    return <></>;
+    return <>No language metadata found</>;
   }
   if (
     selectedMetricMetadata === "sentiment_score" &&
@@ -117,7 +116,7 @@ const DatavizGraph = ({
   return (
     <>
       {!pivotData && pivotLoading && <p>Loading...</p>}
-      {(pivotData === null || pivotData?.length == 0) && <></>}
+      {(pivotData === null || pivotData?.length == 0) && <>no data</>}
       {pivotData?.length == 1 && (
         <>
           <Card>
@@ -141,7 +140,7 @@ const DatavizGraph = ({
         </>
       )}
       {pivotData?.length > 1 && (
-        <ResponsiveContainer width="100%" height={"100%"}>
+        <ResponsiveContainer width="100%" height="100%" minHeight="14rem">
           <BarChart
             data={pivotData}
             layout="vertical"

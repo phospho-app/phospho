@@ -16,9 +16,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   ChevronDown,
@@ -29,18 +28,9 @@ import {
   TextSearch,
 } from "lucide-react";
 import React from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import useSWR from "swr";
 
-const MetadataForm: React.FC<{}> = ({}) => {
+const MetadataForm: React.FC = () => {
   // create a page with 2 dropdowns :
   // 1. Metric: count of tasks, avg session length, sum of a metadata field,
   // 2. Groupby field : None ; metadataField (user_id, version_id, etc. ) ; event_name ; flag
@@ -264,7 +254,6 @@ const MetadataForm: React.FC<{}> = ({}) => {
       </div>
       <div className="h-3/4">
         <DatavizGraph
-          project_id={project_id}
           metric={selectedMetric}
           selectedMetricMetadata={selectedMetricMetadata}
           breakdown_by={selectedGroupBy}

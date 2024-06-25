@@ -4,15 +4,40 @@ import EventsLast7Days from "@/components/dashboard/events-last7days";
 import EventsLast30m from "@/components/dashboard/events-last30m";
 import OverviewLast7Days from "@/components/dashboard/overview-last7days";
 import UsageLast30m from "@/components/dashboard/usage-last30m";
+import DatavizGraph from "@/components/dataviz";
 import { CenteredSpinner } from "@/components/small-spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import React from "react";
+import { GridStack } from "gridstack";
+import "gridstack/dist/gridstack-extra.min.css";
+import "gridstack/dist/gridstack.min.css";
+import React, { useEffect } from "react";
 import useSWR from "swr";
 
-import DatavizGraph from "../dataviz";
+interface DashboardCardProps {
+  children: React.ReactNode;
+  cardTitle: string;
+  className?: string;
+}
+
+const DashboardCard: React.FC<DashboardCardProps> = ({
+  children,
+  cardTitle,
+  className,
+}) => {
+  return (
+    <Card className="grid-stack-item" gs-w={"4"} gs-h={"2"}>
+      <div className="grid-stack-item-content">
+        <CardHeader>
+          <CardTitle>{cardTitle}</CardTitle>
+        </CardHeader>
+        <CardContent>{children}</CardContent>
+      </div>
+    </Card>
+  );
+};
 
 const Dashboard: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
@@ -25,6 +50,14 @@ const Dashboard: React.FC = () => {
   );
   const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
 
+  useEffect(() => {
+    var grid = GridStack.init({
+      column: 8,
+      minRow: 1,
+      margin: 10,
+    });
+  });
+
   if (!project_id) {
     return <></>;
   }
@@ -32,61 +65,31 @@ const Dashboard: React.FC = () => {
   // The normal dashboard displays a session overview
   const normalDashboard = (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <Card className="col-span-full lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Average number of Tokens per event</CardTitle>
-          </CardHeader>
-          <CardContent className="h-72">
-            <DatavizGraph
-              project_id={project_id}
-              metric="Avg"
-              selectedMetricMetadata="total_tokens"
-              breakdown_by="event_name"
-            />
-          </CardContent>
-        </Card>
-        <Card className="col-span-full lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Average sentiment score per task position</CardTitle>
-          </CardHeader>
-          <CardContent className="h-72">
-            <DatavizGraph
-              project_id={project_id}
-              metric="Avg"
-              selectedMetricMetadata="sentiment_score"
-              breakdown_by="task_position"
-            />
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <Card className="col-span-full lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Average success rate per event name</CardTitle>
-          </CardHeader>
-          <CardContent className="h-72">
-            <DatavizGraph
-              project_id={project_id}
-              metric="Avg Success rate"
-              selectedMetricMetadata=""
-              breakdown_by="event_name"
-            />
-          </CardContent>
-        </Card>
-        <Card className="col-span-full lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Success rate per language</CardTitle>
-          </CardHeader>
-          <CardContent className="h-72">
-            <DatavizGraph
-              project_id={project_id}
-              metric="Avg Success rate"
-              selectedMetricMetadata=""
-              breakdown_by="language"
-            />
-          </CardContent>
-        </Card>
+      <div className="grid-stack">
+        <DashboardCard cardTitle="Average sentiment score per task position">
+          <DatavizGraph
+            metric="Avg"
+            selectedMetricMetadata="sentiment_score"
+            breakdown_by="task_position"
+          />
+        </DashboardCard>
+        <DashboardCard cardTitle="Average success rate per event name">
+          <DatavizGraph
+            metric="Avg Success rate"
+            breakdown_by="event_name"
+            selectedMetricMetadata=""
+          />
+        </DashboardCard>
+        <DashboardCard cardTitle="Success rate per language">
+          <DatavizGraph metric="Avg Success rate" breakdown_by="language" />
+        </DashboardCard>
+        <DashboardCard cardTitle="Success rate per task position">
+          <DatavizGraph
+            metric="Avg Success rate"
+            breakdown_by="task_position"
+            selectedMetricMetadata=""
+          />
+        </DashboardCard>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <Card className="col-span-full lg:col-span-4">
@@ -94,7 +97,7 @@ const Dashboard: React.FC = () => {
             <CardTitle>Number of Daily Tasks</CardTitle>
           </CardHeader>
           <CardContent>
-            <OverviewLast7Days project_id={project_id} />
+            <OverviewLast7Days />
           </CardContent>
         </Card>
         <Card className="col-span-full lg:col-span-2">
@@ -102,7 +105,7 @@ const Dashboard: React.FC = () => {
             <CardTitle>Last 30 min</CardTitle>
           </CardHeader>
           <CardContent>
-            <UsageLast30m project_id={project_id} />
+            <UsageLast30m />
           </CardContent>
         </Card>
       </div>
@@ -112,7 +115,7 @@ const Dashboard: React.FC = () => {
             <CardTitle>Number of Daily Events</CardTitle>
           </CardHeader>
           <CardContent>
-            <EventsLast7Days project_id={project_id} />
+            <EventsLast7Days />
           </CardContent>
         </Card>
 
@@ -121,7 +124,7 @@ const Dashboard: React.FC = () => {
             <CardTitle>Last 30 min</CardTitle>
           </CardHeader>
           <CardContent>
-            <EventsLast30m project_id={project_id} />
+            <EventsLast30m />
           </CardContent>
         </Card>
       </div>
