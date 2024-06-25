@@ -277,15 +277,16 @@ async def extract_langsmith_data(
     last_langsmith_extract = await get_last_langsmith_extract(user_data["project_id"])
 
     client = Client(api_key=user_data["langsmith_credentials"]["langsmith_api_key"])
+    logger.debug(f"User data: {user_data}")
     if last_langsmith_extract is None:
         runs = client.list_runs(
-            project_name=user_data["langsmith_credentials"]["project_name"],
+            project_name=user_data["langsmith_credentials"]["langsmith_project_name"],
             run_type="llm",
         )
 
     else:
         runs = client.list_runs(
-            project_name=user_data["langsmith_credentials"]["project_name"],
+            project_name=user_data["langsmith_credentials"]["langsmith_project_name"],
             run_type="llm",
             start_time=datetime.strptime(
                 last_langsmith_extract, "%Y-%m-%d %H:%M:%S.%f"
@@ -353,7 +354,9 @@ async def extract_langsmith_data(
     await encrypt_and_store_langsmith_credentials(
         project_id=user_data["project_id"],
         langsmith_api_key=user_data["langsmith_credentials"]["langsmith_api_key"],
-        langsmith_project_name=user_data["langsmith_credentials"]["project_name"],
+        langsmith_project_name=user_data["langsmith_credentials"][
+            "langsmith_project_name"
+        ],
     )
 
     return {"status": "ok"}
