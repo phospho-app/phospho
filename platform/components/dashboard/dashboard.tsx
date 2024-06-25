@@ -103,6 +103,9 @@ const Dashboard: React.FC = () => {
   const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
   const [grid, setGrid] = React.useState<GridStack | null>(null);
 
+  // TODO : turn this into a global state
+  const customDashboardTiles = selectedProject?.settings?.dashboard_tiles;
+
   useEffect(() => {
     const initializedGrid = GridStack.init({
       column: 8,
@@ -111,14 +114,11 @@ const Dashboard: React.FC = () => {
       // removable: true,
     });
     setGrid(initializedGrid);
-  }, []);
+  }, [customDashboardTiles]);
 
   if (!project_id) {
     return <></>;
   }
-
-  // TODO : turn this into a global state
-  const customDashboardTiles = selectedProject?.settings?.dashboard_tiles;
 
   if (!customDashboardTiles) {
     return <></>;
