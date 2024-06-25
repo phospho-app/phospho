@@ -76,13 +76,16 @@ class Consumer(Thread):
                         self.nb_consecutive_errors = 0
             except Exception as e:
                 self.nb_consecutive_errors += 1
+                # If the error is a client-side error, we don't want to retry
+                if str(e).startswith("Client-side error"):
+                    raise e
+
+                # Otherwise, we retry with an exponential backoff
                 logger.warning(
                     f"Error sending phospho log events: {e}. Retrying in {self.get_wait_time()}s"
                 )
                 # Put all the events back into the log queue, so they are logged next tick
                 self.log_queue.add_batch(batch)
-
-                raise e
 
     def stop(self):
         self.running = False
