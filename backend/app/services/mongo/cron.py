@@ -41,9 +41,6 @@ async def fetch_and_decrypt_langsmith_credentials(
     decryptor = AES.new(key, AES.MODE_CBC, IV)
     data = decryptor.decrypt(source[AES.block_size :])  # decrypt the data
     padding = data[-1]  # extract the padding length
-    logger.debug(
-        f"Decrypted Langsmith credentials for project : {data[:-padding].decode('utf-8')}"
-    )
     return {
         "langsmith_api_key": data[:-padding].decode("utf-8"),
         "langsmith_project_name": credentials["langsmith_project_name"],
@@ -118,9 +115,6 @@ async def fetch_and_decrypt_langfuse_credentials(
     decryptor = AES.new(key, AES.MODE_CBC, IV)
     data = decryptor.decrypt(source[AES.block_size :])  # decrypt the data
     padding = data[-1]  # extract the padding length
-    logger.debug(
-        f"Decrypted Langfuse credentials for project : {data[:-padding].decode('utf-8')}"
-    )
     return {
         "langfuse_secret_key": data[:-padding].decode("utf-8"),
         "langfuse_public_key": credentials["langfuse_public_key"],
