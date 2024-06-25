@@ -161,6 +161,9 @@ export interface SentimentThreshold {
 export interface ProjectSettings {
   events: Record<string, EventDefinition>;
   sentiment_threshold: SentimentThreshold;
+  run_evals?: boolean;
+  run_sentiment_language?: boolean;
+  run_event_detection?: boolean;
 }
 
 export interface Project {

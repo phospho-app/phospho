@@ -183,6 +183,13 @@ async def task_event_detection_pipeline(
     if project.settings is None:
         logger.warning(f"Project with id {project_id} has no settings")
         return []
+    # We check if the event detection is enabled in the project settings
+    if (
+        project.settings.run_event_detection is not None
+        and not project.settings.run_event_detection
+    ):
+        logger.info(f"Event detection is disabled for project {project_id}")
+        return []
     # Convert to the proper lab project object
     # TODO : Normalize the project definition by storing all db models in the phospho module
     # and importing models from the phospho module
@@ -279,6 +286,18 @@ async def task_scoring_pipeline(
     """
     logger.debug(f"Run the task scoring pipeline for task {task.id}")
     mongo_db = await get_mongo_db()
+
+    # Fetch run_evals variable in settings in the project, if it doesn't exist, return None
+    project = await mongo_db["projects"].find_one(
+        {"id": task.project_id},
+        {"settings.run_evals": 1},
+    )
+
+    run_evals = project.get("settings", {}).get("run_evals", None)
+    logger.debug(run_evals)
+    if run_evals is not None and not run_evals:
+        logger.info(f"run_evals is disabled for project {task.project_id}")
+        return None
 
     # We want 50/50 success and failure examples
     nb_success = int(config.FEW_SHOT_MAX_NUMBER_OF_EXAMPLES / 2)
@@ -461,8 +480,8 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
     start_time = time.time()
     logger.info(f"Starting main pipeline for task {task.id}")
 
-    # For now, do things sequentially
-
+    # Do the session scoring -> success, failure
+    mongo_db = await get_mongo_db()
     # Do the event detection
     if task.test_id is None:
         # Run the event detection pipeline
@@ -471,9 +490,6 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
         sentiment_object, language = await sentiment_and_language_analysis_pipeline(
             task
         )
-
-    # Do the session scoring -> success, failure
-    mongo_db = await get_mongo_db()
 
     if save_task:
         task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
@@ -578,6 +594,14 @@ async def sentiment_and_language_analysis_pipeline(
     """
     mongo_db = await get_mongo_db()
     project = await get_project_by_id(task.project_id)
+
+    if (
+        project.settings is not None
+        and project.settings.run_sentiment_language is not None
+        and not project.settings.run_sentiment_language
+    ):
+        logger.info(f"Sentiment analysis is disabled for project {task.project_id}")
+        return None, None
 
     # Default values
     score_threshold = 0.3
