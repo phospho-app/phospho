@@ -1,6 +1,6 @@
 from requests import HTTPError
 from .log_queue import LogQueue
-from .client import Client
+from .client import Client, ClientSideError
 
 import time
 import atexit
@@ -74,13 +74,12 @@ class Consumer(Thread):
                             {"batched_log_events": batch},
                         )
                         self.nb_consecutive_errors = 0
-            except Exception as e:
-                self.nb_consecutive_errors += 1
+            except ClientSideError as e:
                 # If the error is a client-side error, we don't want to retry
-                if str(e).startswith("Client-side error"):
-                    raise e
-
-                # Otherwise, we retry with an exponential backoff
+                raise e
+            except Exception as e:
+                # Retry with an exponential backoff
+                self.nb_consecutive_errors += 1
                 logger.warning(
                     f"Error sending phospho log events: {e}. Retrying in {self.get_wait_time()}s"
                 )

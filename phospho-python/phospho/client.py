@@ -16,6 +16,14 @@ from phospho.tasks import TaskCollection, TaskEntity
 logger = logging.getLogger(__name__)
 
 
+class ServerSideError(Exception):
+    pass
+
+
+class ClientSideError(Exception):
+    pass
+
+
 class Client:
     """Standard client for calls to the phospho backend"""
 
@@ -81,11 +89,11 @@ class Client:
         if response.status_code >= 200 and response.status_code < 300:
             return response
         elif response.status_code >= 400 and response.status_code < 500:
-            raise ValueError(
+            raise ClientSideError(
                 f"Client-side error {response.status_code} GET {url}: {response.text}"
             )
         elif response.status_code >= 500:
-            logger.error(
+            raise ServerSideError(
                 f"Server-side error {response.status_code} GET {url}: {response.text}"
             )
         else:
@@ -102,11 +110,11 @@ class Client:
         if response.status_code >= 200 and response.status_code < 300:
             return response
         elif response.status_code >= 400 and response.status_code < 500:
-            raise ValueError(
+            raise ClientSideError(
                 f"Client-side error {response.status_code} POST {url}: {response.text}"
             )
         elif response.status_code >= 500:
-            logger.error(
+            raise ServerSideError(
                 f"Server-side error {response.status_code} POST {url}: {response.text}"
             )
         else:
