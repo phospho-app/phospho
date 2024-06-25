@@ -2,16 +2,18 @@
 phospho client to interact with the phospho API
 """
 
+import logging
 import os
 from typing import Dict, List, Literal, Optional
 
 import requests
 
 import phospho.config as config
-
+from phospho.models import Comparison, FlattenedTask, Project, Test
 from phospho.sessions import SessionCollection
 from phospho.tasks import TaskCollection, TaskEntity
-from phospho.models import Comparison, Task, Test, FlattenedTask, Project
+
+logger = logging.getLogger(__name__)
 
 
 class Client:
@@ -78,17 +80,18 @@ class Client:
 
         if response.status_code >= 200 and response.status_code < 300:
             return response
-
+        elif response.status_code >= 400 and response.status_code < 500:
+            raise ValueError(
+                f"Client-side error {response.status_code} GET {url}: {response.text}"
+            )
+        elif response.status_code >= 500:
+            logger.error(
+                f"Server-side error {response.status_code} GET {url}: {response.text}"
+            )
         else:
-            try:
-                json = response.json()
-                raise ValueError(
-                    f"Error posting {url} (code: {response.status_code}): {json}"
-                )
-            except Exception as e:
-                raise ValueError(
-                    f"Error posting {url} (code: {response.status_code}): {response.text}"
-                )
+            raise ValueError(
+                f"Unknwon error {response.status_code} GET {url}: {response.text}"
+            )
 
     def _post(
         self, path: str, payload: Optional[Dict[str, object]] = None
@@ -98,16 +101,18 @@ class Client:
 
         if response.status_code >= 200 and response.status_code < 300:
             return response
+        elif response.status_code >= 400 and response.status_code < 500:
+            raise ValueError(
+                f"Client-side error {response.status_code} POST {url}: {response.text}"
+            )
+        elif response.status_code >= 500:
+            logger.error(
+                f"Server-side error {response.status_code} POST {url}: {response.text}"
+            )
         else:
-            try:
-                json = response.json()
-                raise ValueError(
-                    f"Error posting {url} (code: {response.status_code}): {json}"
-                )
-            except Exception as e:
-                raise ValueError(
-                    f"Error posting {url} (code: {response.status_code}): {response.text}"
-                )
+            raise ValueError(
+                f"Unknwon error {response.status_code} POST {url}: {response.text}"
+            )
 
     @property
     def sessions(self) -> SessionCollection:
