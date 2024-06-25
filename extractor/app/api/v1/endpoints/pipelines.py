@@ -20,6 +20,7 @@ from app.services.pipelines import (
     task_main_pipeline,
     store_opentelemetry_data_in_db,
     get_last_langsmith_extract,
+    get_last_langfuse_extract,
     change_last_langsmith_extract,
     encrypt_and_store_langsmith_credentials,
     task_scoring_pipeline,
@@ -366,16 +367,15 @@ async def extract_langfuse_data(
     user_data: dict,
     background_tasks: BackgroundTasks,
 ):
-    logger.debug(
-        f"Received LangFuse connection data for org id: {user_data['org_id']}, {user_data}"
-    )
+    logger.debug(f"Received LangFuse connection data for org id: {user_data['org_id']}")
 
-    last_langfuse_extract = await get_last_langsmith_extract(user_data["project_id"])
+    last_langfuse_extract = await get_last_langfuse_extract(user_data["project_id"])
 
     langfuse = Langfuse(
         public_key=user_data["langfuse_credentials"]["langfuse_public_key"],
         secret_key=user_data["langfuse_credentials"]["langfuse_secret_key"],
     )
+
     if last_langfuse_extract is None:
         observations = langfuse.client.observations.get_many(type="GENERATION")
 
