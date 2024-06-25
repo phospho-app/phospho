@@ -27,15 +27,12 @@ async def run_langsmith_sync_pipeline():
         current_usage = org_plan.get("current_usage", 0)
         max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
 
-        background_tasks = BackgroundTasks()
-
-        background_tasks.add_task(
-            collect_langsmith_data,
-            project_id,
-            org_plan["org_id"],
-            langsmith_credentials,
-            current_usage,
-            max_usage,
+        await collect_langsmith_data(
+            project_id=project_id,
+            org_id=org_plan["org_id"],
+            langsmith_credentials=langsmith_credentials,
+            current_usage=current_usage,
+            max_usage=max_usage,
         )
 
     return {"status": "ok", "message": "Pipeline ran successfully"}
@@ -53,15 +50,12 @@ async def run_langfuse_sync_pipeline():
         current_usage = org_plan.get("current_usage", 0)
         max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
 
-        background_tasks = BackgroundTasks()
-
-        background_tasks.add_task(
-            collect_langfuse_data,
-            project_id,
-            org_plan["org_id"],
-            langfuse_credentials,
-            current_usage,
-            max_usage,
+        await collect_langfuse_data(
+            project_id=project_id,
+            org_id=org_plan["org_id"],
+            langfuse_credentials=langfuse_credentials,
+            current_usage=current_usage,
+            max_usage=max_usage,
         )
 
     return {"status": "ok", "message": "Pipeline ran successfully"}
