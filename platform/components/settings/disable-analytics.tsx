@@ -178,7 +178,9 @@ export default function DisableAnalytics({
                   <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5 ml-2 mt-1" />
                 </HoverCardTrigger>
               </div>
-              <HoverCardContent>{item.description}</HoverCardContent>
+              <HoverCardContent className="w-80">
+                {item.description}
+              </HoverCardContent>
             </HoverCard>
           </div>
         </div>
