@@ -305,7 +305,7 @@ export const SendDataAlertDialog = ({
   const toast = useToast();
 
   const formSchemaLS = z.object({
-    lang_smith_api_key: z
+    langsmith_api_key: z
       .string()
       .min(50, {
         message: "Your API key should be longer than 50 characters.",
@@ -313,7 +313,7 @@ export const SendDataAlertDialog = ({
       .max(60, {
         message: "Your API key should be shorter than 60 characters.",
       }),
-    project_name: z
+    langsmith_project_name: z
       .string()
       .min(2, {
         message: "Project name should be at least 2 characters.",
@@ -359,8 +359,8 @@ export const SendDataAlertDialog = ({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        project_name: values.project_name,
-        langsmith_api_key: values.lang_smith_api_key,
+        langsmith_project_name: values.langsmith_project_name,
+        langsmith_api_key: values.langsmith_api_key,
       }),
     }).then(async (response) => {
       const responseBody = await response.json();
@@ -685,7 +685,7 @@ phospho.log({input, output});`}
                         >
                           <FormField
                             control={formLS.control}
-                            name="lang_smith_api_key"
+                            name="langsmith_api_key"
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>
@@ -731,7 +731,7 @@ phospho.log({input, output});`}
                           />
                           <FormField
                             control={formLS.control}
-                            name="project_name"
+                            name="langsmith_project_name"
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>LangSmith project name</FormLabel>
