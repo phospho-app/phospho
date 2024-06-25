@@ -11,6 +11,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useSWRConfig } from "swr";
 import { z } from "zod";
 
 const FormSchema = z.object({
@@ -22,6 +23,7 @@ export default function DisableAnalytics({
 }: {
   selectedProject: Project;
 }) {
+  const { mutate } = useSWRConfig();
   const { accessToken } = useUser();
   const [checkedEval, setCheckedEval] = useState(
     selectedProject.settings?.run_evals === undefined
@@ -62,19 +64,23 @@ export default function DisableAnalytics({
                 run_sentiment_language: checkedLangSent,
               },
             }),
-          });
-          if (!response.ok) {
-            throw new Error("Failed to update project settings");
-          }
-          toast({
-            title: "Selection saved",
-            description: "Project settings have been updated",
+          }).then(() => {
+            mutate(
+              [`/api/projects/${selectedProject.id}`, accessToken],
+              async () => {
+                return { project: selectedProject };
+              },
+            );
+            toast({
+              title: "Settings updated",
+              description:
+                "Your next logs will be updated with the new settings.",
+            });
           });
         } catch (error) {
           toast({
-            title: "There was an error",
-            description:
-              "We were unable to save your selection. Please try again later.",
+            title: "Error",
+            description: "An error occured while updating the settings.",
           });
         }
       };
@@ -141,9 +147,7 @@ export default function DisableAnalytics({
             }
             className="mt-1"
             onCheckedChange={(checked) => {
-              const recipeTypeList = form.watch("recipe_type_list");
               if (checked) {
-                form.setValue("recipe_type_list", [...recipeTypeList, item.id]);
                 if (item.id === "evaluation") {
                   setCheckedEval(true);
                 }
@@ -154,10 +158,6 @@ export default function DisableAnalytics({
                   setCheckedLangSent(true);
                 }
               } else {
-                form.setValue(
-                  "recipe_type_list",
-                  recipeTypeList.filter((v) => v !== item.id),
-                );
                 if (item.id === "evaluation") {
                   setCheckedEval(false);
                 }

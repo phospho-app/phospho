@@ -160,6 +160,12 @@ async def delete_project_related_resources(project_id: str):
 
 
 async def update_project(project: Project, **kwargs) -> Project:
+    """
+    Update a project with the provided kwargs.
+
+    TODO: Update only the fields that are provided in the kwargs and not the whole project
+    otherwise creates mongoDB timeouts
+    """
     mongo_db = await get_mongo_db()
 
     # Construct the payload of the update
@@ -269,7 +275,7 @@ async def update_project(project: Project, **kwargs) -> Project:
                         )
 
         # Update the database
-        _ = await mongo_db["projects"].update_one(
+        await mongo_db["projects"].update_one(
             {"id": project.id}, {"$set": updated_project.model_dump()}
         )
 

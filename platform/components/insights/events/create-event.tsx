@@ -21,11 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  DetectionEngine,
-  DetectionScope,
-  ScoreRangeType,
-} from "@/models/models";
+import { DetectionEngine, DetectionScope } from "@/models/models";
 import { ScoreRangeSettings } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
