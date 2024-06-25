@@ -28,10 +28,9 @@ module.exports = {
 }
 
 // Verify if NEXT_PUBLIC_API_URL is set
+// Verify if NEXT_PUBLIC_API_URL is set
 if (!process.env.NEXT_PUBLIC_API_URL) {
-  throw new Error(
-    "Please define the NEXT_PUBLIC_API_URL environment variable"
-  );
+  console.warn("The NEXT_PUBLIC_API_URL environment variable is not defined.");
 }
 
 
