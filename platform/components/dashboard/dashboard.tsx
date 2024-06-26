@@ -284,9 +284,6 @@ const Dashboard: React.FC = () => {
       ? [`/api/projects/${project_id}`, accessToken, "initial_tiles"]
       : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
   );
 
   const { data: hasTasksData } = useSWR(
@@ -324,7 +321,7 @@ const Dashboard: React.FC = () => {
       column: 8,
       minRow: Math.max(...allYValues, 1),
       margin: 12,
-      float: true,
+      // float: true,
       // removable: true,
     });
 
