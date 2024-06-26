@@ -33,7 +33,14 @@ import { set } from "date-fns";
 import { GridStack, GridStackNode } from "gridstack";
 import "gridstack/dist/gridstack-extra.min.css";
 import "gridstack/dist/gridstack.min.css";
-import { EllipsisVertical, Pencil, Plus, Trash, X } from "lucide-react";
+import {
+  BarChartBig,
+  EllipsisVertical,
+  Pencil,
+  Plus,
+  Trash,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -67,7 +74,7 @@ const RenameDashboardTile: React.FC<RenameDashboardTileProps> = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: tile.cardTitle,
+      name: tile.tile_name,
     },
   });
 
@@ -75,7 +82,7 @@ const RenameDashboardTile: React.FC<RenameDashboardTileProps> = ({
     if (!selectedProject) return;
     if (!selectedProject.settings) return;
 
-    tile.cardTitle = values.name;
+    tile.tile_name = values.name;
     selectedProject.settings.dashboard_tiles[tile_index] = tile;
 
     try {
@@ -168,7 +175,7 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
     >
       <div className="grid-stack-item-content">
         <CardHeader className="flex flex-row justify-between items-center py-1">
-          <CardTitle>{tile.cardTitle}</CardTitle>
+          <CardTitle>{tile.tile_name}</CardTitle>
           <AlertDialog open={renameOpen} onOpenChange={setRenameOpen}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -313,7 +320,7 @@ const Dashboard: React.FC = () => {
         console.log("Change event items", items);
 
         // Push updates
-        async function pushUpdates() {
+        (async () => {
           if (!selectedProject) return;
           try {
             const creation_response = await fetch(
@@ -340,8 +347,7 @@ const Dashboard: React.FC = () => {
               description: `${error}`,
             });
           }
-        }
-        pushUpdates();
+        })();
       });
     }
 
@@ -360,8 +366,9 @@ const Dashboard: React.FC = () => {
         <FilterComponent variant="tasks" />
         <Link href="/org/insights/dataviz">
           <Button variant="default">
-            <Plus className="w-4 h-4 mr-1" />
-            New graph
+            <Plus className="w-3 h-3 " />
+            <BarChartBig className="w-4 h-4 mr-2" />
+            Add new graph
           </Button>
         </Link>
       </div>
@@ -376,7 +383,7 @@ const Dashboard: React.FC = () => {
             >
               <DatavizGraph
                 metric={tile.metric}
-                selectedMetricMetadata={tile.selectedMetricMetadata}
+                metadata_metric={tile.metadata_metric}
                 breakdown_by={tile.breakdown_by}
               />
             </DashboardTileCard>

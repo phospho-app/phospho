@@ -15,8 +15,10 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { navigationStateStore } from "@/store/store";
+import { DashboardTile } from "@/models/models";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   ChevronDown,
@@ -29,8 +31,9 @@ import {
   TextSearch,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 
 const MetadataForm: React.FC = () => {
   // create a page with 2 dropdowns :
@@ -40,20 +43,22 @@ const MetadataForm: React.FC = () => {
   // The data is fetched and then displayed as a bar chart or a table
 
   const { accessToken } = useUser();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const selectedProject = dataStateStore((state) => state.selectedProject);
   const project_id = navigationStateStore((state) => state.project_id);
 
   const selectedMetric = navigationStateStore((state) => state.selectedMetric);
-  const selectedMetricMetadata = navigationStateStore(
-    (state) => state.selectedMetricMetadata,
+  const metadata_metric = navigationStateStore(
+    (state) => state.metadata_metric,
   );
-  const selectedGroupBy = navigationStateStore(
-    (state) => state.selectedGroupBy,
-  );
+  const breakdown_by = navigationStateStore((state) => state.selectedGroupBy);
   const setSelectedMetric = navigationStateStore(
     (state) => state.setSelectedMetric,
   );
-  const setSelectedMetricMetadata = navigationStateStore(
-    (state) => state.setSelectedMetricMetadata,
+  const setmetadata_metric = navigationStateStore(
+    (state) => state.setmetadata_metric,
   );
   const setSelectedGroupBy = navigationStateStore(
     (state) => state.setSelectedGroupBy,
@@ -79,7 +84,7 @@ const MetadataForm: React.FC = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
-                  Metric: {selectedMetric} {selectedMetricMetadata ?? ""}{" "}
+                  Metric: {selectedMetric} {metadata_metric ?? ""}{" "}
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
@@ -87,7 +92,7 @@ const MetadataForm: React.FC = () => {
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedMetric("Nb tasks");
-                    setSelectedMetricMetadata(null);
+                    setmetadata_metric(null);
                   }}
                 >
                   <MessagesSquare className="h-4 w-4 mr-2" />
@@ -96,7 +101,7 @@ const MetadataForm: React.FC = () => {
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedMetric("Event count");
-                    setSelectedMetricMetadata(null);
+                    setmetadata_metric(null);
                   }}
                 >
                   <TextSearch className="h-4 w-4 mr-2" />
@@ -105,7 +110,7 @@ const MetadataForm: React.FC = () => {
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedMetric("Event distribution");
-                    setSelectedMetricMetadata(null);
+                    setmetadata_metric(null);
                   }}
                 >
                   <TextSearch className="h-4 w-4 mr-2" />
@@ -114,7 +119,7 @@ const MetadataForm: React.FC = () => {
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedMetric("Avg Success rate");
-                    setSelectedMetricMetadata(null);
+                    setmetadata_metric(null);
                   }}
                 >
                   <Flag className="h-4 w-4 mr-2" />
@@ -123,7 +128,7 @@ const MetadataForm: React.FC = () => {
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedMetric("Avg session length");
-                    setSelectedMetricMetadata(null);
+                    setmetadata_metric(null);
                   }}
                 >
                   <List className="h-4 w-4 mr-2" />
@@ -147,7 +152,7 @@ const MetadataForm: React.FC = () => {
                           key={field}
                           onClick={() => {
                             setSelectedMetric("Avg");
-                            setSelectedMetricMetadata(field);
+                            setmetadata_metric(field);
                           }}
                         >
                           {`${field}_avg`}
@@ -173,7 +178,7 @@ const MetadataForm: React.FC = () => {
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedMetric("Sum");
-                            setSelectedMetricMetadata(field);
+                            setmetadata_metric(field);
                           }}
                           key={`${field}_sum`}
                         >
@@ -188,7 +193,7 @@ const MetadataForm: React.FC = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
-                  Breakdown by: {selectedGroupBy}{" "}
+                  Breakdown by: {breakdown_by}{" "}
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
@@ -250,7 +255,54 @@ const MetadataForm: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <Button>
+          <Button
+            onClick={async () => {
+              // Add a new tile to the selectedProjectSettings and update it server side
+              if (!selectedProject) return;
+              if (!selectedProject.settings) return;
+
+              const tileName = metadata_metric
+                ? `${metadata_metric} by ${breakdown_by}`
+                : `${selectedMetric} by ${breakdown_by}`;
+
+              const newTile = {
+                tile_name: tileName,
+                metric: selectedMetric,
+                metadata_metric: metadata_metric,
+                breakdown_by: breakdown_by,
+              } as DashboardTile;
+              selectedProject.settings.dashboard_tiles.push(newTile);
+
+              // Push updates
+              try {
+                const creation_response = await fetch(
+                  `/api/projects/${selectedProject.id}`,
+                  {
+                    method: "POST",
+                    headers: {
+                      Authorization: "Bearer " + accessToken,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(selectedProject),
+                  },
+                ).then((response) => {
+                  mutate(
+                    [`/api/projects/${selectedProject.id}`, accessToken],
+                    async (data: any) => {
+                      return { project: selectedProject };
+                    },
+                  );
+                  // Redirect to the dashboard
+                  router.push("/org/transcripts/dashboard");
+                });
+              } catch (error) {
+                toast({
+                  title: "Error when creating tile",
+                  description: `${error}`,
+                });
+              }
+            }}
+          >
             <Plus className="h-3 w-3" />
             <LayoutDashboard className="h-4 w-4 mr-2" />
             Add to dashboard
@@ -265,8 +317,8 @@ const MetadataForm: React.FC = () => {
       <div className="h-3/4">
         <DatavizGraph
           metric={selectedMetric}
-          selectedMetricMetadata={selectedMetricMetadata}
-          breakdown_by={selectedGroupBy}
+          metadata_metric={metadata_metric}
+          breakdown_by={breakdown_by}
         />
       </div>
     </>

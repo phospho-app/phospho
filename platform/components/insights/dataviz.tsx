@@ -19,11 +19,11 @@ import useSWR from "swr";
 
 const DatavizGraph = ({
   metric,
-  selectedMetricMetadata,
+  metadata_metric,
   breakdown_by,
 }: {
   metric: string;
-  selectedMetricMetadata?: string | null;
+  metadata_metric?: string | null;
   breakdown_by: string;
 }) => {
   const { accessToken } = useUser();
@@ -33,8 +33,8 @@ const DatavizGraph = ({
   const selectedProject = dataStateStore((state) => state.selectedProject);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
 
-  if (!selectedMetricMetadata) {
-    selectedMetricMetadata = "";
+  if (!metadata_metric) {
+    metadata_metric = "";
   }
 
   const { data } = useSWR(
@@ -52,7 +52,7 @@ const DatavizGraph = ({
       `/api/metadata/${project_id}/pivot/`,
       accessToken,
       metric,
-      selectedMetricMetadata,
+      metadata_metric,
       breakdown_by,
       numberMetadataFields,
       categoryMetadataFields,
@@ -61,7 +61,7 @@ const DatavizGraph = ({
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metric: metric,
-        metric_metadata: selectedMetricMetadata,
+        metric_metadata: metadata_metric,
         breakdown_by: breakdown_by,
         number_metadata_fields: numberMetadataFields,
         category_metadata_fields: categoryMetadataFields,
@@ -109,7 +109,7 @@ const DatavizGraph = ({
     return <></>;
   }
   if (
-    selectedMetricMetadata === "sentiment_score" &&
+    metadata_metric === "sentiment_score" &&
     !numberMetadataFields.includes("sentiment_score")
   ) {
     return <></>;
@@ -134,8 +134,7 @@ const DatavizGraph = ({
             <CardContent className="text-xl font-extrabold">
               <p>
                 {Math.round(
-                  pivotData[0][`${metric}${selectedMetricMetadata ?? ""}`] *
-                    10000,
+                  pivotData[0][`${metric}${metadata_metric ?? ""}`] * 10000,
                 ) / 10000}
               </p>
             </CardContent>

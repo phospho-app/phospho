@@ -190,10 +190,10 @@ class Threshold(BaseModel):
 
 class DashboardTile(BaseModel):
     id: str = Field(default_factory=generate_uuid)
-    cardTitle: str
+    tile_name: str
     metric: str
     breakdown_by: str
-    selectedMetricMetadata: Optional[str] = None
+    metadata_metric: Optional[str] = None
     # Position
     x: Optional[int] = None
     y: Optional[int] = None
@@ -208,23 +208,23 @@ class ProjectSettings(BaseModel):
     dashboard_tiles: List[DashboardTile] = Field(
         default_factory=lambda: [
             DashboardTile(
-                cardTitle="Success rate per task position",
+                tile_name="Success rate per task position",
                 metric="Avg Success rate",
                 breakdown_by="task_position",
             ),
             DashboardTile(
-                cardTitle="Average success rate per event name",
+                tile_name="Average success rate per event name",
                 metric="Avg Success rate",
                 breakdown_by="event_name",
             ),
             DashboardTile(
-                cardTitle="Average sentiment score per task position",
+                tile_name="Average sentiment score per task position",
                 metric="Avg",
-                selectedMetricMetadata="sentiment_score",
+                metadata_metric="sentiment_score",
                 breakdown_by="task_position",
             ),
             DashboardTile(
-                cardTitle="Success rate per language",
+                tile_name="Success rate per language",
                 metric="Avg Success rate",
                 breakdown_by="language",
             ),

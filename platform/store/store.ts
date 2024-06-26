@@ -6,11 +6,7 @@ import {
   ProjectDataFilters,
   Task,
 } from "@/models/models";
-import {
-  PaginationState,
-  SortingState,
-  Updater,
-} from "@tanstack/react-table";
+import { PaginationState, SortingState, Updater } from "@tanstack/react-table";
 import { addDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { create } from "zustand";
@@ -45,8 +41,8 @@ interface navigationState {
 
   selectedMetric: string;
   setSelectedMetric: (metric: string) => void;
-  selectedMetricMetadata: string | null;
-  setSelectedMetricMetadata: (metadata: string | null) => void;
+  metadata_metric: string | null;
+  setmetadata_metric: (metadata: string | null) => void;
   selectedGroupBy: string;
   setSelectedGroupBy: (groupBy: string) => void;
 }
@@ -244,9 +240,9 @@ export const navigationStateStore = create(
       selectedMetric: "Nb tasks",
       setSelectedMetric: (metric: string) =>
         set((state) => ({ selectedMetric: metric })),
-      selectedMetricMetadata: null,
-      setSelectedMetricMetadata: (metadata: string | null) =>
-        set((state) => ({ selectedMetricMetadata: metadata })),
+      metadata_metric: null,
+      setmetadata_metric: (metadata: string | null) =>
+        set((state) => ({ metadata_metric: metadata })),
       selectedGroupBy: "flag",
       setSelectedGroupBy: (groupBy: string) =>
         set((state) => ({ selectedGroupBy: groupBy })),

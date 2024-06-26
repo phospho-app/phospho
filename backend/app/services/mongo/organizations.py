@@ -40,12 +40,11 @@ async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Proje
                 mongo_db["projects"].update_one(
                     {"_id": project_data["_id"]}, {"$set": project.model_dump()}
                 )
-
+            projects.append(project)
         except Exception as e:
             logger.warning(
                 f"Error validating model of project {project_data.get('id')}: {e}"
             )
-        projects.append(project)
 
     return projects
 
