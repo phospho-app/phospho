@@ -36,6 +36,8 @@ import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
+import { Toggle } from "@radix-ui/react-toggle";
+import { set } from "date-fns";
 import {
   BarChartBig,
   CopyIcon,
@@ -58,6 +60,7 @@ import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
 
+import { Spinner } from "../small-spinner";
 import UpgradeButton from "../upgrade-button";
 
 const PythonIcon = () => {
@@ -282,6 +285,8 @@ export const SendDataAlertDialog = ({
   );
 
   const [showModal, setShowModal] = React.useState(true);
+  const [disableLF, setDisableLF] = React.useState(false);
+  const [disableLS, setDisableLS] = React.useState(false);
 
   React.useEffect(() => {
     setShowModal(selectedOrgMetadata?.plan === "hobby");
@@ -299,8 +304,8 @@ export const SendDataAlertDialog = ({
   const { user, accessToken } = useUser();
   const toast = useToast();
 
-  const formSchema = z.object({
-    lang_smith_api_key: z
+  const formSchemaLS = z.object({
+    langsmith_api_key: z
       .string()
       .min(50, {
         message: "Your API key should be longer than 50 characters.",
@@ -308,7 +313,7 @@ export const SendDataAlertDialog = ({
       .max(60, {
         message: "Your API key should be shorter than 60 characters.",
       }),
-    project_name: z
+    langsmith_project_name: z
       .string()
       .min(2, {
         message: "Project name should be at least 2 characters.",
@@ -318,15 +323,35 @@ export const SendDataAlertDialog = ({
       }),
   });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const formLS = useForm<z.infer<typeof formSchemaLS>>({
+    resolver: zodResolver(formSchemaLS),
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (showModal) {
-      setButtonPressed(true);
-      setShowModal(false);
-    }
+  const formSchemaLF = z.object({
+    langfuse_secret_key: z
+      .string()
+      .min(35, {
+        message: "Your secret key should be longer than 35 characters.",
+      })
+      .max(50, {
+        message: "Your secret key should be shorter than 50 characters.",
+      }),
+    langfuse_public_key: z
+      .string()
+      .min(35, {
+        message: "Your public key should be at least 35 characters.",
+      })
+      .max(50, {
+        message: "Your public key should be at most 50 characters.",
+      }),
+  });
+
+  const formLF = useForm<z.infer<typeof formSchemaLF>>({
+    resolver: zodResolver(formSchemaLF),
+  });
+
+  async function onLangSmithSubmit(values: z.infer<typeof formSchemaLS>) {
+    setDisableLS(true);
     fetch(`/api/projects/${project_id}/connect-langsmith`, {
       method: "POST",
       headers: {
@@ -334,21 +359,62 @@ export const SendDataAlertDialog = ({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        project_name: values.project_name,
-        langsmith_api_key: values.lang_smith_api_key,
+        langsmith_project_name: values.langsmith_project_name,
+        langsmith_api_key: values.langsmith_api_key,
       }),
     }).then(async (response) => {
       const responseBody = await response.json();
       if (response.ok) {
+        setDisableLS(false);
+        if (showModal) {
+          setButtonPressed(true);
+          setShowModal(false);
+        }
         toast.toast({
           title: "🦜🔗 LangSmith import successful",
           description: "Your data is being imported to phospho.",
         });
       } else {
+        setDisableLS(false);
         toast.toast({
           title: "🦜🔗 LangSmith import failed",
           description:
             "Please double-check your LangSmith API key and project name",
+        });
+      }
+    });
+  }
+
+  async function onLangFuseSubmit(values: z.infer<typeof formSchemaLF>) {
+    setDisableLF(true);
+    fetch(`/api/projects/${project_id}/connect-langfuse`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        langfuse_public_key: values.langfuse_public_key,
+        langfuse_secret_key: values.langfuse_secret_key,
+      }),
+    }).then(async (response) => {
+      const responseBody = await response.json();
+      if (response.ok) {
+        setDisableLF(false);
+        if (showModal) {
+          setButtonPressed(true);
+          setShowModal(false);
+        }
+        toast.toast({
+          title: "🪢 LangFuse import successful",
+          description: "Your data is being imported to phospho.",
+        });
+      } else {
+        setDisableLF(false);
+        toast.toast({
+          title: "🪢 LangFuse import failed",
+          description:
+            "Please double-check your LangFuse public and secret keys",
         });
       }
     });
@@ -587,6 +653,9 @@ phospho.log({input, output});`}
                     <ToggleGroupItem value="lang_smith">
                       <ToggleButton>🦜🔗 LangSmith</ToggleButton>
                     </ToggleGroupItem>
+                    <ToggleGroupItem value="lang_fuse">
+                      <ToggleButton>🪢 LangFuse</ToggleButton>
+                    </ToggleGroupItem>
                     <ToggleGroupItem value="other_bottom">
                       <ToggleButton>Other</ToggleButton>
                     </ToggleGroupItem>
@@ -609,14 +678,14 @@ phospho.log({input, output});`}
                         Synchronise your data from LangSmith to phospho. We will
                         fetch the data periodically.
                       </div>
-                      <Form {...form}>
+                      <Form {...formLS}>
                         <form
-                          onSubmit={form.handleSubmit(onSubmit)}
+                          onSubmit={formLS.handleSubmit(onLangSmithSubmit)}
                           className="space-y-8"
                         >
                           <FormField
-                            control={form.control}
-                            name="lang_smith_api_key"
+                            control={formLS.control}
+                            name="langsmith_api_key"
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>
@@ -661,8 +730,8 @@ phospho.log({input, output});`}
                             )}
                           />
                           <FormField
-                            control={form.control}
-                            name="project_name"
+                            control={formLS.control}
+                            name="langsmith_project_name"
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>LangSmith project name</FormLabel>
@@ -680,9 +749,99 @@ phospho.log({input, output});`}
                           <div className="flex justify-end">
                             <Button
                               type="submit"
-                              disabled={!form.formState.isValid}
+                              disabled={!formLS.formState.isValid || disableLS}
                             >
+                              {disableLS && <Spinner className="mr-1" />}
                               Transfer data from LangSmith
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </div>
+                  )}
+
+                  {selectedTab == "lang_fuse" && (
+                    <div className="flex-col space-y-4">
+                      <div className="text-sm">
+                        Synchronise your data from LangFuse to phospho. We will
+                        fetch the data periodically.
+                      </div>
+                      <Form {...formLF}>
+                        <form
+                          onSubmit={formLF.handleSubmit(onLangFuseSubmit)}
+                          className="space-y-8"
+                        >
+                          <FormField
+                            control={formLF.control}
+                            name="langfuse_secret_key"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Your LangFuse secret key,{" "}
+                                  <Link
+                                    className="underline hover:text-green-500"
+                                    href="https://cloud.langfuse.com/project/"
+                                  >
+                                    go to LangFuse -&gt; Settings -&gt; Create
+                                    new API keys
+                                  </Link>
+                                </FormLabel>
+                                <div className="flex justify-center">
+                                  <HoverCard openDelay={80} closeDelay={30}>
+                                    <HoverCardTrigger>
+                                      <Lock className="mr-2 mt-2" />
+                                    </HoverCardTrigger>
+                                    <HoverCardContent
+                                      side="top"
+                                      className="text-sm text-center"
+                                    >
+                                      <div>
+                                        This key is encrypted and stored
+                                        securely.
+                                      </div>
+                                      <div>
+                                        We only use it to fetch your data from
+                                        LangFuse.
+                                      </div>
+                                    </HoverCardContent>
+                                  </HoverCard>
+
+                                  <FormControl>
+                                    <PasswordInput
+                                      placeholder="sk-lf-..."
+                                      {...field}
+                                      className="font-normal flex"
+                                    />
+                                  </FormControl>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={formLF.control}
+                            name="langfuse_public_key"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Your LangFuse public key</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="pk-lf-..."
+                                    {...field}
+                                    className="font-normal"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex justify-end">
+                            <Button
+                              type="submit"
+                              disabled={!formLF.formState.isValid || disableLF}
+                            >
+                              {disableLF && <Spinner className="mr-1" />}
+                              Transfer data from LangFuse
                             </Button>
                           </div>
                         </form>

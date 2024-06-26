@@ -41,6 +41,7 @@ langsmith = "^0.1.63"
 apscheduler = "^3.10.4"
 pycryptodome = "^3.20.0"
 xlsxwriter = "^3.2.0"
+langfuse = "^2.36.2"
 
 [tool.poetry.group.dev]
 optional = true

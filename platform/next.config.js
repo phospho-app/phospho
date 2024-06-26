@@ -25,13 +25,13 @@ module.exports = {
   
     ]
   },
+  output: 'standalone', // Added for the docker mode in self hosting
 }
 
 // Verify if NEXT_PUBLIC_API_URL is set
+// Verify if NEXT_PUBLIC_API_URL is set
 if (!process.env.NEXT_PUBLIC_API_URL) {
-  throw new Error(
-    "Please define the NEXT_PUBLIC_API_URL environment variable inside .env.local"
-  );
+  console.warn("The NEXT_PUBLIC_API_URL environment variable is not defined.");
 }
 
 
@@ -74,5 +74,9 @@ module.exports = withSentryConfig(
     // https://docs.sentry.io/product/crons/
     // https://vercel.com/docs/cron-jobs
     automaticVercelMonitors: true,
+    
+    // Disables the Sentry webpack plugin to avoid source map uploading during build
+    disableServerWebpackPlugin: true,
+    disableClientWebpackPlugin: true,
   }
 );

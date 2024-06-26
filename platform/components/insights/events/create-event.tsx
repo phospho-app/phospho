@@ -22,12 +22,7 @@ import { SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import {
-  DetectionEngine,
-  DetectionScope,
-  Project,
-  ScoreRangeType,
-} from "@/models/models";
+import { DetectionEngine, DetectionScope, Project } from "@/models/models";
 import { ScoreRangeSettings } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";

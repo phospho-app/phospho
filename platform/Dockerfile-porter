@@ -1,20 +1,24 @@
-FROM node:18-alpine AS base
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APP_ENV
+ARG NEXT_PUBLIC_AUTH_URL
+ARG PROPELAUTH_REDIRECT_URI
+#
+ARG PROD_API_URL
+ARG PROPELAUTH_API_KEY
+ARG PROPELAUTH_VERIFIER_KEY
+
+FROM node:21-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat g++ make python3
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
-
+RUN yarn add sharp
+RUN yarn install --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -25,14 +29,29 @@ COPY . .
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
-# ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NEXT_TELEMETRY_DISABLED 1
+# ENV DEBUG=*
 
-RUN \
-  if [ -f yarn.lock ]; then yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APP_ENV
+ARG NEXT_PUBLIC_AUTH_URL
+ARG PROPELAUTH_REDIRECT_URI
+ARG PROD_API_URL
+ARG PROPELAUTH_API_KEY
+ARG PROPELAUTH_VERIFIER_KEY
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_APP_ENV=${NEXT_PUBLIC_APP_ENV}
+ENV NEXT_PUBLIC_AUTH_URL=${NEXT_PUBLIC_AUTH_URL}
+ENV PROPELAUTH_REDIRECT_URI=${PROPELAUTH_REDIRECT_URI}
+ENV PROD_API_URL = ${PROD_API_URL}
+ENV PROPELAUTH_API_KEY = ${PROPELAUTH_API_KEY}
+ENV PROPELAUTH_VERIFIER_KEY = ${PROPELAUTH_VERIFIER_KEY}
+
+RUN yarn build
+
+# If using npm comment out above and use below instead
+# RUN npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -56,12 +75,31 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APP_ENV
+ARG NEXT_PUBLIC_AUTH_URL
+ARG PROPELAUTH_REDIRECT_URI
+ARG PROD_API_URL
+ARG PROPELAUTH_API_KEY
+ARG PROPELAUTH_VERIFIER_KEY
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_APP_ENV=${NEXT_PUBLIC_APP_ENV}
+ENV NEXT_PUBLIC_AUTH_URL=${NEXT_PUBLIC_AUTH_URL}
+ENV PROPELAUTH_REDIRECT_URI=${PROPELAUTH_REDIRECT_URI}
+ENV PROD_API_URL = ${PROD_API_URL}
+ENV PROPELAUTH_API_KEY = ${PROPELAUTH_API_KEY}
+ENV PROPELAUTH_VERIFIER_KEY = ${PROPELAUTH_VERIFIER_KEY}
+
+
 USER nextjs
 
-EXPOSE 3000
+EXPOSE $PORT
 
-ENV PORT 3000
+ENV PORT $PORT
+
+# set hostname to localhost
+ENV HOSTNAME "0.0.0.0"
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
-CMD HOSTNAME="0.0.0.0" node server.js
+CMD ["node", "server.js"]

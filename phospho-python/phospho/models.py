@@ -205,6 +205,10 @@ class ProjectSettings(BaseModel):
     events: Dict[str, EventDefinition] = Field(default_factory=dict)
     sentiment_threshold: Optional[Threshold] = Field(default_factory=Threshold)
     last_langsmith_extract: Optional[str] = None
+    last_langfuse_extract: Optional[str] = None
+    run_evals: Optional[bool] = True
+    run_sentiment_language: Optional[bool] = True
+    run_event_detection: Optional[bool] = True
     dashboard_tiles: List[DashboardTile] = Field(
         default_factory=lambda: [
             DashboardTile(

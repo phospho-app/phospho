@@ -2,6 +2,7 @@
 
 import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
+import DisableAnalytics from "@/components/settings/disable-analytics";
 import TaskProgress from "@/components/settings/tasks-quota";
 import {
   AlertDialog,
@@ -94,6 +95,7 @@ export default function Page() {
           </Link>
           <AlertDialogDeleteProject />
         </div>
+        <DisableAnalytics selectedProject={selectedProject} />
         <div>
           {plan === "usage_based" && (
             <div>

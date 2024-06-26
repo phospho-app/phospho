@@ -183,6 +183,13 @@ async def task_event_detection_pipeline(
     if project.settings is None:
         logger.warning(f"Project with id {project_id} has no settings")
         return []
+    # We check if the event detection is enabled in the project settings
+    if (
+        project.settings.run_event_detection is not None
+        and not project.settings.run_event_detection
+    ):
+        logger.info(f"Event detection is disabled for project {project_id}")
+        return []
     # Convert to the proper lab project object
     # TODO : Normalize the project definition by storing all db models in the phospho module
     # and importing models from the phospho module
@@ -279,6 +286,18 @@ async def task_scoring_pipeline(
     """
     logger.debug(f"Run the task scoring pipeline for task {task.id}")
     mongo_db = await get_mongo_db()
+
+    # Fetch run_evals variable in settings in the project, if it doesn't exist, return None
+    project = await mongo_db["projects"].find_one(
+        {"id": task.project_id},
+        {"settings.run_evals": 1},
+    )
+
+    run_evals = project.get("settings", {}).get("run_evals", None)
+    logger.debug(run_evals)
+    if run_evals is not None and not run_evals:
+        logger.info(f"run_evals is disabled for project {task.project_id}")
+        return None
 
     # We want 50/50 success and failure examples
     nb_success = int(config.FEW_SHOT_MAX_NUMBER_OF_EXAMPLES / 2)
@@ -461,8 +480,8 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
     start_time = time.time()
     logger.info(f"Starting main pipeline for task {task.id}")
 
-    # For now, do things sequentially
-
+    # Do the session scoring -> success, failure
+    mongo_db = await get_mongo_db()
     # Do the event detection
     if task.test_id is None:
         # Run the event detection pipeline
@@ -471,9 +490,6 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
         sentiment_object, language = await sentiment_and_language_analysis_pipeline(
             task
         )
-
-    # Do the session scoring -> success, failure
-    mongo_db = await get_mongo_db()
 
     if save_task:
         task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
@@ -578,6 +594,14 @@ async def sentiment_and_language_analysis_pipeline(
     """
     mongo_db = await get_mongo_db()
     project = await get_project_by_id(task.project_id)
+
+    if (
+        project.settings is not None
+        and project.settings.run_sentiment_language is not None
+        and not project.settings.run_sentiment_language
+    ):
+        logger.info(f"Sentiment analysis is disabled for project {task.project_id}")
+        return None, None
 
     # Default values
     score_threshold = 0.3
@@ -730,6 +754,27 @@ async def get_last_langsmith_extract(
     return project_validated.settings.last_langsmith_extract
 
 
+async def get_last_langfuse_extract(
+    project_id: str,
+):
+    """
+    Get the last Langfuse extract for a project
+    """
+    mongo_db = await get_mongo_db()
+
+    project = await mongo_db["projects"].find_one(
+        {"id": project_id},
+    )
+
+    try:
+        project_validated = Project.model_validate(project)
+    except Exception as e:
+        logger.error(f"Error validating project data: {e}")
+        return None
+
+    return project_validated.settings.last_langfuse_extract
+
+
 async def change_last_langsmith_extract(
     project_id: str,
     new_last_extract_date: str,
@@ -779,8 +824,67 @@ async def encrypt_and_store_langsmith_credentials(
         {"project_id": project_id},
         {
             "$set": {
+                "type": "langsmith",
                 "langsmith_api_key": base64.b64encode(data).decode("latin-1"),
                 "langsmith_project_name": langsmith_project_name,
+            },
+        },
+        upsert=True,
+    )
+
+
+async def change_last_langfuse_extract(
+    project_id: str,
+    new_last_extract_date: str,
+):
+    """
+    Change the last LangFuse extract for a project
+    """
+    mongo_db = await get_mongo_db()
+
+    await mongo_db["projects"].update_one(
+        {"id": project_id},
+        {"$set": {"settings.last_langfuse_extract": new_last_extract_date}},
+    )
+
+
+async def encrypt_and_store_langfuse_credentials(
+    project_id: str,
+    langfuse_secret_key: str,
+    langfuse_public_key: str,
+):
+    """
+    Store the encrypted LangFuse credentials in the database
+    """
+
+    mongo_db = await get_mongo_db()
+
+    encryption_key = os.getenv("EXTRACTOR_SECRET_KEY")
+    api_key_as_bytes = langfuse_secret_key.encode("utf-8")
+
+    # Encrypt the credentials
+    key = SHA256.new(
+        encryption_key.encode("utf-8")
+    ).digest()  # use SHA-256 over our key to get a proper-sized AES key
+
+    IV = Random.new().read(AES.block_size)  # generate IV
+    encryptor = AES.new(key, AES.MODE_CBC, IV)
+    padding = (
+        AES.block_size - len(api_key_as_bytes) % AES.block_size
+    )  # calculate needed padding
+    api_key_as_bytes += bytes([padding]) * padding
+    data = IV + encryptor.encrypt(
+        api_key_as_bytes
+    )  # store the IV at the beginning and encrypt
+
+    # Store the encrypted credentials in the database
+    await mongo_db["keys"].update_one(
+        {"project_id": project_id},
+        {
+            "$set": {
+                "type": "langfuse",
+                "langfuse_secret_key": base64.b64encode(data).decode("latin-1"),
+                "langfuse_public_key": langfuse_public_key,
             },
         },
         upsert=True,
