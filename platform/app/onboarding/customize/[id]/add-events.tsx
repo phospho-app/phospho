@@ -23,6 +23,7 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
+// @ts-ignore
 import { sendUserFeedback } from "phospho";
 import { useEffect, useState } from "react";
 
