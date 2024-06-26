@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { authFetcher } from "@/lib/fetcher";
-import { DashboardTile } from "@/models/models";
+import { DashboardTile, Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -53,19 +53,24 @@ import { Form, FormField, FormItem, FormLabel } from "../ui/form";
 import { useToast } from "../ui/use-toast";
 
 interface RenameDashboardTileProps {
-  tile_index: number;
   tile: DashboardTile;
   setOpen: (open: boolean) => void;
 }
 
 const RenameDashboardTile: React.FC<RenameDashboardTileProps> = ({
-  tile_index,
   tile,
   setOpen,
 }) => {
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const { accessToken, loading } = useUser();
   const { toast } = useToast();
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const formSchema = z.object({
     name: z.string().min(1).max(100),
@@ -83,7 +88,12 @@ const RenameDashboardTile: React.FC<RenameDashboardTileProps> = ({
     if (!selectedProject.settings) return;
 
     tile.tile_name = values.name;
-    selectedProject.settings.dashboard_tiles[tile_index] = tile;
+    // Edit the selected project settings based on the tile id
+    selectedProject.settings.dashboard_tiles.map((t) => {
+      if (t.id === tile.id) {
+        t.tile_name = tile.tile_name;
+      }
+    });
 
     try {
       const creation_response = await fetch(
@@ -119,7 +129,7 @@ const RenameDashboardTile: React.FC<RenameDashboardTileProps> = ({
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="font-normal space-y-4"
-          key={`editTileName${tile_index}`}
+          key={`editTileName${tile.id}`}
         >
           <AlertDialogHeader>
             <FormField
@@ -149,19 +159,24 @@ interface DashboardTileProps {
   children: React.ReactNode;
   tile: DashboardTile;
   grid: GridStack | null;
-  tile_index: number;
 }
 
 const DashboardTileCard: React.FC<DashboardTileProps> = ({
   children,
   tile,
   grid,
-  tile_index,
 }) => {
   const [renameOpen, setRenameOpen] = React.useState(false);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const { accessToken } = useUser();
   const { toast } = useToast();
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   return (
     <Card
@@ -170,8 +185,8 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
       gs-h={tile.h}
       gs-x={tile.x}
       gs-y={tile.y}
-      gs-id={tile_index} // used to update the tile's position
-      id={`gridstackitem-${tile_index}`} // used when deleting the tile
+      gs-id={tile.id} // used to update the tile's position
+      id={`gridstackitem-${tile.id}`} // used when deleting the tile
     >
       <div className="grid-stack-item-content">
         <CardHeader className="flex flex-row justify-between items-center py-1">
@@ -195,7 +210,7 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
                     // Remove the card from the grid
                     // Get this card's parent gridstack item using the id
                     const closestParentGridStackItem = document.getElementById(
-                      `gridstackitem-${tile_index}`,
+                      `gridstackitem-${tile.id}`,
                     );
                     console.log(
                       "closestParentGridStackItem",
@@ -210,10 +225,12 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
                       if (!selectedProject) return;
                       if (!selectedProject.settings) return;
 
-                      selectedProject.settings.dashboard_tiles.splice(
-                        tile_index,
-                        1,
-                      );
+                      // Remove based on the tile's id
+                      const newTiles =
+                        selectedProject.settings.dashboard_tiles.filter(
+                          (t) => t.id !== tile.id,
+                        );
+                      selectedProject.settings.dashboard_tiles = newTiles;
                       // Update the project settings
                       try {
                         const creation_response = await fetch(
@@ -250,11 +267,7 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <RenameDashboardTile
-              tile_index={tile_index}
-              tile={tile}
-              setOpen={setRenameOpen}
-            />
+            <RenameDashboardTile tile={tile} setOpen={setRenameOpen} />
           </AlertDialog>
         </CardHeader>
         <CardContent className="h-4/5">{children}</CardContent>
@@ -266,8 +279,14 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
 const Dashboard: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const { toast } = useToast();
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const { data: hasTasksData } = useSWR(
     project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
@@ -276,16 +295,29 @@ const Dashboard: React.FC = () => {
   );
   const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
   const [grid, setGrid] = React.useState<GridStack | null>(null);
+  const [currentGridProjectId, setCurrentGridProjectId] = React.useState<
+    string | undefined
+  >(undefined);
   const customDashboardTiles = selectedProject?.settings?.dashboard_tiles;
-  console.log("customDashboardTiles", customDashboardTiles);
 
   useEffect(() => {
-    console.log("Initializing grid");
-    if (!selectedProject) return;
-    if (grid) {
-      grid.removeAll();
+    console.log("grid: Callback called");
+    // if (!selectedProject) {
+    //   console.log("grid: No selected project");
+
+    // }
+    if (grid && currentGridProjectId !== selectedProject?.id) {
+      console.log("grid: Destroying grid");
+      console.log(
+        "grid: selectedProject.id",
+        selectedProject?.id,
+        "grid: currentGridProjectId",
+        currentGridProjectId,
+      );
+      grid.destroy(false);
     }
 
+    console.log("grid: Init grid");
     const initializedGrid = GridStack.init({
       column: 8,
       minRow: 1,
@@ -293,66 +325,67 @@ const Dashboard: React.FC = () => {
       // removable: true,
     });
 
-    if (initializedGrid) {
-      initializedGrid.on("change", (event: Event, items: GridStackNode[]) => {
-        if (!selectedProject) return;
-        if (!selectedProject.settings) return;
+    const onChangeFunction = (event: Event, items: GridStackNode[]) => {
+      if (!selectedProject) return;
+      if (!selectedProject.settings) return;
 
-        // Find the tile that was moved
-        selectedProject.settings.dashboard_tiles.forEach((tile, tile_index) => {
-          items.forEach((item) => {
-            console.log("Change event item", item);
-            if (item.id === tile_index.toString()) {
-              if (!selectedProject.settings) return;
+      // Find the tile that was moved
+      selectedProject.settings.dashboard_tiles.forEach((tile, tile_index) => {
+        items.forEach((item) => {
+          console.log("Change event item", item);
+          if (item.id === tile.id) {
+            if (!selectedProject.settings) return;
 
-              // Update the tile's position
-              tile.x = item.x;
-              tile.y = item.y;
-              tile.w = item.w ?? 4;
-              tile.h = item.h ?? 2;
-
-              // Update the project settings
-              selectedProject.settings.dashboard_tiles[tile_index] = tile;
-            }
-          });
-        });
-
-        console.log("Change event items", items);
-
-        // Push updates
-        (async () => {
-          if (!selectedProject) return;
-          try {
-            const creation_response = await fetch(
-              `/api/projects/${selectedProject.id}`,
-              {
-                method: "POST",
-                headers: {
-                  Authorization: "Bearer " + accessToken,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(selectedProject),
-              },
-            ).then((response) => {
-              mutate(
-                [`/api/projects/${selectedProject.id}`, accessToken],
-                async (data: any) => {
-                  return { project: selectedProject };
-                },
-              );
-            });
-          } catch (error) {
-            toast({
-              title: "Error when moving the tile",
-              description: `${error}`,
-            });
+            // Update the tile's position
+            tile.x = item.x;
+            tile.y = item.y;
+            tile.w = item.w ?? 4;
+            tile.h = item.h ?? 2;
           }
-        })();
+        });
       });
-    }
 
-    setGrid(initializedGrid);
-  }, [selectedProject?.id]);
+      console.log("Change event items", items);
+
+      // Push updates
+      (async () => {
+        if (!selectedProject) return;
+        try {
+          const creation_response = await fetch(
+            `/api/projects/${selectedProject.id}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: "Bearer " + accessToken,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(selectedProject),
+            },
+          ).then((response) => {
+            mutate(
+              [`/api/projects/${selectedProject.id}`, accessToken],
+              async (data: any) => {
+                return { project: selectedProject };
+              },
+            );
+          });
+        } catch (error) {
+          toast({
+            title: "Error when moving the tile",
+            description: `${error}`,
+          });
+        }
+      })();
+    };
+
+    if (initializedGrid) {
+      console.log("grid: initializeGrid Setting change event");
+      initializedGrid.on("change", onChangeFunction);
+      setGrid(initializedGrid);
+      setCurrentGridProjectId(selectedProject?.id);
+      return;
+    }
+  }, [selectedProject?.id, currentGridProjectId]);
 
   if (!project_id) {
     return <></>;
@@ -372,15 +405,11 @@ const Dashboard: React.FC = () => {
           </Button>
         </Link>
       </div>
+
       {customDashboardTiles && (
         <div className="grid-stack">
           {customDashboardTiles.map((tile, index) => (
-            <DashboardTileCard
-              key={index}
-              tile={tile}
-              grid={grid}
-              tile_index={index}
-            >
+            <DashboardTileCard key={tile.id} tile={tile} grid={grid}>
               <DatavizGraph
                 metric={tile.metric}
                 metadata_metric={tile.metadata_metric}
