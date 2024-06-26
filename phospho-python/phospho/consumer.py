@@ -1,5 +1,6 @@
+from requests import HTTPError
 from .log_queue import LogQueue
-from .client import Client
+from .client import Client, ClientSideError
 
 import time
 import atexit
@@ -74,18 +75,19 @@ class Consumer(Thread):
                             {"batched_log_events": batch},
                         )
                         self.nb_consecutive_errors = 0
+            except ClientSideError as e:
+                # If the error is a client-side error, we don't want to retry
+                raise e
             except Exception as e:
                 if self.raise_error_on_fail_to_send:
-                    # If we are in a test, we want to raise the error
                     raise e
-                else:
-                    self.nb_consecutive_errors += 1
-                    logger.warning(
-                        f"Error sending log events: {e}. Retrying in {self.get_wait_time()}s"
-                    )
-
-                    # Put all the events back into the log queue, so they are logged next tick
-                    self.log_queue.add_batch(batch)
+                # Retry with an exponential backoff
+                self.nb_consecutive_errors += 1
+                logger.warning(
+                    f"Error sending phospho log events: {e}. Retrying in {self.get_wait_time()}s"
+                )
+                # Put all the events back into the log queue, so they are logged next tick
+                self.log_queue.add_batch(batch)
 
     def stop(self):
         self.running = False
