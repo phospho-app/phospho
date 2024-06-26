@@ -159,10 +159,15 @@ export interface SentimentThreshold {
 }
 
 export interface DashboardTile {
+  id: string;
   cardTitle: string;
   metric: string;
   breakdown_by: string;
   selectedMetricMetadata?: string;
+  x?: number;
+  y?: number;
+  w: number;
+  h: number;
 }
 
 export interface ProjectSettings {

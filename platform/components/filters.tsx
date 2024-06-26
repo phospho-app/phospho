@@ -135,9 +135,9 @@ const FilterComponent = ({
   return (
     <div>
       <DropdownMenu>
-        <div className="flex flex-wrap align-content space-x-2 space-y-2">
+        <div className="flex flex-wrap align-content space-x-2">
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="mt-2">
+            <Button variant="outline">
               <ListFilter className="h-4 w-4 mr-1" />
               Filters
             </Button>

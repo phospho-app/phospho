@@ -150,7 +150,7 @@ const RunAnalysisInPast = ({
   return (
     <Sheet>
       <SheetTrigger>
-        <Button variant={"outline"} className="mt-2">
+        <Button variant={"outline"}>
           <Sparkles className="text-green-500 h-4 w-4 mr-2" />
           Detect
           <ChevronRight className="h-4 w-4 ml-2" />

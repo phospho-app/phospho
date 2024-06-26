@@ -189,10 +189,16 @@ class Threshold(BaseModel):
 
 
 class DashboardTile(BaseModel):
+    id: str = Field(default_factory=generate_uuid)
     cardTitle: str
     metric: str
     breakdown_by: str
     selectedMetricMetadata: Optional[str] = None
+    # Position
+    x: Optional[int] = None
+    y: Optional[int] = None
+    w: int = 4
+    h: int = 2
 
 
 class ProjectSettings(BaseModel):
