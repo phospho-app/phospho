@@ -152,6 +152,7 @@ def post_init_org(
             )
             return {"status": "ok"}
 
+        # Otherwise, we are in the cloud mode
         # Initialize the organization with the hobby plan
         propelauth.update_org_metadata(
             org_id,
@@ -226,6 +227,13 @@ async def post_create_checkout_session(
     if org_plan == "pro":
         # Organization already has a pro plan
         return {"error": "Organization already has a pro plan"}
+
+    if org_plan == "self-hosted":
+        # Organization already has a self-hosted plan
+        logger.error(
+            f"Organization {org_id} is in a self-hosted plan but requested a pro plan"
+        )
+        return {"error": "Organization is in a self-hosted plan"}
     # Create the checkout session
     stripe.api_key = config.STRIPE_SECRET_KEY
     try:
@@ -457,6 +465,14 @@ async def post_create_billing_portal_session(
     org_plan = org_metadata.get("plan", "hobby")
     if org_plan == "hobby":
         return {"error": "Organization has a hobby plan, no billing portal available"}
+
+    if org_plan == "self-hosted":
+        logger.error(
+            f"Organization {org_id} is in a self-hosted plan but requested a billing portal"
+        )
+        return {
+            "error": "Organization has a self-hosted plan, no billing portal available"
+        }
     stripe.api_key = config.STRIPE_SECRET_KEY
     try:
         logger.debug(

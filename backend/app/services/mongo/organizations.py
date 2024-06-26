@@ -164,6 +164,9 @@ def change_organization_plan(
     """
     Upgrade the organization to a usage_based plan
     """
+    if config.ENVIRONMENT == "preview":
+        logger.error("Cannot upgrade organization in preview environment")
+        return None
     try:
         # Upgrade the organization to the pro plan
         org = propelauth.fetch_org(org_id)

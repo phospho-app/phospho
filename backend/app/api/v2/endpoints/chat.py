@@ -73,7 +73,11 @@ async def create(
     if "customer_id" in org_metadata.keys():
         customer_id = org_metadata.get("customer_id", None)
 
-    if not customer_id and org_id != config.PHOSPHO_ORG_ID:
+    if (
+        not customer_id
+        and org_id != config.PHOSPHO_ORG_ID
+        and config.ENVIRONMENT != "preview"
+    ):
         if config.ENVIRONMENT != "test":
             raise HTTPException(
                 status_code=402,
