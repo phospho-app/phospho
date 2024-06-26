@@ -1,7 +1,6 @@
 "use client";
 
 import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
-import FetchHasTasksSessions from "@/components/fetch-data/fetch-tasks-sessions";
 import Navbar from "@/components/navbar/nav-bar";
 import { Sidebar } from "@/components/sidebar";
 import { dataStateStore, navigationStateStore } from "@/store/store";
@@ -42,7 +41,6 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
   return (
     <section>
       <FetchOrgProject />
-      <FetchHasTasksSessions />
       <div className="max-h-screen h-screen overflow-hidden">
         <div className="h-full">
           <Navbar />
