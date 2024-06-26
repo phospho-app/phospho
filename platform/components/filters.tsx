@@ -14,7 +14,11 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
-import { Clustering, MetadataFieldsToUniqueValues } from "@/models/models";
+import {
+  Clustering,
+  MetadataFieldsToUniqueValues,
+  Project,
+} from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -49,10 +53,9 @@ const FilterComponent = ({
 }) => {
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const { accessToken } = useUser();
-  const events = selectedProject?.settings?.events;
 
+  const project_id = navigationStateStore((state) => state.project_id);
   const setSessionsPagination = navigationStateStore(
     (state) => state.setSessionsPagination,
   );
@@ -60,6 +63,15 @@ const FilterComponent = ({
     (state) => state.setTasksPagination,
   );
   const dateRange = navigationStateStore((state) => state.dateRange);
+
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const events = selectedProject?.settings?.events;
 
   const resetPagination = () => {
     if (variant === "tasks") {
@@ -135,9 +147,9 @@ const FilterComponent = ({
   return (
     <div>
       <DropdownMenu>
-        <div className="flex flex-wrap align-content space-x-2 space-y-2">
+        <div className="flex flex-wrap align-content space-x-2">
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="mt-2">
+            <Button variant="outline">
               <ListFilter className="h-4 w-4 mr-1" />
               Filters
             </Button>

@@ -6,7 +6,8 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { Project } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
 import useSWR from "swr";
@@ -14,8 +15,13 @@ import useSWR from "swr";
 function EventAnalytics({ eventId }: { eventId: string }) {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
-  const dateRange = navigationStateStore((state) => state.dateRange);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const eventFilters = {
     // created_at_start: dateRange?.created_at_start,

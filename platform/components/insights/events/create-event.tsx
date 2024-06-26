@@ -21,14 +21,15 @@ import { Separator } from "@/components/ui/separator";
 import { SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { DetectionEngine, DetectionScope } from "@/models/models";
+import { authFetcher } from "@/lib/fetcher";
+import { DetectionEngine, DetectionScope, Project } from "@/models/models";
 import { ScoreRangeSettings } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
 
 export default function CreateEvent({
@@ -42,10 +43,16 @@ export default function CreateEvent({
 
   const project_id = navigationStateStore((state) => state.project_id);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const { mutate } = useSWRConfig();
   const { loading, accessToken } = useUser();
   const { toast } = useToast();
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const currentEvents = selectedProject?.settings?.events || {};
   const eventToEdit = eventNameToEdit ? currentEvents[eventNameToEdit] : null;

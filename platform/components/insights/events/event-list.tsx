@@ -32,12 +32,14 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { authFetcher } from "@/lib/fetcher";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pencil, Sparkles, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
 
 import CreateEvent from "./create-event";
 import RunEvent from "./run-event";
@@ -226,16 +228,24 @@ function EventRow({
 }
 
 function EventsList() {
-  const project_id = navigationStateStore((state) => state.project_id);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const router = useRouter();
   const { mutate } = useSWRConfig();
   const { accessToken } = useUser();
+
+  const project_id = navigationStateStore((state) => state.project_id);
+
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const events = selectedProject?.settings?.events || {};
   const eventArray = Object.entries(events);
   // sort the events by name
   eventArray.sort((a, b) => a[0].localeCompare(b[0]));
-  const router = useRouter();
 
   // Deletion event
   const handleDeleteEvent = async (eventNameToDelete: string) => {

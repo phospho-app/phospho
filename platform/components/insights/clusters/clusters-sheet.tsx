@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
 import UpgradeButton from "@/components/upgrade-button";
-import { Clustering } from "@/models/models";
+import { authFetcher } from "@/lib/fetcher";
+import { Clustering, Project } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -19,6 +20,7 @@ import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ChevronRight, Sparkles } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 const RunClusters = ({
   totalNbTasks,
@@ -31,14 +33,13 @@ const RunClusters = ({
 }) => {
   const { accessToken } = useUser();
   const [clusteringCost, setClusteringCost] = useState(0);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const project_id = navigationStateStore((state) => state.project_id);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
+
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);
-  const dataFilters = navigationStateStore((state) => state.dataFilters);
-
-  const project_id = selectedProject?.id;
 
   useEffect(() => {
     if (totalNbTasks) {

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
-import { UsageQuota } from "@/models/models";
+import { Project, UsageQuota } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { CopyIcon, Pencil } from "lucide-react";
@@ -20,15 +20,21 @@ import { useState } from "react";
 import useSWR from "swr";
 
 export default function Page() {
+  const { accessToken } = useUser();
+  const [open, setOpen] = useState(false);
+
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
   const project_id = navigationStateStore((state) => state.project_id);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
-  const [open, setOpen] = useState(false);
-
-  const { accessToken } = useUser();
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const plan = selectedOrgMetadata?.plan || "hobby";
 

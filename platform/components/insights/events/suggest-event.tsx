@@ -18,14 +18,15 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { DetectionEngine, DetectionScope } from "@/models/models";
+import { authFetcher } from "@/lib/fetcher";
+import { DetectionEngine, DetectionScope, Project } from "@/models/models";
 import { EventDefinition } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Wand2 } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
 
 interface SuggestEventProps {
@@ -74,7 +75,13 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
   const { loading, accessToken } = useUser();
   const { toast } = useToast();
 
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
   const currentEvents = selectedProject?.settings?.events || {};
   const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
   const current_nb_events = Object.keys(currentEvents).length;

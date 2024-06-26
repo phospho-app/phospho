@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
@@ -17,30 +18,37 @@ import {
 } from "recharts";
 import useSWR from "swr";
 
-const DatavizForDashboard = ({
-  project_id,
+const DatavizGraph = ({
   metric,
-  selectedMetricMetadata,
+  metadata_metric,
   breakdown_by,
 }: {
-  project_id: string;
   metric: string;
-  selectedMetricMetadata: string;
+  metadata_metric?: string | null;
   breakdown_by: string;
 }) => {
   const { accessToken } = useUser();
   const { toast } = useToast();
-
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+
+  if (!metadata_metric) {
+    metadata_metric = "";
+  }
 
   const { data } = useSWR(
     [`/api/metadata/${project_id}/fields`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
+      keepPreviousData: true,
     },
   );
   const numberMetadataFields: string[] | undefined = data?.number;
@@ -51,7 +59,7 @@ const DatavizForDashboard = ({
       `/api/metadata/${project_id}/pivot/`,
       accessToken,
       metric,
-      selectedMetricMetadata,
+      metadata_metric,
       breakdown_by,
       numberMetadataFields,
       categoryMetadataFields,
@@ -60,7 +68,7 @@ const DatavizForDashboard = ({
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metric: metric,
-        metric_metadata: selectedMetricMetadata,
+        metric_metadata: metadata_metric,
         breakdown_by: breakdown_by,
         number_metadata_fields: numberMetadataFields,
         category_metadata_fields: categoryMetadataFields,
@@ -108,7 +116,7 @@ const DatavizForDashboard = ({
     return <></>;
   }
   if (
-    selectedMetricMetadata === "sentiment_score" &&
+    metadata_metric === "sentiment_score" &&
     !numberMetadataFields.includes("sentiment_score")
   ) {
     return <></>;
@@ -116,9 +124,9 @@ const DatavizForDashboard = ({
 
   // Display the data or "Loading..."
   return (
-    <div className="flex flex-col space-y-2">
+    <>
       {!pivotData && pivotLoading && <p>Loading...</p>}
-      {(pivotData === null || pivotData?.length == 0) && <></>}
+      {(pivotData === null || pivotData?.length == 0) && <>No data</>}
       {pivotData?.length == 1 && (
         <>
           <Card>
@@ -133,8 +141,7 @@ const DatavizForDashboard = ({
             <CardContent className="text-xl font-extrabold">
               <p>
                 {Math.round(
-                  pivotData[0][`${metric}${selectedMetricMetadata ?? ""}`] *
-                    10000,
+                  pivotData[0][`${metric}${metadata_metric ?? ""}`] * 10000,
                 ) / 10000}
               </p>
             </CardContent>
@@ -142,15 +149,15 @@ const DatavizForDashboard = ({
         </>
       )}
       {pivotData?.length > 1 && (
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={pivotData}
             layout="vertical"
             margin={{
-              top: 20,
-              right: 100,
-              bottom: 20,
-              left: 100,
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
             }}
           >
             <CartesianGrid />
@@ -217,7 +224,7 @@ const DatavizForDashboard = ({
                 }
                 return value;
               }}
-              width={150}
+              width={100}
             />
             <XAxis
               stroke="#888888"
@@ -270,8 +277,8 @@ const DatavizForDashboard = ({
           </BarChart>
         </ResponsiveContainer>
       )}
-    </div>
+    </>
   );
 };
 
-export default DatavizForDashboard;
+export default DatavizGraph;
