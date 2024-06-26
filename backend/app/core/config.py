@@ -28,16 +28,11 @@ if MONGODB_NAME == "production" and ENVIRONMENT != "production":
     raise Exception("MONGODB_NAME is set to 'production' in non-production environment")
 
 ### USAGE LIMITS ###
-# TODO: disabled in preview
-# Maximum number of projects per user
-MAX_PROJECTS_PER_USER = 100
-
-DEFAULT_MAX_QUERY_LIMIT = 1000
-MAX_NUMBER_OF_SCREENED_TASKS_PER_PROJECT = 10000
 PLAN_HOBBY_MAX_NB_DETECTIONS = 10
 
 PLAN_HOBBY_MAX_USERS = 1
 PLAN_PRO_MAX_USERS = 15
+PLAN_SELFHOSTED_MAX_USERS = os.getenv("PLAN_SELFHOSTED_MAX_USERS", 100)
 
 ### DOCUMENTATION ##
 

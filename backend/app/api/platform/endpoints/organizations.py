@@ -140,6 +140,18 @@ def post_init_org(
         }
 
     try:
+        # Check if we are in self-hosted mode
+        if config.ENVIRONMENT == "preview":
+            propelauth.update_org_metadata(
+                org_id,
+                max_users=config.PLAN_SELFHOSTED_MAX_USERS,
+                metadata={"plan": "self-hosted", "initialized": True},
+            )
+            logger.info(
+                f"Organization {org_id} initialized with max_users={config.PLAN_SELFHOSTED_MAX_USERS} and plan=self-hosted"
+            )
+            return {"status": "ok"}
+
         # Initialize the organization with the hobby plan
         propelauth.update_org_metadata(
             org_id,
