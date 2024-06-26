@@ -35,6 +35,7 @@ export function getColumns() {
   const { accessToken } = useUser();
   let uniqueEventNamesInData: string[] = [];
   const project_id = navigationStateStore((state) => state.project_id);
+
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
@@ -42,7 +43,6 @@ export function getColumns() {
       keepPreviousData: true,
     },
   );
-
   const { data: uniqueEvents } = useSWR(
     project_id
       ? [`/api/projects/${project_id}/unique-events`, accessToken]

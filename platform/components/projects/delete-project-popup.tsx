@@ -21,6 +21,7 @@ import { useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 
 const AlertDialogDeleteProject = () => {
+  const router = useRouter();
   const { accessToken } = useUser();
   const { mutate } = useSWRConfig();
 
@@ -28,6 +29,11 @@ const AlertDialogDeleteProject = () => {
 
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
+
+  const setproject_id = navigationStateStore((state) => state.setproject_id);
+  const projects = dataStateStore((state) => state.projects);
+  const setProjects = dataStateStore((state) => state.setProjects);
+
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
@@ -35,11 +41,6 @@ const AlertDialogDeleteProject = () => {
       keepPreviousData: true,
     },
   );
-  const setproject_id = navigationStateStore((state) => state.setproject_id);
-  const projects = dataStateStore((state) => state.projects);
-  const setProjects = dataStateStore((state) => state.setProjects);
-
-  const router = useRouter();
 
   return (
     selectedProject && (

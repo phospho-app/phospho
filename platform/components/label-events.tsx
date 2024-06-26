@@ -335,7 +335,6 @@ export const InteractiveEventBadgeForSessions = ({
 
   // Find the event definition in the project settings
   const eventDefinition = selectedProject.settings?.events[event.event_name];
-  const { toast } = useToast();
 
   return (
     <DropdownMenu>

@@ -34,18 +34,12 @@ const RunClusters = ({
   const { accessToken } = useUser();
   const [clusteringCost, setClusteringCost] = useState(0);
   const project_id = navigationStateStore((state) => state.project_id);
-  const { data: selectedProject }: { data: Project } = useSWR(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
+
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);
-  const dataFilters = navigationStateStore((state) => state.dataFilters);
 
   useEffect(() => {
     if (totalNbTasks) {

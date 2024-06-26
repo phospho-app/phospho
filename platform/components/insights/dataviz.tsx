@@ -30,6 +30,7 @@ const DatavizGraph = ({
   const { accessToken } = useUser();
   const { toast } = useToast();
   const project_id = navigationStateStore((state) => state.project_id);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -38,7 +39,6 @@ const DatavizGraph = ({
       keepPreviousData: true,
     },
   );
-  const dataFilters = navigationStateStore((state) => state.dataFilters);
 
   if (!metadata_metric) {
     metadata_metric = "";
@@ -126,7 +126,7 @@ const DatavizGraph = ({
   return (
     <>
       {!pivotData && pivotLoading && <p>Loading...</p>}
-      {(pivotData === null || pivotData?.length == 0) && <>no data</>}
+      {(pivotData === null || pivotData?.length == 0) && <>No data</>}
       {pivotData?.length == 1 && (
         <>
           <Card>

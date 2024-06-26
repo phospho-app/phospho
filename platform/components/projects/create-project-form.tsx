@@ -37,7 +37,6 @@ const CreateProjectDialog = ({
   setOpen: (open: boolean) => void;
   projectToEdit?: Project;
 }) => {
-  // PropelAuth
   const { accessToken } = useUser();
   const { mutate } = useSWRConfig();
   const { toast } = useToast();
@@ -45,6 +44,12 @@ const CreateProjectDialog = ({
   const setproject_id = navigationStateStore((state) => state.setproject_id);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
+
+  const [isCreating, setIsCreating] = useState(false);
+  const [isCreated, setIsCreated] = useState(false);
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+  const router = useRouter();
+
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
@@ -52,13 +57,6 @@ const CreateProjectDialog = ({
       keepPreviousData: true,
     },
   );
-
-  const [isCreating, setIsCreating] = useState(false);
-  const [isCreated, setIsCreated] = useState(false);
-
-  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-  const router = useRouter();
 
   const FormSchema = z.object({
     project_name: z

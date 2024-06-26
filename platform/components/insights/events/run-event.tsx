@@ -49,6 +49,7 @@ export default function RunEvent({
   const { loading, accessToken } = useUser();
   const { toast } = useToast();
   const dateRange = navigationStateStore((state) => state.dateRange);
+
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),

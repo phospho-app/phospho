@@ -100,6 +100,7 @@ export function getColumns({
 }): ColumnDef<TaskWithEvents>[] {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),

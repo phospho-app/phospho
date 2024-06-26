@@ -19,6 +19,8 @@ export function SelectProjectButton() {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
+  const projects = dataStateStore((state) => state.projects);
+
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
@@ -26,7 +28,6 @@ export function SelectProjectButton() {
       keepPreviousData: true,
     },
   );
-  const projects = dataStateStore((state) => state.projects);
 
   const selectedProjectName = selectedProject?.project_name ?? "loading...";
 

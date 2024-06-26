@@ -228,9 +228,12 @@ function EventRow({
 }
 
 function EventsList() {
-  const project_id = navigationStateStore((state) => state.project_id);
+  const router = useRouter();
   const { mutate } = useSWRConfig();
   const { accessToken } = useUser();
+
+  const project_id = navigationStateStore((state) => state.project_id);
+
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
@@ -243,7 +246,6 @@ function EventsList() {
   const eventArray = Object.entries(events);
   // sort the events by name
   eventArray.sort((a, b) => a[0].localeCompare(b[0]));
-  const router = useRouter();
 
   // Deletion event
   const handleDeleteEvent = async (eventNameToDelete: string) => {

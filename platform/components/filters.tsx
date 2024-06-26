@@ -56,6 +56,14 @@ const FilterComponent = ({
   const { accessToken } = useUser();
 
   const project_id = navigationStateStore((state) => state.project_id);
+  const setSessionsPagination = navigationStateStore(
+    (state) => state.setSessionsPagination,
+  );
+  const setTasksPagination = navigationStateStore(
+    (state) => state.setTasksPagination,
+  );
+  const dateRange = navigationStateStore((state) => state.dateRange);
+
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
@@ -64,14 +72,6 @@ const FilterComponent = ({
     },
   );
   const events = selectedProject?.settings?.events;
-
-  const setSessionsPagination = navigationStateStore(
-    (state) => state.setSessionsPagination,
-  );
-  const setTasksPagination = navigationStateStore(
-    (state) => state.setTasksPagination,
-  );
-  const dateRange = navigationStateStore((state) => state.dateRange);
 
   const resetPagination = () => {
     if (variant === "tasks") {
