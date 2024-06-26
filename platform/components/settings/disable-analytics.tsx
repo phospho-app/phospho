@@ -8,17 +8,10 @@ import { toast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
-import { z } from "zod";
-
-const FormSchema = z.object({
-  recipe_type_list: z.array(z.string()),
-});
 
 export default function DisableAnalytics() {
   const { mutate } = useSWRConfig();
@@ -59,41 +52,33 @@ export default function DisableAnalytics() {
     if (!accessToken) return;
     if (!selectedProject) return;
     const updateSettings = async () => {
-      try {
-        const response = await fetch(`/api/projects/${selectedProject.id}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+      await fetch(`/api/projects/${selectedProject.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          settings: {
+            run_evals: checkedEval,
+            run_event_detection: checkedEvent,
+            run_sentiment_language: checkedLangSent,
           },
-          body: JSON.stringify({
-            settings: {
-              run_evals: checkedEval,
-              run_event_detection: checkedEvent,
-              run_sentiment_language: checkedLangSent,
-            },
-          }),
-        }).then(() => {
-          mutate(
-            [`/api/projects/${selectedProject.id}`, accessToken],
-            async () => {
-              return { project: selectedProject };
-            },
-          );
-          toast({
-            title: "Settings updated",
-            description:
-              "Your next logs will be updated with the new settings.",
-          });
-        });
-      } catch (error) {
+        }),
+      }).then(() => {
+        mutate(
+          [`/api/projects/${selectedProject.id}`, accessToken],
+          async () => {
+            return { project: selectedProject };
+          },
+        );
         toast({
-          title: "Error",
-          description: "An error occured while updating the settings.",
+          title: "Settings updated",
+          description: "Your next logs will be updated with the new settings.",
         });
-      }
-      updateSettings();
+      });
     };
+    updateSettings();
   }, [checkedEval, checkedEvent, checkedLangSent]);
 
   const analytics = [
@@ -120,13 +105,6 @@ export default function DisableAnalytics() {
         "Recognize the sentiment (positive, negative) and the language of the user's task input. 2 credits per task.",
     },
   ] as const;
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      recipe_type_list: ["evaluation", "event_detection", "sentiment_language"],
-    },
-  });
 
   return (
     <div>
