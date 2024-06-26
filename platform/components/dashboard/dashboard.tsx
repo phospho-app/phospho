@@ -95,21 +95,18 @@ const RenameDashboardTile: React.FC<RenameDashboardTileProps> = ({
     });
 
     try {
-      const creation_response = await fetch(
-        `/api/projects/${selectedProject.id}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer " + accessToken,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(selectedProject),
+      await fetch(`/api/projects/${selectedProject.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+          "Content-Type": "application/json",
         },
-      ).then((response) => {
+        body: JSON.stringify(selectedProject),
+      }).then(() => {
         setOpen(false);
         mutate(
           [`/api/projects/${selectedProject.id}`, accessToken],
-          async (data: any) => {
+          async () => {
             return { project: selectedProject };
           },
         );
