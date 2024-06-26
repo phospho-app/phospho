@@ -497,7 +497,7 @@ async def connect_langsmith(
 
         client = Client(api_key=credentials["langsmith_api_key"])
         runs = client.list_runs(
-            project_name=credentials["project_name"],
+            project_name=credentials["langsmith_project_name"],
             start_time=datetime.datetime.now() - datetime.timedelta(seconds=1),
         )
         _ = [run for run in runs]
