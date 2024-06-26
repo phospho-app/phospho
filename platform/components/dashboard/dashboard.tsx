@@ -284,6 +284,9 @@ const Dashboard: React.FC = () => {
       ? [`/api/projects/${project_id}`, accessToken, "initial_tiles"]
       : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
 
   const { data: hasTasksData } = useSWR(

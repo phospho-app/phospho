@@ -14,13 +14,18 @@ import React from "react";
 import useSWR from "swr";
 
 export function LabelTasksCallout() {
-  const hasLabelledTasks = dataStateStore((state) => state.hasLabelledTasks);
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
-
-  const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const { accessToken } = useUser();
+
+  const { data: hasLabelledTasks } = useSWR(
+    project_id
+      ? [`/api/explore/${project_id}/has-enough-labelled-tasks`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+  );
 
   const { data: hasTasksData } = useSWR(
     project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
