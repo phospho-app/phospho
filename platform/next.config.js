@@ -25,6 +25,7 @@ module.exports = {
   
     ]
   },
+  output: 'standalone', // Added for the docker mode in self hosting
 }
 
 // Verify if NEXT_PUBLIC_API_URL is set
@@ -73,5 +74,9 @@ module.exports = withSentryConfig(
     // https://docs.sentry.io/product/crons/
     // https://vercel.com/docs/cron-jobs
     automaticVercelMonitors: true,
+    
+    // Disables the Sentry webpack plugin to avoid source map uploading during build
+    disableServerWebpackPlugin: true,
+    disableClientWebpackPlugin: true,
   }
 );
