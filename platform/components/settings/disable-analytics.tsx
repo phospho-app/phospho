@@ -5,26 +5,27 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { toast } from "@/components/ui/use-toast";
+import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { useSWRConfig } from "swr";
-import { z } from "zod";
+import useSWR, { useSWRConfig } from "swr";
 
-const FormSchema = z.object({
-  recipe_type_list: z.array(z.string()),
-});
-
-export default function DisableAnalytics({
-  selectedProject,
-}: {
-  selectedProject: Project;
-}) {
+export default function DisableAnalytics() {
   const { mutate } = useSWRConfig();
   const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
+
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+
   const [checkedEval, setCheckedEval] = useState(
     selectedProject.settings?.run_evals === undefined
       ? true
@@ -48,52 +49,37 @@ export default function DisableAnalytics({
   const nbrEvents = eventList.length;
 
   useEffect(() => {
-    if (accessToken) {
-      const updateSettings = async () => {
-        try {
-          const response = await fetch(`/api/projects/${selectedProject.id}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
-              settings: {
-                run_evals: checkedEval,
-                run_event_detection: checkedEvent,
-                run_sentiment_language: checkedLangSent,
-              },
-            }),
-          }).then(() => {
-            mutate(
-              [`/api/projects/${selectedProject.id}`, accessToken],
-              async () => {
-                return { project: selectedProject };
-              },
-            );
-            toast({
-              title: "Settings updated",
-              description:
-                "Your next logs will be updated with the new settings.",
-            });
-          });
-        } catch (error) {
-          toast({
-            title: "Error",
-            description: "An error occured while updating the settings.",
-          });
-        }
-      };
-      updateSettings();
-    }
-  }, [
-    checkedEval,
-    checkedEvent,
-    checkedLangSent,
-    !checkedEval,
-    !checkedEvent,
-    !checkedLangSent,
-  ]);
+    if (!accessToken) return;
+    if (!selectedProject) return;
+    const updateSettings = async () => {
+      await fetch(`/api/projects/${selectedProject.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          settings: {
+            run_evals: checkedEval,
+            run_event_detection: checkedEvent,
+            run_sentiment_language: checkedLangSent,
+          },
+        }),
+      }).then(() => {
+        mutate(
+          [`/api/projects/${selectedProject.id}`, accessToken],
+          async () => {
+            return { project: selectedProject };
+          },
+        );
+        toast({
+          title: "Settings updated",
+          description: "Your next logs will be updated with the new settings.",
+        });
+      });
+    };
+    updateSettings();
+  }, [checkedEval, checkedEvent, checkedLangSent]);
 
   const analytics = [
     {
@@ -120,20 +106,15 @@ export default function DisableAnalytics({
     },
   ] as const;
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      recipe_type_list: ["evaluation", "event_detection", "sentiment_language"],
-    },
-  });
-
   return (
     <div>
       <div className="mb-4">
-        <h3 className="text-lg font-bold tracking-tight mb-4">
-          Disable analytics
+        <h3 className="text-lg font-bold tracking-tight mb-2">
+          Automatic analytics
         </h3>
-        <p>You can disable or enable types of analytics for your project.</p>
+        <p>
+          The following analytics are automatically computed on logged content.
+        </p>
       </div>
       {analytics.map((item) => (
         <div key={item.id} className="flex align-center">
