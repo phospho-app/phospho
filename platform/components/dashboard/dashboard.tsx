@@ -26,10 +26,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { authFetcher } from "@/lib/fetcher";
 import { DashboardTile, Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
-import { set } from "date-fns";
 import { GridStack, GridStackNode } from "gridstack";
 import "gridstack/dist/gridstack-extra.min.css";
 import "gridstack/dist/gridstack.min.css";
@@ -244,15 +243,15 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
                             body: JSON.stringify(selectedProject),
                           },
                         ).then((response) => {
-                          mutate(
-                            [
-                              `/api/projects/${selectedProject.id}`,
-                              accessToken,
-                            ],
-                            async (data: any) => {
-                              return { project: selectedProject };
-                            },
-                          );
+                          // mutate(
+                          //   [
+                          //     `/api/projects/${selectedProject.id}`,
+                          //     accessToken,
+                          //   ],
+                          //   async (data: any) => {
+                          //     return { project: selectedProject };
+                          //   },
+                          // );
                         });
                       } catch (error) {
                         toast({
@@ -363,12 +362,12 @@ const Dashboard: React.FC = () => {
               body: JSON.stringify(selectedProject),
             },
           ).then((response) => {
-            mutate(
-              [`/api/projects/${selectedProject.id}`, accessToken],
-              async (data: any) => {
-                return { project: selectedProject };
-              },
-            );
+            // mutate(
+            //   [`/api/projects/${selectedProject.id}`, accessToken],
+            //   async (data: any) => {
+            //     return { project: selectedProject };
+            //   },
+            // );
           });
         } catch (error) {
           toast({
