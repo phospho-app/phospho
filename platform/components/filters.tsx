@@ -14,7 +14,11 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
-import { Clustering, MetadataFieldsToUniqueValues } from "@/models/models";
+import {
+  Clustering,
+  MetadataFieldsToUniqueValues,
+  Project,
+} from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -49,8 +53,16 @@ const FilterComponent = ({
 }) => {
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const { accessToken } = useUser();
+
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
   const events = selectedProject?.settings?.events;
 
   const setSessionsPagination = navigationStateStore(

@@ -9,13 +9,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { authFetcher } from "@/lib/fetcher";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
+import useSWR from "swr";
 
 export function SelectProjectButton() {
-  // Zustand state management
+  const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
   const projects = dataStateStore((state) => state.projects);
 
   const selectedProjectName = selectedProject?.project_name ?? "loading...";

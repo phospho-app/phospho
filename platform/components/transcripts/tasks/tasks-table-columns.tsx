@@ -26,7 +26,12 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
-import { Event, EventDefinition, TaskWithEvents } from "@/models/models";
+import {
+  Event,
+  EventDefinition,
+  Project,
+  TaskWithEvents,
+} from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
@@ -93,9 +98,15 @@ export function getColumns({
   setSheetToOpen: (sheet: string | null) => void;
   setEventDefinition: (event: EventDefinition | null) => void;
 }): ColumnDef<TaskWithEvents>[] {
-  const project_id = navigationStateStore((state) => state.project_id);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const events = selectedProject?.settings?.events || {};
   const eventArray = Object.entries(events);

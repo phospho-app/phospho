@@ -12,11 +12,18 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { useToast } from "@/components/ui/use-toast";
+import { authFetcher } from "@/lib/fetcher";
 import { cn } from "@/lib/utils";
-import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
+import {
+  Event,
+  Project,
+  SessionWithEvents,
+  TaskWithEvents,
+} from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, PlusIcon, Trash } from "lucide-react";
+import useSWR from "swr";
 
 export const EventDetectionDescription = ({
   event,
@@ -92,8 +99,14 @@ export const InteractiveEventBadgeForTasks = ({
   setTask: (task: TaskWithEvents) => void;
 }) => {
   const { accessToken } = useUser();
-
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const project_id = task.project_id;
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   if (!selectedProject) {
     return <></>;
@@ -101,7 +114,6 @@ export const InteractiveEventBadgeForTasks = ({
 
   // Find the event definition in the project settings
   const eventDefinition = selectedProject.settings?.events[event.event_name];
-  const { toast } = useToast();
 
   return (
     <DropdownMenu>
@@ -196,7 +208,14 @@ export const AddEventDropdownForTasks = ({
   }
   const { accessToken } = useUser();
   const events = task.events;
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const project_id = task.project_id;
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   if (!selectedProject) {
     return <></>;
@@ -301,8 +320,14 @@ export const InteractiveEventBadgeForSessions = ({
   setSession: (task: SessionWithEvents) => void;
 }) => {
   const { accessToken } = useUser();
-
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const project_id = session.project_id;
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   if (!selectedProject) {
     return <></>;
@@ -404,7 +429,14 @@ export const AddEventDropdownForSessions = ({
   }
   const { accessToken } = useUser();
   const events = session.events;
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const project_id = session.project_id;
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   if (!selectedProject) {
     return <></>;

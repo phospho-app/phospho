@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { DashboardTile } from "@/models/models";
+import { DashboardTile, Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -45,7 +45,6 @@ const MetadataForm: React.FC = () => {
   const { toast } = useToast();
   const router = useRouter();
 
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const project_id = navigationStateStore((state) => state.project_id);
 
   const selectedMetric = navigationStateStore((state) => state.selectedMetric);
@@ -61,6 +60,14 @@ const MetadataForm: React.FC = () => {
   );
   const setSelectedGroupBy = navigationStateStore(
     (state) => state.setSelectedGroupBy,
+  );
+
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
 
   // Fetch metadata unique metadata fields from the API

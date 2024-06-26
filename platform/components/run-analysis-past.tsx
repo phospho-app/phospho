@@ -21,6 +21,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { authFetcher } from "@/lib/fetcher";
+import { Project } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,6 +34,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import useSWR from "swr";
 import { z } from "zod";
 
 import FilterComponent from "./filters";
@@ -54,14 +57,20 @@ const RunAnalysisInPast = ({
   const [checkedEvent, setCheckedEvent] = useState(true);
   const [checkedLangSent, setCheckedLangSent] = useState(true);
   const [totalAnalytics, setTotalAnalytics] = useState(0);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
 
-  const project_id = selectedProject?.id;
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
   const eventList: string[] = Object.keys(
     selectedProject?.settings?.events || {},
   );

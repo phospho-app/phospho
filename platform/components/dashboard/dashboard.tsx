@@ -318,9 +318,10 @@ const Dashboard: React.FC = () => {
     }
 
     console.log("grid: Init grid");
+    const allYValues = customDashboardTiles?.map((t) => t.y ?? 0) ?? [];
     const initializedGrid = GridStack.init({
       column: 8,
-      minRow: 1,
+      minRow: Math.max(...allYValues, 1),
       margin: 12,
       // removable: true,
     });

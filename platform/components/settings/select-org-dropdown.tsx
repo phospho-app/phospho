@@ -21,9 +21,6 @@ export function SelectOrgButton() {
     (state) => state.setSelectedOrgId,
   );
   const setproject_id = navigationStateStore((state) => state.setproject_id);
-  const setSelectedProject = dataStateStore(
-    (state) => state.setSelectedProject,
-  );
 
   // PropelAuth
   const { user, loading, accessToken } = useUser();
@@ -36,7 +33,6 @@ export function SelectOrgButton() {
 
   const handleValueChange = (selectedOrgId: string) => {
     setSelectedOrgId(selectedOrgId);
-    setSelectedProject(null);
     setproject_id(null);
     // Additional logic here if needed
   };

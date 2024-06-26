@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
@@ -30,7 +31,13 @@ const DatavizGraph = ({
   const { toast } = useToast();
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
   const dataFilters = navigationStateStore((state) => state.dataFilters);
 
   if (!metadata_metric) {

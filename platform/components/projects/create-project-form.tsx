@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 // zustand state management
 import { dataStateStore, navigationStateStore } from "@/store/store";
@@ -26,7 +27,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import * as z from "zod";
 
 const CreateProjectDialog = ({
@@ -43,7 +44,14 @@ const CreateProjectDialog = ({
 
   const setproject_id = navigationStateStore((state) => state.setproject_id);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const [isCreating, setIsCreating] = useState(false);
   const [isCreated, setIsCreated] = useState(false);

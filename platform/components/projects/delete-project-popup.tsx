@@ -12,11 +12,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { authFetcher } from "@/lib/fetcher";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
 
 const AlertDialogDeleteProject = () => {
   const { accessToken } = useUser();
@@ -25,7 +27,14 @@ const AlertDialogDeleteProject = () => {
   const [clicked, setClicked] = useState(false);
 
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+  const project_id = navigationStateStore((state) => state.project_id);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
   const setproject_id = navigationStateStore((state) => state.setproject_id);
   const projects = dataStateStore((state) => state.projects);
   const setProjects = dataStateStore((state) => state.setProjects);

@@ -264,8 +264,6 @@ interface dataState {
 
   projects: Project[] | null;
   setProjects: (projects: Project[]) => void;
-  selectedProject: Project | null;
-  setSelectedProject: (project: Project | null) => void;
 
   hasLabelledTasks: HasEnoughLabelledTasks | null;
   setHasLabelledTasks: (
@@ -284,9 +282,6 @@ export const dataStateStore = create<dataState>((set) => ({
   projects: null,
   setProjects: (projects: Project[]) =>
     set((state) => ({ projects: projects })),
-  selectedProject: null,
-  setSelectedProject: (project: Project | null) =>
-    set((state) => ({ selectedProject: project })),
 
   hasLabelledTasks: null,
   setHasLabelledTasks: (hasLabelledTasks: HasEnoughLabelledTasks | null) =>

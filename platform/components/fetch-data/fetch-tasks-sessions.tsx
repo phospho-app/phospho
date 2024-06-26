@@ -17,10 +17,6 @@ function FetchHasTasksSessions() {
     (state) => state.setHasLabelledTasks,
   );
 
-  const setSelectedProject = dataStateStore(
-    (state) => state.setSelectedProject,
-  );
-
   console.log("Rendering FetchHasTasksSessions");
 
   // Fetch has enough labelled tasks
@@ -45,20 +41,6 @@ function FetchHasTasksSessions() {
         description: `Keep labelling to improve automatic evaluations.`,
       });
     }
-  }
-
-  // Fetch the selected project from the server. This is useful when the user
-  // changes the settings
-  const { data: fetchedProject } = useSWR(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-  if (fetchedProject) {
-    console.log("Updating fetchedProject:", fetchedProject);
-    setSelectedProject(fetchedProject);
   }
 
   return <></>;

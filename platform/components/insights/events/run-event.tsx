@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { EventDefinition } from "@/models/models";
+import { EventDefinition, Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -46,10 +46,16 @@ export default function RunEvent({
   // Component to create an event or edit an existing event
 
   const project_id = navigationStateStore((state) => state.project_id);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const { loading, accessToken } = useUser();
   const { toast } = useToast();
   const dateRange = navigationStateStore((state) => state.dateRange);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const { data: hasTasksData } = useSWR(
     project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,

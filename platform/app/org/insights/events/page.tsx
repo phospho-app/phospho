@@ -6,19 +6,29 @@ import SuccessRateByEvent from "@/components/insights/events/success-rate-by-eve
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { authFetcher } from "@/lib/fetcher";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
-import { AlertCircle, PlusIcon, Wand2 } from "lucide-react";
+import { useUser } from "@propelauth/nextjs/client";
+import { AlertCircle, PlusIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
+import useSWR from "swr";
 
 export default function Page() {
-  const router = useRouter();
+  const { accessToken } = useUser();
 
   const project_id = navigationStateStore((state) => state.project_id);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const [open, setOpen] = useState(false);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
+
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const events = selectedProject?.settings?.events || {};
 
