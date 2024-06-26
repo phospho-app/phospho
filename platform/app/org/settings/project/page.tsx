@@ -47,10 +47,10 @@ export default function Page() {
   const maxUsage = usage?.max_usage;
 
   if (project_id === null || project_id === undefined) {
-    return <>No project_id selected</>;
+    return <>No project selected</>;
   }
   if (selectedProject === null || selectedProject === undefined) {
-    return <>No selected project data</>;
+    return <>Loading...</>;
   }
 
   return (
@@ -95,7 +95,6 @@ export default function Page() {
           </Link>
           <AlertDialogDeleteProject />
         </div>
-        <DisableAnalytics selectedProject={selectedProject} />
         <div>
           {plan === "usage_based" && (
             <div>
@@ -123,6 +122,7 @@ export default function Page() {
             </>
           )}
         </div>
+        <DisableAnalytics />
       </div>
     </div>
   );
