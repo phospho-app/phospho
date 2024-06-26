@@ -7,7 +7,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { SentimentThreshold } from "@/models/models";
+import { authFetcher } from "@/lib/fetcher";
+import { Project, SentimentThreshold } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +16,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { EllipsisVertical, Settings } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
 
 export const SentimentSettings = ({}: {}) => {
@@ -29,8 +30,14 @@ export const SentimentSettings = ({}: {}) => {
 
   const { accessToken } = useUser();
 
-  const selectedProject = dataStateStore((state) => state.selectedProject);
   const project_id = navigationStateStore((state) => state.project_id);
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const score = selectedProject?.settings?.sentiment_threshold?.score || 0.3;
   const magnitude =

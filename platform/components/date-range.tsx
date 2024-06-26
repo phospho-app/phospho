@@ -65,7 +65,7 @@ export function DatePickerWithRange({
   }
 
   return (
-    <div className={cn("grid gap-2 mt-2 whitespace-nowrap", className)}>
+    <div className={cn("grid gap-2 whitespace-nowrap", className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button

@@ -3,9 +3,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { Event } from "@/models/models";
-import { dataStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Legend,
   Line,
@@ -29,8 +29,9 @@ interface DailyEvents {
   total: number[];
 }
 
-const EventsLast7Days = ({ project_id }: { project_id: string }) => {
-  const { loading, accessToken } = useUser();
+const EventsLast7Days = () => {
+  const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
 
   let uniqueEventNames: string[] = [];
   const { data: uniqueEvents } = useSWR(

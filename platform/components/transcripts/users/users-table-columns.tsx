@@ -16,7 +16,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { authFetcher } from "@/lib/fetcher";
-import { Event, UserMetadata } from "@/models/models";
+import { Event, Project, UserMetadata } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
@@ -32,13 +32,17 @@ import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
 export function getColumns() {
-  const router = useRouter();
-
+  const { accessToken } = useUser();
   let uniqueEventNamesInData: string[] = [];
   const project_id = navigationStateStore((state) => state.project_id);
-  const selectedProject = dataStateStore((state) => state.selectedProject);
-  const { accessToken } = useUser();
 
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
   const { data: uniqueEvents } = useSWR(
     project_id
       ? [`/api/projects/${project_id}/unique-events`, accessToken]

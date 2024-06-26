@@ -113,12 +113,12 @@ export function Sidebar() {
               <Users className="h-4 w-4 mr-2" />
               Users
             </SideBarElement>
-            <SideBarElement href="/org/transcripts/dashboard">
-              <LayoutDashboard className="h-4 w-4 mr-2" />
-              Dashboard
-            </SideBarElement>
           </div>
         )}
+        <SideBarElement href="/org/transcripts/dashboard">
+          <LayoutDashboard className="h-4 w-4 mr-2" />
+          Dashboard
+        </SideBarElement>
         <WhiteSpaceSeparator />
         <SideBarElement
           href="/org/insights/clusters"

@@ -4,17 +4,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getCountsPerEvent } from "@/lib/events_data";
 import { authFetcher } from "@/lib/fetcher";
 import { Event } from "@/models/models";
-import { dataStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import useSWR from "swr";
 
-interface EventsLast7DaysProps {
-  project_id: string;
-}
-
-const EventsLast30m: React.FC<EventsLast7DaysProps> = ({ project_id }) => {
+const EventsLast30m: React.FC = () => {
   const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
 
   let uniqueEventNamesInData: string[] = [];
   const { data: uniqueEvents } = useSWR(
