@@ -95,21 +95,18 @@ const RenameDashboardTile: React.FC<RenameDashboardTileProps> = ({
     });
 
     try {
-      const creation_response = await fetch(
-        `/api/projects/${selectedProject.id}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer " + accessToken,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(selectedProject),
+      await fetch(`/api/projects/${selectedProject.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+          "Content-Type": "application/json",
         },
-      ).then((response) => {
+        body: JSON.stringify(selectedProject),
+      }).then(() => {
         setOpen(false);
         mutate(
           [`/api/projects/${selectedProject.id}`, accessToken],
-          async (data: any) => {
+          async () => {
             return { project: selectedProject };
           },
         );
@@ -243,15 +240,15 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
                             body: JSON.stringify(selectedProject),
                           },
                         ).then((response) => {
-                          // mutate(
-                          //   [
-                          //     `/api/projects/${selectedProject.id}`,
-                          //     accessToken,
-                          //   ],
-                          //   async (data: any) => {
-                          //     return { project: selectedProject };
-                          //   },
-                          // );
+                          mutate(
+                            [
+                              `/api/projects/${selectedProject.id}`,
+                              accessToken,
+                            ],
+                            async (data: any) => {
+                              return { project: selectedProject };
+                            },
+                          );
                         });
                       } catch (error) {
                         toast({
@@ -280,7 +277,9 @@ const Dashboard: React.FC = () => {
   const { accessToken } = useUser();
   const { toast } = useToast();
   const { data: selectedProject }: { data: Project } = useSWR(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    project_id
+      ? [`/api/projects/${project_id}`, accessToken, "initial_tiles"]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
@@ -322,6 +321,7 @@ const Dashboard: React.FC = () => {
       column: 8,
       minRow: Math.max(...allYValues, 1),
       margin: 12,
+      // float: true,
       // removable: true,
     });
 
@@ -362,12 +362,12 @@ const Dashboard: React.FC = () => {
               body: JSON.stringify(selectedProject),
             },
           ).then((response) => {
-            // mutate(
-            //   [`/api/projects/${selectedProject.id}`, accessToken],
-            //   async (data: any) => {
-            //     return { project: selectedProject };
-            //   },
-            // );
+            mutate(
+              [`/api/projects/${selectedProject.id}`, accessToken],
+              async (data: any) => {
+                return { project: selectedProject };
+              },
+            );
           });
         } catch (error) {
           toast({
