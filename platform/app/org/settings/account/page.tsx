@@ -83,6 +83,9 @@ export default function Page() {
         {plan === "pro" && (
           <div>You can invite up to 15 collaborators per organization.</div>
         )}
+        {plan === "self-hosted" && (
+          <div className="mt-4">You are in self-hosted mode</div>
+        )}
       </div>
     </div>
   );
