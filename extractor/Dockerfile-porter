@@ -13,9 +13,9 @@ COPY ./poetry.lock /src/poetry.lock
 # Install dependencies
 RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
 
-# Install hospho package
+# Install phospho package
 RUN poetry install --no-interaction --no-ansi
-RUN poetry run pip install phospho[lab]
+RUN poetry run pip install --upgrade phospho[lab]
 
 # Copy source code
 COPY ./app /src/app
