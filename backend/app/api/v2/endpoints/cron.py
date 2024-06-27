@@ -1,4 +1,5 @@
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, Header, Request
+from fastapi_simple_rate_limiter import rate_limiter
 
 from loguru import logger
 from app.services.mongo.extractor import collect_langsmith_data, collect_langfuse_data
@@ -9,8 +10,29 @@ from app.services.mongo.cron import (
     fetch_and_decrypt_langsmith_credentials,
     fetch_and_decrypt_langfuse_credentials,
 )
+from typing import Dict
 
 router = APIRouter(tags=["cron"])
+
+
+@router.post(
+    "/cron/sync_pipeline",
+    description="Run the synchronisation pipeline for Langsmith and Langfuse",
+    response_model=Dict,
+)
+@rate_limiter(limit=2, seconds=60)
+async def run_sync_pipeline(
+    request: Request,
+    key: str | None = Header(default=None),
+):
+    if key != config.CRON_SECRET_KEY:
+        return {"status": "error", "message": "Invalid secret key"}
+    try:
+        await run_langsmith_sync_pipeline()
+        await run_langfuse_sync_pipeline()
+        return {"status": "ok", "message": "Pipeline ran successfully"}
+    except Exception as e:
+        return {"status": "error", "message": f"Error running sync pipeline {e}"}
 
 
 async def run_langsmith_sync_pipeline():

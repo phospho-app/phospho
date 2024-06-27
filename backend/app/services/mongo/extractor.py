@@ -347,9 +347,6 @@ async def collect_langsmith_data(
     max_usage: int,
 ):
     async with httpx.AsyncClient() as client:
-        logger.debug(
-            f"Calling the extractor API for collecting langsmith data: {config.EXTRACTOR_URL}/v1/pipelines/langsmith"
-        )
         try:
             response = await client.post(
                 f"{config.EXTRACTOR_URL}/v1/pipelines/langsmith",  # WARNING: hardcoded API version
