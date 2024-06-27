@@ -122,6 +122,10 @@ async def get_usage_quota(org_id: str, plan: str) -> dict:
         max_usage = None
         max_usage_label = "unlimited"
 
+    if plan == "self-hosted":
+        max_usage = None
+        max_usage_label = "unlimited"
+
     return {
         "org_id": org_id,
         "plan": plan,
