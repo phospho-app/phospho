@@ -29,6 +29,7 @@ import {
   MessagesSquare,
   Plus,
   TextSearch,
+  Timer,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -235,6 +236,37 @@ const MetadataForm: React.FC = () => {
                   <List className="h-4 w-4 mr-2" />
                   Task position
                 </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Timer className="h-4 w-4 mr-2" />
+                    Time
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedGroupBy("day");
+                        }}
+                      >
+                        Day
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedGroupBy("week");
+                        }}
+                      >
+                        Week
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedGroupBy("month");
+                        }}
+                      >
+                        Month
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <Code className="h-4 w-4 mr-2" />

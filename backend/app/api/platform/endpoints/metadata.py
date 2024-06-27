@@ -226,4 +226,5 @@ async def post_metadata_pivot(
         category_metadata_fields=pivot_query.category_metadata_fields,
         filters=pivot_query.filters,
     )
+
     return MetadataPivotResponse(pivot_table=pivot_table)

@@ -458,6 +458,7 @@ async def breakdown_by_sum_of_metadata_field(
 
     The breakdown_by field can be one of the following:
     - A metadata field
+    - A time field: day, week, month
     - "event_name"
     - "task_position"
     - "None"
@@ -487,6 +488,8 @@ async def breakdown_by_sum_of_metadata_field(
         breakdown_by_col = f"metadata.{breakdown_by}"
     elif breakdown_by == "None":
         breakdown_by_col = "id"
+    elif breakdown_by in ["day", "week", "month"]:
+        breakdown_by_col = "'dateToString': {'format': '%Y-%m-%d','date': {'$toDate': {'$multiply': ['$created_at', 1000]}},}"
     else:
         breakdown_by_col = breakdown_by
 
@@ -705,7 +708,11 @@ async def breakdown_by_sum_of_metadata_field(
     else:
         pipeline.append({"$sort": {"breakdown_by": -1, "metric": 1}})
 
+    logger.debug(f"Breakdown by sum of metadata field pipeline: {pipeline}")
+
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=200)
+
+    logger.debug(f"Breakdown by sum of metadata field: {result}")
 
     # logger.debug(f"Breakdown by sum of metadata field: {result}")
 
