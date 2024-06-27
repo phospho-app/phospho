@@ -33,10 +33,11 @@ async def create_fine_tuning_job(
     # Might add more checks in the future
     if org["org"].get("metadata", None) is not None:
         logger.debug(f"Org metadata: {org['org']['metadata']}")
-        if org["org"]["metadata"].get("plan") == "pro":
+        if org["org"]["metadata"].get("is_in_alpha", False):
             authorize_request = True
 
     if not authorize_request:
+        logger.warning("Not authorized user tried to create a fine-tuning job.")
         raise HTTPException(
             status_code=403, detail="You need to be a pro user to use this feature."
         )

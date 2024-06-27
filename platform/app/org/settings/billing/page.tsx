@@ -45,7 +45,7 @@ export default function Page() {
   return (
     <>
       <div className="flex flex-col space-y-2">
-        {plan && plan !== "hobby" && (
+        {plan && plan !== "hobby" && plan !== "self-hosted" && (
           <Button
             variant="secondary"
             onClick={onBillingPortalClick}
@@ -64,6 +64,7 @@ export default function Page() {
         )}
         {plan === "usage_based" && <Pricing currentPlan="usage_based" />}
         {plan === "pro" && <Pricing currentPlan="pro" />}
+        {plan === "self-hosted" && <Pricing currentPlan="self-hosted" />}
         <div className="h-20"></div>
       </div>
     </>

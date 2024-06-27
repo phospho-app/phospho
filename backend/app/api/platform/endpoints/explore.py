@@ -388,14 +388,17 @@ async def post_detect_clusters(
             detail="No tasks found in the project.",
         )
 
-    if org_plan.get("plan") == "hobby" or org_plan.get("plan") is None:
-        if current_usage + clustering_sample_size >= max_usage:
-            raise HTTPException(
-                status_code=403,
-                detail="Payment details required to run the cluster detection algorithm.",
-            )
+    # Ignore limits and metering in preview mode
+    if config.ENVIRONMENT != "preview":
+        if org_plan.get("plan") == "hobby" or org_plan.get("plan") is None:
+            if current_usage + clustering_sample_size >= max_usage:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Payment details required to run the cluster detection algorithm.",
+                )
 
-    await bill_on_stripe(org_id=org_id, nb_credits_used=clustering_sample_size * 2)
+        await bill_on_stripe(org_id=org_id, nb_credits_used=clustering_sample_size * 2)
+
     await clustering(
         clustering_request=ClusteringRequest(
             project_id=project_id,

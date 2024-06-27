@@ -39,7 +39,11 @@ async def post_backfill_event(
     if "customer_id" in org_metadata.keys():
         customer_id = org_metadata.get("customer_id", None)
 
-    if not customer_id and org_id != config.PHOSPHO_ORG_ID:
+    if (
+        not customer_id
+        and org_id != config.PHOSPHO_ORG_ID
+        and config.ENVIRONMENT != "preview"
+    ):
         raise HTTPException(
             status_code=402,
             detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",

@@ -397,6 +397,14 @@ export default function Pricing({
     />
   );
 
+  if (currentPlan === "self-hosted") {
+    return (
+      <div className="flex items-center justify-center h-full px-6">
+        <p>You are in self-hosted mode. Contact us at contact@phospho.ai for any help.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-start gap-x-4 ">
       {(currentPlan === "hobby" || currentPlan === null) && hobbyPricingCard}
