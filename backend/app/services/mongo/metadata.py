@@ -3,7 +3,7 @@ from app.api.v2.models.projects import UserMetadata
 from app.services.mongo.tasks import task_filtering_pipeline_match
 from fastapi import HTTPException
 from loguru import logger
-from app.services.mongo.sessions import compute_session_length, compute_task_position
+from app.services.mongo.sessions import compute_task_position
 
 from app.db.mongo import get_mongo_db
 from phospho.models import ProjectDataFilters

@@ -3,7 +3,6 @@ from loguru import logger
 import tiktoken
 
 from app.api.v2.models import (
-    Embedding,
     EmbeddingRequest,
     EmbeddingResponseData,
     EmbeddingUsage,
