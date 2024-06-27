@@ -122,6 +122,10 @@ async def get_usage_quota(org_id: str, plan: str) -> dict:
         max_usage = None
         max_usage_label = "unlimited"
 
+    if plan == "self-hosted":
+        max_usage = None
+        max_usage_label = "unlimited"
+
     return {
         "org_id": org_id,
         "plan": plan,
@@ -164,6 +168,9 @@ def change_organization_plan(
     """
     Upgrade the organization to a usage_based plan
     """
+    if config.ENVIRONMENT == "preview":
+        logger.error("Cannot upgrade organization in preview environment")
+        return None
     try:
         # Upgrade the organization to the pro plan
         org = propelauth.fetch_org(org_id)

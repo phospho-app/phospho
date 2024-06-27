@@ -28,16 +28,11 @@ if MONGODB_NAME == "production" and ENVIRONMENT != "production":
     raise Exception("MONGODB_NAME is set to 'production' in non-production environment")
 
 ### USAGE LIMITS ###
-# TODO: disabled in preview
-# Maximum number of projects per user
-MAX_PROJECTS_PER_USER = 100
-
-DEFAULT_MAX_QUERY_LIMIT = 1000
-MAX_NUMBER_OF_SCREENED_TASKS_PER_PROJECT = 10000
 PLAN_HOBBY_MAX_NB_DETECTIONS = 10
 
 PLAN_HOBBY_MAX_USERS = 1
 PLAN_PRO_MAX_USERS = 15
+PLAN_SELFHOSTED_MAX_USERS = os.getenv("PLAN_SELFHOSTED_MAX_USERS", 100)
 
 ### DOCUMENTATION ##
 
@@ -45,6 +40,28 @@ ADMIN_EMAIL = "notifications@phospho.app"  # Used when new users sign up
 
 ### OPENAI ###
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+### PROPELAUTH ###
+PROPELAUTH_URL = os.getenv("PROPELAUTH_URL")
+PROPELAUTH_API_KEY = os.getenv("PROPELAUTH_API_KEY")
+if ENVIRONMENT == "test":
+    PHOSPHO_ORG_ID = "3fe248a3-834c-4c26-8dcc-4e55112f702d"
+else:
+    PHOSPHO_ORG_ID = "13b5f728-21a5-481d-82fa-0241ca0e07b9"
+
+### EXTRACTOR (phospho service) ###
+EXTRACTOR_SECRET_KEY = os.getenv("EXTRACTOR_SECRET_KEY")
+EXTRACTOR_URL = os.getenv("EXTRACTOR_URL")
+# TODO: move this to a startup check
+assert (
+    EXTRACTOR_URL is not None
+), "EXTRACTOR_URL is missing from the environment variables"
+
+### PHOSPHO AI HUB ###
+PHOSPHO_AI_HUB_URL = os.getenv("PHOSPHO_AI_HUB_URL", None)
+PHOSPHO_AI_HUB_API_KEY = os.getenv("PHOSPHO_AI_HUB_API_KEY", None)
+if ENVIRONMENT != "preview" and PHOSPHO_AI_HUB_URL is None:
+    logger.error("PHOSPHO_AI_HUB_URL is missing from the environment variables")
 
 ### Vector Search ###
 QDRANT_URL = os.getenv("QDRANT_URL")
@@ -55,32 +72,19 @@ if QDRANT_API_KEY is None:
     raise Exception("QDRANT_API_KEY is missing from the environment variables")
 
 ### WATCHERS ###
-OPENAI_MODEL_ID = "gpt-4"  # "gpt-4"
-OPENAI_MODEL_ID_FOR_EVAL = "gpt-4"
-OPENAI_MODEL_ID_FOR_EVENTS = "gpt-3.5-turbo-16k"
 EVALUATION_SOURCE = "phospho-4"  # If phospho
 FEW_SHOT_MIN_NUMBER_OF_EXAMPLES = 10  # Make it even
-FEW_SHOT_MAX_NUMBER_OF_EXAMPLES = 50  # Imposed by Cohere API
+# FEW_SHOT_MAX_NUMBER_OF_EXAMPLES = 50  # Imposed by Cohere API # unused
 
-### TESTING ###
-# Testing variables are only used in the test environment
-# This default value is PLB's User ID
-if ENVIRONMENT == "test":
-    TESTING_UID = os.getenv("TESTING_UID", "e4M5ZDH2pwXz8ddEbVIR")
+###############################################
+### Config below used only in phospho cloud ###
+###############################################
 
 ### SLACK ###
 SLACK_URL = os.getenv("SLACK_URL")
 
 ### SENTRY ###
 SENTRY_DSN = os.getenv("SENTRY_DSN")
-
-### PROPELAUTH ###
-PROPELAUTH_URL = os.getenv("PROPELAUTH_URL")
-PROPELAUTH_API_KEY = os.getenv("PROPELAUTH_API_KEY")
-if ENVIRONMENT == "test":
-    PHOSPHO_ORG_ID = "3fe248a3-834c-4c26-8dcc-4e55112f702d"
-else:
-    PHOSPHO_ORG_ID = "13b5f728-21a5-481d-82fa-0241ca0e07b9"
 
 ### CICD ###
 CICD_PROJECTS = ["VQcNOtKLbszDeMBVaJSr"]
@@ -108,6 +112,7 @@ if ENVIRONMENT != "preview":
 else:
     STRIPE_WEBHOOK_SECRET = "NO_STRIPE_WEBHOOK_SECRET"
 
+# Needed for stripe
 if ENVIRONMENT == "production":
     PHOSPHO_FRONTEND_URL = "https://platform.phospho.ai"
 elif ENVIRONMENT == "staging":
@@ -125,14 +130,6 @@ if ENVIRONMENT == "production":
 else:
     PRO_PLAN_STRIPE_PRODUCT_ID = "prod_Q21F3pwJZDvzNg"
 
-### EXTRACTOR ###
-EXTRACTOR_SECRET_KEY = os.getenv("EXTRACTOR_SECRET_KEY")
-EXTRACTOR_URL = os.getenv("EXTRACTOR_URL")
-# TODO: move this to a startup check
-assert (
-    EXTRACTOR_URL is not None
-), "EXTRACTOR_URL is missing from the environment variables"
-
 ### ANYSCALE ###
 ANYSCALE_BASE_URL = "https://api.endpoints.anyscale.com/v1"
 ANYSCALE_API_KEY = os.getenv("ANYSCALE_API_KEY")
@@ -142,12 +139,6 @@ if ENVIRONMENT != "preview":
 
 CSV_UPLOAD_MAX_ROWS = 100000
 FINE_TUNING_MINIMUM_DOCUMENTS = 20
-
-### PHOSPHO AI HUB ###
-PHOSPHO_AI_HUB_URL = os.getenv("PHOSPHO_AI_HUB_URL", None)
-PHOSPHO_AI_HUB_API_KEY = os.getenv("PHOSPHO_AI_HUB_API_KEY", None)
-if ENVIRONMENT != "preview" and PHOSPHO_AI_HUB_URL is None:
-    logger.error("PHOSPHO_AI_HUB_URL is missing from the environment variables")
 
 ### CRON ###
 CRON_SECRET_KEY = os.getenv("CRON_SECRET_KEY")

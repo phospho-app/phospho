@@ -55,6 +55,10 @@ async def bill_on_stripe(
         logger.debug(f"No job results to bill for organization {org_id}")
         return
 
+    if config.ENVIRONMENT == "preview":
+        logger.debug("Preview environment, stripe billing disabled")
+        return
+
     stripe.api_key = config.STRIPE_SECRET_KEY
 
     # Get the stripe customer id from the org metadata
