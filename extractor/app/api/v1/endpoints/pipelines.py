@@ -271,13 +271,12 @@ async def extract_langsmith_data(
     background_tasks: BackgroundTasks,
 ):
     logger.debug(
-        f"Received Langsmith connection data for org id: {user_data['org_id']}, {user_data}"
+        f"Received Langsmith connection data for org id: {user_data['org_id']}"
     )
 
     last_langsmith_extract = await get_last_langsmith_extract(user_data["project_id"])
 
     client = Client(api_key=user_data["langsmith_credentials"]["langsmith_api_key"])
-    logger.debug(f"User data: {user_data}")
     if last_langsmith_extract is None:
         runs = client.list_runs(
             project_name=user_data["langsmith_credentials"]["langsmith_project_name"],

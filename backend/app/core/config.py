@@ -148,3 +148,6 @@ PHOSPHO_AI_HUB_URL = os.getenv("PHOSPHO_AI_HUB_URL", None)
 PHOSPHO_AI_HUB_API_KEY = os.getenv("PHOSPHO_AI_HUB_API_KEY", None)
 if ENVIRONMENT != "preview" and PHOSPHO_AI_HUB_URL is None:
     logger.error("PHOSPHO_AI_HUB_URL is missing from the environment variables")
+
+### CRON ###
+CRON_SECRET_KEY = os.getenv("CRON_SECRET_KEY")
