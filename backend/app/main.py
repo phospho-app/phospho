@@ -15,9 +15,6 @@ from app.api.v2.endpoints.cron import (
     run_langfuse_sync_pipeline,
 )
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.jobstores.memory import MemoryJobStore
-
 logging.info(f"ENVIRONMENT : {config.ENVIRONMENT}")
 
 
@@ -135,6 +132,7 @@ from app.api.v2.endpoints import (
     train,
     events,
     chat,
+    cron,
 )
 
 api_v2 = FastAPI(
@@ -165,6 +163,7 @@ api_v2.include_router(health.router)
 api_v2.include_router(events.router)
 api_v2.include_router(train.router)
 api_v2.include_router(chat.router)
+api_v2.include_router(cron.router)
 
 
 # Mount the subapplication on the main app with the prefix /v2/
@@ -201,19 +200,3 @@ api_platform.include_router(recipes.router)
 api_platform.include_router(onboarding.router)
 
 app.mount("/api", api_platform)
-
-# Scheduler for cron jobs
-
-jobstores = {
-    "default": MemoryJobStore(),
-}
-
-scheduler = AsyncIOScheduler(jobstores=jobstores, timezone="Europe/Paris")
-scheduler.start()
-
-
-# We sync langsmith data every hour
-@scheduler.scheduled_job("interval", seconds=3600)
-async def run_cron_job():
-    await run_langsmith_sync_pipeline()
-    await run_langfuse_sync_pipeline()
