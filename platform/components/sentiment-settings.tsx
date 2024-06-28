@@ -9,7 +9,6 @@ import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { authFetcher } from "@/lib/fetcher";
 import { Project, SentimentThreshold } from "@/models/models";
-import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";

@@ -1,50 +1,43 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useRedirectFunctions } from "@propelauth/nextjs/client";
 import {
   BarChartBig,
   BookOpenText,
   Boxes,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
   KeyRound,
   LayoutDashboard,
   List,
-  ListChecks,
-  LockKeyhole,
   MessagesSquare,
-  Monitor,
   Settings,
   Shuffle,
   Sparkles,
-  Star,
   TestTubeDiagonal,
   TextSearch,
-  User,
-  User2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Card, CardContent, CardHeader } from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import UpgradeButton from "./upgrade-button";
 
-function SideBarElement({
-  href,
-  icon,
-  children,
-  collapsible = false,
-}: {
+interface SideBarElementProps {
+  children: React.ReactNode;
   href: string;
   icon?: any;
-  children?: React.ReactNode;
   collapsible?: boolean;
-}) {
+}
+
+const SideBarElement: React.FC<SideBarElementProps> = ({
+  children,
+  href,
+  icon,
+  collapsible = false,
+}) => {
   const pathname = usePathname();
 
   return (
@@ -64,7 +57,7 @@ function SideBarElement({
       )}
     </>
   );
-}
+};
 
 function WhiteSpaceSeparator() {
   return <div className="h-4" />;
@@ -169,7 +162,6 @@ export function Sidebar() {
               Project
             </SideBarElement>
             <SideBarElement
-              // href="/org/settings/billing"
               icon={
                 <KeyRound size={16} className="scale-x-[-1] rotate-90 mr-2" />
               }
