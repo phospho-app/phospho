@@ -484,12 +484,39 @@ async def breakdown_by_sum_of_metadata_field(
         {"$match": main_filter},
     ]
 
+    logger.debug(f"Breakdown by {breakdown_by}")
+
     if breakdown_by in category_metadata_fields:
         breakdown_by_col = f"metadata.{breakdown_by}"
     elif breakdown_by == "None":
         breakdown_by_col = "id"
     elif breakdown_by in ["day", "week", "month"]:
-        breakdown_by_col = "'dateToString': {'format': '%Y-%m-%d','date': {'$toDate': {'$multiply': ['$created_at', 1000]}},}"
+        breakdown_by_col = "time_period"
+        # We cant to group our data by day, week or month
+        pipeline += [
+            {
+                "$addFields": {
+                    "time_period": {
+                        "$dateToString": {
+                            "date": {
+                                "$toDate": {
+                                    "$convert": {
+                                        # Multiply by 1000 to convert to milliseconds
+                                        "input": {"$multiply": ["$created_at", 1000]},
+                                        "to": "long",
+                                    }
+                                }
+                            },
+                            "format": "%Y-%m-%d"
+                            if breakdown_by == "day"
+                            else "%Y-%U"
+                            if breakdown_by == "week"
+                            else "%Y-%B",
+                        }
+                    }
+                }
+            }
+        ]
     else:
         breakdown_by_col = breakdown_by
 
