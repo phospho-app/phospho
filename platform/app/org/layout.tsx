@@ -14,7 +14,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
     (state) => state.selectedOrgMetadata,
   );
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const { user, isLoggedIn } = useUser();
+  const { user, isLoggedIn, loading } = useUser();
   const router = useRouter();
 
   if (
@@ -40,7 +40,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
     }
   }
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn && !loading) {
     router.push("/authenticate");
   }
 
