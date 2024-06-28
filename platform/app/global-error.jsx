@@ -14,7 +14,9 @@ export default function GlobalError({ error }) {
   return (
     <html>
       <body>
+        <div>
         <Error />
+        </div>
       </body>
     </html>
   );
