@@ -31,9 +31,12 @@ export default function FetchOrgProject() {
     // This is called the first time the user logs in,
     // before onboarding
     (async () => {
+      console.log("Org id: ", selectedOrgId);
+      console.log("Projects length: ", projects?.length);
       if (!accessToken) return;
       if (!selectedOrgId) return;
       if (!projects) return;
+      if (loading) return;
 
       try {
         if (projects.length > 0) {
@@ -63,7 +66,7 @@ export default function FetchOrgProject() {
         console.error("Error fetching repositories:", error);
       }
     })();
-  }, [selectedOrgId, projects?.length, accessToken]);
+  }, [selectedOrgId, projects?.length]);
 
   if (user && !loading && user.orgIdToOrgMemberInfo !== undefined) {
     const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
