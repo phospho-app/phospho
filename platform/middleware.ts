@@ -10,7 +10,5 @@ export const config = {
     "/api/auth/(.*)",
     // OPTIONAL: Don't match any static assets
     "/((?!_next/static|_next/image|favicon.ico).*)",
-    // Don't match paths that don't require authentication
-    "/((org|onboarding|checkout).*)"
   ],
 };
