@@ -9,6 +9,8 @@ export const config = {
     // REQUIRED: Match all request paths that start with /api/auth/
     "/api/auth/(.*)",
     // OPTIONAL: Don't match any static assets
-    "/((?!_next/static|_next/image|favicon.ico|org|onboarding|checkout).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+    // Don't match paths that don't require authentication
+    "/((org|onboarding|checkout).*)"
   ],
 };
