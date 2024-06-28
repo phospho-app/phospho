@@ -42,7 +42,7 @@ export function SelectOrgButton() {
   }
 
   return (
-    <div className="px-3 py-2">
+    <div className="px-3 py-2 sm:max-w-1/4">
       <Select onValueChange={handleValueChange}>
         <SelectTrigger>
           <SelectValue asChild={true}>

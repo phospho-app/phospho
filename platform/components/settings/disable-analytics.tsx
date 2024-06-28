@@ -109,54 +109,53 @@ export default function DisableAnalytics() {
   return (
     <div>
       <div className="mb-4">
-        <h3 className="text-lg font-bold tracking-tight mb-2">
+        <h2 className="text-2xl font-bold tracking-tight mb-1">
           Automatic analytics
-        </h3>
-        <p>
+        </h2>
+        <p className="text-sm text-muted-foreground">
           The following analytics are automatically computed on logged content.
         </p>
       </div>
-      {analytics.map((item) => (
-        <div key={item.id} className="flex align-center">
-          <Checkbox
-            checked={
-              item.id === "evaluation"
-                ? checkedEval
-                : item.id === "event_detection"
-                  ? checkedEvent
-                  : checkedLangSent
-            }
-            className="mt-1"
-            onCheckedChange={(checked) => {
-              if (checked) {
-                if (item.id === "evaluation") {
-                  setCheckedEval(true);
-                }
-                if (item.id === "event_detection") {
-                  setCheckedEvent(true);
-                }
-                if (item.id === "sentiment_language") {
-                  setCheckedLangSent(true);
-                }
-              } else {
-                if (item.id === "evaluation") {
-                  setCheckedEval(false);
-                }
-                if (item.id === "event_detection") {
-                  setCheckedEvent(false);
-                }
-                if (item.id === "sentiment_language") {
-                  setCheckedLangSent(false);
-                }
+      <div className="space-y-1.5">
+        {analytics.map((item) => (
+          <div key={item.id} className="flex flex-row items-center space-x-2">
+            <Checkbox
+              checked={
+                item.id === "evaluation"
+                  ? checkedEval
+                  : item.id === "event_detection"
+                    ? checkedEvent
+                    : checkedLangSent
               }
-            }}
-          />
-          <div>
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  if (item.id === "evaluation") {
+                    setCheckedEval(true);
+                  }
+                  if (item.id === "event_detection") {
+                    setCheckedEvent(true);
+                  }
+                  if (item.id === "sentiment_language") {
+                    setCheckedLangSent(true);
+                  }
+                } else {
+                  if (item.id === "evaluation") {
+                    setCheckedEval(false);
+                  }
+                  if (item.id === "event_detection") {
+                    setCheckedEvent(false);
+                  }
+                  if (item.id === "sentiment_language") {
+                    setCheckedLangSent(false);
+                  }
+                }
+              }}
+            />
             <HoverCard openDelay={0} closeDelay={0}>
-              <div className="flex">
-                <span className="font-bold mb-4 ml-2">{item.label}</span>
+              <div>{item.label}</div>
+              <div>
                 <HoverCardTrigger>
-                  <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5 ml-2 mt-1" />
+                  <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5" />
                 </HoverCardTrigger>
               </div>
               <HoverCardContent className="w-80">
@@ -164,8 +163,8 @@ export default function DisableAnalytics() {
               </HoverCardContent>
             </HoverCard>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

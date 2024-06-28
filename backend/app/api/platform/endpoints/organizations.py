@@ -192,6 +192,22 @@ async def get_org_usage_quota(
     org_metadata = org.get("metadata", {})
     org_plan = org_metadata.get("plan", "hobby")
     usage_quota = await get_usage_quota(org_id, plan=org_plan)
+    stripe_customer_id = org_metadata.get("customer_id", None)
+    # Return the balance transaction if the org has a stripe customer id
+    if stripe_customer_id is not None:
+        stripe.api_key = config.STRIPE_SECRET_KEY
+        response = stripe.Customer.list_balance_transactions(
+            stripe_customer_id,
+            limit=1,
+        )
+        data = response.get("data", [])
+        if data:
+            balance_transaction = data[0]
+            usage_quota.update(
+                {
+                    "balance_transaction": balance_transaction.get("ending_balance", 0),
+                }
+            )
     return usage_quota
 
 

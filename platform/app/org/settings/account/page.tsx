@@ -3,10 +3,9 @@
 import { SelectOrgButton } from "@/components/settings/select-org-dropdown";
 import { CenteredSpinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
-import UpgradeButton from "@/components/upgrade-button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
-import { CopyIcon } from "lucide-react";
+import { CopyIcon, ExternalLink, User, UserPlus } from "lucide-react";
 import Link from "next/link";
 
 export default function Page() {
@@ -25,68 +24,89 @@ export default function Page() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
+    <>
+      <div className="mb-8 space-y-2">
         <h2 className="text-2xl font-bold tracking-tight mb-4">Your Account</h2>
-        <p>Currently logged in user: {user?.email}</p>
-        <div className="mt-4 mb-4">
-          <Button variant="secondary" onClick={redirectToAccountPage}>
-            Manage Account
-          </Button>
-        </div>
-      </div>
-      <h2 className="text-2xl font-bold tracking-tight mb-4">Organization</h2>
-
-      <div className="space-x-2">
+        <p>
+          Currently logged in user:{" "}
+          <code className="bg-secondary p-1.5">{user?.email}</code>
+        </p>
         <div>
-          Selected organization:
-          <SelectOrgButton />
-        </div>
-        <div className="md:flex flex-auto items-center my-2">
-          <p>Your organization id: {selectedOrgId}</p>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              if (selectedOrgId) {
-                navigator.clipboard.writeText(selectedOrgId);
-              }
-            }}
-          >
-            <CopyIcon size="16" />
+          <Button variant="secondary" onClick={redirectToAccountPage}>
+            <User className="w-4 h-4 mr-2" />
+            Manage Account <ExternalLink className="w-3 h-3 ml-2" />
           </Button>
         </div>
-        <Link
-          href={`${process.env.NEXT_PUBLIC_AUTH_URL}/org/api_keys/${selectedOrgId}`}
-        >
-          <Button variant="secondary">Get API keys</Button>
-        </Link>
-        <Button
-          variant="secondary"
-          onClick={() => redirectToOrgPage(selectedOrgId ?? undefined)}
-        >
-          Invite collaborators
-        </Button>
-        {plan === "hobby" && (
-          <>
-            <UpgradeButton />
-            <div className="mt-4">
-              <div>
-                <Link href="/org/settings/billing" className="underline">
-                  Add a payment method
-                </Link>{" "}
-                to invite more members to your organization.
-              </div>
-            </div>
-          </>
-        )}
-        {plan === "pro" && (
-          <div>You can invite up to 15 collaborators per organization.</div>
-        )}
-        {plan === "self-hosted" && (
-          <div className="mt-4">You are in self-hosted mode</div>
-        )}
       </div>
-    </div>
+      <div className="mb-8 space-y-2">
+        <h2 className="text-2xl font-bold tracking-tight mb-1">Organization</h2>
+        <div className="text-sm text-muted-foreground mb-4">
+          Organizations are used to share projects and manage billing.
+        </div>
+        <div className="space-y-2 pb-4">
+          <div className="md:flex flex-auto items-center">
+            <p>
+              Organization id:{" "}
+              <code className="bg-secondary p-1.5">{selectedOrgId}</code>
+            </p>
+            <Button
+              variant="outline"
+              className="ml-2"
+              size="icon"
+              onClick={() => {
+                if (selectedOrgId) {
+                  navigator.clipboard.writeText(selectedOrgId);
+                }
+              }}
+            >
+              <CopyIcon className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-2 pb-4">
+          <h2 className="text-xl font-bold tracking-tight">Invite</h2>
+          <div className="text-sm text-muted-foreground">
+            Share your projects by inviting them to join your organization.
+          </div>
+          <Button
+            variant="secondary"
+            onClick={() => redirectToOrgPage(selectedOrgId ?? undefined)}
+            disabled={plan === "hobby"}
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Invite to organization <ExternalLink className="w-3 h-3 ml-2" />
+          </Button>
+          {plan === "hobby" && (
+            <div className="text-sm text-muted-foreground">
+              <Link href="/org/settings/billing" className="underline">
+                Add a payment method
+              </Link>{" "}
+              to invite more members.
+            </div>
+          )}
+          {plan === "pro" && (
+            <div className="text-sm text-muted-foreground">
+              You can invite up to 15 members per organization.
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="space-y-2 pb-4">
+        <h2 className="text-xl font-bold tracking-tight">Switch</h2>
+        <div className="text-sm text-muted-foreground">
+          Your account can belong to multiple organizations. Switch between them
+          here.
+        </div>
+        <SelectOrgButton />
+      </div>
+      {plan === "self-hosted" && (
+        <div className="mb-8 space-y-2">
+          <h2 className="text-2xl font-bold tracking-tight mb-4">
+            Self-hosted
+          </h2>
+          <div className="mt-4">You are in self-hosted mode</div>
+        </div>
+      )}
+    </>
   );
 }
