@@ -2,16 +2,19 @@
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { dataStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import {
   BarChartBig,
   BookOpenText,
   Boxes,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
+  KeyRound,
   LayoutDashboard,
   List,
   ListChecks,
+  LockKeyhole,
   MessagesSquare,
   Monitor,
   Settings,
@@ -73,6 +76,7 @@ export function Sidebar() {
   );
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
 
   useEffect(() => {
     const handleResize = () => {
@@ -163,6 +167,15 @@ export function Sidebar() {
           <div className="ml-6 text-muted-foreground">
             <SideBarElement href="/org/settings/project">
               Project
+            </SideBarElement>
+            <SideBarElement
+              // href="/org/settings/billing"
+              icon={
+                <KeyRound size={16} className="scale-x-[-1] rotate-90 mr-2" />
+              }
+              href={`${process.env.NEXT_PUBLIC_AUTH_URL}/org/api_keys/${selectedOrgId}`}
+            >
+              API Keys
             </SideBarElement>
             <SideBarElement href="/org/settings/account">
               Account
