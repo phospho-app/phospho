@@ -1,55 +1,60 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useRedirectFunctions } from "@propelauth/nextjs/client";
 import {
   BarChartBig,
   BookOpenText,
   Boxes,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
   KeyRound,
   LayoutDashboard,
   List,
-  ListChecks,
-  LockKeyhole,
   MessagesSquare,
-  Monitor,
   Settings,
   Shuffle,
   Sparkles,
-  Star,
   TestTubeDiagonal,
   TextSearch,
-  User,
-  User2,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Card, CardContent, CardHeader } from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import UpgradeButton from "./upgrade-button";
 
-function SideBarElement({
+interface SideBarElementProps {
+  children: React.ReactNode;
+  href?: string;
+  icon?: any;
+  collapsible?: boolean;
+  onClick?: () => void;
+}
+
+const SideBarElement: React.FC<SideBarElementProps> = ({
+  children,
   href,
   icon,
-  children,
   collapsible = false,
-}: {
-  href: string;
-  icon?: any;
-  children?: React.ReactNode;
-  collapsible?: boolean;
-}) {
+  onClick,
+}) => {
   const pathname = usePathname();
 
   return (
     <>
-      {(!pathname.startsWith(href) || collapsible) && (
+      {onClick && (
+        <Button
+          variant={"ghost"}
+          className="w-full justify-start h-min py-1"
+          onClick={onClick}
+        >
+          {icon}
+          {children}
+        </Button>
+      )}
+      {href && (!pathname.startsWith(href) || collapsible) && (
         <Link href={href}>
           <Button variant={"ghost"} className="w-full justify-start h-min py-1">
             {icon}
@@ -57,14 +62,14 @@ function SideBarElement({
           </Button>
         </Link>
       )}
-      {pathname.startsWith(href) && !collapsible && (
+      {href && pathname.startsWith(href) && !collapsible && (
         <div className="flex justify-start items-center bg-secondary rounded-md text-sm font-medium h-min px-4 py-1">
           {icon} {children}
         </div>
       )}
     </>
   );
-}
+};
 
 function WhiteSpaceSeparator() {
   return <div className="h-4" />;
@@ -77,6 +82,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const { redirectToOrgApiKeysPage } = useRedirectFunctions();
 
   useEffect(() => {
     const handleResize = () => {
@@ -169,11 +175,10 @@ export function Sidebar() {
               Project
             </SideBarElement>
             <SideBarElement
-              // href="/org/settings/billing"
               icon={
                 <KeyRound size={16} className="scale-x-[-1] rotate-90 mr-2" />
               }
-              href={`${process.env.NEXT_PUBLIC_AUTH_URL}/org/api_keys/${selectedOrgId}`}
+              onClick={() => redirectToOrgApiKeysPage(selectedOrgId ?? "")}
             >
               API Keys
             </SideBarElement>
