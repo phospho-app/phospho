@@ -32,7 +32,14 @@ export default function Page() {
           <code className="bg-secondary p-1.5">{user?.email}</code>
         </p>
         <div>
-          <Button variant="secondary" onClick={redirectToAccountPage}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              redirectToAccountPage({
+                redirectBackToUrl: "https://platform.phospho.ai/org",
+              });
+            }}
+          >
             <User className="w-4 h-4 mr-2" />
             Manage Account <ExternalLink className="w-3 h-3 ml-2" />
           </Button>

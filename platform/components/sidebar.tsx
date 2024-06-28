@@ -27,9 +27,10 @@ import UpgradeButton from "./upgrade-button";
 
 interface SideBarElementProps {
   children: React.ReactNode;
-  href: string;
+  href?: string;
   icon?: any;
   collapsible?: boolean;
+  onClick?: () => void;
 }
 
 const SideBarElement: React.FC<SideBarElementProps> = ({
@@ -37,12 +38,23 @@ const SideBarElement: React.FC<SideBarElementProps> = ({
   href,
   icon,
   collapsible = false,
+  onClick,
 }) => {
   const pathname = usePathname();
 
   return (
     <>
-      {(!pathname.startsWith(href) || collapsible) && (
+      {onClick && (
+        <Button
+          variant={"ghost"}
+          className="w-full justify-start h-min py-1"
+          onClick={onClick}
+        >
+          {icon}
+          {children}
+        </Button>
+      )}
+      {href && (!pathname.startsWith(href) || collapsible) && (
         <Link href={href}>
           <Button variant={"ghost"} className="w-full justify-start h-min py-1">
             {icon}
@@ -50,7 +62,7 @@ const SideBarElement: React.FC<SideBarElementProps> = ({
           </Button>
         </Link>
       )}
-      {pathname.startsWith(href) && !collapsible && (
+      {href && pathname.startsWith(href) && !collapsible && (
         <div className="flex justify-start items-center bg-secondary rounded-md text-sm font-medium h-min px-4 py-1">
           {icon} {children}
         </div>
@@ -70,6 +82,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const { redirectToOrgApiKeysPage } = useRedirectFunctions();
 
   useEffect(() => {
     const handleResize = () => {
@@ -165,7 +178,11 @@ export function Sidebar() {
               icon={
                 <KeyRound size={16} className="scale-x-[-1] rotate-90 mr-2" />
               }
-              href={`${process.env.NEXT_PUBLIC_AUTH_URL}/org/api_keys/${selectedOrgId}`}
+              onClick={() => {
+                redirectToOrgApiKeysPage(selectedOrgId ?? "", {
+                  redirectBackToUrl: "https://platform.phospho.ai/org",
+                });
+              }}
             >
               API Keys
             </SideBarElement>
