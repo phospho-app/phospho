@@ -89,12 +89,6 @@ export default function FetchOrgProject() {
       : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
   );
-  if (orgMetadataError) {
-    toast({
-      title: "Error fetching org metadata",
-      description: `Details: ${orgMetadataError}`,
-    });
-  }
   if (fetchedOrgMetadata) {
     setSelectOrgMetadata(fetchedOrgMetadata);
   }
@@ -117,6 +111,7 @@ export default function FetchOrgProject() {
       title: "Error fetching projects",
       description: `Details: ${projectFetchingError}`,
     });
+    return <></>;
   }
   if (fetchedProjectsData?.projects !== undefined) {
     setProjects(fetchedProjectsData?.projects);

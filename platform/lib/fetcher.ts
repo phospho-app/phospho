@@ -1,10 +1,13 @@
+import { toast } from "@/components/ui/use-toast";
+
 const authFetcher = async (
   url: string,
   accessToken?: string,
   method?: string,
   body?: any,
-) =>
+) => {
   // args?: Request
+
   {
     if (!accessToken) {
       return;
@@ -23,16 +26,35 @@ const authFetcher = async (
       "Content-Type": "application/json",
     };
     const response = await fetch(url, { method, headers: headers, body });
-    const response_json = await response.json();
-    return response_json;
-  };
+    if (response.ok) {
+      const response_json = await response.json();
+      return response_json;
+    } else {
+      console.error("Error fetching data:", response);
+      toast({
+        title: "Error fetching data",
+        description: response.statusText,
+      });
+      return undefined;
+    }
+  }
+};
 
 const nonAuthFetcher = async (url: string, method?: string) => {
   const response = await fetch(url, {
     method,
     headers: { "Content-Type": "application/json" },
   });
-  return await response.json();
+  if (response.ok) {
+    return await response.json();
+  } else {
+    console.error("Error fetching data:", response);
+    toast({
+      title: "Error fetching data",
+      description: response.statusText,
+    });
+    return undefined;
+  }
 };
 
 export { authFetcher, nonAuthFetcher };
