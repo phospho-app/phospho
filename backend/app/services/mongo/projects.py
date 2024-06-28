@@ -706,6 +706,13 @@ async def collect_languages(
     return languages
 
 
+def only_keep_fields(data: dict, fields: List[str]) -> dict:
+    """
+    Keep only the fields in the list in the data dict
+    """
+    return {key: value for key, value in data.items() if key in fields}
+
+
 async def populate_default(
     project_id: str,
     org_id: str,
@@ -775,7 +782,17 @@ async def populate_default(
         task.created_at = generate_timestamp()
         task.org_id = org_id
         task.project_id = project_id
-        task.metadata = {}
+        task.metadata = only_keep_fields(
+            task.metadata,
+            [
+                "prompt_tokens",
+                "completion_tokens",
+                "language",
+                "sentiment_label",
+                "sentiment_score",
+                "sentiment_magnitude",
+            ],
+        )
         task.last_eval.id = generate_uuid()
         task.last_eval.created_at = generate_timestamp()
         task.last_eval.project_id = project_id = project_id

@@ -484,8 +484,6 @@ async def breakdown_by_sum_of_metadata_field(
         {"$match": main_filter},
     ]
 
-    logger.debug(f"Breakdown by {breakdown_by}")
-
     if breakdown_by in category_metadata_fields:
         breakdown_by_col = f"metadata.{breakdown_by}"
     elif breakdown_by == "None":
@@ -735,12 +733,6 @@ async def breakdown_by_sum_of_metadata_field(
     else:
         pipeline.append({"$sort": {"breakdown_by": -1, "metric": 1}})
 
-    logger.debug(f"Breakdown by sum of metadata field pipeline: {pipeline}")
-
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=200)
-
-    logger.debug(f"Breakdown by sum of metadata field: {result}")
-
-    # logger.debug(f"Breakdown by sum of metadata field: {result}")
 
     return result
