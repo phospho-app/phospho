@@ -4,6 +4,7 @@ import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
 import Navbar from "@/components/navbar/nav-bar";
 import { Sidebar } from "@/components/sidebar";
 import { dataStateStore, navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import "@radix-ui/react-dropdown-menu";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -13,6 +14,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
     (state) => state.selectedOrgMetadata,
   );
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const { user, isLoggedIn, loading } = useUser();
   const router = useRouter();
 
   if (
@@ -38,11 +40,15 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
     }
   }
 
+  if (!isLoggedIn && !loading) {
+    router.push("/authenticate");
+  }
+
   return (
     <section>
-      <FetchOrgProject />
       <div className="max-h-screen h-screen overflow-hidden">
         <div className="h-full">
+          <FetchOrgProject />
           <Navbar />
           <div className="grid grid-cols-8 gap-2 w-full h-full">
             <div className="hidden md:block">

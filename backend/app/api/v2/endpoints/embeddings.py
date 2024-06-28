@@ -41,7 +41,7 @@ async def post_embeddings(
     if (
         not customer_id
         and org_id != config.PHOSPHO_ORG_ID
-        and config.ENVIRONMENT != "test"
+        and config.ENVIRONMENT not in ["preview", "test"]
     ):
         raise HTTPException(
             status_code=402,

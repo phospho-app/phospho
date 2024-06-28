@@ -14,6 +14,7 @@ try:
     credentials_natural_language = os.getenv(
         "GCP_JSON_CREDENTIALS_NATURAL_LANGUAGE_PROCESSING"
     )
+    # TODO: this will fail in self-hosted environments
     if credentials_natural_language is not None:
         credentials_dict = json.loads(
             b64decode(credentials_natural_language).decode("utf-8")
