@@ -102,7 +102,6 @@ const FilterComponent = ({
     value: language,
     label: getLanguageLabel(language),
   }));
-  console.log("languageFilterOptions", languageFilterOptions);
 
   // Metadata filters: {"string": {metadata_key: [unique_metadata_values]}}
   const { data: metadataFieldsToValues } = useSWR(
