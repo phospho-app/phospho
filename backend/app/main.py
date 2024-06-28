@@ -3,6 +3,7 @@ import logging
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from urllib.parse import urlparse
 
 import phospho
 from app.core import config
@@ -10,15 +11,25 @@ from app.db.mongo import close_mongo_db, connect_and_init_db
 from app.db.qdrant import close_qdrant, init_qdrant
 from app.services.mongo.extractor import check_health
 from app.services.mongo.ai_hub import check_health_ai_hub
-from app.api.v2.endpoints.cron import (
-    run_langsmith_sync_pipeline,
-    run_langfuse_sync_pipeline,
-)
 
 logging.info(f"ENVIRONMENT : {config.ENVIRONMENT}")
 
 
 # Setup the Sentry SDK
+# Ignore 400 errors in /log
+
+
+def filter_events(event, _):
+    url_string = event["request"]["url"]
+    parsed_url = urlparse(url_string)
+
+    if "log" in parsed_url.path.split("/"):
+        status = event["response"]["status"]
+        if status >= 400 and status < 500:
+            return None
+
+    return event
+
 
 if config.ENVIRONMENT == "production":
     sentry_sdk.init(
@@ -30,6 +41,7 @@ if config.ENVIRONMENT == "production":
         # of sampled transactions.
         # We recommend adjusting this value in production.
         profiles_sample_rate=0.1,
+        before_send=filter_events,
     )
     sentry_sdk.set_level("warning")
 
