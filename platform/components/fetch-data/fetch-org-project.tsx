@@ -26,8 +26,6 @@ export default function FetchOrgProject() {
     (state) => state.setSelectOrgMetadata,
   );
 
-  console.log("Rendering FetchOrgProject");
-
   useEffect(() => {
     // Initialize the org if it has no project
     // This is called the first time the user logs in,
