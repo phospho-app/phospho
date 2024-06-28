@@ -1,9 +1,7 @@
 "use client";
 
 import EventsLast7Days from "@/components/dashboard/events-last7days";
-import EventsLast30m from "@/components/dashboard/events-last30m";
 import OverviewLast7Days from "@/components/dashboard/overview-last7days";
-import UsageLast30m from "@/components/dashboard/usage-last30m";
 import DatavizGraph from "@/components/insights/dataviz";
 import { CenteredSpinner } from "@/components/small-spinner";
 import {
@@ -351,20 +349,17 @@ const Dashboard: React.FC = () => {
       (async () => {
         if (!selectedProject) return;
         try {
-          const creation_response = await fetch(
-            `/api/projects/${selectedProject.id}`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: "Bearer " + accessToken,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(selectedProject),
+          await fetch(`/api/projects/${selectedProject.id}`, {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + accessToken,
+              "Content-Type": "application/json",
             },
-          ).then((response) => {
+            body: JSON.stringify(selectedProject),
+          }).then(() => {
             mutate(
               [`/api/projects/${selectedProject.id}`, accessToken],
-              async (data: any) => {
+              async () => {
                 return { project: selectedProject };
               },
             );
@@ -419,43 +414,22 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
       )}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <Card className="col-span-full lg:col-span-4">
-          <CardHeader>
-            <CardTitle>Number of Daily Tasks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <OverviewLast7Days />
-          </CardContent>
-        </Card>
-        <Card className="col-span-full lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Last 30 min</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UsageLast30m />
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <Card className="col-span-full lg:col-span-4">
-          <CardHeader>
-            <CardTitle>Number of Daily Events</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <EventsLast7Days />
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-full lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Last 30 min</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <EventsLast30m />
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="col-span-full lg:col-span-4">
+        <CardHeader>
+          <CardTitle>Number of Daily Tasks</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <OverviewLast7Days />
+        </CardContent>
+      </Card>
+      <Card className="col-span-full lg:col-span-4">
+        <CardHeader>
+          <CardTitle>Number of Daily Events</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EventsLast7Days />
+        </CardContent>
+      </Card>
     </>
   );
 
