@@ -177,7 +177,7 @@ def change_organization_plan(
             stripe.api_key = config.STRIPE_SECRET_KEY
             stripe.Customer.create_balance_transaction(
                 customer_id,
-                amount=-10,
+                amount=-1000,  # in cents
                 currency="usd",
                 description="[auto] Free credits for new organization",
             )
