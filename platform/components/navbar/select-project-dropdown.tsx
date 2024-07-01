@@ -13,6 +13,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { BriefcaseBusiness } from "lucide-react";
 import useSWR from "swr";
 
 export function SelectProjectButton() {
@@ -59,8 +60,8 @@ export function SelectProjectButton() {
       defaultValue={selectedProjectName}
     >
       <SelectTrigger className="py-1 h-8">
-        <span className="flex mr-1">
-          <span className="mr-1">Project</span>
+        <span className="flex space-x-1">
+          <div className="flex items-center">Project</div>
           <SelectValue
             asChild={true}
             children={<div>{selectedProjectName}</div>}
@@ -73,7 +74,12 @@ export function SelectProjectButton() {
         className="overflow-y-auto max-h-[40rem]"
       >
         <SelectGroup>
-          <SelectLabel>Projects ({`${projects?.length}`})</SelectLabel>
+          <SelectLabel>
+            <div className="flex flex-row items-center">
+              <BriefcaseBusiness className="w-4 h-4 mr-1" />
+              Projects ({`${projects?.length}`})
+            </div>
+          </SelectLabel>
           {projects.map((project) => (
             <SelectItem
               key={project.id}

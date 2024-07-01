@@ -17,7 +17,7 @@ export function CreateProjectButton() {
     <AlertDialog open={openProject} onOpenChange={setOpenProject}>
       <AlertDialogTrigger asChild>
         <div>
-          <HoverCard openDelay={50} closeDelay={50}>
+          <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger asChild>
               <Button variant="outline" size="icon" className="py-1 h-8 w-8">
                 <PlusIcon className="h-4 w-4" />

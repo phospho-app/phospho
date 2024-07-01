@@ -205,7 +205,7 @@ async def get_org_usage_quota(
             balance_transaction = data[0]
             usage_quota.update(
                 {
-                    "balance_transaction": balance_transaction.get("ending_balance", 0),
+                    "balance_transaction": balance_transaction.get("amount", 0),
                 }
             )
     return usage_quota

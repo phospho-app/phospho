@@ -189,7 +189,7 @@ export function getColumns({
       accessorKey: "flag",
       cell: (row) => (
         <DropdownMenu>
-          <HoverCard openDelay={50} closeDelay={50}>
+          <HoverCard openDelay={0} closeDelay={0}>
             <DropdownMenuTrigger>
               <HoverCardTrigger asChild>
                 <div className="flex flex-row items-center">

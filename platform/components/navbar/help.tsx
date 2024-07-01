@@ -48,7 +48,7 @@ export function NavBarHelp() {
       >
         <DropdownMenuTrigger asChild>
           <div>
-            <HoverCard openDelay={50} closeDelay={50}>
+            <HoverCard openDelay={0} closeDelay={0}>
               <HoverCardTrigger>
                 <Button
                   variant="ghost"

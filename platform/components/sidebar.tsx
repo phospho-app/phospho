@@ -7,6 +7,8 @@ import {
   BarChartBig,
   BookOpenText,
   Boxes,
+  BriefcaseBusiness,
+  CircleUser,
   KeyRound,
   LayoutDashboard,
   List,
@@ -18,6 +20,7 @@ import {
   TextSearch,
   TriangleAlert,
   Users,
+  WalletMinimal,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -173,6 +176,7 @@ export function Sidebar() {
         {(pathname.startsWith("/org/settings") || isMobile) && (
           <div className="ml-6 text-muted-foreground">
             <SideBarElement href="/org/settings/project">
+              <BriefcaseBusiness size={16} className="mr-2" />
               Project
             </SideBarElement>
             <SideBarElement
@@ -181,16 +185,18 @@ export function Sidebar() {
               }
               onClick={() => {
                 redirectToOrgApiKeysPage(selectedOrgId ?? "", {
-                  redirectBackToUrl: "https://platform.phospho.ai/org",
+                  redirectBackToUrl: window.location.hostname,
                 });
               }}
             >
               API Keys
             </SideBarElement>
             <SideBarElement href="/org/settings/account">
+              <CircleUser size={16} className="mr-2" />
               Account
             </SideBarElement>
             <SideBarElement href="/org/settings/billing">
+              <WalletMinimal size={16} className="mr-2" />
               Billing
             </SideBarElement>
           </div>
