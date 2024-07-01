@@ -406,7 +406,6 @@ async def post_stripe_webhook(
                 if org_id is not None:
                     # Upgrade the organization to the pro plan
                     logger.info(f"Upgrading organization {org_id} to pro plan")
-
                     background_tasks.add_task(
                         change_organization_plan,
                         org_id=org_id,
