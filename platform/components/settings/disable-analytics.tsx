@@ -27,19 +27,13 @@ export default function DisableAnalytics() {
   );
 
   const [checkedEval, setCheckedEval] = useState(
-    selectedProject.settings?.run_evals === undefined
-      ? true
-      : selectedProject.settings?.run_evals,
+    selectedProject.settings?.run_evals,
   );
   const [checkedEvent, setCheckedEvent] = useState(
-    selectedProject.settings?.run_event_detection === undefined
-      ? true
-      : selectedProject.settings?.run_event_detection,
+    selectedProject.settings?.run_event_detection,
   );
   const [checkedLangSent, setCheckedLangSent] = useState(
-    selectedProject.settings?.run_sentiment_language === undefined
-      ? true
-      : selectedProject.settings?.run_sentiment_language,
+    selectedProject.settings?.run_sentiment_language,
   );
 
   const eventList: string[] = Object.keys(
@@ -48,9 +42,12 @@ export default function DisableAnalytics() {
   const formatedEventList = eventList.join(", ");
   const nbrEvents = eventList.length;
 
-  useEffect(() => {
+  const handleChecked = () => {
     if (!accessToken) return;
     if (!selectedProject) return;
+    if (checkedEval === undefined) return;
+    if (checkedEvent === undefined) return;
+    if (checkedLangSent === undefined) return;
     const updateSettings = async () => {
       await fetch(`/api/projects/${selectedProject.id}`, {
         method: "POST",
@@ -79,7 +76,7 @@ export default function DisableAnalytics() {
       });
     };
     updateSettings();
-  }, [checkedEval, checkedEvent, checkedLangSent]);
+  };
 
   const analytics = [
     {
@@ -149,6 +146,7 @@ export default function DisableAnalytics() {
                     setCheckedLangSent(false);
                   }
                 }
+                handleChecked();
               }}
             />
             <HoverCard openDelay={0} closeDelay={0}>
