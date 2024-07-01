@@ -16,6 +16,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
@@ -47,6 +48,7 @@ const AlertDialogDeleteProject = () => {
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button variant="destructive" className="justify-start">
+            <Trash className="w-4 h-4 mr-2" />
             Delete project
           </Button>
         </AlertDialogTrigger>
@@ -68,7 +70,6 @@ const AlertDialogDeleteProject = () => {
               <AlertDialogAction
                 onClick={async () => {
                   setClicked(true);
-                  console.log("delete project");
                   if (!projects) return;
                   // Don't delete the project if only 1 project is left
                   if (projects.length === 1) return;

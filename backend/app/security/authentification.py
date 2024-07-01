@@ -183,17 +183,7 @@ def raise_error_if_not_in_pro_tier(org: dict, enforce: bool = True) -> None:
         return
     org_id = org["org"].get("org_id")
     # Exempted orgs
-    EXEMPTED_ORG_IDS = [
-        "13b5f728-21a5-481d-82fa-0241ca0e07b9",  # phospho
-        "bb46a507-19db-4e11-bf26-6bd7cdc8dcdd",  # e
-        "a5724a02-a243-4025-9b34-080f40818a31",  # m
-        "144df1a7-40f6-4c8d-a0a2-9ed010c1a142",  # v
-        "3bf3f4b0-2ef7-47f7-a043-d96e9f5a3d7e",  # st
-        "2fdbcf01-eb52-4747-bb14-b66621973e8f",  # sa
-        "5a3d67ab-231c-4ad1-adba-84b6842668ad",  # sa (a)
-        "7e8f6db2-3b6b-4bf6-84ee-3f226b81e43d",  # di
-    ]
-    if org_id in EXEMPTED_ORG_IDS:
+    if org_id in config.EXEMPTED_ORG_IDS:
         return
 
     org_metadata = org.get("metadata", {"plan": "hobby"})

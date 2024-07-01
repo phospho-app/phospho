@@ -65,6 +65,9 @@ export default function Page() {
   const { data: usage }: { data: UsageQuota | null | undefined } = useSWR(
     [`/api/organizations/${selectedOrgId}/usage-quota`, accessToken],
     ([url, token]) => authFetcher(url, token),
+    {
+      keepPreviousData: true,
+    },
   );
 
   const currentUsage = usage?.current_usage;
@@ -109,6 +112,12 @@ export default function Page() {
         <div>
           You plan is: <code className="bg-secondary p-1.5">{plan}</code>
         </div>
+        {usage && usage.balance_transaction < 0 && (
+          <div>
+            🎁 You received {-usage.balance_transaction / 100}$ of free credits.
+            A discount will be applied to your next bill.
+          </div>
+        )}
         {plan && plan !== "hobby" && plan !== "self-hosted" && (
           <div className="flex flex-row space-x-2 items-center">
             <div className="text-sm text-muted-foreground">

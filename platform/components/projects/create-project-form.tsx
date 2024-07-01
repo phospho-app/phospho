@@ -24,6 +24,7 @@ import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
+import { BriefcaseBusiness } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -172,7 +173,12 @@ const CreateProjectDialog = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <AlertDialogHeader>
           {(projectToEdit === null || projectToEdit === undefined) && (
-            <AlertDialogTitle>Create a new project</AlertDialogTitle>
+            <AlertDialogTitle>
+              <div className="flex flex-row items-center">
+                <BriefcaseBusiness className="w-6 h-6 mr-2" />
+                Create a new project
+              </div>
+            </AlertDialogTitle>
           )}
           {projectToEdit && (
             <AlertDialogTitle>

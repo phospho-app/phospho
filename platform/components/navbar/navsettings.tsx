@@ -20,14 +20,21 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useLogoutFunction, useUser } from "@propelauth/nextjs/client";
-import { FileUp, Moon, Settings, Star, Sun, Upload } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CircleUser,
+  FileUp,
+  Moon,
+  Settings,
+  Star,
+  Sun,
+  User,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import useSWR from "swr";
 
 export function NavBarSettings() {
   const { setTheme } = useTheme();
@@ -44,14 +51,15 @@ export function NavBarSettings() {
   const setproject_id = navigationStateStore((state) => state.setproject_id);
 
   const [open, setOpen] = React.useState(false);
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
   return (
     <div className="flex items-center space-x-2">
       <AlertDialog open={open}>
-        <DropdownMenu>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <div>
-              <HoverCard openDelay={50} closeDelay={50}>
+              <HoverCard openDelay={0} closeDelay={0}>
                 <HoverCardTrigger asChild>
                   <Button
                     variant="ghost"
@@ -72,44 +80,51 @@ export function NavBarSettings() {
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>
-              <div>{user?.email}</div>
-              {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
-                <div className="flex items-center text-xs text-muted-foreground hover:text-green-500 font-normal">
-                  Hobby user
-                </div>
-              )}
-              {selectedOrgMetadata && selectedOrgMetadata?.plan === "pro" && (
-                <div className="flex items-center text-xs text-muted-foreground hover:text-green-500 font-normal">
-                  <Star className="mr-1 h-4 w-4" />
-                  Pro plan member
-                </div>
-              )}
-              {selectedOrgMetadata &&
-                selectedOrgMetadata?.plan === "usage_based" && (
+            <DropdownMenuLabel className="space-y-1">
+              <div
+                onClick={() => {
+                  router.push("/org/settings/account");
+                  setDropdownOpen(false);
+                }}
+                className="cursor-pointer hover:text-green-500 flex flex-row items-center"
+              >
+                <CircleUser className="mr-1 h-5 w-5" />
+                {user?.email}
+              </div>
+              <div
+                onClick={() => {
+                  router.push("/org/settings/billing");
+                  setDropdownOpen(false);
+                }}
+                className="cursor-pointer ml-2"
+              >
+                {selectedOrgMetadata &&
+                  selectedOrgMetadata?.plan === "hobby" && (
+                    <div className="flex items-center text-xs text-muted-foreground hover:text-green-500 font-normal">
+                      Hobby user
+                    </div>
+                  )}
+                {selectedOrgMetadata && selectedOrgMetadata?.plan === "pro" && (
                   <div className="flex items-center text-xs text-muted-foreground hover:text-green-500 font-normal">
-                    <Star className="mr-1 h-4 w-4" />
-                    Usage based billing
+                    <Star className="mr-1 h-3 w-3" />
+                    Pro plan member
                   </div>
                 )}
+                {selectedOrgMetadata &&
+                  selectedOrgMetadata?.plan === "usage_based" && (
+                    <div className="flex items-center text-xs text-muted-foreground hover:text-green-500 font-normal">
+                      <Star className="mr-1 h-3 w-3" />
+                      Usage based billing
+                    </div>
+                  )}
+              </div>
             </DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => router.push("/org/settings/account")}
-            >
-              Account
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => router.push("/org/settings/billing")}
-            >
-              Billing
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>Project</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() => router.push("/org/settings/project")}
             >
               <div className="flex flex-row items-center">
-                <Settings className="w-4 h-4 mr-1" />
+                <BriefcaseBusiness className="w-4 h-4 mr-1" />
                 Project settings
               </div>
             </DropdownMenuItem>

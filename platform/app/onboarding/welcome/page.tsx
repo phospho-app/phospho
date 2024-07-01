@@ -111,7 +111,7 @@ function WhatIsEvaluation() {
           </div>
           <div className="flex justify-center flex-grow">
             <div className="flex flex-row items-center p-2 space-x-4">
-              <HoverCard openDelay={50} closeDelay={50}>
+              <HoverCard openDelay={0} closeDelay={0}>
                 <HoverCardTrigger>
                   <ThumbsDown
                     className={`w-16 h-16 hover:text-red-500 cursor-pointer rounded-sm p-1
@@ -125,7 +125,7 @@ function WhatIsEvaluation() {
                 <HoverCardContent side="top">Click me!</HoverCardContent>
               </HoverCard>
 
-              <HoverCard openDelay={50} closeDelay={50}>
+              <HoverCard openDelay={0} closeDelay={0}>
                 <HoverCardTrigger>
                   <ThumbsUp
                     className={`w-16 h-16 hover:text-green-500 cursor-pointer rounded-sm p-1

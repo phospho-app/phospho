@@ -43,6 +43,7 @@ export interface UsageQuota {
   current_usage: number;
   max_usage: number;
   max_usage_label: string;
+  balance_transaction: number;
 }
 
 export interface OrgMetadata {

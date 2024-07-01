@@ -234,12 +234,18 @@ function RunAnalyticsForm({
           </div>
         )}
         <div className="flex justify-between">
-          <Link href="/">
-            <Button variant="link" className="px-0">
-              Later
-            </Button>
-            <div className="text-xs">you can run this later</div>
-          </Link>
+          <HoverCard openDelay={0} closeDelay={0}>
+            <HoverCardTrigger asChild>
+              <Link href="/">
+                <Button variant="link" className="px-0">
+                  Later
+                </Button>
+              </Link>
+            </HoverCardTrigger>
+            <HoverCardContent side="bottom">
+              <div className="text-xs">You can run this later</div>
+            </HoverCardContent>
+          </HoverCard>
           <Button
             type="submit"
             disabled={form.formState.isSubmitted || form.formState.isSubmitting}
