@@ -911,14 +911,14 @@ phospho.log({input, output});`}
         </AlertDialogContent>
       )}
       {buttonPressed && (
-        <AlertDialogContent className=" md:max-w-1/2 flex flex-col justify-between">
+        <AlertDialogContent className="md:max-w-1/2 flex flex-col justify-between">
           <AlertDialogHeader>
             <div className="flex justify-between">
               <div className="flex flex-col space-y-2 w-full">
                 <AlertDialogTitle className="text-2xl font-bold tracking-tight mb-1">
                   One more thing...
                 </AlertDialogTitle>
-                <Card className="w-full border-red-500 bg-red-100">
+                <Card className="w-full border-red-500 bg-red-200">
                   <CardTitle className="text-xl mt-2 ml-2 text-black">
                     <div className="flex align-center">
                       <TriangleAlert className="mr-2" />
@@ -926,7 +926,7 @@ phospho.log({input, output});`}
                     </div>
                   </CardTitle>
                   <CardHeader>
-                    <CardDescription>
+                    <CardDescription className="text-black">
                       Please add payment information to enable data analytics
                     </CardDescription>
                   </CardHeader>
@@ -935,11 +935,8 @@ phospho.log({input, output});`}
             </div>
           </AlertDialogHeader>
 
-          <div className="text-muted-foreground mx-[10%]">
-            <p>
-              By adding your information, you'll have access to advanced
-              analytics features like:
-            </p>
+          <div className="text-muted-foreground mx-[5%]">
+            <p>Add your info to access advanced analytics features:</p>
             <ul>
               <li> - Sentiment Analytics</li>
               <li> - Success/Failure flags</li>
@@ -948,12 +945,21 @@ phospho.log({input, output});`}
               <li> - Data Clustering</li>
             </ul>
           </div>
+          <div className="mx-[5%] font-semibold">
+            Enable analytics now to get 10$ of free credits 🎁
+          </div>
 
           <div className="flex justify-between">
-            <Button onClick={() => handleSkip()} variant={"link"}>
+            <Button
+              onClick={() => handleSkip()}
+              variant={"link"}
+              className="text-muted-foreground"
+            >
               Ignore
             </Button>
-            <UpgradeButton tagline="Enable Analytics" />
+            <div className="flex flex-col justify-center items-center">
+              <UpgradeButton tagline="Enable Analytics" />
+            </div>
           </div>
         </AlertDialogContent>
       )}

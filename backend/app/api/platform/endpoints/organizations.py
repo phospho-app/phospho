@@ -205,7 +205,7 @@ async def get_org_usage_quota(
             balance_transaction = data[0]
             usage_quota.update(
                 {
-                    "balance_transaction": balance_transaction.get("ending_balance", 0),
+                    "balance_transaction": balance_transaction.get("amount", 0),
                 }
             )
     return usage_quota
@@ -406,7 +406,6 @@ async def post_stripe_webhook(
                 if org_id is not None:
                     # Upgrade the organization to the pro plan
                     logger.info(f"Upgrading organization {org_id} to pro plan")
-
                     background_tasks.add_task(
                         change_organization_plan,
                         org_id=org_id,

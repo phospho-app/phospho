@@ -69,7 +69,7 @@ export default function Page() {
                   <div className="flex-col space-y-4">
                     <div className="pb-2">
                       {max_nb_events}/{max_nb_events} events created. Add a
-                      payment method to add more.
+                      payment method to create more.
                     </div>
                     <Link href="/org/settings/billing">
                       <Button>Add payment method</Button>

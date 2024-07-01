@@ -18,7 +18,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { CopyIcon, Pencil } from "lucide-react";
+import { BriefcaseBusiness, CopyIcon, Pencil } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -51,32 +51,15 @@ export default function Page() {
   return (
     <div className="w-full">
       <h2 className="text-2xl font-bold tracking-tight mb-4">
-        <div className="flex items-baseline">
-          Project "{selectedProject.project_name}"
-          <HoverCard openDelay={0} closeDelay={0}>
-            <AlertDialog open={open} onOpenChange={setOpen}>
-              <AlertDialogTrigger asChild>
-                <HoverCardTrigger asChild>
-                  <Button variant="ghost" size="icon" className="ml-2">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </HoverCardTrigger>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="md:w-1/3">
-                <CreateProjectDialog
-                  setOpen={setOpen}
-                  projectToEdit={selectedProject}
-                />
-              </AlertDialogContent>
-            </AlertDialog>
-            <HoverCardContent className="text-xs font-normal text-background bg-foreground m-0">
-              <span>Rename project</span>
-            </HoverCardContent>
-          </HoverCard>
+        <div className="flex items-center">
+          <div className="flex flex-row items-center">
+            <BriefcaseBusiness className="w-6 h-6 mr-2" />
+            Project "{selectedProject.project_name}"
+          </div>
         </div>
       </h2>
-      <div className="mt-4 mb-4 flex-col space-y-8">
-        <div className="md:flex flex-auto items-center mb-4">
+      <div className="mt-4 mb-4 flex-col space-y-4">
+        <div className="md:flex flex-auto items-center">
           <div>
             Your project id:{" "}
             <code className="bg-secondary p-1.5">{project_id}</code>
@@ -91,6 +74,22 @@ export default function Page() {
           >
             <CopyIcon className="w-3 h-3" />
           </Button>
+        </div>
+        <div>
+          <AlertDialog open={open} onOpenChange={setOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="secondary">
+                <Pencil className="h-4 w-4 mr-2" />
+                Rename project
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="md:w-1/3">
+              <CreateProjectDialog
+                setOpen={setOpen}
+                projectToEdit={selectedProject}
+              />
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
         <DisableAnalytics />
         <div>

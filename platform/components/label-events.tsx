@@ -256,7 +256,7 @@ export const AddEventDropdownForTasks = ({
           }
 
           return (
-            <HoverCard openDelay={50} closeDelay={50}>
+            <HoverCard openDelay={0} closeDelay={0}>
               <HoverCardTrigger>
                 <DropdownMenuItem
                   key={event_name}
@@ -476,7 +476,7 @@ export const AddEventDropdownForSessions = ({
           }
 
           return (
-            <HoverCard openDelay={50} closeDelay={50}>
+            <HoverCard openDelay={0} closeDelay={0}>
               <HoverCardTrigger>
                 <DropdownMenuItem
                   key={event_name}

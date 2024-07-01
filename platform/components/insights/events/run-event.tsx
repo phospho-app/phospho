@@ -207,7 +207,7 @@ export default function RunEvent({
                     {Math.floor(totalNbTasks * form.getValues("sample_rate"))}{" "}
                     tasks
                   </span>
-                  <HoverCard openDelay={50} closeDelay={50}>
+                  <HoverCard openDelay={0} closeDelay={0}>
                     <HoverCardTrigger>
                       <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
                     </HoverCardTrigger>

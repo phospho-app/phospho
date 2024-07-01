@@ -5,7 +5,7 @@ import { CenteredSpinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
-import { CopyIcon, ExternalLink, User, UserPlus } from "lucide-react";
+import { CircleUser, CopyIcon, ExternalLink, UserPlus } from "lucide-react";
 import Link from "next/link";
 
 export default function Page() {
@@ -36,11 +36,11 @@ export default function Page() {
             variant="secondary"
             onClick={() => {
               redirectToAccountPage({
-                redirectBackToUrl: "https://platform.phospho.ai/org",
+                redirectBackToUrl: window.location.hostname,
               });
             }}
           >
-            <User className="w-4 h-4 mr-2" />
+            <CircleUser className="w-4 h-4 mr-2" />
             Manage Account <ExternalLink className="w-3 h-3 ml-2" />
           </Button>
         </div>
