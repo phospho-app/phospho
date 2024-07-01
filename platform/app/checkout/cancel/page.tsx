@@ -26,10 +26,7 @@ export default function Page() {
           <CardDescription className="text-xl">That's ok.</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
-          <p>
-            We'd be happy to learn more about your project and see what we can
-            do to help.
-          </p>
+          <p>We can discuss your needs and how we can help you.</p>
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button
@@ -42,12 +39,13 @@ export default function Page() {
                   "If you have any questions, feel free to reach out.",
               });
             }}
+            className="text-muted-foreground"
           >
-            No, leave me alone
+            Ignore
           </Button>
           <Link href="https://calendly.com/paul-louis-phospho">
             <Button variant="default" className="bg-green-600">
-              Let's chat
+              Book a free meeting
             </Button>
           </Link>
         </CardFooter>

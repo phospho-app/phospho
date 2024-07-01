@@ -16,13 +16,14 @@ import {
   Sparkles,
   TestTubeDiagonal,
   TextSearch,
+  TriangleAlert,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Card, CardContent } from "./ui/card";
+import { Card, CardContent, CardTitle } from "./ui/card";
 import UpgradeButton from "./upgrade-button";
 
 interface SideBarElementProps {
@@ -100,7 +101,7 @@ export function Sidebar() {
   }, []);
 
   return (
-    <div className="flex flex-col py-4 overflow-y-auto border-secondary h-full">
+    <div className="flex flex-col py-4 overflow-y-auto border-secondary h-full ">
       <div>
         <SideBarElement
           href="/org/transcripts/"
@@ -197,24 +198,25 @@ export function Sidebar() {
       </div>
 
       {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
-        <div className="flex justify-center mx-2 mb-4 mt-4">
-          <Card>
-            <CardContent className="flex justify-center mb-0">
-              <div>
-                <div className="flex items-baseline">
-                  <Sparkles className="h-4 w-4 text-green-500 mr-1" />
-                  <h2 className="font-semibold mt-4 mb-1">Complete setup</h2>
-                </div>
-                <p className="mb-2 text-sm">
-                  Enable automatic evaluation and event detection
-                </p>
-                <div className="flex justify-center">
-                  <UpgradeButton
-                    tagline="Add payment method"
-                    enlarge={false}
-                    green={false}
-                  />
-                </div>
+        <div className="flex justify-center mt-4 mx-0.5">
+          <Card className="border-red-500 ">
+            <CardTitle className="text-sm flex flex-row font-bold p-1">
+              <TriangleAlert className="h-6 w-6 mr-2" />
+              <h2>Your account is missing billing information</h2>
+            </CardTitle>
+            <CardContent className="flex flex-col justify-center px-2">
+              <p className="mb-2 text-xs text-muted-foreground">
+                Advanced analytics are <b>not</b> enabled.
+              </p>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Add payment now to get 10$ of free credits 🎁
+              </p>
+              <div className="flex justify-center">
+                <UpgradeButton
+                  tagline="Enable analytics"
+                  enlarge={false}
+                  green={true}
+                />
               </div>
             </CardContent>
           </Card>
