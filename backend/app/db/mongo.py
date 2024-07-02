@@ -256,15 +256,6 @@ async def connect_and_init_db():
                                     },
                                 }
                             },
-                            # Merge the session
-                            {
-                                "$lookup": {
-                                    "from": "sessions",
-                                    "localField": "session_id",
-                                    "foreignField": "id",
-                                    "as": "session",
-                                },
-                            },
                         ],
                     }
                 )
