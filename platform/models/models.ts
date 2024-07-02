@@ -260,4 +260,5 @@ export interface ProjectDataFilters {
   tasks_ids?: string[] | null;
   clustering_id?: string | null;
   clusters_ids?: string[] | null;
+  is_last_task?: boolean | null;
 }

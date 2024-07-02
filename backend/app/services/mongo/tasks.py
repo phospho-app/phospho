@@ -345,6 +345,20 @@ async def task_filtering_pipeline_match(
             {f"{prefix}notes": {"$ne": ""}},
         ]
 
+    if filters.is_last_task is not None:
+        logger.debug("FILTER: is last task")
+        from app.services.mongo.sessions import compute_task_position
+        from copy import copy
+
+        filters_without_latest = copy(filters)
+        filters_without_latest.is_last_task = None
+
+        logger.debug("Computing task position...")
+        await compute_task_position(
+            project_id=project_id, filters=filters_without_latest
+        )
+        match[f"{prefix}is_last_task"] = filters.is_last_task
+
     return match, collection
 
 
