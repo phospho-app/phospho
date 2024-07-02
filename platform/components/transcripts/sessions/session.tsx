@@ -126,6 +126,38 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
             {formatUnixTimestampToLiteralDatetime(
               session_with_events.created_at,
             )}
+            <div className="space-y-2">
+              {session_with_events?.metadata &&
+                Object.entries(session_with_events.metadata)
+                  .sort(([key1, value1], [key2, value2]) => {
+                    if (key1 < key2) return -1;
+                    if (key1 > key2) return 1;
+                    return 0;
+                  })
+                  .map(([key, value]) => {
+                    if (
+                      typeof value === "string" ||
+                      typeof value === "number"
+                    ) {
+                      const shortValue =
+                        typeof value === "string" && value.length > 50
+                          ? value.substring(0, 50) + "..."
+                          : value;
+                      return (
+                        <Badge
+                          variant="outline"
+                          className="mx-2 text-xs font-normal"
+                          key={key}
+                        >
+                          <p>
+                            {key}: {shortValue}
+                          </p>
+                        </Badge>
+                      );
+                    }
+                    return null;
+                  })}
+            </div>
             <Collapsible>
               <CollapsibleTrigger>
                 <Button variant="link">{">"}Raw Session Data</Button>

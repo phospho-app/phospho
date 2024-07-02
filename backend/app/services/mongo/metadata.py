@@ -544,6 +544,23 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
+    if metric.lower() == "nb sessions":
+        # Count the number of unique sessions and group by breakdown_by
+        pipeline += [
+            {
+                "$group": {
+                    "_id": f"${breakdown_by_col}",
+                    "metric": {"$addToSet": "$session_id"},
+                },
+            },
+            {
+                "$project": {
+                    "breakdown_by": "$_id",
+                    "metric": {"$size": "$metric"},
+                }
+            },
+        ]
+
     if metric.lower() == "avg success rate":
         pipeline += [
             {
