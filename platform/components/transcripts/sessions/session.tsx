@@ -126,7 +126,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
             {formatUnixTimestampToLiteralDatetime(
               session_with_events.created_at,
             )}
-            <div>
+            <div className="space-y-2">
               {session_with_events?.metadata &&
                 Object.entries(session_with_events.metadata)
                   .sort(([key1, value1], [key2, value2]) => {
