@@ -324,12 +324,13 @@ async def process_log_without_session_id(
     tasks_id_to_process: List[str] = []
     tasks_to_create: List[Dict[str, object]] = []
     for log_event in list_of_log_event:
+        log_event_metadata = collect_metadata(log_event)
         task = create_task_from_logevent(
             org_id=org_id,
             project_id=project_id,
             log_event=log_event,
             session_id=None,
-            log_event_metadata={},
+            log_event_metadata=log_event_metadata,
         )
         tasks_id_to_process.append(task.id)
         tasks_to_create.append(task.model_dump())
