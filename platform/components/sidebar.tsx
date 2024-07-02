@@ -205,7 +205,7 @@ export function Sidebar() {
 
       {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
         <div className="flex justify-center mt-4 mx-0.5">
-          <Card className="border-red-500 ">
+          <Card className="border-red-500 ml-4">
             <CardTitle className="text-sm flex flex-row font-bold p-1">
               <TriangleAlert className="h-6 w-6 mr-2" />
               <h2>Your account is missing billing information</h2>
