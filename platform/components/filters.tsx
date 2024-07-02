@@ -327,7 +327,7 @@ const FilterComponent = ({
               onClick={() => {
                 setDataFilters({
                   ...dataFilters,
-                  is_last_task: false,
+                  is_last_task: null,
                 });
                 resetPagination();
               }}
