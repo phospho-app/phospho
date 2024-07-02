@@ -191,10 +191,10 @@ async def compute_task_position(
         },
         # Transform to get 1 doc = 1 task. We also add the task position.
         {"$unwind": {"path": "$tasks", "includeArrayIndex": "task_position"}},
-        # Set "is_latest_task" to True for the task where task_position is == session.session_length - 1
+        # Set "is_last_task" to True for the task where task_position is == session.session_length - 1
         {
             "$set": {
-                "tasks.is_latest_task": {
+                "tasks.is_last_task": {
                     "$eq": ["$task_position", {"$subtract": ["$session_length", 1]}]
                 }
             }
@@ -203,7 +203,7 @@ async def compute_task_position(
             "$project": {
                 "id": "$tasks.id",
                 "task_position": {"$add": ["$task_position", 1]},
-                "is_latest_task": "$tasks.is_latest_task",
+                "is_last_task": "$tasks.is_last_task",
                 "_id": 0,
             }
         },

@@ -150,7 +150,7 @@ class Task(ProjectElementBaseModel):
     topics: Optional[List[str]] = None
     # Position of the task in the session
     task_position: Optional[int] = None
-    is_latest_task: Optional[bool] = None
+    is_last_task: Optional[bool] = None
 
     def preview(self):
         # Return a string representation of the input and output
@@ -654,7 +654,7 @@ class ProjectDataFilters(BaseModel):
     tasks_ids: Optional[List[str]] = None
     clustering_id: Optional[str] = None  # A group of clusters
     clusters_ids: Optional[List[str]] = None  # A list of clusters
-    is_latest_task: Optional[bool] = None
+    is_last_task: Optional[bool] = None
 
 
 class Cluster(ProjectElementBaseModel):
