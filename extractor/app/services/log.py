@@ -246,6 +246,7 @@ def create_task_from_logevent(
     project_id: str,
     log_event: LogEvent,
     session_id: Optional[str] = None,
+    log_event_metadata: Dict[str, Any] = {},
 ) -> Task:
     if log_event.project_id is None:
         log_event.project_id = project_id
@@ -265,7 +266,7 @@ def create_task_from_logevent(
         additional_output=convert_additional_data_to_dict(
             log_event.raw_output, "raw_output"
         ),
-        metadata=collect_metadata(log_event),
+        metadata=log_event_metadata,
         data=None,
         flag=log_event.flag,
         test_id=log_event.test_id,
@@ -323,11 +324,13 @@ async def process_log_without_session_id(
     tasks_id_to_process: List[str] = []
     tasks_to_create: List[Dict[str, object]] = []
     for log_event in list_of_log_event:
+        log_event_metadata = collect_metadata(log_event)
         task = create_task_from_logevent(
             org_id=org_id,
             project_id=project_id,
             log_event=log_event,
             session_id=None,
+            log_event_metadata=log_event_metadata,
         )
         tasks_id_to_process.append(task.id)
         tasks_to_create.append(task.model_dump())
@@ -411,6 +414,9 @@ async def process_log_with_session_id(
         if log_event.project_id is None:
             log_event.project_id = project_id
 
+        # Calculate log_event metadata
+        log_event_metadata = collect_metadata(log_event)
+
         # Only create a new session if the session doesn't exist in db
         session_is_in_db = log_event.session_id in sessions_ids_already_in_db
 
@@ -428,7 +434,11 @@ async def process_log_with_session_id(
                 "id": log_event.session_id,
                 "project_id": session_project_id,
                 # Note: there is no metadata and data
-                "metadata": {},
+                "metadata": {
+                    "total_tokens": log_event_metadata.get("total_tokens", 0),
+                    "prompt_tokens": log_event_metadata.get("prompt_tokens", 0),
+                    "completion_tokens": log_event_metadata.get("completion_tokens", 0),
+                },
                 "data": {},
                 "session_length": 1,
             }
@@ -441,10 +451,23 @@ async def process_log_with_session_id(
             # Increment the session length of the session to create
             sessions_to_create[log_event.session_id]["session_length"] += 1
         elif log_event.session_id is not None and session_is_in_db:
-            # Increment the session length in the database
+            # Increment the session length, total_tokens, prompt_tokens and completion_tokens in the database
             mongo_db["sessions"].update_one(
                 {"id": log_event.session_id},
-                {"$inc": {"session_length": 1}},
+                {
+                    "$inc": {
+                        "session_length": 1,
+                        "metadata.total_tokens": log_event_metadata.get(
+                            "total_tokens", 0
+                        ),
+                        "metadata.prompt_tokens": log_event_metadata.get(
+                            "prompt_tokens", 0
+                        ),
+                        "metadata.completion_tokens": log_event_metadata.get(
+                            "completion_tokens", 0
+                        ),
+                    }
+                },
             )
         else:
             logger.info(
@@ -456,6 +479,7 @@ async def process_log_with_session_id(
             project_id=log_event.project_id,
             log_event=log_event,
             session_id=log_event.session_id,
+            log_event_metadata=log_event_metadata,
         )
         tasks_id_to_process.append(task.id)
         tasks_to_create.append(task.model_dump())

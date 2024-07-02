@@ -239,13 +239,13 @@ export const navigationStateStore = create(
 
       selectedMetric: "Nb tasks",
       setSelectedMetric: (metric: string) =>
-        set((state) => ({ selectedMetric: metric })),
+        set(() => ({ selectedMetric: metric })),
       metadata_metric: null,
       setmetadata_metric: (metadata: string | null) =>
-        set((state) => ({ metadata_metric: metadata })),
+        set(() => ({ metadata_metric: metadata })),
       selectedGroupBy: "flag",
       setSelectedGroupBy: (groupBy: string) =>
-        set((state) => ({ selectedGroupBy: groupBy })),
+        set(() => ({ selectedGroupBy: groupBy })),
     }),
 
     {

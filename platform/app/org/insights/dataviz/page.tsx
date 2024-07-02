@@ -18,7 +18,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { DashboardTile, Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   ChevronDown,
@@ -104,6 +104,15 @@ const MetadataForm: React.FC = () => {
                 >
                   <MessagesSquare className="h-4 w-4 mr-2" />
                   Tasks count
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedMetric("Nb sessions");
+                    setmetadata_metric(null);
+                  }}
+                >
+                  <List className="h-4 w-4 mr-2" />
+                  Sessions count
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
