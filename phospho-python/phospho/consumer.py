@@ -1,4 +1,3 @@
-from requests import HTTPError
 from .log_queue import LogQueue
 from .client import Client, ClientSideError
 
