@@ -30,6 +30,7 @@ import {
   Flag,
   Frown,
   Languages,
+  List,
   ListFilter,
   Meh,
   PenSquare,
@@ -320,12 +321,26 @@ const FilterComponent = ({
                 </Button>
               );
             })}
+          {dataFilters.is_last_task && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDataFilters({
+                  ...dataFilters,
+                  is_last_task: null,
+                });
+                resetPagination();
+              }}
+            >
+              Is last task
+              <X className="h-4 w-4 ml-2" />
+            </Button>
+          )}
           {dataFilters && activeFilterCount > 0 && (
             <HoverCard openDelay={0} closeDelay={0}>
               <HoverCardTrigger>
                 <Button
                   variant="secondary"
-                  size="icon"
                   onClick={() => {
                     setDataFilters({
                       created_at_start: dateRange?.created_at_start,
@@ -601,7 +616,26 @@ const FilterComponent = ({
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
-
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <List className="h-4 w-4 mr-2" />
+              Task position
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem
+                onClick={() => {
+                  const currentIsLastTask = dataFilters.is_last_task ?? false;
+                  setDataFilters({
+                    ...dataFilters,
+                    is_last_task: !currentIsLastTask,
+                  });
+                  resetPagination();
+                }}
+              >
+                Is last task
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Code className="h-4 w-4 mr-2" />
