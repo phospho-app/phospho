@@ -27,6 +27,9 @@ if ENVIRONMENT == "production" and MONGODB_NAME != "production":
 if MONGODB_NAME == "production" and ENVIRONMENT != "production":
     raise Exception("MONGODB_NAME is set to 'production' in non-production environment")
 
+
+IS_MAINTENANCE = os.getenv("IS_MAINTENANCE", "false") == "true"
+
 ### USAGE LIMITS ###
 PLAN_HOBBY_MAX_NB_DETECTIONS = 10
 
