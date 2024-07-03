@@ -35,6 +35,12 @@ async def store_batch_of_log_events(
 ) -> LogReply:
     """Store the log_content in the logs database"""
 
+    # Check if we are in maintenance mode
+    if config.IS_MAINTENANCE:
+        raise HTTPException(
+            status_code=503, detail="Planned maintenance. Please try again later."
+        )
+
     await verify_propelauth_org_owns_project_id(org, project_id)
     # raise_error_if_not_in_pro_tier(org)
 
