@@ -127,7 +127,7 @@ def get_nb_tokens_completion_tokens(
     return 0
 
 
-def collect_metadata(log_event: LogEvent) -> Optional[dict]:
+def collect_metadata(log_event: LogEvent) -> dict:
     """
     Collect the metadata from the log event.
     - Add all unknown fields to the metadata
@@ -378,6 +378,7 @@ async def process_log_with_session_id(
     if len(list_of_log_event) == 0:
         logger.debug("No log event with session_id to process")
         return None
+
     logger.info(
         f"Project {project_id}: processing {len(list_of_log_event)} log events with session_id"
     )
