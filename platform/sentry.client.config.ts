@@ -10,6 +10,8 @@ Sentry.init({
   // Adjust this value in production, or use tracesSampler for greater control
   tracesSampleRate: 1,
 
+  ignoreErrors: [process.env.NEXT_PUBLIC_INTERCOM_APP_ID || "intercom-app-id-not-set"],
+  
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 
