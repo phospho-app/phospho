@@ -780,7 +780,7 @@ phospho.log({input, output});`}
                                   Your LangFuse secret key,{" "}
                                   <Link
                                     className="underline hover:text-green-500"
-                                    href="https://cloud.langfuse.com/project/"
+                                    href="https://cloud.langfuse.com/"
                                   >
                                     go to LangFuse -&gt; Settings -&gt; Create
                                     new API keys
