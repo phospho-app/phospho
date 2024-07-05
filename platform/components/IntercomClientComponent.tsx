@@ -18,15 +18,10 @@ const IntercomClientComponent: React.FC = () => {
         };
 
         if (user) {
-            console.log("User is logged in");
-            console.log("User :", user);
             window.intercomSettings.user_id = user.userId;
             window.intercomSettings.email = user.email;
         }
-        else {
-            console.log("User is not logged in");
-        }
-        console.log("Intercom Settings: ", window.intercomSettings);
+        
         if (window.Intercom) {
             window.Intercom('reattach_activator');
             window.Intercom('update', window.intercomSettings);
