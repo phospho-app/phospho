@@ -12,7 +12,6 @@ on:
 jobs:
   deploy_extractor_staging:
     runs-on: ubuntu-latest
-    environment: staging
 
     permissions:
       contents: "read"
