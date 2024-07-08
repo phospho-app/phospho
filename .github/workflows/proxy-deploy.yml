@@ -10,7 +10,7 @@ on:
       - dev
 
 jobs:
-  deploy_extractor_staging:
+  deploy_proxy:
     runs-on: ubuntu-latest
 
     defaults:
