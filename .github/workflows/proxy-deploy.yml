@@ -47,6 +47,8 @@ jobs:
           gcloud builds submit --config cloudbuild.yaml
 
       - name: Deploy to Cloud Run in Staging Env
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         run: |
           gcloud run deploy phospho-proxy \
             --project $GCP_PROJECT_ID \
