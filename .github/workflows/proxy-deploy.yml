@@ -13,6 +13,10 @@ jobs:
   deploy_extractor_staging:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: proxy
+
     permissions:
       contents: "read"
       id-token: "write"
