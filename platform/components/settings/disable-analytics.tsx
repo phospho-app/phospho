@@ -10,11 +10,10 @@ import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import { useEffect, useState } from "react";
-import useSWR, { useSWRConfig } from "swr";
+import { useState } from "react";
+import useSWR from "swr";
 
 export default function DisableAnalytics() {
-  const { mutate } = useSWRConfig();
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
@@ -32,8 +31,12 @@ export default function DisableAnalytics() {
   const [checkedEvent, setCheckedEvent] = useState(
     selectedProject.settings?.run_event_detection,
   );
-  const [checkedLangSent, setCheckedLangSent] = useState(
-    selectedProject.settings?.run_sentiment_language,
+  const [checkedLanguage, setCheckedLanguage] = useState(
+    selectedProject.settings?.run_language,
+  );
+
+  const [checkedSentiment, setCheckedSentiment] = useState(
+    selectedProject.settings?.run_sentiment,
   );
 
   const eventList: string[] = Object.keys(
@@ -42,12 +45,14 @@ export default function DisableAnalytics() {
   const formatedEventList = eventList.join(", ");
   const nbrEvents = eventList.length;
 
-  const handleChecked = () => {
+  const handleChecked = (id: string) => {
     if (!accessToken) return;
     if (!selectedProject) return;
+    if (!selectedProject.id) return;
     if (checkedEval === undefined) return;
     if (checkedEvent === undefined) return;
-    if (checkedLangSent === undefined) return;
+    if (checkedLanguage === undefined) return;
+    if (checkedSentiment === undefined) return;
     const updateSettings = async () => {
       await fetch(`/api/projects/${selectedProject.id}`, {
         method: "POST",
@@ -57,18 +62,16 @@ export default function DisableAnalytics() {
         },
         body: JSON.stringify({
           settings: {
-            run_evals: checkedEval,
-            run_event_detection: checkedEvent,
-            run_sentiment_language: checkedLangSent,
+            run_evals: id === "evaluation" ? !checkedEval : checkedEval,
+            run_event_detection:
+              id === "event_detection" ? !checkedEvent : checkedEvent,
+            run_language:
+              id === "language" ? !checkedLanguage : checkedLanguage,
+            run_sentiment:
+              id === "sentiment" ? !checkedSentiment : checkedSentiment,
           },
         }),
       }).then(() => {
-        mutate(
-          [`/api/projects/${selectedProject.id}`, accessToken],
-          async () => {
-            return { project: selectedProject };
-          },
-        );
         toast({
           title: "Settings updated",
           description: "Your next logs will be updated with the new settings.",
@@ -93,13 +96,19 @@ export default function DisableAnalytics() {
         formatedEventList +
         ". " +
         nbrEvents +
-        " credits per tasks, one per event.",
+        " credits per tasks, 1 per event.",
     },
     {
-      id: "sentiment_language",
-      label: "Sentiment & language",
+      id: "sentiment",
+      label: "Sentiment",
       description:
-        "Recognize the sentiment (positive, negative) and the language of the user's task input. 2 credits per task.",
+        "Recognize the sentiment (positive, negative) of the user's task input. 1 credit per task.",
+    },
+    {
+      id: "language",
+      label: "Language",
+      description:
+        "Detect the language of the user's task input. 1 credit per task.",
     },
   ] as const;
 
@@ -122,7 +131,9 @@ export default function DisableAnalytics() {
                   ? checkedEval
                   : item.id === "event_detection"
                     ? checkedEvent
-                    : checkedLangSent
+                    : item.id === "sentiment"
+                      ? checkedSentiment
+                      : checkedLanguage
               }
               onCheckedChange={(checked) => {
                 if (checked) {
@@ -132,8 +143,11 @@ export default function DisableAnalytics() {
                   if (item.id === "event_detection") {
                     setCheckedEvent(true);
                   }
-                  if (item.id === "sentiment_language") {
-                    setCheckedLangSent(true);
+                  if (item.id === "sentiment") {
+                    setCheckedSentiment(true);
+                  }
+                  if (item.id === "language") {
+                    setCheckedLanguage(true);
                   }
                 } else {
                   if (item.id === "evaluation") {
@@ -142,11 +156,14 @@ export default function DisableAnalytics() {
                   if (item.id === "event_detection") {
                     setCheckedEvent(false);
                   }
-                  if (item.id === "sentiment_language") {
-                    setCheckedLangSent(false);
+                  if (item.id === "sentiment") {
+                    setCheckedSentiment(false);
+                  }
+                  if (item.id === "language") {
+                    setCheckedLanguage(false);
                   }
                 }
-                handleChecked();
+                handleChecked(item.id);
               }}
             />
             <HoverCard openDelay={0} closeDelay={0}>

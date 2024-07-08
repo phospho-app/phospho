@@ -175,7 +175,8 @@ export interface ProjectSettings {
   events: Record<string, EventDefinition>;
   sentiment_threshold: SentimentThreshold;
   run_evals?: boolean;
-  run_sentiment_language?: boolean;
+  run_sentiment?: boolean;
+  run_language?: boolean;
   run_event_detection?: boolean;
   dashboard_tiles: DashboardTile[];
 }
