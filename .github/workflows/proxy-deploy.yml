@@ -1,0 +1,53 @@
+name: Deploy proxy
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "proxy/**"
+    branches:
+      - main
+      - dev
+
+jobs:
+  deploy_extractor_staging:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: "auth"
+        uses: "google-github-actions/auth@v2"
+        env:
+          GCP_JSON_CREDENTIALS: ${{ secrets.GCP_JSON_CREDENTIALS }}
+        with:
+          credentials_json: ${{ secrets.GCP_JSON_CREDENTIALS }}
+
+      - name: Set up GCP Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: "Use gcloud CLI"
+        run: "gcloud info"
+
+      - name: Build the container image
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          gcloud builds submit --config cloudbuild.yaml
+
+      - name: Deploy to Cloud Run in Staging Env
+        run: |
+          gcloud run deploy phospho-proxy \
+            --project $GCP_PROJECT_ID \
+            --port 7605 \
+            --region europe-west1 \
+            --allow-unauthenticated \
+            --image europe-west1-docker.pkg.dev/portal-385519/phospho-proxy/app:production
+            --memory 512Mi
