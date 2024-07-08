@@ -55,4 +55,5 @@ jobs:
             --port 80 \
             --region europe-west1 \
             --allow-unauthenticated \
-            --image europe-west1-docker.pkg.dev/portal-385519/phospho-proxy/app:production
+            --image europe-west1-docker.pkg.dev/portal-385519/phospho-proxy/app:production \
+            --memory 512Mi
