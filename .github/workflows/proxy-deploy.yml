@@ -52,7 +52,7 @@ jobs:
         run: |
           gcloud run deploy phospho-proxy \
             --project $GCP_PROJECT_ID \
-            --port 7605 \
+            --port 80 \
             --region europe-west1 \
             --allow-unauthenticated \
             --image europe-west1-docker.pkg.dev/portal-385519/phospho-proxy/app:production
