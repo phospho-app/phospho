@@ -9,11 +9,10 @@ from dotenv import load_dotenv
 
 from openai import AsyncOpenAI, OpenAIError
 from openai.types.chat import ChatCompletionChunk
-from openai._streaming import Stream
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import StreamingResponse
-from typing import Dict, List, Generator, Any, AsyncGenerator
+from typing import Dict, List, Any, AsyncGenerator
 
 # This is an example implementation of a FastAPI backend of an LLM app,
 # where interactions are logged with phospho

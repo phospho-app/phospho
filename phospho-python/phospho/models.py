@@ -208,7 +208,8 @@ class ProjectSettings(BaseModel):
     last_langsmith_extract: Optional[str] = None
     last_langfuse_extract: Optional[str] = None
     run_evals: Optional[bool] = True
-    run_sentiment_language: Optional[bool] = True
+    run_sentiment: Optional[bool] = True
+    run_language: Optional[bool] = True
     run_event_detection: Optional[bool] = True
     dashboard_tiles: List[DashboardTile] = Field(
         default_factory=lambda: [
@@ -260,17 +261,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "event_name"
-                        ] = event_name
+                        project_data["settings"]["events"][event_name]["event_name"] = (
+                            event_name
+                        )
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "org_id"
-                        ] = project_data["org_id"]
+                        project_data["settings"]["events"][event_name]["org_id"] = (
+                            project_data["org_id"]
+                        )
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "project_id"
-                        ] = project_data["id"]
+                        project_data["settings"]["events"][event_name]["project_id"] = (
+                            project_data["id"]
+                        )
 
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:

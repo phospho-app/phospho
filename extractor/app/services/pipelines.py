@@ -597,8 +597,10 @@ async def sentiment_and_language_analysis_pipeline(
 
     if (
         project.settings is not None
-        and project.settings.run_sentiment_language is not None
-        and not project.settings.run_sentiment_language
+        and project.settings.run_sentiment is not None
+        and project.settings.run_language is not None
+        and not project.settings.run_sentiment
+        and not project.settings.run_language
     ):
         logger.info(f"Sentiment analysis is disabled for project {task.project_id}")
         return None, None
@@ -648,6 +650,11 @@ async def sentiment_and_language_analysis_pipeline(
         task.input, score_threshold, magnitude_threshold
     )
 
+    if not project.settings.run_language:
+        language = None
+    if not project.settings.run_sentiment:
+        sentiment_object = None
+
     await mongo_db["tasks"].update_one(
         {
             "id": task.id,
@@ -655,30 +662,39 @@ async def sentiment_and_language_analysis_pipeline(
         },
         {
             "$set": {
-                "sentiment": sentiment_object.model_dump(),
+                "sentiment": sentiment_object.model_dump()
+                if sentiment_object
+                else None,
                 "language": language,
-                "metadata.sentiment_score": sentiment_object.score,
-                "metadata.sentiment_magnitude": sentiment_object.magnitude,
-                "metadata.sentiment_label": sentiment_object.label,
+                "metadata.sentiment_score": sentiment_object.score
+                if sentiment_object
+                else None,
+                "metadata.sentiment_magnitude": sentiment_object.magnitude
+                if sentiment_object
+                else None,
+                "metadata.sentiment_label": sentiment_object.label
+                if sentiment_object
+                else None,
                 "metadata.language": language,
             }
         },
     )
 
-    jobresult = JobResult(
-        org_id=task.org_id,
-        project_id=task.project_id,
-        job_id="sentiment_analysis",
-        value=sentiment_object.model_dump(),
-        result_type=ResultType.dict,
-        metadata={
-            "input": task.input,
-        },
-    )
+    if sentiment_object:
+        jobresult = JobResult(
+            org_id=task.org_id,
+            project_id=task.project_id,
+            job_id="sentiment_analysis",
+            value=sentiment_object.model_dump(),
+            result_type=ResultType.dict,
+            metadata={
+                "input": task.input,
+            },
+        )
 
-    mongo_db["job_results"].insert_one(jobresult.model_dump())
+        mongo_db["job_results"].insert_one(jobresult.model_dump())
 
-    logger.info(f"Sentiment analysis for task {task.id} : {sentiment_object}")
+        logger.info(f"Sentiment analysis for task {task.id} : {sentiment_object}")
 
     return sentiment_object, language
 
