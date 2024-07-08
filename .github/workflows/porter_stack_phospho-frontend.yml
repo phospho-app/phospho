@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-name: Deploy to Porter
+name: Porter - Deploy frontend
 jobs:
   porter-deploy:
     runs-on: ubuntu-latest
