@@ -57,4 +57,4 @@ jobs:
             --allow-unauthenticated \
             --image europe-west1-docker.pkg.dev/portal-385519/phospho-proxy/app:production \
             --memory 512Mi \
-            --concurrency 1000
+            --concurrency 500
