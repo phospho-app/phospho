@@ -1,3 +1,4 @@
+from collections import defaultdict
 import time
 from typing import Dict, List, Literal, Optional
 
@@ -43,7 +44,7 @@ async def run_event_detection_pipeline(
     mongo_db = await get_mongo_db()
     # Create the list of messages
     messages = []
-    events_per_task = {}
+    events_per_task: Dict[str, List[Event]] = defaultdict(list)
 
     for task in tasks:
         message = lab.Message.from_task(task=task, metadata={"task": task})
@@ -54,15 +55,13 @@ async def run_event_detection_pipeline(
         executor_type="parallel_jobs",
     )
 
-    # Display the workload results
-    # logger.debug(f"Workload results : {workload.results}")
-
+    detected_events = []
+    job_results = []
+    llm_calls = []
     # Iter over the results
     for message in messages:
         results = workload.results.get(message.id, {})
-        logger.debug(f"Results for message {message.id} : {results}")
-
-        events_per_task[message.metadata["task"].id] = []
+        logger.debug(f"Results for message {message.id}")
 
         for event_name, result in results.items():
             # event_name is the primary key of the table
@@ -82,7 +81,7 @@ async def run_event_detection_pipeline(
                     task_id=message.metadata["task"].id,
                     recipe_id=result.job_metadata.get("recipe_id"),
                 )
-                mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+                llm_calls.append(llm_call_obj.model_dump())
             else:
                 logger.warning(f"No LLM call detected for event {event_name}")
 
@@ -109,15 +108,6 @@ async def run_event_detection_pipeline(
                     score_range=result.metadata.get("score_range", None),
                 )
 
-                # Update the task object with the event
-                await mongo_db["tasks"].update_one(
-                    {
-                        "id": message.metadata["task"].id,
-                        "project_id": message.metadata["task"].project_id,
-                    },
-                    # Add the event to the list of events
-                    {"$addToSet": {"events": detected_event_data.model_dump()}},
-                )
                 if webhook_url is not None:
                     await trigger_webhook(
                         url=webhook_url,
@@ -125,37 +115,31 @@ async def run_event_detection_pipeline(
                         headers=webhook_headers,
                     )
 
-                # Update the Events collection with the new event
-                await mongo_db["events"].insert_one(detected_event_data.model_dump())
-
+                detected_events.append(detected_event_data.model_dump())
                 events_per_task[message.metadata["task"].id].append(detected_event_data)
-
-            else:
-                logger.info(
-                    f"Event {event_name} NOT detected for task {message.metadata['task'].id}"
-                )
-                # Handle the case where the event is not detected, but was previously detected
-                # We need to remove the event from the task document
-
-                await mongo_db["tasks"].update_one(
-                    {
-                        "id": message.metadata["task"].id,
-                        "project_id": message.metadata["task"].project_id,
-                    },
-                    # Remove the event from the list of events
-                    {"$pull": {"events": {"event_name": event_name}}},
-                )
-
-                # Try to delete the event from the Event collection
-                await mongo_db["events"].delete_one(
-                    {"task_id": message.metadata["task"].id, "event_name": event_name}
-                )
 
             # Save the prediction
             result.task_id = message.metadata["task"].id
             if result.job_metadata.get("recipe_id") is None:
                 logger.error(f"No recipe_id found for event {event_name}.")
-            mongo_db["job_results"].insert_one(result.model_dump())
+            job_results.append(result.model_dump())
+
+    # Save the detected events and jobs results in the database
+    if len(detected_events) > 0:
+        try:
+            await mongo_db["events"].insert_many(detected_events)
+        except Exception as e:
+            logger.error(f"Error saving detected events to the database: {e}")
+    if len(llm_calls) > 0:
+        try:
+            await mongo_db["llm_calls"].insert_many(llm_calls)
+        except Exception as e:
+            logger.error(f"Error saving LLM calls to the database: {e}")
+    if len(job_results) > 0:
+        try:
+            await mongo_db["job_results"].insert_many(job_results)
+        except Exception as e:
+            logger.error(f"Error saving job results to the database: {e}")
 
     return events_per_task
 
@@ -401,6 +385,8 @@ async def task_event_detection_pipeline(
     # Check the results of the workload
     message_results = workload.results.get(latest_message_id, [])
     detected_events = []
+    llm_calls = []
+    job_results = []
     for event_name, result in message_results.items():
         # Store the LLM call in the database
         metadata = result.metadata
@@ -413,7 +399,7 @@ async def task_event_detection_pipeline(
                 recipe_id=result.job_metadata.get("recipe_id"),
                 project_id=project_id,
             )
-            mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
+            llm_calls.append(llm_call_obj.model_dump())
         else:
             logger.warning(f"No LLM call detected for event {event_name}")
 
@@ -438,13 +424,6 @@ async def task_event_detection_pipeline(
                 score_range=result.metadata.get("score_range", None),
             )
             detected_events.append(detected_event_data)
-            # Update the task object with the event
-            if save_task:
-                mongo_db["tasks"].update_many(
-                    {"id": task.id, "project_id": task.project_id},
-                    # Add the event to the list of events
-                    {"$push": {"events": detected_event_data.model_dump()}},
-                )
             # Trigger the webhook if it exists
             if event_definition.webhook is not None:
                 await trigger_webhook(
@@ -457,7 +436,7 @@ async def task_event_detection_pipeline(
         if result.job_metadata.get("recipe_id") is None:
             logger.error(f"No recipe_id found for event {event_name}")
 
-        mongo_db["job_results"].insert_one(result.model_dump())
+        job_results.append(result.model_dump())
 
     if len(detected_events) > 0:
         try:
@@ -465,8 +444,20 @@ async def task_event_detection_pipeline(
                 [event.model_dump() for event in detected_events]
             )
         except Exception as e:
-            error_mesagge = f"Error saving detected events to the database: {e}"
-            logger.error(error_mesagge)
+            error_message = f"Error saving detected events to the database: {e}"
+            logger.error(error_message)
+    if len(llm_calls) > 0:
+        try:
+            mongo_db["llm_calls"].insert_many(llm_calls)
+        except Exception as e:
+            error_message = f"Error saving LLM calls to the database: {e}"
+            logger.error(error_message)
+    if len(job_results) > 0:
+        try:
+            mongo_db["job_results"].insert_many(job_results)
+        except Exception as e:
+            error_message = f"Error saving job results to the database: {e}"
+            logger.error(error_message)
 
     return detected_events
 
@@ -769,8 +760,8 @@ async def messages_main_pipeline(
         try:
             mongo_db["events"].insert_many([event.model_dump() for event in events])
         except Exception as e:
-            error_mesagge = f"Error saving detected events to the database: {e}"
-            logger.error(error_mesagge)
+            error_message = f"Error saving detected events to the database: {e}"
+            logger.error(error_message)
 
     return PipelineResults(
         events=events,
