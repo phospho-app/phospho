@@ -180,7 +180,7 @@ async def task_event_detection_pipeline(
 
     # We fetch positive examples of the event
 
-    PHOSPHO_EVENT_MODEL_NAMES = ["phospho-6", "owner"]
+    PHOSPHO_EVENT_MODEL_NAMES = ["phospho-6", "owner", "phospho-4"]
 
     llm_based_events = []
     for event_name, event in project.settings.events.items():
