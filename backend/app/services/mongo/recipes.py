@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 from app.api.platform.models.explore import Pagination
 from app.db.mongo import get_mongo_db
@@ -27,7 +28,6 @@ async def get_recipe_from_event_id(project_id: str, event_id: str) -> Recipe:
         project_id=project_id, event_id=event_id
     )
     if event_definition.recipe_id is None:
-        logger.error()
         raise HTTPException(
             status_code=404,
             detail=f"Event {event_definition.event_name} has no recipe_id for project {project_id}.",
@@ -56,6 +56,12 @@ async def run_recipe_on_tasks_batched(
         project_id=project_id,
         filters=filters,
     )
+    if not total_nb_tasks:
+        logger.warning(
+            f"No tasks found for project {project_id} with filters {filters}. Skipping."
+        )
+        return
+
     if sample_rate is not None:
         # Clamp sample rate between 0 and 1
         sample_rate = max(0, min(1, sample_rate))
@@ -64,7 +70,7 @@ async def run_recipe_on_tasks_batched(
         sample_size = total_nb_tasks
 
     # Batch the tasks to avoid memory issues
-    batch_size = 256
+    batch_size = 128
     nb_batches = sample_size // batch_size
     for i in range(nb_batches + 1):
         tasks = await get_all_tasks(
@@ -73,6 +79,8 @@ async def run_recipe_on_tasks_batched(
             pagination=Pagination(page=i, per_page=batch_size),
         )
         await run_recipe_on_tasks(tasks=tasks, recipe=recipe, org_id=org_id)
+        # Add a sleep to avoid overloading the extractor
+        await asyncio.sleep(5)
 
 
 async def run_recipe_types_on_tasks(
