@@ -177,12 +177,205 @@ async def task_event_detection_pipeline(
     # Convert to the proper lab project object
     # TODO : Normalize the project definition by storing all db models in the phospho module
     # and importing models from the phospho module
+
+    # We fetch positive examples of the event
+
+    PHOSPHO_EVENT_MODEL_NAMES = ["phospho-6", "owner"]
+
+    llm_based_events = []
+    for event_name, event in project.settings.events.items():
+        if event.detection_engine == "llm_detection":
+            llm_based_events.append(event_name)
+
+    # Matches at most one successful example per event_name
+    successful_examples_tasks = (
+        await mongo_db["events"]
+        .aggregate(
+            [
+                {
+                    "$match": {
+                        "project_id": project_id,
+                        "source": {"$in": PHOSPHO_EVENT_MODEL_NAMES},
+                        "confirmed": True,
+                        "removed": False,
+                        "event_name": {
+                            "$in": llm_based_events
+                        },  # filter by event names in project.settings.event
+                    }
+                },
+                {
+                    "$facet": {
+                        "event_names": [{"$group": {"_id": "$event_name"}}],
+                        "events": [
+                            {"$sort": {"created_at": -1}},
+                            {
+                                "$group": {
+                                    "_id": "$event_name",
+                                    "first_event": {"$first": "$$ROOT"},
+                                }
+                            },
+                            {"$replaceRoot": {"newRoot": "$first_event"}},
+                            {
+                                "$lookup": {
+                                    "from": "tasks",
+                                    "localField": "task_id",
+                                    "foreignField": "id",
+                                    "as": "task",
+                                }
+                            },
+                            {"$unwind": "$task"},
+                            {
+                                "$addFields": {
+                                    "event_name": "$event_name",
+                                    "output": "$task.output",
+                                    "input": "$task.input",
+                                }
+                            },
+                            {
+                                "$project": {
+                                    "input": 1,
+                                    "output": 1,
+                                    "event_name": 1,
+                                }
+                            },
+                        ],
+                    }
+                },
+                {
+                    "$project": {
+                        "events": {
+                            "$setDifference": [
+                                "$events",
+                                {
+                                    "$map": {
+                                        "input": "$event_names",
+                                        "as": "event_name",
+                                        "in": {
+                                            "$filter": {
+                                                "input": "$events",
+                                                "as": "event",
+                                                "cond": {
+                                                    "$eq": [
+                                                        "$$event.event_name",
+                                                        "$$event_name._id",
+                                                    ]
+                                                },
+                                            }
+                                        },
+                                    }
+                                },
+                            ]
+                        }
+                    }
+                },
+                {"$unwind": "$events"},
+                {"$replaceRoot": {"newRoot": "$events"}},
+            ]
+        )
+        .to_list(length=None)
+    )
+
+    # Matches at most one unsuccessful example per event_name
+    unsuccessful_examples_tasks = (
+        await mongo_db["events"]
+        .aggregate(
+            [
+                {
+                    "$match": {
+                        "project_id": project_id,
+                        "removed": True,
+                        "confirmed": False,
+                        "source": {"$in": PHOSPHO_EVENT_MODEL_NAMES},
+                        "removal_reason": {"$regex": "removed_by_user"},
+                        "event_name": {"$in": llm_based_events},
+                    }
+                },
+                {
+                    "$facet": {
+                        "event_names": [{"$group": {"_id": "$event_name"}}],
+                        "events": [
+                            {"$sort": {"created_at": -1}},
+                            {
+                                "$group": {
+                                    "_id": "$event_name",
+                                    "first_event": {"$first": "$$ROOT"},
+                                }
+                            },
+                            {"$replaceRoot": {"newRoot": "$first_event"}},
+                            {
+                                "$lookup": {
+                                    "from": "tasks",
+                                    "localField": "task_id",
+                                    "foreignField": "id",
+                                    "as": "task",
+                                }
+                            },
+                            {"$unwind": "$task"},
+                            {
+                                "$addFields": {
+                                    "event_name": "$event_name",
+                                    "output": "$task.output",
+                                    "input": "$task.input",
+                                }
+                            },
+                            {
+                                "$project": {
+                                    "input": 1,
+                                    "output": 1,
+                                    "event_name": 1,
+                                }
+                            },
+                        ],
+                    }
+                },
+                {
+                    "$project": {
+                        "events": {
+                            "$setDifference": [
+                                "$events",
+                                {
+                                    "$map": {
+                                        "input": "$event_names",
+                                        "as": "event_name",
+                                        "in": {
+                                            "$filter": {
+                                                "input": "$events",
+                                                "as": "event",
+                                                "cond": {
+                                                    "$eq": [
+                                                        "$$event.event_name",
+                                                        "$$event_name._id",
+                                                    ]
+                                                },
+                                            }
+                                        },
+                                    }
+                                },
+                            ]
+                        }
+                    }
+                },
+                {"$unwind": "$events"},
+                {"$replaceRoot": {"newRoot": "$events"}},
+            ]
+        )
+        .to_list(length=None)
+    )
+
     workload = lab.Workload.from_phospho_project_config(project)
     logger.debug(f"Workload for project {project_id} : {workload}")
 
     # events_per_task = await run_event_detection_pipeline(workload=workload, tasks=[task])
 
-    message = lab.Message.from_task(task=task_data, previous_tasks=task_context)
+    message = lab.Message.from_task(
+        task=task_data,
+        previous_tasks=task_context,
+        metadata={
+            "successful_examples": successful_examples_tasks,
+            "unsuccessful_examples": unsuccessful_examples_tasks,
+        },
+    )
+
     latest_message_id = message.id
     await workload.async_run(
         messages=[message],
@@ -285,7 +478,6 @@ async def task_scoring_pipeline(
     )
 
     run_evals = project.get("settings", {}).get("run_evals", None)
-    logger.debug(run_evals)
     if run_evals is not None and not run_evals:
         logger.info(f"run_evals is disabled for project {task.project_id}")
         return None
@@ -294,7 +486,7 @@ async def task_scoring_pipeline(
     nb_success = int(config.FEW_SHOT_MAX_NUMBER_OF_EXAMPLES / 2)
     nb_failure = int(config.FEW_SHOT_MAX_NUMBER_OF_EXAMPLES / 2)
 
-    PHOSPHO_EVAL_MODELS_NAMES = ["phospho", "phospho-4"]
+    PHOSPHO_EVAL_MODEL_NAMES = ["phospho", "phospho-4"]
 
     # Get the user evals from the db
     successful_examples_tasks = (
@@ -304,8 +496,8 @@ async def task_scoring_pipeline(
                 {
                     "$match": {
                         "project_id": task.project_id,
-                        "source": {"$nin": PHOSPHO_EVAL_MODELS_NAMES},
                         "value": "success",
+                        "source": {"$nin": PHOSPHO_EVAL_MODEL_NAMES},
                     }
                 },
                 {"$sort": {"created_at": -1}},
@@ -341,7 +533,7 @@ async def task_scoring_pipeline(
                 {
                     "$match": {
                         "project_id": task.project_id,
-                        "source": {"$nin": PHOSPHO_EVAL_MODELS_NAMES},
+                        "source": {"$nin": PHOSPHO_EVAL_MODEL_NAMES},
                         "value": "failure",
                     }
                 },
