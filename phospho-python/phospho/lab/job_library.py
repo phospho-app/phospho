@@ -149,6 +149,7 @@ async def event_detection(
 ) -> JobResult:
     """
     Detects if an event is present in a message.
+    - We can use message metadatas to get examples of successful and unsuccessful interactions
     """
     # Identifier of the source of the evaluation, with the version of the model if phospho
     EVALUATION_SOURCE = "phospho-6"
@@ -162,22 +163,61 @@ async def event_detection(
     if isinstance(score_range_settings, dict):
         score_range_settings = ScoreRangeSettings.model_validate(score_range_settings)
 
+    successful_examples = message.metadata.get("successful_examples", [])
+    unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
+
+    assert isinstance(successful_examples, list), "successful_examples is not a list"
+    assert isinstance(
+        unsuccessful_examples, list
+    ), "unsuccessful_examples is not a list"
+
+    successful_example = None
+    for example in successful_examples:
+        if event_name == example["event_name"]:
+            successful_example = example
+            break
+
+    unsuccessful_example = None
+    for example in unsuccessful_examples:
+        if event_name == example["event_name"]:
+            unsuccessful_example = example
+            break
+
     # Build the prompt
     if score_range_settings.score_type == "confidence":
         prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
 and you want to say if the event '{event_name}' happened during the latest interaction.
-This conversation is between a User and a Assistant.
+This conversation is between a User and an Assistant.
 """
     elif score_range_settings.score_type == "range":
         prompt = f"""You are an impartial judge reading a conversation between a user and an assistant,
 and during the latest interaction you want to evaluate the event '{event_name}'.
-This conversation is between a User and a Assistant.
+This conversation is between a User and an Assistant.
 """
 
     if event_description is not None and len(event_description) > 0:
         prompt += f"The description of the event '{event_name}' is:\n<event_description>{event_description}</event_description>\n"
     else:
-        prompt += f"You don't have any description for what is '{event_name}'. Make your best guess.\n"
+        prompt += (
+            f"You don't have any description of '{event_name}'. Take your best guess.\n"
+        )
+
+    if successful_example is not None:
+        prompt += f"""
+Here is an example of a successful interaction where the event '{event_name}' happened:
+<example>
+User: {successful_example['input']}
+Assistant: {successful_example['output']}
+</example>
+"""
+    if unsuccessful_example is not None:
+        prompt += f"""
+Here is an example of an unsuccessful interaction where the event '{event_name}' did not happen:
+<example>
+User: {unsuccessful_example['input']}
+Assistant: {unsuccessful_example['output']}
+</example>
+"""
 
     if len(message.previous_messages) > 1 and "task" in event_scope:
         truncated_context = shorten_text(

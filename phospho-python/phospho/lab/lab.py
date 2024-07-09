@@ -34,7 +34,6 @@ from .models import (
     ResultType,
     Recipe,
 )
-from phospho.utils import generate_uuid
 
 
 logger = logging.getLogger(__name__)
@@ -195,7 +194,7 @@ class Job:
         self, message: Message
     ) -> List[Dict[str, JobResult]]:
         """
-        Asynchronously run the job on the message in all the laternative configurations, except the default.
+        Asynchronously run the job on the message in all the alternative configurations, except the default.
         Results are appended to the job_predictions attribute.
         """
         if len(self.alternative_configs) == 0:
@@ -309,8 +308,7 @@ class MessageCallable(Protocol):
     A function whose first argument is a Message.
     """
 
-    def __call__(self, message: Message, *args: Any, **kwargs: Any) -> Any:
-        ...
+    def __call__(self, message: Message, *args: Any, **kwargs: Any) -> Any: ...
 
 
 class Workload:
