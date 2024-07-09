@@ -562,11 +562,11 @@ async def task_scoring_pipeline(
     )
     logger.debug(f"Nb of failure examples: {len(unsuccessful_examples_tasks)}")
 
-    # Get the Task's system prompt
+    # Get the Task's evaluation prompt
     if task.metadata is not None:
-        system_prompt = task.metadata.get("system_prompt", None)
+        evaluation_prompt = task.metadata.get("evaluation_prompt", None)
     else:
-        system_prompt = None
+        evaluation_prompt = None
 
     # Call the eval function
     # Create the phospho workload
@@ -590,7 +590,7 @@ async def task_scoring_pipeline(
         metadata={
             "successful_examples": successful_examples_tasks,
             "unsuccessful_examples": unsuccessful_examples_tasks,
-            "system_prompt": system_prompt,
+            "evaluation_prompt": evaluation_prompt,
         },
     )
     await workload.async_run(messages=[message], executor_type="sequential")

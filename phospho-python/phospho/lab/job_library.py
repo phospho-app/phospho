@@ -465,7 +465,7 @@ async def evaluate_task(
     Message.metadata = {
         "successful_examples": [{input, output, flag}],
         "unsuccessful_examples": [{input, output, flag}],
-        "system_prompt": str,
+        "evaluation_prompt": str,
     }
     """
     from phospho.utils import fits_in_context_window
@@ -476,12 +476,13 @@ async def evaluate_task(
 
     successful_examples = message.metadata.get("successful_examples", [])
     unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
-    system_prompt = message.metadata.get("system_prompt", None)
+    evaluation_prompt = message.metadata.get("evaluation_prompt", None)
 
     assert isinstance(successful_examples, list), "successful_examples is not a list"
     assert isinstance(
         unsuccessful_examples, list
     ), "unsuccessful_examples is not a list"
+    assert isinstance(evaluation_prompt, str) or evaluation_prompt is None
 
     # 32k is the max input length for gpt-4-1106-preview, we remove 1k to be safe
     # TODO : Make this adaptative to model name
@@ -559,81 +560,8 @@ async def evaluate_task(
             )
             return None
 
-    async def few_shot_evaluation(
-        message: Message,
-        successful_examples: list,  # {input, output, flag}
-        unsuccessful_examples: list,  # {input, output}
-    ) -> Optional[Literal["success", "failure"]]:
-        """
-        Few shot classification of a task using Cohere classification API
-        We balance the number of examples for each category (success, failure).
-        We use the most recent examples for the two categories
-        (the ones with the smaller index in the list)
-        """
-        import cohere
-        from cohere.responses.classify import Example
-
-        co = cohere.AsyncClient(config.COHERE_API_KEY, timeout=40)
-
-        half_few_shot_max = few_shot_max_number_of_examples // 2
-        # Truncate the examples to the max number of examples
-        if len(successful_examples) > half_few_shot_max:
-            successful_examples = successful_examples[:half_few_shot_max]
-            logger.debug(
-                f"truncated successful examples to {half_few_shot_max} examples"
-            )
-
-        if len(unsuccessful_examples) > half_few_shot_max:
-            unsuccessful_examples = unsuccessful_examples[:half_few_shot_max]
-            logger.debug(
-                f"truncated unsuccessful examples to {half_few_shot_max} examples"
-            )
-
-        # Format the examples
-        examples = []
-        for example in successful_examples:
-            text_prompt = f"User: {example['input']}\nAssistant: {example['output']}"
-            examples.append(Example(text_prompt, "success"))
-        for example in unsuccessful_examples:
-            text_prompt = f"User: {example['input']}\nAssistant: {example['output']}"
-            examples.append(Example(text_prompt, "failure"))
-
-        # Shuffle the examples
-        random.shuffle(examples)
-
-        if len(examples) > few_shot_max_number_of_examples:
-            examples = examples[:few_shot_max_number_of_examples]
-            logger.debug(
-                f"Truncated examples to {few_shot_max_number_of_examples} examples"
-            )
-
-        # Build the prompt to classify
-        text_prompt_to_classify = message.transcript(with_role=True)
-        inputs = [text_prompt_to_classify]  # TODO : batching later?
-
-        try:
-            response = await co.classify(
-                model="large",
-                inputs=inputs,
-                examples=examples,
-            )
-        except Exception as e:
-            await co.close()  # Close the connection before raising the exception
-            raise e
-
-        # Close the connection
-        await co.close()
-        flag = response.classifications[0].predictions[0]
-        confidence = response.classifications[0].confidences[0]
-        # TODO : add check on confidence ?
-        logger.debug(f"few_shot_eval flag : {flag}, confidence : {confidence}")
-        if flag in ["success", "failure"]:
-            return flag
-        else:
-            raise Exception("The flag is not success or failure")
-
     def build_zero_shot_prompt(
-        message: Message, system_prompt: Optional[str] = None
+        message: Message, evaluation_prompt: Optional[str] = None
     ) -> str:
         """
         Builds a zero shot prompt for the evaluation of a task.
@@ -645,12 +573,12 @@ async def evaluate_task(
         prompt = """You are an impartial judge evaluating an interaction between a user and an assistant. \
         Your goal is to say if the assistant response to the user was good or bad."""
 
-        if system_prompt:
+        if evaluation_prompt:
             prompt += f"""An assistant behaviour is guided by its system prompt. A good assistant response follows \
                 its system prompt. A bad assistant response disregards its system prompt. The system prompt of the assistant \
                 is the following:
                 [START SYSTEM PROMPT]
-                {system_prompt}
+                {evaluation_prompt}
                 [END SYSTEM PROMPT]
             """
         else:
@@ -679,28 +607,8 @@ async def evaluate_task(
         """
         return prompt
 
-    if len(merged_examples) < few_shot_min_number_of_examples:
-        # Zero shot mode
-        prompt = build_zero_shot_prompt(message, system_prompt)
-        flag = await zero_shot_evaluation(prompt, model_name=model_name)
-    else:
-        # Few shot mode
-        logger.debug(
-            f"Running eval in few shot mode with Cohere classifier and {len(merged_examples)} examples"
-        )
-        prompt = None
-        try:
-            flag = await few_shot_evaluation(
-                message=message,
-                successful_examples=successful_examples,
-                unsuccessful_examples=unsuccessful_examples,
-            )
-        except Exception as e:
-            logger.error(
-                f"Error in few shot evaluation (falling back to zero shot mode) : {e}"
-            )
-            prompt = build_zero_shot_prompt(message, system_prompt)
-            flag = await zero_shot_evaluation(prompt, model_name=model_name)
+    prompt = build_zero_shot_prompt(message, evaluation_prompt)
+    flag = await zero_shot_evaluation(prompt, model_name=model_name)
 
     return JobResult(
         result_type=ResultType.literal,
