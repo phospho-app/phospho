@@ -482,21 +482,17 @@ async def evaluate_task(
     # 128k is the max input length for gpt-4o, we remove 1k to be safe
     # TODO : Make this adaptative to model name
     max_tokens_input_lenght = 128 * 1000 - 1000
-    merged_examples = []
-    min_number_of_examples = min(len(successful_examples), len(unsuccessful_examples))
-
-    for i in range(0, min_number_of_examples):
-        merged_examples.append(successful_examples[i])
-        merged_examples.append(unsuccessful_examples[i])
 
     # Shuffle the examples
-    random.shuffle(merged_examples)
+    random.shuffle(successful_examples)
+    random.shuffle(unsuccessful_examples)
 
     # Additional metadata
     api_call_time: Optional[float] = None
     llm_call: Optional[dict] = None
 
     async def zero_shot_evaluation(
+        system_prompt: str,
         prompt: str,
         model_name: str = os.getenv("MODEL_ID", "gpt-4o"),
     ) -> Optional[Literal["success", "failure"]]:
@@ -520,8 +516,7 @@ async def evaluate_task(
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an impartial judge evaluating an interaction between a user and an assistant. \
-        Your goal is to say if the assistant response to the user was good or bad.",
+                    "content": system_prompt,
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -531,6 +526,8 @@ async def evaluate_task(
 
         llm_response = response.choices[0].message.content
         api_call_time = time.time() - start_time
+
+        logger.debug(f"LLM response : {llm_response}")
 
         llm_call = {
             "model": model_name,
@@ -560,7 +557,10 @@ async def evaluate_task(
             return None
 
     def build_zero_shot_prompt(
-        message: Message, evaluation_prompt: Optional[str] = None
+        message: Message,
+        evaluation_prompt: Optional[str] = None,
+        successful_examples: List[dict] = [],
+        unsuccessful_examples: List[dict] = [],
     ) -> str:
         """
         Builds a zero shot prompt for the evaluation of a task.
@@ -568,47 +568,55 @@ async def evaluate_task(
         # Zero shot mode
         logger.debug("Running eval in zero shot mode")
 
-        # Build zero shot prompt
-        prompt = """"""
+        prompt = """Here is the interaction between the assistant and the user that you have to evaluate:
+[START INTERACTION]
+"""
 
-        if evaluation_prompt:
-            logger.debug(f"Using custom evaluation prompt {evaluation_prompt}")
-            prompt += f"""An assistant behaviour is guided by its system prompt. A good assistant response follows \
-                its system prompt. A bad assistant response disregards its system prompt. The system prompt of the assistant \
-                is the following:
-                [START SYSTEM PROMPT]
-                {evaluation_prompt}
-                [END SYSTEM PROMPT]
-            """
-        else:
-            # Assume a generic system prompt
-            # TODO : Use the project settings and events suggestions to infer a system prompt
-            prompt += """A good assistant is helpful, concise, precise, entertaining, sharp, to the point, direct, agreeable.
-            A bad assistant is pointless, verbose, boring, off-topic, inaccurate, unhelpful, misleading, confusing.
-            """
-
-        # If there is a previous task, add it to the prompt
         if len(message.previous_messages) > 0:
-            prompt += f"""A good assistant remembers previous interactions and gives in context answers.
-            A bad assistant ignores the context of the conversation and responds out of touch. 
-            The previous interaction between the user and the assistant was the following:
-            [START PREVIOUS INTERACTION]
-            {message.previous_messages_transcript(with_role=True)}
-            [END PREVIOUS INTERACTION]
-            """
+            prompt += f"""{message.previous_messages_transcript(with_role=True)}"""
 
-        prompt += f"""Given the best of your knowledge, evaluate the following interaction between the user and the assistant:
-        [START INTERACTION]
-        {message.transcript(with_role=True)}
-        [END INTERACTION]
+        prompt += f"""
+{message.transcript(with_role=True)}
+[END INTERACTION]
 
-        Respond with only one word: success if the assistant response was good, failure if the assistant response was bad.
-        """
-        logger.debug(f"Zero shot prompt: {prompt}")
-        return prompt
+Respond with only one word: success or failure based on these guidelines:
+"""
+        system_prompt = """You are an impartial judge evaluating an interaction between a user and an assistant. You follow the given evaluation guidelines."""
+        if evaluation_prompt:
+            system_prompt += f"""
+[EVALUATION GUIDELINES START]
+{evaluation_prompt}
+[EVALUATION GUIDELINES END]
+"""
+        else:
+            system_prompt += """
+[EVALUATION GUIDELINES START]
+Give a positive answer if the assistant response was good, to the point, and relevant, give a negative answer if the assistant response was bad, inapropriate or irrelevent.
+[EVALUATION GUIDELINES END]
+"""
+        if len(successful_examples) > 1:
+            system_prompt += f"""Here are some examples of successful interactions:
+[SUCCESSFUL EXAMPLES START]
+{successful_examples[0]['input']} -> {successful_examples[0]['output']} -> success
+{successful_examples[1]['input']} -> {successful_examples[1]['output']} -> success
+[SUCCESSFUL EXAMPLES END]
+"""
+        if len(unsuccessful_examples) > 1:
+            system_prompt += f"""Here are some examples of interactions:
+[UNSUCCESSFUL EXAMPLES START]
+{unsuccessful_examples[0]['input']} -> {unsuccessful_examples[0]['output']} -> failure
+{unsuccessful_examples[1]['input']} -> {unsuccessful_examples[1]['output']} -> failure
+[UNSUCCESSFUL EXAMPLES END]
+"""
 
-    prompt = build_zero_shot_prompt(message, evaluation_prompt)
-    flag = await zero_shot_evaluation(prompt, model_name=model_name)
+        return system_prompt, prompt
+
+    system_prompt, prompt = build_zero_shot_prompt(
+        message, evaluation_prompt, successful_examples, unsuccessful_examples
+    )
+    logger.debug(f"System Prompt : {system_prompt}")
+    logger.debug(f"Prompt : {prompt}")
+    flag = await zero_shot_evaluation(system_prompt, prompt, model_name=model_name)
 
     return JobResult(
         result_type=ResultType.literal,
