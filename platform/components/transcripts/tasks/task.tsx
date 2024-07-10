@@ -27,7 +27,7 @@ interface TaskProps {
 }
 
 const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
-  const { user, loading, accessToken } = useUser();
+  const { user, accessToken } = useUser();
   const [refresh, setRefresh] = useState(false);
 
   const router = useRouter();
