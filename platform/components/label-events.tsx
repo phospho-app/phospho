@@ -260,6 +260,7 @@ export const AddEventDropdownForTasks = ({
     scoreCategoryLabel?: string;
   }) {
     // Call the API to add the event to the task
+    console.log("scoreCategoryLabel", scoreCategoryLabel);
     fetch(`/api/tasks/${task.id}/add-event`, {
       method: "POST",
       headers: {
@@ -268,6 +269,8 @@ export const AddEventDropdownForTasks = ({
       },
       body: JSON.stringify({
         event: event,
+        score_range_value: scoreRangeValue,
+        score_category_label: scoreCategoryLabel,
       }),
     })
       .then((response) => response.json())
