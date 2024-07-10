@@ -672,10 +672,3 @@ class Clustering(ProjectElementBaseModel):
     clusters_ids: List[str]
     status: Optional[Literal["started", "summaries", "completed"]] = None
     clusters: Optional[List[Cluster]] = None
-
-
-class Evaluation_prompt(BaseModel):
-    project_id: str
-    system_prompt: str
-    created_at: int = Field(default_factory=generate_timestamp)
-    removed: bool = False
