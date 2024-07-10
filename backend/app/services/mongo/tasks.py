@@ -185,11 +185,6 @@ async def add_event_to_task(
     ]:
         return task
 
-    logger.info(f"event: {event}")
-    logger.info(f"event_source: {event_source}")
-    logger.info(f"score_range_value: {score_range_value}")
-    logger.info(f"score_category_label: {score_category_label}")
-
     if (
         score_range_value is None
         and score_category_label is not None
@@ -223,7 +218,11 @@ async def add_event_to_task(
         confirmed=True,
         score_range=score_range,
     )
-    _ = await mongo_db["events"].insert_one(detected_event_data.model_dump())
+    await mongo_db["events"].insert_one(detected_event_data.model_dump())
+
+    if task.events is None:
+        task.events = []
+    task.events.append(detected_event_data)
 
     return task
 
