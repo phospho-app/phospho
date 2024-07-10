@@ -12,7 +12,7 @@ from app.services.projects import get_project_by_id
 
 from app.services.webhook import trigger_webhook
 from phospho import lab
-from phospho.models import ResultType, SentimentObject, JobResult
+from phospho.models import ResultType, SentimentObject, JobResult, Evaluation_prompt
 
 from app.api.v1.models.pipelines import PipelineResults
 
@@ -566,7 +566,17 @@ async def task_scoring_pipeline(
     if task.metadata is not None:
         evaluation_prompt = task.metadata.get("evaluation_prompt", None)
     else:
-        evaluation_prompt = None
+        evaluation_prompt = mongo_db["eval_prompts"].find_one(
+            {"project_id": task.project_id},
+            {"removed": False},
+        )
+        if evaluation_prompt is None:
+            logger.debug(
+                f"No custom evaluation prompt found for project {task.project_id}"
+            )
+        else:
+            validated = Evaluation_prompt.model_validate(evaluation_prompt)
+            evaluation_prompt = validated.system_prompt
 
     # Call the eval function
     # Create the phospho workload

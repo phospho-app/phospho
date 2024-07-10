@@ -20,10 +20,8 @@ try:
 except ImportError:
     pass
 
-from phospho import config
-
 from .language_models import get_async_client, get_provider_and_model, get_sync_client
-from .models import JobResult, Message, ResultType, DetectionScope
+from phospho.models import JobResult, Message, ResultType, DetectionScope
 
 logger = logging.getLogger(__name__)
 
@@ -452,15 +450,12 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
 
 async def evaluate_task(
     message: Message,
-    few_shot_min_number_of_examples: int = 5,
-    few_shot_max_number_of_examples: int = 10,
     model: str = "openai:gpt-4o",
     **kwargs,
 ) -> JobResult:
     """
     Evaluate a task:
-    - If there are not enough examples, use the zero shot expensive classifier
-    - If there are enough examples, use the cheaper few shot classifier
+    - We use llm as a judge with few shot examples and the possibility to provide a custom prompt to the evalutor
 
     Message.metadata = {
         "successful_examples": [{input, output, flag}],
@@ -484,7 +479,7 @@ async def evaluate_task(
     ), "unsuccessful_examples is not a list"
     assert isinstance(evaluation_prompt, str) or evaluation_prompt is None
 
-    # 32k is the max input length for gpt-4-1106-preview, we remove 1k to be safe
+    # 128k is the max input length for gpt-4o, we remove 1k to be safe
     # TODO : Make this adaptative to model name
     max_tokens_input_lenght = 128 * 1000 - 1000
     merged_examples = []
@@ -523,7 +518,11 @@ async def evaluate_task(
         response = await async_openai_client.chat.completions.create(
             model=model_name,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {
+                    "role": "system",
+                    "content": "You are an impartial judge evaluating an interaction between a user and an assistant. \
+        Your goal is to say if the assistant response to the user was good or bad.",
+                },
                 {"role": "user", "content": prompt},
             ],
             temperature=0,
@@ -570,10 +569,10 @@ async def evaluate_task(
         logger.debug("Running eval in zero shot mode")
 
         # Build zero shot prompt
-        prompt = """You are an impartial judge evaluating an interaction between a user and an assistant. \
-        Your goal is to say if the assistant response to the user was good or bad."""
+        prompt = """"""
 
         if evaluation_prompt:
+            logger.debug(f"Using custom evaluation prompt {evaluation_prompt}")
             prompt += f"""An assistant behaviour is guided by its system prompt. A good assistant response follows \
                 its system prompt. A bad assistant response disregards its system prompt. The system prompt of the assistant \
                 is the following:
@@ -605,6 +604,7 @@ async def evaluate_task(
 
         Respond with only one word: success if the assistant response was good, failure if the assistant response was bad.
         """
+        logger.debug(f"Zero shot prompt: {prompt}")
         return prompt
 
     prompt = build_zero_shot_prompt(message, evaluation_prompt)

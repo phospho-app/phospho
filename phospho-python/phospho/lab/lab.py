@@ -26,12 +26,12 @@ from .models import (
     EventConfig,
     EventConfigForKeywords,
     EvenConfigForRegex,
-    EventDefinition,
     JobConfig,
     JobResult,
     Message,
-    Project,
     ResultType,
+    EventDefinition,
+    Project,
     Recipe,
 )
 
