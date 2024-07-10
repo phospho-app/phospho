@@ -6,104 +6,85 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { authFetcher } from "@/lib/fetcher";
-import { Project, SentimentThreshold } from "@/models/models";
+import { EvaluationModel, EvaluationModelDefinition } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { EllipsisVertical, Settings } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import useSWR, { useSWRConfig } from "swr";
+import useSWR from "swr";
 import { z } from "zod";
 
-export const EvalSettings = ({}: {}) => {
-  const [thresholdOpen, setThresholdOpen] = useState(false);
-  const { mutate } = useSWRConfig();
-  const dataFilters = navigationStateStore((state) => state.dataFilters);
-  const tasksSorting = navigationStateStore((state) => state.tasksSorting);
-  const tasksPagination = navigationStateStore(
-    (state) => state.tasksPagination,
-  );
+import { Spinner } from "./small-spinner";
+import { Textarea } from "./ui/textarea";
 
+export const EvalSettings = ({}: {}) => {
+  const [evalOpen, setEvalOpen] = useState(false);
+  const [clicked, setClicked] = useState(false);
   const { accessToken } = useUser();
 
   const project_id = navigationStateStore((state) => state.project_id);
-  const { data: selectedProject }: { data: Project } = useSWR(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+
+  const {
+    data: evaluation_model,
+    mutate: mutateEvaluation,
+  }: { data: EvaluationModel; mutate: any } = useSWR(
+    project_id ? [`/api/projects/${project_id}/evaluation`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
     },
   );
 
-  const score = selectedProject?.settings?.sentiment_threshold?.score || 0.3;
-  const magnitude =
-    selectedProject?.settings?.sentiment_threshold?.magnitude || 0.6;
-
   const formSchema = z.object({
-    score: z.number().min(0.05).max(1),
-    magnitude: z.number().min(0.1).max(100),
+    prompt: z.string().max(1000),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      score: score,
-      magnitude: magnitude,
+      prompt:
+        evaluation_model?.system_prompt ||
+        "Answer positively when the interaction talks about ... and negatively when it does not.",
     },
   });
 
   function toggleButton() {
-    setThresholdOpen(!thresholdOpen);
+    setEvalOpen(!evalOpen);
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { score, magnitude } = values;
-    const threshold: SentimentThreshold = {
-      score: score,
-      magnitude: magnitude,
-    };
-    if (!selectedProject || !selectedProject.settings) {
+    setClicked(true);
+    const { prompt } = values;
+    if (!project_id) {
       return;
     }
-    selectedProject.settings.sentiment_threshold = threshold;
-
-    const project_name = selectedProject.project_name;
-    const settings = selectedProject.settings;
-    fetch(`/api/projects/${project_id}`, {
+    const payload: EvaluationModelDefinition = {
+      project_id: project_id,
+      system_prompt: prompt,
+    };
+    fetch(`/api/projects/${project_id}/evaluation`, {
       method: "POST",
       headers: {
         Authorization: "Bearer " + accessToken,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        project_name: project_name,
-        settings: settings,
-      }),
-    }).then(() => {
-      mutate(
-        project_id
-          ? [
-              `/api/projects/${project_id}/tasks`,
-              accessToken,
-              tasksPagination.pageIndex,
-              JSON.stringify(dataFilters),
-              JSON.stringify(tasksSorting),
-            ]
-          : null,
-      );
+      body: JSON.stringify({ ...payload }),
+    }).then((response) => {
+      mutateEvaluation(response.json());
+      setClicked(false);
       toggleButton();
     });
   }
 
-  if (!selectedProject) {
+  if (!project_id || !prompt) {
     return <></>;
   }
 
   return (
-    <DropdownMenu open={thresholdOpen} onOpenChange={setThresholdOpen}>
+    <DropdownMenu open={evalOpen} onOpenChange={setEvalOpen}>
       <DropdownMenuTrigger>
         <Button variant="ghost" size={"icon"} onClick={toggleButton}>
           <EllipsisVertical className="h-5 w-5" />
@@ -112,60 +93,33 @@ export const EvalSettings = ({}: {}) => {
       <DropdownMenuContent className="w-full">
         <DropdownMenuLabel className="flex flex-row items-center">
           <Settings className="w-4 h-4 mr-1" />
-          Sentiment settings
+          System prompt for evaluation
         </DropdownMenuLabel>
         <div className="p-2">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="score"
+                name="prompt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="mr-2">
-                      Score, Positive-Negative (0.05-1)
+                    <FormLabel>
+                      Describe what a successful interaction is to you
                     </FormLabel>
-                    <Input
+                    <Textarea
+                      className="h-40 w-full break-words"
                       {...field}
-                      type="number"
-                      step="0.05"
-                      className="input"
-                      value={field.value}
-                      onChange={(e) => {
-                        field.onChange(e.target.valueAsNumber);
-                      }}
-                    />
-                  </FormItem>
-                )}
-              ></FormField>
-              <FormField
-                control={form.control}
-                name="magnitude"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="mr-2">
-                      Magnitude, Neutral-Mixed (0.1-100)
-                    </FormLabel>
-                    <Input
-                      {...field}
-                      type="number"
-                      step="0.1"
-                      className="input"
-                      value={field.value}
-                      onChange={(e) => {
-                        field.onChange(e.target.valueAsNumber);
-                      }}
+                      autoFocus
                     />
                   </FormItem>
                 )}
               ></FormField>
               <Button
                 type="submit"
-                onClick={() => {
-                  onSubmit(form.getValues());
-                }}
                 className="w-full"
+                disabled={clicked || !prompt || !form.formState.isValid}
               >
+                {clicked && <Spinner className="mr-1" />}
                 Update
               </Button>
             </form>
