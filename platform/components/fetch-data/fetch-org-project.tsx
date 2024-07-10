@@ -89,6 +89,9 @@ export default function FetchOrgProject() {
       ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
       : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
   if (fetchedOrgMetadata) {
     setSelectOrgMetadata(fetchedOrgMetadata);
@@ -106,6 +109,9 @@ export default function FetchOrgProject() {
       ? [`/api/organizations/${selectedOrgId}/projects`, accessToken]
       : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
   if (projectFetchingError) {
     toast({
