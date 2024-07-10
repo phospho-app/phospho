@@ -5,6 +5,9 @@ from app.db.models import Task, Event, Recipe
 from phospho.lab import Message
 from phospho.models import SentimentObject
 
+from app.utils import generate_timestamp
+from pydantic import Field
+
 
 class RunMainPipelineOnTaskRequest(BaseModel):
     task: Task
@@ -32,3 +35,10 @@ class AugmentedOpenTelemetryData(BaseModel):
     project_id: str
     org_id: str
     open_telemetry_data: dict
+
+
+class Evaluation_model(BaseModel):
+    project_id: str
+    system_prompt: str
+    created_at: int = Field(default_factory=generate_timestamp)
+    removed: bool = False
