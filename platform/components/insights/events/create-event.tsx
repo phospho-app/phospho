@@ -92,6 +92,33 @@ export default function CreateEvent({
         min: z.number().min(0).max(1),
         max: z.number().min(1).max(5),
         score_type: z.enum(["confidence", "range", "category"]),
+        categories: z.any().transform((value, ctx) => {
+          // If array of string, return it
+          if (Array.isArray(value)) {
+            return value;
+          }
+          // If not a string, raise an error
+          if (typeof value !== "string") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Categories must be a string.",
+            });
+            return z.NEVER;
+          }
+          // Split the string into an array of categories
+          let categories = value.split(",").map((category) => category.trim());
+          // Remove empty strings
+          categories = categories.filter((category) => category !== "");
+          // Raise an error if there are less than 1 category or more than 9
+          if (categories.length < 1 || categories.length > 9) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Categories must be between 1 and 9.",
+            });
+            return z.NEVER;
+          }
+          return categories;
+        }),
       })
       .optional(),
   });
@@ -388,6 +415,12 @@ export default function CreateEvent({
                                 min: 1,
                                 max: 5,
                               });
+                            } else if (value === "category") {
+                              field.onChange({
+                                score_type: "category",
+                                min: 1,
+                                max: 1,
+                              });
                             }
                           }}
                           defaultValue={field.value?.score_type ?? "confidence"}
@@ -408,6 +441,9 @@ export default function CreateEvent({
                             <SelectItem value="range">
                               1-5 score (number)
                             </SelectItem>
+                            <SelectItem value="category">
+                              Category (enum)
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -416,6 +452,22 @@ export default function CreateEvent({
                 />
               )
             }
+            {form.watch("detection_engine") === "llm_detection" &&
+              form.watch("score_range_settings")?.score_type === "category" && (
+                <FormField
+                  control={form.control}
+                  name="score_range_settings.categories"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categories</FormLabel>
+                      <FormControl>
+                        <Input placeholder="happy,sad,neutral" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             {form.watch("detection_engine") === "keyword_detection" && (
               <FormField
                 control={form.control}
@@ -426,7 +478,10 @@ export default function CreateEvent({
                       List of words to detect, separated by a comma
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="happy, joyful, excited" {...field} />
+                      <Input
+                        placeholder="question, why, how, what"
+                        {...field}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -451,7 +506,7 @@ export default function CreateEvent({
                     </FormMessage>
                     <FormControl>
                       <Input
-                        placeholder="^[0-9]{5}$ or happy | joyful | excited"
+                        placeholder="^[0-9]{5}$ or why | how | what"
                         {...field}
                       />
                     </FormControl>

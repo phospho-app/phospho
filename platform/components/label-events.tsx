@@ -63,6 +63,9 @@ export const EventDetectionDescription = ({
             Score: {roundedScore}/{event.score_range.max}
           </div>
         )}
+        {event.score_range?.score_type == "category" && (
+          <div>Category: {event.score_range.label}</div>
+        )}
       </div>
     </div>
   );
@@ -79,10 +82,18 @@ export const EventBadge = ({ event }: { event: Event }) => {
 
   return (
     <Badge variant="outline" className={badgeStyle}>
-      {event.score_range?.score_type !== "range" && event.event_name}
+      {event.score_range?.score_type !== "range" &&
+        event.score_range?.score_type !== "category" && (
+          <p>{event.event_name}</p>
+        )}
       {event.score_range?.score_type === "range" && (
         <p>
           {event.event_name} {roundedScore}/{event.score_range.max}
+        </p>
+      )}
+      {event.score_range?.score_type === "category" && (
+        <p>
+          {event.event_name}: {event.score_range.label}
         </p>
       )}
     </Badge>

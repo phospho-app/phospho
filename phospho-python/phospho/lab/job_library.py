@@ -504,7 +504,8 @@ How would you categorize the interaction according to the event '{event_name}'? 
         for logprob in first_logprobs:
             stripped_token = logprob.token.lower().strip()
             if stripped_token.isdigit():
-                if int(stripped_token) >= 1 and int(stripped_token) <= len(
+                token_as_int = int(stripped_token)
+                if token_as_int >= 1 and token_as_int <= len(
                     score_range_settings.categories
                 ):
                     # Only keep the tokens in the range
@@ -548,7 +549,7 @@ How would you categorize the interaction according to the event '{event_name}'? 
         score = int(token_with_max_score)
         label = score_range_settings.categories[score - 1]
         options_confidence = {
-            score_range_settings.categories[int(token)]: logprob
+            score_range_settings.categories[int(token) - 1]: logprob
             for token, logprob in logprob_score.items()
             if token.isdigit()
             and int(token) <= len(score_range_settings.categories)

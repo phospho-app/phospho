@@ -89,6 +89,8 @@ export interface ScoreRange {
   max: number;
   value: number;
   score_type: ScoreRangeType;
+  label: string;
+  options_confidence: Record<string | number, number>;
 }
 
 export interface Event {
