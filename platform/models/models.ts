@@ -247,6 +247,19 @@ export interface MetadataTypeToFieldsToUniqueValues {
   string: MetadataFieldsToUniqueValues;
 }
 
+export interface EvaluationModelDefinition {
+  project_id: string;
+  system_prompt: string;
+}
+
+export interface EvaluationModel {
+  project_id: string;
+  system_prompt: string;
+  created_at: number;
+  id: string;
+  removed: boolean;
+}
+
 export interface ProjectDataFilters {
   created_at_start?: number | null;
   created_at_end?: number | null;
