@@ -58,8 +58,13 @@ def get_async_client(provider: str) -> AsyncOpenAI:
         )
     if provider == "solar":
         return AsyncOpenAI(
-            base_url="https://api.upstage.ai/v1/solar",
+            base_url="https://api.upstage.ai/v1/solar/",
             api_key=os.getenv("SOLAR_API_KEY"),
+        )
+    if provider == "together":
+        return AsyncOpenAI(
+            base_url="https://api.together.xyz/v1/",
+            api_key=os.getenv("TOGETHER_API_KEY"),
         )
     raise NotImplementedError(f"Provider {provider} is not supported.")
 
@@ -79,7 +84,12 @@ def get_sync_client(provider: str) -> OpenAI:
         )
     if provider == "solar":
         return OpenAI(
-            base_url="https://api.upstage.ai/v1/solar",
+            base_url="https://api.upstage.ai/v1/solar/",
             api_key=os.getenv("SOLAR_API_KEY"),
+        )
+    if provider == "together":
+        return OpenAI(
+            base_url="https://api.together.xyz/v1/",
+            api_key=os.getenv("TOGETHER_API_KEY"),
         )
     raise NotImplementedError(f"Provider {provider} is not supported.")
