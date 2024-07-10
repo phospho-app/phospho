@@ -160,6 +160,13 @@ async def event_detection(
         score_range_settings = ScoreRangeSettings()
     if isinstance(score_range_settings, dict):
         score_range_settings = ScoreRangeSettings.model_validate(score_range_settings)
+    if (
+        score_range_settings.score_type == "category"
+        and not score_range_settings.categories
+    ):
+        raise ValueError(
+            f"Categories must be provided for category score type. Got: {score_range_settings.model_dump()}"
+        )
 
     successful_examples = message.metadata.get("successful_examples", [])
     unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
@@ -190,6 +197,11 @@ This conversation is between a User and an Assistant.
     elif score_range_settings.score_type == "range":
         prompt = f"""You are an impartial judge reading a conversation between a user and an assistant,
 and during the latest interaction you want to evaluate the event '{event_name}'.
+This conversation is between a User and an Assistant.
+"""
+    elif score_range_settings.score_type == "category":
+        prompt = f"""You are an impartial judge reading a conversation between a user and an assistant,
+and you want to categorize the latest interaction based on the description of '{event_name}'.
 This conversation is between a User and an Assistant.
 """
 
@@ -307,6 +319,20 @@ Did the event '{event_name}' happen during the interaction? Respond with only on
         prompt += f"""
 How would you assess the '{event_name}' during the interaction? Respond with a whole number between {score_range_settings.min} and {score_range_settings.max}.
 """
+    elif (
+        score_range_settings.score_type == "category"
+        and score_range_settings.categories
+    ):
+        formatted_categories = "\n".join(
+            [
+                f"{i+1}. {category}"
+                for i, category in enumerate(score_range_settings.categories)
+            ]
+        )
+        prompt += f"""
+How would you categorize the interaction according to the event '{event_name}'? Respond with a number between 1 and {len(score_range_settings.categories)}, where each number corresponds to a category:
+{formatted_categories}
+"""
 
     # Call the API
     start_time = time.time()
@@ -363,9 +389,23 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
             if "yes" in stripped_llm_response:
                 result_type = ResultType.bool
                 detected_event = True
+                metadata["score_range"] = ScoreRange(
+                    score_type="confidence",
+                    max=1,
+                    min=0,
+                    value=1,
+                    options_confidence={"yes": 1},
+                )
             elif "no" in stripped_llm_response:
                 result_type = ResultType.bool
                 detected_event = False
+                metadata["score_range"] = ScoreRange(
+                    score_type="confidence",
+                    max=1,
+                    min=0,
+                    value=0,
+                    options_confidence={"no": 1},
+                )
             else:
                 result_type = ResultType.error
                 detected_event = None
@@ -379,7 +419,53 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
                     max=score_range_settings.max,
                     min=score_range_settings.min,
                     value=score,
+                    options_confidence={score: 1},
                 )
+        elif (
+            score_range_settings.score_type == "category"
+            and score_range_settings.categories
+        ):
+            # Check if the response is a number
+            if stripped_llm_response.isdigit():
+                llm_response_as_int = int(stripped_llm_response)
+                if llm_response_as_int > 0 and llm_response_as_int <= len(
+                    score_range_settings.categories
+                ):
+                    result_type = ResultType.literal
+                    detected_event = True
+                    score = llm_response_as_int
+                    label = score_range_settings.categories[score - 1]
+                    metadata["score_range"] = ScoreRange(
+                        score_type="category",
+                        value=score,
+                        min=1,
+                        max=len(score_range_settings.categories),
+                        label=label,
+                        options_confidence={label: 1},
+                    )
+                else:
+                    result_type = ResultType.error
+                    detected_event = None
+            # Check if the response is directly the label
+            else:
+                if stripped_llm_response in score_range_settings.categories:
+                    result_type = ResultType.literal
+                    detected_event = True
+                    score = (
+                        score_range_settings.categories.index(stripped_llm_response) + 1
+                    )
+                    metadata["score_range"] = ScoreRange(
+                        score_type="category",
+                        value=score,
+                        min=1,
+                        max=len(score_range_settings.categories),
+                        label=stripped_llm_response,
+                        options_confidence={stripped_llm_response: 1},
+                    )
+                else:
+                    result_type = ResultType.error
+                    detected_event = None
+
         return JobResult(
             result_type=result_type, value=detected_event, metadata=metadata
         )
@@ -397,6 +483,7 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
             if stripped_token == "yes":
                 logprob_score["yes"] += math.exp(logprob.logprob)
     elif score_range_settings.score_type == "range":
+        # Looking for tokens corresponding to the range (numbers)
         for logprob in first_logprobs:
             stripped_token = logprob.token.lower().strip()
             if stripped_token.isdigit():
@@ -407,10 +494,22 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
                     # Only keep the tokens in the range
                     # Note: Only works with 1-5 range!
                     logprob_score[stripped_token] += math.exp(logprob.logprob)
+    elif (
+        score_range_settings.score_type == "category"
+        and score_range_settings.categories
+    ):
+        # Looking for tokens corresponding to the range of categories (numbers)
+        for logprob in first_logprobs:
+            stripped_token = logprob.token.lower().strip()
+            if stripped_token.isdigit():
+                token_as_int = int(stripped_token)
+                if token_as_int >= 1 and token_as_int <= len(
+                    score_range_settings.categories
+                ):
+                    # Only keep the tokens in the range
+                    logprob_score[stripped_token] += math.exp(logprob.logprob)
     else:
-        raise ValueError(
-            f"Unknown score_type : {score_range_settings.score_type}. Valid values are: ['confidence', 'range']"
-        )
+        raise ValueError(f"Unknown score_type : {score_range_settings.score_type}.")
     # Normalize the scores so that they sum to 1
     total_score = sum(logprob_score.values())
     if total_score > 0:
@@ -426,6 +525,8 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
         else:
             detected_event = False
             score = logprob_score["no"]
+        label = "yes" if detected_event else "no"
+        options_confidence = logprob_score
     elif score_range_settings.score_type == "range":
         # In range mode, the event is always marked as detected
         detected_event = True
@@ -434,6 +535,24 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
         score = sum(
             float(key) * logprob_score[key] for key in logprob_score if key.isdigit()
         )
+        label = str(int(score))
+    elif (
+        score_range_settings.score_type == "category"
+        and score_range_settings.categories
+    ):
+        # In category mode, the event is always marked as detected
+        detected_event = True
+        # The score is the token with the highest logprob
+        token_with_max_score = max(logprob_score, key=lambda x: logprob_score.get(x, 0))
+        score = int(token_with_max_score)
+        label = score_range_settings.categories[score - 1]
+        options_confidence = {
+            score_range_settings.categories[int(token) - 1]: logprob
+            for token, logprob in logprob_score.items()
+            if token.isdigit()
+            and int(token) <= len(score_range_settings.categories)
+            and int(token) > 0
+        }
 
     metadata["logprob_score"] = logprob_score
     metadata["all_logprobs"] = [logprob.model_dump() for logprob in first_logprobs]
@@ -442,6 +561,8 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
         max=score_range_settings.max,
         min=score_range_settings.min,
         value=score,
+        label=label,
+        options_confidence=options_confidence,
     )
 
     # Return the result

@@ -100,7 +100,12 @@ async def post_add_event_to_task(
     task = await get_task_by_id(task_id)
     await verify_if_propelauth_user_can_access_project(user, task.project_id)
 
-    updated_task = await add_event_to_task(task=task, event=add_event.event)
+    updated_task = await add_event_to_task(
+        task=task,
+        event=add_event.event,
+        score_range_value=add_event.score_range_value,
+        score_category_label=add_event.score_category_label,
+    )
     return updated_task
 
 
