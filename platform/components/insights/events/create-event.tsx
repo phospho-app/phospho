@@ -91,7 +91,7 @@ export default function CreateEvent({
       .object({
         min: z.number().min(0).max(1),
         max: z.number().min(1).max(5),
-        score_type: z.enum(["confidence", "range"]),
+        score_type: z.enum(["confidence", "range", "category"]),
       })
       .optional(),
   });

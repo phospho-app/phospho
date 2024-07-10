@@ -510,9 +510,7 @@ How would you categorize the interaction according to the event '{event_name}'? 
                     # Only keep the tokens in the range
                     logprob_score[stripped_token] += math.exp(logprob.logprob)
     else:
-        raise ValueError(
-            f"Unknown score_type : {score_range_settings.score_type}. Valid values are: ['confidence', 'range']"
-        )
+        raise ValueError(f"Unknown score_type : {score_range_settings.score_type}.")
     # Normalize the scores so that they sum to 1
     total_score = sum(logprob_score.values())
     if total_score > 0:

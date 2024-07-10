@@ -120,12 +120,14 @@ export enum DetectionScope {
 export enum ScoreRangeType {
   confidence = "confidence",
   range = "range",
+  category = "category",
 }
 
 export interface ScoreRangeSettings {
   min: number;
   max: number;
   score_type: ScoreRangeType;
+  categories?: string[];
 }
 
 export interface EventDefinition {
