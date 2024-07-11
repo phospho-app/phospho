@@ -1,3 +1,4 @@
+import { EvalSettings } from "@/components/eval-settings";
 import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
@@ -32,7 +33,7 @@ import {
   Project,
   TaskWithEvents,
 } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -178,11 +179,14 @@ export function getColumns({
     },
     // Flag
     {
-      header: ({ column }) => {
+      header: () => {
         return (
-          <div className="flex items-center">
-            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-            Eval
+          <div className="flex items-center space-x-2 justify-between">
+            <div className="flex items-center">
+              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+              Eval
+            </div>
+            <EvalSettings />
           </div>
         );
       },
@@ -275,7 +279,7 @@ export function getColumns({
     },
     // Events
     {
-      header: ({ column }) => {
+      header: () => {
         return (
           <div className="flex items-center space-x-2 justify-between">
             <div className="flex flex-row items-center space-x-1">
@@ -388,7 +392,7 @@ export function getColumns({
     },
     // Language
     {
-      header: ({ column }) => {
+      header: () => {
         return (
           <div className="flex items-center">
             <Sparkles className="h-4 w-4 mr-1 text-green-500" />
@@ -411,7 +415,7 @@ export function getColumns({
     },
     // Sentiment Analysis
     {
-      header: ({ column }) => {
+      header: () => {
         return (
           <div className="flex justify-between items-center space-x-2">
             <div className="flex flex-row items-center">

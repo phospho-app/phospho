@@ -5,6 +5,9 @@ from app.db.models import Task, Event, Recipe
 from phospho.lab import Message
 from phospho.models import SentimentObject
 
+from app.utils import generate_timestamp, generate_uuid
+from pydantic import Field
+
 
 class RunMainPipelineOnTaskRequest(BaseModel):
     task: Task

@@ -363,6 +363,6 @@ def extract_metadata_from_input_output(
 
     system_prompt = detect_system_prompt_from_input_output(input, output)
     if system_prompt is not None:
-        metadata.update({"system_prompt": system_prompt})
+        metadata.update({"evaluation_prompt": system_prompt})
 
     return metadata

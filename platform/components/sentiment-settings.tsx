@@ -18,8 +18,11 @@ import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
 
+import { Spinner } from "./small-spinner";
+
 export const SentimentSettings = ({}: {}) => {
   const [thresholdOpen, setThresholdOpen] = useState(false);
+  const [clicked, setClicked] = useState(false);
   const { mutate } = useSWRConfig();
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const tasksSorting = navigationStateStore((state) => state.tasksSorting);
@@ -60,6 +63,7 @@ export const SentimentSettings = ({}: {}) => {
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setClicked(true);
     const { score, magnitude } = values;
     const threshold: SentimentThreshold = {
       score: score,
@@ -94,6 +98,7 @@ export const SentimentSettings = ({}: {}) => {
             ]
           : null,
       );
+      setClicked(false);
       toggleButton();
     });
   }
@@ -116,7 +121,7 @@ export const SentimentSettings = ({}: {}) => {
         </DropdownMenuLabel>
         <div className="p-2">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form className="space-y-4">
               <FormField
                 control={form.control}
                 name="score"
@@ -165,7 +170,9 @@ export const SentimentSettings = ({}: {}) => {
                   onSubmit(form.getValues());
                 }}
                 className="w-full"
+                disabled={clicked || !form.formState.isValid}
               >
+                {clicked && <Spinner className="mr-1" />}
                 Update
               </Button>
             </form>

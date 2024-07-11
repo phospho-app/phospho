@@ -1,6 +1,6 @@
 import datetime
 import io
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import pandas as pd
 import resend
@@ -8,7 +8,6 @@ from app.api.platform.models import Pagination, UserMetadata
 from app.api.platform.models.explore import Sorting
 from app.core import config
 from app.db.models import (
-    EventDefinition,
     Project,
     ProjectDataFilters,
     Recipe,
@@ -36,7 +35,7 @@ from fastapi import HTTPException
 from loguru import logger
 from propelauth_fastapi import User
 
-from phospho.models import Threshold
+from phospho.models import Threshold, EvaluationModel, EventDefinition
 
 
 async def get_project_by_id(project_id: str) -> Project:
@@ -711,6 +710,42 @@ def only_keep_fields(data: dict, fields: List[str]) -> dict:
     Keep only the fields in the list in the data dict
     """
     return {key: value for key, value in data.items() if key in fields}
+
+
+async def get_evaluation_model(
+    project_id: str,
+):
+    """
+    Get the evaluation model for a project
+    """
+    mongo_db = await get_mongo_db()
+    evaluation_model = await mongo_db["evaluation_model"].find_one(
+        {"project_id": project_id, "removed": False}
+    )
+
+    if evaluation_model is None:
+        return EvaluationModel(
+            project_id=project_id,
+            system_prompt="Answer positively when the interaction talks about ... and negatively when it does not.",
+        )
+
+    validated_evaluation_model = EvaluationModel.model_validate(evaluation_model)
+    return validated_evaluation_model
+
+
+async def post_evaluation_model(
+    evaluation_model: EvaluationModel,
+) -> dict:
+    """
+    Post the evaluation model for a project
+    """
+    mongo_db = await get_mongo_db()
+    await mongo_db["evaluation_model"].update_one(
+        {"project_id": evaluation_model.project_id, "removed": False},
+        {"$set": {"removed": True}},
+    )
+    await mongo_db["evaluation_model"].insert_one(evaluation_model.model_dump())
+    return {"status": "success"}
 
 
 async def populate_default(

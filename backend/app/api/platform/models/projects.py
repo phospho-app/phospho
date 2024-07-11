@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
+from app.utils import generate_timestamp
 
 from app.db.models import EventDefinition
 

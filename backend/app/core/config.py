@@ -75,7 +75,7 @@ if QDRANT_API_KEY is None:
     raise Exception("QDRANT_API_KEY is missing from the environment variables")
 
 ### WATCHERS ###
-EVALUATION_SOURCE = "phospho-4"  # If phospho
+EVALUATION_SOURCE = "phospho-6"  # If phospho
 FEW_SHOT_MIN_NUMBER_OF_EXAMPLES = 10  # Make it even
 # FEW_SHOT_MAX_NUMBER_OF_EXAMPLES = 50  # Imposed by Cohere API # unused
 

@@ -66,6 +66,16 @@ def get_async_client(provider: str) -> AsyncOpenAI:
             base_url="https://api.together.xyz/v1/",
             api_key=os.getenv("TOGETHER_API_KEY"),
         )
+    if provider == "anyscale":
+        return AsyncOpenAI(
+            base_url="https://api.endpoints.anyscale.com/v1/",
+            api_key=os.getenv("ANYSCALE_API_KEY"),
+        )
+    if provider == "fireworks":
+        return AsyncOpenAI(
+            base_url="https://api.fireworks.ai/inference/v1/",
+            api_key=os.getenv("FIREWORKS_API_KEY"),
+        )
     raise NotImplementedError(f"Provider {provider} is not supported.")
 
 
@@ -91,5 +101,15 @@ def get_sync_client(provider: str) -> OpenAI:
         return OpenAI(
             base_url="https://api.together.xyz/v1/",
             api_key=os.getenv("TOGETHER_API_KEY"),
+        )
+    if provider == "anyscale":
+        return OpenAI(
+            base_url="https://api.endpoints.anyscale.com/v1/",
+            api_key=os.getenv("ANYSCALE_API_KEY"),
+        )
+    if provider == "fireworks":
+        return OpenAI(
+            base_url="https://api.fireworks.ai/inference/v1/",
+            api_key=os.getenv("FIREWORKS_API_KEY"),
         )
     raise NotImplementedError(f"Provider {provider} is not supported.")

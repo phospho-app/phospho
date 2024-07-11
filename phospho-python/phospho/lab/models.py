@@ -1,20 +1,17 @@
 import itertools
 import logging
-from enum import Enum
-from typing import Any, List, Literal, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
 from phospho.models import (
-    EventDefinition,
-    Project,
     ScoreRangeSettings,
-    Task,
-    Session,
     DetectionScope,
-    Message,
-    JobResult,
-    ResultType,
+    Message,  # Used in __init__.py
+    ResultType,  # Used in __init__.py
+    JobResult,  # Used in __init__.py
+    EventDefinition,  # Used in __init__.py
+    Project,  # Used in __init__.py
     Recipe,
 )
 
