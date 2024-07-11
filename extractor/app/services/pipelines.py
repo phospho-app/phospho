@@ -6,7 +6,7 @@ from loguru import logger
 
 from app.core import config
 from app.db.models import Eval, Event, EventDefinition, Recipe, LlmCall, Task
-from app.api.v1.models.pipelines import Evaluation_model
+from app.api.v1.models.pipelines import EvaluationModel
 from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
@@ -508,7 +508,7 @@ async def task_scoring_pipeline(
                 f"No custom evaluation prompt found for project {task.project_id}"
             )
         else:
-            validated_evaluation_model = Evaluation_model.model_validate(
+            validated_evaluation_model = EvaluationModel.model_validate(
                 evaluation_model
             )
             evaluation_prompt = validated_evaluation_model.system_prompt
@@ -529,7 +529,6 @@ async def task_scoring_pipeline(
                         "project_id": task.project_id,
                         "value": "success",
                         "source": {"$nin": PHOSPHO_EVAL_MODEL_NAMES},
-                        "created_at": {"$gt": eval_last_changed},
                     }
                 },
                 {"$sort": {"created_at": -1}},
@@ -567,7 +566,6 @@ async def task_scoring_pipeline(
                         "project_id": task.project_id,
                         "source": {"$nin": PHOSPHO_EVAL_MODEL_NAMES},
                         "value": "failure",
-                        "created_at": {"$gt": eval_last_changed},
                     }
                 },
                 {"$sort": {"created_at": -1}},

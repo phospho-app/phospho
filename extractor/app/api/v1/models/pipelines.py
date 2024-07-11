@@ -5,7 +5,7 @@ from app.db.models import Task, Event, Recipe
 from phospho.lab import Message
 from phospho.models import SentimentObject
 
-from app.utils import generate_timestamp
+from app.utils import generate_timestamp, generate_uuid
 from pydantic import Field
 
 
@@ -37,7 +37,8 @@ class AugmentedOpenTelemetryData(BaseModel):
     open_telemetry_data: dict
 
 
-class Evaluation_model(BaseModel):
+class EvaluationModel(BaseModel):
+    id: int = Field(default_factory=generate_uuid)
     project_id: str
     system_prompt: str
     created_at: int = Field(default_factory=generate_timestamp)

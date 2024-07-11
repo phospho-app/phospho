@@ -26,8 +26,8 @@ from app.security.authentification import (
     verify_if_propelauth_user_can_access_project,
 )
 from app.api.platform.models.projects import (
-    Evaluation_model,
-    Evaluation_model_definition,
+    EvaluationModel,
+    EvaluationModelDefinition,
 )
 from app.services.mongo.projects import (
     delete_project_from_id,
@@ -580,12 +580,12 @@ async def connect_langfuse(
 
 @router.get(
     "/projects/{project_id}/evaluation",
-    response_model=Evaluation_model,
+    response_model=EvaluationModel,
 )
 async def get_evaluation_prompt(
     project_id: str,
     user: User = Depends(propelauth.require_user),
-) -> Evaluation_model:
+) -> EvaluationModel:
     """
     Get custom evaluation prompt for a given project id
     """
@@ -603,7 +603,7 @@ async def get_evaluation_prompt(
 )
 async def set_evaluation_prompt(
     project_id: str,
-    evaluation_model_definition: Evaluation_model_definition,
+    evaluation_model_definition: EvaluationModelDefinition,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
@@ -612,7 +612,7 @@ async def set_evaluation_prompt(
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
 
-    evaluation_model = Evaluation_model(
+    evaluation_model = EvaluationModel(
         project_id=evaluation_model_definition.project_id,
         system_prompt=evaluation_model_definition.system_prompt,
     )

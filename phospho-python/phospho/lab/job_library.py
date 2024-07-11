@@ -603,9 +603,8 @@ async def evaluate_task(
     # TODO : Make this adaptative to model name
     max_tokens_input_lenght = 128 * 1000 - 1000
 
-    # Shuffle the examples
-    random.shuffle(successful_examples)
-    random.shuffle(unsuccessful_examples)
+    merged_examples = successful_examples + unsuccessful_examples
+    random.shuffle(merged_examples)
 
     # Additional metadata
     api_call_time: Optional[float] = None
@@ -675,8 +674,7 @@ async def evaluate_task(
     def build_prompt(
         message: Message,
         evaluation_prompt: Optional[str] = None,
-        successful_examples: List[dict] = [],
-        unsuccessful_examples: List[dict] = [],
+        merged_examples: List[dict] = [],
     ) -> str:
         """
         Builds a prompt for the evaluation of a task,
@@ -710,26 +708,18 @@ Respond with only one word: success or failure based on these guidelines:
 Give a positive answer if the assistant response was good, to the point, and relevant, give a negative answer if the assistant response was bad, inapropriate or irrelevent.
 [EVALUATION GUIDELINES END]
 """
-        if len(successful_examples) > 1:
-            system_prompt += f"""Here are some examples of successful interactions:
-[SUCCESSFUL EXAMPLES START]
-{successful_examples[0]['input']} -> {successful_examples[0]['output']} -> success
-{successful_examples[1]['input']} -> {successful_examples[1]['output']} -> success
-[SUCCESSFUL EXAMPLES END]
-"""
-        if len(unsuccessful_examples) > 1:
-            system_prompt += f"""Here are some examples of interactions:
-[UNSUCCESSFUL EXAMPLES START]
-{unsuccessful_examples[0]['input']} -> {unsuccessful_examples[0]['output']} -> failure
-{unsuccessful_examples[1]['input']} -> {unsuccessful_examples[1]['output']} -> failure
-[UNSUCCESSFUL EXAMPLES END]
-"""
+        if len(merged_examples) > 1:
+            system_prompt += """Here are some examples of interactions:
+[EXAMPLES START]"""
+            for example in merged_examples:
+                system_prompt += f"""
+{example['input']} -> {example['output']} -> {example['flag']}"""
+
+            system_prompt += """[EXAMPLES END]"""
 
         return system_prompt, prompt
 
-    system_prompt, prompt = build_prompt(
-        message, evaluation_prompt, successful_examples, unsuccessful_examples
-    )
+    system_prompt, prompt = build_prompt(message, evaluation_prompt, merged_examples)
     flag = await evaluation(system_prompt, prompt, model_name=model_name)
 
     return JobResult(

@@ -260,7 +260,7 @@ export interface EvaluationModel {
   project_id: string;
   system_prompt: string;
   created_at: number;
-  id: string;
+  id: number;
   removed: boolean;
 }
 
