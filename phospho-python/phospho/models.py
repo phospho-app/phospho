@@ -46,7 +46,7 @@ class ProjectElementBaseModel(DatedBaseModel):
 
 
 class EvaluationModel(BaseModel):
-    id: str = Field(default_factory=generate_uuid)
+    id: int = Field(default_factory=generate_uuid)
     project_id: str
     system_prompt: str
     created_at: int = Field(default_factory=generate_timestamp)
