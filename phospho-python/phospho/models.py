@@ -45,6 +45,14 @@ class ProjectElementBaseModel(DatedBaseModel):
     project_id: str
 
 
+class EvaluationModel(BaseModel):
+    id: str = Field(default_factory=generate_uuid)
+    project_id: str
+    system_prompt: str
+    created_at: int = Field(default_factory=generate_timestamp)
+    removed: bool = False
+
+
 class Eval(ProjectElementBaseModel):
     session_id: Optional[str] = None
     task_id: str
@@ -55,6 +63,7 @@ class Eval(ProjectElementBaseModel):
     test_id: Optional[str] = None
     notes: Optional[str] = None
     task: Optional["Task"] = None
+    evaluation_model: Optional[EvaluationModel] = None
 
 
 DetectionScope = Literal[
@@ -264,17 +273,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "event_name"
-                        ] = event_name
+                        project_data["settings"]["events"][event_name]["event_name"] = (
+                            event_name
+                        )
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "org_id"
-                        ] = project_data["org_id"]
+                        project_data["settings"]["events"][event_name]["org_id"] = (
+                            project_data["org_id"]
+                        )
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "project_id"
-                        ] = project_data["id"]
+                        project_data["settings"]["events"][event_name]["project_id"] = (
+                            project_data["id"]
+                        )
 
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:

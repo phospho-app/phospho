@@ -21,11 +21,12 @@ class UploadTasksRequest(BaseModel):
     pd_read_config: dict = Field(default_factory=dict)
 
 
-class Evaluation_model_definition(BaseModel):
+class EvaluationModelDefinition(BaseModel):
     project_id: str
     system_prompt: str
 
 
-class Evaluation_model(Evaluation_model_definition):
+class EvaluationModel(EvaluationModelDefinition):
+    id: int = Field(default_factory=generate_timestamp)
     created_at: int = Field(default_factory=generate_timestamp)
     removed: bool = False

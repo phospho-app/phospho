@@ -1,11 +1,11 @@
 import datetime
 import io
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import pandas as pd
 import resend
 from app.api.platform.models import Pagination, UserMetadata
-from app.api.platform.models.projects import Evaluation_model
+from app.api.platform.models.projects import EvaluationModel
 from app.api.platform.models.explore import Sorting
 from app.core import config
 from app.db.models import (
@@ -726,17 +726,17 @@ async def get_evaluation_model(
     )
 
     if evaluation_model is None:
-        return Evaluation_model(
+        return EvaluationModel(
             project_id=project_id,
             system_prompt="Answer positively when the interaction talks about ... and negatively when it does not.",
         )
 
-    validated_evaluation_model = Evaluation_model.model_validate(evaluation_model)
+    validated_evaluation_model = EvaluationModel.model_validate(evaluation_model)
     return validated_evaluation_model
 
 
 async def post_evaluation_model(
-    evaluation_model: Evaluation_model,
+    evaluation_model: EvaluationModel,
 ) -> dict:
     """
     Post the evaluation model for a project
