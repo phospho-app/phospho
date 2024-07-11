@@ -245,6 +245,14 @@ const MetadataForm: React.FC = () => {
                   <List className="h-4 w-4 mr-2" />
                   Task position
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedGroupBy("session_length");
+                  }}
+                >
+                  <List className="h-4 w-4 mr-2" />
+                  Session length
+                </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <Timer className="h-4 w-4 mr-2" />
