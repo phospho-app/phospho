@@ -61,8 +61,6 @@ export default function CreateEvent({
   const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
   const current_nb_events = Object.keys(currentEvents).length;
 
-  console.log("eventToEdit", eventToEdit);
-
   // If we are editing an event, we need to pre-fill the form
   const formSchema = z.object({
     event_name: z
@@ -408,18 +406,21 @@ export default function CreateEvent({
                                 score_type: "confidence",
                                 min: 0,
                                 max: 1,
+                                categories: [],
                               });
                             } else if (value === "range") {
                               field.onChange({
                                 score_type: "range",
                                 min: 1,
                                 max: 5,
+                                categories: [],
                               });
                             } else if (value === "category") {
                               field.onChange({
                                 score_type: "category",
                                 min: 1,
                                 max: 1,
+                                categories: "",
                               });
                             }
                           }}
