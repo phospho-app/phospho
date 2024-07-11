@@ -37,7 +37,7 @@ class QuerySessionsTasksRequest(BaseModel):
 
 
 class DetectClustersRequest(BaseModel):
-    limit: int = 2000
+    limit: int = 4000
     filters: Optional[ProjectDataFilters] = Field(default_factory=ProjectDataFilters)
 
 
