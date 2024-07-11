@@ -19,14 +19,3 @@ class AddEventsQuery(BaseModel):
 
 class UploadTasksRequest(BaseModel):
     pd_read_config: dict = Field(default_factory=dict)
-
-
-class EvaluationModelDefinition(BaseModel):
-    project_id: str
-    system_prompt: str
-
-
-class EvaluationModel(EvaluationModelDefinition):
-    id: int = Field(default_factory=generate_timestamp)
-    created_at: int = Field(default_factory=generate_timestamp)
-    removed: bool = False
