@@ -490,8 +490,6 @@ async def task_scoring_pipeline(
 
     PHOSPHO_EVAL_MODEL_NAMES = ["phospho", "phospho-4"]
 
-    eval_last_changed = None
-
     # Get the Task's evaluation prompt
     if (
         task.metadata is not None
@@ -512,12 +510,6 @@ async def task_scoring_pipeline(
                 evaluation_model
             )
             evaluation_prompt = validated_evaluation_model.system_prompt
-            eval_last_changed = validated_evaluation_model.created_at
-
-    if eval_last_changed is None:
-        eval_last_changed = generate_timestamp() - 60 * 60 * 24 * 7 * 5
-
-    logger.debug(f"Eval last changed: {eval_last_changed}")
 
     # Get the user evals from the db
     successful_examples_tasks = (
