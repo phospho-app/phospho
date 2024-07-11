@@ -728,7 +728,7 @@ async def get_evaluation_model(
     if evaluation_model is None:
         return Evaluation_model(
             project_id=project_id,
-            system_prompt="You are an impartial judge evaluating an interaction between a user and an assistant. Your goal is to say if the assistant response to the user was good or bad.",
+            system_prompt="Answer positively when the interaction talks about ... and negatively when it does not.",
         )
 
     validated_evaluation_model = Evaluation_model.model_validate(evaluation_model)
