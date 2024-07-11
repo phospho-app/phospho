@@ -25,6 +25,10 @@ from app.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
 )
+from app.api.platform.models.projects import (
+    Evaluation_model,
+    Evaluation_model_definition,
+)
 from app.services.mongo.projects import (
     delete_project_from_id,
     delete_project_related_resources,
@@ -36,6 +40,8 @@ from app.services.mongo.projects import (
     update_project,
     add_project_events,
     collect_languages,
+    get_evaluation_model,
+    post_evaluation_model,
 )
 from app.services.mongo.tasks import get_all_tasks
 from app.services.mongo.events import get_all_events
@@ -570,3 +576,48 @@ async def connect_langfuse(
         max_usage=max_usage,
     )
     return {"status": "ok", "message": "LangFuse connected successfully."}
+
+
+@router.get(
+    "/projects/{project_id}/evaluation",
+    response_model=Evaluation_model,
+)
+async def get_evaluation_prompt(
+    project_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> Evaluation_model:
+    """
+    Get custom evaluation prompt for a given project id
+    """
+    project = await get_project_by_id(project_id)
+    propelauth.require_org_member(user, project.org_id)
+
+    evaluation_model = await get_evaluation_model(project_id=project_id)
+
+    return evaluation_model
+
+
+@router.post(
+    "/projects/{project_id}/evaluation",
+    response_model=dict,
+)
+async def set_evaluation_prompt(
+    project_id: str,
+    evaluation_model_definition: Evaluation_model_definition,
+    user: User = Depends(propelauth.require_user),
+) -> dict:
+    """
+    Set custom evaluation prompt for a given project id
+    """
+    project = await get_project_by_id(project_id)
+    propelauth.require_org_member(user, project.org_id)
+
+    evaluation_model = Evaluation_model(
+        project_id=evaluation_model_definition.project_id,
+        system_prompt=evaluation_model_definition.system_prompt,
+    )
+
+    logger.debug(evaluation_model)
+    await post_evaluation_model(evaluation_model)
+
+    return {"status": "ok", "message": "Evaluation prompt set successfully."}

@@ -6,6 +6,7 @@ from loguru import logger
 
 from app.core import config
 from app.db.models import Eval, Event, EventDefinition, Recipe, LlmCall, Task
+from app.api.v1.models.pipelines import Evaluation_model
 from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
@@ -13,6 +14,7 @@ from app.services.projects import get_project_by_id
 from app.services.webhook import trigger_webhook
 from phospho import lab
 from phospho.models import ResultType, SentimentObject, JobResult
+from app.utils import generate_timestamp
 
 from app.api.v1.models.pipelines import PipelineResults
 
@@ -488,6 +490,35 @@ async def task_scoring_pipeline(
 
     PHOSPHO_EVAL_MODEL_NAMES = ["phospho", "phospho-4"]
 
+    eval_last_changed = None
+
+    # Get the Task's evaluation prompt
+    if (
+        task.metadata is not None
+        and task.metadata.get("evaluation_prompt", None) is not None
+    ):
+        evaluation_prompt = task.metadata.get("evaluation_prompt", None)
+    else:
+        evaluation_prompt = None
+        evaluation_model = await mongo_db["evaluation_model"].find_one(
+            {"project_id": task.project_id, "removed": False},
+        )
+        if evaluation_model is None:
+            logger.debug(
+                f"No custom evaluation prompt found for project {task.project_id}"
+            )
+        else:
+            validated_evaluation_model = Evaluation_model.model_validate(
+                evaluation_model
+            )
+            evaluation_prompt = validated_evaluation_model.system_prompt
+            eval_last_changed = validated_evaluation_model.created_at
+
+    if eval_last_changed is None:
+        eval_last_changed = generate_timestamp() - 60 * 60 * 24 * 7 * 5
+
+    logger.debug(f"Eval last changed: {eval_last_changed}")
+
     # Get the user evals from the db
     successful_examples_tasks = (
         await mongo_db["evals"]
@@ -498,6 +529,7 @@ async def task_scoring_pipeline(
                         "project_id": task.project_id,
                         "value": "success",
                         "source": {"$nin": PHOSPHO_EVAL_MODEL_NAMES},
+                        "created_at": {"$gt": eval_last_changed},
                     }
                 },
                 {"$sort": {"created_at": -1}},
@@ -535,6 +567,7 @@ async def task_scoring_pipeline(
                         "project_id": task.project_id,
                         "source": {"$nin": PHOSPHO_EVAL_MODEL_NAMES},
                         "value": "failure",
+                        "created_at": {"$gt": eval_last_changed},
                     }
                 },
                 {"$sort": {"created_at": -1}},
@@ -562,12 +595,6 @@ async def task_scoring_pipeline(
     )
     logger.debug(f"Nb of failure examples: {len(unsuccessful_examples_tasks)}")
 
-    # Get the Task's system prompt
-    if task.metadata is not None:
-        system_prompt = task.metadata.get("system_prompt", None)
-    else:
-        system_prompt = None
-
     # Call the eval function
     # Create the phospho workload
     workload = lab.Workload()
@@ -590,7 +617,7 @@ async def task_scoring_pipeline(
         metadata={
             "successful_examples": successful_examples_tasks,
             "unsuccessful_examples": unsuccessful_examples_tasks,
-            "system_prompt": system_prompt,
+            "evaluation_prompt": evaluation_prompt,
         },
     )
     await workload.async_run(messages=[message], executor_type="sequential")

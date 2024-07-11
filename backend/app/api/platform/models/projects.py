@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
+from app.utils import generate_timestamp
 
 from app.db.models import EventDefinition
 
@@ -18,3 +19,13 @@ class AddEventsQuery(BaseModel):
 
 class UploadTasksRequest(BaseModel):
     pd_read_config: dict = Field(default_factory=dict)
+
+
+class Evaluation_model_definition(BaseModel):
+    project_id: str
+    system_prompt: str
+
+
+class Evaluation_model(Evaluation_model_definition):
+    created_at: int = Field(default_factory=generate_timestamp)
+    removed: bool = False

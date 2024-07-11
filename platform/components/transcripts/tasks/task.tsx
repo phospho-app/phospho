@@ -19,7 +19,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
 
 interface TaskProps {
@@ -27,7 +27,7 @@ interface TaskProps {
 }
 
 const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
-  const { user, loading, accessToken } = useUser();
+  const { user, accessToken } = useUser();
   const [refresh, setRefresh] = useState(false);
 
   const router = useRouter();

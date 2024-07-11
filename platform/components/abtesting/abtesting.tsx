@@ -37,8 +37,6 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const router = useRouter();
-  const [sorting, setSorting] = useState([]);
-  const [filters, setFilters] = useState([]);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {

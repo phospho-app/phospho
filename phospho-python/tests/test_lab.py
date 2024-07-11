@@ -51,13 +51,7 @@ async def test_evaluation():
     # Create a workload
     workload = lab.Workload()
     workload.add_job(
-        lab.Job(
-            id="talking_about_product",
-            job_function=lab.job_library.evaluate_task,
-            config=EvalConfig(
-                few_shot_min_number_of_examples=4,
-            ),
-        )
+        lab.Job(id="talking_about_product", job_function=lab.job_library.evaluate_task)
     )
 
     messages = [
