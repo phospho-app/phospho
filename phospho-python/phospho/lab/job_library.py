@@ -334,6 +334,7 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
         prompt += f"""
 How would you categorize the interaction according to the event '{event_name}'? Respond with a number between 1 and {len(score_range_settings.categories)}, where each number corresponds to a category:
 {formatted_categories}
+If the event '{event_name}' is not present in the interaction or you can't categorize it, respond with 0.
 """
 
     # Call the API
@@ -430,7 +431,7 @@ How would you categorize the interaction according to the event '{event_name}'? 
             # Check if the response is a number
             if stripped_llm_response.isdigit():
                 llm_response_as_int = int(stripped_llm_response)
-                if llm_response_as_int > 0 and llm_response_as_int <= len(
+                if llm_response_as_int >= 1 and llm_response_as_int <= len(
                     score_range_settings.categories
                 ):
                     result_type = ResultType.literal
@@ -444,6 +445,17 @@ How would you categorize the interaction according to the event '{event_name}'? 
                         max=len(score_range_settings.categories),
                         label=label,
                         options_confidence={label: 1},
+                    )
+                elif llm_response_as_int == 0:
+                    result_type = ResultType.literal
+                    detected_event = False
+                    metadata["score_range"] = ScoreRange(
+                        score_type="category",
+                        value=0,
+                        min=0,
+                        max=len(score_range_settings.categories),
+                        label="None",
+                        options_confidence={"None": 1},
                     )
                 else:
                     result_type = ResultType.error
@@ -463,6 +475,17 @@ How would you categorize the interaction according to the event '{event_name}'? 
                         max=len(score_range_settings.categories),
                         label=stripped_llm_response,
                         options_confidence={stripped_llm_response: 1},
+                    )
+                elif stripped_llm_response == "none":
+                    result_type = ResultType.literal
+                    detected_event = False
+                    metadata["score_range"] = ScoreRange(
+                        score_type="category",
+                        value=0,
+                        min=0,
+                        max=len(score_range_settings.categories),
+                        label="None",
+                        options_confidence={"None": 1},
                     )
                 else:
                     result_type = ResultType.error
@@ -505,7 +528,7 @@ How would you categorize the interaction according to the event '{event_name}'? 
             stripped_token = logprob.token.lower().strip()
             if stripped_token.isdigit():
                 token_as_int = int(stripped_token)
-                if token_as_int >= 1 and token_as_int <= len(
+                if token_as_int >= 0 and token_as_int <= len(
                     score_range_settings.categories
                 ):
                     # Only keep the tokens in the range
@@ -542,18 +565,23 @@ How would you categorize the interaction according to the event '{event_name}'? 
         score_range_settings.score_type == "category"
         and score_range_settings.categories
     ):
-        # In category mode, the event is always marked as detected
-        detected_event = True
         # The score is the token with the highest logprob
         token_with_max_score = max(logprob_score, key=lambda x: logprob_score.get(x, 0))
         score = int(token_with_max_score)
-        label = score_range_settings.categories[score - 1]
+        if score == 0:
+            # No event detected
+            detected_event = False
+            label = "None"
+        else:
+            # Event detected
+            detected_event = True
+            label = score_range_settings.categories[score - 1]
         options_confidence = {
             score_range_settings.categories[int(token) - 1]: logprob
             for token, logprob in logprob_score.items()
             if token.isdigit()
             and int(token) <= len(score_range_settings.categories)
-            and int(token) > 0
+            and int(token) >= 0
         }
 
     metadata["logprob_score"] = logprob_score
