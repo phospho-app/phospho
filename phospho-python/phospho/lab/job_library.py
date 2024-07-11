@@ -147,11 +147,13 @@ async def event_detection(
 ) -> JobResult:
     """
     Detects if an event is present in a message.
+
     - We can use message metadatas to get examples of successful and unsuccessful interactions
     """
     # Identifier of the source of the evaluation, with the version of the model if phospho
     EVALUATION_SOURCE = "phospho-6"
     MAX_TOKENS = 128_000
+
     # Check if some Env variables override the default model and LLM provider
     provider, model_name = get_provider_and_model(model)
     async_openai_client = get_async_client(provider)
@@ -168,6 +170,7 @@ async def event_detection(
             f"Categories must be provided for category score type. Got: {score_range_settings.model_dump()}"
         )
 
+    # We fetch examples for few shot
     successful_examples = message.metadata.get("successful_examples", [])
     unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
 
@@ -188,45 +191,48 @@ async def event_detection(
             unsuccessful_example = example
             break
 
+    system_prompt = """"""
+    prompt = """"""
     # Build the prompt
     if score_range_settings.score_type == "confidence":
-        prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
-and you want to say if the event '{event_name}' happened during the latest interaction.
-This conversation is between a User and an Assistant.
+        system_prompt = f"""You are an impartial judge reading a conversation between a user and an assistant.
+You must determine if the event '{event_name}' happened during the latest interaction.
 """
     elif score_range_settings.score_type == "range":
-        prompt = f"""You are an impartial judge reading a conversation between a user and an assistant,
-and during the latest interaction you want to evaluate the event '{event_name}'.
-This conversation is between a User and an Assistant.
+        system_prompt = f"""You are an impartial judge reading a conversation between a user and an assistant.
+You must evaluate the event '{event_name}'.
 """
     elif score_range_settings.score_type == "category":
-        prompt = f"""You are an impartial judge reading a conversation between a user and an assistant,
-and you want to categorize the latest interaction based on the description of '{event_name}'.
-This conversation is between a User and an Assistant.
+        system_prompt = f"""You are an impartial judge reading a conversation between a user and an assistant.
+You must categorize the event '{event_name}'.
 """
 
     if event_description is not None and len(event_description) > 0:
-        prompt += f"The description of the event '{event_name}' is:\n<event_description>{event_description}</event_description>\n"
+        system_prompt += f"""'{event_name}' can be describe like so:
+'{event_description}'
+"""
     else:
-        prompt += (
-            f"You don't have any description of '{event_name}'. Take your best guess.\n"
-        )
+        system_prompt += f"""
+You don't have a description for '{event_name}'. Base your evaluation on the context of the conversation and the name of the event.
+"""
 
     if successful_example is not None:
-        prompt += f"""
-Here is an example of a successful interaction where the event '{event_name}' happened:
-<example>
-User: {successful_example['input']}
-Assistant: {successful_example['output']}
-</example>
+        system_prompt += f"""
+Here is an example of an interaction where the event '{event_name}' happened:
+[EVENT DETECTED EXAMPLE START]
+{successful_example['input']} -> {successful_example['output']}
+[EXAMPLE END]
 """
     if unsuccessful_example is not None:
-        prompt += f"""
-Here is an example of an unsuccessful interaction where the event '{event_name}' did not happen:
-<example>
-User: {unsuccessful_example['input']}
-Assistant: {unsuccessful_example['output']}
-</example>
+        system_prompt += f"""
+Here is an example of an interaction where the event '{event_name}' did not happen:
+[EVENT NOT DETECTED EXAMPLE START]
+{unsuccessful_example['input']} -> {unsuccessful_example['output']}
+[EXAMPLE END]
+"""
+
+    system_prompt += """
+I will now give you an interaction to evaluate.
 """
 
     if len(message.previous_messages) > 1 and "task" in event_scope:
@@ -236,18 +242,18 @@ Assistant: {unsuccessful_example['output']}
             get_number_of_tokens(prompt) + 100,
             how="right",
         )
-        prompt += f"""
-To help you label the interaction, here are the previous messages leading to the interaction:
-<context>
+        system_prompt += f"""
+Here is the context of the conversation:
+[CONTEXT START]
 {truncated_context}
-</context>
+[CONTEXT END]
 """
 
     if event_scope == "task":
-        prompt += f"""Now, the interaction you have to label is the following:
-<interaction>
+        prompt += f"""Label the following interaction with the event '{event_name}':
+[INTERACTION TO LABEL START]
 {message.latest_interaction()}
-</interaction>
+[INTERACTION END]
 """
     elif event_scope == "task_input_only":
         message_list = message.as_list()
@@ -267,10 +273,10 @@ To help you label the interaction, here are the previous messages leading to the
         )
 
         prompt += f"""
-Now, you have to label the following interaction, which only contains the user message:
-<interaction>
+Label the following user message with the event '{event_name}':
+[INTERACTION TO LABEL START]
 User: {truncated_context}
-</interaction>
+[INTERACTION END]
 """
     elif event_scope == "task_output_only":
         message_list = message.as_list()
@@ -289,10 +295,10 @@ User: {truncated_context}
                 logs=["No assistant message in the interaction"],
             )
         prompt += f"""
-Now, you have to label the following interaction, which only contains the assistant message:
-<interaction>
+Label the following assistant message with the event '{event_name}':
+[INTERACTION TO LABEL START]
 Assistant: {truncated_context}
-</interaction>
+[INTERACTION END]
 """
     elif event_scope == "session":
         truncated_context = shorten_text(
@@ -302,10 +308,10 @@ Assistant: {truncated_context}
             how="right",
         )
         prompt += f"""
-Now, you have the full conversation to label. The event '{event_name}' can happen at any point during the conversation.
-<interaction>
+Label the following interaction with the event '{event_name}':
+[INTERACTION TO LABEL START]
 {truncated_context}
-</interaction>
+[INTERACTION END]
 """
     else:
         raise ValueError(
@@ -314,10 +320,12 @@ Now, you have the full conversation to label. The event '{event_name}' can happe
 
     if score_range_settings.score_type == "confidence":
         prompt += f"""
-Did the event '{event_name}' happen during the interaction? Respond with only one word: Yes or No."""
+Did the event '{event_name}' happen during the interaction? 
+Respond with only one word: Yes or No."""
     elif score_range_settings.score_type == "range":
         prompt += f"""
-How would you assess the '{event_name}' during the interaction? Respond with a whole number between {score_range_settings.min} and {score_range_settings.max}.
+How would you assess the '{event_name}' during the interaction? 
+Respond with a whole number between {score_range_settings.min} and {score_range_settings.max}.
 """
     elif (
         score_range_settings.score_type == "category"
@@ -330,7 +338,8 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
             ]
         )
         prompt += f"""
-How would you categorize the interaction according to the event '{event_name}'? Respond with a number between 1 and {len(score_range_settings.categories)}, where each number corresponds to a category:
+How would you categorize the interaction according to the event '{event_name}'? 
+Respond with a number between 1 and {len(score_range_settings.categories)}, where each number corresponds to a category:
 {formatted_categories}
 If the event '{event_name}' is not present in the interaction or you can't categorize it, respond with 0.
 """
@@ -343,7 +352,7 @@ If the event '{event_name}' is not present in the interaction or you can't categ
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant and an expert evaluator. Follow the instructions.",
+                    "content": system_prompt,
                 },
                 {"role": "user", "content": prompt},
             ],
