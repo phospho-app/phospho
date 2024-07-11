@@ -531,7 +531,6 @@ How would you categorize the interaction according to the event '{event_name}'? 
         # In range mode, the event is always marked as detected
         detected_event = True
         # The score is the weighted average of the token * logprob
-        logger.debug(f"logprob_score : {logprob_score}")
         score = sum(
             float(key) * logprob_score[key] for key in logprob_score if key.isdigit()
         )
@@ -612,13 +611,13 @@ async def evaluate_task(
     api_call_time: Optional[float] = None
     llm_call: Optional[dict] = None
 
-    async def zero_shot_evaluation(
+    async def evaluation(
         system_prompt: str,
         prompt: str,
         model_name: str = os.getenv("MODEL_ID", "gpt-4o"),
     ) -> Optional[Literal["success", "failure"]]:
         """
-        Call the LLM API to get a zero shot classification of a task
+        Call the LLM API to get a classification of a task
         as a success or a failure.
         """
         nonlocal api_call_time
@@ -628,8 +627,6 @@ async def evaluate_task(
             logger.error("The prompt does not fit in the context window")
             # TODO : Fall back to a bigger model
             return None
-
-        logger.debug(f"Running zero shot evaluation with model {model_name}")
 
         start_time = time.time()
         response = await async_openai_client.chat.completions.create(
@@ -647,8 +644,6 @@ async def evaluate_task(
 
         llm_response = response.choices[0].message.content
         api_call_time = time.time() - start_time
-
-        logger.debug(f"LLM response : {llm_response}")
 
         llm_call = {
             "model": model_name,
@@ -677,18 +672,18 @@ async def evaluate_task(
             )
             return None
 
-    def build_zero_shot_prompt(
+    def build_prompt(
         message: Message,
         evaluation_prompt: Optional[str] = None,
         successful_examples: List[dict] = [],
         unsuccessful_examples: List[dict] = [],
     ) -> str:
         """
-        Builds a zero shot prompt for the evaluation of a task.
-        """
-        # Zero shot mode
-        logger.debug("Running eval in zero shot mode")
+        Builds a prompt for the evaluation of a task,
+        makes use of successful and unsuccessful examples as well as a custom evaluation prompt.
 
+        We divide the prompt from the system prompt, this works much better than the previous prompt only approach.
+        """
         prompt = """Here is the interaction between the assistant and the user that you have to evaluate:
 [START INTERACTION]
 """
@@ -732,12 +727,10 @@ Give a positive answer if the assistant response was good, to the point, and rel
 
         return system_prompt, prompt
 
-    system_prompt, prompt = build_zero_shot_prompt(
+    system_prompt, prompt = build_prompt(
         message, evaluation_prompt, successful_examples, unsuccessful_examples
     )
-    logger.debug(f"System Prompt : {system_prompt}")
-    logger.debug(f"Prompt : {prompt}")
-    flag = await zero_shot_evaluation(system_prompt, prompt, model_name=model_name)
+    flag = await evaluation(system_prompt, prompt, model_name=model_name)
 
     return JobResult(
         result_type=ResultType.literal,
