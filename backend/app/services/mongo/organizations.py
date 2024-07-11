@@ -172,9 +172,17 @@ def change_organization_plan(
         propelauth.update_org_metadata(
             org_id, max_users=config.PLAN_PRO_MAX_USERS, metadata=org_metadata
         )
+        stripe.api_key = config.STRIPE_SECRET_KEY
+
+        # Update the customer metadata with the org_id
+
+        stripe.Customer.modify(
+            org_metadata.get("customer_id", None),
+            metadata={"org_id": org_id},
+        )
+
         if plan == "usage_based" and old_plan == "hobby" and customer_id:
             # Attribute free credits to the organization
-            stripe.api_key = config.STRIPE_SECRET_KEY
             stripe.Customer.create_balance_transaction(
                 customer_id,
                 amount=-1000,  # in cents
