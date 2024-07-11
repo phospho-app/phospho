@@ -650,7 +650,7 @@ async def evaluate_task(
             "prompt": prompt,
             "llm_output": llm_response,
             "api_call_time": api_call_time,
-            "evaluation_source": "phospho-4",
+            "evaluation_source": "phospho-6",
         }
 
         # Parse the llm response to avoid basic errors
