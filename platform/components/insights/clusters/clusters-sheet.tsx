@@ -123,15 +123,15 @@ const RunClusters = ({
             currently {totalNbTasks ? totalNbTasks : 0} tasks.
           </div>
         )}
-        {totalNbTasks && totalNbTasks >= 5 && totalNbTasks <= 2000 && (
+        {totalNbTasks && totalNbTasks >= 5 && totalNbTasks <= 4000 && (
           <div className="mt-4">
             We will clusterize {totalNbTasks} tasks for a total of{" "}
             {clusteringCost} credits.
           </div>
         )}
-        {!hobby && totalNbTasks && totalNbTasks > 2000 && (
+        {!hobby && totalNbTasks && totalNbTasks > 4000 && (
           <div className="mt-4">
-            Please filter your selection to less than 2000 tasks. There are
+            Please filter your selection to less than 4000 tasks. There are
             currently {totalNbTasks} tasks to clusterize.
           </div>
         )}
@@ -143,7 +143,7 @@ const RunClusters = ({
         {!hobby &&
           totalNbTasks &&
           totalNbTasks >= 5 &&
-          totalNbTasks <= 2000 && (
+          totalNbTasks <= 4000 && (
             <div className="flex justify-end">
               <Button
                 type="submit"
