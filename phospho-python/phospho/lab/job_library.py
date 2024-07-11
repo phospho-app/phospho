@@ -561,6 +561,7 @@ If the event '{event_name}' is not present in the interaction or you can't categ
             float(key) * logprob_score[key] for key in logprob_score if key.isdigit()
         )
         label = str(int(score))
+        options_confidence = logprob_score
     elif (
         score_range_settings.score_type == "category"
         and score_range_settings.categories
