@@ -35,11 +35,3 @@ class AugmentedOpenTelemetryData(BaseModel):
     project_id: str
     org_id: str
     open_telemetry_data: dict
-
-
-class EvaluationModel(BaseModel):
-    id: int = Field(default_factory=generate_uuid)
-    project_id: str
-    system_prompt: str
-    created_at: int = Field(default_factory=generate_timestamp)
-    removed: bool = False

@@ -25,10 +25,7 @@ from app.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
 )
-from app.api.platform.models.projects import (
-    EvaluationModel,
-    EvaluationModelDefinition,
-)
+from phospho.models import EvaluationModel, EvaluationModelDefinition
 from app.services.mongo.projects import (
     delete_project_from_id,
     delete_project_related_resources,

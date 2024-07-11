@@ -5,8 +5,14 @@ from typing import Dict, List, Literal, Optional
 from loguru import logger
 
 from app.core import config
-from app.db.models import Eval, Event, EventDefinition, Recipe, LlmCall, Task
-from app.api.v1.models.pipelines import EvaluationModel
+from app.db.models import (
+    Eval,
+    Event,
+    EventDefinition,
+    Recipe,
+    LlmCall,
+    Task,
+)
 from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
@@ -19,7 +25,7 @@ from app.api.v1.models.pipelines import PipelineResults
 
 from app.services.sentiment_analysis import run_sentiment_and_language_analysis
 
-from phospho.models import Project
+from phospho.models import Project, EvaluationModel
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from Crypto import Random
@@ -645,9 +651,7 @@ async def task_scoring_pipeline(
         test_id=task.test_id,
         org_id=task.org_id,
         task=task if not save_task else None,
-        evaluation_model=validated_evaluation_model.model_dump()
-        if validated_evaluation_model
-        else None,
+        evaluation_model=validated_evaluation_model,
     )
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
     # Save the prediction

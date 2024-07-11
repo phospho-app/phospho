@@ -5,11 +5,9 @@ from typing import Dict, List, Optional
 import pandas as pd
 import resend
 from app.api.platform.models import Pagination, UserMetadata
-from app.api.platform.models.projects import EvaluationModel
 from app.api.platform.models.explore import Sorting
 from app.core import config
 from app.db.models import (
-    EventDefinition,
     Project,
     ProjectDataFilters,
     Recipe,
@@ -37,7 +35,7 @@ from fastapi import HTTPException
 from loguru import logger
 from propelauth_fastapi import User
 
-from phospho.models import Threshold
+from phospho.models import Threshold, EvaluationModel, EventDefinition
 
 
 async def get_project_by_id(project_id: str) -> Project:
