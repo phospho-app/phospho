@@ -462,6 +462,7 @@ async def breakdown_by_sum_of_metadata_field(
     - "event_name"
     - "task_position"
     - "None"
+    - "session_length"
 
     The output is a list of dictionaries, each containing:
     - breakdown_by: str
@@ -479,6 +480,35 @@ async def breakdown_by_sum_of_metadata_field(
     main_filter, collection_name = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters, collection="tasks_with_events"
     )
+
+    def _merge_sessions(pipeline: List[Dict[str, object]]) -> List[Dict[str, object]]:
+        # if already merged, return the pipeline
+        if any(
+            operator.get("$lookup", {}).get("from") == "sessions"
+            for operator in pipeline
+        ):
+            return pipeline
+
+        # Merge the sessions with the tasks
+        pipeline += [
+            {
+                "$lookup": {
+                    "from": "sessions",
+                    "localField": "session_id",
+                    "foreignField": "id",
+                    "as": "session",
+                },
+            },
+            {
+                "$addFields": {
+                    "session": {"$ifNull": ["$session", []]},
+                }
+            },
+            {
+                "$unwind": "$session",
+            },
+        ]
+        return pipeline
 
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
@@ -515,6 +545,9 @@ async def breakdown_by_sum_of_metadata_field(
                 }
             }
         ]
+    elif breakdown_by == "session_length":
+        pipeline = _merge_sessions(pipeline)
+        breakdown_by_col = "session.session_length"
     else:
         breakdown_by_col = breakdown_by
 
@@ -584,23 +617,8 @@ async def breakdown_by_sum_of_metadata_field(
         ]
 
     if metric.lower() == "avg session length":
+        pipeline = _merge_sessions(pipeline)
         pipeline += [
-            {
-                "$lookup": {
-                    "from": "sessions",
-                    "localField": "session_id",
-                    "foreignField": "id",
-                    "as": "session",
-                },
-            },
-            {
-                "$addFields": {
-                    "session": {"$ifNull": ["$session", []]},
-                }
-            },
-            {
-                "$unwind": "$session",
-            },
             {
                 "$group": {
                     "_id": f"${breakdown_by_col}",
