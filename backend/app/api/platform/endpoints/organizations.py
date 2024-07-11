@@ -356,15 +356,16 @@ async def post_stripe_webhook(
                             f"/!\ Automatic activation failed! Stripe checkout session {session.id}"
                             + " was processed but has no org_id in metadata and no customer email"
                         )
-                # Activate the organization
-                logger.info(f"Activating organization {org_id} with plan pro")
+                else:
+                    # Activate the organization
+                    logger.info(f"Activating organization {org_id} with plan pro")
 
-                background_tasks.add_task(
-                    change_organization_plan,
-                    org_id=org_id,
-                    plan="usage_based",
-                    customer_id=customer_id,
-                )
+                    background_tasks.add_task(
+                        change_organization_plan,
+                        org_id=org_id,
+                        plan="usage_based",
+                        customer_id=customer_id,
+                    )
             else:
                 # We don't know this !
                 logger.error(
@@ -494,7 +495,7 @@ async def post_create_billing_portal_session(
             f"Creating billing portal session for org {org_id}, user {user.email}, and customer {org_metadata.get('customer_id', None)}"
         )
         # Update the metadata of the customer in stripe
-        _ = stripe.Customer.modify(
+        stripe.Customer.modify(
             org_metadata.get("customer_id", None),
             metadata={"org_id": org_id},
         )
