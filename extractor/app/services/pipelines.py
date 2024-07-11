@@ -14,7 +14,6 @@ from app.services.projects import get_project_by_id
 from app.services.webhook import trigger_webhook
 from phospho import lab
 from phospho.models import ResultType, SentimentObject, JobResult
-from app.utils import generate_timestamp
 
 from app.api.v1.models.pipelines import PipelineResults
 
@@ -490,6 +489,8 @@ async def task_scoring_pipeline(
 
     PHOSPHO_EVAL_MODEL_NAMES = ["phospho", "phospho-4"]
 
+    validated_evaluation_model = None
+
     # Get the Task's evaluation prompt
     if (
         task.metadata is not None
@@ -644,6 +645,9 @@ async def task_scoring_pipeline(
         test_id=task.test_id,
         org_id=task.org_id,
         task=task if not save_task else None,
+        evaluation_model=validated_evaluation_model.model_dump()
+        if validated_evaluation_model
+        else None,
     )
     mongo_db["evals"].insert_one(evaluation_data.model_dump())
     # Save the prediction
