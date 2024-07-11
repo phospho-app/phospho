@@ -672,3 +672,15 @@ class Clustering(ProjectElementBaseModel):
     clusters_ids: List[str]
     status: Optional[Literal["started", "summaries", "completed"]] = None
     clusters: Optional[List[Cluster]] = None
+
+
+class DatasetField(BaseModel):
+    name: str  # Name of the field
+    description: Optional[str] = None  # Description of the field
+
+
+class Dataset(ProjectElementBaseModel):
+    name: str  # Name of the dataset, must be a unique name in the workspace
+    workspace_id: str  # Name of the workspace where the dataset is stored in Argilla
+    num_rows: int  # Number of rows in the dataset
+    fields: List[DatasetField]  # List of fields in the dataset

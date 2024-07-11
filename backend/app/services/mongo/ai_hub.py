@@ -21,31 +21,20 @@ from app.core import config
 from app.services.mongo.files import process_and_save_examples
 from app.utils import generate_uuid
 from loguru import logger
-
-
-def health_check():
-    """
-    Check if the extractor server is healthy
-    """
-    try:
-        response = httpx.get(f"{config.PHOSPHO_AI_HUB_URL}/v1/health")
-        return response.status_code == 200
-    except Exception as e:
-        logger.error(e)
-        return False
+from app.utils import health_check
 
 
 def check_health_ai_hub():
     """
     Check if the AI Hub server is healthy
     """
-    ai_hub_is_healthy = health_check()
+    ai_hub_is_healthy = health_check(f"{config.PHOSPHO_AI_HUB_URL}/v1/health")
     if not ai_hub_is_healthy:
         logger.error(
             f"AI Hub server is not reachable at url {config.PHOSPHO_AI_HUB_URL}"
         )
     else:
-        logger.debug(f"AI Hub server is reachable at url {config.PHOSPHO_AI_HUB_URL}")
+        logger.info(f"AI Hub server is reachable at url {config.PHOSPHO_AI_HUB_URL}")
 
 
 async def fetch_models(org_id: Optional[str] = None) -> Optional[ModelsResponse]:
