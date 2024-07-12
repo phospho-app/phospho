@@ -472,6 +472,19 @@ async def breakdown_by_sum_of_metadata_field(
     The output stack can be used to create a stacked bar chart.
     """
 
+    # Used for logging
+    kwargs = {
+        "project_id": project_id,
+        "metric": metric,
+        "metadata_field": metadata_field,
+        "number_metadata_fields": number_metadata_fields,
+        "category_metadata_fields": category_metadata_fields,
+        "breakdown_by": breakdown_by,
+        "filters": filters,
+    }
+    formatted_kwargs = "\n".join([f"{key}={value}" for key, value in kwargs.items()])
+    logger.info(f"Running pivot with:\n{formatted_kwargs}")
+
     if filters is None:
         filters = ProjectDataFilters()
 
@@ -506,6 +519,11 @@ async def breakdown_by_sum_of_metadata_field(
             },
             {
                 "$unwind": "$session",
+            },
+            {
+                "$set": {
+                    "session_length": "$session.session_length",
+                }
             },
         ]
         return pipeline
@@ -548,7 +566,7 @@ async def breakdown_by_sum_of_metadata_field(
     elif breakdown_by == "session_length":
         await compute_session_length(project_id=project_id)
         pipeline = _merge_sessions(pipeline)
-        breakdown_by_col = "session.session_length"
+        breakdown_by_col = "session_length"
     else:
         breakdown_by_col = breakdown_by
 
@@ -764,11 +782,9 @@ async def breakdown_by_sum_of_metadata_field(
             # {"$match": {"breakdown_by": {"$ne": None}}},
         ]
     )
-    if breakdown_by == "task_position":
-        pipeline.append({"$sort": {"breakdown_by": 1}})
-    else:
-        pipeline.append({"$sort": {"breakdown_by": -1, "metric": 1}})
+    pipeline.append({"$sort": {"breakdown_by": 1, "metric": 1}})
 
+    logger.info(f"Running pipeline: {pipeline}")
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=200)
 
     return result
