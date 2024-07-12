@@ -29,7 +29,7 @@ import useSWR from "swr";
 
 import { TableNavigation } from "../TableNavigation";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/Card";
-import { getColumns } from "./AbtestingColumns";
+import { getColumns } from "./abtesting-columns";
 
 interface DataTableProps<TData, TValue> {}
 
