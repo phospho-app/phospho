@@ -60,7 +60,7 @@ async def post_create_dataset(
     if dataset is None:
         raise HTTPException(
             status_code=400,
-            detail="The dataset could not be generated usign these filters.",
+            detail="The dataset could not be generated using these filters.",
         )
 
     return {"status": "ok"}

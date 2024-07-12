@@ -1,12 +1,9 @@
-from phospho.models import ProjectSettings
-
 from app.services.mongo.tasks import get_all_tasks
 from app.api.platform.models.datasets import DatasetCreationRequest
 from app.services.mongo.projects import get_project_by_id
 from loguru import logger
 from app.core import config
 from argilla import FeedbackDataset
-import httpx
 import argilla as rg
 from app.utils import health_check
 from typing import List
@@ -86,6 +83,12 @@ async def generate_dataset_from_project(
     for key, value in project.settings.events.items():
         labels[key] = key
 
+    if len(labels) <= 2:
+        logger.warning(
+            f"Not enough labels found in project settings {project.id} with filters {creation_request.filters} and limit {creation_request.limit}"
+        )
+        return None
+
     # Create the dataset
     # Add phospho metadata in the dataset metadata: org_id, project_id, filters, limit,...
     # FeedbackDataset
@@ -150,8 +153,11 @@ async def generate_dataset_from_project(
         filters=creation_request.filters,
     )
 
-    if len(tasks) == 0:
-        raise ValueError("No tasks found for this project")
+    if len(tasks) <= 2:
+        logger.warning(
+            f"Not enough tasks found for project {creation_request.project_id} and filters {creation_request.filters} and limit {creation_request.limit}"
+        )
+        return None
 
     logger.debug(f"Found {len(tasks)} tasks for project {creation_request.project_id}")
     logger.debug(tasks[0])
