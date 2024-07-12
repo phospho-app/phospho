@@ -51,7 +51,7 @@ class EvaluationModelDefinition(BaseModel):
 
 
 class EvaluationModel(EvaluationModelDefinition):
-    id: int = Field(default_factory=generate_uuid)
+    id: str | int = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
     removed: bool = False
 
