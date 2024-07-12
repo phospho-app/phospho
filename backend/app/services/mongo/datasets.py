@@ -86,9 +86,6 @@ async def generate_dataset_from_project(
     for key, value in project.settings.events.items():
         labels[key] = key
 
-    # Get the number of keys in the labels
-    nb_labels = len(labels.keys())
-
     if len(labels.keys()) < 2:
         logger.warning(
             f"Not enough labels found in project settings {project.id} with filters {creation_request.filters} and limit {creation_request.limit}"
