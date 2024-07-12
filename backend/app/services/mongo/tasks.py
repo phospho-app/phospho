@@ -379,6 +379,9 @@ async def task_filtering_pipeline_match(
         )
         match[f"{prefix}is_last_task"] = filters.is_last_task
 
+    if filters.session_ids is not None:
+        match[f"{prefix}session_id"] = {"$in": filters.session_ids}
+
     return match, collection
 
 

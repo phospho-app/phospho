@@ -14,6 +14,8 @@ export interface Task {
   sentiment?: SentimentObject;
   language?: string;
   notes?: string;
+  task_position: number;
+  is_last_task: boolean;
 }
 
 export interface SentimentObject {
@@ -51,6 +53,7 @@ export interface OrgMetadata {
   plan?: string | null; // "hobby" or "pro"
   customer_id?: string | null; // Stripe customer id
   initialized?: boolean | null; // Whether the org has been initialized
+  argilla_workspace_id?: string | null; // Argilla workspace id
 }
 
 export interface Session {
@@ -147,6 +150,7 @@ export interface EventDefinition {
   regex_pattern?: string;
   job_id?: string;
   score_range_settings?: ScoreRangeSettings;
+  is_last_task?: boolean;
 }
 
 export interface ABTest {
@@ -279,4 +283,5 @@ export interface ProjectDataFilters {
   clustering_id?: string | null;
   clusters_ids?: string[] | null;
   is_last_task?: boolean | null;
+  session_ids?: string[] | null;
 }

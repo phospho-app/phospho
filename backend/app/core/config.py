@@ -79,6 +79,10 @@ EVALUATION_SOURCE = "phospho-6"  # If phospho
 FEW_SHOT_MIN_NUMBER_OF_EXAMPLES = 10  # Make it even
 # FEW_SHOT_MAX_NUMBER_OF_EXAMPLES = 50  # Imposed by Cohere API # unused
 
+### ARGILLA SERVER (annotations) ###
+ARGILLA_URL = os.getenv("ARGILLA_URL", None)
+ARGILLA_API_KEY = os.getenv("ARGILLA_API_KEY", None)  # API Key with role 'owner'
+
 ###############################################
 ### Config below used only in phospho cloud ###
 ###############################################

@@ -105,6 +105,8 @@ class EventDefinition(DatedBaseModel):
     recipe_type: RecipeType = "event_detection"
     removed: bool = False
     score_range_settings: ScoreRangeSettings = Field(default_factory=ScoreRangeSettings)
+    # If true, the event can only be detected in the last task of a session
+    is_last_task: bool = False
 
 
 class ScoreRange(BaseModel):
@@ -276,17 +278,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name]["event_name"] = (
-                            event_name
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "event_name"
+                        ] = event_name
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["org_id"] = (
-                            project_data["org_id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "org_id"
+                        ] = project_data["org_id"]
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["project_id"] = (
-                            project_data["id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "project_id"
+                        ] = project_data["id"]
 
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:
@@ -671,6 +673,7 @@ class ProjectDataFilters(BaseModel):
     clustering_id: Optional[str] = None  # A group of clusters
     clusters_ids: Optional[List[str]] = None  # A list of clusters
     is_last_task: Optional[bool] = None
+    session_ids: Optional[List[str]] = None
 
 
 class Cluster(ProjectElementBaseModel):

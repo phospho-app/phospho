@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -119,6 +120,7 @@ export default function CreateEvent({
         }),
       })
       .optional(),
+    is_last_task: z.boolean(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -133,6 +135,7 @@ export default function CreateEvent({
       keywords: eventToEdit?.keywords ?? "",
       regex_pattern: eventToEdit?.regex_pattern ?? "",
       score_range_settings: eventToEdit?.score_range_settings,
+      is_last_task: eventToEdit?.is_last_task ?? false,
     },
   });
 
@@ -171,6 +174,7 @@ export default function CreateEvent({
       keywords: values.keywords,
       regex_pattern: values.regex_pattern,
       score_range_settings: values.score_range_settings as ScoreRangeSettings,
+      is_last_task: values.is_last_task,
     };
     console.log("Updated selected project:", selectedProject);
 
@@ -426,15 +430,13 @@ export default function CreateEvent({
                           }}
                           defaultValue={field.value?.score_type ?? "confidence"}
                         >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue
-                                defaultValue={
-                                  field.value?.score_type ?? "confidence"
-                                }
-                              />
-                            </SelectTrigger>
-                          </FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              defaultValue={
+                                field.value?.score_type ?? "confidence"
+                              }
+                            />
+                          </SelectTrigger>
                           <SelectContent position="popper">
                             <SelectItem value="confidence">
                               Yes/No (boolean)
@@ -552,6 +554,23 @@ export default function CreateEvent({
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="is_last_task"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-1 space-y-0 py-1">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="font-medium text-muted-foreground">
+                    Only detect on the last task of a session
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
           </div>
           <SheetFooter>
             <Button

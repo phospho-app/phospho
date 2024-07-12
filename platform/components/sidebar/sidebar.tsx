@@ -9,6 +9,7 @@ import {
   Boxes,
   BriefcaseBusiness,
   CircleUser,
+  Database,
   KeyRound,
   LayoutDashboard,
   List,
@@ -164,6 +165,12 @@ export function Sidebar() {
           icon={<TestTubeDiagonal size={16} className="mr-2" />}
         >
           Tests
+        </SideBarElement>
+        <SideBarElement
+          href="/org/datasets"
+          icon={<Database size={16} className="mr-2" />}
+        >
+          Datasets
         </SideBarElement>
         <WhiteSpaceSeparator />
         <SideBarElement

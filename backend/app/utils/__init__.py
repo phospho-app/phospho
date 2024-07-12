@@ -4,6 +4,8 @@ import time
 import re
 import tiktoken
 import datetime
+import httpx
+from loguru import logger
 
 
 def generate_uuid(prefix: str = "") -> str:
@@ -74,3 +76,16 @@ def cast_datetime_or_timestamp_to_timestamp(
         return int(date_or_ts.timestamp())
     else:
         return date_or_ts
+
+
+def health_check(url: str) -> bool:
+    """
+    Check if the given usrl is healthy
+    Will return False if the server is not reachable
+    """
+    try:
+        response = httpx.get(url)
+        return True
+    except Exception as e:
+        logger.error(e)
+        return False
