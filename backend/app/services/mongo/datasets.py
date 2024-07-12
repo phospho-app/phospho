@@ -9,7 +9,10 @@ from app.utils import health_check
 from typing import List
 
 # Connect to argila
-rg.init(api_url=config.ARGILLA_URL, api_key=config.ARGILLA_API_KEY)
+try:
+    rg.init(api_url=config.ARGILLA_URL, api_key=config.ARGILLA_API_KEY)
+except Exception as e:
+    logger.error(e)
 
 
 def check_health_argilla() -> None:
@@ -83,7 +86,10 @@ async def generate_dataset_from_project(
     for key, value in project.settings.events.items():
         labels[key] = key
 
-    if len(labels) <= 2:
+    # Get the number of keys in the labels
+    nb_labels = len(labels.keys())
+
+    if len(labels.keys()) < 2:
         logger.warning(
             f"Not enough labels found in project settings {project.id} with filters {creation_request.filters} and limit {creation_request.limit}"
         )

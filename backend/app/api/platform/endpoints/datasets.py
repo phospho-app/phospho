@@ -30,8 +30,6 @@ async def post_create_dataset(
 
     org = propelauth.fetch_org(org_member_info.org_id)
 
-    logger.warning(org)
-
     # Get the org metadata
     org_metadata = org.get("metadata", {})
 
