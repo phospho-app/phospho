@@ -561,7 +561,7 @@ async def process_log_with_session_id(
 
     if trigger_pipeline:
         # Vectorize them
-        await add_vectorized_tasks(tasks_id_to_process)
+        # await add_vectorized_tasks(tasks_id_to_process)
 
         # Trigger the pipeline
         for task_id in tasks_id_to_process:

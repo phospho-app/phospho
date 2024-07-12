@@ -105,6 +105,8 @@ class EventDefinition(DatedBaseModel):
     recipe_type: RecipeType = "event_detection"
     removed: bool = False
     score_range_settings: ScoreRangeSettings = Field(default_factory=ScoreRangeSettings)
+    # If true, the event can only be detected in the last task of a session
+    is_last_task: bool = False
 
 
 class ScoreRange(BaseModel):

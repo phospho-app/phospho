@@ -221,7 +221,43 @@ async def connect_and_init_db():
                                         "$filter": {
                                             "input": "$events",
                                             "as": "event",
-                                            "cond": {"$ne": ["$$event.removed", True]},
+                                            "cond": {
+                                                "$and": [
+                                                    {
+                                                        "$ne": [
+                                                            "$$event.removed",
+                                                            True,
+                                                        ],
+                                                    },
+                                                    {
+                                                        "$or": [
+                                                            # The field is present in the event definition and the task
+                                                            {
+                                                                "$and": [
+                                                                    {
+                                                                        "$eq": [
+                                                                            "$$event.event_definition.is_last_task",
+                                                                            True,
+                                                                        ]
+                                                                    },
+                                                                    {
+                                                                        "$eq": [
+                                                                            "$is_last_task",
+                                                                            True,
+                                                                        ]
+                                                                    },
+                                                                ]
+                                                            },
+                                                            # the field is not present in the event definition
+                                                            {
+                                                                "$not": [
+                                                                    "$$event.event_definition.is_last_task",
+                                                                ]
+                                                            },
+                                                        ],
+                                                    },
+                                                ]
+                                            },
                                         }
                                     }
                                 }

@@ -147,6 +147,7 @@ export interface EventDefinition {
   regex_pattern?: string;
   job_id?: string;
   score_range_settings?: ScoreRangeSettings;
+  is_last_task?: boolean;
 }
 
 export interface ABTest {
@@ -279,4 +280,5 @@ export interface ProjectDataFilters {
   clustering_id?: string | null;
   clusters_ids?: string[] | null;
   is_last_task?: boolean | null;
+  session_ids?: string[] | null;
 }
