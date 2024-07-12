@@ -64,18 +64,3 @@ async def post_create_dataset(
         )
 
     return {"status": "ok"}
-
-
-### Debug ###
-
-
-@router.get("/datasets-name-check/{workspace_id}/{dataset_name}")
-async def post_validate_dataset_name(
-    workspace_id: str, dataset_name: str
-):  # user: User = Depends(propelauth.require_user)):
-    # TODO: Check if the user has access to the porject and the workspace
-
-    # Authorization checks
-    is_name_valid = dataset_name_is_valid(dataset_name, workspace_id)
-
-    return {"is_name_valid": is_name_valid}
