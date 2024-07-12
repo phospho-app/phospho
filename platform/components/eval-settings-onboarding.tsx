@@ -1,17 +1,12 @@
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { authFetcher } from "@/lib/fetcher";
 import { EvaluationModel, EvaluationModelDefinition } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
-import { EllipsisVertical, Settings } from "lucide-react";
+import { AlertDialog, AlertDialogTitle } from "@radix-ui/react-alert-dialog";
+import { Settings, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
@@ -20,7 +15,11 @@ import { z } from "zod";
 import { Spinner } from "./small-spinner";
 import { Textarea } from "./ui/textarea";
 
-export const EvalSettings = () => {
+export const EvalSettingsOnboarding = ({
+  setOpen,
+}: {
+  setOpen: (open: boolean) => void;
+}) => {
   const [evalOpen, setEvalOpen] = useState(false);
   const [clicked, setClicked] = useState(false);
   const { accessToken } = useUser();
@@ -84,48 +83,45 @@ export const EvalSettings = () => {
   }
 
   return (
-    <DropdownMenu open={evalOpen} onOpenChange={setEvalOpen}>
-      <DropdownMenuTrigger>
-        <Button variant="ghost" size={"icon"} onClick={toggleButton}>
-          <EllipsisVertical className="h-5 w-5" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-full">
-        <DropdownMenuLabel className="flex flex-row items-center">
-          <Settings className="w-4 h-4 mr-1" />
-          System prompt for evaluation
-        </DropdownMenuLabel>
-        <div className="p-2">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="prompt"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Describe what a successful interaction is to you
-                    </FormLabel>
-                    <Textarea
-                      className="h-40 w-full break-words"
-                      {...field}
-                      autoFocus
-                    />
-                  </FormItem>
-                )}
-              ></FormField>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={clicked || !prompt || !form.formState.isValid}
-              >
-                {clicked && <Spinner className="mr-1" />}
-                Update
-              </Button>
-            </form>
-          </Form>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <AlertDialog>
+      <AlertDialogTitle className="flex flex-row items-center">
+        <Settings className="w-4 h-4 mr-1" />
+        System prompt for evaluation
+      </AlertDialogTitle>
+      <div className="p-2">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="prompt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Describe what a successful interaction is to you
+                  </FormLabel>
+                  <Textarea
+                    className="h-40 w-full break-words"
+                    {...field}
+                    autoFocus
+                  />
+                </FormItem>
+              )}
+            ></FormField>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={clicked || !prompt || !form.formState.isValid}
+            >
+              {clicked && <Spinner className="mr-1" />}
+              Update
+            </Button>
+          </form>
+        </Form>
+      </div>
+      <X
+        onClick={() => setOpen(false)}
+        className="absolute top-2 right-2 cursor-pointer"
+      />
+    </AlertDialog>
   );
 };
