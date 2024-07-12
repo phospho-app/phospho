@@ -1,7 +1,7 @@
 "use client";
 
-import { Spinner } from "@/components/small-spinner";
-import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/SmallSpinner";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
@@ -9,15 +9,15 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useToast } from "@/components/ui/use-toast";
+} from "@/components/ui/DropdownMenu";
+import { useToast } from "@/components/ui/UseToast";
 import {
   DetectionScope,
   EventDefinition,

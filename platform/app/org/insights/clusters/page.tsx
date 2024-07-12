@@ -1,6 +1,6 @@
 "use client";
 
-import Clusters from "@/components/insights/clusters/clusters";
+import Clusters from "@/components/insights/clusters/Clusters";
 import React from "react";
 
 const Page: React.FC<{}> = ({}) => {

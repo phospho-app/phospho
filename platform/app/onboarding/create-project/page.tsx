@@ -1,16 +1,16 @@
 "use client";
 
-import Authenticate from "@/components/authenticate";
-import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
-import { Icons, Spinner } from "@/components/small-spinner";
-import { Button } from "@/components/ui/button";
+import Authenticate from "@/components/Authenticate";
+import { Icons, Spinner } from "@/components/SmallSpinner";
+import FetchOrgProject from "@/components/fetch-data/FetchOrgProject";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import {
   Form,
   FormControl,
@@ -18,9 +18,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+} from "@/components/ui/Form";
+import { Input } from "@/components/ui/Input";
+import { useToast } from "@/components/ui/UseToast";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";

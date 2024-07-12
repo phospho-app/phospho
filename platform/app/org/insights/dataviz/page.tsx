@@ -1,10 +1,10 @@
 "use client";
 
-import { DatavizCallout } from "@/components/callouts/import-data";
-import { DatePickerWithRange } from "@/components/date-range";
-import FilterComponent from "@/components/filters";
-import DatavizGraph from "@/components/insights/dataviz";
-import { Button } from "@/components/ui/button";
+import { DatePickerWithRange } from "@/components/DateRange";
+import FilterComponent from "@/components/Filters";
+import { DatavizCallout } from "@/components/callouts/ImportData";
+import DatavizGraph from "@/components/insights/Dataviz";
+import { Button } from "@/components/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,8 +14,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useToast } from "@/components/ui/use-toast";
+} from "@/components/ui/DropdownMenu";
+import { useToast } from "@/components/ui/UseToast";
 import { authFetcher } from "@/lib/fetcher";
 import { DashboardTile, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";

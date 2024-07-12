@@ -1,4 +1,4 @@
-import FullPageLoader from "@/components/full-page-loader";
+import FullPageLoader from "@/components/FullPageLoader";
 
 export default function Loading() {
   return <FullPageLoader />;

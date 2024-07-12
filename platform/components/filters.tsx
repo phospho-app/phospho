@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/DropdownMenu";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
@@ -20,7 +20,6 @@ import {
   Project,
 } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
-import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   Annoyed,
@@ -45,7 +44,7 @@ import {
 import React from "react";
 import useSWR from "swr";
 
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/HoverCard";
 
 const FilterComponent = ({
   variant = "tasks",

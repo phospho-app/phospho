@@ -1,21 +1,21 @@
 "use client";
 
 // Models
-import { Button } from "@/components/ui/button";
-import Icons from "@/components/ui/icons";
+import { Button } from "@/components/ui/Button";
+import Icons from "@/components/ui/Icons";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
+} from "@/components/ui/Popover";
+import { Textarea } from "@/components/ui/Textarea";
 import { Task } from "@/models/models";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
 import { PenSquare, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useState } from "react";
 
-import { CardHeader } from "./ui/card";
+import { CardHeader } from "./ui/Card";
 
 interface ThumbsUpAndDownProps {
   task: Task;

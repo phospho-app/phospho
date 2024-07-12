@@ -1,7 +1,7 @@
 "use client";
 
-import { CenteredSpinner } from "@/components/small-spinner";
-import { SessionsTable } from "@/components/transcripts/sessions/sessions-table";
+import { CenteredSpinner } from "@/components/SmallSpinner";
+import { SessionsTable } from "@/components/transcripts/sessions/SessionsTable";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";

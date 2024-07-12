@@ -1,23 +1,21 @@
-import { SendDataAlertDialog } from "@/components/callouts/import-data";
-import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { SendDataAlertDialog } from "@/components/callouts/ImportData";
+import { AlertDialog, AlertDialogTrigger } from "@/components/ui/AlertDialog";
+import { Button } from "@/components/ui/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/DropdownMenu";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
+} from "@/components/ui/HoverCard";
 import { useUser } from "@propelauth/nextjs/client";
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import {

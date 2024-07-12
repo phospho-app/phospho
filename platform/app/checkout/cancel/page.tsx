@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
@@ -8,8 +8,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+} from "@/components/ui/Card";
+import { useToast } from "@/components/ui/UseToast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 

@@ -1,9 +1,9 @@
 "use client";
 
-import Pricing from "@/components/settings/pricing";
-import TaskProgress from "@/components/settings/tasks-quota";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import Pricing from "@/components/settings/Pricing";
+import TaskProgress from "@/components/settings/TasksQuota";
+import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/UseToast";
 import { authFetcher } from "@/lib/fetcher";
 import { UsageQuota } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";

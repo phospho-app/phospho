@@ -1,9 +1,9 @@
 "use client";
 
-import EventsLast7Days from "@/components/dashboard/events-last7days";
-import OverviewLast7Days from "@/components/dashboard/overview-last7days";
-import DatavizGraph from "@/components/insights/dataviz";
-import { CenteredSpinner } from "@/components/small-spinner";
+import { CenteredSpinner } from "@/components/SmallSpinner";
+import EventsLast7Days from "@/components/dashboard/EventsLast7Days";
+import OverviewLast7Days from "@/components/dashboard/OverviewLast7Days";
+import DatavizGraph from "@/components/insights/Dataviz";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,16 +12,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from "@/components/ui/AlertDialog";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/DropdownMenu";
+import { Input } from "@/components/ui/Input";
 import { authFetcher } from "@/lib/fetcher";
 import { DashboardTile, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
@@ -44,10 +44,10 @@ import { useForm } from "react-hook-form";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
 
-import { DatePickerWithRange } from "../date-range";
-import FilterComponent from "../filters";
-import { Form, FormField, FormItem, FormLabel } from "../ui/form";
-import { useToast } from "../ui/use-toast";
+import { DatePickerWithRange } from "../DateRange";
+import FilterComponent from "../Filters";
+import { Form, FormField, FormItem, FormLabel } from "../ui/Form";
+import { useToast } from "../ui/UseToast";
 
 interface RenameDashboardTileProps {
   tile: DashboardTile;

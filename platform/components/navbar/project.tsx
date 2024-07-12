@@ -1,5 +1,5 @@
-import CreateProjectButton from "./create-project-button";
-import { SelectProjectButton } from "./select-project-dropdown";
+import CreateProjectButton from "./CreateProjectButton";
+import { SelectProjectButton } from "./SelectProjectDropdown";
 
 export function NavBarProject() {
   return (

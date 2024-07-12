@@ -1,19 +1,14 @@
 "use client";
 
-import CreateProjectDialog from "@/components/projects/create-project-form";
-import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
-import DisableAnalytics from "@/components/settings/disable-analytics";
+import CreateProjectDialog from "@/components/projects/CreateProjectForm";
+import AlertDialogDeleteProject from "@/components/projects/DeleteProjectPopup";
+import DisableAnalytics from "@/components/settings/DisableAnalytics";
 import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+} from "@/components/ui/AlertDialog";
+import { Button } from "@/components/ui/Button";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";

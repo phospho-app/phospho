@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useRedirectFunctions } from "@propelauth/nextjs/client";
 import {
@@ -26,8 +26,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Card, CardContent, CardTitle } from "./ui/card";
-import UpgradeButton from "./upgrade-button";
+import UpgradeButton from "./UpgradeButton";
+import { Card, CardContent, CardTitle } from "./ui/Card";
 
 interface SideBarElementProps {
   children: React.ReactNode;

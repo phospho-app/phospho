@@ -1,11 +1,11 @@
-import { Button } from "@/components/ui/button";
+import UpgradeButton from "@/components/UpgradeButton";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-} from "@/components/ui/card";
-import UpgradeButton from "@/components/upgrade-button";
+} from "@/components/ui/Card";
 import { Separator } from "@radix-ui/react-separator";
 import { Check } from "lucide-react";
 import Link from "next/link";

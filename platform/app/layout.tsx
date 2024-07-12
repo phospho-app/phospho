@@ -1,17 +1,17 @@
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
-import Script from "next/script";
+// Intercom
+import IntercomClientComponent from "@/components/IntercomClientComponent";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { Toaster } from "@/components/ui/Toaster";
 // PropelAuth
 import { AuthProvider } from "@propelauth/nextjs/client";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 
 import "./globals.css";
 // PostHog
 import { PHProvider } from "./providers";
-// Intercom
-import IntercomClientComponent from "@/components/IntercomClientComponent";
 
 const PostHogPageView = dynamic(() => import("./PostHogPageView"), {
   ssr: false,
@@ -71,18 +71,18 @@ export default function RootLayout({
               <Toaster />
             </ThemeProvider>
             <Script
-        strategy="afterInteractive"
-        id="intercom-settings"
-        dangerouslySetInnerHTML={{
-            __html: `
+              strategy="afterInteractive"
+              id="intercom-settings"
+              dangerouslySetInnerHTML={{
+                __html: `
                         window.intercomSettings = {
                             api_base: "https://api-iam.intercom.io",
                             app_id: ${process.env.NEXT_PUBLIC_INTERCOM_APP_ID}, // Ensure this matches your actual Intercom app ID.
                         };
-                    `
-        }}
-    />
-    <IntercomClientComponent/>
+                    `,
+              }}
+            />
+            <IntercomClientComponent />
           </body>
         </AuthProvider>
       </PHProvider>

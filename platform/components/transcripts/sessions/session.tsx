@@ -1,21 +1,21 @@
 "use client";
 
-import SuggestEvent from "@/components/insights/events/suggest-event";
-import TaskBox from "@/components/task-box";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import TaskBox from "@/components/TaskBox";
+import SuggestEvent from "@/components/insights/events/SuggestEvent";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@/components/ui/Collapsible";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";

@@ -1,7 +1,7 @@
 "use client";
 
-import ComingSoon from "@/components/coming-soon";
-import TopRowKpis from "@/components/insights/top-row";
+import ComingSoon from "@/components/ComingSoon";
+import TopRowKpis from "@/components/insights/TopRow";
 // State store
 import { navigationStateStore } from "@/store/store";
 // PropelAuth

@@ -1,13 +1,13 @@
 "use client";
 
-import SessionsDataviz from "@/components/transcripts/sessions/session-dataviz";
-import { Button } from "@/components/ui/button";
+import SessionsDataviz from "@/components/transcripts/sessions/SessionDataviz";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -15,7 +15,7 @@ import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
 
-import { SessionsTable } from "./sessions-table";
+import { SessionsTable } from "./SessionsTable";
 
 const Sessions: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);

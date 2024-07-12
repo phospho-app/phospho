@@ -1,12 +1,12 @@
 "use client";
 
-import RunClusters from "@/components/insights/clusters/clusters-sheet";
+import RunClusters from "@/components/insights/clusters/ClustersSheet";
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
@@ -15,7 +15,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
-import { ClustersTable } from "./clusters-table";
+import { ClustersTable } from "./ClustersTable";
 
 const Clusters: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);

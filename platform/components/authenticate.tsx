@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { useRedirectFunctions } from "@propelauth/nextjs/client";
 import React from "react";
 

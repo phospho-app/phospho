@@ -1,8 +1,8 @@
 "use client";
 
-import { CenteredSpinner } from "@/components/small-spinner";
-import TaskBox from "@/components/task-box";
-import { Button } from "@/components/ui/button";
+import { CenteredSpinner } from "@/components/SmallSpinner";
+import TaskBox from "@/components/TaskBox";
+import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
@@ -10,7 +10,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/Card";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Task, TaskWithEvents } from "@/models/models";
