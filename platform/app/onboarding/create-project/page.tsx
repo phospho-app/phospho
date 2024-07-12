@@ -2,7 +2,7 @@
 
 import Authenticate from "@/components/authenticate";
 import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
-import { Icons, Spinner } from "@/components/small-spinner";
+import { Spinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -198,7 +198,7 @@ export default function Page() {
                   }
                 >
                   {redirecting && <Spinner className="mr-1" />}
-                  {!creatingProject && <>Create project</>}
+                  Create project
                 </Button>
               </div>
             </form>
