@@ -198,7 +198,7 @@ export default function Page() {
                   }
                 >
                   {redirecting && <Spinner className="mr-1" />}
-                  {!creatingProject && <>Create project</>}
+                  Create project
                 </Button>
               </div>
             </form>
