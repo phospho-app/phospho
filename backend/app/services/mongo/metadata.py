@@ -3,7 +3,7 @@ from app.api.v2.models.projects import UserMetadata
 from app.services.mongo.tasks import task_filtering_pipeline_match
 from fastapi import HTTPException
 from loguru import logger
-from app.services.mongo.sessions import compute_task_position, compute_session_length
+from app.services.mongo.sessions import compute_task_position
 
 from app.db.mongo import get_mongo_db
 from phospho.models import ProjectDataFilters
@@ -462,7 +462,6 @@ async def breakdown_by_sum_of_metadata_field(
     - "event_name"
     - "task_position"
     - "None"
-    - "session_length"
 
     The output is a list of dictionaries, each containing:
     - breakdown_by: str
@@ -472,19 +471,6 @@ async def breakdown_by_sum_of_metadata_field(
     The output stack can be used to create a stacked bar chart.
     """
 
-    # Used for logging
-    kwargs = {
-        "project_id": project_id,
-        "metric": metric,
-        "metadata_field": metadata_field,
-        "number_metadata_fields": number_metadata_fields,
-        "category_metadata_fields": category_metadata_fields,
-        "breakdown_by": breakdown_by,
-        "filters": filters,
-    }
-    formatted_kwargs = "\n".join([f"{key}={value}" for key, value in kwargs.items()])
-    logger.info(f"Running pivot with:\n{formatted_kwargs}")
-
     if filters is None:
         filters = ProjectDataFilters()
 
@@ -493,40 +479,6 @@ async def breakdown_by_sum_of_metadata_field(
     main_filter, collection_name = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters, collection="tasks_with_events"
     )
-
-    def _merge_sessions(pipeline: List[Dict[str, object]]) -> List[Dict[str, object]]:
-        # if already merged, return the pipeline
-        if any(
-            operator.get("$lookup", {}).get("from") == "sessions"
-            for operator in pipeline
-        ):
-            return pipeline
-
-        # Merge the sessions with the tasks
-        pipeline += [
-            {
-                "$lookup": {
-                    "from": "sessions",
-                    "localField": "session_id",
-                    "foreignField": "id",
-                    "as": "session",
-                },
-            },
-            {
-                "$addFields": {
-                    "session": {"$ifNull": ["$session", []]},
-                }
-            },
-            {
-                "$unwind": "$session",
-            },
-            {
-                "$set": {
-                    "session_length": "$session.session_length",
-                }
-            },
-        ]
-        return pipeline
 
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
@@ -563,10 +515,6 @@ async def breakdown_by_sum_of_metadata_field(
                 }
             }
         ]
-    elif breakdown_by == "session_length":
-        await compute_session_length(project_id=project_id)
-        pipeline = _merge_sessions(pipeline)
-        breakdown_by_col = "session_length"
     else:
         breakdown_by_col = breakdown_by
 
@@ -636,8 +584,23 @@ async def breakdown_by_sum_of_metadata_field(
         ]
 
     if metric.lower() == "avg session length":
-        pipeline = _merge_sessions(pipeline)
         pipeline += [
+            {
+                "$lookup": {
+                    "from": "sessions",
+                    "localField": "session_id",
+                    "foreignField": "id",
+                    "as": "session",
+                },
+            },
+            {
+                "$addFields": {
+                    "session": {"$ifNull": ["$session", []]},
+                }
+            },
+            {
+                "$unwind": "$session",
+            },
             {
                 "$group": {
                     "_id": f"${breakdown_by_col}",
@@ -782,9 +745,11 @@ async def breakdown_by_sum_of_metadata_field(
             # {"$match": {"breakdown_by": {"$ne": None}}},
         ]
     )
-    pipeline.append({"$sort": {"breakdown_by": 1, "metric": 1}})
+    if breakdown_by == "task_position":
+        pipeline.append({"$sort": {"breakdown_by": 1}})
+    else:
+        pipeline.append({"$sort": {"breakdown_by": -1, "metric": 1}})
 
-    logger.info(f"Running pipeline: {pipeline}")
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=200)
 
     return result

@@ -102,8 +102,7 @@ const RunClusters = ({
     <Sheet>
       <SheetTrigger>
         <Button className="default">
-          <Sparkles className="w-4 h-4 mr-2 text-green-500" /> Configure
-          clusters detection
+          <Sparkles className="w-4 h-4 mr-2 text-green-500" /> Detect clusters
           <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
       </SheetTrigger>
