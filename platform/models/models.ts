@@ -14,6 +14,8 @@ export interface Task {
   sentiment?: SentimentObject;
   language?: string;
   notes?: string;
+  task_position: number;
+  is_last_task: boolean;
 }
 
 export interface SentimentObject {
