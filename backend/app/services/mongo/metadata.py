@@ -3,7 +3,7 @@ from app.api.v2.models.projects import UserMetadata
 from app.services.mongo.tasks import task_filtering_pipeline_match
 from fastapi import HTTPException
 from loguru import logger
-from app.services.mongo.sessions import compute_task_position
+from app.services.mongo.sessions import compute_task_position, compute_session_length
 
 from app.db.mongo import get_mongo_db
 from phospho.models import ProjectDataFilters
@@ -546,6 +546,7 @@ async def breakdown_by_sum_of_metadata_field(
             }
         ]
     elif breakdown_by == "session_length":
+        await compute_session_length(project_id=project_id)
         pipeline = _merge_sessions(pipeline)
         breakdown_by_col = "session.session_length"
     else:
