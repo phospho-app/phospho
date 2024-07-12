@@ -51,7 +51,7 @@ class EvaluationModelDefinition(BaseModel):
 
 
 class EvaluationModel(EvaluationModelDefinition):
-    id: int = Field(default_factory=generate_uuid)
+    id: Union[str, int] = Field(default_factory=generate_uuid)
     created_at: int = Field(default_factory=generate_timestamp)
     removed: bool = False
 
@@ -105,6 +105,8 @@ class EventDefinition(DatedBaseModel):
     recipe_type: RecipeType = "event_detection"
     removed: bool = False
     score_range_settings: ScoreRangeSettings = Field(default_factory=ScoreRangeSettings)
+    # If true, the event can only be detected in the last task of a session
+    is_last_task: bool = False
 
 
 class ScoreRange(BaseModel):
@@ -671,6 +673,7 @@ class ProjectDataFilters(BaseModel):
     clustering_id: Optional[str] = None  # A group of clusters
     clusters_ids: Optional[List[str]] = None  # A list of clusters
     is_last_task: Optional[bool] = None
+    session_ids: Optional[List[str]] = None
 
 
 class Cluster(ProjectElementBaseModel):

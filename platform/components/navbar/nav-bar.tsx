@@ -1,6 +1,6 @@
 "use client";
 
-import { Sidebar } from "@/components/sidebar";
+import { Sidebar } from "@/components/sidebar/sidebar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

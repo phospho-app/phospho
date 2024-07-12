@@ -9,13 +9,13 @@ import {
   Boxes,
   BriefcaseBusiness,
   CircleUser,
+  Database,
   KeyRound,
   LayoutDashboard,
   List,
   MessagesSquare,
   Settings,
   Shuffle,
-  Sparkles,
   TestTubeDiagonal,
   TextSearch,
   TriangleAlert,
@@ -26,8 +26,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Card, CardContent, CardTitle } from "./ui/card";
-import UpgradeButton from "./upgrade-button";
+import { Card, CardContent, CardTitle } from "../ui/card";
+import UpgradeButton from "../upgrade-button";
+import { OnboardingProgress } from "./sidebar-progress";
 
 interface SideBarElementProps {
   children: React.ReactNode;
@@ -165,6 +166,12 @@ export function Sidebar() {
         >
           Tests
         </SideBarElement>
+        <SideBarElement
+          href="/org/datasets"
+          icon={<Database size={16} className="mr-2" />}
+        >
+          Datasets
+        </SideBarElement>
         <WhiteSpaceSeparator />
         <SideBarElement
           href="/org/settings"
@@ -228,6 +235,10 @@ export function Sidebar() {
           </Card>
         </div>
       )}
+
+      <div className="absolute bottom-5">
+        <OnboardingProgress />
+      </div>
     </div>
   );
 }

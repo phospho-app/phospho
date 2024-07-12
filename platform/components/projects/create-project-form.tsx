@@ -207,7 +207,9 @@ const CreateProjectDialog = ({
         />
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Close</AlertDialogCancel>
+          <AlertDialogCancel onClick={() => setOpen(false)}>
+            Close
+          </AlertDialogCancel>
           <div>
             {!isCreating &&
               !isCreated &&
