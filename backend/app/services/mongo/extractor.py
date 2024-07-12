@@ -19,29 +19,18 @@ from loguru import logger
 from phospho.lab import Message
 from app.security import propelauth
 import stripe
-
-
-def health_check():
-    """
-    Check if the extractor server is healthy
-    """
-    try:
-        response = httpx.get(f"{config.EXTRACTOR_URL}/v1/health")
-        return response.status_code == 200
-    except Exception as e:
-        logger.error(e)
-        return False
+from app.utils import health_check
 
 
 def check_health():
     """
     Check if the extractor server is healthy
     """
-    extractor_is_healthy = health_check()
+    extractor_is_healthy = health_check(f"{config.EXTRACTOR_URL}/v1/health")
     if not extractor_is_healthy:
         logger.error(f"Extractor server is not reachable at url {config.EXTRACTOR_URL}")
     else:
-        logger.debug(f"Extractor server is reachable at url {config.EXTRACTOR_URL}")
+        logger.info(f"Extractor server is reachable at url {config.EXTRACTOR_URL}")
 
 
 async def bill_on_stripe(

@@ -7,7 +7,7 @@ license = "Copyright Phospho 2024"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.13"
 aiohttp = ">=3.8.6"
 fastapi = ">=0.109.0"
 loguru = ">=0.7.2"
@@ -41,6 +41,7 @@ pycryptodome = "^3.20.0"
 xlsxwriter = "^3.2.0"
 langfuse = "^2.36.2"
 fastapi-simple-rate-limiter = "^0.0.4"
+argilla = "^1.29.0"
 
 [tool.poetry.group.dev]
 optional = true
