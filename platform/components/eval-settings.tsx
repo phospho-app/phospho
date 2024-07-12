@@ -20,7 +20,7 @@ import { z } from "zod";
 import { Spinner } from "./small-spinner";
 import { Textarea } from "./ui/textarea";
 
-export const EvalSettings = ({}: {}) => {
+export const EvalSettings = () => {
   const [evalOpen, setEvalOpen] = useState(false);
   const [clicked, setClicked] = useState(false);
   const { accessToken } = useUser();
