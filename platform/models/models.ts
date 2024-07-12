@@ -51,6 +51,7 @@ export interface OrgMetadata {
   plan?: string | null; // "hobby" or "pro"
   customer_id?: string | null; // Stripe customer id
   initialized?: boolean | null; // Whether the org has been initialized
+  argilla_workspace_id?: string | null; // Argilla workspace id
 }
 
 export interface Session {

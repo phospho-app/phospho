@@ -9,6 +9,7 @@ from argilla import FeedbackDataset
 import httpx
 import argilla as rg
 from app.utils import health_check
+from typing import List
 
 # Connect to argila
 rg.init(api_url=config.ARGILLA_URL, api_key=config.ARGILLA_API_KEY)
@@ -32,6 +33,18 @@ def check_health_argilla() -> None:
         logger.error(f"Argilla server is not reachable at url {config.ARGILLA_URL}")
 
 
+def get_workspace_datasets(workspace_id: str) -> List[FeedbackDataset]:
+    """
+    Get the datasets of a workspace
+    """
+    try:
+        datasets = rg.FeedbackDataset.list(workspace=workspace_id)
+        return datasets
+    except Exception as e:
+        logger.error(e)
+        return []
+
+
 def dataset_name_is_valid(dataset_name: str, workspace_id: str) -> bool:
     """
     For now, checks if the name does not already exist in the workspace
@@ -39,18 +52,19 @@ def dataset_name_is_valid(dataset_name: str, workspace_id: str) -> bool:
     if len(dataset_name) == 0:
         return False
 
+    # Get the dataset names of this workspace
     try:
-        dataset = rg.FeedbackDataset.from_argilla(
-            name=dataset_name, workspace=workspace_id
-        )
-        logger.debug(f"dataset: {dataset}")
-        # We found a dataset with the same name, so it is not valid
-        return False
+        dataset_list = rg.FeedbackDataset.list(
+            workspace=workspace_id
+        )  # This line will raise an exception if the workspace does not exist
+        if dataset_name in [dataset.name for dataset in dataset_list]:
+            return False
+
+        return True
 
     except Exception as e:
-        # TODO: check the exception type
-        logger.error(e)
-        return True
+        logger.warning(e)
+        return False
 
 
 async def generate_dataset_from_project(
@@ -112,6 +126,18 @@ async def generate_dataset_from_project(
                 required=False,
             ),
         ],
+        metadata_properties=[
+            rg.TermsMetadataProperty(
+                name="org_id",
+                title="Organization ID",
+                values=[project.org_id],
+            ),
+            rg.TermsMetadataProperty(
+                name="project_id",
+                title="Project ID",
+                values=[creation_request.project_id],
+            ),
+        ],
     )
 
     # Tasks to dataset records
@@ -124,6 +150,9 @@ async def generate_dataset_from_project(
         filters=creation_request.filters,
     )
 
+    if len(tasks) == 0:
+        raise ValueError("No tasks found for this project")
+
     logger.debug(f"Found {len(tasks)} tasks for project {creation_request.project_id}")
     logger.debug(tasks[0])
 
@@ -134,7 +163,8 @@ async def generate_dataset_from_project(
             fields={
                 "user_input": task.input,
                 "assistant_output": task.output,
-            }
+            },
+            metadata={"task_id": task.id},
         )
         records.append(record)
 
