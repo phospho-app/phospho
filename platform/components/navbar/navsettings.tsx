@@ -1,9 +1,9 @@
 "use client";
 
-import { SendDataAlertDialog } from "@/components/callouts/ImportData";
-import DownloadButton from "@/components/navbar/DownloadCsv";
-import { AlertDialog, AlertDialogTrigger } from "@/components/ui/AlertDialog";
-import { Button } from "@/components/ui/Button";
+import { SendDataAlertDialog } from "@/components/callouts/import-data";
+import DownloadButton from "@/components/navbar/download-csv";
+import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,12 +14,12 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/DropdownMenu";
+} from "@/components/ui/dropdown-menu";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/HoverCard";
+} from "@/components/ui/hover-card";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useLogoutFunction, useUser } from "@propelauth/nextjs/client";
 import {

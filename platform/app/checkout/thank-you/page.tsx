@@ -1,7 +1,7 @@
 "use client";
 
-import { CenteredSpinner } from "@/components/SmallSpinner";
-import { Button } from "@/components/ui/Button";
+import { CenteredSpinner } from "@/components/small-spinner";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,8 +9,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card";
-import { Checkbox } from "@/components/ui/Checkbox";
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -18,14 +18,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/Form";
+} from "@/components/ui/form";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/HoverCard";
-import { useToast } from "@/components/ui/UseToast";
-import { toast } from "@/components/ui/UseToast";
+} from "@/components/ui/hover-card";
+import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";

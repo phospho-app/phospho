@@ -1,14 +1,14 @@
 "use client";
 
-import TopRowKpis from "@/components/insights/TopRow";
-import { UsersTable } from "@/components/transcripts/users/UsersTable";
-import { Button } from "@/components/ui/Button";
+import TopRowKpis from "@/components/insights/top-row";
+import { UsersTable } from "@/components/transcripts/users/users-table";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card";
+} from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";

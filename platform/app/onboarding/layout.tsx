@@ -1,7 +1,7 @@
 "use client";
 
-import FetchOrgProject from "@/components/fetch-data/FetchOrgProject";
-import { Button } from "@/components/ui/Button";
+import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
+import { Button } from "@/components/ui/button";
 import { navigationStateStore } from "@/store/store";
 import { useLogoutFunction } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";

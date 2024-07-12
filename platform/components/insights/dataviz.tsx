@@ -1,10 +1,10 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { useToast } from "@/components/ui/UseToast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
-import { navigationStateStore } from "@/store/store";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
 import {

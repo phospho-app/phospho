@@ -1,23 +1,23 @@
 "use client";
 
-import { Spinner } from "@/components/SmallSpinner";
-import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/small-spinner";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card";
+} from "@/components/ui/card";
 import {
   Form,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/Form";
-import { Input } from "@/components/ui/Input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/ToggleGroup";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EventDefinition, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";

@@ -1,7 +1,7 @@
 "use client";
 
-import Event from "@/components/insights/events/EventAnalytics";
-import { Button } from "@/components/ui/Button";
+import Event from "@/components/insights/events/event-analytics";
+import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { CenteredSpinner } from "@/components/SmallSpinner";
-import { SelectOrgButton } from "@/components/settings/SelectOrgDropdown";
-import { Button } from "@/components/ui/Button";
+import { SelectOrgButton } from "@/components/settings/select-org-dropdown";
+import { CenteredSpinner } from "@/components/small-spinner";
+import { Button } from "@/components/ui/button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
 import { CircleUser, CopyIcon, ExternalLink, UserPlus } from "lucide-react";

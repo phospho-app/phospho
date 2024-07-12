@@ -1,4 +1,4 @@
-import { toast } from "@/components/ui/UseToast";
+import { toast } from "@/components/ui/use-toast";
 
 const authFetcher = async (
   url: string,

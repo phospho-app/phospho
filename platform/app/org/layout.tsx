@@ -1,8 +1,8 @@
 "use client";
 
-import { Sidebar } from "@/components/Sidebar";
-import FetchOrgProject from "@/components/fetch-data/FetchOrgProject";
-import Navbar from "@/components/navbar/NavBar";
+import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
+import Navbar from "@/components/navbar/nav-bar";
+import { Sidebar } from "@/components/sidebar";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import "@radix-ui/react-dropdown-menu";

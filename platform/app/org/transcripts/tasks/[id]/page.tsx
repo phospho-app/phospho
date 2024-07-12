@@ -1,7 +1,7 @@
 "use client";
 
-import TaskOverview from "@/components/transcripts/tasks/Task";
-import { Button } from "@/components/ui/Button";
+import TaskOverview from "@/components/transcripts/tasks/task";
+import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 

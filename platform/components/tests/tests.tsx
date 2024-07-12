@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
 import { Test } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
@@ -9,8 +9,8 @@ import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
 
-import { Card, CardDescription, CardHeader, CardTitle } from "../ui/Card";
-import { DataTable } from "./TestsTable";
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { DataTable } from "./tests-table";
 
 const Tests: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);

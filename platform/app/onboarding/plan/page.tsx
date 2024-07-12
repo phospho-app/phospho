@@ -1,8 +1,8 @@
 "use client";
 
-import FullPageLoader from "@/components/FullPageLoader";
-import Pricing from "@/components/settings/Pricing";
-import { Card, CardContent, CardHeader } from "@/components/ui/Card";
+import FullPageLoader from "@/components/full-page-loader";
+import Pricing from "@/components/settings/pricing";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
 import { redirect, useRouter } from "next/navigation";
 

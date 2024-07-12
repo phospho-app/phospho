@@ -1,11 +1,11 @@
 "use client";
 
-import CreateEvent from "@/components/insights/events/CreateEvent";
-import EventsList from "@/components/insights/events/EventList";
-import SuccessRateByEvent from "@/components/insights/events/SuccessRateByEvent";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/Alert";
-import { Button } from "@/components/ui/Button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/Sheet";
+import CreateEvent from "@/components/insights/events/create-event";
+import EventsList from "@/components/insights/events/event-list";
+import SuccessRateByEvent from "@/components/insights/events/success-rate-by-event";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";

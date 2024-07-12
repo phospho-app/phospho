@@ -1,6 +1,6 @@
 "use client";
 
-import { TasksTable } from "@/components/transcripts/tasks/TasksTable";
+import { TasksTable } from "@/components/transcripts/tasks/tasks-table";
 import { authFetcher } from "@/lib/fetcher";
 import { UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";

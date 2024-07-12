@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/DropdownMenu";
+} from "@/components/ui/dropdown-menu";
 import { ChevronDown, ChevronLeft } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";

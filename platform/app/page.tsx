@@ -1,7 +1,7 @@
 "use client";
 
-import FullPageLoader from "@/components/FullPageLoader";
-import FetchOrgProject from "@/components/fetch-data/FetchOrgProject";
+import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
+import FullPageLoader from "@/components/full-page-loader";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";

@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/HoverCard";
+} from "@/components/ui/hover-card";
 import { ABTest } from "@/models/models";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { ColumnDef } from "@tanstack/react-table";

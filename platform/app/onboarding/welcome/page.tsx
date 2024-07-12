@@ -1,17 +1,17 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-} from "@/components/ui/Carousel";
+} from "@/components/ui/carousel";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/HoverCard";
+} from "@/components/ui/hover-card";
 import { ArrowBigDown, Bot, ThumbsDown, ThumbsUp, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

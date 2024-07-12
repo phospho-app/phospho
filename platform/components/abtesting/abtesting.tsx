@@ -1,7 +1,7 @@
 "use client";
 
 // Shadcn ui
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/Table";
+} from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
 import { ABTest } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
@@ -27,8 +27,8 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
-import { TableNavigation } from "../TableNavigation";
-import { Card, CardDescription, CardHeader, CardTitle } from "../ui/Card";
+import { TableNavigation } from "../table-navigation";
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { getColumns } from "./abtesting-columns";
 
 interface DataTableProps<TData, TValue> {}

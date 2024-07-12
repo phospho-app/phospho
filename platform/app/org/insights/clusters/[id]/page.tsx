@@ -1,7 +1,7 @@
 "use client";
 
-import { TasksTable } from "@/components/transcripts/tasks/TasksTable";
-import { Button } from "@/components/ui/Button";
+import { TasksTable } from "@/components/transcripts/tasks/tasks-table";
+import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
 import { Cluster } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
