@@ -13,7 +13,7 @@ from app.db.qdrant import get_qdrant, models
 from app.services.pipelines import task_main_pipeline
 
 # Service
-from app.services.tasks import get_task_by_id
+from app.services.tasks import compute_task_position, get_task_by_id
 from app.utils import generate_timestamp
 from phospho.utils import filter_nonjsonable_keys, is_jsonable
 from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
@@ -246,8 +246,11 @@ def create_task_from_logevent(
     project_id: str,
     log_event: LogEvent,
     session_id: Optional[str] = None,
-    log_event_metadata: Dict[str, Any] = {},
+    log_event_metadata: Optional[Dict[str, Any]] = None,
 ) -> Task:
+    if log_event_metadata is None:
+        log_event_metadata = {}
+
     if log_event.project_id is None:
         log_event.project_id = project_id
     task = Task(
@@ -388,7 +391,6 @@ async def process_log_with_session_id(
     sessions_to_earliest_task: Dict[str, Task] = {}
 
     mongo_db = await get_mongo_db()
-
     sessions_ids_already_in_db = (
         await mongo_db["sessions"]
         .aggregate(
@@ -550,6 +552,12 @@ async def process_log_with_session_id(
                 logger.error(error_mesagge)
     else:
         logger.info("Logevent: no session to create")
+
+    # Compute the task position
+    await compute_task_position(
+        project_id=project_id,
+        session_ids=list(sessions_to_create.keys()) + sessions_ids_already_in_db,
+    )
 
     if trigger_pipeline:
         # Vectorize them

@@ -279,9 +279,9 @@ async def connect_and_init_db():
             mongo_db[MONGODB_NAME]["job_results"].create_index(
                 ["project_id", "job_metadata.id"], background=True
             )
-            mongo_db[MONGODB_NAME]["recipes"].create_index(
-                "id", unique=True, background=True
-            )
+            # mongo_db[MONGODB_NAME]["recipes"].create_index(
+            #     "id", unique=True, background=True
+            # )
 
         except Exception as e:
             logger.warning(f"Error while connecting to Mongo: {e}")
