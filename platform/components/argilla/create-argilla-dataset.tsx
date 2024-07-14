@@ -31,6 +31,10 @@ const CreateDataset = () => {
     const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
     const dataFilters = navigationStateStore((state) => state.dataFilters);
     const [isCreatingDataset, setIsCreatingDataset] = useState(false);
+    const [limit, setLimit] = useState(400); // Limit on the dataset size
+
+    // Hardcoded limit for the dataset size
+    const MAX_LIMIT = 2000;
 
     if (!project_id) {
         return <></>;
@@ -81,7 +85,7 @@ const CreateDataset = () => {
                 },
                 body: JSON.stringify({
                     project_id: project_id,
-                    limit: 100000, // TODO: remove this limit
+                    limit: limit,
                     workspace_id: orgMetadata?.argilla_workspace_id,
                     dataset_name: datasetName,
                     filters: dataFilters,
@@ -134,6 +138,22 @@ const CreateDataset = () => {
                 <div className="flex flex-wrap mt-4">
                     <DatePickerWithRange className="mr-2" />
                     <FilterComponent variant="tasks" />
+                </div>
+                <div className="mt-4">
+                    <label htmlFor="limit" className="block text-sm font-medium text-gray-700">
+                        Dataset size (max {MAX_LIMIT} rows)
+                    </label>
+                    <Input
+                        type="number"
+                        name="limit"
+                        id="limit"
+                        value={limit}
+                        onChange={(e) => setLimit(Math.min(Number(e.target.value), MAX_LIMIT))}
+                        className="mt-1 block w-full"
+                        placeholder="100"
+                        min={1}
+                        max={MAX_LIMIT}
+                    />
                 </div>
                 <div className="mt-4">
                     <label htmlFor="datasetName" className="block text-sm font-medium text-gray-700">
