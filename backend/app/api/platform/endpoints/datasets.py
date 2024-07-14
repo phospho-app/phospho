@@ -45,6 +45,12 @@ async def post_create_dataset(
     if workspace_id is request.workspace_id:
         raise HTTPException(status_code=400, detail="The workspace_id is not valid.")
 
+    MAX_LIMIT = 2000
+    if request.limit > MAX_LIMIT:
+        raise HTTPException(
+            status_code=400, detail=f"The limit must be less than {MAX_LIMIT}."
+        )
+
     # Authorization checks
     is_name_valid = dataset_name_is_valid(request.dataset_name, request.workspace_id)
 
