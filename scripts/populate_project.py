@@ -28,8 +28,8 @@ phospho.init(
     raise_error_on_fail_to_send=True,
 )
 
-user_inputs: List[str] = ["What is the price of the car?"]
-assistant_outputs: List[str] = ["The price of the car is $20,000"]
+user_inputs: List[str] = ["What is the price of the Suziki?"]
+assistant_outputs: List[str] = ["The price of the motorbike is $20,000"]
 
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -38,7 +38,7 @@ print(f"generating {NB_OF_QUESTIONS_TO_ASK} input output pairs...")
 
 
 def generate_user_question(user_inputs: List[str]) -> str:
-    system_prompt = "You are customer in a car and motorbikes dealership, talking to a salesperson. You cannot ask the following questions: "
+    system_prompt = "You are customer in a motorbikes dealership, talking to a salesperson. You cannot ask the following questions: "
     for user_input in user_inputs:
         system_prompt += f"{user_input}, "
 
@@ -70,7 +70,7 @@ for i in range(NB_OF_QUESTIONS_TO_ASK):
         messages=[
             {
                 "role": "system",
-                "content": "You are a salesperson in a car and motorbikes dealership. You are talking to a customer. Be concise.",
+                "content": "You are a salesperson in a motorbikes dealership. You are talking to a customer. Be concise.",
             },
             {
                 "role": "user",
