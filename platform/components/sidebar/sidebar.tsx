@@ -9,9 +9,9 @@ import {
   Boxes,
   BriefcaseBusiness,
   CircleUser,
-  Database,
   KeyRound,
   LayoutDashboard,
+  LayoutGrid,
   List,
   MessagesSquare,
   Settings,
@@ -167,10 +167,10 @@ export function Sidebar() {
           Tests
         </SideBarElement>
         <SideBarElement
-          href="/org/datasets"
-          icon={<Database size={16} className="mr-2" />}
+          href="/org/integrations"
+          icon={<LayoutGrid size={16} className="mr-2" />}
         >
-          Datasets
+          Integrations
         </SideBarElement>
         <WhiteSpaceSeparator />
         <SideBarElement

@@ -79,7 +79,7 @@ const CreateDataset = () => {
         <Sheet>
             <SheetTrigger>
                 <Button className="default">
-                    Export new dataset
+                    Export a new dataset
                     <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
             </SheetTrigger>
