@@ -12,6 +12,7 @@ from app.utils import health_check
 from typing import List
 import pandas as pd
 from app.db.models import Task
+from app.core import config
 
 # Connect to argila
 try:
@@ -91,8 +92,6 @@ async def generate_dataset_from_project(
     """
     Extract a dataset from a project and push it to Argilla
     """
-
-    MIN_NUMBER_OF_DATASET_SAMPLES = 10
 
     # Load the project configs, so we know the dataset fields and questions
     project = await get_project_by_id(creation_request.project_id)
@@ -181,7 +180,7 @@ async def generate_dataset_from_project(
         filters=creation_request.filters,
     )
 
-    if len(tasks) <= MIN_NUMBER_OF_DATASET_SAMPLES:
+    if len(tasks) <= config.MIN_NUMBER_OF_DATASET_SAMPLES:
         logger.warning(
             f"Not enough tasks found for project {creation_request.project_id} and filters {creation_request.filters} and limit {creation_request.limit}"
         )
@@ -232,7 +231,7 @@ async def generate_dataset_from_project(
             # Get the number of samples to keep
             n_samples = min(n_true, n_false)
 
-            if n_samples <= MIN_NUMBER_OF_DATASET_SAMPLES:
+            if n_samples <= config.MIN_NUMBER_OF_DATASET_SAMPLES:
                 logger.warning(f"Cannot balance label {label} with {n_samples} samples")
                 continue
 
