@@ -37,7 +37,13 @@ const ArgillaIntegrations: React.FC = () => {
     <Card>
       <CardHeader>
         <CardTitle>Argilla</CardTitle>
-        <CardDescription>View the documentation here.</CardDescription>
+        <CardDescription>
+          View the documentation{" "}
+          <Link href={"https://docs.phospho.ai/guides/export-dataset-argilla"}>
+            here
+          </Link>
+          .
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div>
