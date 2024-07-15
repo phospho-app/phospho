@@ -197,8 +197,8 @@ async def generate_dataset_from_project(
         df_records = []
         for task in tasks:
             df_record = {
-                "user_input": task.input,
-                "assistant_output": task.output,
+                "user_input": task.input if task.input is not None else "",
+                "assistant_output": task.output if task.output is not None else "",
                 "task_id": task.id,
             }
             for label in labels:
