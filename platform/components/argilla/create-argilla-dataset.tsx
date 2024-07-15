@@ -30,15 +30,48 @@ const CreateDataset = () => {
     const project_id = navigationStateStore((state) => state.project_id);
     const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
     const dataFilters = navigationStateStore((state) => state.dataFilters);
-    const [datasetName, setDatasetName] = useState("");
-
-    const hobby = orgMetadata?.plan === "hobby";
+    const [isCreatingDataset, setIsCreatingDataset] = useState(false);
 
     if (!project_id) {
         return <></>;
     }
 
+    // We create a function to generate a dataset name that is nice for humans
+    // TODO: add some easter eggs
+    const colors = [
+        'green', 'neon', 'crimson', 'azure', 'emerald', 'sapphire', 'amber', 'violet', 'coral',
+        'indigo', 'teal', 'scarlet', 'jade', 'slate', 'ivory'
+    ];
+
+    const fruits = [
+        'mango', 'kiwi', 'pineapple', 'dragonfruit', 'papaya', 'lychee', 'pomegranate',
+        'guava', 'fig', 'passionfruit', 'starfruit', 'coconut', 'jackfruit'
+    ];
+
+    function getRandomItem<T>(array: T[]): T {
+        return array[Math.floor(Math.random() * array.length)];
+    }
+
+    function getCompactDate() {
+        const date = new Date();
+        const year = date.getFullYear().toString().slice(-2);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}${month}${day}`;
+    }
+
+    function generateDatasetName() {
+        const color = getRandomItem(colors);
+        const fruit = getRandomItem(fruits);
+        const date = getCompactDate();
+        return `${color}-${fruit}-${date}`;
+    }
+
+    const [datasetName, setDatasetName] = useState(generateDatasetName());
+
     async function createNewDataset() {
+        // Disable the button while we are creating the dataset
+        setIsCreatingDataset(true);
         try {
             await fetch(`/api/datasets`, {
                 method: "POST",
@@ -60,18 +93,27 @@ const CreateDataset = () => {
                         title: "Dataset created",
                         description: "View it in your Argilla platform",
                     });
+                } else if (response.status == 400) {
+                    response.json().then((data) => {
+                        toast({
+                            title: "Could not create dataset",
+                            description: data.detail,
+                        });
+                    });
                 } else {
                     toast({
                         title: "Could not create dataset",
                         description: response.text(),
                     });
-                }
+                };
+                setIsCreatingDataset(false);
             });
         } catch (e) {
             toast({
                 title: "Error when creating dataset",
                 description: JSON.stringify(e),
             });
+            setIsCreatingDataset(false);
         }
     }
 
@@ -79,7 +121,7 @@ const CreateDataset = () => {
         <Sheet>
             <SheetTrigger>
                 <Button className="default">
-                    Export new dataset
+                    Export a new dataset
                     <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
             </SheetTrigger>
@@ -89,13 +131,6 @@ const CreateDataset = () => {
                     Export datasets from your project for labelling in your Argilla platform.
                 </SheetDescription>
                 <Separator className="my-8" />
-                <Alert>
-                    <CircleAlert className="h-4 w-4" />
-                    <AlertTitle>Heads up!</AlertTitle>
-                    <AlertDescription>
-                        Dataset names must be unique within your Argilla workspace.
-                    </AlertDescription>
-                </Alert>
                 <div className="flex flex-wrap mt-4">
                     <DatePickerWithRange className="mr-2" />
                     <FilterComponent variant="tasks" />
@@ -118,6 +153,7 @@ const CreateDataset = () => {
                     <Button
                         type="submit"
                         onClick={createNewDataset}
+                        disabled={isCreatingDataset}
                     >
                         Create dataset
                     </Button>
