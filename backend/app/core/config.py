@@ -83,6 +83,9 @@ FEW_SHOT_MIN_NUMBER_OF_EXAMPLES = 10  # Make it even
 ARGILLA_URL = os.getenv("ARGILLA_URL", None)
 ARGILLA_API_KEY = os.getenv("ARGILLA_API_KEY", None)  # API Key with role 'owner'
 
+MAX_NUMBER_OF_DATASET_SAMPLES = 2000
+MIN_NUMBER_OF_DATASET_SAMPLES = 10
+
 ###############################################
 ### Config below used only in phospho cloud ###
 ###############################################
