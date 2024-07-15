@@ -137,7 +137,7 @@ async def generate_dataset_from_project(
                 title="Event detection",
                 description="Select all the events that apply",
                 labels=labels,
-                required=True,
+                required=False,
                 visible_labels=max(
                     3, len(labels)
                 ),  # The min number of labels to display must be equal or greater than 3
