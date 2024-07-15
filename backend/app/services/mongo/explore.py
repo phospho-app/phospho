@@ -1986,6 +1986,13 @@ async def fetch_flattened_tasks(
             **return_columns,
             "event_name": "$events.event_name",
             "event_created_at": "$events.created_at",
+            "score_range_value": "$events.score_range.value",
+            "removal_reason": "$events.removal_reason",
+            "removed": "$events.removed",
+            "confirmed": "$events.confirmed",
+            "score_range_min": "$events.score_range.min",
+            "score_range_max": "$events.score_range.max",
+            "score_range_score_type": "$events.score_range.score_type",
         }
     if with_sessions:
         pipeline.extend(
