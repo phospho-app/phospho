@@ -137,7 +137,7 @@ async def generate_dataset_from_project(
                 title="Event detection",
                 description="Select all the events that apply",
                 labels=labels,
-                required=True,
+                required=False,
                 visible_labels=max(
                     3, len(labels)
                 ),  # The min number of labels to display must be equal or greater than 3
@@ -197,8 +197,8 @@ async def generate_dataset_from_project(
         df_records = []
         for task in tasks:
             df_record = {
-                "user_input": task.input,
-                "assistant_output": task.output,
+                "user_input": task.input if task.input is not None else "",
+                "assistant_output": task.output if task.output is not None else "",
                 "task_id": task.id,
             }
             for label in labels:
