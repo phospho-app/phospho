@@ -13,6 +13,7 @@ from app.services.mongo.datasets import dataset_name_is_valid
 from argilla import FeedbackDataset
 from loguru import logger
 from app.services.mongo.projects import get_project_by_id
+from app.core import config
 
 from app.security.authentification import propelauth
 
@@ -44,6 +45,12 @@ async def post_create_dataset(
 
     if workspace_id is request.workspace_id:
         raise HTTPException(status_code=400, detail="The workspace_id is not valid.")
+
+    if request.limit > config.MAX_NUMBER_OF_DATASET_SAMPLES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"The limit must be less than {config.MAX_NUMBER_OF_DATASET_SAMPLES}.",
+        )
 
     # Authorization checks
     is_name_valid = dataset_name_is_valid(request.dataset_name, request.workspace_id)

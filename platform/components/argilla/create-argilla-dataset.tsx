@@ -9,21 +9,16 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { toast } from "@/components/ui/use-toast";
-import UpgradeButton from "@/components/upgrade-button";
-import { authFetcher } from "@/lib/fetcher";
-import { Clustering, Project } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ChevronRight, Sparkles } from "lucide-react";
 import React from "react";
-import { useEffect, useState } from "react";
-import useSWR from "swr";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { CircleAlert } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox"
 
 const CreateDataset = () => {
     const { accessToken } = useUser();
@@ -31,6 +26,12 @@ const CreateDataset = () => {
     const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
     const dataFilters = navigationStateStore((state) => state.dataFilters);
     const [isCreatingDataset, setIsCreatingDataset] = useState(false);
+    // Params for the dataset creation
+    const [limit, setLimit] = useState(400); // Limit on the dataset size
+    const [useSmartSampling, setUseSmartSampling] = useState(false); // To know wich sampling_type send to the backend
+
+    // Hardcoded limit for the dataset size
+    const MAX_LIMIT = 2000;
 
     if (!project_id) {
         return <></>;
@@ -72,6 +73,7 @@ const CreateDataset = () => {
     async function createNewDataset() {
         // Disable the button while we are creating the dataset
         setIsCreatingDataset(true);
+        console.log(useSmartSampling)
         try {
             await fetch(`/api/datasets`, {
                 method: "POST",
@@ -81,11 +83,13 @@ const CreateDataset = () => {
                 },
                 body: JSON.stringify({
                     project_id: project_id,
-                    limit: 100000, // TODO: remove this limit
+                    limit: limit,
                     workspace_id: orgMetadata?.argilla_workspace_id,
                     dataset_name: datasetName,
                     filters: dataFilters,
-
+                    sampling_parameters: {
+                        sampling_type: useSmartSampling ? "balanced" : "naive"
+                    }
                 }),
             }).then((response) => {
                 if (response.status == 200) {
@@ -117,6 +121,10 @@ const CreateDataset = () => {
         }
     }
 
+    const handleSmartSamplingChange = (checked: boolean) => {
+        setUseSmartSampling(checked === true);
+    };
+
     return (
         <Sheet>
             <SheetTrigger>
@@ -134,6 +142,37 @@ const CreateDataset = () => {
                 <div className="flex flex-wrap mt-4">
                     <DatePickerWithRange className="mr-2" />
                     <FilterComponent variant="tasks" />
+                </div>
+                {/* <div className="items-top flex space-x-2 mt-4">
+                    <Checkbox
+                        id="terms1"
+                        checked={useSmartSampling}
+                        onCheckedChange={handleSmartSamplingChange}
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                        <label
+                            htmlFor="terms1"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Force balanced dataset
+                        </label>
+                    </div>
+                </div> */}
+                <div className="mt-4">
+                    <label htmlFor="limit" className="block text-sm font-medium text-gray-700">
+                        Dataset size (max {MAX_LIMIT} rows)
+                    </label>
+                    <Input
+                        type="number"
+                        name="limit"
+                        id="limit"
+                        value={limit}
+                        onChange={(e) => setLimit(Math.min(Number(e.target.value), MAX_LIMIT))}
+                        className="mt-1 block w-full"
+                        placeholder="100"
+                        min={1}
+                        max={MAX_LIMIT}
+                    />
                 </div>
                 <div className="mt-4">
                     <label htmlFor="datasetName" className="block text-sm font-medium text-gray-700">

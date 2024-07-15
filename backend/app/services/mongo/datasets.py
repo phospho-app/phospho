@@ -1,5 +1,8 @@
 from app.services.mongo.tasks import get_all_tasks
-from app.api.platform.models.datasets import DatasetCreationRequest
+from app.api.platform.models.datasets import (
+    DatasetCreationRequest,
+    DatasetSamplingParameters,
+)
 from app.services.mongo.projects import get_project_by_id
 from loguru import logger
 from app.core import config
@@ -7,6 +10,9 @@ from argilla import FeedbackDataset
 import argilla as rg
 from app.utils import health_check
 from typing import List
+import pandas as pd
+from app.db.models import Task
+from app.core import config
 
 # Connect to argila
 try:
@@ -67,12 +73,26 @@ def dataset_name_is_valid(dataset_name: str, workspace_id: str) -> bool:
         return False
 
 
+def sample_tasks(
+    tasks: List[Task], sampling_params: DatasetSamplingParameters
+) -> List[Task]:
+    if sampling_params.sampling_type == "naive":
+        return tasks
+
+    if sampling_params.sampling_type == "balanced":
+        logger.warning("Balanced sampling not implemented yet")
+        return tasks
+
+    return tasks
+
+
 async def generate_dataset_from_project(
     creation_request: DatasetCreationRequest,
 ) -> FeedbackDataset:
     """
     Extract a dataset from a project and push it to Argilla
     """
+
     # Load the project configs, so we know the dataset fields and questions
     project = await get_project_by_id(creation_request.project_id)
 
@@ -84,6 +104,10 @@ async def generate_dataset_from_project(
     # By default project.settings.events is {}
     labels = {}
     for key, value in project.settings.events.items():
+        # We do not use session level events for now
+        if value.detection_engine == "session":
+            logger.debug(f"Skipping session event {key} as it is session level")
+            continue
         labels[key] = key
 
     if len(labels.keys()) < 2:
@@ -156,18 +180,82 @@ async def generate_dataset_from_project(
         filters=creation_request.filters,
     )
 
-    if len(tasks) <= 2:
+    if len(tasks) <= config.MIN_NUMBER_OF_DATASET_SAMPLES:
         logger.warning(
             f"Not enough tasks found for project {creation_request.project_id} and filters {creation_request.filters} and limit {creation_request.limit}"
         )
         return None
 
     logger.debug(f"Found {len(tasks)} tasks for project {creation_request.project_id}")
-    logger.debug(tasks[0])
+    logger.debug(tasks[0].events)
+
+    # Filter the sampling of tasks based on the dataset creation request
+    if creation_request.sampling_parameters.sampling_type == "naive":
+        sampled_tasks = tasks
+    elif creation_request.sampling_parameters.sampling_type == "balanced":
+        # Build the pandas dataframe
+        df_records = []
+        for task in tasks:
+            df_record = {
+                "user_input": task.input,
+                "assistant_output": task.output,
+                "task_id": task.id,
+            }
+            for label in labels:
+                df_record[label] = False
+
+            for event in task.events:
+                if event.event_definition.detection_scope == "session":
+                    continue
+                df_record[event.event_definition.event_name] = True
+
+            df_records.append(df_record)
+
+        df = pd.DataFrame(df_records)
+
+        labels_to_balance = list(labels.keys()).copy()
+
+        while len(labels_to_balance) > 0:
+            # Get the label with the least number of True values
+            label = min(labels_to_balance, key=lambda x: df[x].sum())
+            labels_to_balance.remove(label)
+
+            logger.debug(f"Balancing label {label}")
+
+            # Get the number of True values
+            n_true = df[label].sum()
+
+            # Get the number of False values
+            n_false = len(df) - n_true
+
+            # Get the number of samples to keep
+            n_samples = min(n_true, n_false)
+
+            if n_samples <= config.MIN_NUMBER_OF_DATASET_SAMPLES:
+                logger.warning(f"Cannot balance label {label} with {n_samples} samples")
+                continue
+
+            logger.debug(f"Balancing label {label} with {n_samples} samples")
+
+            # Balance the dataset
+            df = pd.concat(
+                [
+                    df[df[label] == True].sample(n=n_samples),
+                    df[df[label] == False].sample(n=n_samples),
+                ]
+            )
+
+        sampled_tasks = [task for task in tasks if task.id in df["task_id"].tolist()]
+        logger.info(
+            f"Balanced dataset has {len(sampled_tasks)} tasks (compared to {len(tasks)} before balancing"
+        )
+
+    else:
+        raise ValueError("Unknown sampling type. Must be naive or balanced.")
 
     # Make them into Argilla records
     records = []
-    for task in tasks:
+    for task in sampled_tasks:
         record = rg.FeedbackRecord(
             fields={
                 "user_input": task.input,
