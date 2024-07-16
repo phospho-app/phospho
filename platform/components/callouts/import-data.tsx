@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,8 +36,6 @@ import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
-import { Toggle } from "@radix-ui/react-toggle";
-import { set } from "date-fns";
 import {
   BarChartBig,
   CopyIcon,
@@ -48,10 +46,10 @@ import {
   Plus,
   Telescope,
   TriangleAlert,
+  Unplug,
   Upload,
   X,
 } from "lucide-react";
-import { Unplug } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";

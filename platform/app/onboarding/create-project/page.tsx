@@ -2,7 +2,7 @@
 
 import Authenticate from "@/components/authenticate";
 import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
-import { Icons, Spinner } from "@/components/small-spinner";
+import { Spinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
@@ -198,7 +198,7 @@ export default function Page() {
                   }
                 >
                   {redirecting && <Spinner className="mr-1" />}
-                  {!creatingProject && <>Create project</>}
+                  Create project
                 </Button>
               </div>
             </form>

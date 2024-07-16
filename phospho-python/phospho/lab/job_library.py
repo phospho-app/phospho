@@ -20,10 +20,8 @@ try:
 except ImportError:
     pass
 
-from phospho import config
-
 from .language_models import get_async_client, get_provider_and_model, get_sync_client
-from .models import JobResult, Message, ResultType, DetectionScope
+from phospho.models import JobResult, Message, ResultType, DetectionScope
 
 logger = logging.getLogger(__name__)
 
@@ -149,11 +147,13 @@ async def event_detection(
 ) -> JobResult:
     """
     Detects if an event is present in a message.
+
     - We can use message metadatas to get examples of successful and unsuccessful interactions
     """
     # Identifier of the source of the evaluation, with the version of the model if phospho
     EVALUATION_SOURCE = "phospho-6"
     MAX_TOKENS = 128_000
+
     # Check if some Env variables override the default model and LLM provider
     provider, model_name = get_provider_and_model(model)
     async_openai_client = get_async_client(provider)
@@ -162,7 +162,15 @@ async def event_detection(
         score_range_settings = ScoreRangeSettings()
     if isinstance(score_range_settings, dict):
         score_range_settings = ScoreRangeSettings.model_validate(score_range_settings)
+    if (
+        score_range_settings.score_type == "category"
+        and not score_range_settings.categories
+    ):
+        raise ValueError(
+            f"Categories must be provided for category score type. Got: {score_range_settings.model_dump()}"
+        )
 
+    # We fetch examples for few shot
     successful_examples = message.metadata.get("successful_examples", [])
     unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
 
@@ -183,40 +191,48 @@ async def event_detection(
             unsuccessful_example = example
             break
 
+    system_prompt = """"""
+    prompt = """"""
     # Build the prompt
     if score_range_settings.score_type == "confidence":
-        prompt = f"""You are an impartial judge reading a conversation between a user and an assistant, 
-and you want to say if the event '{event_name}' happened during the latest interaction.
-This conversation is between a User and an Assistant.
+        system_prompt = f"""You are an impartial judge reading a conversation between a user and an assistant.
+You must determine if the event '{event_name}' happened during the latest interaction.
 """
     elif score_range_settings.score_type == "range":
-        prompt = f"""You are an impartial judge reading a conversation between a user and an assistant,
-and during the latest interaction you want to evaluate the event '{event_name}'.
-This conversation is between a User and an Assistant.
+        system_prompt = f"""You are an impartial judge reading a conversation between a user and an assistant.
+You must evaluate the event '{event_name}'.
+"""
+    elif score_range_settings.score_type == "category":
+        system_prompt = f"""You are an impartial judge reading a conversation between a user and an assistant.
+You must categorize the event '{event_name}'.
 """
 
     if event_description is not None and len(event_description) > 0:
-        prompt += f"The description of the event '{event_name}' is:\n<event_description>{event_description}</event_description>\n"
+        system_prompt += f"""'{event_name}' can be describe like so:
+'{event_description}'
+"""
     else:
-        prompt += (
-            f"You don't have any description of '{event_name}'. Take your best guess.\n"
-        )
+        system_prompt += f"""
+You don't have a description for '{event_name}'. Base your evaluation on the context of the conversation and the name of the event.
+"""
 
     if successful_example is not None:
-        prompt += f"""
-Here is an example of a successful interaction where the event '{event_name}' happened:
-<example>
-User: {successful_example['input']}
-Assistant: {successful_example['output']}
-</example>
+        system_prompt += f"""
+Here is an example of an interaction where the event '{event_name}' happened:
+[EVENT DETECTED EXAMPLE START]
+{successful_example['input']} -> {successful_example['output']}
+[EXAMPLE END]
 """
     if unsuccessful_example is not None:
-        prompt += f"""
-Here is an example of an unsuccessful interaction where the event '{event_name}' did not happen:
-<example>
-User: {unsuccessful_example['input']}
-Assistant: {unsuccessful_example['output']}
-</example>
+        system_prompt += f"""
+Here is an example of an interaction where the event '{event_name}' did not happen:
+[EVENT NOT DETECTED EXAMPLE START]
+{unsuccessful_example['input']} -> {unsuccessful_example['output']}
+[EXAMPLE END]
+"""
+
+    system_prompt += """
+I will now give you an interaction to evaluate.
 """
 
     if len(message.previous_messages) > 1 and "task" in event_scope:
@@ -226,18 +242,18 @@ Assistant: {unsuccessful_example['output']}
             get_number_of_tokens(prompt) + 100,
             how="right",
         )
-        prompt += f"""
-To help you label the interaction, here are the previous messages leading to the interaction:
-<context>
+        system_prompt += f"""
+Here is the context of the conversation:
+[CONTEXT START]
 {truncated_context}
-</context>
+[CONTEXT END]
 """
 
     if event_scope == "task":
-        prompt += f"""Now, the interaction you have to label is the following:
-<interaction>
+        prompt += f"""Label the following interaction with the event '{event_name}':
+[INTERACTION TO LABEL START]
 {message.latest_interaction()}
-</interaction>
+[INTERACTION END]
 """
     elif event_scope == "task_input_only":
         message_list = message.as_list()
@@ -257,10 +273,10 @@ To help you label the interaction, here are the previous messages leading to the
         )
 
         prompt += f"""
-Now, you have to label the following interaction, which only contains the user message:
-<interaction>
+Label the following user message with the event '{event_name}':
+[INTERACTION TO LABEL START]
 User: {truncated_context}
-</interaction>
+[INTERACTION END]
 """
     elif event_scope == "task_output_only":
         message_list = message.as_list()
@@ -279,10 +295,10 @@ User: {truncated_context}
                 logs=["No assistant message in the interaction"],
             )
         prompt += f"""
-Now, you have to label the following interaction, which only contains the assistant message:
-<interaction>
+Label the following assistant message with the event '{event_name}':
+[INTERACTION TO LABEL START]
 Assistant: {truncated_context}
-</interaction>
+[INTERACTION END]
 """
     elif event_scope == "session":
         truncated_context = shorten_text(
@@ -292,10 +308,10 @@ Assistant: {truncated_context}
             how="right",
         )
         prompt += f"""
-Now, you have the full conversation to label. The event '{event_name}' can happen at any point during the conversation.
-<interaction>
+Label the following interaction with the event '{event_name}':
+[INTERACTION TO LABEL START]
 {truncated_context}
-</interaction>
+[INTERACTION END]
 """
     else:
         raise ValueError(
@@ -304,10 +320,28 @@ Now, you have the full conversation to label. The event '{event_name}' can happe
 
     if score_range_settings.score_type == "confidence":
         prompt += f"""
-Did the event '{event_name}' happen during the interaction? Respond with only one word: Yes or No."""
+Did the event '{event_name}' happen during the interaction? 
+Respond with only one word: Yes or No."""
     elif score_range_settings.score_type == "range":
         prompt += f"""
-How would you assess the '{event_name}' during the interaction? Respond with a whole number between {score_range_settings.min} and {score_range_settings.max}.
+How would you assess the '{event_name}' during the interaction? 
+Respond with a whole number between {score_range_settings.min} and {score_range_settings.max}.
+"""
+    elif (
+        score_range_settings.score_type == "category"
+        and score_range_settings.categories
+    ):
+        formatted_categories = "\n".join(
+            [
+                f"{i+1}. {category}"
+                for i, category in enumerate(score_range_settings.categories)
+            ]
+        )
+        prompt += f"""
+How would you categorize the interaction according to the event '{event_name}'? 
+Respond with a number between 1 and {len(score_range_settings.categories)}, where each number corresponds to a category:
+{formatted_categories}
+If the event '{event_name}' is not present in the interaction or you can't categorize it, respond with 0.
 """
 
     # Call the API
@@ -318,7 +352,7 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant and an expert evaluator. Follow the instructions.",
+                    "content": system_prompt,
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -365,9 +399,23 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
             if "yes" in stripped_llm_response:
                 result_type = ResultType.bool
                 detected_event = True
+                metadata["score_range"] = ScoreRange(
+                    score_type="confidence",
+                    max=1,
+                    min=0,
+                    value=1,
+                    options_confidence={"yes": 1},
+                )
             elif "no" in stripped_llm_response:
                 result_type = ResultType.bool
                 detected_event = False
+                metadata["score_range"] = ScoreRange(
+                    score_type="confidence",
+                    max=1,
+                    min=0,
+                    value=0,
+                    options_confidence={"no": 1},
+                )
             else:
                 result_type = ResultType.error
                 detected_event = None
@@ -381,7 +429,75 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
                     max=score_range_settings.max,
                     min=score_range_settings.min,
                     value=score,
+                    options_confidence={score: 1},
                 )
+        elif (
+            score_range_settings.score_type == "category"
+            and score_range_settings.categories
+        ):
+            # Check if the response is a number
+            if stripped_llm_response.isdigit():
+                llm_response_as_int = int(stripped_llm_response)
+                if llm_response_as_int >= 1 and llm_response_as_int <= len(
+                    score_range_settings.categories
+                ):
+                    result_type = ResultType.literal
+                    detected_event = True
+                    score = llm_response_as_int
+                    label = score_range_settings.categories[score - 1]
+                    metadata["score_range"] = ScoreRange(
+                        score_type="category",
+                        value=score,
+                        min=1,
+                        max=len(score_range_settings.categories),
+                        label=label,
+                        options_confidence={label: 1},
+                    )
+                elif llm_response_as_int == 0:
+                    result_type = ResultType.literal
+                    detected_event = False
+                    metadata["score_range"] = ScoreRange(
+                        score_type="category",
+                        value=0,
+                        min=0,
+                        max=len(score_range_settings.categories),
+                        label="None",
+                        options_confidence={"None": 1},
+                    )
+                else:
+                    result_type = ResultType.error
+                    detected_event = None
+            # Check if the response is directly the label
+            else:
+                if stripped_llm_response in score_range_settings.categories:
+                    result_type = ResultType.literal
+                    detected_event = True
+                    score = (
+                        score_range_settings.categories.index(stripped_llm_response) + 1
+                    )
+                    metadata["score_range"] = ScoreRange(
+                        score_type="category",
+                        value=score,
+                        min=1,
+                        max=len(score_range_settings.categories),
+                        label=stripped_llm_response,
+                        options_confidence={stripped_llm_response: 1},
+                    )
+                elif stripped_llm_response == "none":
+                    result_type = ResultType.literal
+                    detected_event = False
+                    metadata["score_range"] = ScoreRange(
+                        score_type="category",
+                        value=0,
+                        min=0,
+                        max=len(score_range_settings.categories),
+                        label="None",
+                        options_confidence={"None": 1},
+                    )
+                else:
+                    result_type = ResultType.error
+                    detected_event = None
+
         return JobResult(
             result_type=result_type, value=detected_event, metadata=metadata
         )
@@ -399,6 +515,7 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
             if stripped_token == "yes":
                 logprob_score["yes"] += math.exp(logprob.logprob)
     elif score_range_settings.score_type == "range":
+        # Looking for tokens corresponding to the range (numbers)
         for logprob in first_logprobs:
             stripped_token = logprob.token.lower().strip()
             if stripped_token.isdigit():
@@ -409,10 +526,22 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
                     # Only keep the tokens in the range
                     # Note: Only works with 1-5 range!
                     logprob_score[stripped_token] += math.exp(logprob.logprob)
+    elif (
+        score_range_settings.score_type == "category"
+        and score_range_settings.categories
+    ):
+        # Looking for tokens corresponding to the range of categories (numbers)
+        for logprob in first_logprobs:
+            stripped_token = logprob.token.lower().strip()
+            if stripped_token.isdigit():
+                token_as_int = int(stripped_token)
+                if token_as_int >= 0 and token_as_int <= len(
+                    score_range_settings.categories
+                ):
+                    # Only keep the tokens in the range
+                    logprob_score[stripped_token] += math.exp(logprob.logprob)
     else:
-        raise ValueError(
-            f"Unknown score_type : {score_range_settings.score_type}. Valid values are: ['confidence', 'range']"
-        )
+        raise ValueError(f"Unknown score_type : {score_range_settings.score_type}.")
     # Normalize the scores so that they sum to 1
     total_score = sum(logprob_score.values())
     if total_score > 0:
@@ -428,14 +557,39 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
         else:
             detected_event = False
             score = logprob_score["no"]
+        label = "yes" if detected_event else "no"
+        options_confidence = logprob_score
     elif score_range_settings.score_type == "range":
         # In range mode, the event is always marked as detected
         detected_event = True
         # The score is the weighted average of the token * logprob
-        logger.debug(f"logprob_score : {logprob_score}")
         score = sum(
             float(key) * logprob_score[key] for key in logprob_score if key.isdigit()
         )
+        label = str(int(score))
+        options_confidence = logprob_score
+    elif (
+        score_range_settings.score_type == "category"
+        and score_range_settings.categories
+    ):
+        # The score is the token with the highest logprob
+        token_with_max_score = max(logprob_score, key=lambda x: logprob_score.get(x, 0))
+        score = int(token_with_max_score)
+        if score == 0:
+            # No event detected
+            detected_event = False
+            label = "None"
+        else:
+            # Event detected
+            detected_event = True
+            label = score_range_settings.categories[score - 1]
+        options_confidence = {
+            score_range_settings.categories[int(token) - 1]: logprob
+            for token, logprob in logprob_score.items()
+            if token.isdigit()
+            and int(token) <= len(score_range_settings.categories)
+            and int(token) >= 0
+        }
 
     metadata["logprob_score"] = logprob_score
     metadata["all_logprobs"] = [logprob.model_dump() for logprob in first_logprobs]
@@ -444,6 +598,8 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
         max=score_range_settings.max,
         min=score_range_settings.min,
         value=score,
+        label=label,
+        options_confidence=options_confidence,
     )
 
     # Return the result
@@ -452,20 +608,17 @@ How would you assess the '{event_name}' during the interaction? Respond with a w
 
 async def evaluate_task(
     message: Message,
-    few_shot_min_number_of_examples: int = 5,
-    few_shot_max_number_of_examples: int = 10,
     model: str = "openai:gpt-4o",
     **kwargs,
 ) -> JobResult:
     """
     Evaluate a task:
-    - If there are not enough examples, use the zero shot expensive classifier
-    - If there are enough examples, use the cheaper few shot classifier
+    - We use llm as a judge with few shot examples and the possibility to provide a custom prompt to the evalutor
 
     Message.metadata = {
         "successful_examples": [{input, output, flag}],
         "unsuccessful_examples": [{input, output, flag}],
-        "system_prompt": str,
+        "evaluation_prompt": str,
     }
     """
     from phospho.utils import fits_in_context_window
@@ -476,36 +629,32 @@ async def evaluate_task(
 
     successful_examples = message.metadata.get("successful_examples", [])
     unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
-    system_prompt = message.metadata.get("system_prompt", None)
+    evaluation_prompt = message.metadata.get("evaluation_prompt", None)
 
     assert isinstance(successful_examples, list), "successful_examples is not a list"
     assert isinstance(
         unsuccessful_examples, list
     ), "unsuccessful_examples is not a list"
+    assert isinstance(evaluation_prompt, str) or evaluation_prompt is None
 
-    # 32k is the max input length for gpt-4-1106-preview, we remove 1k to be safe
+    # 128k is the max input length for gpt-4o, we remove 1k to be safe
     # TODO : Make this adaptative to model name
     max_tokens_input_lenght = 128 * 1000 - 1000
-    merged_examples = []
-    min_number_of_examples = min(len(successful_examples), len(unsuccessful_examples))
 
-    for i in range(0, min_number_of_examples):
-        merged_examples.append(successful_examples[i])
-        merged_examples.append(unsuccessful_examples[i])
-
-    # Shuffle the examples
+    merged_examples = successful_examples + unsuccessful_examples
     random.shuffle(merged_examples)
 
     # Additional metadata
     api_call_time: Optional[float] = None
     llm_call: Optional[dict] = None
 
-    async def zero_shot_evaluation(
+    async def evaluation(
+        system_prompt: str,
         prompt: str,
         model_name: str = os.getenv("MODEL_ID", "gpt-4o"),
     ) -> Optional[Literal["success", "failure"]]:
         """
-        Call the LLM API to get a zero shot classification of a task
+        Call the LLM API to get a classification of a task
         as a success or a failure.
         """
         nonlocal api_call_time
@@ -516,13 +665,14 @@ async def evaluate_task(
             # TODO : Fall back to a bigger model
             return None
 
-        logger.debug(f"Running zero shot evaluation with model {model_name}")
-
         start_time = time.time()
         response = await async_openai_client.chat.completions.create(
             model=model_name,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                },
                 {"role": "user", "content": prompt},
             ],
             temperature=0,
@@ -537,7 +687,7 @@ async def evaluate_task(
             "prompt": prompt,
             "llm_output": llm_response,
             "api_call_time": api_call_time,
-            "evaluation_source": "phospho-4",
+            "evaluation_source": "phospho-6",
         }
 
         # Parse the llm response to avoid basic errors
@@ -559,148 +709,56 @@ async def evaluate_task(
             )
             return None
 
-    async def few_shot_evaluation(
+    def build_prompt(
         message: Message,
-        successful_examples: list,  # {input, output, flag}
-        unsuccessful_examples: list,  # {input, output}
-    ) -> Optional[Literal["success", "failure"]]:
-        """
-        Few shot classification of a task using Cohere classification API
-        We balance the number of examples for each category (success, failure).
-        We use the most recent examples for the two categories
-        (the ones with the smaller index in the list)
-        """
-        import cohere
-        from cohere.responses.classify import Example
-
-        co = cohere.AsyncClient(config.COHERE_API_KEY, timeout=40)
-
-        half_few_shot_max = few_shot_max_number_of_examples // 2
-        # Truncate the examples to the max number of examples
-        if len(successful_examples) > half_few_shot_max:
-            successful_examples = successful_examples[:half_few_shot_max]
-            logger.debug(
-                f"truncated successful examples to {half_few_shot_max} examples"
-            )
-
-        if len(unsuccessful_examples) > half_few_shot_max:
-            unsuccessful_examples = unsuccessful_examples[:half_few_shot_max]
-            logger.debug(
-                f"truncated unsuccessful examples to {half_few_shot_max} examples"
-            )
-
-        # Format the examples
-        examples = []
-        for example in successful_examples:
-            text_prompt = f"User: {example['input']}\nAssistant: {example['output']}"
-            examples.append(Example(text_prompt, "success"))
-        for example in unsuccessful_examples:
-            text_prompt = f"User: {example['input']}\nAssistant: {example['output']}"
-            examples.append(Example(text_prompt, "failure"))
-
-        # Shuffle the examples
-        random.shuffle(examples)
-
-        if len(examples) > few_shot_max_number_of_examples:
-            examples = examples[:few_shot_max_number_of_examples]
-            logger.debug(
-                f"Truncated examples to {few_shot_max_number_of_examples} examples"
-            )
-
-        # Build the prompt to classify
-        text_prompt_to_classify = message.transcript(with_role=True)
-        inputs = [text_prompt_to_classify]  # TODO : batching later?
-
-        try:
-            response = await co.classify(
-                model="large",
-                inputs=inputs,
-                examples=examples,
-            )
-        except Exception as e:
-            await co.close()  # Close the connection before raising the exception
-            raise e
-
-        # Close the connection
-        await co.close()
-        flag = response.classifications[0].predictions[0]
-        confidence = response.classifications[0].confidences[0]
-        # TODO : add check on confidence ?
-        logger.debug(f"few_shot_eval flag : {flag}, confidence : {confidence}")
-        if flag in ["success", "failure"]:
-            return flag
-        else:
-            raise Exception("The flag is not success or failure")
-
-    def build_zero_shot_prompt(
-        message: Message, system_prompt: Optional[str] = None
+        evaluation_prompt: Optional[str] = None,
+        merged_examples: List[dict] = [],
     ) -> str:
         """
-        Builds a zero shot prompt for the evaluation of a task.
+        Builds a prompt for the evaluation of a task,
+        makes use of successful and unsuccessful examples as well as a custom evaluation prompt.
+
+        We divide the prompt from the system prompt, this works much better than the previous prompt only approach.
         """
-        # Zero shot mode
-        logger.debug("Running eval in zero shot mode")
+        prompt = """Here is the interaction between the assistant and the user that you have to evaluate:
+[START INTERACTION]
+"""
 
-        # Build zero shot prompt
-        prompt = """You are an impartial judge evaluating an interaction between a user and an assistant. \
-        Your goal is to say if the assistant response to the user was good or bad."""
-
-        if system_prompt:
-            prompt += f"""An assistant behaviour is guided by its system prompt. A good assistant response follows \
-                its system prompt. A bad assistant response disregards its system prompt. The system prompt of the assistant \
-                is the following:
-                [START SYSTEM PROMPT]
-                {system_prompt}
-                [END SYSTEM PROMPT]
-            """
-        else:
-            # Assume a generic system prompt
-            # TODO : Use the project settings and events suggestions to infer a system prompt
-            prompt += """A good assistant is helpful, concise, precise, entertaining, sharp, to the point, direct, agreeable.
-            A bad assistant is pointless, verbose, boring, off-topic, inaccurate, unhelpful, misleading, confusing.
-            """
-
-        # If there is a previous task, add it to the prompt
         if len(message.previous_messages) > 0:
-            prompt += f"""A good assistant remembers previous interactions and gives in context answers.
-            A bad assistant ignores the context of the conversation and responds out of touch. 
-            The previous interaction between the user and the assistant was the following:
-            [START PREVIOUS INTERACTION]
-            {message.previous_messages_transcript(with_role=True)}
-            [END PREVIOUS INTERACTION]
-            """
+            prompt += f"""{message.previous_messages_transcript(with_role=True)}"""
 
-        prompt += f"""Given the best of your knowledge, evaluate the following interaction between the user and the assistant:
-        [START INTERACTION]
-        {message.transcript(with_role=True)}
-        [END INTERACTION]
+        prompt += f"""
+{message.transcript(with_role=True)}
+[END INTERACTION]
 
-        Respond with only one word: success if the assistant response was good, failure if the assistant response was bad.
-        """
-        return prompt
+Respond with only one word: success or failure based on these guidelines:
+"""
+        system_prompt = """You are an impartial judge evaluating an interaction between a user and an assistant. You follow the given evaluation guidelines."""
+        if evaluation_prompt:
+            system_prompt += f"""
+[EVALUATION GUIDELINES START]
+{evaluation_prompt}
+[EVALUATION GUIDELINES END]
+"""
+        else:
+            system_prompt += """
+[EVALUATION GUIDELINES START]
+Give a positive answer if the assistant response was good, to the point, and relevant, give a negative answer if the assistant response was bad, inapropriate or irrelevent.
+[EVALUATION GUIDELINES END]
+"""
+        if len(merged_examples) > 1:
+            system_prompt += """Here are some examples of interactions:
+[EXAMPLES START]"""
+            for example in merged_examples:
+                system_prompt += f"""
+{example['input']} -> {example['output']} -> {example['flag']}"""
 
-    if len(merged_examples) < few_shot_min_number_of_examples:
-        # Zero shot mode
-        prompt = build_zero_shot_prompt(message, system_prompt)
-        flag = await zero_shot_evaluation(prompt, model_name=model_name)
-    else:
-        # Few shot mode
-        logger.debug(
-            f"Running eval in few shot mode with Cohere classifier and {len(merged_examples)} examples"
-        )
-        prompt = None
-        try:
-            flag = await few_shot_evaluation(
-                message=message,
-                successful_examples=successful_examples,
-                unsuccessful_examples=unsuccessful_examples,
-            )
-        except Exception as e:
-            logger.error(
-                f"Error in few shot evaluation (falling back to zero shot mode) : {e}"
-            )
-            prompt = build_zero_shot_prompt(message, system_prompt)
-            flag = await zero_shot_evaluation(prompt, model_name=model_name)
+            system_prompt += """[EXAMPLES END]"""
+
+        return system_prompt, prompt
+
+    system_prompt, prompt = build_prompt(message, evaluation_prompt, merged_examples)
+    flag = await evaluation(system_prompt, prompt, model_name=model_name)
 
     return JobResult(
         result_type=ResultType.literal,

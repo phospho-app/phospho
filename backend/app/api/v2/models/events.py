@@ -1,7 +1,7 @@
 from typing import List, Optional, Literal
 from pydantic import BaseModel
 from app.db.models import Event
-from phospho.lab.models import Message
+from phospho.models import Message
 from .log import MinimalLogEvent
 
 

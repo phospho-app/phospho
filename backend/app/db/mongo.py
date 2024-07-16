@@ -48,7 +48,6 @@ async def connect_and_init_db():
             mongo_db[MONGODB_NAME]["sessions"].create_index(
                 "project_id", background=True
             )
-            mongo_db[MONGODB_NAME]["sessions"].create_index("org_id", background=True)
             mongo_db[MONGODB_NAME]["sessions"].create_index(
                 [("created_at", pymongo.DESCENDING)], background=True
             )
@@ -62,7 +61,6 @@ async def connect_and_init_db():
             )
             mongo_db[MONGODB_NAME]["tasks"].create_index("org_id", background=True)
             mongo_db[MONGODB_NAME]["tasks"].create_index("session_id", background=True)
-            mongo_db[MONGODB_NAME]["tasks"].create_index("project_id", background=True)
             mongo_db[MONGODB_NAME]["tasks"].create_index("test_id", background=True)
             mongo_db[MONGODB_NAME]["tasks"].create_index(
                 [("created_at", pymongo.DESCENDING)], background=True
@@ -101,7 +99,6 @@ async def connect_and_init_db():
             )
             mongo_db[MONGODB_NAME]["evals"].create_index("task_id", background=True)
             mongo_db[MONGODB_NAME]["evals"].create_index("session_id", background=True)
-            mongo_db[MONGODB_NAME]["evals"].create_index("project_id", background=True)
             mongo_db[MONGODB_NAME]["evals"].create_index("test_id", background=True)
             mongo_db[MONGODB_NAME]["evals"].create_index(
                 ["project_id", "source", "value"], background=True
@@ -224,7 +221,43 @@ async def connect_and_init_db():
                                         "$filter": {
                                             "input": "$events",
                                             "as": "event",
-                                            "cond": {"$ne": ["$$event.removed", True]},
+                                            "cond": {
+                                                "$and": [
+                                                    {
+                                                        "$ne": [
+                                                            "$$event.removed",
+                                                            True,
+                                                        ],
+                                                    },
+                                                    {
+                                                        "$or": [
+                                                            # The field is present in the event definition and the task
+                                                            {
+                                                                "$and": [
+                                                                    {
+                                                                        "$eq": [
+                                                                            "$$event.event_definition.is_last_task",
+                                                                            True,
+                                                                        ]
+                                                                    },
+                                                                    {
+                                                                        "$eq": [
+                                                                            "$is_last_task",
+                                                                            True,
+                                                                        ]
+                                                                    },
+                                                                ]
+                                                            },
+                                                            # the field is not present in the event definition
+                                                            {
+                                                                "$not": [
+                                                                    "$$event.event_definition.is_last_task",
+                                                                ]
+                                                            },
+                                                        ],
+                                                    },
+                                                ]
+                                            },
                                         }
                                     }
                                 }
@@ -267,9 +300,6 @@ async def connect_and_init_db():
                 "id", unique=True, background=True
             )
             mongo_db[MONGODB_NAME]["event_definitions"].create_index(
-                "project_id", background=True
-            )
-            mongo_db[MONGODB_NAME]["event_definitions"].create_index(
                 ["project_id", "id"], background=True
             )
             mongo_db[MONGODB_NAME]["event_definitions"].create_index(
@@ -282,6 +312,12 @@ async def connect_and_init_db():
             mongo_db[MONGODB_NAME]["private-clusters"].create_index(
                 "project_id", background=True
             )
+            mongo_db[MONGODB_NAME]["job_results"].create_index(
+                ["project_id", "job_metadata.id"], background=True
+            )
+            # mongo_db[MONGODB_NAME]["recipes"].create_index(
+            #     "id", unique=True, background=True
+            # )
 
         except Exception as e:
             logger.warning(f"Error while connecting to Mongo: {e}")

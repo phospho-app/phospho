@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -61,8 +62,6 @@ export default function CreateEvent({
   const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
   const current_nb_events = Object.keys(currentEvents).length;
 
-  console.log("eventToEdit", eventToEdit);
-
   // If we are editing an event, we need to pre-fill the form
   const formSchema = z.object({
     event_name: z
@@ -91,9 +90,37 @@ export default function CreateEvent({
       .object({
         min: z.number().min(0).max(1),
         max: z.number().min(1).max(5),
-        score_type: z.enum(["confidence", "range"]),
+        score_type: z.enum(["confidence", "range", "category"]),
+        categories: z.any().transform((value, ctx) => {
+          // If array of string, return it
+          if (Array.isArray(value)) {
+            return value;
+          }
+          // If not a string, raise an error
+          if (typeof value !== "string") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Categories must be a string.",
+            });
+            return z.NEVER;
+          }
+          // Split the string into an array of categories
+          let categories = value.split(",").map((category) => category.trim());
+          // Remove empty strings
+          categories = categories.filter((category) => category !== "");
+          // Raise an error if there are less than 1 category or more than 9
+          if (categories.length < 1 || categories.length > 9) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Categories must be between 1 and 9.",
+            });
+            return z.NEVER;
+          }
+          return categories;
+        }),
       })
       .optional(),
+    is_last_task: z.boolean(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -108,6 +135,7 @@ export default function CreateEvent({
       keywords: eventToEdit?.keywords ?? "",
       regex_pattern: eventToEdit?.regex_pattern ?? "",
       score_range_settings: eventToEdit?.score_range_settings,
+      is_last_task: eventToEdit?.is_last_task ?? false,
     },
   });
 
@@ -146,6 +174,7 @@ export default function CreateEvent({
       keywords: values.keywords,
       regex_pattern: values.regex_pattern,
       score_range_settings: values.score_range_settings as ScoreRangeSettings,
+      is_last_task: values.is_last_task,
     };
     console.log("Updated selected project:", selectedProject);
 
@@ -381,32 +410,42 @@ export default function CreateEvent({
                                 score_type: "confidence",
                                 min: 0,
                                 max: 1,
+                                categories: [],
                               });
                             } else if (value === "range") {
                               field.onChange({
                                 score_type: "range",
                                 min: 1,
                                 max: 5,
+                                categories: [],
+                              });
+                            } else if (value === "category") {
+                              field.onChange({
+                                score_type: "category",
+                                min: 1,
+                                max: 1,
+                                categories: "",
                               });
                             }
                           }}
                           defaultValue={field.value?.score_type ?? "confidence"}
                         >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue
-                                defaultValue={
-                                  field.value?.score_type ?? "confidence"
-                                }
-                              />
-                            </SelectTrigger>
-                          </FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              defaultValue={
+                                field.value?.score_type ?? "confidence"
+                              }
+                            />
+                          </SelectTrigger>
                           <SelectContent position="popper">
                             <SelectItem value="confidence">
                               Yes/No (boolean)
                             </SelectItem>
                             <SelectItem value="range">
                               1-5 score (number)
+                            </SelectItem>
+                            <SelectItem value="category">
+                              Category (enum)
                             </SelectItem>
                           </SelectContent>
                         </Select>
@@ -416,6 +455,22 @@ export default function CreateEvent({
                 />
               )
             }
+            {form.watch("detection_engine") === "llm_detection" &&
+              form.watch("score_range_settings")?.score_type === "category" && (
+                <FormField
+                  control={form.control}
+                  name="score_range_settings.categories"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categories</FormLabel>
+                      <FormControl>
+                        <Input placeholder="happy,sad,neutral" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             {form.watch("detection_engine") === "keyword_detection" && (
               <FormField
                 control={form.control}
@@ -426,7 +481,10 @@ export default function CreateEvent({
                       List of words to detect, separated by a comma
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="happy, joyful, excited" {...field} />
+                      <Input
+                        placeholder="question, why, how, what"
+                        {...field}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -451,7 +509,7 @@ export default function CreateEvent({
                     </FormMessage>
                     <FormControl>
                       <Input
-                        placeholder="^[0-9]{5}$ or happy | joyful | excited"
+                        placeholder="^[0-9]{5}$ or why | how | what"
                         {...field}
                       />
                     </FormControl>
@@ -496,6 +554,23 @@ export default function CreateEvent({
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="is_last_task"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-1 space-y-0 py-1">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="font-medium text-muted-foreground">
+                    Only detect on the last task of a session
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
           </div>
           <SheetFooter>
             <Button

@@ -14,6 +14,8 @@ export interface Task {
   sentiment?: SentimentObject;
   language?: string;
   notes?: string;
+  task_position: number;
+  is_last_task: boolean;
 }
 
 export interface SentimentObject {
@@ -51,6 +53,7 @@ export interface OrgMetadata {
   plan?: string | null; // "hobby" or "pro"
   customer_id?: string | null; // Stripe customer id
   initialized?: boolean | null; // Whether the org has been initialized
+  argilla_workspace_id?: string | null; // Argilla workspace id
 }
 
 export interface Session {
@@ -89,6 +92,8 @@ export interface ScoreRange {
   max: number;
   value: number;
   score_type: ScoreRangeType;
+  label: string;
+  options_confidence: Record<string | number, number>;
 }
 
 export interface Event {
@@ -120,12 +125,14 @@ export enum DetectionScope {
 export enum ScoreRangeType {
   confidence = "confidence",
   range = "range",
+  category = "category",
 }
 
 export interface ScoreRangeSettings {
   min: number;
   max: number;
   score_type: ScoreRangeType;
+  categories?: string[];
 }
 
 export interface EventDefinition {
@@ -143,6 +150,7 @@ export interface EventDefinition {
   regex_pattern?: string;
   job_id?: string;
   score_range_settings?: ScoreRangeSettings;
+  is_last_task?: boolean;
 }
 
 export interface ABTest {
@@ -247,6 +255,19 @@ export interface MetadataTypeToFieldsToUniqueValues {
   string: MetadataFieldsToUniqueValues;
 }
 
+export interface EvaluationModelDefinition {
+  project_id: string;
+  system_prompt: string;
+}
+
+export interface EvaluationModel {
+  project_id: string;
+  system_prompt: string;
+  created_at: number;
+  id: number;
+  removed: boolean;
+}
+
 export interface ProjectDataFilters {
   created_at_start?: number | null;
   created_at_end?: number | null;
@@ -262,4 +283,5 @@ export interface ProjectDataFilters {
   clustering_id?: string | null;
   clusters_ids?: string[] | null;
   is_last_task?: boolean | null;
+  session_ids?: string[] | null;
 }

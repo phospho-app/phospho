@@ -25,7 +25,7 @@ async def test_event_detection(db, populated_project):
             store_llm_call=True,
         )
 
-        assert detected_event == True
+        assert detected_event
 
         # Now, we wan't the event to be false
         task_transcript = """
@@ -45,4 +45,4 @@ async def test_event_detection(db, populated_project):
             store_llm_call=True,
         )
 
-        assert detected_event == False
+        assert detected_event

@@ -45,6 +45,17 @@ class ProjectElementBaseModel(DatedBaseModel):
     project_id: str
 
 
+class EvaluationModelDefinition(BaseModel):
+    project_id: str
+    system_prompt: str
+
+
+class EvaluationModel(EvaluationModelDefinition):
+    id: Union[str, int] = Field(default_factory=generate_uuid)
+    created_at: int = Field(default_factory=generate_timestamp)
+    removed: bool = False
+
+
 class Eval(ProjectElementBaseModel):
     session_id: Optional[str] = None
     task_id: str
@@ -55,6 +66,7 @@ class Eval(ProjectElementBaseModel):
     test_id: Optional[str] = None
     notes: Optional[str] = None
     task: Optional["Task"] = None
+    evaluation_model: Optional[EvaluationModel] = None
 
 
 DetectionScope = Literal[
@@ -75,6 +87,7 @@ class ScoreRangeSettings(BaseModel):
     min: float = 0
     max: float = 1
     score_type: Literal["confidence", "range", "category"] = "confidence"
+    categories: Optional[List[str]] = None
 
 
 class EventDefinition(DatedBaseModel):
@@ -92,13 +105,17 @@ class EventDefinition(DatedBaseModel):
     recipe_type: RecipeType = "event_detection"
     removed: bool = False
     score_range_settings: ScoreRangeSettings = Field(default_factory=ScoreRangeSettings)
+    # If true, the event can only be detected in the last task of a session
+    is_last_task: bool = False
 
 
 class ScoreRange(BaseModel):
+    score_type: Literal["confidence", "range", "category"]
+    value: float
     min: float
     max: float
-    value: float
-    score_type: Literal["confidence", "range", "category"]
+    label: Optional[str] = None
+    options_confidence: Optional[Dict[Any, float]] = None
 
 
 class Event(ProjectElementBaseModel):
@@ -665,6 +682,7 @@ class ProjectDataFilters(BaseModel):
     clustering_id: Optional[str] = None  # A group of clusters
     clusters_ids: Optional[List[str]] = None  # A list of clusters
     is_last_task: Optional[bool] = None
+    session_ids: Optional[List[str]] = None
 
 
 class Cluster(ProjectElementBaseModel):
