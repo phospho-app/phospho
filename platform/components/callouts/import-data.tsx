@@ -39,6 +39,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import {
   BarChartBig,
   CopyIcon,
+  LoaderCircle,
   Lock,
   Mail,
   MonitorPlay,
@@ -157,7 +158,7 @@ export default function UploadDataset({
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const [loading] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
 
   const onSubmit = () => {
@@ -176,6 +177,7 @@ export default function UploadDataset({
     formData.set("file", file, file.name);
     try {
       // Call API to upload file
+      setLoading(true);
       fetch(`/api/projects/${project_id}/upload-tasks`, {
         method: "POST",
         headers: {
@@ -191,6 +193,7 @@ export default function UploadDataset({
               "Tasks will appear in your dashboard in a few minutes.",
           });
           setOpen(false);
+          setLoading(false);
         } else {
           // Read the error details
           const error = await response.text();
@@ -198,9 +201,11 @@ export default function UploadDataset({
             title: "An error occurred",
             description: `${error}`,
           });
+          setLoading(false);
         }
       });
     } catch (error) {
+      setLoading(false);
       console.error("An unexpected error happened:", error);
       toast({
         title: "An error occurred",
@@ -244,17 +249,16 @@ export default function UploadDataset({
         />
       </div>
 
-      {/* {loading && (
-            <div className="flex flex-row space-x-2 items-center justify-content">
-              <div className="w-4 h-4 animate-spin">
-                <LoaderCircle />
-              </div>
-            </div>
-          )} */}
-      {file !== null && (
+      {file !== null && !loading && (
         <Button onClick={onSubmit}>
           <Upload className="mr-1 w-4 h-4" />
           Confirm
+        </Button>
+      )}
+      {loading && (
+        <Button disabled>
+          <Spinner className="mr-1" />
+          Uploading...
         </Button>
       )}
       {/* </form> */}
