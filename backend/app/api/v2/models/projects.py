@@ -50,6 +50,7 @@ class FlattenedTasksRequest(BaseModel):
     limit: int = 1000
     with_events: bool = True
     with_sessions: bool = True
+    with_removed_events: bool = False
 
 
 class ComputeJobsRequest(BaseModel):

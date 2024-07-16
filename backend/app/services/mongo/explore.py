@@ -1921,6 +1921,7 @@ async def fetch_flattened_tasks(
     limit: int = 1000,
     with_events: bool = True,
     with_sessions: bool = True,
+    with_removed_events: bool = False,
 ) -> List[FlattenedTask]:
     """
     Get a flattened representation of the tasks of a project for analytics
@@ -2021,9 +2022,14 @@ async def fetch_flattened_tasks(
         ]
     )
     # Query Mongo
-    flattened_tasks = (
-        await mongo_db["tasks_with_events"].aggregate(pipeline).to_list(length=limit)
-    )
+    if with_removed_events:
+        flattened_tasks = await mongo_db.aggregate(pipeline).to_list(length=limit)
+    else:
+        flattened_tasks = (
+            await mongo_db["tasks_with_events"]
+            .aggregate(pipeline)
+            .to_list(length=limit)
+        )
     # Ignore _id field
     flattened_tasks = [
         {k: v for k, v in task.items() if k != "_id"} for task in flattened_tasks
