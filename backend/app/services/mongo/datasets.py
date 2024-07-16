@@ -13,6 +13,8 @@ from typing import List
 import pandas as pd
 from app.db.models import Task
 from app.core import config
+from app.core import constants
+# Language dict
 
 # Connect to argila
 try:
@@ -103,15 +105,16 @@ async def generate_dataset_from_project(
     # Get the labels from the project settings
     # By default project.settings.events is {}
     labels = {}
+
+    # Add the no-event label (when no event is detected)
+    labels["no-event"] = "No event"
+
     for key, value in project.settings.events.items():
         # We do not use session level events for now
         if value.detection_engine == "session":
             logger.debug(f"Skipping session event {key} as it is session level")
             continue
         labels[key] = key
-
-    # Add the no-event label (when no event is detected)
-    labels["no-event"] = "No event"
 
     if len(labels.keys()) < 2:
         logger.warning(
@@ -135,6 +138,11 @@ async def generate_dataset_from_project(
             ),
         ],
         questions=[
+            rg.RatingQuestion(
+                name="sentiment",
+                description="What is the sentiment of the message? (1: Very negative, 3: Neutral, 5: Very positive)",
+                values=[1, 2, 3, 4, 5],
+            ),
             rg.MultiLabelQuestion(
                 name="event_detection",
                 title="Event detection",
@@ -150,6 +158,13 @@ async def generate_dataset_from_project(
                 title="Evaluation",
                 description="Evaluate the quality of the assistant's response",
                 labels=["Success", "Failure"],
+                required=False,
+            ),
+            rg.LabelQuestion(
+                name="language",
+                title="Language",
+                description="Select the language of the user input",
+                labels=constants.LANGUAGES_FOR_LABELLING,
                 required=False,
             ),
             rg.TextQuestion(
