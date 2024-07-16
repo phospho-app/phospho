@@ -37,6 +37,8 @@ def authenticate_org_key(
 ) -> dict:
     """
     API key authentification for orgs
+
+    Parses the authorization header and checks if the API key is valid.
     """
     # Parse credentials
     api_key_token = authorization.credentials

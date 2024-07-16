@@ -107,12 +107,6 @@ app.add_middleware(
 app.add_event_handler("startup", connect_and_init_db)
 app.add_event_handler("shutdown", close_mongo_db)
 
-if config.ENVIRONMENT != "preview":
-    app.add_event_handler("startup", init_qdrant)
-    app.add_event_handler("shutdown", close_qdrant)
-else:
-    logging.info("Not initializing Qdrant in preview mode.")
-
 
 # Other services
 app.add_event_handler("startup", check_health)
