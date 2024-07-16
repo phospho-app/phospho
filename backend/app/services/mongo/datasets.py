@@ -13,6 +13,69 @@ from typing import List
 import pandas as pd
 from app.db.models import Task
 from app.core import config
+import collections
+
+# Language dict
+
+LANGUAGES = {
+    "ar": "Arabic",
+    "af": "Afrikaans",
+    "bg": "Bulgarian",
+    "bn": "Bengali",
+    "ca": "Catalan",
+    "cs": "Czech",
+    "cy": "Welsh",
+    "da": "Danish",
+    "de": "German",
+    "el": "Greek",
+    "en": "English",
+    "es": "Spanish",
+    "et": "Estonian",
+    "fa": "Persian",
+    "fi": "Finnish",
+    "fr": "French",
+    "gu": "Gujarati",
+    "he": "Hebrew",
+    "hi": "Hindi",
+    "hr": "Croatian",
+    "hu": "Hungarian",
+    "id": "Indonesian",
+    "it": "Italian",
+    "ja": "Japanese",
+    "kn": "Kannada",
+    "ko": "Korean",
+    "lt": "Lithuanian",
+    "lv": "Latvian",
+    "mk": "Macedonian",
+    "ml": "Malayalam",
+    "mr": "Marathi",
+    "ne": "Nepali",
+    "nl": "Dutch",
+    "no": "Norwegian",
+    "pa": "Punjabi",
+    "pl": "Polish",
+    "pt": "Portuguese",
+    "ro": "Romanian",
+    "ru": "Russian",
+    "sk": "Slovak",
+    "sl": "Slovenian",
+    "so": "Somali",
+    "sq": "Albanian",
+    "sr": "Serbian",
+    "sv": "Swedish",
+    "sw": "Swahili",
+    "ta": "Tamil",
+    "te": "Telugu",
+    "th": "Thai",
+    "tl": "Tagalog",
+    "tr": "Turkish",
+    "uk": "Ukrainian",
+    "ur": "Urdu",
+    "vi": "Vietnamese",
+    "zh-cn": "Chinese (Simplified, cn)",
+    "zh-latn": "Chinese (Simplified, latn)",
+    "zh-tw": "Chinese (Traditional)",
+}
 
 # Connect to argila
 try:
@@ -103,15 +166,16 @@ async def generate_dataset_from_project(
     # Get the labels from the project settings
     # By default project.settings.events is {}
     labels = {}
+
+    # Add the no-event label (when no event is detected)
+    labels["no-event"] = "No event"
+
     for key, value in project.settings.events.items():
         # We do not use session level events for now
         if value.detection_engine == "session":
             logger.debug(f"Skipping session event {key} as it is session level")
             continue
         labels[key] = key
-
-    # Add the no-event label (when no event is detected)
-    labels["no-event"] = "No event"
 
     if len(labels.keys()) < 2:
         logger.warning(
@@ -135,6 +199,11 @@ async def generate_dataset_from_project(
             ),
         ],
         questions=[
+            rg.RatingQuestion(
+                name="sentiment",
+                description="What is the sentiment of the message? (1: Very negative, 3: Neutral, 5: Very positive)",
+                values=[1, 2, 3, 4, 5],
+            ),
             rg.MultiLabelQuestion(
                 name="event_detection",
                 title="Event detection",
@@ -150,6 +219,13 @@ async def generate_dataset_from_project(
                 title="Evaluation",
                 description="Evaluate the quality of the assistant's response",
                 labels=["Success", "Failure"],
+                required=False,
+            ),
+            rg.LabelQuestion(
+                name="language",
+                title="Language",
+                description="Select the language of the user input",
+                labels=LANGUAGES,
                 required=False,
             ),
             rg.TextQuestion(
