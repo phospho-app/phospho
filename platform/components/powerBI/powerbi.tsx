@@ -42,14 +42,7 @@ const PowerBIIntegrations: React.FC = () => {
           Power BI
         </CardTitle>
         <CardDescription>
-          View the documentation{" "}
-          <Link
-            href={"https://docs.phospho.ai/guides/welcome-guide"}
-            className="hover:text-green-500"
-          >
-            here
-          </Link>
-          .
+          Coming soon: Export data from your project for use in Power BI
         </CardDescription>
       </CardHeader>
       <CardContent>
