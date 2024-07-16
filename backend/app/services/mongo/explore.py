@@ -1993,6 +1993,7 @@ async def fetch_flattened_tasks(
             "event_score_range_min": "$events.score_range.min",
             "event_score_range_max": "$events.score_range.max",
             "event_score_range_score_type": "$events.score_range.score_type",
+            "event_source": "$events.source",
         }
     if with_sessions:
         pipeline.extend(
