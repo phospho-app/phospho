@@ -20,7 +20,6 @@ import {
   Project,
 } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
-import { dataStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   Annoyed,
