@@ -1,57 +1,59 @@
 import datetime
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
 
-from app.services.mongo.files import process_file_upload_into_log_events
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
-from loguru import logger
 import pandas as pd
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
+from google.cloud.storage.transfer_manager import upload_chunks_concurrently
+from google.cloud.storage import Bucket, Blob, Client
+from google.oauth2 import service_account
+
+from google.auth.credentials import Credentials
+from loguru import logger
 from propelauth_fastapi import User
 
 from app.api.platform.models import (
+    AddEventsQuery,
     Events,
     Project,
+    ProjectDataFilters,
     ProjectUpdateRequest,
+    QuerySessionsTasksRequest,
     SearchQuery,
     SearchResponse,
     Sessions,
     Tasks,
     Tests,
-    AddEventsQuery,
     Users,
-    ProjectDataFilters,
-    QuerySessionsTasksRequest,
 )
+from app.core import config
 from app.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
 )
-from phospho.models import EvaluationModel, EvaluationModelDefinition
+from app.security.authorization import get_quota
+from app.services.mongo.events import get_all_events
+from app.services.mongo.extractor import collect_langfuse_data, collect_langsmith_data
+from app.services.mongo.files import process_file_upload_into_log_events
 from app.services.mongo.projects import (
+    add_project_events,
+    collect_languages,
     delete_project_from_id,
     delete_project_related_resources,
     email_project_tasks,
     get_all_sessions,
     get_all_tests,
-    get_project_by_id,
     get_all_users_metadata,
-    update_project,
-    add_project_events,
-    collect_languages,
     get_evaluation_model,
+    get_project_by_id,
     post_evaluation_model,
+    update_project,
+)
+from app.services.mongo.search import (
+    search_sessions_in_project,
+    search_tasks_in_project,
 )
 from app.services.mongo.tasks import get_all_tasks
-from app.services.mongo.events import get_all_events
-
-
-from app.services.mongo.search import (
-    search_tasks_in_project,
-    search_sessions_in_project,
-)
-
-from app.services.mongo.extractor import collect_langsmith_data, collect_langfuse_data
-from app.security.authorization import get_quota
-from app.core import config
+from phospho.models import EvaluationModel, EvaluationModelDefinition
 
 router = APIRouter(tags=["Projects"])
 
@@ -435,6 +437,16 @@ async def post_upload_tasks(
             status_code=400,
             detail=f"Error: The extension {file_extension} is not supported (supported: {SUPPORTED_EXTENSIONS}).",
         )
+
+    # Push the file to a GCP bucket named "platform-import-data"
+    if config.GCP_BUCKET_CLIENT:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        filepath = f"{project.org_id}/{project_id}/{timestamp}_{file.filename}"
+        logger.info(f"Uploading file {file.filename} to GCP bucket as {filepath}")
+
+        bucket = Bucket(client=config.GCP_BUCKET_CLIENT, name="platform-import-data")
+        blob = bucket.blob(filepath)
+        blob.upload_from_file(file.file)
 
     # Read file content -> into memory
     file_params = {}

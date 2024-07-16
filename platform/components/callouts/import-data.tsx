@@ -39,6 +39,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import {
   BarChartBig,
   CopyIcon,
+  LoaderCircle,
   Lock,
   Mail,
   MonitorPlay,
@@ -157,7 +158,7 @@ export default function UploadDataset({
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const [loading] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
 
   const onSubmit = () => {
@@ -176,6 +177,7 @@ export default function UploadDataset({
     formData.set("file", file, file.name);
     try {
       // Call API to upload file
+      setLoading(true);
       fetch(`/api/projects/${project_id}/upload-tasks`, {
         method: "POST",
         headers: {
@@ -190,6 +192,8 @@ export default function UploadDataset({
             description:
               "Tasks will appear in your dashboard in a few minutes.",
           });
+          setOpen(false);
+          setLoading(false);
         } else {
           // Read the error details
           const error = await response.text();
@@ -197,9 +201,11 @@ export default function UploadDataset({
             title: "An error occurred",
             description: `${error}`,
           });
+          setLoading(false);
         }
       });
     } catch (error) {
+      setLoading(false);
       console.error("An unexpected error happened:", error);
       toast({
         title: "An error occurred",
@@ -243,17 +249,16 @@ export default function UploadDataset({
         />
       </div>
 
-      {/* {loading && (
-            <div className="flex flex-row space-x-2 items-center justify-content">
-              <div className="w-4 h-4 animate-spin">
-                <LoaderCircle />
-              </div>
-            </div>
-          )} */}
-      {file !== null && (
+      {file !== null && !loading && (
         <Button onClick={onSubmit}>
           <Upload className="mr-1 w-4 h-4" />
           Confirm
+        </Button>
+      )}
+      {loading && (
+        <Button disabled>
+          <Spinner className="mr-1" />
+          Uploading...
         </Button>
       )}
       {/* </form> */}
@@ -372,6 +377,7 @@ export const SendDataAlertDialog = ({
           title: "🦜🔗 LangSmith import successful",
           description: "Your data is being imported to phospho.",
         });
+        setOpen(false);
       } else {
         setDisableLS(false);
         toast.toast({
@@ -407,6 +413,7 @@ export const SendDataAlertDialog = ({
           title: "🪢 LangFuse import successful",
           description: "Your data is being imported to phospho.",
         });
+        setOpen(false);
       } else {
         setDisableLF(false);
         toast.toast({
@@ -690,7 +697,7 @@ phospho.log({input, output});`}
                                   Your LangSmith API key,{" "}
                                   <Link
                                     className="underline hover:text-green-500"
-                                    href="https://smith.langchain.com/o/b864875a-2a0c-537e-92f1-5df713478975/settings"
+                                    href="https://docs.smith.langchain.com/how_to_guides/setup/create_account_api_key#api-keys"
                                   >
                                     learn more here
                                   </Link>
