@@ -190,6 +190,7 @@ export default function UploadDataset({
             description:
               "Tasks will appear in your dashboard in a few minutes.",
           });
+          setOpen(false);
         } else {
           // Read the error details
           const error = await response.text();
