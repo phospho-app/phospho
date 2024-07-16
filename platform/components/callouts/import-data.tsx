@@ -377,6 +377,7 @@ export const SendDataAlertDialog = ({
           title: "🦜🔗 LangSmith import successful",
           description: "Your data is being imported to phospho.",
         });
+        setOpen(false);
       } else {
         setDisableLS(false);
         toast.toast({
@@ -412,6 +413,7 @@ export const SendDataAlertDialog = ({
           title: "🪢 LangFuse import successful",
           description: "Your data is being imported to phospho.",
         });
+        setOpen(false);
       } else {
         setDisableLF(false);
         toast.toast({
@@ -695,7 +697,7 @@ phospho.log({input, output});`}
                                   Your LangSmith API key,{" "}
                                   <Link
                                     className="underline hover:text-green-500"
-                                    href="https://smith.langchain.com/o/b864875a-2a0c-537e-92f1-5df713478975/settings"
+                                    href="https://docs.smith.langchain.com/how_to_guides/setup/create_account_api_key#api-keys"
                                   >
                                     learn more here
                                   </Link>
