@@ -74,7 +74,7 @@ DetectionEngine = Literal[
 class ScoreRangeSettings(BaseModel):
     min: float = 0
     max: float = 1
-    score_type: Literal["confidence", "range"] = "confidence"
+    score_type: Literal["confidence", "range", "category"] = "confidence"
 
 
 class EventDefinition(DatedBaseModel):
@@ -98,7 +98,7 @@ class ScoreRange(BaseModel):
     min: float
     max: float
     value: float
-    score_type: Literal["confidence", "range"]
+    score_type: Literal["confidence", "range", "category"]
 
 
 class Event(ProjectElementBaseModel):
@@ -343,7 +343,9 @@ class FlattenedTask(BaseModel, extra="allow"):
     event_score_range_value: Optional[float] = None
     event_score_range_min: Optional[float] = None
     event_score_range_max: Optional[float] = None
-    event_score_range_score_type: Optional[Literal["confidence", "range"]] = None
+    event_score_range_score_type: Optional[
+        Literal["confidence", "range", "category"]
+    ] = None
 
 
 class DatasetRow(DatedBaseModel, extra="allow"):
