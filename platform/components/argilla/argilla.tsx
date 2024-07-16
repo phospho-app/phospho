@@ -4,7 +4,6 @@ import CreateDataset from "@/components/argilla/create-argilla-dataset";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { dataStateStore } from "@/store/store";
-import { useUser } from "@propelauth/nextjs/client";
 import { CircleAlert } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -31,12 +30,17 @@ const ArgillaIntegrations: React.FC = () => {
     }
   }, [selectedOrgMetadata?.argilla_workspace_id]);
 
-  const { user } = useUser();
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Argilla</CardTitle>
+        <CardTitle className="flex">
+          <img
+            src="/image/argilla.png"
+            alt="Argilla Logo"
+            className="w-10 h-5 mr-2"
+          />
+          Argilla
+        </CardTitle>
         <CardDescription>
           View the documentation{" "}
           <Link

@@ -182,12 +182,9 @@ const CreateDataset = () => {
                     </div>
                 </div> */}
         <div className="mt-4">
-          <label
-            htmlFor="limit"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <div className="block text-sm font-medium">
             Dataset size (max {MAX_LIMIT} rows)
-          </label>
+          </div>
           <Input
             type="number"
             name="limit"
@@ -203,12 +200,7 @@ const CreateDataset = () => {
           />
         </div>
         <div className="mt-4">
-          <label
-            htmlFor="datasetName"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Dataset Name
-          </label>
+          <div className="block text-sm font-medium">Dataset Name</div>
           <Input
             type="text"
             name="datasetName"
