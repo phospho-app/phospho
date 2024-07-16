@@ -2,9 +2,14 @@
 App configuration file
 """
 
+import json
 import os
+from base64 import b64decode
 
 from dotenv import load_dotenv
+from google.oauth2 import service_account
+from google.cloud.storage import Client
+
 from loguru import logger
 
 load_dotenv()  # take environment variables from .env.
@@ -165,3 +170,14 @@ FINE_TUNING_MINIMUM_DOCUMENTS = 20
 
 ### CRON ###
 CRON_SECRET_KEY = os.getenv("CRON_SECRET_KEY")
+
+# GCP
+credentials_gcp_bucket = os.getenv("GCP_JSON_CREDENTIALS_BUCKET")
+if credentials_gcp_bucket:
+    credentials_dict = json.loads(b64decode(credentials_gcp_bucket).decode("utf-8"))
+    credentials = service_account.Credentials.from_service_account_info(
+        credentials_dict
+    )
+    GCP_BUCKET_CLIENT = Client(credentials=credentials)
+else:
+    GCP_BUCKET_CLIENT = None

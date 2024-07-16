@@ -181,6 +181,11 @@ async def store_opentelemetry_data(
         f"Storing opentelemetry data for project {augmented_open_telemetry_data.project_id}"
     )
 
+    mongo_db = await get_mongo_db()
+    mongo_db["logs_opentelemetry"].insert_one(
+        augmented_open_telemetry_data.model_dump()
+    )
+
     try:
         # Assuming the JSON is stored in a variable called 'json_data'
         data = augmented_open_telemetry_data.open_telemetry_data
@@ -297,6 +302,10 @@ async def extract_langsmith_data(
     current_usage = user_data["current_usage"]
     max_usage = user_data["max_usage"]
 
+    # Dump to a dedicated db
+    mongo_db = await get_mongo_db()
+    mongo_db["logs_langsmith"].insert_many([run.model_dump() for run in runs])
+
     for run in runs:
         try:
             input = ""
@@ -388,6 +397,10 @@ async def extract_langfuse_data(
                 last_langfuse_extract, "%Y-%m-%d %H:%M:%S.%f"
             ),
         )
+
+    # Dump to a dedicated db
+    mongo_db = await get_mongo_db()
+    mongo_db["logs_langfuse"].insert_one(observations.model_dump())
 
     logs_to_process: List[LogEvent] = []
     extra_logs_to_save: List[LogEvent] = []
