@@ -35,7 +35,7 @@ PROPELAUTH_VERIFIER_KEY=-----BEGIN PUBLIC KEY-----
 
 ## Install dependencies
 
-Using Node 18.20.1
+Using Node 21
 
 ```
 npm i
@@ -47,7 +47,8 @@ npm i
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with the **Chrome** browser to see the result. 
+WARNING !!! This will not work on Safari !
 
 ## Learn More
 
