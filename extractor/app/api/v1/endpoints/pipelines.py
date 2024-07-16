@@ -312,7 +312,9 @@ async def extract_langsmith_data(
         logger.error(f"Error converting runs to dict: {e}")
         # Try with pydantic model v2
         runs_as_dict = [run.model_dump() for run in runs]
-    mongo_db["logs_langsmith"].insert_many(runs_as_dict)
+
+    if len(runs_as_dict) > 0:
+        mongo_db["logs_langsmith"].insert_many(runs_as_dict)
 
     for run in runs:
         try:
@@ -408,7 +410,9 @@ async def extract_langfuse_data(
 
     # Dump to a dedicated db
     mongo_db = await get_mongo_db()
-    mongo_db["logs_langfuse"].insert_one(observations.model_dump())
+    observations_list = [observation.model_dump() for observation in observations.data]
+    if len(observations_list) > 0:
+        mongo_db["logs_langfuse"].insert_many(observations_list)
 
     logs_to_process: List[LogEvent] = []
     extra_logs_to_save: List[LogEvent] = []
