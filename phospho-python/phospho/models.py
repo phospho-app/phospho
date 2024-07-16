@@ -360,7 +360,9 @@ class FlattenedTask(BaseModel, extra="allow"):
     event_score_range_value: Optional[float] = None
     event_score_range_min: Optional[float] = None
     event_score_range_max: Optional[float] = None
-    event_score_range_score_type: Optional[Literal["confidence", "range"]] = None
+    event_score_range_score_type: Optional[
+        Literal["confidence", "range", "category"]
+    ] = None
 
 
 class DatasetRow(DatedBaseModel, extra="allow"):
