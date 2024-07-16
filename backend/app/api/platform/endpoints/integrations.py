@@ -4,20 +4,20 @@ To check if an organization has access to an argilla workspace, there is a metad
 
 from fastapi import APIRouter, Depends, HTTPException
 from propelauth_py.user import User
-from app.services.mongo.datasets import (
+from app.services.mongo.integrations import (
     generate_dataset_from_project,
-    get_workspace_datasets,
+    get_power_bi_credentials,
 )
-from app.api.platform.models.datasets import DatasetCreationRequest
-from app.services.mongo.datasets import dataset_name_is_valid
-from argilla import FeedbackDataset
-from loguru import logger
+from app.api.platform.models.integrations import DatasetCreationRequest
+from app.services.mongo.integrations import dataset_name_is_valid
 from app.services.mongo.projects import get_project_by_id
 from app.core import config
 
 from app.security.authentification import propelauth
+from loguru import logger
+from app.api.platform.models.integrations import PowerBICredentials
 
-router = APIRouter(tags=["Datasets"])
+router = APIRouter(tags=["Integrations"])
 
 
 @router.post("/datasets")
@@ -69,3 +69,22 @@ async def post_create_dataset(
         )
 
     return {"status": "ok"}
+
+
+@router.get("/powerbi/{org_id}", response_model=PowerBICredentials)
+async def get_dedicated_db(org_id: str, user: User = Depends(propelauth.require_user)):
+    org_member_info = propelauth.require_org_member(user, org_id)
+    org = propelauth.fetch_org(org_member_info.org_id)
+
+    # Get the org metadata
+    org_metadata = org.get("metadata", {})
+
+    if "power_bi" not in org_metadata or not org_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Your organization does not have access to an Argilla workspace. Contact us to get access to one.",
+        )
+
+    db_credentials = await get_power_bi_credentials(org_id=org_id)
+
+    return db_credentials
