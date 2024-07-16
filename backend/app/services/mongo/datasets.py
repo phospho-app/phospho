@@ -110,6 +110,9 @@ async def generate_dataset_from_project(
             continue
         labels[key] = key
 
+    # Add the no-event label (when no event is detected)
+    labels["no-event"] = "No event"
+
     if len(labels.keys()) < 2:
         logger.warning(
             f"Not enough labels found in project settings {project.id} with filters {creation_request.filters} and limit {creation_request.limit}"
@@ -137,7 +140,7 @@ async def generate_dataset_from_project(
                 title="Event detection",
                 description="Select all the events that apply",
                 labels=labels,
-                required=False,
+                required=True,
                 visible_labels=max(
                     3, len(labels)
                 ),  # The min number of labels to display must be equal or greater than 3
