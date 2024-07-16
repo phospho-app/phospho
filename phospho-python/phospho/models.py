@@ -337,6 +337,13 @@ class FlattenedTask(BaseModel, extra="allow"):
     session_length: Optional[int] = None
     event_name: Optional[str] = None
     event_created_at: Optional[int] = None
+    event_removal_reason: Optional[str] = None
+    event_removed: Optional[bool] = None
+    event_confirmed: Optional[bool] = None
+    event_score_range_value: Optional[float] = None
+    event_score_range_min: Optional[float] = None
+    event_score_range_max: Optional[float] = None
+    event_score_range_score_type: Optional[Literal["confidence", "range"]] = None
 
 
 class DatasetRow(DatedBaseModel, extra="allow"):
