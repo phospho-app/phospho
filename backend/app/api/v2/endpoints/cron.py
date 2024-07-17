@@ -39,13 +39,13 @@ async def run_langsmith_sync_pipeline():
 
     projects_ids = await fetch_projects_to_sync(type="langsmith")
 
-    extractor_client = ExtractorClient()
     for project_id in projects_ids:
         usage_quota = await get_quota(project_id)
-
-        await extractor_client.collect_langsmith_data(
-            project_id=project_id,
+        extractor_client = ExtractorClient(
             org_id=usage_quota.org_id,
+            project_id=project_id,
+        )
+        await extractor_client.collect_langsmith_data(
             langsmith_api_key=None,
             langsmith_project_name=None,
             current_usage=usage_quota.current_usage,
@@ -60,20 +60,18 @@ async def run_langfuse_sync_pipeline():
 
     projects_ids = await fetch_projects_to_sync(type="langfuse")
 
-    extractor_client = ExtractorClient()
     for project_id in projects_ids:
         langfuse_credentials = await fetch_and_decrypt_langfuse_credentials(project_id)
 
         usage_quota = await get_quota(project_id)
-        current_usage = usage_quota.current_usage
-        max_usage = usage_quota.max_usage
+        extractor_client = ExtractorClient(
+            org_id=usage_quota.org_id, project_id=project_id
+        )
 
         await extractor_client.collect_langfuse_data(
-            project_id=project_id,
-            org_id=usage_quota.org_id,
             langfuse_credentials=langfuse_credentials,
-            current_usage=current_usage,
-            max_usage=max_usage,
+            current_usage=usage_quota.current_usage,
+            max_usage=usage_quota.max_usage,
         )
 
     return {"status": "ok", "message": "Pipeline ran successfully"}

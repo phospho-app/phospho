@@ -524,11 +524,12 @@ async def connect_langsmith(
 
     usage_quota = await get_quota(project_id)
 
-    extractor_client = ExtractorClient()
-    background_tasks.add_task(
-        extractor_client.collect_langsmith_data,
+    extractor_client = ExtractorClient(
         project_id=project_id,
         org_id=project.org_id,
+    )
+    background_tasks.add_task(
+        extractor_client.collect_langsmith_data,
         langsmith_api_key=query.langsmith_api_key,
         langsmith_project_name=query.langsmith_project_name,
         current_usage=usage_quota.current_usage,
@@ -575,11 +576,12 @@ async def connect_langfuse(
 
     usage_quota = await get_quota(project_id)
 
-    extractor_client = ExtractorClient()
-    background_tasks.add_task(
-        extractor_client.collect_langfuse_data,
+    extractor_client = ExtractorClient(
         project_id=project_id,
         org_id=project.org_id,
+    )
+    background_tasks.add_task(
+        extractor_client.collect_langfuse_data,
         langfuse_credentials=credentials,
         current_usage=usage_quota.current_usage,
         max_usage=usage_quota.max_usage,

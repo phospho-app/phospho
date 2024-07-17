@@ -658,9 +658,13 @@ async def backcompute_recipe(job_id: str, tasks: List[Task]) -> None:
             tasks_to_process.append(task)
 
     # Send the task to the job pipeline of the extractor
-    extractor_client = ExtractorClient()
+    extractor_client = ExtractorClient(
+        org_id=recipe.org_id,
+        project_id=recipe.project_id,
+    )
     await extractor_client.run_recipe_on_tasks(
-        tasks=tasks_to_process, recipe=recipe, org_id=recipe.org_id
+        tasks=tasks_to_process,
+        recipe=recipe,
     )
 
 

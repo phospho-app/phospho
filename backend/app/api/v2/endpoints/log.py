@@ -102,13 +102,14 @@ async def store_batch_of_log_events(
     )
 
     # All the tasks to process were deemed as valid and the org had enough credits to process them
-    extractor_client = ExtractorClient()
+    extractor_client = ExtractorClient(
+        project_id=project_id,
+        org_id=org["org"].get("org_id"),
+    )
     background_tasks.add_task(
         extractor_client.run_log_process,
         logs_to_process=logs_to_process,
         extra_logs_to_save=extra_logs_to_save,
-        project_id=project_id,
-        org_id=org["org"].get("org_id"),
     )
 
     return log_reply
@@ -129,12 +130,13 @@ async def store_opentelemetry_log(
 
     await verify_propelauth_org_owns_project_id(org, project_id)
 
-    extractor_client = ExtractorClient()
+    extractor_client = ExtractorClient(
+        project_id=project_id,
+        org_id=org["org"].get("org_id"),
+    )
     background_tasks.add_task(
         extractor_client.store_open_telemetry_data,
         open_telemetry_data=open_telemetry_data,
-        project_id=project_id,
-        org_id=org["org"].get("org_id"),
     )
 
     return {"status": "ok"}

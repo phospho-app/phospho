@@ -72,7 +72,10 @@ async def run_recipe_on_tasks_batched(
     # Batch the tasks to avoid memory issues
     batch_size = 128
     nb_batches = sample_size // batch_size
-    extractor_client = ExtractorClient()
+    extractor_client = ExtractorClient(
+        project_id=project_id,
+        org_id=org_id,
+    )
     for i in range(nb_batches + 1):
         tasks = await get_all_tasks(
             project_id=project_id,

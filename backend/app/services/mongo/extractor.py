@@ -74,8 +74,23 @@ class ExtractorClient:
     A client to interact with the extractor server
     """
 
+    def __init__(
+        self,
+        org_id: str,
+        project_id: str,
+    ):
+        """
+        project_id: Used to store and retrieve the logs
+        org_id: Used to bill the organization on Stripe
+        """
+        self.org_id = org_id
+        self.project_id = project_id
+
     async def _post(
-        self, endpoint: str, data: dict, on_success_callback: Optional[Callable] = None
+        self,
+        endpoint: str,
+        data: dict,
+        on_success_callback: Optional[Callable] = None,
     ):
         """
         Post data to the extractor server
@@ -119,8 +134,6 @@ class ExtractorClient:
     async def run_log_process(
         self,
         logs_to_process: List[LogEvent],
-        project_id: str,
-        org_id: str,
         extra_logs_to_save: Optional[List[LogEvent]] = None,
     ) -> None:
         """
@@ -139,11 +152,12 @@ class ExtractorClient:
                     log_event.model_dump(mode="json")
                     for log_event in extra_logs_to_save
                 ],
-                "project_id": project_id,
-                "org_id": org_id,
+                "project_id": self.project_id,
+                "org_id": self.org_id,
             },
             on_success_callback=lambda response: bill_on_stripe(
-                org_id=org_id, nb_credits_used=response.json().get("nb_job_results", 0)
+                org_id=self.org_id,
+                nb_credits_used=response.json().get("nb_job_results", 0),
             ),
         )
 
@@ -187,7 +201,6 @@ class ExtractorClient:
         self,
         tasks: List[Task],
         recipe: Recipe,
-        org_id: str,
     ):
         if len(tasks) == 0:
             logger.debug(f"No tasks to process for recipe {recipe.id}")
@@ -200,26 +213,26 @@ class ExtractorClient:
                 "recipe": recipe.model_dump(mode="json"),
             },
             on_success_callback=lambda response: bill_on_stripe(
-                org_id=org_id, nb_credits_used=response.json().get("nb_job_results", 0)
+                org_id=self.org_id,
+                nb_credits_used=response.json().get("nb_job_results", 0),
             ),
         )
 
     async def store_open_telemetry_data(
-        self, open_telemetry_data: dict, project_id: str, org_id: str
+        self,
+        open_telemetry_data: dict,
     ):
         await self._post(
             "pipelines/opentelemetry",
             {
                 "open_telemetry_data": open_telemetry_data,
-                "project_id": project_id,
-                "org_id": org_id,
+                "project_id": self.project_id,
+                "org_id": self.org_id,
             },
         )
 
     async def collect_langsmith_data(
         self,
-        project_id: str,
-        org_id: str,
         langsmith_api_key: str,
         langsmith_project_name: str,
         current_usage: int,
@@ -230,8 +243,8 @@ class ExtractorClient:
             {
                 "langsmith_api_key": langsmith_api_key,
                 "langsmith_project_name": langsmith_project_name,
-                "project_id": project_id,
-                "org_id": org_id,
+                "project_id": self.project_id,
+                "org_id": self.org_id,
                 "current_usage": current_usage,
                 "max_usage": max_usage,
             },
@@ -239,8 +252,6 @@ class ExtractorClient:
 
     async def collect_langfuse_data(
         self,
-        project_id: str,
-        org_id: str,
         langfuse_credentials: dict,
         current_usage: int,
         max_usage: Optional[int] = None,
@@ -249,8 +260,8 @@ class ExtractorClient:
             "pipelines/langfuse",
             {
                 "langfuse_credentials": langfuse_credentials,
-                "project_id": project_id,
-                "org_id": org_id,
+                "project_id": self.project_id,
+                "org_id": self.org_id,
                 "current_usage": current_usage,
                 "max_usage": max_usage,
             },

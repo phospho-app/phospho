@@ -34,7 +34,10 @@ async def post_detect_events_in_task(
     raise_error_if_not_in_pro_tier(org, enforce=True)
 
     task = Task(**event_detection_request.model_dump())
-    extractor_client = ExtractorClient()
+    extractor_client = ExtractorClient(
+        project_id=project_id,
+        org_id=org["org"].get("org_id"),
+    )
     pipeline_results = await extractor_client.run_main_pipeline_on_task(task)
 
     return EventDetectionReply(
@@ -61,7 +64,10 @@ async def post_detect_events_in_messages_list(
     await verify_propelauth_org_owns_project_id(org, project_id)
     raise_error_if_not_in_pro_tier(org, enforce=True)
 
-    extractor_client = ExtractorClient()
+    extractor_client = ExtractorClient(
+        project_id=project_id,
+        org_id=org["org"].get("org_id"),
+    )
     pipeline_results = await extractor_client.run_main_pipeline_on_messages(
         event_detection_request.messages,
         project_id,
