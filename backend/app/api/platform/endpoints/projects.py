@@ -4,12 +4,12 @@ from typing import List, Optional
 import pandas as pd
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
 from google.cloud.storage import Bucket
-
 from loguru import logger
 from propelauth_fastapi import User
 
 from app.api.platform.models import (
     AddEventsQuery,
+    ConnectLangsmithQuery,
     Events,
     Project,
     ProjectDataFilters,
@@ -21,7 +21,6 @@ from app.api.platform.models import (
     Tasks,
     Tests,
     Users,
-    ConnectLangsmithQuery,
 )
 from app.core import config
 from app.security.authentification import (
@@ -30,10 +29,7 @@ from app.security.authentification import (
 )
 from app.security.authorization import get_quota
 from app.services.mongo.events import get_all_events
-from app.services.mongo.extractor import (
-    ExtractorClient,
-    collect_langfuse_data,
-)
+from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.files import process_file_upload_into_log_events
 from app.services.mongo.projects import (
     add_project_events,
