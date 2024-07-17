@@ -81,6 +81,7 @@ class ExtractorClient:
     ):
         """
         project_id: Used to store and retrieve the logs
+
         org_id: Used to bill the organization on Stripe
         """
         self.org_id = org_id

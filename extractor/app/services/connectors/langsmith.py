@@ -1,5 +1,4 @@
 import base64
-import os
 from datetime import datetime
 from typing import List, Optional
 from app.core import config
@@ -9,6 +8,7 @@ from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from langsmith import Client
+from langsmith.schemas import Run
 from loguru import logger
 
 from app.api.v1.models import LogEvent
@@ -28,12 +28,7 @@ class LangsmithConnector(BaseConnector):
     project_id: str
     credentials: Optional[LangsmithCredentials] = None
     client: Optional[Client] = None
-
-    def __init__(
-        self,
-        project_id: str,
-    ):
-        self.project_id = project_id
+    runs: Optional[List[Run]] = None
 
     async def load_config(
         self,
@@ -50,6 +45,9 @@ class LangsmithConnector(BaseConnector):
 
         mongo_db = await get_mongo_db()
         encryption_key = config.EXTRACTOR_SECRET_KEY
+        if not encryption_key:
+            logger.error("No encryption key provided")
+            return
 
         # Fetch the encrypted credentials from the database
         credentials = await mongo_db["keys"].find_one(
@@ -72,7 +70,6 @@ class LangsmithConnector(BaseConnector):
             langsmith_api_key=data[:-padding].decode("utf-8"),
             langsmith_project_name=credentials_data.langsmith_project_name,
         )
-        self.client = Client(api_key=self.credentials.langsmith_api_key)
 
     async def register(
         self,
@@ -90,6 +87,10 @@ class LangsmithConnector(BaseConnector):
         mongo_db = await get_mongo_db()
 
         encryption_key = config.EXTRACTOR_SECRET_KEY
+        if not encryption_key:
+            logger.error("No encryption key provided")
+            return
+
         api_key_as_bytes = langsmith_api_key.encode("utf-8")
 
         # Encrypt the credentials
@@ -155,6 +156,8 @@ class LangsmithConnector(BaseConnector):
         if self.credentials is None:
             raise ValueError("Credentials not loaded")
 
+        self.client = Client(api_key=self.credentials.langsmith_api_key)
+
         last_langsmith_extract = await self._get_last_langsmith_extract()
         if last_langsmith_extract is None:
             self.runs = self.client.list_runs(
@@ -192,6 +195,12 @@ class LangsmithConnector(BaseConnector):
         logs_to_process: List[LogEvent] = []
         extra_logs_to_save: List[LogEvent] = []
 
+        if self.runs is None:
+            logger.error(
+                f"No Langsmith runs to process for project id: {self.project_id}"
+            )
+            return
+
         for run in self.runs:
             try:
                 input = ""
@@ -219,6 +228,7 @@ class LangsmithConnector(BaseConnector):
                     session_id=str(run.session_id),
                     project_id=self.project_id,
                     metadata={"langsmith_run_id": run.id},
+                    org_id=org_id,
                 )
 
                 if max_usage is None or (
@@ -234,7 +244,6 @@ class LangsmithConnector(BaseConnector):
                 )
 
         await self._update_last_langsmith_extract()
-
         await process_log(
             project_id=self.project_id,
             org_id=org_id,

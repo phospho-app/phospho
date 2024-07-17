@@ -1,15 +1,20 @@
 class BaseConnector:
-    def __init__(self):
-        pass
+    project_id: str
+
+    def __init__(
+        self,
+        project_id: str,
+    ):
+        self.project_id = project_id
 
     async def register(self, *args, **kwargs):
-        pass
+        raise NotImplementedError
 
     async def _dump(self):
-        pass
+        raise NotImplementedError
 
     async def pull(self, project_id: str):
-        pass
+        raise NotImplementedError
 
     async def push(
         self,
@@ -17,4 +22,7 @@ class BaseConnector:
         current_usage: int,
         max_usage: int,
     ):
-        pass
+        raise NotImplementedError
+
+    async def sync(self, *args, **kwargs):
+        raise NotImplementedError

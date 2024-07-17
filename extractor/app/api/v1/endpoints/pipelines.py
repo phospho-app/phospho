@@ -1,4 +1,3 @@
-# Models
 from datetime import datetime
 from typing import List
 
@@ -14,16 +13,12 @@ from app.api.v1.models import (
 )
 from app.db.mongo import get_mongo_db
 
-# Security
 from app.security.authentication import authenticate_key
 from app.services.connectors import LangsmithConnector
 from app.services.log import process_log
 
-# Services
 from app.services.pipelines import (
-    change_last_langfuse_extract,
     encrypt_and_store_langfuse_credentials,
-    get_last_langfuse_extract,
     messages_main_pipeline,
     recipe_pipeline,
     store_opentelemetry_data_in_db,
@@ -295,69 +290,6 @@ async def extract_langfuse_data(
     background_tasks: BackgroundTasks,
 ):
     logger.debug(f"Received LangFuse connection data for org id: {user_data['org_id']}")
-
-    last_langfuse_extract = await get_last_langfuse_extract(user_data["project_id"])
-
-    langfuse = Langfuse(
-        public_key=user_data["langfuse_credentials"]["langfuse_public_key"],
-        secret_key=user_data["langfuse_credentials"]["langfuse_secret_key"],
-    )
-
-    if last_langfuse_extract is None:
-        observations = langfuse.client.observations.get_many(type="GENERATION")
-
-    else:
-        observations = langfuse.client.observations.get_many(
-            type="GENERATION",
-            from_start_time=datetime.strptime(
-                last_langfuse_extract, "%Y-%m-%d %H:%M:%S.%f"
-            ),
-        )
-
-    # Dump to a dedicated db
-    mongo_db = await get_mongo_db()
-    observations_list = [observation.model_dump() for observation in observations.data]
-    if len(observations_list) > 0:
-        mongo_db["logs_langfuse"].insert_many(observations_list)
-
-    logs_to_process: List[LogEvent] = []
-    extra_logs_to_save: List[LogEvent] = []
-    current_usage = user_data["current_usage"]
-    max_usage = user_data["max_usage"]
-
-    for observation in observations.data:
-        try:
-            input = observation.input
-            output = observation.output
-
-            log_event = LogEvent(
-                created_at=int(observation.start_time.timestamp()),
-                input=input,
-                output=output,
-                session_id=str(observation.trace_id),
-                org_id=user_data["org_id"],
-                project_id=user_data["project_id"],
-                metadata={"langsfuse_run_id": observation.id},
-            )
-
-            if max_usage is None or (
-                max_usage is not None and current_usage < max_usage
-            ):
-                logs_to_process.append(log_event)
-                current_usage += 1
-            else:
-                extra_logs_to_save.append(log_event)
-        except Exception as e:
-            logger.error(
-                f"Error processing langfuse run for project id: {user_data['project_id']}, {e}"
-            )
-
-    langfuse.shutdown()
-
-    await change_last_langfuse_extract(
-        project_id=user_data["project_id"],
-        new_last_extract_date=str(datetime.now()),
-    )
 
     background_tasks.add_task(
         process_log,
