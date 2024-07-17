@@ -926,6 +926,12 @@ try:
         If `with_events=True`, the DataFrame will have one row per (task, event).
         If `with_events=False`, the DataFrame will have one row per task.
 
+        If `with_sessions=True`, the DataFrame will have one row per task, with session information.
+        If `with_sessions=False`, the DataFrame will have one row per task, without session information.
+
+        If `with_removed_events=True`, the DataFrame will include removed events ; only possible if `with_events=True`.
+        If `with_removed_events=False`, the DataFrame will not include removed events.
+
         :param limit: The maximum number of tasks to return.
         :param with_events: Whether to include events in the DataFrame. If True, the
             DataFrame will have one row per (task, event). If False, the DataFrame will
