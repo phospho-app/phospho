@@ -1930,6 +1930,12 @@ async def fetch_flattened_tasks(
     The with_sessions parameter allows to include the session length in the result.
     The with_removed_events parameter allows to include the removed events in the result ; if with_events is False, this parameter is ignored.
     """
+
+    if not with_events and with_removed_events:
+        raise ValueError(
+            "The with_removed_events parameter can only be used if with_events is True"
+        )
+
     # Create an aggregated table
     mongo_db = await get_mongo_db()
 
