@@ -169,9 +169,9 @@ async def process_file_upload_into_log_events(
     logs_to_process: List[LogEvent] = []
     extra_logs_to_save: List[LogEvent] = []
 
-    org_plan = await get_quota(project_id)
-    current_usage = org_plan.get("current_usage", 0)
-    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+    usage_quota = await get_quota(project_id)
+    current_usage = usage_quota.current_usage
+    max_usage = usage_quota.max_usage
 
     for _, row in tasks_df.iterrows():
         # Create a task for each row

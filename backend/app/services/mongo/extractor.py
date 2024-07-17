@@ -325,7 +325,7 @@ async def collect_langsmith_data(
     langsmith_api_key: str,
     langsmith_project_name: str,
     current_usage: int,
-    max_usage: int,
+    max_usage: Optional[int] = None,
 ):
     async with httpx.AsyncClient() as client:
         try:

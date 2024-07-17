@@ -702,3 +702,12 @@ class Clustering(ProjectElementBaseModel):
     clusters_ids: List[str]
     status: Optional[Literal["started", "summaries", "completed"]] = None
     clusters: Optional[List[Cluster]] = None
+
+
+class UsageQuota(BaseModel):
+    org_id: str
+    plan: str
+    current_usage: int
+    max_usage: Optional[int]
+    max_usage_label: str
+    balance_transaction: Optional[float] = None

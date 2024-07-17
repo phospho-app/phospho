@@ -519,9 +519,7 @@ async def connect_langsmith(
             status_code=400, detail=f"Error: Could not connect to Langsmith: {e}"
         )
 
-    org_plan = await get_quota(project_id)
-    current_usage = org_plan.get("current_usage", 0)
-    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+    usage_quota = await get_quota(project_id)
 
     background_tasks.add_task(
         collect_langsmith_data,
@@ -529,8 +527,8 @@ async def connect_langsmith(
         org_id=project.org_id,
         langsmith_api_key=query.langsmith_api_key,
         langsmith_project_name=query.langsmith_project_name,
-        current_usage=current_usage,
-        max_usage=max_usage,
+        current_usage=usage_quota.current_usage,
+        max_usage=usage_quota.max_usage,
     )
     return {"status": "ok", "message": "Langsmith connected successfully."}
 
@@ -571,17 +569,15 @@ async def connect_langfuse(
             status_code=400, detail=f"Error: Could not connect to LangFuse: {e}"
         )
 
-    org_plan = await get_quota(project_id)
-    current_usage = org_plan.get("current_usage", 0)
-    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+    usage_quota = await get_quota(project_id)
 
     background_tasks.add_task(
         collect_langfuse_data,
         project_id=project_id,
         org_id=project.org_id,
         langfuse_credentials=credentials,
-        current_usage=current_usage,
-        max_usage=max_usage,
+        current_usage=usage_quota.current_usage,
+        max_usage=usage_quota.max_usage,
     )
     return {"status": "ok", "message": "LangFuse connected successfully."}
 

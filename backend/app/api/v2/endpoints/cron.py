@@ -41,17 +41,15 @@ async def run_langsmith_sync_pipeline():
     projects_ids = await fetch_projects_to_sync(type="langsmith")
 
     for project_id in projects_ids:
-        org_plan = await get_quota(project_id)
-        current_usage = org_plan.get("current_usage", 0)
-        max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+        usage_quota = await get_quota(project_id)
 
         await collect_langsmith_data(
             project_id=project_id,
-            org_id=org_plan["org_id"],
+            org_id=usage_quota.org_id,
             langsmith_api_key=None,
             langsmith_project_name=None,
-            current_usage=current_usage,
-            max_usage=max_usage,
+            current_usage=usage_quota.current_usage,
+            max_usage=usage_quota.max_usage,
         )
 
     return {"status": "ok", "message": "Pipeline ran successfully"}
@@ -65,13 +63,13 @@ async def run_langfuse_sync_pipeline():
     for project_id in projects_ids:
         langfuse_credentials = await fetch_and_decrypt_langfuse_credentials(project_id)
 
-        org_plan = await get_quota(project_id)
-        current_usage = org_plan.get("current_usage", 0)
-        max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+        usage_quota = await get_quota(project_id)
+        current_usage = usage_quota.current_usage
+        max_usage = usage_quota.max_usage
 
         await collect_langfuse_data(
             project_id=project_id,
-            org_id=org_plan["org_id"],
+            org_id=usage_quota.org_id,
             langfuse_credentials=langfuse_credentials,
             current_usage=current_usage,
             max_usage=max_usage,

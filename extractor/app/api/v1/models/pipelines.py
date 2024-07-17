@@ -41,6 +41,6 @@ class PipelineLangsmithRequest(BaseModel):
     project_id: str
     org_id: str
     current_usage: int
-    max_usage: int
+    max_usage: Optional[int] = None
     langsmith_api_key: Optional[str] = None
     langsmith_project_name: Optional[str] = None
