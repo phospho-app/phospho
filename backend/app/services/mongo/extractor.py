@@ -235,9 +235,9 @@ class ExtractorClient:
 
     async def collect_langsmith_data(
         self,
-        langsmith_api_key: str,
-        langsmith_project_name: str,
         current_usage: int,
+        langsmith_api_key: Optional[str] = None,
+        langsmith_project_name: Optional[str] = None,
         max_usage: Optional[int] = None,
     ):
         await self._post(
@@ -258,9 +258,9 @@ class ExtractorClient:
 
     async def collect_langfuse_data(
         self,
-        langfuse_secret_key: str,
-        langfuse_public_key: str,
         current_usage: int,
+        langfuse_secret_key: Optional[str] = None,
+        langfuse_public_key: Optional[str] = None,
         max_usage: Optional[int] = None,
     ):
         await self._post(
