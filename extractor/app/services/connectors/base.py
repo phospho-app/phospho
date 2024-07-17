@@ -55,7 +55,7 @@ class BaseConnector:
     ):
         await self.load_config(**kwargs)
         await self.pull()
-        nb_processed_logs = await self.push(
+        nb_job_results = await self.push(
             org_id=org_id,
             current_usage=current_usage,
             max_usage=max_usage,
@@ -64,5 +64,5 @@ class BaseConnector:
         return {
             "status": "ok",
             "message": "Synchronisation pipeline ran successfully",
-            "nb_processed_logs": nb_processed_logs,
+            "nb_job_results": nb_job_results,
         }

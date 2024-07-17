@@ -1,10 +1,4 @@
 from app.db.mongo import get_mongo_db
-from loguru import logger
-from Crypto.Cipher import AES
-from Crypto.Hash import SHA256
-import os
-import base64
-from Crypto import Random
 
 
 async def fetch_projects_to_sync(type: str = "langsmith"):

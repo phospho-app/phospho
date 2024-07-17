@@ -185,14 +185,14 @@ class ExtractorClient:
         """
 
         if len(messages) == 0:
-            logger.debug(f"No messages to process for project {project_id}")
+            logger.debug(f"No messages to process for project {self.project_id}")
             return PipelineResults(events=[], flag=None)
 
         result = await self._post(
             "pipelines/main/messages",
             {
                 "messages": [message.model_dump(mode="json") for message in messages],
-                "project_id": project_id,
+                "project_id": self.project_id,
             },
         )
         if result.status_code != 200:
@@ -250,6 +250,10 @@ class ExtractorClient:
                 "current_usage": current_usage,
                 "max_usage": max_usage,
             },
+            on_success_callback=lambda response: bill_on_stripe(
+                org_id=self.org_id,
+                nb_credits_used=response.json().get("nb_job_results", 0),
+            ),
         )
 
     async def collect_langfuse_data(
@@ -269,4 +273,8 @@ class ExtractorClient:
                 "current_usage": current_usage,
                 "max_usage": max_usage,
             },
+            on_success_callback=lambda response: bill_on_stripe(
+                org_id=self.org_id,
+                nb_credits_used=response.json().get("nb_job_results", 0),
+            ),
         )
