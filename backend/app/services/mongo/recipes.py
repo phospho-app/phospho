@@ -83,7 +83,8 @@ async def run_recipe_on_tasks_batched(
             pagination=Pagination(page=i, per_page=batch_size),
         )
         await extractor_client.run_recipe_on_tasks(
-            tasks=tasks, recipe=recipe, org_id=org_id
+            tasks=tasks,
+            recipe=recipe,
         )
         # Add a sleep to avoid overloading the extractor
         await asyncio.sleep(5)

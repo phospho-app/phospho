@@ -176,7 +176,8 @@ class ExtractorClient:
         return PipelineResults.model_validate(result.json())
 
     async def run_main_pipeline_on_messages(
-        self, messages: List[Message], project_id: str
+        self,
+        messages: List[Message],
     ) -> PipelineResults:
         """
         Run the log procesing pipeline on messages asynchronously

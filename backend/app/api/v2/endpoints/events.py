@@ -69,8 +69,7 @@ async def post_detect_events_in_messages_list(
         org_id=org["org"].get("org_id"),
     )
     pipeline_results = await extractor_client.run_main_pipeline_on_messages(
-        event_detection_request.messages,
-        project_id,
+        event_detection_request.messages
     )
     return EventDetectionReply(
         **event_detection_request.model_dump(),
