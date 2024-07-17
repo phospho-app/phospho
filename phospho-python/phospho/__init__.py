@@ -913,7 +913,10 @@ try:
     import pandas as pd
 
     def tasks_df(
-        limit: int = 1000, with_events: bool = True, with_sessions: bool = True
+        limit: int = 1000,
+        with_events: bool = True,
+        with_sessions: bool = True,
+        with_removed_events: bool = False,
     ) -> pd.DataFrame:
         """
         Get the tasks of a project in a pandas DataFrame.
@@ -922,6 +925,12 @@ try:
 
         If `with_events=True`, the DataFrame will have one row per (task, event).
         If `with_events=False`, the DataFrame will have one row per task.
+
+        If `with_sessions=True`, the DataFrame will have one row per task, with session information.
+        If `with_sessions=False`, the DataFrame will have one row per task, without session information.
+
+        If `with_removed_events=True`, the DataFrame will include removed events ; only possible if `with_events=True`.
+        If `with_removed_events=False`, the DataFrame will not include removed events.
 
         :param limit: The maximum number of tasks to return.
         :param with_events: Whether to include events in the DataFrame. If True, the
@@ -940,6 +949,7 @@ try:
             limit=limit,
             with_events=with_events,
             with_sessions=with_sessions,
+            with_removed_events=with_removed_events,
         ).get("flattened_tasks", [])
         tasks_df = pd.DataFrame(flattened_tasks)
 

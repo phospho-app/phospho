@@ -210,6 +210,7 @@ class Client:
         limit: int = 1000,
         with_events: bool = True,
         with_sessions: bool = True,
+        with_removed_events: bool = False,
     ) -> dict:
         """
         Get the tasks of a project in a flattened format.
@@ -221,6 +222,7 @@ class Client:
                 "limit": limit,
                 "with_events": with_events,
                 "with_sessions": with_sessions,
+                "with_removed_events": with_removed_events,
             },
         )
         return response.json()
