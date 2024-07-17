@@ -223,7 +223,7 @@ class ProjectSettings(BaseModel):
     events: Dict[str, EventDefinition] = Field(default_factory=dict)
     sentiment_threshold: Optional[Threshold] = Field(default_factory=Threshold)
     last_langsmith_extract: Optional[Union[str, datetime.datetime]] = None
-    last_langfuse_extract: Optional[str] = None
+    last_langfuse_extract: Optional[Union[str, datetime.datetime]] = None
     run_evals: Optional[bool] = True
     run_sentiment: Optional[bool] = True
     run_language: Optional[bool] = True

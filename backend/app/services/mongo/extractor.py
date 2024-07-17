@@ -85,7 +85,7 @@ class ExtractorClient:
         endpoint: str,
         data: dict,
         on_success_callback: Optional[Callable] = None,
-    ):
+    ) -> Optional[httpx.Response]:
         """
         Post data to the extractor server
         """
@@ -110,6 +110,8 @@ class ExtractorClient:
                         )
                 if response.status_code == 200 and on_success_callback:
                     on_success_callback(response)
+
+                return response
             except Exception as e:
                 error_id = generate_uuid()
                 error_message = f"Caught error while calling extractor API (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
@@ -122,8 +124,6 @@ class ExtractorClient:
                     else:
                         slack_message = error_message
                     await slack_notification(slack_message)
-
-            return response
 
     async def run_log_process(
         self,
