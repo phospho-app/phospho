@@ -913,7 +913,10 @@ try:
     import pandas as pd
 
     def tasks_df(
-        limit: int = 1000, with_events: bool = True, with_sessions: bool = True
+        limit: int = 1000,
+        with_events: bool = True,
+        with_sessions: bool = True,
+        with_removed_events: bool = False,
     ) -> pd.DataFrame:
         """
         Get the tasks of a project in a pandas DataFrame.
@@ -940,6 +943,7 @@ try:
             limit=limit,
             with_events=with_events,
             with_sessions=with_sessions,
+            with_removed_events=with_removed_events,
         ).get("flattened_tasks", [])
         tasks_df = pd.DataFrame(flattened_tasks)
 
