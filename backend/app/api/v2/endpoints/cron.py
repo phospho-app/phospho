@@ -2,12 +2,11 @@ from fastapi import APIRouter, Header, Request
 from fastapi_simple_rate_limiter import rate_limiter
 
 from loguru import logger
-from app.services.mongo.extractor import collect_langsmith_data, collect_langfuse_data
+from app.services.mongo.extractor import ExtractorClient
 from app.security.authorization import get_quota
 from app.core import config
 from app.services.mongo.cron import fetch_projects_to_sync
 from app.services.mongo.cron import (
-    fetch_and_decrypt_langsmith_credentials,
     fetch_and_decrypt_langfuse_credentials,
 )
 from typing import Dict
@@ -40,10 +39,11 @@ async def run_langsmith_sync_pipeline():
 
     projects_ids = await fetch_projects_to_sync(type="langsmith")
 
+    extractor_client = ExtractorClient()
     for project_id in projects_ids:
         usage_quota = await get_quota(project_id)
 
-        await collect_langsmith_data(
+        await extractor_client.collect_langsmith_data(
             project_id=project_id,
             org_id=usage_quota.org_id,
             langsmith_api_key=None,
@@ -60,6 +60,7 @@ async def run_langfuse_sync_pipeline():
 
     projects_ids = await fetch_projects_to_sync(type="langfuse")
 
+    extractor_client = ExtractorClient()
     for project_id in projects_ids:
         langfuse_credentials = await fetch_and_decrypt_langfuse_credentials(project_id)
 
@@ -67,7 +68,7 @@ async def run_langfuse_sync_pipeline():
         current_usage = usage_quota.current_usage
         max_usage = usage_quota.max_usage
 
-        await collect_langfuse_data(
+        await extractor_client.collect_langfuse_data(
             project_id=project_id,
             org_id=usage_quota.org_id,
             langfuse_credentials=langfuse_credentials,

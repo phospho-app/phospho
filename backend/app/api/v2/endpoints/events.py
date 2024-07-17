@@ -11,10 +11,8 @@ from app.security import (
     verify_propelauth_org_owns_project_id,
 )
 from app.security.authentification import raise_error_if_not_in_pro_tier
-from app.services.mongo.extractor import (
-    run_main_pipeline_on_task,
-    run_main_pipeline_on_messages,
-)
+from app.services.mongo.extractor import ExtractorClient
+
 
 router = APIRouter(tags=["Events"])
 
@@ -36,7 +34,8 @@ async def post_detect_events_in_task(
     raise_error_if_not_in_pro_tier(org, enforce=True)
 
     task = Task(**event_detection_request.model_dump())
-    pipeline_results = await run_main_pipeline_on_task(task)
+    extractor_client = ExtractorClient()
+    pipeline_results = await extractor_client.run_main_pipeline_on_task(task)
 
     return EventDetectionReply(
         **event_detection_request.model_dump(),
@@ -62,7 +61,8 @@ async def post_detect_events_in_messages_list(
     await verify_propelauth_org_owns_project_id(org, project_id)
     raise_error_if_not_in_pro_tier(org, enforce=True)
 
-    pipeline_results = await run_main_pipeline_on_messages(
+    extractor_client = ExtractorClient()
+    pipeline_results = await extractor_client.run_main_pipeline_on_messages(
         event_detection_request.messages,
         project_id,
     )

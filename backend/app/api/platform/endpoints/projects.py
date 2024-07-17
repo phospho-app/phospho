@@ -30,7 +30,10 @@ from app.security.authentification import (
 )
 from app.security.authorization import get_quota
 from app.services.mongo.events import get_all_events
-from app.services.mongo.extractor import collect_langfuse_data, collect_langsmith_data
+from app.services.mongo.extractor import (
+    ExtractorClient,
+    collect_langfuse_data,
+)
 from app.services.mongo.files import process_file_upload_into_log_events
 from app.services.mongo.projects import (
     add_project_events,
@@ -521,8 +524,9 @@ async def connect_langsmith(
 
     usage_quota = await get_quota(project_id)
 
+    extractor_client = ExtractorClient()
     background_tasks.add_task(
-        collect_langsmith_data,
+        extractor_client.collect_langsmith_data,
         project_id=project_id,
         org_id=project.org_id,
         langsmith_api_key=query.langsmith_api_key,
@@ -571,8 +575,9 @@ async def connect_langfuse(
 
     usage_quota = await get_quota(project_id)
 
+    extractor_client = ExtractorClient()
     background_tasks.add_task(
-        collect_langfuse_data,
+        extractor_client.collect_langfuse_data,
         project_id=project_id,
         org_id=project.org_id,
         langfuse_credentials=credentials,

@@ -3,7 +3,7 @@ from typing import Optional
 from app.api.platform.models.explore import Pagination
 from app.db.mongo import get_mongo_db
 from app.services.mongo.events import get_event_definition_from_event_id
-from app.services.mongo.extractor import run_recipe_on_tasks
+from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.projects import get_project_by_id
 from app.services.mongo.tasks import get_all_tasks, get_total_nb_of_tasks
 from fastapi import HTTPException
@@ -72,13 +72,16 @@ async def run_recipe_on_tasks_batched(
     # Batch the tasks to avoid memory issues
     batch_size = 128
     nb_batches = sample_size // batch_size
+    extractor_client = ExtractorClient()
     for i in range(nb_batches + 1):
         tasks = await get_all_tasks(
             project_id=project_id,
             filters=filters,
             pagination=Pagination(page=i, per_page=batch_size),
         )
-        await run_recipe_on_tasks(tasks=tasks, recipe=recipe, org_id=org_id)
+        await extractor_client.run_recipe_on_tasks(
+            tasks=tasks, recipe=recipe, org_id=org_id
+        )
         # Add a sleep to avoid overloading the extractor
         await asyncio.sleep(5)
 
