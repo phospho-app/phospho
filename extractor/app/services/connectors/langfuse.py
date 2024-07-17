@@ -180,7 +180,7 @@ class LangfuseConnector(BaseConnector):
             logger.error(
                 f"No Langfuse observations to process for project id: {self.project_id}"
             )
-            return
+            return 0
 
         for observation in self.observations.data:
             try:

@@ -195,7 +195,7 @@ class LangsmithConnector(BaseConnector):
             logger.error(
                 f"No Langsmith runs to process for project id: {self.project_id}"
             )
-            return
+            return 0
 
         for run in self.runs:
             try:
