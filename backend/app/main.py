@@ -8,8 +8,7 @@ from urllib.parse import urlparse
 import phospho
 from app.core import config
 from app.db.mongo import close_mongo_db, connect_and_init_db
-from app.db.qdrant import close_qdrant, init_qdrant
-from app.services.mongo.extractor import check_health
+from app.services.mongo.extractor import check_health_extractor
 from app.services.mongo.ai_hub import check_health_ai_hub
 from app.services.mongo.datasets import check_health_argilla
 
@@ -109,7 +108,7 @@ app.add_event_handler("shutdown", close_mongo_db)
 
 
 # Other services
-app.add_event_handler("startup", check_health)
+app.add_event_handler("startup", check_health_extractor)
 app.add_event_handler("startup", check_health_ai_hub)
 app.add_event_handler("startup", check_health_argilla)
 
@@ -118,7 +117,7 @@ app.add_event_handler("startup", check_health_argilla)
 
 # Healthcheck
 @app.get("/health")
-def check_health():
+def check_health_extractor():
     return {"status": "ok"}
 
 

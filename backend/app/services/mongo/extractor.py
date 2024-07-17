@@ -1,28 +1,21 @@
-"""
-A service to interact with the extractor server
-"""
-
-# TODO : Refacto
-
 import time
 import traceback
 from typing import Callable, List, Optional
 
 import httpx
+import stripe
 from app.api.v2.models import LogEvent, PipelineResults
 from app.core import config
-from app.db.models import Task, Recipe
+from app.db.models import Recipe, Task
+from app.security import propelauth
 from app.services.slack import slack_notification
-from app.utils import generate_uuid
+from app.utils import generate_uuid, health_check
 from loguru import logger
 
 from phospho.lab import Message
-from app.security import propelauth
-import stripe
-from app.utils import health_check
 
 
-def check_health():
+def check_health_extractor():
     """
     Check if the extractor server is healthy
     """
