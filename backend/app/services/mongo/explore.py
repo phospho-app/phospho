@@ -1925,6 +1925,10 @@ async def fetch_flattened_tasks(
 ) -> List[FlattenedTask]:
     """
     Get a flattened representation of the tasks of a project for analytics
+
+    The with_events parameter allows to include the events in the result.
+    The with_sessions parameter allows to include the session length in the result.
+    The with_removed_events parameter allows to include the removed events in the result ; if with_events is False, this parameter is ignored.
     """
     # Create an aggregated table
     mongo_db = await get_mongo_db()
