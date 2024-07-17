@@ -1932,8 +1932,8 @@ async def fetch_flattened_tasks(
     """
 
     if not with_events and with_removed_events:
-        raise ValueError(
-            "The with_removed_events parameter can only be used if with_events is True"
+        logger.warning(
+            "The with_removed_events parameter is ignored if with_events is False"
         )
 
     # Create an aggregated table
