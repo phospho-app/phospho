@@ -54,7 +54,6 @@ export interface OrgMetadata {
   customer_id?: string | null; // Stripe customer id
   initialized?: boolean | null; // Whether the org has been initialized
   argilla_workspace_id?: string | null; // Argilla workspace id
-  power_bi?: string | null; // Power BI workspace id
 }
 
 export interface Session {
@@ -196,15 +195,6 @@ export interface Project {
   project_name: string;
   org_id: string;
   settings?: ProjectSettings;
-}
-
-export interface PowerBIConnection {
-  org_id: string;
-  server: string;
-  database: string;
-  username: string;
-  password: string;
-  status: string;
 }
 
 export interface HasEnoughLabelledTasks {

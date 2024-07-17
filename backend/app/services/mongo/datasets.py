@@ -1,8 +1,7 @@
 from app.services.mongo.tasks import get_all_tasks
-from app.api.platform.models.integrations import (
+from app.api.platform.models.datasets import (
     DatasetCreationRequest,
     DatasetSamplingParameters,
-    PowerBICredentials,
 )
 from app.services.mongo.projects import get_project_by_id
 from loguru import logger
@@ -13,7 +12,7 @@ from app.utils import health_check
 from typing import List
 import pandas as pd
 from app.db.models import Task
-from app.db.mongo import get_mongo_db
+from app.core import config
 from app.core import constants
 # Language dict
 
@@ -289,7 +288,7 @@ async def generate_dataset_from_project(
     argilla_dataset.add_records(records)
 
     # Push the dataset to Argilla
-    argilla_dataset.push_to_argilla(
+    remote_dataset = argilla_dataset.push_to_argilla(
         name=creation_request.dataset_name, workspace=creation_request.workspace_id
     )
 
@@ -297,16 +296,3 @@ async def generate_dataset_from_project(
 
     # TODO: add rules
     return argilla_dataset
-
-
-async def get_power_bi_credentials(org_id: str) -> PowerBICredentials:
-    mongo_db = await get_mongo_db()
-
-    dedicated_db = await mongo_db["integrations"].find_one(
-        {"org_id": org_id},
-    )
-    del dedicated_db["_id"]
-
-    validated_db = PowerBICredentials.model_validate(dedicated_db)
-
-    return validated_db
