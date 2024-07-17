@@ -1921,9 +1921,14 @@ async def fetch_flattened_tasks(
     limit: int = 1000,
     with_events: bool = True,
     with_sessions: bool = True,
+    with_removed_events: bool = False,
 ) -> List[FlattenedTask]:
     """
     Get a flattened representation of the tasks of a project for analytics
+
+    The with_events parameter allows to include the events in the result.
+    The with_sessions parameter allows to include the session length in the result.
+    The with_removed_events parameter allows to include the removed events in the result ; if with_events is False, this parameter is ignored.
     """
     # Create an aggregated table
     mongo_db = await get_mongo_db()
@@ -1943,58 +1948,7 @@ async def fetch_flattened_tasks(
         "task_created_at": "$created_at",
         "session_id": "$session_id",
     }
-    if with_events:
-        pipeline.extend(
-            [
-                # Deduplicate events based on event_name
-                {
-                    "$set": {
-                        "events": {
-                            "$reduce": {
-                                "input": "$events",
-                                "initialValue": [],
-                                "in": {
-                                    "$concatArrays": [
-                                        "$$value",
-                                        {
-                                            "$cond": [
-                                                {
-                                                    "$in": [
-                                                        "$$this.event_name",
-                                                        "$$value.event_name",
-                                                    ]
-                                                },
-                                                [],
-                                                ["$$this"],
-                                            ]
-                                        },
-                                    ]
-                                },
-                            }
-                        },
-                    }
-                },
-                {
-                    "$unwind": {
-                        "path": "$events",
-                        "preserveNullAndEmptyArrays": True,
-                    }
-                },
-            ]
-        )
-        return_columns = {
-            **return_columns,
-            "event_name": "$events.event_name",
-            "event_created_at": "$events.created_at",
-            "event_removal_reason": "$events.removal_reason",
-            "event_removed": "$events.removed",
-            "event_confirmed": "$events.confirmed",
-            "event_score_range_value": "$events.score_range.value",
-            "event_score_range_min": "$events.score_range.min",
-            "event_score_range_max": "$events.score_range.max",
-            "event_score_range_score_type": "$events.score_range.score_type",
-            "event_source": "$events.source",
-        }
+
     if with_sessions:
         pipeline.extend(
             [
@@ -2014,16 +1968,168 @@ async def fetch_flattened_tasks(
             "session_length": "$session.session_length",
         }
 
+    if with_events:
+        if not with_removed_events:
+            pipeline.extend(
+                [
+                    # Deduplicate events based on event_name
+                    {
+                        "$set": {
+                            "events": {
+                                "$reduce": {
+                                    "input": "$events",
+                                    "initialValue": [],
+                                    "in": {
+                                        "$concatArrays": [
+                                            "$$value",
+                                            {
+                                                "$cond": [
+                                                    {
+                                                        "$in": [
+                                                            "$$this.event_name",
+                                                            "$$value.event_name",
+                                                        ]
+                                                    },
+                                                    [],
+                                                    ["$$this"],
+                                                ]
+                                            },
+                                        ]
+                                    },
+                                }
+                            },
+                        }
+                    },
+                    {
+                        "$unwind": {
+                            "path": "$events",
+                            "preserveNullAndEmptyArrays": True,
+                        }
+                    },
+                ]
+            )
+
+        # Query Mongo
+        else:
+            pipeline.extend(
+                [
+                    {
+                        "$lookup": {
+                            "from": "events",
+                            "localField": "id",
+                            "foreignField": "task_id",
+                            "as": "events",
+                        },
+                    },
+                    {
+                        "$addFields": {
+                            "events": {
+                                "$filter": {
+                                    "input": "$events",
+                                    "as": "event",
+                                    "cond": {
+                                        "$or": [
+                                            # The field is present in the event definition and the task
+                                            {
+                                                "$and": [
+                                                    {
+                                                        "$eq": [
+                                                            "$$event.event_definition.is_last_task",
+                                                            True,
+                                                        ]
+                                                    },
+                                                    {
+                                                        "$eq": [
+                                                            "$is_last_task",
+                                                            True,
+                                                        ]
+                                                    },
+                                                ]
+                                            },
+                                            # the field is not present in the event definition
+                                            {
+                                                "$not": [
+                                                    "$$event.event_definition.is_last_task",
+                                                ]
+                                            },
+                                        ],
+                                    },
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "$set": {
+                            "events": {
+                                "$reduce": {
+                                    "input": "$events",
+                                    "initialValue": [],
+                                    "in": {
+                                        "$concatArrays": [
+                                            "$$value",
+                                            {
+                                                "$cond": [
+                                                    {
+                                                        "$in": [
+                                                            "$$this.event_definition.id",
+                                                            "$$value.event_definition.id",
+                                                        ]
+                                                    },
+                                                    [],
+                                                    ["$$this"],
+                                                ]
+                                            },
+                                        ]
+                                    },
+                                }
+                            },
+                        }
+                    },
+                    {
+                        "$unwind": {
+                            "path": "$events",
+                            "preserveNullAndEmptyArrays": True,
+                        }
+                    },
+                ]
+            )
+
+        return_columns = {
+            **return_columns,
+            "event_name": "$events.event_name",
+            "event_created_at": "$events.created_at",
+            "event_confirmed": "$events.confirmed",
+            "event_score_range_value": "$events.score_range.value",
+            "event_score_range_min": "$events.score_range.min",
+            "event_score_range_max": "$events.score_range.max",
+            "event_score_range_score_type": "$events.score_range.score_type",
+            "event_source": "$events.source",
+        }
+
+        if with_removed_events:
+            return_columns = {
+                **return_columns,
+                "event_removed": "$events.removed",
+                "event_removal_reason": "$events.removal_reason",
+            }
+
     pipeline.extend(
         [
             {"$project": return_columns},
             {"$sort": {"task_created_at": -1}},
         ]
     )
-    # Query Mongo
-    flattened_tasks = (
-        await mongo_db["tasks_with_events"].aggregate(pipeline).to_list(length=limit)
-    )
+
+    if with_events and with_removed_events:
+        flattened_tasks = (
+            await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
+        )
+    else:
+        flattened_tasks = (
+            await mongo_db["tasks_with_events"]
+            .aggregate(pipeline)
+            .to_list(length=limit)
+        )
     # Ignore _id field
     flattened_tasks = [
         {k: v for k, v in task.items() if k != "_id"} for task in flattened_tasks
