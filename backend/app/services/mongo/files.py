@@ -1,18 +1,16 @@
+from typing import List
+
+import pandas as pd
 from app.api.v2.models.log import LogEvent
-from app.core import config
+from app.core.config import CSV_UPLOAD_MAX_ROWS
+from app.db.models import DatasetRow
+from app.db.mongo import get_mongo_db
 from app.security.authorization import get_quota
 from app.services.mongo.emails import send_quota_exceeded_email
-from app.services.mongo.extractor import run_log_process
-import pandas as pd
-from loguru import logger
-from typing import List
-from pydantic import ValidationError
-
-from app.db.models import DatasetRow
-
-from app.db.mongo import get_mongo_db
-from app.core.config import CSV_UPLOAD_MAX_ROWS
+from app.services.mongo.extractor import ExtractorClient
 from app.utils import generate_uuid
+from loguru import logger
+from pydantic import ValidationError
 
 
 async def process_csv_file_as_df(
@@ -199,9 +197,8 @@ async def process_file_upload_into_log_events(
             logger.error(f"Error when uploading csv and LogEvent creation: {e}")
 
     # Send tasks to the extractor
-    await run_log_process(
+    extractor_client = ExtractorClient(org_id=org_id, project_id=project_id)
+    await extractor_client.run_log_process(
         logs_to_process=logs_to_process,
         extra_logs_to_save=extra_logs_to_save,
-        project_id=project_id,
-        org_id=org_id,
     )
