@@ -23,3 +23,12 @@ class DatasetCreationRequest(BaseModel):
     sampling_parameters: DatasetSamplingParameters = Field(
         default_factory=lambda: DatasetSamplingParameters(sampling_type="naive")
     )
+
+
+class PowerBICredentials(BaseModel, extra="allow"):
+    org_id: str
+    server: str
+    database: str
+    username: str
+    password: str
+    status: Optional[str] = None

@@ -11,7 +11,7 @@ from app.db.mongo import close_mongo_db, connect_and_init_db
 from app.db.qdrant import close_qdrant, init_qdrant
 from app.services.mongo.extractor import check_health
 from app.services.mongo.ai_hub import check_health_ai_hub
-from app.services.mongo.datasets import check_health_argilla
+from app.services.mongo.integrations import check_health_argilla
 
 logging.info(f"ENVIRONMENT : {config.ENVIRONMENT}")
 
@@ -184,10 +184,10 @@ app.mount("/v0", api_v2)
 
 ### PLATEFORM ENDPOINTS ###
 from app.api.platform.endpoints import (
-    datasets,
     debug,
     events,
     explore,
+    integrations,
     metadata,
     organizations,
     projects,
@@ -199,7 +199,7 @@ from app.api.platform.endpoints import (
 
 api_platform = FastAPI()
 
-api_platform.include_router(datasets.router)
+api_platform.include_router(integrations.router)
 api_platform.include_router(debug.router)
 api_platform.include_router(organizations.router)
 api_platform.include_router(projects.router)
