@@ -254,14 +254,16 @@ class ExtractorClient:
 
     async def collect_langfuse_data(
         self,
-        langfuse_credentials: dict,
+        langfuse_secret_key: str,
+        langfuse_public_key: str,
         current_usage: int,
         max_usage: Optional[int] = None,
     ):
         await self._post(
             "pipelines/langfuse",
             {
-                "langfuse_credentials": langfuse_credentials,
+                "langfuse_secret_key": langfuse_secret_key,
+                "langfuse_public_key": langfuse_public_key,
                 "project_id": self.project_id,
                 "org_id": self.org_id,
                 "current_usage": current_usage,

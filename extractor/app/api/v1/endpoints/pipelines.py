@@ -1,24 +1,18 @@
-from datetime import datetime
-from typing import List
-
 from app.api.v1.models import (
     AugmentedOpenTelemetryData,
-    LogEvent,
     LogProcessRequest,
     PipelineLangsmithRequest,
     PipelineResults,
     RunMainPipelineOnMessagesRequest,
     RunMainPipelineOnTaskRequest,
     RunRecipeOnTaskRequest,
+    PipelineLangfuseRequest,
 )
 from app.db.mongo import get_mongo_db
-
 from app.security.authentication import authenticate_key
-from app.services.connectors import LangsmithConnector
+from app.services.connectors import LangfuseConnector, LangsmithConnector
 from app.services.log import process_log
-
 from app.services.pipelines import (
-    encrypt_and_store_langfuse_credentials,
     messages_main_pipeline,
     recipe_pipeline,
     store_opentelemetry_data_in_db,
@@ -27,7 +21,6 @@ from app.services.pipelines import (
 )
 from app.services.projects import get_project_by_id
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from langfuse import Langfuse
 from loguru import logger
 
 router = APIRouter()
@@ -272,12 +265,13 @@ async def extract_langsmith_data(
 
     langsmith_connector = LangsmithConnector(
         project_id=request.project_id,
+        langsmith_api_key=request.langsmith_api_key,
+        langsmith_project_name=request.langsmith_project_name,
     )
     return await langsmith_connector.sync(
         org_id=request.org_id,
         current_usage=request.current_usage,
         max_usage=request.max_usage,
-        langsmith_api_key=request.langsmith_api_key,
     )
 
 
@@ -286,27 +280,18 @@ async def extract_langsmith_data(
     description="Run the langfuse pipeline on a task",
 )
 async def extract_langfuse_data(
-    user_data: dict,
-    background_tasks: BackgroundTasks,
+    request: PipelineLangfuseRequest,
 ):
-    logger.debug(f"Received LangFuse connection data for org id: {user_data['org_id']}")
+    logger.debug(f"Received LangFuse connection data for org id: {request.org_id}")
 
-    background_tasks.add_task(
-        process_log,
-        project_id=user_data["project_id"],
-        org_id=user_data["org_id"],
-        logs_to_process=logs_to_process,
-        extra_logs_to_save=extra_logs_to_save,
+    langfuse_connector = LangfuseConnector(
+        project_id=request.project_id,
+        langfuse_secret_key=request.langfuse_secret_key,
+        langfuse_public_key=request.langfuse_public_key,
     )
 
-    logger.debug(
-        f"Finished processing langsmith runs for project id: {user_data['project_id']}"
+    return await langfuse_connector.sync(
+        org_id=request.org_id,
+        current_usage=request.current_usage,
+        max_usage=request.max_usage,
     )
-
-    await encrypt_and_store_langfuse_credentials(
-        project_id=user_data["project_id"],
-        langfuse_secret_key=user_data["langfuse_credentials"]["langfuse_secret_key"],
-        langfuse_public_key=user_data["langfuse_credentials"]["langfuse_public_key"],
-    )
-
-    return {"status": "ok"}

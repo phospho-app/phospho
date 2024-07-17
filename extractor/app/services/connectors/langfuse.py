@@ -7,7 +7,6 @@ from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from langfuse import Langfuse
 from loguru import logger
-from pydantic import BaseModel
 
 from app.api.v1.models import LogEvent
 from app.core import config
@@ -17,36 +16,60 @@ from app.services.log import process_log
 from app.services.mongo.projects import get_project_by_id
 
 
-class LangfuseCredentials(BaseModel):
-    langfuse_public_key: str
-    langfuse_secret_key: str
-
-
 class LangfuseConnector(BaseConnector):
     project_id: str
-    credentials: Optional[LangfuseCredentials] = None
     langfuse: Optional[Langfuse] = None
     observations: Optional[Langfuse.Observations] = None
 
-    async def load_config(
+    def __init__(
         self,
+        project_id: str,
         langfuse_public_key: Optional[str] = None,
         langfuse_secret_key: Optional[str] = None,
     ):
-        if langfuse_public_key is not None and langfuse_secret_key is not None:
-            self.langfuse_public_key = langfuse_public_key
-            self.langfuse_secret_key = langfuse_secret_key
+        self.project_id = project_id
+        self.langfuse_public_key = langfuse_public_key
+        self.langfuse_secret_key = langfuse_secret_key
+
+    async def load_config(self):
+        """
+        Fetch and decrypt the Langfuse credentials from the database
+        """
+
+        if (
+            self.langfuse_public_key is not None
+            and self.langfuse_secret_key is not None
+        ):
             return
 
-    async def register(
-        self,
-        langfuse_secret_key: Optional[str] = None,
-        langfuse_public_key: Optional[str] = None,
-    ):
+        mongo_db = await get_mongo_db()
+        encryption_key = config.EXTRACTOR_SECRET_KEY
+
+        # Fetch the encrypted credentials from the database
+        credentials = await mongo_db["keys"].find_one(
+            {"project_id": self.project_id},
+        )
+
+        # Decrypt the credentials
+        langfuse_secret_key = credentials.get("langfuse_secret_key", None)
+        source = base64.b64decode(langfuse_secret_key.encode("latin-1"))
+
+        key = SHA256.new(
+            encryption_key.encode("utf-8")
+        ).digest()  # use SHA-256 over our key to get a proper-sized AES key
+        IV = source[: AES.block_size]  # extract the IV from the beginning
+        decryptor = AES.new(key, AES.MODE_CBC, IV)
+        data = decryptor.decrypt(source[AES.block_size :])  # decrypt the data
+        padding = data[-1]  # extract the padding length
+
+        self.langfuse_public_key = credentials.get("langfuse_public_key", None)
+        self.langfuse_secret_key = data[:-padding].decode("utf-8")
+
+    async def register(self):
         """
         Store the encrypted LangFuse credentials in the database
         """
-        if langfuse_secret_key is None or langfuse_public_key is None:
+        if self.langfuse_secret_key is None or self.langfuse_public_key is None:
             logger.info("No Langfuse credentials provided")
             return
 
@@ -57,7 +80,7 @@ class LangfuseConnector(BaseConnector):
             logger.error("No encryption key provided")
             return
 
-        api_key_as_bytes = langfuse_secret_key.encode("utf-8")
+        api_key_as_bytes = self.langfuse_secret_key.encode("utf-8")
 
         # Encrypt the credentials
         # use SHA-256 over our key to get a proper-sized AES key
@@ -80,7 +103,7 @@ class LangfuseConnector(BaseConnector):
                 "$set": {
                     "type": "langfuse",
                     "langfuse_secret_key": base64.b64encode(data).decode("latin-1"),
-                    "langfuse_public_key": langfuse_public_key,
+                    "langfuse_public_key": self.langfuse_public_key,
                 },
             },
             upsert=True,
@@ -148,8 +171,8 @@ class LangfuseConnector(BaseConnector):
         self,
         org_id: str,
         current_usage: int,
-        max_usage: int,
-    ):
+        max_usage: Optional[int] = None,
+    ) -> int:
         logs_to_process: List[LogEvent] = []
         extra_logs_to_save: List[LogEvent] = []
 
@@ -194,29 +217,4 @@ class LangfuseConnector(BaseConnector):
             extra_logs_to_save=extra_logs_to_save,
         )
 
-    async def sync(
-        self,
-        org_id: str,
-        current_usage: int,
-        max_usage: int,
-        langfuse_public_key: Optional[str] = None,
-        langfuse_secret_key: Optional[str] = None,
-    ):
-        await self.load_config(
-            langfuse_public_key=langfuse_public_key,
-            langfuse_secret_key=langfuse_secret_key,
-        )
-        await self.pull()
-        await self.push(
-            org_id=org_id,
-            current_usage=current_usage,
-            max_usage=max_usage,
-        )
-        await self.register(
-            langfuse_public_key=langfuse_public_key,
-            langfuse_secret_key=langfuse_secret_key,
-        )
-        return {
-            "status": "ok",
-            "message": "Langfuse synchronisation pipeline ran successfully",
-        }
+        return len(logs_to_process)

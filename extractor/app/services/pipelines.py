@@ -1,36 +1,26 @@
-from collections import defaultdict
 import time
+from collections import defaultdict
 from typing import Dict, List, Literal, Optional
 
 from loguru import logger
 
+from app.api.v1.models.pipelines import PipelineResults
 from app.core import config
 from app.db.models import (
     Eval,
     Event,
     EventDefinition,
-    Recipe,
     LlmCall,
+    Recipe,
     Task,
 )
 from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
-
+from app.services.sentiment_analysis import run_sentiment_and_language_analysis
 from app.services.webhook import trigger_webhook
 from phospho import lab
-from phospho.models import ResultType, SentimentObject, JobResult
-
-from app.api.v1.models.pipelines import PipelineResults
-
-from app.services.sentiment_analysis import run_sentiment_and_language_analysis
-
-from phospho.models import Project, EvaluationModel
-from Crypto.Cipher import AES
-from Crypto.Hash import SHA256
-from Crypto import Random
-import os
-import base64
+from phospho.models import EvaluationModel, JobResult, ResultType, SentimentObject
 
 
 class EventConfig(lab.JobConfig):

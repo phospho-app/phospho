@@ -2,7 +2,6 @@ import base64
 from datetime import datetime
 from typing import List, Optional
 from app.core import config
-from pydantic import BaseModel
 
 from Crypto import Random
 from Crypto.Cipher import AES
@@ -19,28 +18,28 @@ from app.services.log import process_log
 from app.services.projects import get_project_by_id
 
 
-class LangsmithCredentials(BaseModel):
-    langsmith_api_key: str
-    langsmith_project_name: str
-
-
 class LangsmithConnector(BaseConnector):
     project_id: str
-    credentials: Optional[LangsmithCredentials] = None
     client: Optional[Client] = None
     runs: Optional[List[Run]] = None
+    langsmith_api_key: Optional[str] = None
+    langsmith_project_name: Optional[str] = None
 
-    async def load_config(
+    def __init__(
         self,
+        project_id: str,
         langsmith_api_key: Optional[str] = None,
         langsmith_project_name: Optional[str] = None,
     ):
-        if langsmith_api_key is not None and langsmith_project_name is not None:
-            self.credentials = LangsmithCredentials(
-                langsmith_api_key=langsmith_api_key,
-                langsmith_project_name=langsmith_project_name,
-            )
-            self.client = Client(api_key=self.credentials.langsmith_api_key)
+        self.project_id = project_id
+        self.langsmith_api_key = langsmith_api_key
+        self.langsmith_project_name = langsmith_project_name
+
+    async def load_config(self):
+        if (
+            self.langsmith_api_key is not None
+            and self.langsmith_project_name is not None
+        ):
             return
 
         mongo_db = await get_mongo_db()
@@ -54,10 +53,11 @@ class LangsmithConnector(BaseConnector):
             {"project_id": self.project_id},
         )
 
-        credentials_data = LangsmithCredentials.model_validate(credentials)
+        langsmith_api_key = credentials.get("langsmith_api_key", None)
+        langsmith_project_name = credentials.get("langsmith_project_name", None)
 
         # Decrypt the credentials
-        source = base64.b64decode(credentials_data.langsmith_api_key.encode("latin-1"))
+        source = base64.b64decode(langsmith_api_key.encode("latin-1"))
 
         # use SHA-256 over our key to get a proper-sized AES key
         key = SHA256.new(encryption_key.encode("utf-8")).digest()
@@ -66,21 +66,17 @@ class LangsmithConnector(BaseConnector):
         data = decryptor.decrypt(source[AES.block_size :])  # decrypt the data
         padding = data[-1]  # extract the padding length
 
-        self.credentials = LangsmithCredentials(
-            langsmith_api_key=data[:-padding].decode("utf-8"),
-            langsmith_project_name=credentials_data.langsmith_project_name,
-        )
+        self.langsmith_api_key = data[:-padding].decode("utf-8")
+        self.langsmith_project_name = langsmith_project_name
 
     async def register(
         self,
-        langsmith_api_key: Optional[str] = None,
-        langsmith_project_name: Optional[str] = None,
     ):
         """
         Store the encrypted Langsmith credentials in the database
         """
 
-        if langsmith_api_key is None or langsmith_project_name is None:
+        if self.langsmith_api_key is None or self.langsmith_project_name is None:
             logger.info("No Langsmith credentials provided")
             return
 
@@ -91,7 +87,7 @@ class LangsmithConnector(BaseConnector):
             logger.error("No encryption key provided")
             return
 
-        api_key_as_bytes = langsmith_api_key.encode("utf-8")
+        api_key_as_bytes = self.langsmith_api_key.encode("utf-8")
 
         # Encrypt the credentials
         # use SHA-256 over our key to get a proper-sized AES key
@@ -113,7 +109,7 @@ class LangsmithConnector(BaseConnector):
                 "$set": {
                     "type": "langsmith",
                     "langsmith_api_key": base64.b64encode(data).decode("latin-1"),
-                    "langsmith_project_name": langsmith_project_name,
+                    "langsmith_project_name": self.langsmith_project_name,
                 },
             },
             upsert=True,
@@ -190,8 +186,8 @@ class LangsmithConnector(BaseConnector):
         self,
         org_id: str,
         current_usage: int,
-        max_usage: int,
-    ):
+        max_usage: Optional[int] = None,
+    ) -> int:
         logs_to_process: List[LogEvent] = []
         extra_logs_to_save: List[LogEvent] = []
 
@@ -209,8 +205,10 @@ class LangsmithConnector(BaseConnector):
                         input += message["kwargs"]["content"]
 
                 output = ""
-                for generation in run.outputs["generations"]:
-                    output += generation["text"]
+                if run.outputs:
+                    generations = run.outputs.get("generations", [])
+                    for generation in generations:
+                        output += generation["text"]
 
                 if input == "" or output == "":
                     continue
@@ -254,29 +252,4 @@ class LangsmithConnector(BaseConnector):
             f"Finished processing langsmith runs for project id: {self.project_id}"
         )
 
-    async def sync(
-        self,
-        org_id: str,
-        current_usage: int,
-        max_usage: int,
-        langsmith_api_key: Optional[str] = None,
-        langsmith_project_name: Optional[str] = None,
-    ):
-        await self.load_config(
-            langsmith_api_key=langsmith_api_key,
-            langsmith_project_name=langsmith_project_name,
-        )
-        await self.pull()
-        await self.push(
-            org_id=org_id,
-            current_usage=current_usage,
-            max_usage=max_usage,
-        )
-        await self.register(
-            langsmith_api_key=langsmith_api_key,
-            langsmith_project_name=langsmith_project_name,
-        )
-        return {
-            "status": "ok",
-            "message": "Langsmith synchronisation pipeline ran successfully",
-        }
+        return len(logs_to_process)
