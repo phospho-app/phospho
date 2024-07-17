@@ -322,7 +322,8 @@ async def store_open_telemetry_data(
 async def collect_langsmith_data(
     project_id: str,
     org_id: str,
-    langsmith_credentials: dict,
+    langsmith_api_key: str,
+    langsmith_project_name: str,
     current_usage: int,
     max_usage: int,
 ):
@@ -331,7 +332,8 @@ async def collect_langsmith_data(
             response = await client.post(
                 f"{config.EXTRACTOR_URL}/v1/pipelines/langsmith",  # WARNING: hardcoded API version
                 json={
-                    "langsmith_credentials": langsmith_credentials,
+                    "langsmith_api_key": langsmith_api_key,
+                    "langsmith_project_name": langsmith_project_name,
                     "project_id": project_id,
                     "org_id": org_id,
                     "current_usage": current_usage,

@@ -1,13 +1,10 @@
 import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import pandas as pd
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
-from google.cloud.storage.transfer_manager import upload_chunks_concurrently
-from google.cloud.storage import Bucket, Blob, Client
-from google.oauth2 import service_account
+from google.cloud.storage import Bucket
 
-from google.auth.credentials import Credentials
 from loguru import logger
 from propelauth_fastapi import User
 
@@ -24,6 +21,7 @@ from app.api.platform.models import (
     Tasks,
     Tests,
     Users,
+    ConnectLangsmithQuery,
 )
 from app.core import config
 from app.security.authentification import (
@@ -494,7 +492,7 @@ async def post_upload_tasks(
 )
 async def connect_langsmith(
     project_id: str,
-    credentials: dict,
+    query: ConnectLangsmithQuery,
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
@@ -510,9 +508,9 @@ async def connect_langsmith(
         # This snippet is used to test the connection with Langsmith and verify the API key/project name
         from langsmith import Client
 
-        client = Client(api_key=credentials["langsmith_api_key"])
+        client = Client(api_key=query.langsmith_api_key)
         runs = client.list_runs(
-            project_name=credentials["langsmith_project_name"],
+            project_name=query.langsmith_project_name,
             start_time=datetime.datetime.now() - datetime.timedelta(seconds=1),
         )
         _ = [run for run in runs]
@@ -529,7 +527,8 @@ async def connect_langsmith(
         collect_langsmith_data,
         project_id=project_id,
         org_id=project.org_id,
-        langsmith_credentials=credentials,
+        langsmith_api_key=query.langsmith_api_key,
+        langsmith_project_name=query.langsmith_project_name,
         current_usage=current_usage,
         max_usage=max_usage,
     )

@@ -35,3 +35,12 @@ class AugmentedOpenTelemetryData(BaseModel):
     project_id: str
     org_id: str
     open_telemetry_data: dict
+
+
+class PipelineLangsmithRequest(BaseModel):
+    project_id: str
+    org_id: str
+    current_usage: int
+    max_usage: int
+    langsmith_api_key: Optional[str] = None
+    langsmith_project_name: Optional[str] = None

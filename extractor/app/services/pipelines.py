@@ -957,27 +957,6 @@ async def store_opentelemetry_data_in_db(
     return {"status": "ok"}
 
 
-async def get_last_langsmith_extract(
-    project_id: str,
-):
-    """
-    Get the last Langsmith extract for a project
-    """
-    mongo_db = await get_mongo_db()
-
-    project = await mongo_db["projects"].find_one(
-        {"id": project_id},
-    )
-
-    try:
-        project_validated = Project.model_validate(project)
-    except Exception as e:
-        logger.error(f"Error validating project data: {e}")
-        return None
-
-    return project_validated.settings.last_langsmith_extract
-
-
 async def get_last_langfuse_extract(
     project_id: str,
 ):
@@ -997,21 +976,6 @@ async def get_last_langfuse_extract(
         return None
 
     return project_validated.settings.last_langfuse_extract
-
-
-async def change_last_langsmith_extract(
-    project_id: str,
-    new_last_extract_date: str,
-):
-    """
-    Change the last Langsmith extract for a project
-    """
-    mongo_db = await get_mongo_db()
-
-    await mongo_db["projects"].update_one(
-        {"id": project_id},
-        {"$set": {"settings.last_langsmith_extract": new_last_extract_date}},
-    )
 
 
 async def encrypt_and_store_langsmith_credentials(
