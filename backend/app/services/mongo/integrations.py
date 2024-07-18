@@ -380,9 +380,10 @@ async def export_project_to_dedicated_postgres(
     logger.debug(f"Connected to Postgres {credentials.server}:{credentials.database}")
 
     # We batch to avoid memory issues
-    batch_size = 128
+    batch_size = 1024
     nb_batches = total_nb_tasks // batch_size
 
+    columns = None
     for i in range(nb_batches + 1):
         logger.debug(f"Exporting batch {i} of {nb_batches}")
 
@@ -396,6 +397,13 @@ async def export_project_to_dedicated_postgres(
 
         # Convert the list of FlattenedTask to a pandas dataframe
         tasks_df = pd.DataFrame([task.model_dump() for task in flattened_tasks])
+
+        if columns is None:
+            columns = tasks_df.columns
+        else:
+            # Only keep the columns that are in the first batch
+            # And remove columns that are not in the first batch
+            tasks_df = tasks_df[list(set(columns).intersection(set(tasks_df.columns)))]
 
         # Upload dataframe to Postgres
         # There should be no need to sleep in between batches, as this connector is synchronous
