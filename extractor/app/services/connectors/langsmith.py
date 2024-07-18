@@ -69,7 +69,7 @@ class LangsmithConnector(BaseConnector):
         self.langsmith_api_key = data[:-padding].decode("utf-8")
         self.langsmith_project_name = langsmith_project_name
 
-    async def register(
+    async def save_config(
         self,
     ):
         """

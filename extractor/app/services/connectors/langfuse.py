@@ -66,7 +66,7 @@ class LangfuseConnector(BaseConnector):
         self.langfuse_public_key = credentials.get("langfuse_public_key", None)
         self.langfuse_secret_key = data[:-padding].decode("utf-8")
 
-    async def register(self):
+    async def save_config(self):
         """
         Store the encrypted LangFuse credentials in the database
         """

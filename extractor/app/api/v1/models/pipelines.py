@@ -28,9 +28,11 @@ class RunRecipeOnTaskRequest(BaseModel):
     recipe: Recipe
 
 
-class AugmentedOpenTelemetryData(BaseModel):
+class PipelineOpentelemetryRequest(BaseModel):
     project_id: str
     org_id: str
+    current_usage: int
+    max_usage: Optional[int] = None
     open_telemetry_data: dict
 
 

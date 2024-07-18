@@ -14,13 +14,13 @@ class BaseConnector:
         """
         Load the configuration for the connector
         """
-        raise NotImplementedError
+        return
 
-    async def register(self, *args, **kwargs):
+    async def save_config(self, *args, **kwargs):
         """
         Register the configuration for the connector and the fact that it will be used
         """
-        raise NotImplementedError
+        return
 
     async def _dump(self):
         """
@@ -60,7 +60,7 @@ class BaseConnector:
             current_usage=current_usage,
             max_usage=max_usage,
         )
-        await self.register(**kwargs)
+        await self.save_config(**kwargs)
         return {
             "status": "ok",
             "message": "Synchronisation pipeline ran successfully",
