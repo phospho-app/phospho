@@ -1,18 +1,16 @@
 import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import pandas as pd
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
-from google.cloud.storage.transfer_manager import upload_chunks_concurrently
-from google.cloud.storage import Bucket, Blob, Client
-from google.oauth2 import service_account
-
-from google.auth.credentials import Credentials
+from google.cloud.storage import Bucket
 from loguru import logger
 from propelauth_fastapi import User
 
 from app.api.platform.models import (
     AddEventsQuery,
+    ConnectLangfuseQuery,
+    ConnectLangsmithQuery,
     Events,
     Project,
     ProjectDataFilters,
@@ -32,7 +30,7 @@ from app.security.authentification import (
 )
 from app.security.authorization import get_quota
 from app.services.mongo.events import get_all_events
-from app.services.mongo.extractor import collect_langfuse_data, collect_langsmith_data
+from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.files import process_file_upload_into_log_events
 from app.services.mongo.projects import (
     add_project_events,
@@ -494,7 +492,7 @@ async def post_upload_tasks(
 )
 async def connect_langsmith(
     project_id: str,
-    credentials: dict,
+    query: ConnectLangsmithQuery,
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
@@ -510,9 +508,9 @@ async def connect_langsmith(
         # This snippet is used to test the connection with Langsmith and verify the API key/project name
         from langsmith import Client
 
-        client = Client(api_key=credentials["langsmith_api_key"])
+        client = Client(api_key=query.langsmith_api_key)
         runs = client.list_runs(
-            project_name=credentials["langsmith_project_name"],
+            project_name=query.langsmith_project_name,
             start_time=datetime.datetime.now() - datetime.timedelta(seconds=1),
         )
         _ = [run for run in runs]
@@ -521,17 +519,18 @@ async def connect_langsmith(
             status_code=400, detail=f"Error: Could not connect to Langsmith: {e}"
         )
 
-    org_plan = await get_quota(project_id)
-    current_usage = org_plan.get("current_usage", 0)
-    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+    usage_quota = await get_quota(project_id)
 
-    background_tasks.add_task(
-        collect_langsmith_data,
+    extractor_client = ExtractorClient(
         project_id=project_id,
         org_id=project.org_id,
-        langsmith_credentials=credentials,
-        current_usage=current_usage,
-        max_usage=max_usage,
+    )
+    background_tasks.add_task(
+        extractor_client.collect_langsmith_data,
+        langsmith_api_key=query.langsmith_api_key,
+        langsmith_project_name=query.langsmith_project_name,
+        current_usage=usage_quota.current_usage,
+        max_usage=usage_quota.max_usage,
     )
     return {"status": "ok", "message": "Langsmith connected successfully."}
 
@@ -542,7 +541,7 @@ async def connect_langsmith(
 )
 async def connect_langfuse(
     project_id: str,
-    credentials: dict,
+    query: ConnectLangfuseQuery,
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
@@ -559,8 +558,8 @@ async def connect_langfuse(
         from langfuse import Langfuse
 
         langfuse = Langfuse(
-            public_key=credentials["langfuse_public_key"],
-            secret_key=credentials["langfuse_secret_key"],
+            public_key=query.langfuse_public_key,
+            secret_key=query.langfuse_secret_key,
             host="https://cloud.langfuse.com",
         )
         langfuse.auth_check()
@@ -572,17 +571,18 @@ async def connect_langfuse(
             status_code=400, detail=f"Error: Could not connect to LangFuse: {e}"
         )
 
-    org_plan = await get_quota(project_id)
-    current_usage = org_plan.get("current_usage", 0)
-    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+    usage_quota = await get_quota(project_id)
 
-    background_tasks.add_task(
-        collect_langfuse_data,
+    extractor_client = ExtractorClient(
         project_id=project_id,
         org_id=project.org_id,
-        langfuse_credentials=credentials,
-        current_usage=current_usage,
-        max_usage=max_usage,
+    )
+    background_tasks.add_task(
+        extractor_client.collect_langfuse_data,
+        langfuse_secret_key=query.langfuse_secret_key,
+        langfuse_public_key=query.langfuse_public_key,
+        current_usage=usage_quota.current_usage,
+        max_usage=usage_quota.max_usage,
     )
     return {"status": "ok", "message": "LangFuse connected successfully."}
 

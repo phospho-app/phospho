@@ -1,9 +1,10 @@
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
 from app.services.mongo.organizations import get_usage_quota
+from phospho.models import UsageQuota
 
 
-async def get_quota(project_id: str) -> dict:
+async def get_quota(project_id: str) -> UsageQuota:
     """
     Get the quota of a project
     """
@@ -17,9 +18,11 @@ async def get_quota(project_id: str) -> dict:
         raise ValueError(f"Organization {org_id} not found for quota")
     org_plan = "hobby"
     org_metadata = org.get("metadata", None)
+    customer_id = None
     if org_metadata:
         org_plan = org_metadata.get("plan", "hobby")
-    usage = await get_usage_quota(org_id, org_plan)
+        customer_id = org_metadata.get("customer_id", None)
+    usage = await get_usage_quota(org_id=org_id, plan=org_plan, customer_id=customer_id)
     return usage
 
 
@@ -51,7 +54,7 @@ async def authorize_main_pipeline(project_id: str) -> bool:
     # Get the usage quota
     usage = await get_usage_quota(org_id, org_plan)
 
-    if usage["max_usage"] is None:
+    if usage.max_usage is None:
         return True
     else:
-        return usage["current_usage"] < usage["max_usage"]
+        return usage.current_usage < usage.max_usage

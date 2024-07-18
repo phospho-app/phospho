@@ -372,9 +372,9 @@ async def post_detect_clusters(
     Run the clusters detection algorithm on a project
     """
     org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
-    org_plan = await get_quota(project_id)
-    current_usage = org_plan.get("current_usage", 0)
-    max_usage = org_plan.get("max_usage", config.PLAN_HOBBY_MAX_NB_DETECTIONS)
+    usage_quota = await get_quota(project_id)
+    current_usage = usage_quota.current_usage
+    max_usage = usage_quota.max_usage
 
     if query is None:
         query = DetectClustersRequest()
@@ -390,7 +390,7 @@ async def post_detect_clusters(
 
     # Ignore limits and metering in preview mode
     if config.ENVIRONMENT != "preview":
-        if org_plan.get("plan") == "hobby" or org_plan.get("plan") is None:
+        if usage_quota.plan == "hobby" or usage_quota.plan is None:
             if current_usage + clustering_sample_size >= max_usage:
                 raise HTTPException(
                     status_code=403,
@@ -398,6 +398,9 @@ async def post_detect_clusters(
                 )
 
         await bill_on_stripe(org_id=org_id, nb_credits_used=clustering_sample_size * 2)
+
+    if query.filters is None:
+        query.filters = ProjectDataFilters()
 
     await clustering(
         clustering_request=ClusteringRequest(
