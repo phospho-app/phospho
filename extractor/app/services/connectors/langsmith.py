@@ -149,27 +149,25 @@ class LangsmithConnector(BaseConnector):
             mongo_db["logs_langsmith"].insert_many(runs_as_dict)
 
     async def pull(self):
-        if self.credentials is None:
+        if self.langsmith_api_key is None or self.langsmith_project_name is None:
             raise ValueError("Credentials not loaded")
 
-        self.client = Client(api_key=self.credentials.langsmith_api_key)
+        self.client = Client(api_key=self.langsmith_api_key)
 
         last_langsmith_extract = await self._get_last_langsmith_extract()
         if last_langsmith_extract is None:
             self.runs = self.client.list_runs(
-                project_name=self.credentials.project_name,
+                project_name=self.langsmith_project_name,
                 run_type="llm",
             )
         else:
             self.runs = self.client.list_runs(
-                project_name=self.credentials.project_name,
+                project_name=self.langsmith_project_name,
                 run_type="llm",
-                start_time=datetime.strptime(
-                    last_langsmith_extract, "%Y-%m-%d %H:%M:%S.%f"
-                ),
+                start_time=last_langsmith_extract,
             )
         # Save the raw data
-        self._dump()
+        await self._dump()
 
     async def _update_last_langsmith_extract(self):
         """

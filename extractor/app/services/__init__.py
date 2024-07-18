@@ -1,1 +1,1 @@
-from connectors import LangsmithConnector, LangfuseConnector
+from .connectors import LangsmithConnector, LangfuseConnector

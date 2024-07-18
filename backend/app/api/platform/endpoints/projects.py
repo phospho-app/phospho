@@ -9,6 +9,7 @@ from propelauth_fastapi import User
 
 from app.api.platform.models import (
     AddEventsQuery,
+    ConnectLangfuseQuery,
     ConnectLangsmithQuery,
     Events,
     Project,
@@ -540,7 +541,7 @@ async def connect_langsmith(
 )
 async def connect_langfuse(
     project_id: str,
-    credentials: dict,
+    query: ConnectLangfuseQuery,
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
@@ -557,8 +558,8 @@ async def connect_langfuse(
         from langfuse import Langfuse
 
         langfuse = Langfuse(
-            public_key=credentials["langfuse_public_key"],
-            secret_key=credentials["langfuse_secret_key"],
+            public_key=query.langfuse_public_key,
+            secret_key=query.langfuse_secret_key,
             host="https://cloud.langfuse.com",
         )
         langfuse.auth_check()
@@ -578,7 +579,8 @@ async def connect_langfuse(
     )
     background_tasks.add_task(
         extractor_client.collect_langfuse_data,
-        langfuse_credentials=credentials,
+        langfuse_secret_key=query.langfuse_secret_key,
+        langfuse_public_key=query.langfuse_public_key,
         current_usage=usage_quota.current_usage,
         max_usage=usage_quota.max_usage,
     )

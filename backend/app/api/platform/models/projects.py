@@ -23,3 +23,8 @@ class UploadTasksRequest(BaseModel):
 class ConnectLangsmithQuery(BaseModel):
     langsmith_api_key: str
     langsmith_project_name: str
+
+
+class ConnectLangfuseQuery(BaseModel):
+    langfuse_secret_key: str
+    langfuse_public_key: str

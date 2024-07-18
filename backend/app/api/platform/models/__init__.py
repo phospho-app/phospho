@@ -42,6 +42,7 @@ from .projects import (
     OnboardingSurvey,
     UploadTasksRequest,
     ConnectLangsmithQuery,
+    ConnectLangfuseQuery,
 )
 from .recipes import RunRecipeRequest
 from .tasks import AddEventRequest, RemoveEventRequest

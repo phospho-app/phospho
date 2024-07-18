@@ -6,6 +6,7 @@ from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from langfuse import Langfuse
+from langfuse.client import ObservationsViews
 from loguru import logger
 
 from app.api.v1.models import LogEvent
@@ -13,13 +14,13 @@ from app.core import config
 from app.db.mongo import get_mongo_db
 from app.services.connectors.base import BaseConnector
 from app.services.log import process_log
-from app.services.mongo.projects import get_project_by_id
+from app.services.projects import get_project_by_id
 
 
 class LangfuseConnector(BaseConnector):
     project_id: str
     langfuse: Optional[Langfuse] = None
-    observations: Optional[Langfuse.Observations] = None
+    observations: Optional[ObservationsViews] = None
 
     def __init__(
         self,
@@ -135,7 +136,7 @@ class LangfuseConnector(BaseConnector):
             mongo_db["logs_langfuse"].insert_many(observations_list)
 
     async def pull(self):
-        if self.credentials is None:
+        if self.langfuse_public_key is None or self.langfuse_secret_key is None:
             logger.info("No Langfuse credentials provided")
             return
 
@@ -149,12 +150,12 @@ class LangfuseConnector(BaseConnector):
         else:
             self.observations = self.langfuse.client.observations.get_many(
                 type="GENERATION",
-                from_start_time=datetime.strptime(
-                    last_langfuse_extract, "%Y-%m-%d %H:%M:%S.%f"
-                ),
+                from_start_time=last_langfuse_extract,
             )
 
         self.langfuse.shutdown()
+        # Save the raw data
+        await self._dump()
 
     async def _update_last_langfuse_extract(self):
         """
