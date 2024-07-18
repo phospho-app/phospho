@@ -30,13 +30,6 @@ const CreatePowerBI = ({
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
 
   const handleExport = () => {
-    console.log(
-      "State: ",
-      project_id,
-      credentials,
-      credentials.projects_started.includes(project_id),
-      credentials.projects_finished.includes(project_id),
-    );
     if (
       !(
         credentials.projects_started.includes(project_id) ||
@@ -48,7 +41,7 @@ const CreatePowerBI = ({
         description:
           "We are exporting your data to postgres, this may take a few minutes",
       });
-      fetch(`/api/powerbi/${project_id}`, {
+      fetch(`/api/postgres/${project_id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

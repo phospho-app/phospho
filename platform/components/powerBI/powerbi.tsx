@@ -33,7 +33,7 @@ const PowerBIIntegrations: React.FC = () => {
   const [isPowerBISetup, setIsPowerBISetup] = useState<boolean>(false);
 
   const { data: credentials }: { data: PowerBIConnection } = useSWR(
-    org_id ? [`/api/powerbi/${org_id}`, accessToken] : null,
+    org_id ? [`/api/postgres/${org_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
