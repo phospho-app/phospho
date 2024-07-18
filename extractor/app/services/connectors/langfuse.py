@@ -147,7 +147,9 @@ class LangfuseConnector(BaseConnector):
         )
         last_langfuse_extract = await self._get_last_langfuse_extract()
         if last_langfuse_extract is None:
-            self.observations = self.langfuse.observations.get_many(type="GENERATION")
+            self.observations = self.langfuse.client.observations.get_many(
+                type="GENERATION"
+            )
         else:
             self.observations = self.langfuse.client.observations.get_many(
                 type="GENERATION",
