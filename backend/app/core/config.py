@@ -177,3 +177,7 @@ if credentials_gcp_bucket:
     GCP_BUCKET_CLIENT = Client(credentials=credentials)
 else:
     GCP_BUCKET_CLIENT = None
+
+### NEON DB ###
+NEON_ADMIN_USERNAME = os.getenv("NEON_ADMIN_USERNAME")
+NEON_ADMIN_PASSWORD = os.getenv("NEON_ADMIN_PASSWORD")

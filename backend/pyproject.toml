@@ -43,6 +43,8 @@ langfuse = "^2.36.2"
 fastapi-simple-rate-limiter = "^0.0.4"
 argilla = "^1.29.0"
 google-cloud-storage = "^2.17.0"
+sqlmodel = "^0.0.20"
+psycopg2 = "^2.9.9"
 
 [tool.poetry.group.dev]
 optional = true
