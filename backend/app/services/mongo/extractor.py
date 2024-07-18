@@ -167,7 +167,7 @@ class ExtractorClient:
                 "task": task.model_dump(mode="json"),
             },
         )
-        if result.status_code != 200:
+        if result is None or result.status_code != 200:
             return PipelineResults(events=[], flag=None)
         return PipelineResults.model_validate(result.json())
 
@@ -190,7 +190,7 @@ class ExtractorClient:
                 "project_id": self.project_id,
             },
         )
-        if result.status_code != 200:
+        if result is None or result.status_code != 200:
             return PipelineResults(events=[], flag=None)
         return PipelineResults.model_validate(result.json())
 
