@@ -1,5 +1,5 @@
 from app.api.v1.models import (
-    AugmentedOpenTelemetryData,
+    PipelineOpentelemetryRequest,
     LogProcessRequest,
     PipelineLangsmithRequest,
     PipelineResults,
@@ -10,18 +10,22 @@ from app.api.v1.models import (
 )
 from app.db.mongo import get_mongo_db
 from app.security.authentication import authenticate_key
-from app.services.connectors import LangfuseConnector, LangsmithConnector
+from app.services.connectors import (
+    LangfuseConnector,
+    LangsmithConnector,
+    OpenTelemetryConnector,
+)
 from app.services.log import process_log
 from app.services.pipelines import (
     messages_main_pipeline,
     recipe_pipeline,
-    store_opentelemetry_data_in_db,
     task_main_pipeline,
     task_scoring_pipeline,
 )
 from app.services.projects import get_project_by_id
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
+
 
 router = APIRouter()
 
@@ -159,99 +163,21 @@ async def post_run_job_on_task(
     description="Store data from OpenTelemetry in database",
 )
 async def store_opentelemetry_data(
-    augmented_open_telemetry_data: AugmentedOpenTelemetryData,
-    background_tasks: BackgroundTasks,
+    request: PipelineOpentelemetryRequest,
 ) -> dict:
     """Store the opentelemetry data in the opentelemetry database"""
 
-    logger.debug(
-        f"Storing opentelemetry data for project {augmented_open_telemetry_data.project_id}"
+    opentelemetry_connector = OpenTelemetryConnector(
+        project_id=request.project_id,
+        data=request.open_telemetry_data,
+    )
+    await opentelemetry_connector.push(
+        org_id=request.org_id,
+        current_usage=request.current_usage,
+        max_usage=request.max_usage,
     )
 
-    mongo_db = await get_mongo_db()
-    mongo_db["logs_opentelemetry"].insert_one(
-        augmented_open_telemetry_data.model_dump()
-    )
-
-    try:
-        # Assuming the JSON is stored in a variable called 'json_data'
-        data = augmented_open_telemetry_data.open_telemetry_data
-
-        # TODO: Find better way of doing this
-        resource_spans = data["resourceSpans"]
-        resource = resource_spans[0]["scopeSpans"]
-        spans = resource[0]["spans"][0]
-
-        # Unpack attributes
-        attributes = spans["attributes"]
-        unpacked_attributes = {}
-        for attr in attributes:
-            k = attr["key"]
-
-            if "stringValue" in attr["value"]:
-                value = attr["value"]["stringValue"]
-            elif "intValue" in attr["value"]:
-                value = attr["value"]["intValue"]
-            elif "boolValue" in attr["value"]:
-                value = attr["value"]["boolValue"]
-            elif "doubleValue" in attr["value"]:
-                value = attr["value"]["doubleValue"]
-            elif "arrayValue" in attr["value"]:
-                value = attr["value"]["arrayValue"]
-            else:
-                logger.error(f"Unknown value type: {attr['value']}")
-                continue
-
-            keys = k.split(".")
-            current_dict = unpacked_attributes
-            for i, key in enumerate(keys[:-1]):
-                if key.isdigit():
-                    # Skip if key is a digit: No need to unpack
-                    continue
-
-                # Initialize the key if it does not exist
-                if key not in current_dict:
-                    if keys[i + 1].isdigit():
-                        # If next key is a digit, then current key is a list
-                        current_dict[key] = []
-                    else:
-                        # If next key is not a digit, then current key is a dictionary
-                        current_dict[key] = {}
-
-                # Move to the next level
-                if keys[i + 1].isdigit():
-                    # If next key is a digit, then the current key is a list
-                    if len(current_dict[key]) < int(keys[i + 1]) + 1:
-                        current_dict[key].append({})
-                    try:
-                        current_dict = current_dict[key][int(keys[i + 1])]
-                    except IndexError:
-                        logger.error(
-                            f"IndexError: {key} {keys[i + 1]} {current_dict[key]}"
-                        )
-                        continue
-                else:
-                    current_dict = current_dict[key]
-            current_dict[keys[-1]] = value
-
-        spans["attributes"] = unpacked_attributes
-
-        logger.debug(f"Unpacked attributes: {unpacked_attributes}")
-
-        # We only keep the spans that have the "gen_ai.system" attribute
-        if "gen_ai" in unpacked_attributes:
-            background_tasks.add_task(
-                store_opentelemetry_data_in_db,
-                open_telemetry_data=spans,
-                project_id=augmented_open_telemetry_data.project_id,
-                org_id=augmented_open_telemetry_data.org_id,
-            )
-
-        return {"status": "ok"}
-
-    except KeyError as e:
-        logger.error(f"KeyError: {e}")
-        return {"status": "error", "message": f"KeyError: {e}"}
+    return {"status": "ok"}
 
 
 @router.post(
