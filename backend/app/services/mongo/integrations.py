@@ -395,28 +395,7 @@ async def export_project_to_dedicated_postgres(
         )
 
         # Convert the list of FlattenedTask to a pandas dataframe
-        tasks_df = pd.DataFrame(flattened_tasks)
-
-        # row_fields is a tuple with (field_name, field)
-        # We want to extract the field_name and keep the field_value
-        row_fields = tasks_df.loc[0].to_dict()
-
-        # We drop task_metadata for now because of the complexity of the dict format
-        # Would require to add columns recursively as it can be a dict of dict of dict...
-        columns_to_drop = []
-        for i, field in row_fields.items():
-            if isinstance(field[1], dict) or isinstance(field[1], list):
-                # We drop the metadata field for now
-                logger.debug(f"Dropped field: {field}")
-                columns_to_drop.append(i)
-            else:
-                # We extract the field_name from the tuple and keep the value: (field_name, field_value)
-                tasks_df[i] = tasks_df[i].apply(lambda x: x[1])
-
-                # We rename the column with the field_name
-                tasks_df.rename(columns={i: field[0]}, inplace=True)
-
-        tasks_df.drop(columns=columns_to_drop, inplace=True)
+        tasks_df = pd.DataFrame([task.model_dump() for task in flattened_tasks])
 
         # Upload dataframe to Postgres
         # There should be no need to sleep in between batches, as this connector is synchronous
