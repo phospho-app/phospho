@@ -1,3 +1,4 @@
+from phospho.models import UsageQuota
 import stripe
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from loguru import logger
@@ -181,33 +182,20 @@ def post_init_org(
 @router.get(
     "/organizations/{org_id}/usage-quota",
     description="Get the usage quota of an organization",
+    response_model=UsageQuota,
 )
 async def get_org_usage_quota(
     org_id: str,
     user: User = Depends(propelauth.require_user),
-):
+) -> UsageQuota:
     _ = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_id)
     logger.info(org)
     org_metadata = org.get("metadata", {})
     org_plan = org_metadata.get("plan", "hobby")
-    usage_quota = await get_usage_quota(org_id, plan=org_plan)
-    stripe_customer_id = org_metadata.get("customer_id", None)
-    # Return the balance transaction if the org has a stripe customer id
-    if stripe_customer_id is not None:
-        stripe.api_key = config.STRIPE_SECRET_KEY
-        response = stripe.Customer.list_balance_transactions(
-            stripe_customer_id,
-            limit=1,
-        )
-        data = response.get("data", [])
-        if data:
-            balance_transaction = data[0]
-            usage_quota.update(
-                {
-                    "balance_transaction": balance_transaction.get("amount", 0),
-                }
-            )
+    customer_id = org_metadata.get("customer_id", None)
+    usage_quota = await get_usage_quota(org_id, plan=org_plan, customer_id=customer_id)
+
     return usage_quota
 
 

@@ -19,7 +19,7 @@ from app.db.models import (
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
 from app.services.mongo.explore import fetch_flattened_tasks
-from app.services.mongo.extractor import run_recipe_on_tasks
+from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.metadata import fetch_user_metadata
 from app.services.mongo.tasks import (
     get_all_tasks,
@@ -350,6 +350,7 @@ async def email_project_tasks(
                 limit=limit,
                 with_events=True,
                 with_sessions=True,
+                with_removed_events=False,
             )
             tasks_df = pd.DataFrame(
                 [flat_task.model_dump() for flat_task in flattened_tasks]
@@ -658,8 +659,13 @@ async def backcompute_recipe(job_id: str, tasks: List[Task]) -> None:
             tasks_to_process.append(task)
 
     # Send the task to the job pipeline of the extractor
-    await run_recipe_on_tasks(
-        tasks=tasks_to_process, recipe=recipe, org_id=recipe.org_id
+    extractor_client = ExtractorClient(
+        org_id=recipe.org_id,
+        project_id=recipe.project_id,
+    )
+    await extractor_client.run_recipe_on_tasks(
+        tasks=tasks_to_process,
+        recipe=recipe,
     )
 
 
@@ -799,9 +805,9 @@ async def populate_default(
         validated_event_definition.id = generate_uuid()
         validated_event_definition.project_id = project_id
         validated_event_definition.org_id = org_id
-        event_definition_pairs[validated_event_definition.event_name] = (
-            validated_event_definition
-        )
+        event_definition_pairs[
+            validated_event_definition.event_name
+        ] = validated_event_definition
         event_definitions.append(validated_event_definition)
     await mongo_db["event_definitions"].insert_many(
         [event_definition.model_dump() for event_definition in event_definitions]

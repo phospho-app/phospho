@@ -1,4 +1,5 @@
-from app.services.mongo.tasks import get_all_tasks
+import argilla as rg
+import pandas as pd
 from app.api.platform.models.integrations import (
     DatasetCreationRequest,
     DatasetSamplingParameters,
@@ -8,10 +9,8 @@ from app.services.mongo.projects import get_project_by_id
 from loguru import logger
 from app.core import config
 from argilla import FeedbackDataset
-import argilla as rg
 from app.utils import health_check
 from typing import List, Literal
-import pandas as pd
 from app.db.models import Task
 from app.db.mongo import get_mongo_db
 from app.core import constants
@@ -19,6 +18,7 @@ from app.services.mongo.tasks import get_total_nb_of_tasks
 from app.services.mongo.explore import fetch_flattened_tasks
 from app.api.platform.models import Pagination
 from sqlalchemy import create_engine
+from app.services.mongo.tasks import get_all_tasks
 
 # Connect to argila
 try:

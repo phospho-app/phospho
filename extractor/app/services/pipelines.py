@@ -1,36 +1,26 @@
-from collections import defaultdict
 import time
+from collections import defaultdict
 from typing import Dict, List, Literal, Optional
 
 from loguru import logger
 
+from app.api.v1.models.pipelines import PipelineResults
 from app.core import config
 from app.db.models import (
     Eval,
     Event,
     EventDefinition,
-    Recipe,
     LlmCall,
+    Recipe,
     Task,
 )
 from app.db.mongo import get_mongo_db
 from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
-
+from app.services.sentiment_analysis import run_sentiment_and_language_analysis
 from app.services.webhook import trigger_webhook
 from phospho import lab
-from phospho.models import ResultType, SentimentObject, JobResult
-
-from app.api.v1.models.pipelines import PipelineResults
-
-from app.services.sentiment_analysis import run_sentiment_and_language_analysis
-
-from phospho.models import Project, EvaluationModel
-from Crypto.Cipher import AES
-from Crypto.Hash import SHA256
-from Crypto import Random
-import os
-import base64
+from phospho.models import EvaluationModel, JobResult, ResultType, SentimentObject
 
 
 class EventConfig(lab.JobConfig):
@@ -935,181 +925,3 @@ async def recipe_pipeline(tasks: List[Task], recipe: Recipe):
             await sentiment_and_language_analysis_pipeline(task)
     else:
         raise NotImplementedError(f"Recipe type {recipe.recipe_type} not implemented")
-
-
-async def store_opentelemetry_data_in_db(
-    open_telemetry_data: dict, project_id: str, org_id: str
-):
-    """
-    Store the opentelemetry data in the database
-    """
-    mongo_db = await get_mongo_db()
-
-    # Store the data in the database
-    mongo_db["opentelemetry"].insert_one(
-        {
-            "org_id": org_id,
-            "project_id": project_id,
-            "open_telemetry_data": open_telemetry_data,
-        }
-    )
-    logger.info("Opentelemetry data stored in the database")
-    return {"status": "ok"}
-
-
-async def get_last_langsmith_extract(
-    project_id: str,
-):
-    """
-    Get the last Langsmith extract for a project
-    """
-    mongo_db = await get_mongo_db()
-
-    project = await mongo_db["projects"].find_one(
-        {"id": project_id},
-    )
-
-    try:
-        project_validated = Project.model_validate(project)
-    except Exception as e:
-        logger.error(f"Error validating project data: {e}")
-        return None
-
-    return project_validated.settings.last_langsmith_extract
-
-
-async def get_last_langfuse_extract(
-    project_id: str,
-):
-    """
-    Get the last Langfuse extract for a project
-    """
-    mongo_db = await get_mongo_db()
-
-    project = await mongo_db["projects"].find_one(
-        {"id": project_id},
-    )
-
-    try:
-        project_validated = Project.model_validate(project)
-    except Exception as e:
-        logger.error(f"Error validating project data: {e}")
-        return None
-
-    return project_validated.settings.last_langfuse_extract
-
-
-async def change_last_langsmith_extract(
-    project_id: str,
-    new_last_extract_date: str,
-):
-    """
-    Change the last Langsmith extract for a project
-    """
-    mongo_db = await get_mongo_db()
-
-    await mongo_db["projects"].update_one(
-        {"id": project_id},
-        {"$set": {"settings.last_langsmith_extract": new_last_extract_date}},
-    )
-
-
-async def encrypt_and_store_langsmith_credentials(
-    project_id: str,
-    langsmith_api_key: str,
-    langsmith_project_name: str,
-):
-    """
-    Store the encrypted Langsmith credentials in the database
-    """
-
-    mongo_db = await get_mongo_db()
-
-    encryption_key = os.getenv("EXTRACTOR_SECRET_KEY")
-    api_key_as_bytes = langsmith_api_key.encode("utf-8")
-
-    # Encrypt the credentials
-    key = SHA256.new(
-        encryption_key.encode("utf-8")
-    ).digest()  # use SHA-256 over our key to get a proper-sized AES key
-
-    IV = Random.new().read(AES.block_size)  # generate IV
-    encryptor = AES.new(key, AES.MODE_CBC, IV)
-    padding = (
-        AES.block_size - len(api_key_as_bytes) % AES.block_size
-    )  # calculate needed padding
-    api_key_as_bytes += bytes([padding]) * padding
-    data = IV + encryptor.encrypt(
-        api_key_as_bytes
-    )  # store the IV at the beginning and encrypt
-
-    # Store the encrypted credentials in the database
-    await mongo_db["keys"].update_one(
-        {"project_id": project_id},
-        {
-            "$set": {
-                "type": "langsmith",
-                "langsmith_api_key": base64.b64encode(data).decode("latin-1"),
-                "langsmith_project_name": langsmith_project_name,
-            },
-        },
-        upsert=True,
-    )
-
-
-async def change_last_langfuse_extract(
-    project_id: str,
-    new_last_extract_date: str,
-):
-    """
-    Change the last LangFuse extract for a project
-    """
-    mongo_db = await get_mongo_db()
-
-    await mongo_db["projects"].update_one(
-        {"id": project_id},
-        {"$set": {"settings.last_langfuse_extract": new_last_extract_date}},
-    )
-
-
-async def encrypt_and_store_langfuse_credentials(
-    project_id: str,
-    langfuse_secret_key: str,
-    langfuse_public_key: str,
-):
-    """
-    Store the encrypted LangFuse credentials in the database
-    """
-
-    mongo_db = await get_mongo_db()
-
-    encryption_key = os.getenv("EXTRACTOR_SECRET_KEY")
-    api_key_as_bytes = langfuse_secret_key.encode("utf-8")
-
-    # Encrypt the credentials
-    key = SHA256.new(
-        encryption_key.encode("utf-8")
-    ).digest()  # use SHA-256 over our key to get a proper-sized AES key
-
-    IV = Random.new().read(AES.block_size)  # generate IV
-    encryptor = AES.new(key, AES.MODE_CBC, IV)
-    padding = (
-        AES.block_size - len(api_key_as_bytes) % AES.block_size
-    )  # calculate needed padding
-    api_key_as_bytes += bytes([padding]) * padding
-    data = IV + encryptor.encrypt(
-        api_key_as_bytes
-    )  # store the IV at the beginning and encrypt
-
-    # Store the encrypted credentials in the database
-    await mongo_db["keys"].update_one(
-        {"project_id": project_id},
-        {
-            "$set": {
-                "type": "langfuse",
-                "langfuse_secret_key": base64.b64encode(data).decode("latin-1"),
-                "langfuse_public_key": langfuse_public_key,
-            },
-        },
-        upsert=True,
-    )
