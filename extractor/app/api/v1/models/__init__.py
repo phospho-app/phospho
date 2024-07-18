@@ -5,4 +5,6 @@ from .pipelines import (
     RunMainPipelineOnTaskRequest,
     RunRecipeOnTaskRequest,
     AugmentedOpenTelemetryData,
+    PipelineLangsmithRequest,
+    PipelineLangfuseRequest,
 )

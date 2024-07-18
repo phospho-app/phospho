@@ -10,10 +10,6 @@ class MinimalLogEvent(BaseModel, extra="allow"):
     output: Optional[str] = None
 
 
-class LogRequest(BaseModel):
-    batched_log_events: List[MinimalLogEvent]
-
-
 class LogEvent(MinimalLogEvent, extra="allow"):
     # Optional fields
     client_created_at: int = Field(default_factory=generate_timestamp)
@@ -53,6 +49,10 @@ class LogEvent(MinimalLogEvent, extra="allow"):
     environment: str = "default environment"
     # Backcompute
     job_ids: Optional[List[str]] = None
+
+
+class LogRequest(BaseModel):
+    batched_log_events: List[MinimalLogEvent]
 
 
 class LogError(BaseModel):

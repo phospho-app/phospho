@@ -1,40 +1,27 @@
-# Models
-from app.db.mongo import get_mongo_db
 from app.api.v1.models import (
+    AugmentedOpenTelemetryData,
     LogProcessRequest,
+    PipelineLangsmithRequest,
     PipelineResults,
     RunMainPipelineOnMessagesRequest,
     RunMainPipelineOnTaskRequest,
     RunRecipeOnTaskRequest,
-    AugmentedOpenTelemetryData,
+    PipelineLangfuseRequest,
 )
-
-# Security
+from app.db.mongo import get_mongo_db
 from app.security.authentication import authenticate_key
+from app.services.connectors import LangfuseConnector, LangsmithConnector
 from app.services.log import process_log
-
-# Services
 from app.services.pipelines import (
     messages_main_pipeline,
     recipe_pipeline,
-    task_main_pipeline,
     store_opentelemetry_data_in_db,
-    get_last_langsmith_extract,
-    get_last_langfuse_extract,
-    change_last_langsmith_extract,
-    encrypt_and_store_langsmith_credentials,
+    task_main_pipeline,
     task_scoring_pipeline,
-    change_last_langfuse_extract,
-    encrypt_and_store_langfuse_credentials,
 )
 from app.services.projects import get_project_by_id
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
-from app.api.v1.models import LogEvent
-from datetime import datetime
-from langsmith import Client
-from langfuse import Langfuse
-from typing import List
 
 router = APIRouter()
 
@@ -269,115 +256,23 @@ async def store_opentelemetry_data(
 
 @router.post(
     "/pipelines/langsmith",
-    description="Run the langsmith pipeline on a task",
+    description="Run the Langsmith pipeline",
 )
 async def extract_langsmith_data(
-    user_data: dict,
-    background_tasks: BackgroundTasks,
+    request: PipelineLangsmithRequest,
 ):
-    logger.debug(
-        f"Received Langsmith connection data for org id: {user_data['org_id']}"
+    logger.debug(f"Received Langsmith connection data for org id: {request.org_id}")
+
+    langsmith_connector = LangsmithConnector(
+        project_id=request.project_id,
+        langsmith_api_key=request.langsmith_api_key,
+        langsmith_project_name=request.langsmith_project_name,
     )
-
-    last_langsmith_extract = await get_last_langsmith_extract(user_data["project_id"])
-
-    client = Client(api_key=user_data["langsmith_credentials"]["langsmith_api_key"])
-    if last_langsmith_extract is None:
-        runs = client.list_runs(
-            project_name=user_data["langsmith_credentials"]["langsmith_project_name"],
-            run_type="llm",
-        )
-
-    else:
-        runs = client.list_runs(
-            project_name=user_data["langsmith_credentials"]["langsmith_project_name"],
-            run_type="llm",
-            start_time=datetime.strptime(
-                last_langsmith_extract, "%Y-%m-%d %H:%M:%S.%f"
-            ),
-        )
-
-    logs_to_process: List[LogEvent] = []
-    extra_logs_to_save: List[LogEvent] = []
-    current_usage = user_data["current_usage"]
-    max_usage = user_data["max_usage"]
-
-    # Dump to a dedicated db
-    mongo_db = await get_mongo_db()
-    runs_as_dict = []
-    try:
-        # Runs are pydantic model v1
-        runs_as_dict = [run.dict() for run in runs]
-    except Exception as e:
-        logger.error(f"Error converting runs to dict: {e}")
-        # Try with pydantic model v2
-        runs_as_dict = [run.model_dump() for run in runs]
-
-    if len(runs_as_dict) > 0:
-        mongo_db["logs_langsmith"].insert_many(runs_as_dict)
-
-    for run in runs:
-        try:
-            input = ""
-            for message in run.inputs["messages"]:
-                if "HumanMessage" in message["id"]:
-                    input += message["kwargs"]["content"]
-
-            output = ""
-            for generation in run.outputs["generations"]:
-                output += generation["text"]
-
-            if input == "" or output == "":
-                continue
-
-            log_event = LogEvent(
-                created_at=str(int(run.end_time.timestamp())),
-                input=input,
-                output=output,
-                session_id=str(run.session_id),
-                org_id=user_data["org_id"],
-                project_id=user_data["project_id"],
-                metadata={"langsmith_run_id": run.id},
-            )
-
-            if max_usage is None or (
-                max_usage is not None and current_usage < max_usage
-            ):
-                logs_to_process.append(log_event)
-                current_usage += 1
-            else:
-                extra_logs_to_save.append(log_event)
-        except Exception as e:
-            logger.error(
-                f"Error processing langsmith run for project id: {user_data['project_id']}, {e}"
-            )
-
-    await change_last_langsmith_extract(
-        project_id=user_data["project_id"],
-        new_last_extract_date=str(datetime.now()),
+    return await langsmith_connector.sync(
+        org_id=request.org_id,
+        current_usage=request.current_usage,
+        max_usage=request.max_usage,
     )
-
-    background_tasks.add_task(
-        process_log,
-        project_id=user_data["project_id"],
-        org_id=user_data["org_id"],
-        logs_to_process=logs_to_process,
-        extra_logs_to_save=extra_logs_to_save,
-    )
-
-    logger.debug(
-        f"Finished processing langsmith runs for project id: {user_data['project_id']}"
-    )
-
-    await encrypt_and_store_langsmith_credentials(
-        project_id=user_data["project_id"],
-        langsmith_api_key=user_data["langsmith_credentials"]["langsmith_api_key"],
-        langsmith_project_name=user_data["langsmith_credentials"][
-            "langsmith_project_name"
-        ],
-    )
-
-    return {"status": "ok"}
 
 
 @router.post(
@@ -385,90 +280,18 @@ async def extract_langsmith_data(
     description="Run the langfuse pipeline on a task",
 )
 async def extract_langfuse_data(
-    user_data: dict,
-    background_tasks: BackgroundTasks,
+    request: PipelineLangfuseRequest,
 ):
-    logger.debug(f"Received LangFuse connection data for org id: {user_data['org_id']}")
+    logger.debug(f"Received LangFuse connection data for org id: {request.org_id}")
 
-    last_langfuse_extract = await get_last_langfuse_extract(user_data["project_id"])
-
-    langfuse = Langfuse(
-        public_key=user_data["langfuse_credentials"]["langfuse_public_key"],
-        secret_key=user_data["langfuse_credentials"]["langfuse_secret_key"],
+    langfuse_connector = LangfuseConnector(
+        project_id=request.project_id,
+        langfuse_secret_key=request.langfuse_secret_key,
+        langfuse_public_key=request.langfuse_public_key,
     )
 
-    if last_langfuse_extract is None:
-        observations = langfuse.client.observations.get_many(type="GENERATION")
-
-    else:
-        observations = langfuse.client.observations.get_many(
-            type="GENERATION",
-            from_start_time=datetime.strptime(
-                last_langfuse_extract, "%Y-%m-%d %H:%M:%S.%f"
-            ),
-        )
-
-    # Dump to a dedicated db
-    mongo_db = await get_mongo_db()
-    observations_list = [observation.model_dump() for observation in observations.data]
-    if len(observations_list) > 0:
-        mongo_db["logs_langfuse"].insert_many(observations_list)
-
-    logs_to_process: List[LogEvent] = []
-    extra_logs_to_save: List[LogEvent] = []
-    current_usage = user_data["current_usage"]
-    max_usage = user_data["max_usage"]
-
-    for observation in observations.data:
-        try:
-            input = observation.input
-            output = observation.output
-
-            log_event = LogEvent(
-                created_at=str(int(observation.start_time.timestamp())),
-                input=input,
-                output=output,
-                session_id=str(observation.trace_id),
-                org_id=user_data["org_id"],
-                project_id=user_data["project_id"],
-                metadata={"langsfuse_run_id": observation.id},
-            )
-
-            if max_usage is None or (
-                max_usage is not None and current_usage < max_usage
-            ):
-                logs_to_process.append(log_event)
-                current_usage += 1
-            else:
-                extra_logs_to_save.append(log_event)
-        except Exception as e:
-            logger.error(
-                f"Error processing langfuse run for project id: {user_data['project_id']}, {e}"
-            )
-
-    langfuse.shutdown()
-
-    await change_last_langfuse_extract(
-        project_id=user_data["project_id"],
-        new_last_extract_date=str(datetime.now()),
+    return await langfuse_connector.sync(
+        org_id=request.org_id,
+        current_usage=request.current_usage,
+        max_usage=request.max_usage,
     )
-
-    background_tasks.add_task(
-        process_log,
-        project_id=user_data["project_id"],
-        org_id=user_data["org_id"],
-        logs_to_process=logs_to_process,
-        extra_logs_to_save=extra_logs_to_save,
-    )
-
-    logger.debug(
-        f"Finished processing langsmith runs for project id: {user_data['project_id']}"
-    )
-
-    await encrypt_and_store_langfuse_credentials(
-        project_id=user_data["project_id"],
-        langfuse_secret_key=user_data["langfuse_credentials"]["langfuse_secret_key"],
-        langfuse_public_key=user_data["langfuse_credentials"]["langfuse_public_key"],
-    )
-
-    return {"status": "ok"}

@@ -37,6 +37,12 @@ from .explore import (
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
 from .organizations import CreateCheckoutRequest
-from .projects import AddEventsQuery, OnboardingSurvey, UploadTasksRequest
+from .projects import (
+    AddEventsQuery,
+    OnboardingSurvey,
+    UploadTasksRequest,
+    ConnectLangsmithQuery,
+    ConnectLangfuseQuery,
+)
 from .recipes import RunRecipeRequest
 from .tasks import AddEventRequest, RemoveEventRequest

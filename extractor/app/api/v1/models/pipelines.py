@@ -5,9 +5,6 @@ from app.db.models import Task, Event, Recipe
 from phospho.lab import Message
 from phospho.models import SentimentObject
 
-from app.utils import generate_timestamp, generate_uuid
-from pydantic import Field
-
 
 class RunMainPipelineOnTaskRequest(BaseModel):
     task: Task
@@ -35,3 +32,21 @@ class AugmentedOpenTelemetryData(BaseModel):
     project_id: str
     org_id: str
     open_telemetry_data: dict
+
+
+class PipelineLangsmithRequest(BaseModel):
+    project_id: str
+    org_id: str
+    current_usage: int
+    max_usage: Optional[int] = None
+    langsmith_api_key: Optional[str] = None
+    langsmith_project_name: Optional[str] = None
+
+
+class PipelineLangfuseRequest(BaseModel):
+    project_id: str
+    org_id: str
+    current_usage: int
+    max_usage: Optional[int] = None
+    langfuse_public_key: Optional[str] = None
+    langfuse_secret_key: Optional[str] = None
