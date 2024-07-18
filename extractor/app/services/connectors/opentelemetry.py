@@ -20,7 +20,7 @@ class OpenTelemetryConnector(BaseConnector):
         mongo_db = await get_mongo_db()
         mongo_db["logs_opentelemetry"].insert_one(self.data)
 
-    async def push(
+    async def process(
         self,
         org_id: str,
         current_usage: int,

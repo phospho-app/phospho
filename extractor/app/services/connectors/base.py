@@ -34,7 +34,7 @@ class BaseConnector:
         """
         raise NotImplementedError
 
-    async def push(
+    async def process(
         self,
         org_id: str,
         current_usage: int,
@@ -55,7 +55,7 @@ class BaseConnector:
     ):
         await self.load_config(**kwargs)
         await self.pull()
-        nb_job_results = await self.push(
+        nb_job_results = await self.process(
             org_id=org_id,
             current_usage=current_usage,
             max_usage=max_usage,

@@ -171,7 +171,7 @@ async def store_opentelemetry_data(
         project_id=request.project_id,
         data=request.open_telemetry_data,
     )
-    await opentelemetry_connector.push(
+    await opentelemetry_connector.process(
         org_id=request.org_id,
         current_usage=request.current_usage,
         max_usage=request.max_usage,

@@ -41,6 +41,7 @@ class LangfuseConnector(BaseConnector):
             self.langfuse_public_key is not None
             and self.langfuse_secret_key is not None
         ):
+            logger.info("Langfuse credentials already provided")
             return
 
         mongo_db = await get_mongo_db()
@@ -168,7 +169,7 @@ class LangfuseConnector(BaseConnector):
             {"$set": {"settings.last_langfuse_extract": datetime.now()}},
         )
 
-    async def push(
+    async def process(
         self,
         org_id: str,
         current_usage: int,

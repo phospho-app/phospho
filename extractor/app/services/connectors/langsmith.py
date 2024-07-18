@@ -40,6 +40,7 @@ class LangsmithConnector(BaseConnector):
             self.langsmith_api_key is not None
             and self.langsmith_project_name is not None
         ):
+            logger.info("Langfuse credentials already provided")
             return
 
         mongo_db = await get_mongo_db()
@@ -180,7 +181,7 @@ class LangsmithConnector(BaseConnector):
             {"$set": {"settings.last_langsmith_extract": datetime.now()}},
         )
 
-    async def push(
+    async def process(
         self,
         org_id: str,
         current_usage: int,
