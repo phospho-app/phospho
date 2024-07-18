@@ -2145,7 +2145,7 @@ async def fetch_flattened_tasks(
             del task["_id"]
 
         # Flatten the task_metadata field into multiple task_metadata.{key} fields
-        if "task_metadata" in task:
+        if "task_metadata" in task.keys():
             for key, value in task["task_metadata"].items():
                 if not isinstance(value, dict):
                     task[f"task_metadata.{key}"] = value
