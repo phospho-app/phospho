@@ -350,7 +350,10 @@ async def update_power_bi_status(
 
 
 async def export_project_to_dedicated_postgres(
-    project_id: str, credentials: PowerBICredentials, debug: bool = False
+    project_name: str,
+    project_id: str,
+    credentials: PowerBICredentials,
+    debug: bool = False,
 ) -> Literal["success", "failure"]:
     """
     Export the project to the dedicated Neon Postgres database
@@ -417,7 +420,13 @@ async def export_project_to_dedicated_postgres(
 
         # Upload dataframe to Postgres
         # There should be no need to sleep in between batches, as this connector is synchronous
-        pd.DataFrame.to_sql(tasks_df, "tasks", engine, if_exists="append", index=True)
+        pd.DataFrame.to_sql(
+            tasks_df,
+            project_name,
+            engine,
+            if_exists="append",
+            index=False,
+        )
         logger.debug(f"Uploaded batch {i} to Postgres")
 
     logger.info("Export finished")

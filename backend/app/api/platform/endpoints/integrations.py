@@ -134,7 +134,9 @@ async def start_project_extract(
 
     # Start the extract
     try:
-        await export_project_to_dedicated_postgres(project_id, credentials, debug=debug)
+        await export_project_to_dedicated_postgres(
+            project.project_name, project_id, credentials, debug=debug
+        )
     except Exception as e:
         logger.error(f"Error while exporting the project to Power BI: {e}")
         await update_power_bi_status(
