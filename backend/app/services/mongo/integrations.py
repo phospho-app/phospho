@@ -3,7 +3,7 @@ import pandas as pd
 from app.api.platform.models.integrations import (
     DatasetCreationRequest,
     DatasetSamplingParameters,
-    PowerBICredentials,
+    PostgresCredentials,
 )
 from app.services.mongo.projects import get_project_by_id
 from loguru import logger
@@ -19,7 +19,6 @@ from app.services.mongo.explore import fetch_flattened_tasks
 from app.api.platform.models import Pagination
 from sqlalchemy import create_engine
 from app.services.mongo.tasks import get_all_tasks
-from app.core import config
 
 # Connect to argila
 try:
@@ -302,7 +301,7 @@ async def generate_dataset_from_project(
     return argilla_dataset
 
 
-async def get_power_bi_credentials(org_id: str) -> PowerBICredentials:
+async def get_postgres_credentials(org_id: str) -> PostgresCredentials:
     mongo_db = await get_mongo_db()
 
     dedicated_db = await mongo_db["integrations"].find_one(
@@ -310,14 +309,14 @@ async def get_power_bi_credentials(org_id: str) -> PowerBICredentials:
     )
     del dedicated_db["_id"]
 
-    validated_db = PowerBICredentials.model_validate(dedicated_db)
+    validated_db = PostgresCredentials.model_validate(dedicated_db)
 
     return validated_db
 
 
-async def update_power_bi_status(
+async def update_postgres_status(
     org_id: str, project_id: str, status: Literal["started", "failed", "finished"]
-) -> PowerBICredentials:
+) -> PostgresCredentials:
     mongo_db = await get_mongo_db()
 
     # Credentials have two array fields projects_started and projects_finished
@@ -352,7 +351,7 @@ async def update_power_bi_status(
 async def export_project_to_dedicated_postgres(
     project_name: str,
     project_id: str,
-    credentials: PowerBICredentials,
+    credentials: PostgresCredentials,
     debug: bool = False,
 ) -> Literal["success", "failure"]:
     """
@@ -406,8 +405,9 @@ async def export_project_to_dedicated_postgres(
         # Would require to add columns recursively as it can be a dict of dict of dict...
         columns_to_drop = []
         for i, field in row_fields.items():
-            if "task_metadata" in field:
+            if isinstance(field[1], dict) or isinstance(field[1], list):
                 # We drop the metadata field for now
+                logger.debug(f"Dropped field: {field}")
                 columns_to_drop.append(i)
             else:
                 # We extract the field_name from the tuple and keep the value: (field_name, field_value)
