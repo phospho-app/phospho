@@ -2109,6 +2109,7 @@ async def fetch_flattened_tasks(
             "event_score_range_min": "$events.score_range.min",
             "event_score_range_max": "$events.score_range.max",
             "event_score_range_score_type": "$events.score_range.score_type",
+            "event_score_range_label": "$events.score_range.label",
             "event_source": "$events.source",
         }
 
@@ -2136,14 +2137,27 @@ async def fetch_flattened_tasks(
             .aggregate(pipeline)
             .to_list(length=limit)
         )
-    # Ignore _id field
-    flattened_tasks = [
-        {k: v for k, v in task.items() if k != "_id"} for task in flattened_tasks
-    ]
-    # Cast
-    flattened_tasks = [FlattenedTask.model_validate(task) for task in flattened_tasks]
 
-    return flattened_tasks
+    new_flattened_tasks = []
+    for task in flattened_tasks:
+        # Remove the _id field
+        if "_id" in task.keys():
+            del task["_id"]
+
+        # Flatten the task_metadata field into multiple task_metadata.{key} fields
+        if "task_metadata" in task.keys():
+            for key, value in task["task_metadata"].items():
+                if not isinstance(value, dict):
+                    task[f"task_metadata.{key}"] = value
+                else:
+                    # TODO: Handle nested fields. For now, cast to string
+                    task[f"task_metadata.{key}"] = str(value)
+            del task["task_metadata"]
+        # Convert to a FlattenedTask model
+        new_task = FlattenedTask.model_validate(task)
+        new_flattened_tasks.append(new_task)
+
+    return new_flattened_tasks
 
 
 async def update_from_flattened_tasks(
