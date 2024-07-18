@@ -10,12 +10,15 @@ from app.core import config
 from argilla import FeedbackDataset
 import argilla as rg
 from app.utils import health_check
-from typing import List
+from typing import List, Literal
 import pandas as pd
 from app.db.models import Task
 from app.db.mongo import get_mongo_db
 from app.core import constants
-# Language dict
+from app.services.mongo.tasks import get_total_nb_of_tasks
+from app.services.mongo.explore import fetch_flattened_tasks
+from app.api.platform.models import Pagination
+from sqlalchemy import create_engine
 
 # Connect to argila
 try:
@@ -259,8 +262,8 @@ async def generate_dataset_from_project(
             # Balance the dataset
             df = pd.concat(
                 [
-                    df[df[label] == True].sample(n=n_samples),
-                    df[df[label] == False].sample(n=n_samples),
+                    df[df[label]].sample(n=n_samples),
+                    df[df[label]].sample(n=n_samples),
                 ]
             )
 
@@ -310,3 +313,165 @@ async def get_power_bi_credentials(org_id: str) -> PowerBICredentials:
     validated_db = PowerBICredentials.model_validate(dedicated_db)
 
     return validated_db
+
+
+async def update_power_bi_status(
+    org_id: str, project_id: str, status: Literal["started", "failed", "finished"]
+) -> PowerBICredentials:
+    mongo_db = await get_mongo_db()
+
+    # Credentials have two array fields projects_started and projects_finished
+    # We add the project_id to projects_started when the project is started
+    # We remove the project_id from projects_started when the project is failed
+    # We remove the project_id from projects_started and add it to projects_finished when the project is finished
+    if status == "started":
+        updated_credentials = await mongo_db["integrations"].find_one_and_update(
+            {"org_id": org_id},
+            {"$push": {"projects_started": project_id}},
+            return_document=True,
+        )
+    elif status == "failed":
+        updated_credentials = await mongo_db["integrations"].find_one_and_update(
+            {"org_id": org_id},
+            {"$pull": {"projects_started": project_id}},
+            return_document=True,
+        )
+    else:  # status == "finished"
+        updated_credentials = await mongo_db["integrations"].find_one_and_update(
+            {"org_id": org_id},
+            {
+                "$pull": {"projects_started": project_id},
+                "$push": {"projects_finished": project_id},
+            },
+            return_document=True,
+        )
+
+    return updated_credentials
+
+
+async def export_project_to_dedicated_postgres(
+    project_id: str, credentials: PowerBICredentials, debug: bool = False
+) -> Literal["success", "failure"]:
+    """
+    Export the project to the dedicated Neon Postgres database
+    """
+
+    logger.info(
+        f"Starting export of project {project_id} to dedicated Postgres {credentials.server}:{credentials.database}"
+    )
+
+    # Get the total number of tasks
+    total_nb_tasks = await get_total_nb_of_tasks(project_id)
+
+    # Connect to Neon Postgres database, we add asyncpg for ascync support
+    connection_string = f"postgresql://{credentials.username}:{credentials.password}@{credentials.server}/{credentials.database}"
+    engine = create_engine(connection_string, echo=debug)
+
+    logger.debug(f"Connected to Postgres {credentials.server}:{credentials.database}")
+
+    # We batch to avoid memory issues
+    batch_size = 128
+    nb_batches = total_nb_tasks // batch_size
+
+    for i in range(nb_batches + 1):
+        logger.debug(f"Exporting batch {i} of {nb_batches}")
+
+        flattened_tasks = await fetch_flattened_tasks(
+            project_id=project_id,
+            limit=batch_size,
+            with_events=True,
+            with_sessions=True,
+            pagination=Pagination(page=i, per_page=batch_size),
+        )
+
+        # Convert the list of FlattenedTask to a pandas dataframe
+        tasks_df = pd.DataFrame(flattened_tasks)
+
+        # row_fields is a tuple with (field_name, field)
+        # We want to extract the field_name and keep the field_value
+        row_fields = tasks_df.loc[0].to_dict()
+
+        # We drop task_metadata for now because of the complexity of the dict format
+        # Would require to add columns recursively as it can be a dict of dict of dict...
+        columns_to_drop = []
+        for i, field in row_fields.items():
+            if "task_metadata" in field:
+                # We drop the metadata field for now
+                columns_to_drop.append(i)
+            else:
+                # We extract the field_name from the tuple and keep the value: (field_name, field_value)
+                tasks_df[i] = tasks_df[i].apply(lambda x: x[1])
+
+                # We rename the column with the field_name
+                tasks_df.rename(columns={i: field[0]}, inplace=True)
+
+        tasks_df.drop(columns=columns_to_drop, inplace=True)
+
+        # Upload dataframe to Postgres
+        # There should be no need to sleep in between batches, as this connector is synchronous
+        pd.DataFrame.to_sql(tasks_df, "tasks", engine, if_exists="append", index=True)
+        logger.debug(f"Uploaded batch {i} to Postgres")
+
+    logger.info("Export finished")
+    return "success"
+
+
+"""
+The function below is a work in progress to convert a Pydantic model to a SQLModel
+Could be usefull later
+"""
+
+# def pydantic_to_sqlmodel(pydantic_model: BaseModel) -> Type[SQLModel]:
+#     class_name = pydantic_model.__name__
+#     columns = {}
+
+#     for field_name, field in pydantic_model.model_fields.items():
+#         field_type = field.annotation
+
+#         string_field_type = str(field_type)
+
+#         nullable = "Optional" in string_field_type
+
+#         if "dict" in string_field_type or "Literal" in string_field_type:
+#             continue
+
+#         if field_name == "task_id":
+#             columns[field_name] = (str, Field(primary_key=True))
+#         else:
+#             if "str" in string_field_type:
+#                 columns[field_name] = (
+#                     Optional[str] if nullable else str,
+#                     Field(default=None, nullable=nullable),
+#                 )
+#             elif "int" in string_field_type:
+#                 columns[field_name] = (
+#                     Optional[int] if nullable else int,
+#                     Field(default=None, nullable=nullable),
+#                 )
+#             elif "float" in string_field_type:
+#                 columns[field_name] = (
+#                     Optional[float] if nullable else float,
+#                     Field(default=None, nullable=nullable),
+#                 )
+#             elif "bool" in string_field_type:
+#                 columns[field_name] = (
+#                     Optional[bool] if nullable else bool,
+#                     Field(default=None, nullable=nullable),
+#                 )
+#             else:
+#                 logger.warning(
+#                     f"Field {field_name} has unknown type {string_field_type}"
+#                 )
+#         logger.debug(
+#             f"Added column {field_name} with type {string_field_type}, nullable {nullable}"
+#         )
+
+#     logger.debug(f"Creating SQLModel {class_name} with columns {columns}")
+#     dynamic_class = create_model(
+#         class_name,
+#         __base__=SQLModel,
+#         __cls_kwargs__={"table": True, "extend_existing": True},
+#         **columns,
+#     )
+#     logger.debug(f"Created SQLModel {dynamic_class}")
+#     return dynamic_class
