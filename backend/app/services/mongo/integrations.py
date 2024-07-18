@@ -19,6 +19,7 @@ from app.services.mongo.explore import fetch_flattened_tasks
 from app.api.platform.models import Pagination
 from sqlalchemy import create_engine
 from app.services.mongo.tasks import get_all_tasks
+from app.core import config
 
 # Connect to argila
 try:
@@ -262,8 +263,7 @@ async def generate_dataset_from_project(
             # Balance the dataset
             df = pd.concat(
                 [
-                    df[df[label]].sample(n=n_samples),
-                    df[df[label]].sample(n=n_samples),
+                    df[~df[label]].sample(n=n_samples),
                 ]
             )
 
@@ -363,8 +363,16 @@ async def export_project_to_dedicated_postgres(
     # Get the total number of tasks
     total_nb_tasks = await get_total_nb_of_tasks(project_id)
 
-    # Connect to Neon Postgres database, we add asyncpg for ascync support
-    connection_string = f"postgresql://{credentials.username}:{credentials.password}@{credentials.server}/{credentials.database}"
+    # Fetch admin credentials
+    neon_user = config.NEON_ADMIN_USERNAME
+    neon_password = config.NEON_ADMIN_PASSWORD
+
+    if neon_user is None or neon_password is None:
+        logger.error("Neon admin credentials are not configured")
+        return "failure"
+
+    # Connect to Neon Postgres database, we add asyncpg for async support
+    connection_string = f"postgresql://{neon_user}:{neon_password}@{credentials.server}/{credentials.database}"
     engine = create_engine(connection_string, echo=debug)
 
     logger.debug(f"Connected to Postgres {credentials.server}:{credentials.database}")
