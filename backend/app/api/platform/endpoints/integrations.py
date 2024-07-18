@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from propelauth_py.user import User
 from app.services.mongo.integrations import (
     generate_dataset_from_project,
-    get_power_bi_credentials,
-    update_power_bi_status,
+    get_postgres_credentials,
+    update_postgres_status,
     export_project_to_dedicated_postgres,
 )
 from app.api.platform.models.integrations import DatasetCreationRequest
@@ -17,7 +17,7 @@ from app.core import config
 
 from app.security.authentification import propelauth
 from loguru import logger
-from app.api.platform.models.integrations import PowerBICredentials
+from app.api.platform.models.integrations import PostgresCredentials
 
 router = APIRouter(tags=["Integrations"])
 
@@ -73,7 +73,7 @@ async def post_create_dataset(
     return {"status": "ok"}
 
 
-@router.get("/powerbi/{org_id}", response_model=PowerBICredentials)
+@router.get("/postgres/{org_id}", response_model=PostgresCredentials)
 async def get_dedicated_db(org_id: str, user: User = Depends(propelauth.require_user)):
     org_member_info = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_member_info.org_id)
@@ -87,12 +87,12 @@ async def get_dedicated_db(org_id: str, user: User = Depends(propelauth.require_
             detail="Your organization does not have access to a dedicated Power BI workspace. Contact us to get access to one.",
         )
 
-    db_credentials = await get_power_bi_credentials(org_id=org_id)
+    db_credentials = await get_postgres_credentials(org_id=org_id)
 
     return db_credentials
 
 
-@router.post("/powerbi/{project_id}")
+@router.post("/postgres/{project_id}")
 async def start_project_extract(
     project_id: str, user: User = Depends(propelauth.require_user)
 ):
@@ -112,7 +112,7 @@ async def start_project_extract(
 
     logger.debug(f"Starting the extract for project {project_id}")
 
-    credentials = await get_power_bi_credentials(org_id=org_member_info.org_id)
+    credentials = await get_postgres_credentials(org_id=org_member_info.org_id)
 
     # The project has already been started or finished
     if (
@@ -122,7 +122,7 @@ async def start_project_extract(
         return {"status": "ok"}
 
     # Update the project status to "started"
-    await update_power_bi_status(
+    await update_postgres_status(
         org_id=org_member_info.org_id, project_id=project_id, status="started"
     )
 
@@ -139,7 +139,7 @@ async def start_project_extract(
         )
     except Exception as e:
         logger.error(f"Error while exporting the project to Power BI: {e}")
-        await update_power_bi_status(
+        await update_postgres_status(
             org_id=org_member_info.org_id, project_id=project_id, status="failed"
         )
         raise HTTPException(
@@ -147,7 +147,7 @@ async def start_project_extract(
             detail="The extract could not be started. Please try again later.",
         )
 
-    await update_power_bi_status(
+    await update_postgres_status(
         org_id=org_member_info.org_id, project_id=project_id, status="completed"
     )
 

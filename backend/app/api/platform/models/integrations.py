@@ -25,7 +25,7 @@ class DatasetCreationRequest(BaseModel):
     )
 
 
-class PowerBICredentials(BaseModel, extra="allow"):
+class PostgresCredentials(BaseModel, extra="allow"):
     org_id: str
     server: str
     database: str
