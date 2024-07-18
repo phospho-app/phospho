@@ -125,6 +125,8 @@ class ExtractorClient:
                         slack_message = error_message
                     await slack_notification(slack_message)
 
+        return None
+
     async def run_log_process(
         self,
         logs_to_process: List[LogEvent],
