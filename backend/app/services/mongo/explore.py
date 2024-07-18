@@ -26,6 +26,7 @@ from loguru import logger
 from pymongo import InsertOne, UpdateOne
 
 from phospho.models import Cluster, Clustering
+from app.api.platform.models import Pagination
 
 
 async def project_has_tasks(project_id: str) -> bool:
@@ -1921,6 +1922,7 @@ async def fetch_flattened_tasks(
     limit: int = 1000,
     with_events: bool = True,
     with_sessions: bool = True,
+    pagination: Optional[Pagination] = None,
 ) -> List[FlattenedTask]:
     """
     Get a flattened representation of the tasks of a project for analytics
@@ -2013,13 +2015,32 @@ async def fetch_flattened_tasks(
             **return_columns,
             "session_length": "$session.session_length",
         }
-
+    # Sort the pipeline
     pipeline.extend(
         [
             {"$project": return_columns},
             {"$sort": {"task_created_at": -1}},
         ]
     )
+
+    # Pagination
+
+    if pagination:
+        pipeline.extend(
+            [
+                {"$skip": pagination.page * pagination.per_page},
+                {"$limit": pagination.per_page},
+            ]
+        )
+
+    # Limit
+    else:
+        pipeline.extend(
+            [
+                {"$limit": limit},
+            ]
+        )
+
     # Query Mongo
     flattened_tasks = (
         await mongo_db["tasks_with_events"].aggregate(pipeline).to_list(length=limit)
