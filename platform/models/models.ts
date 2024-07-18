@@ -204,7 +204,8 @@ export interface PowerBIConnection {
   database: string;
   username: string;
   password: string;
-  status: string;
+  projects_started: string[];
+  projects_finished: string[];
 }
 
 export interface HasEnoughLabelledTasks {

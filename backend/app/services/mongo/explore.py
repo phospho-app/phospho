@@ -26,6 +26,7 @@ from loguru import logger
 from pymongo import InsertOne, UpdateOne
 
 from phospho.models import Cluster, Clustering
+from app.api.platform.models import Pagination
 
 
 async def project_has_tasks(project_id: str) -> bool:
@@ -1921,6 +1922,7 @@ async def fetch_flattened_tasks(
     limit: int = 1000,
     with_events: bool = True,
     with_sessions: bool = True,
+    pagination: Optional[Pagination] = None,
     with_removed_events: bool = False,
 ) -> List[FlattenedTask]:
     """
@@ -2120,6 +2122,7 @@ async def fetch_flattened_tasks(
                 "event_removal_reason": "$events.removal_reason",
             }
 
+    # Sort the pipeline
     pipeline.extend(
         [
             {"$project": return_columns},
@@ -2127,6 +2130,28 @@ async def fetch_flattened_tasks(
         ]
     )
 
+    # Pagination
+
+    if pagination:
+        pipeline.extend(
+            [
+                {"$skip": pagination.page * pagination.per_page},
+                {"$limit": pagination.per_page},
+            ]
+        )
+
+    # Limit
+    else:
+        pipeline.extend(
+            [
+                {"$limit": limit},
+            ]
+        )
+
+    # Query Mongo
+    flattened_tasks = (
+        await mongo_db["tasks_with_events"].aggregate(pipeline).to_list(length=limit)
+    )
     if with_events and with_removed_events:
         flattened_tasks = (
             await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)

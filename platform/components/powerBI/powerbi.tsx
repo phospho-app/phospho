@@ -1,10 +1,15 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { authFetcher } from "@/lib/fetcher";
+import { PowerBIConnection } from "@/models/models";
 import { dataStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { CircleAlert } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 import {
   Card,
@@ -19,9 +24,21 @@ const PowerBIIntegrations: React.FC = () => {
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
+  const org_id = navigationStateStore((state) => state.selectedOrgId);
+  const project_id = navigationStateStore((state) => state.project_id);
+
+  const { accessToken } = useUser();
 
   // If the selectedOrgMetadata.argilla_worspace_id exists and is not null, then Argilla is set up
   const [isPowerBISetup, setIsPowerBISetup] = useState<boolean>(false);
+
+  const { data: credentials }: { data: PowerBIConnection } = useSWR(
+    org_id ? [`/api/postgres/${org_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   useEffect(() => {
     if (selectedOrgMetadata?.power_bi) {
@@ -47,10 +64,13 @@ const PowerBIIntegrations: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div>
-          {isPowerBISetup ? (
+          {isPowerBISetup && credentials && project_id ? (
             <div>
               <div className="mt-4 flex space-x-4">
-                <CreatePowerBI />
+                <CreatePowerBI
+                  credentials={credentials}
+                  project_id={project_id}
+                />
               </div>
             </div>
           ) : (

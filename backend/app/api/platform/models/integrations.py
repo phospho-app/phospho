@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from phospho.models import ProjectDataFilters
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
 
 class DatasetSamplingParameters(BaseModel):
@@ -25,10 +25,15 @@ class DatasetCreationRequest(BaseModel):
     )
 
 
-class PowerBICredentials(BaseModel, extra="allow"):
+class PostgresCredentials(BaseModel, extra="allow"):
     org_id: str
     server: str
     database: str
     username: str
     password: str
-    status: Optional[str] = None
+    projects_started: Optional[
+        List[str]
+    ] = []  # Projects that have started exporting are stored here
+    projects_finished: Optional[
+        List[str]
+    ] = []  # Projects that have finished exporting are stored here
