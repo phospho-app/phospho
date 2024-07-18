@@ -131,7 +131,7 @@ class LangfuseConnector(BaseConnector):
         # Dump to a dedicated db
         mongo_db = await get_mongo_db()
         observations_list = [
-            observation.model_dump() for observation in self.observations.data
+            observation.dict() for observation in self.observations.data
         ]
         if len(observations_list) > 0:
             mongo_db["logs_langfuse"].insert_many(observations_list)
