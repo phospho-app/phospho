@@ -2172,7 +2172,7 @@ async def fetch_flattened_tasks(
         # Flatten the task_metadata field into multiple task_metadata.{key} fields
         if "task_metadata" in task.keys():
             for key, value in task["task_metadata"].items():
-                if not isinstance(value, dict):
+                if not isinstance(value, dict) and not isinstance(value, list):
                     task[f"task_metadata.{key}"] = value
                 else:
                     # TODO: Handle nested fields. For now, cast to string
