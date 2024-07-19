@@ -3,26 +3,28 @@ To check if an organization has access to an argilla workspace, there is a metad
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+from loguru import logger
 from propelauth_py.user import User
-from app.services.mongo.integrations import (
+
+from app.api.platform.models.integrations import (
+    DatasetCreationRequest,
+    PostgresqlCredentials,
+)
+from app.core import config
+from app.security.authentification import propelauth
+from app.services.integrations import (
+    dataset_name_is_valid,
+    export_project_to_dedicated_postgres,
     generate_dataset_from_project,
     get_postgres_credentials_for_org,
     update_postgres_status,
-    export_project_to_dedicated_postgres,
 )
-from app.api.platform.models.integrations import DatasetCreationRequest
-from app.services.mongo.integrations import dataset_name_is_valid
 from app.services.mongo.projects import get_project_by_id
-from app.core import config
-
-from app.security.authentification import propelauth
-from loguru import logger
-from app.api.platform.models.integrations import PostgresCredentials
 
 router = APIRouter(tags=["Integrations"])
 
 
-@router.post("/datasets")
+@router.post("/argila/datasets")
 async def post_create_dataset(
     request: DatasetCreationRequest, user: User = Depends(propelauth.require_user)
 ):
@@ -73,7 +75,7 @@ async def post_create_dataset(
     return {"status": "ok"}
 
 
-@router.get("/postgres/{org_id}", response_model=PostgresCredentials)
+@router.get("/postgresql/creds/{org_id}", response_model=PostgresqlCredentials)
 async def get_dedicated_db(org_id: str, user: User = Depends(propelauth.require_user)):
     org_member_info = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_member_info.org_id)
@@ -92,7 +94,7 @@ async def get_dedicated_db(org_id: str, user: User = Depends(propelauth.require_
     return db_credentials
 
 
-@router.post("/postgres/{project_id}")
+@router.post("/postgresql/push/{project_id}")
 async def start_project_extract(
     project_id: str, user: User = Depends(propelauth.require_user)
 ):
