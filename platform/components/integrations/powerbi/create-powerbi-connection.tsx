@@ -25,7 +25,7 @@ const CreatePowerBI = ({ project_id }: { project_id: string }) => {
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
 
   const { data: credentials }: { data: PostgresCredentials } = useSWR(
-    org_id ? [`/api/postgres/${org_id}`, accessToken] : null,
+    org_id ? [`/api/postgresql/${org_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
@@ -44,7 +44,7 @@ const CreatePowerBI = ({ project_id }: { project_id: string }) => {
         description:
           "We are exporting your data to postgres, this may take a few minutes",
       });
-      fetch(`/api/postgres/${project_id}`, {
+      fetch(`/api/postgresql/${project_id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
