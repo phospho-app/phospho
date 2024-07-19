@@ -36,7 +36,6 @@ const CreateDataset = () => {
   }
 
   // We create a function to generate a dataset name that is nice for humans
-  // TODO: add some easter eggs
   const colors = [
     "green",
     "neon",
@@ -53,6 +52,8 @@ const CreateDataset = () => {
     "jade",
     "slate",
     "ivory",
+    "bearish",
+    "bullish",
   ];
 
   const fruits = [
@@ -69,6 +70,9 @@ const CreateDataset = () => {
     "starfruit",
     "coconut",
     "jackfruit",
+    "banana",
+    "pl",
+    "apple",
   ];
 
   function getRandomItem<T>(array: T[]): T {
@@ -97,7 +101,7 @@ const CreateDataset = () => {
     setIsCreatingDataset(true);
     console.log(useSmartSampling);
     try {
-      await fetch(`/api/datasets`, {
+      await fetch(`/api/argila/datasets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
