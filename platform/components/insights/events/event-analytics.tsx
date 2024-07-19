@@ -139,20 +139,6 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   )}
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader>
-                <CardDescription>True positive</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(F1Score?.true_positive === undefined && (
-                  <p>...</p>
-                )) || (
-                    <p className="text-xl">
-                      {F1Score?.true_positive}
-                    </p>
-                  )}
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
