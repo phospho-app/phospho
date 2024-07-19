@@ -25,7 +25,7 @@ class DatasetCreationRequest(BaseModel):
     )
 
 
-class PostgresCredentials(BaseModel, extra="allow"):
+class PostgresqlCredentials(BaseModel, extra="allow"):
     org_id: str
     server: str
     database: str

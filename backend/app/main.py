@@ -10,7 +10,7 @@ from app.core import config
 from app.db.mongo import close_mongo_db, connect_and_init_db
 from app.services.mongo.extractor import check_health_extractor
 from app.services.mongo.ai_hub import check_health_ai_hub
-from app.services.mongo.integrations import check_health_argilla
+from app.services.integrations import check_health_argilla
 
 logging.info(f"ENVIRONMENT : {config.ENVIRONMENT}")
 
