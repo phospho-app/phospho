@@ -8,26 +8,29 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
-import { PowerBIConnection } from "@/models/models";
+import { authFetcher } from "@/lib/fetcher";
+import { PostgresCredentials } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ChevronRight } from "lucide-react";
-import Link from "next/link";
 import React from "react";
 import { CopyBlock, monoBlue } from "react-code-blocks";
+import useSWR from "swr";
 
-const CreatePowerBI = ({
-  credentials,
-  project_id,
-}: {
-  credentials: PowerBIConnection;
-  project_id: string;
-}) => {
+const CreatePowerBI = ({ project_id }: { project_id: string }) => {
   const { accessToken } = useUser();
   const org_id = navigationStateStore((state) => state.selectedOrgId);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+
+  const { data: credentials }: { data: PostgresCredentials } = useSWR(
+    org_id ? [`/api/postgres/${org_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const handleExport = () => {
     if (
@@ -84,16 +87,13 @@ const CreatePowerBI = ({
         </SheetDescription>
         <Separator className="my-8" />
         <div className="block text-m font-medium">
-          Below are the credentials to a dedicated postgres DB that you can use
-          to connect your Power BI instance to your project data.
-        </div>
-        <Separator className="my-2" />
-        <div className="block text-m font-medium">
-          View the documentation on how to connect Power BI to a PostgreSQL DB{" "}
-          <Link href="https://docs.phospho.ai" className="hover:text-green-500">
-            here
-          </Link>
-          .
+          Read the guide on{" "}
+          <a
+            href="https://learn.microsoft.com/en-us/power-query/connectors/postgresql#connect-to-a-postgresql-database-from-power-query-desktop"
+            className="underline"
+          >
+            how to connect Power BI to a PostgreSQL DB
+          </a>
         </div>
         <Separator className="my-8" />
         <div className="flex flex-col space-y-2">

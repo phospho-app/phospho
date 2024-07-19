@@ -31,9 +31,7 @@ class PostgresCredentials(BaseModel, extra="allow"):
     database: str
     username: str
     password: str
-    projects_started: Optional[
-        List[str]
-    ] = []  # Projects that have started exporting are stored here
-    projects_finished: Optional[
-        List[str]
-    ] = []  # Projects that have finished exporting are stored here
+    # Projects that have started exporting are stored here
+    projects_started: List[str] = Field(default_factory=list)
+    # Projects that have finished exporting are stored here
+    projects_finished: List[str] = Field(default_factory=list)

@@ -1,72 +1,62 @@
 "use client";
 
-import CreateDataset from "@/components/argilla/create-argilla-dataset";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { dataStateStore } from "@/store/store";
-import { CircleAlert } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card";
+} from "@/components/ui/card";
+import { dataStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
+import { CircleAlert } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
-const ArgillaIntegrations: React.FC = () => {
+import CreatePowerBI from "./create-powerbi-connection";
+
+const PowerBIIntegrations: React.FC = () => {
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
+  const org_id = navigationStateStore((state) => state.selectedOrgId);
+  const project_id = navigationStateStore((state) => state.project_id);
+
+  const { accessToken } = useUser();
 
   // If the selectedOrgMetadata.argilla_worspace_id exists and is not null, then Argilla is set up
-  const [isArgillaSetup, setIsArgillaSetup] = useState<boolean>(false);
+  const [isPowerBISetup, setIsPowerBISetup] = useState<boolean>(false);
 
   useEffect(() => {
-    if (selectedOrgMetadata?.argilla_workspace_id) {
-      setIsArgillaSetup(true);
+    if (selectedOrgMetadata?.power_bi) {
+      setIsPowerBISetup(true);
     }
-  }, [selectedOrgMetadata?.argilla_workspace_id]);
+  }, [selectedOrgMetadata?.power_bi]);
 
+  // Let's add a logo on the left side of the CardTitle
   return (
-    <Card>
+    <Card className="mt-2">
       <CardHeader>
         <CardTitle className="flex">
           <img
-            src="/image/argilla.png"
-            alt="Argilla Logo"
-            className="w-10 h-5 mr-2"
+            src="/image/power-bi.png"
+            alt="PowerBI Logo"
+            className="w-5 h-5 mr-2"
           />
-          Argilla
+          Power BI
         </CardTitle>
         <CardDescription>
-          View the documentation{" "}
-          <Link
-            href={"https://docs.phospho.ai/guides/export-dataset-argilla"}
-            className="hover:text-green-500"
-          >
-            here
-          </Link>
-          .
+          Coming soon: Export data from your project for use in Power BI
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div>
-          {isArgillaSetup ? (
+          {isPowerBISetup && project_id ? (
             <div>
               <div className="mt-4 flex space-x-4">
-                <Link
-                  href={
-                    process.env.NEXT_PUBLIC_ARGILLA_URL ||
-                    "https://argilla.phospho.ai"
-                  }
-                  target="_blank"
-                >
-                  <Button>View your datasets</Button>
-                </Link>
-                <CreateDataset />
+                <CreatePowerBI project_id={project_id} />
               </div>
             </div>
           ) : (
@@ -92,4 +82,4 @@ const ArgillaIntegrations: React.FC = () => {
   );
 };
 
-export default ArgillaIntegrations;
+export default PowerBIIntegrations;
