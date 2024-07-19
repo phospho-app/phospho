@@ -30,6 +30,7 @@ poetry install --with dev
 ```bash
 poetry run uvicorn app.main:app --reload --port 7605
 ```
+**Warning:** You have to put your EXTRACTOR_SECRET_KEY in your backend .env.
 
 ## Security
 
