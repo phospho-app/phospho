@@ -3,21 +3,19 @@ To check if an organization has access to an argilla workspace, there is a metad
 """
 
 from fastapi import APIRouter, Depends, HTTPException
-from loguru import logger
 from propelauth_py.user import User
 
-from app.api.platform.models.integrations import (
-    DatasetCreationRequest,
-    PostgresqlCredentials,
-)
+from app.api.platform.models.integrations import DatasetCreationRequest
 from app.core import config
-from app.security.authentification import propelauth
+from app.security.authentification import (
+    propelauth,
+    verify_if_propelauth_user_can_access_project,
+)
 from app.services.integrations import (
     dataset_name_is_valid,
-    export_project_to_dedicated_postgres,
     generate_dataset_from_project,
-    get_postgres_credentials_for_org,
-    update_postgres_status,
+    PostgresqlCredentials,
+    PostgresqlIntegration,
 )
 from app.services.mongo.projects import get_project_by_id
 
@@ -28,13 +26,10 @@ router = APIRouter(tags=["Integrations"])
 async def post_create_dataset(
     request: DatasetCreationRequest, user: User = Depends(propelauth.require_user)
 ):
-    # TODO: Check if the user has access to the porject and the workspace
-
+    await verify_if_propelauth_user_can_access_project(user, request.project_id)
     project = await get_project_by_id(request.project_id)
     org_member_info = propelauth.require_org_member(user, project.org_id)
-
     org = propelauth.fetch_org(org_member_info.org_id)
-
     # Get the org metadata
     org_metadata = org.get("metadata", {})
 
@@ -46,7 +41,6 @@ async def post_create_dataset(
         )
 
     workspace_id = org_metadata["argilla_workspace_id"]
-
     if workspace_id is request.workspace_id:
         raise HTTPException(status_code=400, detail="The workspace_id is not valid.")
 
@@ -58,99 +52,46 @@ async def post_create_dataset(
 
     # Authorization checks
     is_name_valid = dataset_name_is_valid(request.dataset_name, request.workspace_id)
-
     if not is_name_valid:
         raise HTTPException(
             status_code=400, detail="The dataset name is not valid or already exists."
         )
-
-    dataset = await generate_dataset_from_project(request)
-
-    if dataset is None:
-        raise HTTPException(
-            status_code=400,
-            detail="The dataset could not be generated using these filters.",
-        )
-
+    await generate_dataset_from_project(request)
     return {"status": "ok"}
 
 
 @router.get("/postgresql/creds/{org_id}", response_model=PostgresqlCredentials)
-async def get_dedicated_db(org_id: str, user: User = Depends(propelauth.require_user)):
+async def get_postgresql_creds(
+    org_id: str, user: User = Depends(propelauth.require_user)
+):
     org_member_info = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_member_info.org_id)
-
-    # Get the org metadata
     org_metadata = org.get("metadata", {})
-
-    if "power_bi" not in org_metadata or not org_id:
-        raise HTTPException(
-            status_code=400,
-            detail="Your organization does not have access to a dedicated Power BI workspace. Contact us to get access to one.",
-        )
-
-    db_credentials = await get_postgres_credentials_for_org(org_id=org_id)
-
-    return db_credentials
+    org_name = org.get("name", "")
+    postgres_integration = PostgresqlIntegration(
+        org_id=org_id, org_metadata=org_metadata, org_name=org_name
+    )
+    await postgres_integration.load_config()
+    return postgres_integration.credentials
 
 
 @router.post("/postgresql/push/{project_id}")
-async def start_project_extract(
+async def post_postgresql_push(
     project_id: str, user: User = Depends(propelauth.require_user)
 ):
+    await verify_if_propelauth_user_can_access_project(user, project_id)
     project = await get_project_by_id(project_id)
     org_member_info = propelauth.require_org_member(user, project.org_id)
-
     org = propelauth.fetch_org(org_member_info.org_id)
-
-    # Get the org metadata
     org_metadata = org.get("metadata", {})
-
-    if not org_metadata.get("power_bi", False):
-        raise HTTPException(
-            status_code=400,
-            detail="Your organization does not have access to a dedicated Power BI workspace. Contact us to get access to one.",
-        )
-
-    logger.debug(f"Starting the extract for project {project_id}")
-
-    credentials = await get_postgres_credentials_for_org(org_id=org_member_info.org_id)
-
-    # The project has already been started or finished
-    if (
-        project_id in credentials.projects_started
-        or project_id in credentials.projects_finished
-    ):
-        return {"status": "ok"}
-
-    # Update the project status to "started"
-    await update_postgres_status(
-        org_id=org_member_info.org_id, project_id=project_id, status="started"
+    org_name = org.get("name", "")
+    postgres_integration = PostgresqlIntegration(
+        org_id=org_member_info.org_id,
+        org_name=org_name,
+        org_metadata=org_metadata,
+        project_id=project_id,
     )
-
-    # Debug in local environement
-    if config.ENVIRONMENT == "test":
-        debug = True
-    else:
-        debug = False
-
-    # Start the extract
-    try:
-        await export_project_to_dedicated_postgres(
-            project.project_name, project_id, credentials, debug=debug
-        )
-    except Exception as e:
-        logger.error(f"Error while exporting the project to Power BI: {e}")
-        await update_postgres_status(
-            org_id=org_member_info.org_id, project_id=project_id, status="failed"
-        )
-        raise HTTPException(
-            status_code=400,
-            detail="The extract could not be started. Please try again later.",
-        )
-
-    await update_postgres_status(
-        org_id=org_member_info.org_id, project_id=project_id, status="finished"
+    status = await postgres_integration.export_project_to_dedicated_postgres(
+        project.project_name,
     )
-
-    return {"status": "ok"}
+    return {"status": status}

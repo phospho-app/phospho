@@ -135,7 +135,7 @@ const CreatePowerBI = ({ project_id }: { project_id: string }) => {
           )}
           {credentials.projects_finished.includes(project_id) && (
             <span className="text-green-500">
-              Export complete, we will synchronise your project regularly.
+              Export complete. Your project data will be synced regularly.
             </span>
           )}
         </div>

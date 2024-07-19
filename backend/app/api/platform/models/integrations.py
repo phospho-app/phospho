@@ -23,15 +23,3 @@ class DatasetCreationRequest(BaseModel):
     sampling_parameters: DatasetSamplingParameters = Field(
         default_factory=lambda: DatasetSamplingParameters(sampling_type="naive")
     )
-
-
-class PostgresqlCredentials(BaseModel, extra="allow"):
-    org_id: str
-    server: str
-    database: str
-    username: str
-    password: str
-    # Projects that have started exporting are stored here
-    projects_started: List[str] = Field(default_factory=list)
-    # Projects that have finished exporting are stored here
-    projects_finished: List[str] = Field(default_factory=list)

@@ -96,9 +96,7 @@ async def generate_dataset_from_project(
     # Load the project configs, so we know the dataset fields and questions
     project = await get_project_by_id(creation_request.project_id)
 
-    logger.debug(f"events: {project.settings.events}")
-
-    logger.debug(project)
+    logger.debug(f"events: {project.settings.events}, project: {project}")
 
     # Get the labels from the project settings
     # By default project.settings.events is {}
