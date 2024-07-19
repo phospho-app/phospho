@@ -89,3 +89,16 @@ def health_check(url: str) -> bool:
     except Exception as e:
         logger.error(e)
         return False
+
+
+def slugify_string(string: str) -> str:
+    """
+    Remove special characters, replace spaces by underscores, lowercase the string,
+    and trim it to 30 characters max
+    """
+    # Remove special characters
+    slug = "".join(e for e in string if e.isalnum())
+    slug = slug.replace(" ", "_")
+    slug = slug.lower()
+    slug = slug[:30]
+    return slug
