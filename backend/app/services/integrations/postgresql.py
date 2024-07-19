@@ -2,7 +2,6 @@ from typing import List, Literal, Optional
 
 import pandas as pd
 from app.api.platform.models import Pagination
-from app.api.platform.models.integrations import PostgresqlCredentials
 from app.core import config
 from app.db.mongo import get_mongo_db
 from app.services.mongo.explore import fetch_flattened_tasks
