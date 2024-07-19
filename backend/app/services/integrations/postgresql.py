@@ -64,6 +64,13 @@ class PostgresqlIntegration:
         return f"postgresql://{config.NEON_ADMIN_USERNAME}:{config.NEON_ADMIN_PASSWORD}@{self.credentials.server}/{self.credentials.database}"
 
     async def load_config(self):
+        """
+        Load the Postgres credentials from MongoDB.
+
+        If the credentials are not found, create them.
+
+        This drops the database if it already exists and creates a new one.
+        """
         if self.credentials is not None:
             return self.credentials
         mongo_db = await get_mongo_db()
@@ -95,12 +102,22 @@ class PostgresqlIntegration:
         with engine.connect() as connection:
             logger.debug(f"Creating database {slugify_string(self.org_name)}")
             connection.execution_options(isolation_level="AUTOCOMMIT")
-            connection.execute(
-                text(f"DROP DATABASE IF EXISTS {slugify_string(self.org_name)};")
-            )
-            connection.execute(
-                text(f"CREATE DATABASE {slugify_string(self.org_name)};")
-            )
+            # UPDATE pg_database SET datallowconn = 'false' WHERE datname = 'databasename';
+            # SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'databasename';
+            try:
+                connection.execute(
+                    text(f"DROP DATABASE IF EXISTS {slugify_string(self.org_name)};")
+                )
+            except Exception as e:
+                # Carry on
+                logger.error(e)
+            try:
+                connection.execute(
+                    text(f"CREATE DATABASE {slugify_string(self.org_name)};")
+                )
+            except Exception as e:
+                # Carry on
+                logger.error(e)
             # Create a new user if it doesn't exist
             username = f"user_{generate_uuid()[:8]}"
             password = generate_uuid()
@@ -114,6 +131,7 @@ class PostgresqlIntegration:
                     f"GRANT ALL PRIVILEGES ON DATABASE {slugify_string(self.org_name)} TO {username};"
                 )
             )
+            connection.commit()
             connection.close()
 
         self.credentials = PostgresqlCredentials(
@@ -238,6 +256,8 @@ class PostgresqlIntegration:
                         index=False,
                     )
                     logger.debug("Batch uploaded to Postgres")
+
+                connection.close()
 
             logger.info("Export finished")
             await self.update_status("finished")
