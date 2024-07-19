@@ -75,7 +75,7 @@ async def post_create_dataset(
     return {"status": "ok"}
 
 
-@router.get("/postgresql/{org_id}", response_model=PostgresqlCredentials)
+@router.get("/postgresql/creds/{org_id}", response_model=PostgresqlCredentials)
 async def get_dedicated_db(org_id: str, user: User = Depends(propelauth.require_user)):
     org_member_info = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_member_info.org_id)
@@ -94,7 +94,7 @@ async def get_dedicated_db(org_id: str, user: User = Depends(propelauth.require_
     return db_credentials
 
 
-@router.post("/postgresql/{project_id}")
+@router.post("/postgresql/push/{project_id}")
 async def start_project_extract(
     project_id: str, user: User = Depends(propelauth.require_user)
 ):
