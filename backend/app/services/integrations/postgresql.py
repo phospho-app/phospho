@@ -6,11 +6,12 @@ from app.core import config
 from app.db.mongo import get_mongo_db
 from app.services.mongo.explore import fetch_flattened_tasks
 from app.services.mongo.tasks import get_total_nb_of_tasks
-from app.utils import slugify_string
+from app.utils import generate_uuid, slugify_string
 from fastapi import HTTPException
 from loguru import logger
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine
+from sqlalchemy.sql import text
 
 
 class PostgresqlCredentials(BaseModel, extra="allow"):
@@ -35,10 +36,12 @@ class PostgresqlIntegration:
     def __init__(
         self,
         org_id: str,
+        org_name: str,
         project_id: Optional[str] = None,
         org_metadata: Optional[dict] = None,
     ):
         self.org_id = org_id
+        self.org_name = org_name
         self.project_id = project_id
         if org_metadata is not None:
             # Verify that the org has access to a dedicated Postgres database, based on the metadata
@@ -47,6 +50,18 @@ class PostgresqlIntegration:
                     status_code=400,
                     detail=f"The organization {org_id} does'nt have access to this feature. Please reach out.",
                 )
+
+        if config.NEON_ADMIN_PASSWORD is None or config.NEON_ADMIN_USERNAME is None:
+            logger.error("Neon admin credentials are not configured")
+            raise HTTPException(
+                status_code=500,
+                detail="Admin credentials are not configured",
+            )
+
+    def _connection_string(self) -> str:
+        if self.credentials is None:
+            raise ValueError("No credentials found")
+        return f"postgresql://{config.NEON_ADMIN_USERNAME}:{config.NEON_ADMIN_PASSWORD}@{self.credentials.server}/{self.credentials.database}"
 
     async def load_config(self):
         if self.credentials is not None:
@@ -59,17 +74,60 @@ class PostgresqlIntegration:
             # Remove the _id field
             if "_id" in postgres_credentials.keys():
                 del postgres_credentials["_id"]
-
             postgres_credentials_valid = PostgresqlCredentials.model_validate(
                 postgres_credentials
             )
             self.credentials = postgres_credentials_valid
+            return
 
-        # TODO : Create credentials if they don't exist
-        # For now, we raise an exception
-        raise HTTPException(
-            status_code=400,
-            detail=f"No dedicated database found for org {self.org_id}",
+        # Create credentials if they don't exist
+        if config.NEON_SERVER is None:
+            logger.error("Neon server is not configured")
+            raise HTTPException(
+                status_code=500,
+                detail="Neon server is not configured",
+            )
+
+        engine = create_engine(
+            f"postgresql://{config.NEON_ADMIN_USERNAME}:{config.NEON_ADMIN_PASSWORD}@{config.NEON_SERVER}/phospho"
+        )
+        # Create the database if it doesn't exist
+        with engine.connect() as connection:
+            logger.debug(f"Creating database {slugify_string(self.org_name)}")
+            connection.execution_options(isolation_level="AUTOCOMMIT")
+            connection.execute(
+                text(f"DROP DATABASE IF EXISTS {slugify_string(self.org_name)};")
+            )
+            connection.execute(
+                text(f"CREATE DATABASE {slugify_string(self.org_name)};")
+            )
+            # Create a new user if it doesn't exist
+            username = f"user_{generate_uuid()[:8]}"
+            password = generate_uuid()
+            connection.execute(text(f"DROP USER IF EXISTS {username};"))
+            connection.execute(
+                text(f"CREATE USER {username} WITH PASSWORD '{password}';")
+            )
+            # Grant all privileges to the user over the database
+            connection.execute(
+                text(
+                    f"GRANT ALL PRIVILEGES ON DATABASE {slugify_string(self.org_name)} TO {username};"
+                )
+            )
+            connection.close()
+
+        self.credentials = PostgresqlCredentials(
+            org_id=self.org_id,
+            server=config.NEON_SERVER,
+            database=slugify_string(self.org_name),
+            username=username,
+            password=password,
+        )
+        # Push to MongoDB
+        await mongo_db["integrations"].update_one(
+            {"org_id": self.org_id},
+            {"$set": self.credentials.model_dump()},
+            upsert=True,
         )
 
     async def update_status(
@@ -94,7 +152,7 @@ class PostgresqlIntegration:
                 {"$pull": {"projects_started": self.project_id}},
                 return_document=True,
             )
-        else:  # status == "finished"
+        elif status == "finished":
             updated_credentials = await mongo_db["integrations"].find_one_and_update(
                 {"org_id": self.org_id},
                 {
@@ -103,6 +161,8 @@ class PostgresqlIntegration:
                 },
                 return_document=True,
             )
+        else:
+            raise ValueError(f"Unknown status {status}")
 
         return updated_credentials
 
@@ -124,7 +184,6 @@ class PostgresqlIntegration:
             await self.update_status("failed")
             return "failure"
 
-        exported_db_name = slugify_string(exported_db_name)
         logger.info(
             f"Starting export of project {self.project_id} to dedicated Postgres {self.credentials.server}:{self.credentials.database}"
         )
@@ -135,58 +194,58 @@ class PostgresqlIntegration:
             await self.update_status("finished")
             return "success"
 
-        # Fetch admin credentials
-        neon_user = config.NEON_ADMIN_USERNAME
-        neon_password = config.NEON_ADMIN_PASSWORD
-
-        if neon_user is None or neon_password is None:
-            logger.error("Neon admin credentials are not configured")
-            await self.update_status("failed")
-            return "failure"
-
         # Connect to Neon Postgres database, we add asyncpg for async support
         debug = config.ENVIRONMENT == "test"
-        connection_string = f"postgresql://{neon_user}:{neon_password}@{self.credentials.server}/{self.credentials.database}"
-        engine = create_engine(connection_string, echo=debug)
+        try:
+            engine = create_engine(self._connection_string(), echo=debug)
+            with engine.connect() as connection:
+                logger.debug(
+                    f"Connected to Postgres {self.credentials.server}:{self.credentials.database}"
+                )
+                nb_batches = total_nb_tasks // batch_size
+                columns = None
+                for i in range(nb_batches + 1):
+                    logger.debug(
+                        f"Exporting batch {i}/{nb_batches} ({batch_size} tasks)"
+                    )
+                    flattened_tasks = await fetch_flattened_tasks(
+                        project_id=self.project_id,
+                        limit=batch_size,
+                        with_events=True,
+                        with_sessions=True,
+                        pagination=Pagination(page=i, per_page=batch_size),
+                    )
+                    # Convert the list of FlattenedTask to a pandas dataframe
+                    tasks_df = pd.DataFrame(
+                        [task.model_dump() for task in flattened_tasks]
+                    )
+                    # The metadata columns depends on the tasks. To avoid creating a wrong schema, we only create the schema with the first batch
+                    # Then we only keep the columns that are in the first batch
+                    if columns is None:
+                        columns = tasks_df.columns
+                    else:
+                        # Only keep the columns that are in the first batch and remove columns that are not in the first batch
+                        tasks_df = tasks_df[
+                            list(set(columns).intersection(set(tasks_df.columns)))
+                        ]
+                    if_exists_mode = "replace" if i == 0 else "append"
+                    # Note: to_sql is not async, we could use asyncpg directly: https://github.com/MagicStack/asyncpg
+                    pd.DataFrame.to_sql(
+                        tasks_df,
+                        slugify_string(exported_db_name),
+                        connection,
+                        if_exists=if_exists_mode,
+                        index=False,
+                    )
+                    logger.debug("Batch uploaded to Postgres")
 
-        logger.debug(
-            f"Connected to Postgres {self.credentials.server}:{self.credentials.database}"
-        )
-        nb_batches = total_nb_tasks // batch_size
-        columns = None
-        for i in range(nb_batches + 1):
-            logger.debug(f"Exporting batch {i}/{nb_batches} ({batch_size} tasks)")
-            flattened_tasks = await fetch_flattened_tasks(
-                project_id=self.project_id,
-                limit=batch_size,
-                with_events=True,
-                with_sessions=True,
-                pagination=Pagination(page=i, per_page=batch_size),
-            )
-            # Convert the list of FlattenedTask to a pandas dataframe
-            tasks_df = pd.DataFrame([task.model_dump() for task in flattened_tasks])
-            # The metadata columns depends on the tasks. To avoid creating a wrong schema, we only create the schema with the first batch
-            # Then we only keep the columns that are in the first batch
-            if columns is None:
-                columns = tasks_df.columns
-            else:
-                # Only keep the columns that are in the first batch and remove columns that are not in the first batch
-                tasks_df = tasks_df[
-                    list(set(columns).intersection(set(tasks_df.columns)))
-                ]
-            # Upload dataframe to Postgresql. No need to sleep in between batches, as this connector is synchronous
-            pd.DataFrame.to_sql(
-                tasks_df,
-                exported_db_name,
-                engine,
-                if_exists="append",
-                index=False,
-            )
-            logger.debug("Batch uploaded to Postgres")
-
-        logger.info("Export finished")
-        await self.update_status("finished")
-        return "success"
+            logger.info("Export finished")
+            await self.update_status("finished")
+            return "success"
+        except Exception as e:
+            logger.error(e)
+            await self.update_status("failed")
+            return "failure"
 
 
 """

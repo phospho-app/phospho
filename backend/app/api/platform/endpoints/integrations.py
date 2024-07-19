@@ -3,12 +3,14 @@ To check if an organization has access to an argilla workspace, there is a metad
 """
 
 from fastapi import APIRouter, Depends, HTTPException
-from loguru import logger
 from propelauth_py.user import User
 
 from app.api.platform.models.integrations import DatasetCreationRequest
 from app.core import config
-from app.security.authentification import propelauth
+from app.security.authentification import (
+    propelauth,
+    verify_if_propelauth_user_can_access_project,
+)
 from app.services.integrations import (
     dataset_name_is_valid,
     generate_dataset_from_project,
@@ -24,13 +26,10 @@ router = APIRouter(tags=["Integrations"])
 async def post_create_dataset(
     request: DatasetCreationRequest, user: User = Depends(propelauth.require_user)
 ):
-    # TODO: Check if the user has access to the porject and the workspace
-
+    await verify_if_propelauth_user_can_access_project(user, request.project_id)
     project = await get_project_by_id(request.project_id)
     org_member_info = propelauth.require_org_member(user, project.org_id)
-
     org = propelauth.fetch_org(org_member_info.org_id)
-
     # Get the org metadata
     org_metadata = org.get("metadata", {})
 
@@ -42,7 +41,6 @@ async def post_create_dataset(
         )
 
     workspace_id = org_metadata["argilla_workspace_id"]
-
     if workspace_id is request.workspace_id:
         raise HTTPException(status_code=400, detail="The workspace_id is not valid.")
 
@@ -54,20 +52,11 @@ async def post_create_dataset(
 
     # Authorization checks
     is_name_valid = dataset_name_is_valid(request.dataset_name, request.workspace_id)
-
     if not is_name_valid:
         raise HTTPException(
             status_code=400, detail="The dataset name is not valid or already exists."
         )
-
-    dataset = await generate_dataset_from_project(request)
-
-    if dataset is None:
-        raise HTTPException(
-            status_code=400,
-            detail="The dataset could not be generated using these filters.",
-        )
-
+    await generate_dataset_from_project(request)
     return {"status": "ok"}
 
 
@@ -78,22 +67,27 @@ async def get_postgresql_creds(
     org_member_info = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_member_info.org_id)
     org_metadata = org.get("metadata", {})
+    org_name = org.get("name", "")
     postgres_integration = PostgresqlIntegration(
-        org_id=org_id, org_metadata=org_metadata
+        org_id=org_id, org_metadata=org_metadata, org_name=org_name
     )
-    return await postgres_integration.load_config()
+    await postgres_integration.load_config()
+    return postgres_integration.credentials
 
 
 @router.post("/postgresql/push/{project_id}")
 async def post_postgresql_push(
     project_id: str, user: User = Depends(propelauth.require_user)
 ):
+    await verify_if_propelauth_user_can_access_project(user, project_id)
     project = await get_project_by_id(project_id)
     org_member_info = propelauth.require_org_member(user, project.org_id)
     org = propelauth.fetch_org(org_member_info.org_id)
     org_metadata = org.get("metadata", {})
+    org_name = org.get("name", "")
     postgres_integration = PostgresqlIntegration(
         org_id=org_member_info.org_id,
+        org_name=org_name,
         org_metadata=org_metadata,
         project_id=project_id,
     )
