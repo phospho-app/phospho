@@ -31,15 +31,34 @@ function EventAnalytics({ eventId }: { eventId: string }) {
   const { data: totalNbDetections } = useSWR(
     project_id
       ? [
-          `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
-          accessToken,
-          "total_nb_events",
-          JSON.stringify(eventFilters),
-        ]
+        `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
+        accessToken,
+        "total_nb_events",
+        JSON.stringify(eventFilters),
+      ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_events"],
+        filters: eventFilters,
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+
+  const { data: F1Score } = useSWR(
+    project_id
+      ? [
+        `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
+        accessToken,
+        "f1_score",
+        JSON.stringify(eventFilters),
+      ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["f1_score"],
         filters: eventFilters,
       }),
     {
@@ -71,10 +90,67 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                 {(totalNbDetections?.total_nb_events === undefined && (
                   <p>...</p>
                 )) || (
-                  <p className="text-xl">
-                    {totalNbDetections?.total_nb_events}
-                  </p>
-                )}
+                    <p className="text-xl">
+                      {totalNbDetections?.total_nb_events}
+                    </p>
+                  )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardDescription>F1-score</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(F1Score?.f1_score === undefined && (
+                  <p>...</p>
+                )) || (
+                    <p className="text-xl">
+                      {F1Score?.f1_score}
+                    </p>
+                  )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardDescription>Precision</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(F1Score?.precision === undefined && (
+                  <p>...</p>
+                )) || (
+                    <p className="text-xl">
+                      {F1Score?.precision}
+                    </p>
+                  )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardDescription>Recall</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(F1Score?.recall === undefined && (
+                  <p>...</p>
+                )) || (
+                    <p className="text-xl">
+                      {F1Score?.recall}
+                    </p>
+                  )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardDescription>True positive</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(F1Score?.true_positive === undefined && (
+                  <p>...</p>
+                )) || (
+                    <p className="text-xl">
+                      {F1Score?.true_positive}
+                    </p>
+                  )}
               </CardContent>
             </Card>
           </div>
