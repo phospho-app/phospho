@@ -1700,18 +1700,22 @@ async def get_total_nb_of_true_posive(
     if filters.created_at_end is not None:
         main_filter["created_at"] = {"$lte": filters.created_at_end}
     if filters.event_id is not None:
-        main_filter["id"] = {"$in": filters.event_id}
+        main_filter["event_definition.id"] = {"$in": filters.event_id}
 
     main_filter["source"] = {"$ne": "owner"}
     main_filter["confirmed"] = {"$eq": True}
     main_filter["event_definition.removed"] = {"$ne": True}
-    main_filter["score_range_settings.score_type"] = {"$eq": None}
+    main_filter["event_definition.score_range_settings.score_type"] = {
+        "$eq": "confidence"
+    }
 
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
         {"$count": "true_positive"},
     ]
+    logger.debug(f"Pipeline: {pipeline}")
     query_result = await mongo_db["events"].aggregate(pipeline).to_list(length=1)
+    logger.debug(f"Query result: {query_result}")
     if query_result is not None and len(query_result) > 0:
         total_nb_true_positive = query_result[0]["true_positive"]
     else:
@@ -1736,11 +1740,13 @@ async def get_total_nb_of_false_posive(
     if filters.created_at_end is not None:
         main_filter["created_at"] = {"$lte": filters.created_at_end}
     if filters.event_id is not None:
-        main_filter["id"] = {"$in": filters.event_id}
+        main_filter["event_definition.id"] = {"$in": filters.event_id}
 
     main_filter["confirmed"] = {"$eq": False}
     main_filter["event_definition.removed"] = {"$ne": False}
-    main_filter["score_range_settings.score_type"] = {"$eq": None}
+    main_filter["event_definition.score_range_settings.score_type"] = {
+        "$eq": "confidence"
+    }
 
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
@@ -1771,12 +1777,14 @@ async def get_total_nb_of_false_negative(
     if filters.created_at_end is not None:
         main_filter["created_at"] = {"$lte": filters.created_at_end}
     if filters.event_id is not None:
-        main_filter["id"] = {"$in": filters.event_id}
+        main_filter["event_definition.id"] = {"$in": filters.event_id}
 
     main_filter["source"] = {"$eq": "owner"}
     main_filter["confirmed"] = {"$eq": True}
     main_filter["event_definition.removed"] = {"$ne": True}
-    main_filter["score_range_settings.score_type"] = {"$eq": None}
+    main_filter["event_definition.score_range_settings.score_type"] = {
+        "$eq": "confidence"
+    }
 
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
@@ -1810,38 +1818,34 @@ async def get_events_aggregated_metrics(
         output["total_nb_events"] = await get_total_nb_of_detections(
             project_id=project_id, filters=filters
         )
-    if "f1_score" in metrics:
+    if "f1_score" in metrics or "precision" in metrics or "recall" in metrics:
         output["true_positive"] = await get_total_nb_of_true_posive(
             project_id=project_id, filters=filters
         )
-        output["false positive"] = await get_total_nb_of_false_posive(
+        output["false_positive"] = await get_total_nb_of_false_posive(
             project_id=project_id, filters=filters
         )
-        output["false negative"] = await get_total_nb_of_false_negative(
+        output["false_negative"] = await get_total_nb_of_false_negative(
             project_id=project_id, filters=filters
         )
 
-        if output["true_positive"] + output["false positive"] > 0:
-            output["precision"] = float(output["true positive"]) / (
-                output["true positive"] + output["false positive"]
+        if output["true_positive"] + output["false_positive"] > 0:
+            # To compute the precision, we need enough data to compute the true positive and false positive
+            output["precision"] = float(output["true_positive"]) / (
+                output["true_positive"] + output["false_positive"]
             )
-        else:
-            output["precision"] = "Cannot compute precision"
-
-        if output["true_positive"] + output["false negative"] > 0:
-            output["recall"] = float(output["true positive"]) / (
-                output["true positive"] + output["false negative"]
+        if output["true_positive"] + output["false_negative"] > 0:
+            # To compute the recall, we need enough data to compute the true positive and false negative
+            output["recall"] = float(output["true_positive"]) / (
+                output["true_positive"] + output["false_negative"]
             )
-        else:
-            output["recall"] = "Cannot compute recall"
-
-        if output["precision"] is float and output["recall"] is float:
+        if output.get("precision", None) and output.get("recall", None):
+            # To compute the F1 score, we need enough data to compute the precision and recall
             output["f1_score"] = 2 * (
                 (output["precision"] * output["recall"])
                 / (output["precision"] + output["recall"])
             )
-        else:
-            output["f1_score"] = "Cannot compute f1-score"
+
     return output
 
 
