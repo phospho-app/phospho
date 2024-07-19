@@ -5,8 +5,4 @@ from .argila import (
     sample_tasks,
     generate_dataset_from_project,
 )
-from .postgresql import (
-    get_postgres_credentials_for_org,
-    update_postgres_status,
-    export_project_to_dedicated_postgres,
-)
+from .postgresql import PostgresqlCredentials, PostgresqlIntegration
