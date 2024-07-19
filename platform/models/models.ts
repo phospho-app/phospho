@@ -198,7 +198,7 @@ export interface Project {
   settings?: ProjectSettings;
 }
 
-export interface PowerBIConnection {
+export interface PostgresCredentials {
   org_id: string;
   server: string;
   database: string;

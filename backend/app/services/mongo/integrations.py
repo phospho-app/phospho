@@ -1,4 +1,5 @@
 import argilla as rg
+from fastapi import HTTPException
 import pandas as pd
 from app.api.platform.models.integrations import (
     DatasetCreationRequest,
@@ -301,17 +302,23 @@ async def generate_dataset_from_project(
     return argilla_dataset
 
 
-async def get_postgres_credentials(org_id: str) -> PostgresCredentials:
+async def get_postgres_credentials_for_org(org_id: str) -> PostgresCredentials:
     mongo_db = await get_mongo_db()
-
-    dedicated_db = await mongo_db["integrations"].find_one(
+    postgres_credentials = await mongo_db["integrations"].find_one(
         {"org_id": org_id},
     )
-    del dedicated_db["_id"]
+    if postgres_credentials is None:
+        raise HTTPException(
+            status_code=400, detail=f"No dedicated database found for org {org_id}"
+        )
+    # Remove the _id field
+    if "_id" in postgres_credentials.keys():
+        del postgres_credentials["_id"]
 
-    validated_db = PostgresCredentials.model_validate(dedicated_db)
-
-    return validated_db
+    postgres_credentials_valid = PostgresCredentials.model_validate(
+        postgres_credentials
+    )
+    return postgres_credentials_valid
 
 
 async def update_postgres_status(

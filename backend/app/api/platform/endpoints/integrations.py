@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from propelauth_py.user import User
 from app.services.mongo.integrations import (
     generate_dataset_from_project,
-    get_postgres_credentials,
+    get_postgres_credentials_for_org,
     update_postgres_status,
     export_project_to_dedicated_postgres,
 )
@@ -87,7 +87,7 @@ async def get_dedicated_db(org_id: str, user: User = Depends(propelauth.require_
             detail="Your organization does not have access to a dedicated Power BI workspace. Contact us to get access to one.",
         )
 
-    db_credentials = await get_postgres_credentials(org_id=org_id)
+    db_credentials = await get_postgres_credentials_for_org(org_id=org_id)
 
     return db_credentials
 
@@ -104,7 +104,7 @@ async def start_project_extract(
     # Get the org metadata
     org_metadata = org.get("metadata", {})
 
-    if "power_bi" not in org_metadata or not org_metadata["power_bi"]:
+    if not org_metadata.get("power_bi", False):
         raise HTTPException(
             status_code=400,
             detail="Your organization does not have access to a dedicated Power BI workspace. Contact us to get access to one.",
@@ -112,7 +112,7 @@ async def start_project_extract(
 
     logger.debug(f"Starting the extract for project {project_id}")
 
-    credentials = await get_postgres_credentials(org_id=org_member_info.org_id)
+    credentials = await get_postgres_credentials_for_org(org_id=org_member_info.org_id)
 
     # The project has already been started or finished
     if (
@@ -148,7 +148,7 @@ async def start_project_extract(
         )
 
     await update_postgres_status(
-        org_id=org_member_info.org_id, project_id=project_id, status="completed"
+        org_id=org_member_info.org_id, project_id=project_id, status="finished"
     )
 
     return {"status": "ok"}
