@@ -80,6 +80,9 @@ function EventAnalytics({ eventId }: { eventId: string }) {
 
   return (
     <>
+      <div>
+        <h4 className="text-xl font-bold">Event : "{event?.event_name}"</h4>
+      </div>
       {/* if the score type is not confidence, we display a coming soon message */}
       {event?.score_range_settings?.score_type != "confidence" && (
         <div>
@@ -113,75 +116,77 @@ function EventAnalytics({ eventId }: { eventId: string }) {
           </Card></>
       )}
       {/* In any case we display the Total number of descriptions card */}
-      <div>
-        <Card>
-          <CardHeader>
-            <CardDescription>Total Nb of detections</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {(totalNbDetections?.total_nb_events === undefined && (
-              <p>...</p>
-            )) || (
-                <p className="text-xl">
-                  {totalNbDetections?.total_nb_events}
-                </p>
-              )}
-          </CardContent>
-        </Card>
-      </div>
-      {/* If we have enough data to compute the scores, we display the F1-score, Precision and Recall cards */}
-      {event?.score_range_settings?.score_type == "confidence" && (
-        <div>
+      <div className="container mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
             <CardHeader>
-              <CardDescription>F1-score</CardDescription>
+              <CardDescription>Total Nb of detections</CardDescription>
             </CardHeader>
             <CardContent>
-              {(F1Score?.f1_score && (
-                <p className="text-xl">
-                  {F1Score?.f1_score.toFixed(2)}
-                </p>
-              )) || (F1Score?.f1_score && (
-                <p className="text-xl">
-                  ...
-                </p>
-              ))}
+              {(totalNbDetections?.total_nb_events === undefined && (
+                <p>...</p>
+              )) || (
+                  <p className="text-xl">
+                    {totalNbDetections?.total_nb_events}
+                  </p>
+                )}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription>Precision</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {(F1Score?.f1_score && (
-                <p className="text-xl">
-                  {F1Score?.precision.toFixed(2)}
-                </p>
-              )) || (F1Score?.f1_score && (
-                <p className="text-xl">
-                  ...
-                </p>
-              ))}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription>Recall</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {(F1Score?.f1_score && (
-                <p className="text-xl">
-                  {F1Score?.recall.toFixed(2)}
-                </p>
-              )) || (F1Score?.f1_score && (
-                <p className="text-xl">
-                  ...
-                </p>
-              ))}
-            </CardContent>
-          </Card>
+          {/* If we have enough data to compute the scores, we display the F1-score, Precision and Recall cards */}
+          {event?.score_range_settings?.score_type == "confidence" && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardDescription>F1-score</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(F1Score?.f1_score && (
+                    <p className="text-xl">
+                      {F1Score?.f1_score.toFixed(2)}
+                    </p>
+                  )) || (!F1Score?.f1_score && (
+                    <p className="text-xl"> ... </p>
+                  ))}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardDescription>Precision</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(F1Score?.f1_score && (
+                    <p className="text-xl">
+                      {F1Score?.precision.toFixed(2)}
+                    </p>
+                  )) || (!F1Score?.f1_score && (
+                    <p className="text-xl">
+                      ...
+                    </p>
+                  ))}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardDescription>Recall</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(F1Score?.f1_score && (
+                    <p className="text-xl">
+                      {F1Score?.recall.toFixed(2)}
+                    </p>
+                  )) || (!F1Score?.f1_score && (
+                    <p className="text-xl">
+                      ...
+                    </p>
+                  ))}
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
-      )}
+      </div>
+
+
     </>
   )
 
