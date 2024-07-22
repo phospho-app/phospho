@@ -116,14 +116,14 @@ class LangfuseConnector(BaseConnector):
         Get the last Langfuse extract date for a project
         """
         project = await get_project_by_id(self.project_id)
-        last_langsmith_extract = project.settings.last_langsmith_extract
-        if isinstance(last_langsmith_extract, datetime):
-            return last_langsmith_extract
-        elif isinstance(last_langsmith_extract, str):
-            return datetime.strptime(last_langsmith_extract, "%Y-%m-%d %H:%M:%S.%f")
+        last_langfuse_extract = project.settings.last_langfuse_extract
+        if isinstance(last_langfuse_extract, datetime):
+            return last_langfuse_extract
+        elif isinstance(last_langfuse_extract, str):
+            return datetime.strptime(last_langfuse_extract, "%Y-%m-%d %H:%M:%S.%f")
         else:
             logger.error(
-                f"Error while getting last Langsmith extract for project {self.project_id}: {last_langsmith_extract} is neither a datetime nor a string"
+                f"Error while getting last Langfuse extract for project {self.project_id}: {last_langfuse_extract} is neither a datetime nor a string: {type(last_langfuse_extract)}"
             )
             return None
 
