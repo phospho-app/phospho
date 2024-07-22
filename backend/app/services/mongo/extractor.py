@@ -38,7 +38,7 @@ async def bill_on_stripe(
         logger.debug(f"No job results to bill for organization {org_id}")
         return
 
-    if config.ENVIRONMENT == "preview":
+    if config.ENVIRONMENT == "preview" or config.ENVIRONMENT == "test":
         logger.debug("Preview environment, stripe billing disabled")
         return
 
@@ -109,7 +109,7 @@ class ExtractorClient:
                             f"Error returned when calling extractor API (status code: {response.status_code}): {response.text}"
                         )
                 if response.status_code == 200 and on_success_callback:
-                    on_success_callback(response)
+                    await on_success_callback(response)
 
                 return response
             except Exception as e:
