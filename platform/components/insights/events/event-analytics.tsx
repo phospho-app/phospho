@@ -13,6 +13,9 @@ import { useUser } from "@propelauth/nextjs/client";
 import { Tag } from "lucide-react";
 import React from "react";
 import useSWR from "swr";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Boxes, ChevronRight, Sparkles } from "lucide-react";
 
 function EventAnalytics({ eventId }: { eventId: string }) {
   const { accessToken } = useUser();
@@ -110,6 +113,13 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                       </p>
                     </CardDescription>
                   </div>
+
+                  <Link href="/org/transcripts/tasks">
+                    <Button variant="default">
+                      Give feedback
+                      <ChevronRight className="ml-2" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </CardHeader>
