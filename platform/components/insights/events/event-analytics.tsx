@@ -78,190 +78,295 @@ function EventAnalytics({ eventId }: { eventId: string }) {
 
   console.log(totalNbDetections);
 
-  if (event?.score_range_settings?.score_type != "confidence") {
-    return (
-      <div className="space-y-2">
-        <ComingSoon />
-        <div className="mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardDescription>Total Nb of detections</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {(totalNbDetections?.total_nb_events === undefined && (
-                    <p>...</p>
-                  )) || (
-                      <p className="text-xl">
-                        {totalNbDetections?.total_nb_events}
-                      </p>
-                    )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+  return (
+    <>
+      {/* if the score type is not confidence, we display a coming soon message */}
+      {event?.score_range_settings?.score_type != "confidence" && (
+        <div>
+          <ComingSoon />
         </div>
-      </div>
-    );
-  }
-  else if (!F1Score?.f1_score) {
-    return (
-      <>
-        <Card className="bg-secondary">
-          <CardHeader>
-            <div className="flex">
-              <Tag className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+      )}
+      {/* if the score type is confidence but there is not enough data to compute the scores, we display a not enough feedback message */}
+      {(!F1Score?.f1_score) && (event?.score_range_settings?.score_type == "confidence") && (
+        <>
+          <Card className="bg-secondary">
+            <CardHeader>
+              <div className="flex">
+                <Tag className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
 
-              <div className="flex flex-grow justify-between items-center">
-                <div>
-                  <CardTitle className="text-2xl font-bold tracking-tight mb-0">
-                    <div className="flex flex-row place-items-center">
-                      Unlock event metrics !
-                    </div>
-                  </CardTitle>
-                  <CardDescription className="flex justify-between flex-col text-muted-foreground space-y-0.5">
-                    <p>
-                      Give us more feedback to compute the F1-score, Precision and Recall.
-                    </p>
-                  </CardDescription>
+                <div className="flex flex-grow justify-between items-center">
+                  <div>
+                    <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+                      <div className="flex flex-row place-items-center">
+                        Unlock event metrics !
+                      </div>
+                    </CardTitle>
+                    <CardDescription className="flex justify-between flex-col text-muted-foreground space-y-0.5">
+                      <p>
+                        Give us more feedback to compute the F1-score, Precision and Recall.
+                      </p>
+                    </CardDescription>
+                  </div>
                 </div>
               </div>
-            </div>
+            </CardHeader>
+          </Card></>
+      )}
+      {/* In any case we display the Total number of descriptions card */}
+      <div>
+        <Card>
+          <CardHeader>
+            <CardDescription>Total Nb of detections</CardDescription>
           </CardHeader>
+          <CardContent>
+            {(totalNbDetections?.total_nb_events === undefined && (
+              <p>...</p>
+            )) || (
+                <p className="text-xl">
+                  {totalNbDetections?.total_nb_events}
+                </p>
+              )}
+          </CardContent>
         </Card>
-        <div className="mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardDescription>Total Nb of detections</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {(totalNbDetections?.total_nb_events === undefined && (
-                    <p>...</p>
-                  )) || (
-                      <p className="text-xl">
-                        {totalNbDetections?.total_nb_events}
-                      </p>
-                    )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-        <div className="mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardDescription>F1 - score</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {
-                    <p>...</p>
-                  }
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-        <div className="mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardDescription>Precision</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {
-                    <p>...</p>
-                  }
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-        <div className="mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardDescription>Recall</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {
-                    <p>...</p>
-                  }
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-  else {
-    return (
-      <div className="mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <Card>
-              <CardHeader>
-                <CardDescription>Total Nb of detections</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(totalNbDetections?.total_nb_events === undefined && (
-                  <p>...</p>
-                )) || (
-                    <p className="text-xl">
-                      {totalNbDetections?.total_nb_events}
-                    </p>
-                  )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardDescription>F1-score</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(
-                  <p className="text-xl">
-                    {F1Score?.f1_score.toFixed(2)}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardDescription>Precision</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(
-                  <p className="text-xl">
-                    {F1Score?.precision.toFixed(2)}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardDescription>Recall</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(
-                  <p className="text-xl">
-                    {F1Score?.recall.toFixed(2)}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
       </div>
-    );
-  }
+      {/* If we have enough data to compute the scores, we display the F1-score, Precision and Recall cards */}
+      {event?.score_range_settings?.score_type == "confidence" && (
+        <div>
+          <Card>
+            <CardHeader>
+              <CardDescription>F1-score</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(F1Score?.f1_score && (
+                <p className="text-xl">
+                  {F1Score?.f1_score.toFixed(2)}
+                </p>
+              )) || (F1Score?.f1_score && (
+                <p className="text-xl">
+                  ...
+                </p>
+              ))}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardDescription>Precision</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(F1Score?.f1_score && (
+                <p className="text-xl">
+                  {F1Score?.precision.toFixed(2)}
+                </p>
+              )) || (F1Score?.f1_score && (
+                <p className="text-xl">
+                  ...
+                </p>
+              ))}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardDescription>Recall</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(F1Score?.f1_score && (
+                <p className="text-xl">
+                  {F1Score?.recall.toFixed(2)}
+                </p>
+              )) || (F1Score?.f1_score && (
+                <p className="text-xl">
+                  ...
+                </p>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </>
+  )
+
+  // if (event?.score_range_settings?.score_type != "confidence") {
+  //   return (
+  //     <div className="space-y-2">
+  //       <ComingSoon />
+  //       <div className="mx-auto">
+  //         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  //           <div>
+  //             <Card>
+  //               <CardHeader>
+  //                 <CardDescription>Total Nb of detections</CardDescription>
+  //               </CardHeader>
+  //               <CardContent>
+  //                 {(totalNbDetections?.total_nb_events === undefined && (
+  //                   <p>...</p>
+  //                 )) || (
+  //                     <p className="text-xl">
+  //                       {totalNbDetections?.total_nb_events}
+  //                     </p>
+  //                   )}
+  //               </CardContent>
+  //             </Card>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+  // else if (!F1Score?.f1_score) {
+  //   return (
+  //     <>
+  //            <div className="flex flex-row place-items-center">
+  //                     Unlock event metrics !
+  //                   </div>
+  //                 </CardTitle>
+  //                 <CardDescription className="flex justify-between flex-col text-muted-foreground space-y-0.5">
+  //                   <p>
+  //                     Give us more feedback to compute the F1-score, Precision and Recall.
+  //                   </p>
+  //                 </CardDescription>
+  //               </div>
+  //             </div>
+  //           </di<Card className="bg-secondary">
+  //         <CardHeader>
+  //           <div className="flex">
+  //             <Tag className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+  //             <div className="flex flex-grow justify-between items-center">
+  //               <div>
+  //                 <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+  //              v>
+  //         </CardHeader>
+  //       </Card>
+  //       <div className="mx-auto">
+  //         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  //           <div>
+  //             <Card>
+  //               <CardHeader>
+  //                 <CardDescription>Total Nb of detections</CardDescription>
+  //               </CardHeader>
+  //               <CardContent>
+  //                 {(totalNbDetections?.total_nb_events === undefined && (
+  //                   <p>...</p>
+  //                 )) || (
+  //                     <p className="text-xl">
+  //                       {totalNbDetections?.total_nb_events}
+  //                     </p>
+  //                   )}
+  //               </CardContent>
+  //             </Card>
+  //           </div>
+  //         </div>
+  //       </div>
+  //       <div className="mx-auto">
+  //         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  //           <div>
+  //             <Card>
+  //               <CardHeader>
+  //                 <CardDescription>F1 - score</CardDescription>
+  //               </CardHeader>
+  //               <CardContent>
+  //                 {
+  //                   <p>...</p>
+  //                 }
+  //               </CardContent>
+  //             </Card>
+  //           </div>
+  //         </div>
+  //       </div>
+  //       <div className="mx-auto">
+  //         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  //           <div>
+  //             <Card>
+  //               <CardHeader>
+  //                 <CardDescription>Precision</CardDescription>
+  //               </CardHeader>
+  //               <CardContent>
+  //                 {
+  //                   <p>...</p>
+  //                 }
+  //               </CardContent>
+  //             </Card>
+  //           </div>
+  //         </div>
+  //       </div>
+  //       <div className="mx-auto">
+  //         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  //           <div>
+  //             <Card>
+  //               <CardHeader>
+  //                 <CardDescription>Recall</CardDescription>
+  //               </CardHeader>
+  //               <CardContent>
+  //                 {
+  //                   <p>...</p>
+  //                 }
+  //               </CardContent>
+  //             </Card>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </>
+  //   );
+  // }
+  // else {
+  //   return (
+  //     <div className="mx-auto">
+  //       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  //         <div>
+  //           <Card>
+  //             <CardHeader>
+  //               <CardDescription>Total Nb of detections</CardDescription>
+  //             </CardHeader>
+  //             <CardContent>
+  //               {(totalNbDetections?.total_nb_events === undefined && (
+  //                 <p>...</p>
+  //               )) || (
+  //                   <p className="text-xl">
+  //                     {totalNbDetections?.total_nb_events}
+  //                   </p>
+  //                 )}
+  //             </CardContent>
+  //           </Card>
+  //           <Card>
+  //             <CardHeader>
+  //               <CardDescription>F1-score</CardDescription>
+  //             </CardHeader>
+  //             <CardContent>
+  //               {(
+  //                 <p className="text-xl">
+  //                   {F1Score?.f1_score.toFixed(2)}
+  //                 </p>
+  //               )}
+  //             </CardContent>
+  //           </Card>
+  //           <Card>
+  //             <CardHeader>
+  //               <CardDescription>Precision</CardDescription>
+  //             </CardHeader>
+  //             <CardContent>
+  //               {(
+  //                 <p className="text-xl">
+  //                   {F1Score?.precision.toFixed(2)}
+  //                 </p>
+  //               )}
+  //             </CardContent>
+  //           </Card>
+  //           <Card>
+  //             <CardHeader>
+  //               <CardDescription>Recall</CardDescription>
+  //             </CardHeader>
+  //             <CardContent>
+  //               {(
+  //                 <p className="text-xl">
+  //                   {F1Score?.recall.toFixed(2)}
+  //                 </p>
+  //               )}
+  //             </CardContent>
+  //           </Card>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 }
 
 export default EventAnalytics;
