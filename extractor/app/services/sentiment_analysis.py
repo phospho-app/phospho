@@ -6,7 +6,6 @@ from google.oauth2 import service_account
 import os
 import json
 from base64 import b64decode
-from langdetect import detect
 
 client = None
 
@@ -87,14 +86,12 @@ async def run_sentiment_and_language_analysis(
                 sentiment_response.label = "mixed"
 
         language = response.language_code
-        if language is None:
-            logger.info(
-                "Language not detected by Google API, falling back on langdetect"
-            )
-            language = await detect(text)
 
     except Exception as e:
-        logger.error(f"Error in sentiment analysis: {e}")
+        if "Cannot determine the language of the document." in str(e):
+            logger.info("Language not detected by Google API")
+        else:
+            logger.error(f"Error in sentiment analysis: {e}")
 
         sentiment_response = SentimentObject()
         language = None
