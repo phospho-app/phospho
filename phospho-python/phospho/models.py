@@ -182,7 +182,12 @@ class Task(ProjectElementBaseModel):
         return json.loads(json.dumps(metadata, default=str))
 
 
-class SessionTaskInfo(BaseModel):
+class SessionStats(BaseModel):
+    """
+    Statistics computed at the session granularity,
+    based on the Session content.
+    """
+
     avg_sentiment_score: Optional[float] = None
     avg_magnitude_score: Optional[float] = None
     most_common_sentiment_label: Optional[str] = None
@@ -203,7 +208,7 @@ class Session(ProjectElementBaseModel):
     tasks: Optional[List[Task]] = None
     # Session length is computed dynamically. It may be None if not computed
     session_length: int = 0
-    task_info: Optional[SessionTaskInfo] = None
+    stats: SessionStats = Field(default_factory=SessionStats)
 
     @field_serializer("metadata")
     def serialize_metadata(self, metadata: dict, _info):
@@ -287,17 +292,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name]["event_name"] = (
-                            event_name
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "event_name"
+                        ] = event_name
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["org_id"] = (
-                            project_data["org_id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "org_id"
+                        ] = project_data["org_id"]
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["project_id"] = (
-                            project_data["id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "project_id"
+                        ] = project_data["id"]
 
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:
