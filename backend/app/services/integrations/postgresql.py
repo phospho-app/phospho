@@ -44,7 +44,12 @@ class PostgresqlIntegration:
         org_metadata: Optional[dict] = None,
     ):
         self.org_id = org_id
+        if self.org_id is None:
+            raise ValueError("No org_id provided")
         self.org_name = org_name
+        if self.org_name is None:
+            raise ValueError("No org_name provided")
+
         self.project_id = project_id
         self.project_name = project_name
         if org_metadata is not None:
@@ -76,6 +81,7 @@ class PostgresqlIntegration:
         This drops the database if it already exists and creates a new one.
         """
         if self.credentials is not None:
+            logger.info(f"Credentials already loaded for {self.org_id}")
             return self.credentials
         mongo_db = await get_mongo_db()
         postgres_credentials = await mongo_db["integrations"].find_one(
@@ -156,11 +162,11 @@ class PostgresqlIntegration:
         self.credentials = PostgresqlCredentials(
             org_id=self.org_id,
             org_name=self.org_name,
+            type="postgresql",
             server=config.NEON_SERVER,
             database=slugify_string(self.org_name),
             username=username,
             password=password,
-            type="postgresql",
         )
         # Push to MongoDB
         await mongo_db["integrations"].update_one(
