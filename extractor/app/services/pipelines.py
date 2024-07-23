@@ -20,7 +20,13 @@ from app.services.projects import get_project_by_id
 from app.services.sentiment_analysis import run_sentiment_and_language_analysis
 from app.services.webhook import trigger_webhook
 from phospho import lab
-from phospho.models import EvaluationModel, JobResult, ResultType, SentimentObject
+from phospho.models import (
+    EvaluationModel,
+    JobResult,
+    ResultType,
+    SentimentObject,
+    SessionTaskInfo,
+)
 
 
 class EventConfig(lab.JobConfig):
@@ -662,6 +668,42 @@ async def task_scoring_pipeline(
                     }
                 },
             )
+
+        tasks_in_session = (
+            await mongo_db["tasks"]
+            .find({"session_id": task.session_id, "flag": {"$ne": None}})
+            .to_list(length=None)
+        )
+
+        # Update the session object
+        session_flag = None
+        session_flags = defaultdict(int)
+
+        for task_in_session in tasks_in_session:
+            session_flags[task_in_session["flag"]] += 1
+
+        if (
+            session_flags.get("success") is not None
+            and session_flags.get("failure") is not None
+        ):
+            if session_flags["success"] > session_flags["failure"]:
+                session_flag = "success"
+            else:
+                session_flag = "failure"
+        elif session_flags.get("success") is not None:
+            session_flag = "success"
+        else:
+            session_flag = "failure"
+
+        mongo_db["sessions"].update_one(
+            {"id": task.session_id},
+            {
+                "$set": {
+                    "task_info.flag": session_flag,
+                }
+            },
+        )
+
     return flag
 
 
@@ -784,6 +826,53 @@ async def messages_main_pipeline(
     )
 
 
+async def compute_average_sentiment_and_language(
+    project_id: str, session_id: str
+) -> SessionTaskInfo:
+    """
+    Compute the average sentiment score and magnitude for a session
+    """
+    mongo_db = await get_mongo_db()
+    tasks = (
+        await mongo_db["tasks"]
+        .find(
+            {
+                "project_id": project_id,
+                "session_id": session_id,
+                "sentiment.score": {"$ne": None},
+                "sentiment.magnitude": {"$ne": None},
+                "language": {"$ne": None},
+            },
+        )
+        .to_list(length=None)
+    )
+
+    sentiment_score = 0
+    sentiment_magnitude = 0
+    language_counter = defaultdict(int)
+
+    for task in tasks:
+        sentiment_score += task["sentiment"]["score"]
+        sentiment_magnitude += task["sentiment"]["magnitude"]
+        language_counter[task["language"]] += 1
+
+    if len(tasks) > 0:
+        most_common_language = max(language_counter, key=language_counter.get)
+
+        return SessionTaskInfo(
+            avg_sentiment_score=sentiment_score / len(tasks),
+            avg_magnitude_score=sentiment_magnitude / len(tasks),
+            most_common_language=most_common_language,
+        )
+
+    else:
+        return SessionTaskInfo(
+            avg_sentiment_score=None,
+            avg_magnitude_score=None,
+            most_common_language=None,
+        )
+
+
 async def sentiment_and_language_analysis_pipeline(
     task: Task,
 ) -> tuple[SentimentObject, Optional[str]]:
@@ -853,6 +942,7 @@ async def sentiment_and_language_analysis_pipeline(
     if not project.settings.run_sentiment:
         sentiment_object = None
 
+    # We update the task item
     await mongo_db["tasks"].update_one(
         {
             "id": task.id,
@@ -874,6 +964,23 @@ async def sentiment_and_language_analysis_pipeline(
                 if sentiment_object
                 else None,
                 "metadata.language": language,
+            }
+        },
+    )
+
+    # We update the session item, we want to keep the average sentiment score and magnitude for the session, and the most common language
+    session_task_info = await compute_average_sentiment_and_language(
+        task.project_id, task.session_id
+    )
+
+    await mongo_db["sessions"].update_one(
+        {
+            "id": task.session_id,
+            "project_id": task.project_id,
+        },
+        {
+            "$set": {
+                "task_info": session_task_info.model_dump(),
             }
         },
     )
