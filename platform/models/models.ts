@@ -69,12 +69,17 @@ export interface Session {
   session_length?: number;
 }
 
+export interface Stats {
+  avg_sentiment_score: number;
+  avg_magnitude_score: number;
+  most_common_sentiment_label: string;
+  most_common_language: string;
+  most_common_flag: string;
+}
 export interface SessionWithEvents extends Session {
   events: Event[];
-}
-
-export interface SessionWithEvents extends Session {
   tasks: Task[];
+  stats: Stats;
 }
 
 export interface UserMetadata {

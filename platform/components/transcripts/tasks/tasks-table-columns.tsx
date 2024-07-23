@@ -43,7 +43,6 @@ import {
   ChevronRight,
   EllipsisVertical,
   PenSquare,
-  Play,
   PlusIcon,
   Sparkles,
 } from "lucide-react";
@@ -205,7 +204,7 @@ export function getColumns({
                           ? "destructive"
                           : "secondary"
                     }
-                    className="hover:border-green-500 "
+                    className="hover:border-green-500"
                   >
                     {row.getValue() as string}
                     {row.getValue() === null && <div className="h-3 w-6"></div>}

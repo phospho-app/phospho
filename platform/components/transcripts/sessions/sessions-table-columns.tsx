@@ -1,26 +1,28 @@
+import { EvalSettings } from "@/components/eval-settings";
 import {
   AddEventDropdownForSessions,
   InteractiveEventBadgeForSessions,
 } from "@/components/label-events";
+import { SentimentSettings } from "@/components/sentiment-settings";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
+import { getLanguageLabel } from "@/lib/utils";
 import { Event, SessionWithEvents } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronRight,
-  Sparkles,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { KeyedMutator } from "swr";
 
@@ -84,6 +86,39 @@ export function getColumns({
           )}
         </span>
       ),
+    },
+    // Eval
+    {
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center space-x-2 justify-between">
+            <div className="flex items-center">
+              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+              Eval
+            </div>
+            <EvalSettings />
+          </div>
+        );
+      },
+      accessorKey: "stats.most_common_flag",
+      cell: (row) => {
+        return (
+          <div>
+            <Badge
+              variant={
+                (row.getValue() as string) === "success"
+                  ? "secondary"
+                  : (row.getValue() as string) === "failure"
+                    ? "destructive"
+                    : "secondary"
+              }
+              className="hover:border-green-500"
+            >
+              {row.getValue() as string}
+            </Badge>
+          </div>
+        );
+      },
     },
     // Events
     {
@@ -153,6 +188,73 @@ export function getColumns({
           </div>
         </div>
       ),
+    },
+    // Language
+    {
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center space-x-2 justify-between">
+            <div className="flex items-center">
+              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+              Language
+            </div>
+          </div>
+        );
+      },
+      accessorKey: "stats.most_common_language",
+      cell: (row) => (
+        <HoverCard openDelay={80} closeDelay={30}>
+          <HoverCardTrigger>
+            <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
+          </HoverCardTrigger>
+          <HoverCardContent side="top" className="text-sm text-center">
+            {getLanguageLabel(row.getValue() as string)}
+          </HoverCardContent>
+        </HoverCard>
+      ),
+      maxSize: 10,
+    },
+    {
+      header: () => {
+        return (
+          <div className="flex justify-between items-center space-x-2">
+            <div className="flex flex-row items-center">
+              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+              Sentiment
+            </div>
+            <SentimentSettings />
+          </div>
+        );
+      },
+      accessorKey: "stats.most_common_sentiment_label",
+      cell: (row) => {
+        const sentiment_label = row.getValue() as string;
+        return (
+          <div>
+            <HoverCard openDelay={80} closeDelay={30}>
+              <HoverCardTrigger>
+                <Badge
+                  className={
+                    sentiment_label == "positive"
+                      ? "border-green-500"
+                      : sentiment_label == "negative"
+                        ? "border-red-500"
+                        : ""
+                  }
+                  variant={"secondary"}
+                >
+                  {sentiment_label}
+                </Badge>
+              </HoverCardTrigger>
+              <HoverCardContent side="top" className="text-sm text-left w-50">
+                <h2 className="font-bold">Sentiment label</h2>
+                <p>Automatic sentiment analysis of the Task input</p>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
+        );
+      },
+      maxSize: 10,
     },
     // Session Length
     {
