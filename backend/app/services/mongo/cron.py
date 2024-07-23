@@ -64,11 +64,7 @@ async def run_postgresql_sync_pipeline():
     for integration in integrations:
         try:
             valid_integration = PostgresqlCredentials.model_validate(integration)
-            project_list = (
-                await mongo_db["projects"]
-                .find({"org_id": valid_integration.org_id})
-                .to_list(length=None)
-            )
+            project_list = valid_integration.projects_finished
             for project in project_list:
                 project = get_project_by_id(project["id"])
                 postgresql_integration = PostgresqlIntegration(
