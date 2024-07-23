@@ -797,6 +797,7 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
     Compute session information from its tasks
     - Average sentiment score
     - Average sentiment magnitude
+    - Most common sentiment label
     - Most common language
     - Most common flag
     """
@@ -813,30 +814,43 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
         .to_list(length=None)
     )
 
-    sentiment_score = 0
-    sentiment_magnitude = 0
+    sentiment_score: list = []
+    sentiment_magnitude: list = []
     sentiment_label_counter: Dict[str, int] = defaultdict(int)
     language_counter: Dict[str, int] = defaultdict(int)
     session_flag: Dict[str, int] = defaultdict(int)
 
     for task in tasks:
         valid_task = Task.model_validate(task)
-        sentiment_score += valid_task.sentiment.score
-        sentiment_magnitude += valid_task.sentiment.magnitude
-        sentiment_label_counter[valid_task.sentiment.label] += 1
-        language_counter[valid_task.language] += 1
-        session_flag[valid_task.flag] += 1
+        if valid_task.sentiment is not None:
+            sentiment_score.append(valid_task.sentiment.score)
+        if valid_task.sentiment is not None:
+            sentiment_magnitude.append(valid_task.sentiment.magnitude)
+        if valid_task.sentiment is not None:
+            sentiment_label_counter[valid_task.sentiment.label] += 1
+        if valid_task.language is not None:
+            language_counter[valid_task.language] += 1
+        if valid_task.flag is not None:
+            session_flag[valid_task.flag] += 1
 
     if len(tasks) > 0:
-        most_common_language = max(language_counter, key=language_counter.get)
-        most_common_label = max(
-            sentiment_label_counter, key=sentiment_label_counter.get
+        most_common_language = (
+            max(language_counter, key=language_counter.get)
+            if language_counter
+            else None
         )
-        most_common_flag = max(session_flag, key=session_flag.get)
+        most_common_label = (
+            max(sentiment_label_counter, key=sentiment_label_counter.get)
+            if sentiment_label_counter
+            else None
+        )
+        most_common_flag = (
+            max(session_flag, key=session_flag.get) if session_flag else None
+        )
 
         session_task_info = SessionStats(
-            avg_sentiment_score=sentiment_score / len(tasks),
-            avg_magnitude_score=sentiment_magnitude / len(tasks),
+            avg_sentiment_score=sum(sentiment_score) / len(sentiment_score),
+            avg_magnitude_score=sum(sentiment_magnitude) / len(sentiment_magnitude),
             most_common_sentiment_label=most_common_label,
             most_common_language=most_common_language,
             most_common_flag=most_common_flag,
@@ -846,7 +860,7 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
             {"id": session_id},
             {
                 "$set": {
-                    "task_info": session_task_info.model_dump(),
+                    "stats": session_task_info.model_dump(),
                 }
             },
         )
