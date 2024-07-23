@@ -1,6 +1,11 @@
 from app.db.mongo import get_mongo_db
 from app.security.authorization import get_quota
+from app.services.integrations.postgresql import (
+    PostgresqlIntegration,
+    PostgresqlCredentials,
+)
 from app.services.mongo.extractor import ExtractorClient
+from app.services.mongo.projects import get_project_by_id
 from loguru import logger
 
 
@@ -29,7 +34,7 @@ async def run_langsmith_sync_pipeline():
             max_usage=usage_quota.max_usage,
         )
 
-    return {"status": "ok", "message": "Pipeline ran successfully"}
+    return {"status": "ok"}
 
 
 async def run_langfuse_sync_pipeline():
@@ -47,4 +52,30 @@ async def run_langfuse_sync_pipeline():
             max_usage=usage_quota.max_usage,
         )
 
-    return {"status": "ok", "message": "Pipeline ran successfully"}
+    return {"status": "ok"}
+
+
+async def run_postgresql_sync_pipeline():
+    mongo_db = await get_mongo_db()
+    integrations = (
+        await mongo_db["integrations"].find({"type": "postgresql"}).to_list(length=None)
+    )
+
+    for integration in integrations:
+        try:
+            valid_integration = PostgresqlCredentials.model_validate(integration)
+            project_list = valid_integration.projects_finished
+            for project in project_list:
+                project = get_project_by_id(project["id"])
+                postgresql_integration = PostgresqlIntegration(
+                    org_id=valid_integration.org_id,
+                    org_name=valid_integration.org_name,
+                    project_id=project.id,
+                    project_name=project.name,
+                )
+                await postgresql_integration.push()
+        except Exception as e:
+            logger.error(
+                f"Error running postgresql sync pipeline for {integration}: {e}"
+            )
+    return {"status": "ok"}

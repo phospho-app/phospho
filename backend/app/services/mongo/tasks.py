@@ -272,7 +272,7 @@ async def task_filtering_pipeline_match(
         # Add a dot at the end of the prefix if it is not already there
         prefix += "."
 
-    match: Dict[str, object] = {"project_id": project_id}
+    match: Dict[str, object] = {f"{prefix}project_id": project_id}
 
     if filters.tasks_ids is not None:
         match[f"{prefix}id"] = {"$in": filters.tasks_ids}
@@ -287,17 +287,17 @@ async def task_filtering_pipeline_match(
         match[f"{prefix}created_at"] = {"$gte": filters.created_at_start}
     if filters.created_at_end is not None:
         match[f"{prefix}created_at"] = {
-            **match.get("created_at", {}),
+            **match.get(f"{prefix}created_at", {}),
             "$lte": filters.created_at_end,
         }
 
     if filters.last_eval_source is not None:
         if filters.last_eval_source.startswith("phospho"):
             # We want to filter on the source starting with "phospho"
-            match[f"{prefix}evaluation_source"] = {"$regex": "^phospho"}
+            match[f"{prefix}last_eval.source"] = {"$regex": "^phospho"}
         else:
             # We want to filter on the source not starting with "phospho"
-            match["evalutation_source"] = {"$regex": "^(?!phospho).*"}
+            match[f"{prefix}last_eval.source"] = {"$regex": "^(?!phospho).*"}
 
     if filters.metadata is not None:
         for key, value in filters.metadata.items():

@@ -155,15 +155,14 @@ const CreateDataset = () => {
     <Sheet>
       <SheetTrigger>
         <Button className="default">
-          Export a new dataset
+          Create dataset
           <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
       </SheetTrigger>
       <SheetContent className="md:w-1/2 overflow-auto">
         <SheetTitle>Export data</SheetTitle>
         <SheetDescription>
-          Export datasets from your project for labelling in your Argilla
-          platform.
+          Export your project data into a dataset for labelling
         </SheetDescription>
         <Separator className="my-8" />
         <div className="flex flex-wrap mt-4">
