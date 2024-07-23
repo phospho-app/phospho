@@ -475,15 +475,13 @@ async def get_all_sessions(
             }
 
         if filters.flag is not None:
-            additional_sessions_filter["task_info.most_common_flag"] = filters.flag
+            additional_sessions_filter["stats.most_common_flag"] = filters.flag
 
         if filters.language is not None:
-            additional_sessions_filter["task_info.most_common_language"] = (
-                filters.language
-            )
+            additional_sessions_filter["stats.most_common_language"] = filters.language
 
         if filters.sentiment is not None:
-            additional_sessions_filter["task_info.most_common_sentiment_label"] = (
+            additional_sessions_filter["stats.most_common_sentiment_label"] = (
                 filters.sentiment
             )
 
