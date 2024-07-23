@@ -2,7 +2,6 @@
 Explore metrics service
 """
 
-from contextlib import nullcontext
 import datetime
 import math
 from collections import defaultdict
