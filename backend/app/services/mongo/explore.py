@@ -2265,36 +2265,24 @@ async def fetch_flattened_tasks(
                 "event_removed": "$events.removed",
                 "event_removal_reason": "$events.removal_reason",
                 "event_category_name": "$events.score_range.label",
-                "event_category_id": {
-                    "$arrayElemAt": [
-                        {
-                            "$map": {
-                                "input": "$events.event_definition.score_range_settings.categories",
-                                "as": "category",
-                                "in": {
-                                    "$cond": {
-                                        "if": {
-                                            "$eq": [
-                                                "$$category",
-                                                "$events.score_range.label",
-                                            ]
-                                        },
-                                        "then": {
-                                            "$indexOfArray": [
-                                                "$events.event_definition.score_range_settings.categories",
-                                                "$$category",
-                                            ]
-                                        },
-                                        "else": nullcontext,
-                                    }
-                                },
-                            }
-                        },
-                        0,
-                    ]
-                },
                 "event_number_of_categories": {
-                    "$size": "$events.event_definition.score_range_settings.categories",
+                    "$size": {
+                        "$ifNull": [
+                            "$events.event_definition.score_range_settings.categories",
+                            [],
+                        ]
+                    }
+                },
+                "event_category_index": {
+                    "$indexOfArray": [
+                        {
+                            "$ifNull": [
+                                "$events.event_definition.score_range_settings.categories",
+                                [],
+                            ]
+                        },
+                        "$events.score_range.label",
+                    ]
                 },
             }
 
