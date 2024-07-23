@@ -792,9 +792,7 @@ async def messages_main_pipeline(
     )
 
 
-async def compute_session_info_pipeline(
-    project_id: str, session_id: str
-) -> SessionTaskInfo:
+async def compute_session_info_pipeline(project_id: str, session_id: str):
     """
     Compute session information from its tasks
     - Average sentiment score
@@ -802,6 +800,7 @@ async def compute_session_info_pipeline(
     - Most common language
     - Most common flag
     """
+    logger.debug(f"Compute session info for session {session_id}")
     mongo_db = await get_mongo_db()
     tasks = (
         await mongo_db["tasks"]
@@ -833,7 +832,7 @@ async def compute_session_info_pipeline(
         most_common_language = max(language_counter, key=language_counter.get)
         most_common_flag = max(session_flag, key=session_flag.get)
 
-        return SessionTaskInfo(
+        session_task_info = SessionTaskInfo(
             avg_sentiment_score=sentiment_score / len(tasks),
             avg_magnitude_score=sentiment_magnitude / len(tasks),
             most_common_language=most_common_language,
@@ -841,12 +840,21 @@ async def compute_session_info_pipeline(
         )
 
     else:
-        return SessionTaskInfo(
+        session_task_info = SessionTaskInfo(
             avg_sentiment_score=None,
             avg_magnitude_score=None,
             most_common_language=None,
             most_common_flag=None,
         )
+
+    await mongo_db["sessions"].update_one(
+        {"id": session_id},
+        {
+            "$set": {
+                "task_info": session_task_info.model_dump(),
+            }
+        },
+    )
 
 
 async def sentiment_and_language_analysis_pipeline(
