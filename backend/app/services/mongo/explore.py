@@ -2257,6 +2257,7 @@ async def fetch_flattened_tasks(
             "event_score_range_score_type": "$events.score_range.score_type",
             "event_score_range_label": "$events.score_range.label",
             "event_source": "$events.source",
+            "event_categories": "$events.event_definition.score_range_settings.categories",
         }
 
         if with_removed_events:
@@ -2264,26 +2265,6 @@ async def fetch_flattened_tasks(
                 **return_columns,
                 "event_removed": "$events.removed",
                 "event_removal_reason": "$events.removal_reason",
-                "event_category_name": "$events.score_range.label",
-                "event_number_of_categories": {
-                    "$size": {
-                        "$ifNull": [
-                            "$events.event_definition.score_range_settings.categories",
-                            [],
-                        ]
-                    }
-                },
-                "event_category_index": {
-                    "$indexOfArray": [
-                        {
-                            "$ifNull": [
-                                "$events.event_definition.score_range_settings.categories",
-                                [],
-                            ]
-                        },
-                        "$events.score_range.label",
-                    ]
-                },
             }
 
     # Sort the pipeline

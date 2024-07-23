@@ -365,6 +365,7 @@ class FlattenedTask(BaseModel, extra="allow"):
     ] = None
     event_score_range_label: Optional[str] = None
     event_source: Optional[str] = None
+    event_categories: Optional[List[str]] = None
 
 
 class DatasetRow(DatedBaseModel, extra="allow"):
