@@ -192,20 +192,16 @@ api_v3 = FastAPI(
     },
 )
 
-api_v2.include_router(embeddings.router)
-api_v2.include_router(evals.router)
-api_v2.include_router(log.router)
-api_v2.include_router(me.router)
-api_v2.include_router(models.router)
-api_v2.include_router(tasks.router)
-api_v2.include_router(tests.router)
-api_v2.include_router(predict.router)
-api_v2.include_router(projects.router)
-api_v2.include_router(sessions.router)
-api_v2.include_router(health.router)
-api_v2.include_router(events.router)
-api_v2.include_router(chat.router)
-api_v2.include_router(cron.router)
+api_v3.include_router(embeddings.router)
+api_v3.include_router(log.router)
+api_v3.include_router(tests.router)
+api_v3.include_router(projects.router)
+api_v3.include_router(sessions.router)
+api_v3.include_router(health.router)
+api_v3.include_router(events.router)
+api_v3.include_router(chat.router)
+
+app.mount("/v3", api_v3)
 
 
 ### PLATEFORM ENDPOINTS ###
