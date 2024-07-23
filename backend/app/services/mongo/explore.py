@@ -2256,6 +2256,7 @@ async def fetch_flattened_tasks(
             "event_score_range_score_type": "$events.score_range.score_type",
             "event_score_range_label": "$events.score_range.label",
             "event_source": "$events.source",
+            "event_categories": "$events.event_definition.score_range_settings.categories",
         }
 
         if with_removed_events:
