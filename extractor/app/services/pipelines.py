@@ -822,11 +822,11 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
 
     for task in tasks:
         valid_task = Task.model_validate(task)
-        if valid_task.sentiment is not None:
+        if valid_task.sentiment.score is not None:
             sentiment_score.append(valid_task.sentiment.score)
-        if valid_task.sentiment is not None:
+        if valid_task.sentiment.magnitude is not None:
             sentiment_magnitude.append(valid_task.sentiment.magnitude)
-        if valid_task.sentiment is not None:
+        if valid_task.sentiment.label is not None:
             sentiment_label_counter[valid_task.sentiment.label] += 1
         if valid_task.language is not None:
             language_counter[valid_task.language] += 1
