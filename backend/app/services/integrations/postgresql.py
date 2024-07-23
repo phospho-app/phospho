@@ -16,6 +16,8 @@ from sqlalchemy.sql import text
 
 class PostgresqlCredentials(BaseModel, extra="allow"):
     org_id: str
+    org_name: str
+    type: str = "postgresql"  # integration type
     server: str
     database: str
     username: str
@@ -38,17 +40,27 @@ class PostgresqlIntegration:
         org_id: str,
         org_name: str,
         project_id: Optional[str] = None,
+        project_name: Optional[str] = None,
         org_metadata: Optional[dict] = None,
     ):
+        """
+        This class exports a project to a dedicated Postgres database.
+        """
         self.org_id = org_id
+        if self.org_id is None:
+            raise ValueError("No org_id provided")
         self.org_name = org_name
+        if self.org_name is None:
+            raise ValueError("No org_name provided")
+
         self.project_id = project_id
+        self.project_name = project_name
         if org_metadata is not None:
             # Verify that the org has access to a dedicated Postgres database, based on the metadata
             if not org_metadata.get("power_bi", False):
                 raise HTTPException(
                     status_code=400,
-                    detail=f"The organization {org_id} does'nt have access to this feature. Please reach out.",
+                    detail=f"The organization {org_id} doesn't have access to this feature. Please reach out.",
                 )
 
         if config.NEON_ADMIN_PASSWORD is None or config.NEON_ADMIN_USERNAME is None:
@@ -67,11 +79,13 @@ class PostgresqlIntegration:
         """
         Load the Postgres credentials from MongoDB.
 
-        If the credentials are not found, create them.
+        If the credentials are not found, create them. The database name is the slugified org name. The org name
+        is unique to each organization.
 
         This drops the database if it already exists and creates a new one.
         """
         if self.credentials is not None:
+            logger.info(f"Credentials already loaded for {self.org_id}")
             return self.credentials
         mongo_db = await get_mongo_db()
         postgres_credentials = await mongo_db["integrations"].find_one(
@@ -81,6 +95,21 @@ class PostgresqlIntegration:
             # Remove the _id field
             if "_id" in postgres_credentials.keys():
                 del postgres_credentials["_id"]
+            if "type" not in postgres_credentials.keys():
+                postgres_credentials["type"] = "postgresql"
+                # update type in MongoDB
+                await mongo_db["integrations"].update_one(
+                    {"org_id": self.org_id},
+                    {"$set": {"type": postgres_credentials["type"]}},
+                )
+            if "org_name" not in postgres_credentials.keys():
+                postgres_credentials["org_name"] = self.org_name
+                # update org_name in MongoDB
+                await mongo_db["integrations"].update_one(
+                    {"org_id": self.org_id},
+                    {"$set": {"org_name": postgres_credentials["org_name"]}},
+                )
+
             postgres_credentials_valid = PostgresqlCredentials.model_validate(
                 postgres_credentials
             )
@@ -136,6 +165,8 @@ class PostgresqlIntegration:
 
         self.credentials = PostgresqlCredentials(
             org_id=self.org_id,
+            org_name=self.org_name,
+            type="postgresql",
             server=config.NEON_SERVER,
             database=slugify_string(self.org_name),
             username=username,
@@ -184,16 +215,22 @@ class PostgresqlIntegration:
 
         return updated_credentials
 
-    async def export_project_to_dedicated_postgres(
+    async def push(
         self,
-        exported_db_name: str,
         batch_size: int = 1024,
     ) -> Literal["success", "failure"]:
         """
-        Export the project to the dedicated Postgres database
+        Export the project to the dedicated Postgres database.
+
+        This replaces the table if it already exists.
+
+        The table name is the slugified project name.
         """
         if self.project_id is None:
             logger.error("No project_id provided")
+            return "failure"
+        if self.project_name is None:
+            logger.error("No project_name provided")
             return "failure"
         await self.update_status("started")
         await self.load_config()
@@ -250,7 +287,7 @@ class PostgresqlIntegration:
                     # Note: to_sql is not async, we could use asyncpg directly: https://github.com/MagicStack/asyncpg
                     pd.DataFrame.to_sql(
                         tasks_df,
-                        slugify_string(exported_db_name),
+                        slugify_string(self.project_name),
                         connection,
                         if_exists=if_exists_mode,
                         index=False,
