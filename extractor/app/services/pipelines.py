@@ -819,22 +819,28 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
 
     sentiment_score = 0
     sentiment_magnitude = 0
+    sentiment_label_counter = defaultdict(int)
     language_counter = defaultdict(int)
     session_flag = defaultdict(int)
 
     for task in tasks:
         sentiment_score += task["sentiment"]["score"]
         sentiment_magnitude += task["sentiment"]["magnitude"]
+        sentiment_label_counter[task["sentiment"]["label"]] += 1
         language_counter[task["language"]] += 1
         session_flag[task["flag"]] += 1
 
     if len(tasks) > 0:
         most_common_language = max(language_counter, key=language_counter.get)
+        most_common_label = max(
+            sentiment_label_counter, key=sentiment_label_counter.get
+        )
         most_common_flag = max(session_flag, key=session_flag.get)
 
         session_task_info = SessionTaskInfo(
             avg_sentiment_score=sentiment_score / len(tasks),
             avg_magnitude_score=sentiment_magnitude / len(tasks),
+            most_common_sentiment_label=most_common_label,
             most_common_language=most_common_language,
             most_common_flag=most_common_flag,
         )
@@ -843,6 +849,7 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
         session_task_info = SessionTaskInfo(
             avg_sentiment_score=None,
             avg_magnitude_score=None,
+            most_common_sentiment_label=None,
             most_common_language=None,
             most_common_flag=None,
         )

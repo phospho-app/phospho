@@ -185,6 +185,7 @@ class Task(ProjectElementBaseModel):
 class SessionTaskInfo(BaseModel):
     avg_sentiment_score: Optional[float] = None
     avg_magnitude_score: Optional[float] = None
+    most_common_sentiment_label: Optional[str] = None
     most_common_language: Optional[str] = None
     most_common_flag: Optional[str] = None
 
