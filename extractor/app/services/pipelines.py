@@ -702,7 +702,8 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
             flag = await task_scoring_pipeline(task, save_task=save_task)
         else:
             flag = task_in_db.get("flag")
-        await compute_session_info_pipeline(task.project_id, task.session_id)
+        if task.session_id is not None:
+            await compute_session_info_pipeline(task.project_id, task.session_id)
     else:
         flag = await task_scoring_pipeline(task, save_task=save_task)
 
@@ -822,11 +823,14 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
 
     for task in tasks:
         valid_task = Task.model_validate(task)
-        if valid_task.sentiment.score is not None:
+        if valid_task.sentiment is not None and valid_task.sentiment.score is not None:
             sentiment_score.append(valid_task.sentiment.score)
-        if valid_task.sentiment.magnitude is not None:
+        if (
+            valid_task.sentiment is not None
+            and valid_task.sentiment.magnitude is not None
+        ):
             sentiment_magnitude.append(valid_task.sentiment.magnitude)
-        if valid_task.sentiment.label is not None:
+        if valid_task.sentiment is not None and valid_task.sentiment.label is not None:
             sentiment_label_counter[valid_task.sentiment.label] += 1
         if valid_task.language is not None:
             language_counter[valid_task.language] += 1
