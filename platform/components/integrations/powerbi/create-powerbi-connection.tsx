@@ -83,7 +83,8 @@ const CreatePowerBI = ({ project_id }: { project_id: string }) => {
       <SheetContent className="md:w-1/2 overflow-auto">
         <SheetTitle>Export data to Power BI</SheetTitle>
         <SheetDescription>
-          Export data from your project for use in your Power BI reports.
+          This will export your project data to a PostgreSQL database that you
+          can connect to Power BI.
         </SheetDescription>
         <Separator className="my-8" />
         <div className="block text-m font-medium">
@@ -135,7 +136,7 @@ const CreatePowerBI = ({ project_id }: { project_id: string }) => {
           )}
           {credentials.projects_finished.includes(project_id) && (
             <span className="text-green-500">
-              Export complete. Your project data will be synced regularly.
+              Export complete. Your project data will be synced every 24 hours.
             </span>
           )}
         </div>

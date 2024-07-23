@@ -41,14 +41,15 @@ const ArgillaIntegrations: React.FC = () => {
           Argilla
         </CardTitle>
         <CardDescription>
-          View the documentation{" "}
+          Learn more about the Argilla labelling platform{" "}
           <Link
-            href={"https://docs.phospho.ai/guides/export-dataset-argilla"}
-            className="hover:text-green-500"
+            href={
+              "https://docs.argilla.io/en/latest/practical_guides/practical_guides.html"
+            }
+            className="underline"
           >
             here
           </Link>
-          .
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -63,7 +64,7 @@ const ArgillaIntegrations: React.FC = () => {
                   }
                   target="_blank"
                 >
-                  <Button>View your datasets</Button>
+                  <Button>View datasets</Button>
                 </Link>
                 <CreateDataset />
               </div>

@@ -47,9 +47,7 @@ const PowerBIIntegrations: React.FC = () => {
           />
           Power BI
         </CardTitle>
-        <CardDescription>
-          Coming soon: Export data from your project for use in Power BI
-        </CardDescription>
+        <CardDescription>Export your project data to Power BI.</CardDescription>
       </CardHeader>
       <CardContent>
         <div>

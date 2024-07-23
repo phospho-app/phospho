@@ -67,7 +67,7 @@ async def get_postgresql_creds(
     org_member_info = propelauth.require_org_member(user, org_id)
     org = propelauth.fetch_org(org_member_info.org_id)
     org_metadata = org.get("metadata", {})
-    org_name = org.get("name", "")
+    org_name = org.get("name", None)
     postgres_integration = PostgresqlIntegration(
         org_id=org_id, org_metadata=org_metadata, org_name=org_name
     )
@@ -84,14 +84,13 @@ async def post_postgresql_push(
     org_member_info = propelauth.require_org_member(user, project.org_id)
     org = propelauth.fetch_org(org_member_info.org_id)
     org_metadata = org.get("metadata", {})
-    org_name = org.get("name", "")
+    org_name = org.get("name", None)
     postgres_integration = PostgresqlIntegration(
         org_id=org_member_info.org_id,
         org_name=org_name,
         org_metadata=org_metadata,
         project_id=project_id,
+        project_name=project.project_name,
     )
-    status = await postgres_integration.export_project_to_dedicated_postgres(
-        project.project_name,
-    )
+    status = await postgres_integration.push()
     return {"status": status}

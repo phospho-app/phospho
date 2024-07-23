@@ -179,6 +179,7 @@ else:
     GCP_BUCKET_CLIENT = None
 
 ### NEON DB ###
+# TODO : Rename this to generic SQL names
 NEON_ADMIN_USERNAME = os.getenv("NEON_ADMIN_USERNAME")
 NEON_ADMIN_PASSWORD = os.getenv("NEON_ADMIN_PASSWORD")
 NEON_SERVER = os.getenv("NEON_SERVER")
