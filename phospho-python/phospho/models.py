@@ -182,6 +182,19 @@ class Task(ProjectElementBaseModel):
         return json.loads(json.dumps(metadata, default=str))
 
 
+class SessionStats(BaseModel):
+    """
+    Statistics computed at the session granularity,
+    based on the Session content.
+    """
+
+    avg_sentiment_score: Optional[float] = None
+    avg_magnitude_score: Optional[float] = None
+    most_common_sentiment_label: Optional[str] = None
+    most_common_language: Optional[str] = None
+    most_common_flag: Optional[str] = None
+
+
 class Session(ProjectElementBaseModel):
     metadata: Optional[dict] = None
     data: Optional[dict] = None
@@ -195,6 +208,7 @@ class Session(ProjectElementBaseModel):
     tasks: Optional[List[Task]] = None
     # Session length is computed dynamically. It may be None if not computed
     session_length: int = 0
+    stats: SessionStats = Field(default_factory=SessionStats)
 
     @field_serializer("metadata")
     def serialize_metadata(self, metadata: dict, _info):
