@@ -6,11 +6,6 @@ import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import {
   Table,
   TableBody,
   TableCell,
@@ -29,7 +24,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Database, TrafficCone } from "lucide-react";
+import { Database } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -147,14 +142,6 @@ export function SessionsTable<TData, TValue>({
         <div className="flex flex-row space-x-2 items-center">
           <DatePickerWithRange />
           <FilterComponent variant="sessions" />
-          <HoverCard>
-            <HoverCardTrigger>
-              <TrafficCone className="w-6 h-6 text-muted-foreground" />
-            </HoverCardTrigger>
-            <HoverCardContent>
-              Work in progress! Only the event filters are available for now.
-            </HoverCardContent>
-          </HoverCard>
         </div>
         <TableNavigation table={table} />
       </div>
