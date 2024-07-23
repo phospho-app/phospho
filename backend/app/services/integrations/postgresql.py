@@ -16,6 +16,8 @@ from sqlalchemy.sql import text
 
 class PostgresqlCredentials(BaseModel, extra="allow"):
     org_id: str
+    org_name: str
+    type: str = "postgresql"  # integration type
     server: str
     database: str
     username: str
@@ -38,17 +40,19 @@ class PostgresqlIntegration:
         org_id: str,
         org_name: str,
         project_id: Optional[str] = None,
+        project_name: Optional[str] = None,
         org_metadata: Optional[dict] = None,
     ):
         self.org_id = org_id
         self.org_name = org_name
         self.project_id = project_id
+        self.project_name = project_name
         if org_metadata is not None:
             # Verify that the org has access to a dedicated Postgres database, based on the metadata
             if not org_metadata.get("power_bi", False):
                 raise HTTPException(
                     status_code=400,
-                    detail=f"The organization {org_id} does'nt have access to this feature. Please reach out.",
+                    detail=f"The organization {org_id} doesn't have access to this feature. Please reach out.",
                 )
 
         if config.NEON_ADMIN_PASSWORD is None or config.NEON_ADMIN_USERNAME is None:
@@ -81,6 +85,21 @@ class PostgresqlIntegration:
             # Remove the _id field
             if "_id" in postgres_credentials.keys():
                 del postgres_credentials["_id"]
+            if "type" not in postgres_credentials.keys():
+                postgres_credentials["type"] = "postgresql"
+                # update type in MongoDB
+                await mongo_db["integrations"].update_one(
+                    {"org_id": self.org_id},
+                    {"$set": {"type": postgres_credentials["type"]}},
+                )
+            if "org_name" not in postgres_credentials.keys():
+                postgres_credentials["org_name"] = self.org_name
+                # update org_name in MongoDB
+                await mongo_db["integrations"].update_one(
+                    {"org_id": self.org_id},
+                    {"$set": {"org_name": postgres_credentials["org_name"]}},
+                )
+
             postgres_credentials_valid = PostgresqlCredentials.model_validate(
                 postgres_credentials
             )
@@ -136,10 +155,12 @@ class PostgresqlIntegration:
 
         self.credentials = PostgresqlCredentials(
             org_id=self.org_id,
+            org_name=self.org_name,
             server=config.NEON_SERVER,
             database=slugify_string(self.org_name),
             username=username,
             password=password,
+            type="postgresql",
         )
         # Push to MongoDB
         await mongo_db["integrations"].update_one(
@@ -184,9 +205,8 @@ class PostgresqlIntegration:
 
         return updated_credentials
 
-    async def export_project_to_dedicated_postgres(
+    async def push(
         self,
-        exported_db_name: str,
         batch_size: int = 1024,
     ) -> Literal["success", "failure"]:
         """
@@ -194,6 +214,9 @@ class PostgresqlIntegration:
         """
         if self.project_id is None:
             logger.error("No project_id provided")
+            return "failure"
+        if self.project_name is None:
+            logger.error("No project_name provided")
             return "failure"
         await self.update_status("started")
         await self.load_config()
@@ -250,7 +273,7 @@ class PostgresqlIntegration:
                     # Note: to_sql is not async, we could use asyncpg directly: https://github.com/MagicStack/asyncpg
                     pd.DataFrame.to_sql(
                         tasks_df,
-                        slugify_string(exported_db_name),
+                        slugify_string(self.project_name),
                         connection,
                         if_exists=if_exists_mode,
                         index=False,
