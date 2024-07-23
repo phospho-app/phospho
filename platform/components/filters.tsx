@@ -401,66 +401,70 @@ const FilterComponent = ({
                   <ThumbsDown className="h-4 w-4 mr-2" />
                   <span>Failure</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setDataFilters({
-                      ...dataFilters,
-                      has_notes: !dataFilters.has_notes,
-                    });
-                    resetPagination();
-                  }}
-                  style={{
-                    color: dataFilters.has_notes ? "green" : "inherit",
-                  }}
-                >
-                  <PenSquare className="h-4 w-4 mr-2" />
-                  <span>Has notes </span>
-                </DropdownMenuItem>
+                {variant === "tasks" && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setDataFilters({
+                        ...dataFilters,
+                        has_notes: !dataFilters.has_notes,
+                      });
+                      resetPagination();
+                    }}
+                    style={{
+                      color: dataFilters.has_notes ? "green" : "inherit",
+                    }}
+                  >
+                    <PenSquare className="h-4 w-4 mr-2" />
+                    <span>Has notes </span>
+                  </DropdownMenuItem>
+                )}
                 {/* Last Eval Source */}
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <User className="h-4 w-4 mr-2" />
-                    <span>Source</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setDataFilters({
-                            ...dataFilters,
-                            last_eval_source: "phospho",
-                          });
-                          resetPagination();
-                        }}
-                        style={{
-                          color:
-                            dataFilters.last_eval_source === "phospho"
-                              ? "green"
-                              : "inherit",
-                        }}
-                      >
-                        phospho
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setDataFilters({
-                            ...dataFilters,
-                            last_eval_source: "user",
-                          });
-                          resetPagination();
-                        }}
-                        style={{
-                          color:
-                            dataFilters.last_eval_source === "user"
-                              ? "green"
-                              : "inherit",
-                        }}
-                      >
-                        user
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
+                {variant === "tasks" && (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <User className="h-4 w-4 mr-2" />
+                      <span>Source</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDataFilters({
+                              ...dataFilters,
+                              last_eval_source: "phospho",
+                            });
+                            resetPagination();
+                          }}
+                          style={{
+                            color:
+                              dataFilters.last_eval_source === "phospho"
+                                ? "green"
+                                : "inherit",
+                          }}
+                        >
+                          phospho
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDataFilters({
+                              ...dataFilters,
+                              last_eval_source: "user",
+                            });
+                            resetPagination();
+                          }}
+                          style={{
+                            color:
+                              dataFilters.last_eval_source === "user"
+                                ? "green"
+                                : "inherit",
+                          }}
+                        >
+                          user
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
@@ -615,26 +619,31 @@ const FilterComponent = ({
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <List className="h-4 w-4 mr-2" />
-              Task position
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              <DropdownMenuItem
-                onClick={() => {
-                  const currentIsLastTask = dataFilters.is_last_task ?? false;
-                  setDataFilters({
-                    ...dataFilters,
-                    is_last_task: !currentIsLastTask,
-                  });
-                  resetPagination();
-                }}
-              >
-                Is last task
-              </DropdownMenuItem>
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
+          <div>
+            {variant === "tasks" && (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <List className="h-4 w-4 mr-2" />
+                  Task position
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const currentIsLastTask =
+                        dataFilters.is_last_task ?? false;
+                      setDataFilters({
+                        ...dataFilters,
+                        is_last_task: !currentIsLastTask,
+                      });
+                      resetPagination();
+                    }}
+                  >
+                    Is last task
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            )}
+          </div>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Code className="h-4 w-4 mr-2" />
