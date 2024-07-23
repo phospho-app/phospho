@@ -669,41 +669,6 @@ async def task_scoring_pipeline(
                 },
             )
 
-        tasks_in_session = (
-            await mongo_db["tasks"]
-            .find({"session_id": task.session_id, "flag": {"$ne": None}})
-            .to_list(length=None)
-        )
-
-        # Update the session object
-        session_flag = None
-        session_flags = defaultdict(int)
-
-        for task_in_session in tasks_in_session:
-            session_flags[task_in_session["flag"]] += 1
-
-        if (
-            session_flags.get("success") is not None
-            and session_flags.get("failure") is not None
-        ):
-            if session_flags["success"] > session_flags["failure"]:
-                session_flag = "success"
-            else:
-                session_flag = "failure"
-        elif session_flags.get("success") is not None:
-            session_flag = "success"
-        else:
-            session_flag = "failure"
-
-        mongo_db["sessions"].update_one(
-            {"id": task.session_id},
-            {
-                "$set": {
-                    "task_info.flag": session_flag,
-                }
-            },
-        )
-
     return flag
 
 
@@ -737,6 +702,7 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
             flag = await task_scoring_pipeline(task, save_task=save_task)
         else:
             flag = task_in_db.get("flag")
+        await compute_session_info_pipeline(task.project_id, task.session_id)
     else:
         flag = await task_scoring_pipeline(task, save_task=save_task)
 
@@ -826,11 +792,15 @@ async def messages_main_pipeline(
     )
 
 
-async def compute_average_sentiment_and_language(
+async def compute_session_info_pipeline(
     project_id: str, session_id: str
 ) -> SessionTaskInfo:
     """
-    Compute the average sentiment score and magnitude for a session
+    Compute session information from its tasks
+    - Average sentiment score
+    - Average sentiment magnitude
+    - Most common language
+    - Most common flag
     """
     mongo_db = await get_mongo_db()
     tasks = (
@@ -842,6 +812,7 @@ async def compute_average_sentiment_and_language(
                 "sentiment.score": {"$ne": None},
                 "sentiment.magnitude": {"$ne": None},
                 "language": {"$ne": None},
+                "flag": {"$ne": None},
             },
         )
         .to_list(length=None)
@@ -850,19 +821,23 @@ async def compute_average_sentiment_and_language(
     sentiment_score = 0
     sentiment_magnitude = 0
     language_counter = defaultdict(int)
+    session_flag = defaultdict(int)
 
     for task in tasks:
         sentiment_score += task["sentiment"]["score"]
         sentiment_magnitude += task["sentiment"]["magnitude"]
         language_counter[task["language"]] += 1
+        session_flag[task["flag"]] += 1
 
     if len(tasks) > 0:
         most_common_language = max(language_counter, key=language_counter.get)
+        most_common_flag = max(session_flag, key=session_flag.get)
 
         return SessionTaskInfo(
             avg_sentiment_score=sentiment_score / len(tasks),
             avg_magnitude_score=sentiment_magnitude / len(tasks),
             most_common_language=most_common_language,
+            most_common_flag=most_common_flag,
         )
 
     else:
@@ -870,6 +845,7 @@ async def compute_average_sentiment_and_language(
             avg_sentiment_score=None,
             avg_magnitude_score=None,
             most_common_language=None,
+            most_common_flag=None,
         )
 
 
@@ -964,23 +940,6 @@ async def sentiment_and_language_analysis_pipeline(
                 if sentiment_object
                 else None,
                 "metadata.language": language,
-            }
-        },
-    )
-
-    # We update the session item, we want to keep the average sentiment score and magnitude for the session, and the most common language
-    session_task_info = await compute_average_sentiment_and_language(
-        task.project_id, task.session_id
-    )
-
-    await mongo_db["sessions"].update_one(
-        {
-            "id": task.session_id,
-            "project_id": task.project_id,
-        },
-        {
-            "$set": {
-                "task_info": session_task_info.model_dump(),
             }
         },
     )

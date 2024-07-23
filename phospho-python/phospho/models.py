@@ -186,7 +186,7 @@ class SessionTaskInfo(BaseModel):
     avg_sentiment_score: Optional[float] = None
     avg_magnitude_score: Optional[float] = None
     most_common_language: Optional[str] = None
-    flag: Optional[str] = None
+    most_common_flag: Optional[str] = None
 
 
 class Session(ProjectElementBaseModel):
@@ -286,17 +286,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "event_name"
-                        ] = event_name
+                        project_data["settings"]["events"][event_name]["event_name"] = (
+                            event_name
+                        )
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "org_id"
-                        ] = project_data["org_id"]
+                        project_data["settings"]["events"][event_name]["org_id"] = (
+                            project_data["org_id"]
+                        )
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "project_id"
-                        ] = project_data["id"]
+                        project_data["settings"]["events"][event_name]["project_id"] = (
+                            project_data["id"]
+                        )
 
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:
