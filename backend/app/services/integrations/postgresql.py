@@ -43,6 +43,9 @@ class PostgresqlIntegration:
         project_name: Optional[str] = None,
         org_metadata: Optional[dict] = None,
     ):
+        """
+        This class exports a project to a dedicated Postgres database.
+        """
         self.org_id = org_id
         if self.org_id is None:
             raise ValueError("No org_id provided")
@@ -76,7 +79,8 @@ class PostgresqlIntegration:
         """
         Load the Postgres credentials from MongoDB.
 
-        If the credentials are not found, create them.
+        If the credentials are not found, create them. The database name is the slugified org name. The org name
+        is unique to each organization.
 
         This drops the database if it already exists and creates a new one.
         """
@@ -216,7 +220,11 @@ class PostgresqlIntegration:
         batch_size: int = 1024,
     ) -> Literal["success", "failure"]:
         """
-        Export the project to the dedicated Postgres database
+        Export the project to the dedicated Postgres database.
+
+        This replaces the table if it already exists.
+
+        The table name is the slugified project name.
         """
         if self.project_id is None:
             logger.error("No project_id provided")
