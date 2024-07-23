@@ -644,121 +644,125 @@ const FilterComponent = ({
               </DropdownMenuSub>
             )}
           </div>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <Code className="h-4 w-4 mr-2" />
-              <span>Metadata</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
-                {stringFields && Object.entries(stringFields).length == 0 && (
-                  <DropdownMenuItem disabled>
-                    No metadata available
-                  </DropdownMenuItem>
-                )}
-                {stringFields &&
-                  Object.entries(stringFields).map(([field, values]) => {
-                    return (
-                      <DropdownMenuSub key={field}>
-                        <DropdownMenuSubTrigger>
-                          <span>{field}</span>
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuPortal>
-                          <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
-                            {values.map((value) => {
-                              return (
-                                <DropdownMenuItem
-                                  key={value}
-                                  onClick={() => {
-                                    setDataFilters({
-                                      ...dataFilters,
-                                      metadata: {
-                                        ...dataFilters.metadata,
-                                        [field]: value,
-                                      },
-                                    });
-                                    resetPagination();
-                                  }}
-                                >
-                                  {field !== "language"
-                                    ? value
-                                      ? value.length > 50
-                                        ? value.substring(0, 50) + "..."
-                                        : value
-                                      : "-"
-                                    : getLanguageLabel(value)}
-                                </DropdownMenuItem>
-                              );
-                            })}
-                          </DropdownMenuSubContent>
-                        </DropdownMenuPortal>
-                      </DropdownMenuSub>
-                    );
-                  })}
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <Boxes className="h-4 w-4 mr-2" />
-              <span>Clusterings</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
-                {clusterings && clusterings.length == 0 && (
-                  <DropdownMenuItem disabled>
-                    No clusterings available
-                  </DropdownMenuItem>
-                )}
-                {clusterings &&
-                  clusterings.map((clustering) => {
-                    return (
-                      <DropdownMenuSub key={clustering.id}>
-                        <DropdownMenuSubTrigger>
-                          {formatUnixTimestampToLiteralDatetime(
-                            clustering.created_at,
-                          )}
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuPortal>
-                          <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setDataFilters({
-                                  ...dataFilters,
-                                  clustering_id: clustering.id,
-                                  clusters_ids: null,
-                                });
-                                resetPagination();
-                              }}
-                            >
-                              <Boxes className="h-4 w-4 mr-2" />
-                              <span>All clusters</span>
-                            </DropdownMenuItem>
-                            {clustering.clusters?.map((cluster) => {
-                              return (
-                                <DropdownMenuItem
-                                  key={cluster.id}
-                                  onClick={() => {
-                                    setDataFilters({
-                                      ...dataFilters,
-                                      clustering_id: clustering.id,
-                                      clusters_ids: [cluster.id],
-                                    });
-                                    resetPagination();
-                                  }}
-                                >
-                                  {cluster.name}
-                                </DropdownMenuItem>
-                              );
-                            })}
-                          </DropdownMenuSubContent>
-                        </DropdownMenuPortal>
-                      </DropdownMenuSub>
-                    );
-                  })}
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
+          {variant == "tasks" && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Code className="h-4 w-4 mr-2" />
+                <span>Metadata</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                  {stringFields && Object.entries(stringFields).length == 0 && (
+                    <DropdownMenuItem disabled>
+                      No metadata available
+                    </DropdownMenuItem>
+                  )}
+                  {stringFields &&
+                    Object.entries(stringFields).map(([field, values]) => {
+                      return (
+                        <DropdownMenuSub key={field}>
+                          <DropdownMenuSubTrigger>
+                            <span>{field}</span>
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                              {values.map((value) => {
+                                return (
+                                  <DropdownMenuItem
+                                    key={value}
+                                    onClick={() => {
+                                      setDataFilters({
+                                        ...dataFilters,
+                                        metadata: {
+                                          ...dataFilters.metadata,
+                                          [field]: value,
+                                        },
+                                      });
+                                      resetPagination();
+                                    }}
+                                  >
+                                    {field !== "language"
+                                      ? value
+                                        ? value.length > 50
+                                          ? value.substring(0, 50) + "..."
+                                          : value
+                                        : "-"
+                                      : getLanguageLabel(value)}
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                      );
+                    })}
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+          )}
+          {variant == "tasks" && (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Boxes className="h-4 w-4 mr-2" />
+                <span>Clusterings</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                  {clusterings && clusterings.length == 0 && (
+                    <DropdownMenuItem disabled>
+                      No clusterings available
+                    </DropdownMenuItem>
+                  )}
+                  {clusterings &&
+                    clusterings.map((clustering) => {
+                      return (
+                        <DropdownMenuSub key={clustering.id}>
+                          <DropdownMenuSubTrigger>
+                            {formatUnixTimestampToLiteralDatetime(
+                              clustering.created_at,
+                            )}
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setDataFilters({
+                                    ...dataFilters,
+                                    clustering_id: clustering.id,
+                                    clusters_ids: null,
+                                  });
+                                  resetPagination();
+                                }}
+                              >
+                                <Boxes className="h-4 w-4 mr-2" />
+                                <span>All clusters</span>
+                              </DropdownMenuItem>
+                              {clustering.clusters?.map((cluster) => {
+                                return (
+                                  <DropdownMenuItem
+                                    key={cluster.id}
+                                    onClick={() => {
+                                      setDataFilters({
+                                        ...dataFilters,
+                                        clustering_id: clustering.id,
+                                        clusters_ids: [cluster.id],
+                                      });
+                                      resetPagination();
+                                    }}
+                                  >
+                                    {cluster.name}
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                      );
+                    })}
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
