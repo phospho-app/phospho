@@ -2,6 +2,7 @@
 Explore metrics service
 """
 
+from contextlib import nullcontext
 import datetime
 import math
 from collections import defaultdict
@@ -2263,6 +2264,38 @@ async def fetch_flattened_tasks(
                 **return_columns,
                 "event_removed": "$events.removed",
                 "event_removal_reason": "$events.removal_reason",
+                "event_category_name": "$events.score_range.label",
+                "event_category_id": {
+                    "$arrayElemAt": [
+                        {
+                            "$map": {
+                                "input": "$events.event_definition.score_range_settings.categories",
+                                "as": "category",
+                                "in": {
+                                    "$cond": {
+                                        "if": {
+                                            "$eq": [
+                                                "$$category",
+                                                "$events.score_range.label",
+                                            ]
+                                        },
+                                        "then": {
+                                            "$indexOfArray": [
+                                                "$events.event_definition.score_range_settings.categories",
+                                                "$$category",
+                                            ]
+                                        },
+                                        "else": nullcontext,
+                                    }
+                                },
+                            }
+                        },
+                        0,
+                    ]
+                },
+                "event_number_of_categories": {
+                    "$size": "$events.event_definition.score_range_settings.categories",
+                },
             }
 
     # Sort the pipeline
