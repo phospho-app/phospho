@@ -41,7 +41,7 @@ const ArgillaIntegrations: React.FC = () => {
           Argilla
         </CardTitle>
         <CardDescription>
-          Learn to use the Argilla labelling platform{" "}
+          Learn more about the Argilla labelling platform{" "}
           <Link
             href={
               "https://docs.argilla.io/en/latest/practical_guides/practical_guides.html"
