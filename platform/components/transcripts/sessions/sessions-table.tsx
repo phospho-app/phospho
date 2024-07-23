@@ -147,14 +147,6 @@ export function SessionsTable<TData, TValue>({
         <div className="flex flex-row space-x-2 items-center">
           <DatePickerWithRange />
           <FilterComponent variant="sessions" />
-          <HoverCard>
-            <HoverCardTrigger>
-              <TrafficCone className="w-6 h-6 text-muted-foreground" />
-            </HoverCardTrigger>
-            <HoverCardContent>
-              Work in progress! Only the event filters are available for now.
-            </HoverCardContent>
-          </HoverCard>
         </div>
         <TableNavigation table={table} />
       </div>
