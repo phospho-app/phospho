@@ -95,7 +95,7 @@ export interface ScoreRange {
   score_type: ScoreRangeType;
   label: string;
   options_confidence: Record<string | number, number>;
-  current_label?: string;
+  corrected_label?: string;
 }
 
 export interface Event {

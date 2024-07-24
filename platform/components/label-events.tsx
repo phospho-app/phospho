@@ -66,7 +66,7 @@ export const EventDetectionDescription = ({
           </div>
         )}
         {event.score_range?.score_type == "category" && (
-          <div>Category: {event.score_range.current_label}</div>
+          <div>Category: {event.score_range.corrected_label}</div>
         )}
       </div>
     </div>
@@ -94,7 +94,7 @@ export const EventBadge = ({ event }: { event: Event }) => {
       )}
       {score_type === "category" && (
         <p>
-          {event.event_name}: {event?.score_range?.current_label ?? event.score_range?.label}
+          {event.event_name}: {event?.score_range?.corrected_label ?? event.score_range?.label}
         </p>
       )}
     </Badge>

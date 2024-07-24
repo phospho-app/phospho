@@ -175,13 +175,13 @@ async def change_label_event(
         {"project_id": project_id, "id": event_id},
         {
             "$set": {
-                "score_range.current_label": new_label,
+                "score_range.corrected_label": new_label,
                 "confirmed": True,
             }
         },
     )
 
-    event_model.score_range.current_label = new_label
+    event_model.score_range.corrected_label = new_label
     event_model.confirmed = True
 
     return event_model
