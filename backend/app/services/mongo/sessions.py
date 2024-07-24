@@ -1,10 +1,11 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from app.db.models import Event, EventDefinition, Project, Session, Task
 from app.db.mongo import get_mongo_db
 from app.services.mongo.tasks import task_filtering_pipeline_match
 from fastapi import HTTPException
 from loguru import logger
+import datetime
 
 from phospho.models import ProjectDataFilters
 from phospho.utils import is_jsonable
@@ -390,3 +391,75 @@ async def remove_event_from_session(session: Session, event_name: str) -> Sessio
             status_code=404,
             detail=f"Event {event_name} not found in session {session.id}",
         )
+
+
+async def session_filtering_pipeline_match(
+    project_id: str,
+    filters: Optional[ProjectDataFilters] = None,
+    collection: str = "sessions",
+) -> Tuple[Dict[str, object], str]:
+    """
+    Builds the filtering pipeline for sessions.
+    """
+    if filters is None:
+        filters = ProjectDataFilters()
+
+    match: Dict[str, object] = {"project_id": project_id}
+
+    if filters.session_ids is not None:
+        match["id"] = {"$in": filters.session_ids}
+
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = int(filters.created_at_start.timestamp())
+
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = int(filters.created_at_end.timestamp())
+
+    if filters.created_at_start is not None:
+        match["created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
+        match["created_at"] = {
+            **match.get("created_at", {}),
+            "$lte": filters.created_at_end,
+        }
+
+    if filters.metadata is not None:
+        for key, value in filters.metadata.items():
+            match[f"metadata.{key}"] = value
+
+    if filters.language is not None:
+        match["stats.most_common_language"] = filters.language
+
+    if filters.sentiment is not None:
+        match["stats.most_common_sentiment_label"] = filters.sentiment
+
+    if filters.flag is not None:
+        match["stats.most_common_flag"] = filters.flag
+
+    if filters.event_name is not None:
+        collection = "sessions_with_events"
+        match["$and"] = [
+            {"events": {"$ne": []}},
+            {
+                "events": {
+                    "$elemMatch": {
+                        "event_name": {"$in": filters.event_name},
+                    }
+                }
+            },
+        ]
+
+    if filters.event_id is not None:
+        collection = "sessions_with_events"
+        match["$and"] = [
+            {"events": {"$ne": []}},
+            {
+                "events": {
+                    "$elemMatch": {
+                        "id": {"$in": filters.event_id},
+                    }
+                }
+            },
+        ]
+
+    return match, collection
