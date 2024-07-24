@@ -79,8 +79,8 @@ export const EventBadge = ({ event }: { event: Event }) => {
     : null;
 
   const badgeStyle = event.confirmed
-    ? "border bg-green-500 hover:border-green-500"
-    : "border hover:border-green-500";
+    ? "border bg-green-500 hover:border-green-500 mb-1"
+    : "border hover:border-green-500 mb-1";
 
   const score_type = event.score_range?.score_type ?? "confidence";
 
@@ -284,12 +284,12 @@ export const AddEventDropdownForTasks = ({
       <DropdownMenuTrigger>
         <Badge
           variant="outline"
-          className={cn(" hover:border-green-500", className)}
+          className={cn("hover:border-green-500", className)}
         >
           +
         </Badge>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent align="center">
         {Object.entries(projectEvents).map(([event_name, event]) => {
           // If the event is already in the task, don't show it
           if (events?.some((e) => e.event_name === event_name)) {
@@ -433,7 +433,7 @@ export const InteractiveEventBadgeForSessions = ({
           <HoverCardTrigger>
             <EventBadge event={event} />
           </HoverCardTrigger>
-          <HoverCardContent className="text-sm text-left w-64" side="left">
+          <HoverCardContent className="text-sm text-left w-96" side="left">
             <EventDetectionDescription
               event={event}
               eventDefinition={eventDefinition}
@@ -508,10 +508,14 @@ export const AddEventDropdownForSessions = ({
   session,
   setSession,
   className,
+  setSheetOpen,
+  setSheetToOpen,
 }: {
   session: SessionWithEvents;
   setSession: (session: SessionWithEvents) => void;
   className?: string;
+  setSheetOpen?: (open: boolean) => void;
+  setSheetToOpen?: (sheet: string | null) => void;
 }) => {
   if (!session) {
     return <></>;
@@ -538,14 +542,43 @@ export const AddEventDropdownForSessions = ({
     return <></>;
   }
 
-  const eventsNotInTask = Object.entries(projectEvents).filter(
+  const eventsNotInSession = Object.entries(projectEvents).filter(
     ([event_name, event]) => {
       // If the event is already in the task, don't show it
       return !events?.some((e) => e.event_name === event_name);
     },
   );
-  if (eventsNotInTask.length === 0) {
+  if (eventsNotInSession.length === 0) {
     return <></>;
+  }
+
+  function addEvent({
+    event,
+    scoreRangeValue,
+    scoreCategoryLabel,
+  }: {
+    event: EventDefinition;
+    scoreRangeValue?: number;
+    scoreCategoryLabel?: string;
+  }) {
+    // Call the API to add the event to the task
+    console.log("scoreCategoryLabel", scoreCategoryLabel);
+    fetch(`/api/sessions/${session.id}/add-event`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        event: event,
+        score_range_value: scoreRangeValue,
+        score_category_label: scoreCategoryLabel,
+      }),
+    })
+      .then((response) => response.json())
+      .then((response_json) => {
+        setSession(response_json);
+      });
   }
 
   return (
@@ -558,48 +591,112 @@ export const AddEventDropdownForSessions = ({
           +
         </Badge>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      <DropdownMenuContent align="center">
         {Object.entries(projectEvents).map(([event_name, event]) => {
           // If the event is already in the task, don't show it
           if (events?.some((e) => e.event_name === event_name)) {
             return <></>;
           }
 
+          const score_type =
+            event.score_range_settings?.score_type ?? "confidence";
+
           return (
             <HoverCard openDelay={0} closeDelay={0}>
               <HoverCardTrigger>
-                <DropdownMenuItem
-                  key={event_name}
-                  onClick={async (mouseEvent) => {
-                    mouseEvent.stopPropagation();
-                    // Call the API to add the event to the task
-                    const response = await fetch(
-                      `/api/sessions/${session.id}/add-event`,
+                {score_type === "confidence" && (
+                  <DropdownMenuItem
+                    key={event_name}
+                    onClick={async (mouseEvent) => {
+                      mouseEvent.stopPropagation();
+                      addEvent({ event });
+                    }}
+                  >
+                    {event_name}
+                  </DropdownMenuItem>
+                )}
+                {score_type === "range" && (
+                  <DropdownMenuSub key={event_name}>
+                    <DropdownMenuSubTrigger>
+                      {event_name}
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
                       {
-                        method: "POST",
-                        headers: {
-                          Authorization: "Bearer " + accessToken,
-                          "Content-Type": "application/json",
+                        // Create one dropdown item for each value in the range (min to max)
+                        Array.from(
+                          { length: event.score_range_settings?.max ?? 1 },
+                          (_, i) => i + 1,
+                        ).map((value) => {
+                          return (
+                            <DropdownMenuItem
+                              key={value}
+                              onClick={async (mouseEvent) => {
+                                mouseEvent.stopPropagation();
+                                addEvent({
+                                  event,
+                                  scoreRangeValue: value,
+                                });
+                              }}
+                            >
+                              {value}
+                            </DropdownMenuItem>
+                          );
+                        })
+                      }
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                )}
+                {score_type === "category" && (
+                  <DropdownMenuSub key={event_name}>
+                    <DropdownMenuSubTrigger>
+                      {event_name}
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {// Create one dropdown item for each category
+                      event.score_range_settings?.categories?.map(
+                        (category) => {
+                          return (
+                            <DropdownMenuItem
+                              key={category}
+                              onClick={async (mouseEvent) => {
+                                mouseEvent.stopPropagation();
+                                addEvent({
+                                  event,
+                                  scoreCategoryLabel: category,
+                                });
+                              }}
+                            >
+                              {category}
+                            </DropdownMenuItem>
+                          );
                         },
-                        body: JSON.stringify({
-                          event: event,
-                        }),
-                      },
-                    );
-                    const response_json = await response.json();
-                    setSession(response_json);
-                  }}
-                >
-                  {event_name}
-                </DropdownMenuItem>
+                      )}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                )}
               </HoverCardTrigger>
-              <HoverCardContent side="left" className="text-sm w-64">
+              <HoverCardContent side="left" className="text-sm w-96">
                 <h2 className="font-bold">{event_name}</h2>
                 <div>{event.description}</div>
               </HoverCardContent>
             </HoverCard>
           );
         })}
+        {setSheetOpen !== undefined && setSheetToOpen !== undefined && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+                setSheetToOpen("edit");
+                setSheetOpen(true);
+              }}
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              Add a new event
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
