@@ -1707,7 +1707,7 @@ async def get_total_nb_of_true_posive(
     main_filter["confirmed"] = {"$eq": True}
     main_filter["event_definition.removed"] = {"$ne": True}
     main_filter["event_definition.score_range_settings.score_type"] = {
-        "$eq": "confidence"
+        "$in": ["confidence", "category"]
     }
 
     pipeline: List[Dict[str, object]] = [
@@ -1746,7 +1746,7 @@ async def get_total_nb_of_false_posive(
     main_filter["confirmed"] = {"$eq": False}
     main_filter["event_definition.removed"] = {"$ne": False}
     main_filter["event_definition.score_range_settings.score_type"] = {
-        "$eq": "confidence"
+        "$in": ["confidence", "category"]
     }
 
     pipeline: List[Dict[str, object]] = [
@@ -1784,7 +1784,7 @@ async def get_total_nb_of_false_negative(
     main_filter["confirmed"] = {"$eq": True}
     main_filter["event_definition.removed"] = {"$ne": True}
     main_filter["event_definition.score_range_settings.score_type"] = {
-        "$eq": "confidence"
+        "$in": ["confidence", "category"]
     }
 
     pipeline: List[Dict[str, object]] = [
@@ -1845,6 +1845,39 @@ async def get_events_aggregated_metrics(
             output["f1_score"] = 2 * (
                 (output["precision"] * output["recall"])
                 / (output["precision"] + output["recall"])
+            )
+    if (
+        "f1_score_category" in metrics
+        or "precision_category" in metrics
+        or "recall_category" in metrics
+    ):
+        output["true_positive"] = await get_total_nb_of_true_posive_category(
+            project_id=project_id, filters=filters
+        )
+        output["false_positive"] = await get_total_nb_of_false_posive_category(
+            project_id=project_id, filters=filters
+        )
+        output["false_negative"] = await get_total_nb_of_false_negative_category(
+            project_id=project_id, filters=filters
+        )
+
+        if output["true_positive"] + output["false_positive"] > 0:
+            # To compute the precision, we need enough data to compute the true positive and false positive
+            output["precision_category"] = float(output["true_positive"]) / (
+                output["true_positive"] + output["false_positive"]
+            )
+        if output["true_positive"] + output["false_negative"] > 0:
+            # To compute the recall, we need enough data to compute the true positive and false negative
+            output["recall_category"] = float(output["true_positive"]) / (
+                output["true_positive"] + output["false_negative"]
+            )
+        if output.get("precision_category", None) and output.get(
+            "recall_category", None
+        ):
+            # To compute the F1 score, we need enough data to compute the precision and recall
+            output["f1_score_category"] = 2 * (
+                (output["precision_category"] * output["recall_category"])
+                / (output["precision_category"] + output["recall_category"])
             )
 
     return output
