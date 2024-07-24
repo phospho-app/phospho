@@ -108,28 +108,25 @@ async def post_log(
     background_tasks: BackgroundTasks,
     is_request_authenticated: bool = Depends(authenticate_key),
 ):
-    if is_request_authenticated:
-        logger.info(
-            f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
-        )
-        background_tasks.add_task(
-            process_log,
-            project_id=request_body.project_id,
-            org_id=request_body.org_id,
-            logs_to_process=request_body.logs_to_process,
-            extra_logs_to_save=request_body.extra_logs_to_save,
-        )
+    logger.info(
+        f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
+    )
+    background_tasks.add_task(
+        process_log,
+        project_id=request_body.project_id,
+        org_id=request_body.org_id,
+        logs_to_process=request_body.logs_to_process,
+        extra_logs_to_save=request_body.extra_logs_to_save,
+    )
 
-        project = await get_project_by_id(request_body.project_id)
-        nbr_event = len(project.settings.events)
+    project = await get_project_by_id(request_body.project_id)
+    nbr_event = len(project.settings.events)
 
-        # We return the number of events to process + 2 (one for the eval and one for the sentiment analysis)
-        return {
-            "status": "ok",
-            "nb_job_results": len(request_body.logs_to_process) * (nbr_event + 2),
-        }
-    else:
-        raise HTTPException(status_code=401, detail="Invalid API key")
+    # We return the number of events to process + 2 (one for the eval and one for the sentiment analysis)
+    return {
+        "status": "ok",
+        "nb_job_results": len(request_body.logs_to_process),
+    }
 
 
 @router.post(
