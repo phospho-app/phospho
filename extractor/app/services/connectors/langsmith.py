@@ -10,10 +10,10 @@ from langsmith import Client
 from langsmith.schemas import Run
 from loguru import logger
 
-from app.api.v1.models import LogEvent
+from app.api.v1.models import LogEventForTasks
 from app.db.mongo import get_mongo_db
 from app.services.connectors.base import BaseConnector
-from app.services.log import process_log
+from app.services.log import process_log_for_tasks
 
 from app.services.projects import get_project_by_id
 
@@ -187,8 +187,8 @@ class LangsmithConnector(BaseConnector):
         current_usage: int,
         max_usage: Optional[int] = None,
     ) -> int:
-        logs_to_process: List[LogEvent] = []
-        extra_logs_to_save: List[LogEvent] = []
+        logs_to_process: List[LogEventForTasks] = []
+        extra_logs_to_save: List[LogEventForTasks] = []
 
         if self.runs is None:
             logger.error(
@@ -218,7 +218,7 @@ class LangsmithConnector(BaseConnector):
                 else:
                     run_end_time_ts = None
 
-                log_event = LogEvent(
+                log_event = LogEventForTasks(
                     created_at=run_end_time_ts,
                     input=input,
                     output=output,
@@ -241,7 +241,7 @@ class LangsmithConnector(BaseConnector):
                 )
 
         await self._update_last_langsmith_extract()
-        await process_log(
+        await process_log_for_tasks(
             project_id=self.project_id,
             org_id=org_id,
             logs_to_process=logs_to_process,
