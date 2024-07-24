@@ -1700,94 +1700,198 @@ async def get_y_pred_y_true(
         main_filter["created_at"] = {"$gte": filters.created_at_start}
     if filters.created_at_end is not None:
         main_filter["created_at"] = {"$lte": filters.created_at_end}
-    if filters.event_id is not None:
-        main_filter["event_definition.id"] = {"$in": filters.event_id}
-    main_filter["event_definition.score_range_settings.score_type"] = {
+
+    main_filter["event_definition.id"] = {"$in": filters.event_id}
+
+    main_filter_confidence = main_filter.copy()
+    main_filter_confidence["event_definition.score_range_settings.score_type"] = {
         "$in": ["confidence"]
     }
 
-    query_result = await mongo_db["events"].find(main_filter).to_list(length=None)
+    main_filter_category = main_filter.copy()
+    main_filter_category["event_definition.score_range_settings.score_type"] = {
+        "$in": ["category"]
+    }
+
+    query_result_confidence = (
+        await mongo_db["events"].find(main_filter_confidence).to_list(length=None)
+    )
+    query_result_category = (
+        await mongo_db["events"].find(main_filter_category).to_list(length=None)
+    )
 
     # Convert to DataFrame
-    df = pd.DataFrame(query_result)
+    df_confidence = pd.DataFrame(query_result_confidence)
+    df_category = pd.DataFrame(query_result_category)
+
+    assert df_confidence.empty or df_category.empty
     # Create the filter masks for each case
-    mask_y_pred_true = (
-        (
+
+    if not df_confidence.empty:
+        df = df_confidence
+        mask_y_pred_true = (
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] != True)
+            )
+            | (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] == False)
+            )
+            | (
+                (df["source"] != "owner")
+                & (df["confirmed"] == False)
+                & (df["removed"] == True)
+            )
+        )
+
+        mask_y_pred_false = (
+            (
+                (df["source"] == "owner")
+                & (df["confirmed"] != True)
+                & (df["removed"] != True)
+            )
+            | (
+                (df["source"] == "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] != True)
+            )
+            | (
+                (df["source"] == "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] == True)
+            )
+        )
+
+        mask_y_true_true = (
             (df["source"] != "owner")
             & (df["confirmed"] == True)
             & (df["removed"] != True)
-        )
-        | (
-            (df["source"] != "owner")
-            & (df["confirmed"] == True)
-            & (df["removed"] == False)
-        )
-        | (
-            (df["source"] != "owner")
-            & (df["confirmed"] == False)
-            & (df["removed"] == True)
-        )
-    )
-
-    mask_y_pred_false = (
-        (
-            (df["source"] == "owner")
-            & (df["confirmed"] != True)
-            & (df["removed"] != True)
-        )
-        | (
+        ) | (
             (df["source"] == "owner")
             & (df["confirmed"] == True)
             & (df["removed"] != True)
         )
-        | (
-            (df["source"] == "owner")
-            & (df["confirmed"] == True)
-            & (df["removed"] == True)
-        )
-    )
 
-    mask_y_true_true = (
-        (df["source"] != "owner") & (df["confirmed"] == True) & (df["removed"] != True)
-    ) | (
-        (df["source"] == "owner") & (df["confirmed"] == True) & (df["removed"] != True)
-    )
+        mask_y_true_false = (
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] == True)
+            )
+            | (
+                (df["source"] != "owner")
+                & (df["confirmed"] == False)
+                & (df["removed"] == True)
+            )
+            | (
+                (df["source"] == "owner")
+                & (df["confirmed"] != True)
+                & (df["removed"] != True)
+            )
+            | (
+                (df["source"] == "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] == True)
+            )
+        )
+        # Apply the masks to get the desired DataFrames
+        df = pd.concat([df[mask_y_pred_true], df[mask_y_pred_false]], ignore_index=True)
+        df["y_pred"] = mask_y_pred_true
+        df["y_true"] = mask_y_true_true
 
-    mask_y_true_false = (
-        (
-            (df["source"] != "owner")
-            & (df["confirmed"] == True)
-            & (df["removed"] == True)
-        )
-        | (
-            (df["source"] != "owner")
-            & (df["confirmed"] == False)
-            & (df["removed"] == True)
-        )
-        | (
-            (df["source"] == "owner")
-            & (df["confirmed"] != True)
-            & (df["removed"] != True)
-        )
-        | (
-            (df["source"] == "owner")
-            & (df["confirmed"] == True)
-            & (df["removed"] == True)
-        )
-    )
+    if not df_category.empty:
+        df = df_category
 
-    # Apply the masks to get the desired DataFrames
-    df_y_pred = pd.concat(
-        [df[mask_y_pred_true], df[mask_y_pred_false]], ignore_index=True
-    )
-    df_y_pred["y_pred"] = mask_y_pred_true
-    df_y_true = pd.concat(
-        [df[mask_y_true_true], df[mask_y_true_false]], ignore_index=True
-    )
-    df_y_true["y_true"] = mask_y_true_true
+        mask = (
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] != True)
+            )
+            | (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] == False)
+            )
+            | (
+                (df["source"] != "owner")
+                & (df["confirmed"] == False)
+                & (df["removed"] == True)
+            )
+            | (
+                (df["source"] == "owner")
+                & (df["confirmed"] != True)
+                & (df["removed"] != True)
+            )
+            | (
+                (df["source"] == "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] != True)
+            )
+            | (
+                (df["source"] == "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] == True)
+            )
+        )
+        df = df[mask]
 
-    y_pred = df_y_pred["y_pred"]
-    y_true = df_y_true["y_true"]
+        df["y_pred"] = df["score_range"].apply(lambda x: x.get("label"))
+        df["y_true"] = None
+
+        df.loc[
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] == False)
+            ),
+            "y_true",
+        ] = df.loc[
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] == False)
+            ),
+            "score_range",
+        ].apply(lambda x: x.get("corrected_label"))
+
+        df.loc[
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] != True)
+            ),
+            "y_true",
+        ] = df.loc[
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] != True)
+            ),
+            "score_range",
+        ].apply(lambda x: x.get("corrected_label"))
+
+        df.loc[
+            (
+                (df["source"] == "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] != True)
+            ),
+            "y_true",
+        ] = df.loc[
+            (
+                (df["source"] == "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] != True)
+            ),
+            "score_range",
+        ].apply(lambda x: x.get("label"))
+
+    y_pred = df["y_pred"].fillna("None")
+    y_true = df["y_true"].fillna("None")
 
     return y_pred, y_true
 
@@ -1813,10 +1917,15 @@ async def get_events_aggregated_metrics(
             project_id=project_id, filters=filters
         )
     if "f1_score" in metrics or "precision" in metrics or "recall" in metrics:
-        y_pred, y_true = await get_y_pred_y_true(project_id=project_id, filters=filters)
-        output["f1_score"] = f1_score(y_true, y_pred)
-        output["precision"] = precision_score(y_true, y_pred)
-        output["recall"] = recall_score(y_true, y_pred)
+        if filters.event_id is None:
+            logger.warning("Event ID is required to compute f1_score, precision")
+        else:
+            y_pred, y_true = await get_y_pred_y_true(
+                project_id=project_id, filters=filters
+            )
+            output["f1_score"] = f1_score(y_true, y_pred, average="weighted")
+            output["precision"] = precision_score(y_true, y_pred, average="weighted")
+            output["recall"] = recall_score(y_true, y_pred, average="weighted")
     return output
 
 
