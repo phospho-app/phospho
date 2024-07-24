@@ -87,13 +87,13 @@ function EventAnalytics({ eventId }: { eventId: string }) {
         <h4 className="text-xl font-bold">Event : "{event?.event_name}"</h4>
       </div>
       {/* if the score type is not confidence, we display a coming soon message */}
-      {event?.score_range_settings?.score_type != "confidence" && (
+      {event?.score_range_settings?.score_type == "range" && (
         <div>
           <ComingSoon />
         </div>
       )}
       {/* if the score type is confidence but there is not enough data to compute the scores, we display a not enough feedback message */}
-      {(!F1Score?.f1_score) && (event?.score_range_settings?.score_type == "confidence") && (
+      {(!F1Score?.f1_score) && (event?.score_range_settings?.score_type != "range") && (
         <>
           <Card className="bg-secondary">
             <CardHeader>
@@ -143,7 +143,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
             </CardContent>
           </Card>
           {/* If we have enough data to compute the scores, we display the F1-score, Precision and Recall cards */}
-          {event?.score_range_settings?.score_type == "confidence" && (
+          {event?.score_range_settings?.score_type != "range" && (
             <>
               <Card>
                 <CardHeader>

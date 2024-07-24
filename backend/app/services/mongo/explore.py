@@ -20,6 +20,7 @@ from app.services.mongo.tasks import (
     get_total_nb_of_tasks,
     task_filtering_pipeline_match,
 )
+from app.services.mongo.sessions import session_filtering_pipeline_match
 from app.utils import generate_timestamp, get_last_week_timestamps
 from fastapi import HTTPException
 from loguru import logger
@@ -365,7 +366,6 @@ async def get_total_success_rate(
     )
     # Query
     result = await mongo_db[collection].aggregate(pipeline).to_list(length=1)
-    logger.info(f"result: {result}")
     if len(result) == 0:
         # No tasks = success rate is None
         return None
@@ -679,18 +679,15 @@ async def get_tasks_aggregated_metrics(
             "most_detected_event",
             "nb_daily_tasks",
             "events_ranking",
-            # "daily_success_rate",
             "success_rate_per_task_position",
         ]
 
     today_datetime = datetime.datetime.now(datetime.timezone.utc)
-    today_timestamp = int(today_datetime.timestamp())
     seven_days_ago_datetime = today_datetime - datetime.timedelta(days=6)
     # Round to the beginning of the day
     seven_days_ago_datetime = seven_days_ago_datetime.replace(
         hour=0, minute=0, second=0, microsecond=0
     )
-    seven_days_ago_timestamp = int(seven_days_ago_datetime.timestamp())
 
     output: Dict[str, object] = {}
 
@@ -733,96 +730,53 @@ async def get_tasks_aggregated_metrics(
 
 async def get_total_nb_of_sessions(
     project_id: str,
-    event_name: Optional[List[str]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    **kwargs,
+    filters: Optional[ProjectDataFilters] = None,
 ) -> int:
     """
     Get the total number of sessions of a project.
     """
     mongo_db = await get_mongo_db()
-    collection_name = "sessions"
-    main_filter: Dict[str, object] = {"project_id": project_id}
-    # Time range filter
-    if created_at_start is not None:
-        main_filter["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
-        main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
-            "$lte": created_at_end,
-        }
 
-    pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
-    ]
-    if event_name is not None:
-        collection_name = "sessions_with_events"
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
-                    ]
-                },
-            },
-        )
-    pipeline.append(
-        {"$count": "nb_sessions"},
+    global_filters, collection = await session_filtering_pipeline_match(
+        project_id=project_id, filters=filters
     )
 
-    query_result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
-    if query_result is not None and len(query_result) > 0:
-        total_nb_sessions = query_result[0]["nb_sessions"]
-    else:
-        total_nb_sessions = 0
+    query_result = (
+        await mongo_db[collection]
+        .aggregate(
+            [
+                {"$match": global_filters},
+                {"$count": "nb_sessions"},
+            ]
+        )
+        .to_list(length=1)
+    )
+
+    if len(query_result) == 0:
+        return None
+
+    total_nb_sessions = query_result[0]["nb_sessions"]
     return total_nb_sessions
 
 
 async def get_global_average_session_length(
     project_id: str,
-    event_name: Optional[List[str]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    **kwargs,
+    filters: Optional[ProjectDataFilters] = None,
 ) -> float:
     """
     Get the global average session length of a project.
     """
     mongo_db = await get_mongo_db()
-    collection_name = "sessions"
-    main_filter: Dict[str, object] = {
-        "project_id": project_id,
-    }
-    # Time range filter
-    if created_at_start is not None:
-        main_filter["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
-        main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
-            "$lte": created_at_end,
-        }
-    pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
-    ]
-    if event_name is not None:
-        collection_name = "sessions_with_events"
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
-                    ]
-                },
-            },
-        )
-    result = (
-        await mongo_db[collection_name]
+
+    global_filters, collection = await session_filtering_pipeline_match(
+        project_id=project_id, filters=filters
+    )
+
+    query_result = (
+        await mongo_db[collection]
         .aggregate(
-            pipeline
-            + [
+            [
+                {"$match": global_filters},
                 {
                     "$group": {
                         "_id": None,
@@ -834,46 +788,31 @@ async def get_global_average_session_length(
         )
         .to_list(length=1)
     )
-    if len(result) == 0:
-        return 0
-    global_average_session_length = result[0]["avg_session_length"]
-    return global_average_session_length
+
+    if len(query_result) == 0:
+        return None
+
+    global_avg_session_length = query_result[0]["avg_session_length"]
+    return global_avg_session_length
 
 
 async def get_last_message_success_rate(
     project_id: str,
-    event_name: Optional[List[str]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    **kwargs,
+    filters: Optional[ProjectDataFilters] = None,
 ) -> float:
     """
     Get the success rate of the last message of a project.
     """
     mongo_db = await get_mongo_db()
-    collection_name = "sessions"
-    main_filter: Dict[str, object] = {"project_id": project_id}
-    # Time range filter
-    if created_at_start is not None:
-        main_filter["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
-        main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
-            "$lte": created_at_end,
-        }
-    pipeline: List[Dict[str, object]] = [{"$match": main_filter}]
-    if event_name is not None:
-        collection_name = "sessions_with_events"
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
-                    ]
-                },
-            },
-        )
+
+    global_filters, collection_name = await session_filtering_pipeline_match(
+        project_id=project_id, filters=filters
+    )
+
+    pipeline: List[Dict[str, object]] = [
+        {"$match": global_filters},
+    ]
+
     pipeline.extend(
         [
             {
@@ -890,36 +829,39 @@ async def get_last_message_success_rate(
                     "tasks": {
                         "$sortArray": {
                             "input": "$tasks",
-                            "sortBy": {"tasks.created_at": -1},
+                            "sortBy": {"task_position": -1},
                         },
                     }
                 }
             },
-            # Transform to get 1 doc = 1 task. We also add the task position.
-            {"$unwind": {"path": "$tasks", "includeArrayIndex": "task_position"}},
-            # Filter to keep only the last task (task_position = 0 ; starting from the end)
-            {"$match": {"task_position": 0}},
+            # Get the first task (the one with the greatest task_position)
+            {"$set": {"tasks": {"$arrayElemAt": ["$tasks", 0]}}},
             # Add a field "is_success" to the task
             {
                 "$set": {
-                    "is_success": {"$cond": [{"$eq": ["$tasks.flag", "success"]}, 1, 0]}
+                    "tasks.is_success": {
+                        "$cond": [{"$eq": ["$tasks.flag", "success"]}, 1, 0]
+                    }
                 }
             },
-            # Group on the task position
+            # Group to calculate success rate
             {
                 "$group": {
                     "_id": 0,
                     "count": {"$count": {}},
-                    "nb_success": {"$sum": "$is_success"},
-                    "success_rate": {"$avg": "$is_success"},
+                    "nb_success": {"$sum": "$tasks.is_success"},
+                    "success_rate": {"$avg": "$tasks.is_success"},
                 }
             },
             {"$project": {"_id": 0, "success_rate": 1}},
         ]
     )
+
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
+
     if len(result) == 0:
-        return 0
+        return None
+
     last_message_success_rate = result[0]["success_rate"]
     return last_message_success_rate
 
@@ -932,38 +874,15 @@ async def get_nb_sessions_per_day(
     Get the nb of sessions per day of a project.
     """
     mongo_db = await get_mongo_db()
-    collection_name = "sessions"
-    main_filter = {"project_id": project_id}
-    if filters.created_at_start is not None:
-        main_filter["created_at"] = {"$gte": filters.created_at_start}
-    if filters.created_at_end is not None:
-        main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
-            "$lte": filters.created_at_end,
-        }
+
+    global_filter, collection_name = await session_filtering_pipeline_match(
+        project_id=project_id, filters=filters
+    )
 
     pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
+        {"$match": global_filter},
     ]
 
-    if filters.event_name is not None:
-        collection_name = "sessions_with_events"
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {
-                            "events": {
-                                "$elemMatch": {
-                                    "event_name": {"$in": filters.event_name}
-                                }
-                            }
-                        },
-                    ]
-                },
-            },
-        )
     result = (
         await mongo_db[collection_name]
         .aggregate(
@@ -1021,34 +940,21 @@ async def get_nb_sessions_per_day(
 
 async def get_nb_sessions_histogram(
     project_id: str,
-    event_name: Optional[List[str]] = None,
-    created_at_start: Optional[int] = None,
-    created_at_end: Optional[int] = None,
-    **kwargs,
+    filters: Optional[ProjectDataFilters] = None,
 ):
     """
     Get the number of sessions per session length
     """
     mongo_db = await get_mongo_db()
-    collection_name = "sessions"
-    main_filter: Dict[str, object] = {"project_id": project_id}
-    if created_at_start is not None:
-        main_filter["created_at"] = {"$gte": created_at_start}
-    if created_at_end is not None:
-        main_filter["created_at"] = {"$lte": created_at_end}
-    pipeline: List[Dict[str, object]] = [{"$match": main_filter}]
-    if event_name is not None:
-        collection_name = "sessions_with_events"
-        pipeline.append(
-            {
-                "$match": {
-                    "$and": [
-                        {"events": {"$ne": []}},
-                        {"events": {"$elemMatch": {"event_name": {"$in": event_name}}}},
-                    ]
-                },
-            },
-        )
+
+    global_filter, collection_name = await session_filtering_pipeline_match(
+        project_id=project_id, filters=filters
+    )
+
+    pipeline: List[Dict[str, object]] = [
+        {"$match": global_filter},
+    ]
+
     result = (
         await mongo_db[collection_name]
         .aggregate(
@@ -1103,12 +1009,12 @@ async def get_sessions_aggregated_metrics(
     """
     Compute aggregated metrics for the sessions of a project. Used for the Sessions dashboard.
     """
-    # TODO : Make the return keys parameters and optional (to avoid returning useless data)
 
-    if await project_has_tasks(project_id) is False:
-        return {}
     if await project_has_sessions(project_id) is False:
         return {}
+
+    if filters is None:
+        filters = ProjectDataFilters()
 
     if metrics is None:
         metrics = [
@@ -1120,35 +1026,29 @@ async def get_sessions_aggregated_metrics(
             "success_rate_per_task_position",
         ]
 
-    if filters is None:
-        filters = ProjectDataFilters()
-
-    # Get timestamps
     today_datetime = datetime.datetime.now(datetime.timezone.utc)
-    today_timestamp = int(today_datetime.timestamp())
     seven_days_ago_datetime = today_datetime - datetime.timedelta(days=6)
     # Round to the beginning of the day
     seven_days_ago_datetime = seven_days_ago_datetime.replace(
         hour=0, minute=0, second=0, microsecond=0
     )
-    seven_days_ago_timestamp = int(seven_days_ago_datetime.timestamp())
 
     output: Dict[str, object] = {}
 
     if "total_nb_sessions" in metrics:
         output["total_nb_sessions"] = await get_total_nb_of_sessions(
             project_id=project_id,
-            **filters.model_dump(),
+            filters=filters,
         )
     if "average_session_length" in metrics:
         output["average_session_length"] = await get_global_average_session_length(
             project_id=project_id,
-            **filters.model_dump(),
+            filters=filters,
         )
     if "last_task_success_rate" in metrics:
         output["last_task_success_rate"] = await get_last_message_success_rate(
             project_id=project_id,
-            **filters.model_dump(),
+            filters=filters,
         )
     if "nb_sessions_per_day" in metrics:
         output["nb_sessions_per_day"] = await get_nb_sessions_per_day(
@@ -1157,7 +1057,7 @@ async def get_sessions_aggregated_metrics(
     if "session_length_histogram" in metrics:
         output["session_length_histogram"] = await get_nb_sessions_histogram(
             project_id=project_id,
-            **filters.model_dump(),
+            filters=filters,
         )
     if "success_rate_per_task_position" in metrics:
         output[
@@ -1615,7 +1515,6 @@ async def get_success_rate_by_event_name(
     tasks_filters, task_collection = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters, prefix="tasks"
     )
-    logger.debug(tasks_filters)
 
     pipeline = [
         {"$match": main_filter},
@@ -1707,14 +1606,13 @@ async def get_total_nb_of_true_posive(
     main_filter["confirmed"] = {"$eq": True}
     main_filter["event_definition.removed"] = {"$ne": True}
     main_filter["event_definition.score_range_settings.score_type"] = {
-        "$eq": "confidence"
+        "$in": ["confidence", "category"]
     }
 
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
         {"$count": "true_positive"},
     ]
-    logger.debug(f"Pipeline: {pipeline}")
     query_result = await mongo_db["events"].aggregate(pipeline).to_list(length=1)
     logger.debug(f"Query result: {query_result}")
     if query_result is not None and len(query_result) > 0:
@@ -1746,7 +1644,7 @@ async def get_total_nb_of_false_posive(
     main_filter["confirmed"] = {"$eq": False}
     main_filter["event_definition.removed"] = {"$ne": False}
     main_filter["event_definition.score_range_settings.score_type"] = {
-        "$eq": "confidence"
+        "$in": ["confidence", "category"]
     }
 
     pipeline: List[Dict[str, object]] = [
@@ -1784,7 +1682,7 @@ async def get_total_nb_of_false_negative(
     main_filter["confirmed"] = {"$eq": True}
     main_filter["event_definition.removed"] = {"$ne": True}
     main_filter["event_definition.score_range_settings.score_type"] = {
-        "$eq": "confidence"
+        "$in": ["confidence", "category"]
     }
 
     pipeline: List[Dict[str, object]] = [
@@ -1845,6 +1743,39 @@ async def get_events_aggregated_metrics(
             output["f1_score"] = 2 * (
                 (output["precision"] * output["recall"])
                 / (output["precision"] + output["recall"])
+            )
+    if (
+        "f1_score_category" in metrics
+        or "precision_category" in metrics
+        or "recall_category" in metrics
+    ):
+        output["true_positive"] = await get_total_nb_of_true_posive_category(
+            project_id=project_id, filters=filters
+        )
+        output["false_positive"] = await get_total_nb_of_false_posive_category(
+            project_id=project_id, filters=filters
+        )
+        output["false_negative"] = await get_total_nb_of_false_negative_category(
+            project_id=project_id, filters=filters
+        )
+
+        if output["true_positive"] + output["false_positive"] > 0:
+            # To compute the precision, we need enough data to compute the true positive and false positive
+            output["precision_category"] = float(output["true_positive"]) / (
+                output["true_positive"] + output["false_positive"]
+            )
+        if output["true_positive"] + output["false_negative"] > 0:
+            # To compute the recall, we need enough data to compute the true positive and false negative
+            output["recall_category"] = float(output["true_positive"]) / (
+                output["true_positive"] + output["false_negative"]
+            )
+        if output.get("precision_category", None) and output.get(
+            "recall_category", None
+        ):
+            # To compute the F1 score, we need enough data to compute the precision and recall
+            output["f1_score_category"] = 2 * (
+                (output["precision_category"] * output["recall_category"])
+                / (output["precision_category"] + output["recall_category"])
             )
 
     return output
