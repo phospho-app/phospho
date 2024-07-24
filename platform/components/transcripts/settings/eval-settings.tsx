@@ -17,8 +17,8 @@ import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
 
-import { Spinner } from "./small-spinner";
-import { Textarea } from "./ui/textarea";
+import { Spinner } from "../../small-spinner";
+import { Textarea } from "../../ui/textarea";
 
 export const EvalSettings = () => {
   const [evalOpen, setEvalOpen] = useState(false);

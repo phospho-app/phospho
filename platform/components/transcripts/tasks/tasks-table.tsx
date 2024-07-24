@@ -61,11 +61,12 @@ export function TasksTable<TData, TValue>({
   );
   const { accessToken } = useUser();
   const router = useRouter();
+
+  const [tableIsClickable, setTableIsClickable] = React.useState<boolean>(true);
   const [sheetOpen, setSheetOpen] = React.useState<boolean>(false);
   const [sheetToOpen, setSheetToOpen] = React.useState<string | null>(null);
   const [eventDefinition, setEventDefinition] =
     React.useState<EventDefinition | null>(null);
-  const [tableIsClickable, setTableIsClickable] = React.useState<boolean>(true);
 
   let tasksWithEvents: TaskWithEvents[] = [];
 
@@ -136,9 +137,9 @@ export function TasksTable<TData, TValue>({
 
   const columns = getColumns({
     mutateTasks: mutateTasks,
-    setSheetOpen,
-    setSheetToOpen,
-    setEventDefinition,
+    setSheetOpen: setSheetOpen,
+    setSheetToOpen: setSheetToOpen,
+    setEventDefinition: setEventDefinition,
   });
 
   const table = useReactTable({
@@ -256,7 +257,6 @@ export function TasksTable<TData, TValue>({
                   <Button>Learn more</Button>
                 </Link>
               </div>
-              <div></div>
             </div>
           </Alert>
         )}
@@ -274,13 +274,7 @@ export function TasksTable<TData, TValue>({
           {sheetToOpen === "run" && eventDefinition !== null && (
             <RunEvent setOpen={setSheetOpen} eventToRun={eventDefinition} />
           )}
-          {sheetToOpen === "edit" && (
-            <CreateEvent
-              setOpen={setSheetOpen}
-              // No event name to edit. This menas that it always creates a new event
-              // eventNameToEdit={eventDefinition?.event_name}
-            />
-          )}
+          {sheetToOpen === "edit" && <CreateEvent setOpen={setSheetOpen} />}
         </SheetContent>
       </Sheet>
     </div>
