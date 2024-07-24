@@ -820,6 +820,7 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
     sentiment_label_counter: Dict[str, int] = defaultdict(int)
     language_counter: Dict[str, int] = defaultdict(int)
     session_flag: Dict[str, int] = defaultdict(int)
+    preview = ""
 
     for task in tasks:
         valid_task = Task.model_validate(task)
@@ -836,6 +837,7 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
             language_counter[valid_task.language] += 1
         if valid_task.flag is not None:
             session_flag[valid_task.flag] += 1
+        preview += valid_task.preview() + "\n"
 
     if len(tasks) > 0:
         most_common_language = (
@@ -873,6 +875,7 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
             {
                 "$set": {
                     "stats": session_task_info.model_dump(),
+                    "preview": preview if preview else None,
                 }
             },
         )
