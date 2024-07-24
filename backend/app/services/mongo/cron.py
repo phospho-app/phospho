@@ -65,17 +65,17 @@ async def run_postgresql_sync_pipeline():
         try:
             valid_integration = PostgresqlCredentials.model_validate(integration)
             project_list = valid_integration.projects_finished
-            for project in project_list:
-                project = get_project_by_id(project["id"])
+            for project_id in project_list:
+                project = await get_project_by_id(project_id)
                 postgresql_integration = PostgresqlIntegration(
                     org_id=valid_integration.org_id,
                     org_name=valid_integration.org_name,
                     project_id=project.id,
-                    project_name=project.name,
+                    project_name=project.project_name,
                 )
                 await postgresql_integration.push()
         except Exception as e:
             logger.error(
-                f"Error running postgresql sync pipeline for {integration}: {e}"
+                f"Error running postgresql sync pipeline {integration.get('org_id')}: {e}"
             )
     return {"status": "ok"}
