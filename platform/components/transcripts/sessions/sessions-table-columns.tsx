@@ -1,10 +1,10 @@
-import { EvalSettings } from "@/components/eval-settings";
-import { RunEventsSettings } from "@/components/events-settings";
 import {
   AddEventDropdownForSessions,
   InteractiveEventBadgeForSessions,
 } from "@/components/label-events";
-import { SentimentSettings } from "@/components/sentiment-settings";
+import { EvalSettings } from "@/components/transcripts/settings/eval-settings";
+import { RunEventsSettings } from "@/components/transcripts/settings/events-settings";
+import { SentimentSettings } from "@/components/transcripts/settings/sentiment-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
