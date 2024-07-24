@@ -852,9 +852,17 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
             max(session_flag, key=session_flag.get) if session_flag else None
         )
 
+        avg_sentiment_score = None
+        if len(sentiment_score) > 0:
+            avg_sentiment_score = sum(sentiment_score) / len(sentiment_score)
+
+        avg_magnitude_score = None
+        if len(sentiment_magnitude) > 0:
+            avg_magnitude_score = sum(sentiment_magnitude) / len(sentiment_magnitude)
+
         session_task_info = SessionStats(
-            avg_sentiment_score=sum(sentiment_score) / len(sentiment_score),
-            avg_magnitude_score=sum(sentiment_magnitude) / len(sentiment_magnitude),
+            avg_sentiment_score=avg_sentiment_score,
+            avg_magnitude_score=avg_magnitude_score,
             most_common_sentiment_label=most_common_label,
             most_common_language=most_common_language,
             most_common_flag=most_common_flag,
