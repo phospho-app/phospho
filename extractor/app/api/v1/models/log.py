@@ -1,16 +1,17 @@
+from typing import Dict, List, Literal, Optional, Union
+
+from app.utils import generate_timestamp, generate_uuid
 from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Union, Literal
-from app.utils import generate_uuid, generate_timestamp
 
 
-class MinimalLogEvent(BaseModel, extra="allow"):
+class MinimalLogEventForTasks(BaseModel, extra="allow"):
     # This is the minimal log event
     project_id: Optional[str] = None
     input: str
     output: Optional[str] = None
 
 
-class LogEvent(MinimalLogEvent, extra="allow"):
+class LogEventForTasks(MinimalLogEventForTasks, extra="allow"):
     # Optional fields
     client_created_at: int = Field(default_factory=generate_timestamp)
     created_at: Optional[int] = None
@@ -51,20 +52,27 @@ class LogEvent(MinimalLogEvent, extra="allow"):
     job_ids: Optional[List[str]] = None
 
 
-class LogRequest(BaseModel):
-    batched_log_events: List[MinimalLogEvent]
+class LogProcessRequestForTasks(BaseModel):
+    logs_to_process: List[LogEventForTasks]
+    extra_logs_to_save: List[LogEventForTasks]
+    project_id: str
+    org_id: str
 
 
-class LogError(BaseModel):
-    error_in_log: str
+class MinimalLogEventForMessages(BaseModel, extra="allow"):
+    session_id: str
+    messages: List[str]
+    merge_mode: Literal["resolve", "append", "replace"] = "resolve"
+    created_at: int = Field(default_factory=generate_timestamp)
+    metadata: Optional[Dict[str, object]] = None
+    version_id: Optional[str] = None
+    user_id: Optional[str] = None
+    flag: Optional[Literal["success", "failure"]] = None
+    test_id: Optional[str] = None
 
 
-class LogReply(BaseModel):
-    logged_events: List[Union[LogEvent, LogError]]
-
-
-class LogProcessRequest(BaseModel):
-    logs_to_process: List[LogEvent]
-    extra_logs_to_save: List[LogEvent]
+class LogProcessRequestForMessages(BaseModel):
+    logs_to_process: List[MinimalLogEventForMessages]
+    extra_logs_to_save: List[MinimalLogEventForMessages]
     project_id: str
     org_id: str

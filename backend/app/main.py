@@ -122,8 +122,6 @@ def check_health_extractor():
 
 
 ### V2 API ###
-# Following PropelAuth
-
 from app.api.v2.endpoints import (
     embeddings,
     evals,
@@ -179,6 +177,25 @@ api_v2.include_router(cron.router)
 app.mount("/v2", api_v2)
 # Also mount it on /v0/ for backward compatibility
 app.mount("/v0", api_v2)
+
+
+### V2 API ###
+api_v3 = FastAPI(
+    title="phospho",
+    summary="phospho http api v3",
+    description="For more information, see the [documentation](https://docs.phospho.ai/).",
+    version="0.3.0",
+    contact={
+        "name": "phospho",
+        "url": "https://phospho.ai",
+        "email": "contact@phospho.app",
+    },
+)
+
+# api_v3.include_router(log.router)
+api_v3.include_router(health.router)
+
+app.mount("/v3", api_v3)
 
 
 ### PLATEFORM ENDPOINTS ###

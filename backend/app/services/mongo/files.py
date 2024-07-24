@@ -198,7 +198,7 @@ async def process_file_upload_into_log_events(
 
     # Send tasks to the extractor
     extractor_client = ExtractorClient(org_id=org_id, project_id=project_id)
-    await extractor_client.run_log_process(
+    await extractor_client.run_log_process_for_tasks(
         logs_to_process=logs_to_process,
         extra_logs_to_save=extra_logs_to_save,
     )
