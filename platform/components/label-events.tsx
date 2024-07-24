@@ -24,7 +24,7 @@ import {
   TaskWithEvents,
 } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
-import { Check, PlusIcon, Trash } from "lucide-react";
+import { Check, ChevronRight, PlusIcon, Trash } from "lucide-react";
 import useSWR from "swr";
 
 export const EventDetectionDescription = ({
@@ -175,6 +175,44 @@ export const InteractiveEventBadgeForTasks = ({
           <Check className="w-4 h-4 mr-2" />
           Confirm
         </DropdownMenuItem>
+        {event?.score_range?.score_type === "category" && (
+          <DropdownMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <HoverCard openDelay={0} closeDelay={0}>
+                  <HoverCardTrigger>
+                    <div className="flex items-center cursor-pointer">
+                      Modify class
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </HoverCardTrigger>
+                </HoverCard>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="start">
+                {// Create one dropdown item for each category
+                  eventDefinition?.score_range_settings?.categories?.map(
+                    (category) => {
+                      return (
+                        <DropdownMenuItem
+                          key={category}
+                          onClick={async (mouseEvent) => {
+                            mouseEvent.stopPropagation();
+                            //   addEvent({
+                            //     event,
+                            //     scoreCategoryLabel: category,
+                            //   });
+                          }}
+                        >
+                          {category}
+                        </DropdownMenuItem>
+                      );
+                    },
+                  )
+                }
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           className="text-red-500"
           onClick={async (mouseEvent) => {
@@ -351,24 +389,24 @@ export const AddEventDropdownForTasks = ({
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
                       {// Create one dropdown item for each category
-                      event.score_range_settings?.categories?.map(
-                        (category) => {
-                          return (
-                            <DropdownMenuItem
-                              key={category}
-                              onClick={async (mouseEvent) => {
-                                mouseEvent.stopPropagation();
-                                addEvent({
-                                  event,
-                                  scoreCategoryLabel: category,
-                                });
-                              }}
-                            >
-                              {category}
-                            </DropdownMenuItem>
-                          );
-                        },
-                      )}
+                        event.score_range_settings?.categories?.map(
+                          (category) => {
+                            return (
+                              <DropdownMenuItem
+                                key={category}
+                                onClick={async (mouseEvent) => {
+                                  mouseEvent.stopPropagation();
+                                  addEvent({
+                                    event,
+                                    scoreCategoryLabel: category,
+                                  });
+                                }}
+                              >
+                                {category}
+                              </DropdownMenuItem>
+                            );
+                          },
+                        )}
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
                 )}
