@@ -1,10 +1,11 @@
 import time
 import traceback
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Union
 
 import httpx
 import stripe
 from app.api.v2.models import LogEvent, PipelineResults
+from app.api.v3.models import MinimalLogEvent
 from app.core import config
 from app.db.models import Recipe, Task
 from app.security import propelauth
@@ -127,7 +128,7 @@ class ExtractorClient:
 
         return None
 
-    async def run_log_process(
+    async def run_log_process_for_tasks(
         self,
         logs_to_process: List[LogEvent],
         extra_logs_to_save: Optional[List[LogEvent]] = None,
@@ -140,6 +141,38 @@ class ExtractorClient:
 
         await self._post(
             "pipelines/log",
+            {
+                "logs_to_process": [
+                    log_event.model_dump(mode="json") for log_event in logs_to_process
+                ],
+                "extra_logs_to_save": [
+                    log_event.model_dump(mode="json")
+                    for log_event in extra_logs_to_save
+                ],
+                "project_id": self.project_id,
+                "org_id": self.org_id,
+            },
+            on_success_callback=lambda response: bill_on_stripe(
+                org_id=self.org_id,
+                nb_credits_used=response.json().get("nb_job_results", 0),
+            ),
+        )
+
+    async def run_log_process_for_messages(
+        self,
+        logs_to_process: List[MinimalLogEvent],
+        extra_logs_to_save: Optional[List[MinimalLogEvent]] = None,
+    ):
+        """
+        Run the log procesing pipeline on *messages* asynchronously
+
+        This is the v3 version of the function
+        """
+        if extra_logs_to_save is None:
+            extra_logs_to_save = []
+
+        await self._post(
+            "pipelines/log/messages",
             {
                 "logs_to_process": [
                     log_event.model_dump(mode="json") for log_event in logs_to_process

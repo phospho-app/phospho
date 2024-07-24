@@ -107,7 +107,7 @@ async def store_batch_of_log_events(
         org_id=org["org"].get("org_id"),
     )
     background_tasks.add_task(
-        extractor_client.run_log_process,
+        extractor_client.run_log_process_for_tasks,
         logs_to_process=logs_to_process,
         extra_logs_to_save=extra_logs_to_save,
     )
