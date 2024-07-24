@@ -6,6 +6,7 @@ import datetime
 import math
 from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Tuple, Union
+from sklearn.metrics import f1_score, precision_score, recall_score
 
 import pandas as pd
 import pydantic
@@ -1684,14 +1685,13 @@ async def get_total_nb_of_detections(
     return total_nb_detections
 
 
-async def get_total_nb_of_true_posive(
+async def get_y_pred_y_true(
     project_id: str,
     filters: ProjectDataFilters,
     **kwargs,
-) -> int:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Get the total number of true positive detections of a confidence event.
-    Uses the event collection.
+    Get the y_pred for an event.
     """
     mongo_db = await get_mongo_db()
     main_filter: Dict[str, object] = {"project_id": project_id}
@@ -1702,101 +1702,94 @@ async def get_total_nb_of_true_posive(
         main_filter["created_at"] = {"$lte": filters.created_at_end}
     if filters.event_id is not None:
         main_filter["event_definition.id"] = {"$in": filters.event_id}
-
-    main_filter["source"] = {"$ne": "owner"}
-    main_filter["confirmed"] = {"$eq": True}
-    main_filter["event_definition.removed"] = {"$ne": True}
     main_filter["event_definition.score_range_settings.score_type"] = {
-        "$in": ["confidence", "category"]
+        "$in": ["confidence"]
     }
 
-    pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
-        {"$count": "true_positive"},
-    ]
-    logger.debug(f"Pipeline: {pipeline}")
-    query_result = await mongo_db["events"].aggregate(pipeline).to_list(length=1)
-    logger.debug(f"Query result: {query_result}")
-    if query_result is not None and len(query_result) > 0:
-        total_nb_true_positive = query_result[0]["true_positive"]
-    else:
-        total_nb_true_positive = 0
-    return total_nb_true_positive
+    query_result = await mongo_db["events"].find(main_filter).to_list(length=None)
 
+    # Convert to DataFrame
+    df = pd.DataFrame(query_result)
+    # Create the filter masks for each case
+    mask_y_pred_true = (
+        (
+            (df["source"] != "owner")
+            & (df["confirmed"] == True)
+            & (df["removed"] != True)
+        )
+        | (
+            (df["source"] != "owner")
+            & (df["confirmed"] == True)
+            & (df["removed"] == False)
+        )
+        | (
+            (df["source"] != "owner")
+            & (df["confirmed"] == False)
+            & (df["removed"] == True)
+        )
+    )
 
-async def get_total_nb_of_false_posive(
-    project_id: str,
-    filters: ProjectDataFilters,
-    **kwargs,
-) -> int:
-    """
-    Get the total number of true positive detections of a confidence event.
-    Uses the event collection.
-    """
-    mongo_db = await get_mongo_db()
-    main_filter: Dict[str, object] = {"project_id": project_id}
-    # Time range filter
-    if filters.created_at_start is not None:
-        main_filter["created_at"] = {"$gte": filters.created_at_start}
-    if filters.created_at_end is not None:
-        main_filter["created_at"] = {"$lte": filters.created_at_end}
-    if filters.event_id is not None:
-        main_filter["event_definition.id"] = {"$in": filters.event_id}
+    mask_y_pred_false = (
+        (
+            (df["source"] == "owner")
+            & (df["confirmed"] != True)
+            & (df["removed"] != True)
+        )
+        | (
+            (df["source"] == "owner")
+            & (df["confirmed"] == True)
+            & (df["removed"] != True)
+        )
+        | (
+            (df["source"] == "owner")
+            & (df["confirmed"] == True)
+            & (df["removed"] == True)
+        )
+    )
 
-    main_filter["confirmed"] = {"$eq": False}
-    main_filter["event_definition.removed"] = {"$ne": False}
-    main_filter["event_definition.score_range_settings.score_type"] = {
-        "$in": ["confidence", "category"]
-    }
+    mask_y_true_true = (
+        (df["source"] != "owner") & (df["confirmed"] == True) & (df["removed"] != True)
+    ) | (
+        (df["source"] == "owner") & (df["confirmed"] == True) & (df["removed"] != True)
+    )
 
-    pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
-        {"$count": "false_positive"},
-    ]
-    query_result = await mongo_db["events"].aggregate(pipeline).to_list(length=1)
-    if query_result is not None and len(query_result) > 0:
-        total_nb_false_positive = query_result[0]["false_positive"]
-    else:
-        total_nb_false_positive = 0
-    return total_nb_false_positive
+    mask_y_true_false = (
+        (
+            (df["source"] != "owner")
+            & (df["confirmed"] == True)
+            & (df["removed"] == True)
+        )
+        | (
+            (df["source"] != "owner")
+            & (df["confirmed"] == False)
+            & (df["removed"] == True)
+        )
+        | (
+            (df["source"] == "owner")
+            & (df["confirmed"] != True)
+            & (df["removed"] != True)
+        )
+        | (
+            (df["source"] == "owner")
+            & (df["confirmed"] == True)
+            & (df["removed"] == True)
+        )
+    )
 
+    # Apply the masks to get the desired DataFrames
+    df_y_pred = pd.concat(
+        [df[mask_y_pred_true], df[mask_y_pred_false]], ignore_index=True
+    )
+    df_y_pred["y_pred"] = mask_y_pred_true
+    df_y_true = pd.concat(
+        [df[mask_y_true_true], df[mask_y_true_false]], ignore_index=True
+    )
+    df_y_true["y_true"] = mask_y_true_true
 
-async def get_total_nb_of_false_negative(
-    project_id: str,
-    filters: ProjectDataFilters,
-    **kwargs,
-) -> int:
-    """
-    Get the total number of true positive detections of a confidence event.
-    Uses the event collection.
-    """
-    mongo_db = await get_mongo_db()
-    main_filter: Dict[str, object] = {"project_id": project_id}
-    # Time range filter
-    if filters.created_at_start is not None:
-        main_filter["created_at"] = {"$gte": filters.created_at_start}
-    if filters.created_at_end is not None:
-        main_filter["created_at"] = {"$lte": filters.created_at_end}
-    if filters.event_id is not None:
-        main_filter["event_definition.id"] = {"$in": filters.event_id}
+    y_pred = df_y_pred["y_pred"]
+    y_true = df_y_true["y_true"]
 
-    main_filter["source"] = {"$eq": "owner"}
-    main_filter["confirmed"] = {"$eq": True}
-    main_filter["event_definition.removed"] = {"$ne": True}
-    main_filter["event_definition.score_range_settings.score_type"] = {
-        "$in": ["confidence", "category"]
-    }
-
-    pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
-        {"$count": "false_negative"},
-    ]
-    query_result = await mongo_db["events"].aggregate(pipeline).to_list(length=1)
-    if query_result is not None and len(query_result) > 0:
-        total_nb_false_negative = query_result[0]["false_negative"]
-    else:
-        total_nb_false_negative = 0
-    return total_nb_false_negative
+    return y_pred, y_true
 
 
 async def get_events_aggregated_metrics(
@@ -1820,66 +1813,10 @@ async def get_events_aggregated_metrics(
             project_id=project_id, filters=filters
         )
     if "f1_score" in metrics or "precision" in metrics or "recall" in metrics:
-        output["true_positive"] = await get_total_nb_of_true_posive(
-            project_id=project_id, filters=filters
-        )
-        output["false_positive"] = await get_total_nb_of_false_posive(
-            project_id=project_id, filters=filters
-        )
-        output["false_negative"] = await get_total_nb_of_false_negative(
-            project_id=project_id, filters=filters
-        )
-
-        if output["true_positive"] + output["false_positive"] > 0:
-            # To compute the precision, we need enough data to compute the true positive and false positive
-            output["precision"] = float(output["true_positive"]) / (
-                output["true_positive"] + output["false_positive"]
-            )
-        if output["true_positive"] + output["false_negative"] > 0:
-            # To compute the recall, we need enough data to compute the true positive and false negative
-            output["recall"] = float(output["true_positive"]) / (
-                output["true_positive"] + output["false_negative"]
-            )
-        if output.get("precision", None) and output.get("recall", None):
-            # To compute the F1 score, we need enough data to compute the precision and recall
-            output["f1_score"] = 2 * (
-                (output["precision"] * output["recall"])
-                / (output["precision"] + output["recall"])
-            )
-    if (
-        "f1_score_category" in metrics
-        or "precision_category" in metrics
-        or "recall_category" in metrics
-    ):
-        output["true_positive"] = await get_total_nb_of_true_posive_category(
-            project_id=project_id, filters=filters
-        )
-        output["false_positive"] = await get_total_nb_of_false_posive_category(
-            project_id=project_id, filters=filters
-        )
-        output["false_negative"] = await get_total_nb_of_false_negative_category(
-            project_id=project_id, filters=filters
-        )
-
-        if output["true_positive"] + output["false_positive"] > 0:
-            # To compute the precision, we need enough data to compute the true positive and false positive
-            output["precision_category"] = float(output["true_positive"]) / (
-                output["true_positive"] + output["false_positive"]
-            )
-        if output["true_positive"] + output["false_negative"] > 0:
-            # To compute the recall, we need enough data to compute the true positive and false negative
-            output["recall_category"] = float(output["true_positive"]) / (
-                output["true_positive"] + output["false_negative"]
-            )
-        if output.get("precision_category", None) and output.get(
-            "recall_category", None
-        ):
-            # To compute the F1 score, we need enough data to compute the precision and recall
-            output["f1_score_category"] = 2 * (
-                (output["precision_category"] * output["recall_category"])
-                / (output["precision_category"] + output["recall_category"])
-            )
-
+        y_pred, y_true = await get_y_pred_y_true(project_id=project_id, filters=filters)
+        output["f1_score"] = f1_score(y_true, y_pred)
+        output["precision"] = precision_score(y_true, y_pred)
+        output["recall"] = recall_score(y_true, y_pred)
     return output
 
 
