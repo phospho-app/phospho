@@ -7,7 +7,7 @@ from app.api.v1.models import LogEventForTasks
 from app.core import config
 from app.db.mongo import get_mongo_db
 from app.db.qdrant import get_qdrant, models
-from app.services.log import (
+from app.services.log.base import (
     collect_metadata,
     convert_additional_data_to_dict,
     get_time_created_at,

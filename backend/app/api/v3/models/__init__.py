@@ -1,1 +1,1 @@
-from .log import MinimalLogEvent
+from .log import MinimalLogEventForMessages

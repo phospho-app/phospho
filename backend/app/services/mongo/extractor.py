@@ -1,12 +1,11 @@
 import time
 import traceback
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional
 
-from app.services.mongo.projects import get_project_by_id
 import httpx
 import stripe
 from app.api.v2.models import LogEvent, PipelineResults
-from app.api.v3.models import MinimalLogEvent
+from app.api.v3.models import MinimalLogEventForMessages
 from app.core import config
 from app.db.models import Recipe, Task
 from app.security import propelauth
@@ -86,6 +85,8 @@ class ExtractorClient:
         """
         Compute the usage on Stripe
         """
+        from app.services.mongo.projects import get_project_by_id
+
         # Fetch the project settings
         project = await get_project_by_id(self.project_id)
         # Find out the number of active events and if sentiment and language analysis are enabled
@@ -182,8 +183,8 @@ class ExtractorClient:
 
     async def run_log_process_for_messages(
         self,
-        logs_to_process: List[MinimalLogEvent],
-        extra_logs_to_save: Optional[List[MinimalLogEvent]] = None,
+        logs_to_process: List[MinimalLogEventForMessages],
+        extra_logs_to_save: Optional[List[MinimalLogEventForMessages]] = None,
     ):
         """
         Run the log procesing pipeline on *messages* asynchronously

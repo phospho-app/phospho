@@ -3,12 +3,8 @@ from pydantic import BaseModel, Field
 from app.utils import generate_uuid, generate_timestamp
 
 
-class MinimalLogEvent(BaseModel, extras="allow"):
-    """
-    This is the
-    """
-
-    session_id: str = Field(default_factory=lambda: generate_uuid("session_"))
+class MinimalLogEventForMessages(BaseModel, extra="allow"):
+    session_id: str = Field(default_factory=generate_uuid)
     messages: List[str] = Field(default_factory=list)
     merge_mode: Literal["resolve", "append", "replace"] = "resolve"
     created_at: int = Field(default_factory=generate_timestamp)
@@ -25,8 +21,8 @@ class LogError(BaseModel):
 
 class LogRequest(BaseModel):
     project_id: str
-    batched_log_events: List[MinimalLogEvent]
+    batched_log_events: List[MinimalLogEventForMessages]
 
 
 class LogReply(BaseModel):
-    logged_events: List[Union[MinimalLogEvent, LogError]]
+    logged_events: List[Union[MinimalLogEventForMessages, LogError]]

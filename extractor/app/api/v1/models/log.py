@@ -59,7 +59,7 @@ class LogProcessRequestForTasks(BaseModel):
     org_id: str
 
 
-class MinimalLogEventForMessages(BaseModel, extras="allow"):
+class MinimalLogEventForMessages(BaseModel, extra="allow"):
     session_id: str
     messages: List[str]
     merge_mode: Literal["resolve", "append", "replace"] = "resolve"

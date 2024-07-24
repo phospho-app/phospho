@@ -1,9 +1,13 @@
 from typing import List, Union
-from app.api.v3.models.log import LogReply, LogRequest, MinimalLogEvent, LogError
+from app.api.v3.models.log import (
+    LogReply,
+    LogRequest,
+    MinimalLogEventForMessages,
+    LogError,
+)
 from app.core import config
 from app.security import (
     authenticate_org_key,
-    get_quota,
     verify_propelauth_org_owns_project_id,
 )
 from app.security.authorization import get_quota_for_org
@@ -37,9 +41,9 @@ async def store_batch_of_log_events(
     await verify_propelauth_org_owns_project_id(org, log_request.project_id)
 
     # We return the valid log events
-    logged_events: List[Union[MinimalLogEvent, LogError]] = []
-    logs_to_process: List[MinimalLogEvent] = []
-    extra_logs_to_save: List[MinimalLogEvent] = []
+    logged_events: List[Union[MinimalLogEventForMessages, LogError]] = []
+    logs_to_process: List[MinimalLogEventForMessages] = []
+    extra_logs_to_save: List[MinimalLogEventForMessages] = []
 
     usage_quota = await get_quota_for_org(org["org"].get("org_id"))
     current_usage = usage_quota.current_usage
