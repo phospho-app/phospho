@@ -66,7 +66,7 @@ export const EventDetectionDescription = ({
           </div>
         )}
         {event.score_range?.score_type == "category" && (
-          <div>Category: {event.score_range.label}</div>
+          <div>Category: {event.score_range.current_label}</div>
         )}
       </div>
     </div>
@@ -94,7 +94,7 @@ export const EventBadge = ({ event }: { event: Event }) => {
       )}
       {score_type === "category" && (
         <p>
-          {event.event_name}: {event.score_range?.label}
+          {event.event_name}: {event?.score_range?.current_label ?? event.score_range?.label}
         </p>
       )}
     </Badge>
@@ -176,42 +176,52 @@ export const InteractiveEventBadgeForTasks = ({
           Confirm
         </DropdownMenuItem>
         {event?.score_range?.score_type === "category" && (
-          <DropdownMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <HoverCard openDelay={0} closeDelay={0}>
-                  <HoverCardTrigger>
-                    <div className="flex items-center cursor-pointer">
-                      Modify class
-                      <ChevronRight className="w-4 h-4" />
-                    </div>
-                  </HoverCardTrigger>
-                </HoverCard>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="right" align="start">
-                {// Create one dropdown item for each category
-                  eventDefinition?.score_range_settings?.categories?.map(
-                    (category) => {
-                      return (
-                        <DropdownMenuItem
-                          key={category}
-                          onClick={async (mouseEvent) => {
-                            mouseEvent.stopPropagation();
-                            //   addEvent({
-                            //     event,
-                            //     scoreCategoryLabel: category,
-                            //   });
-                          }}
-                        >
-                          {category}
-                        </DropdownMenuItem>
-                      );
-                    },
-                  )
-                }
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </DropdownMenuItem>
+          <DropdownMenuSub >
+            <DropdownMenuSubTrigger>
+              Change class
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent >
+              {// Create one dropdown item for each category
+                eventDefinition?.score_range_settings?.categories?.map(
+                  (category) => {
+                    return (
+                      <DropdownMenuItem
+                        key={category}
+                        onClick={async (mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          const response = await fetch(
+                            `/api/events/${event.project_id}/label/${event.id}`,
+                            {
+                              method: "POST",
+                              headers: {
+                                Authorization: "Bearer " + accessToken,
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                new_label: category,
+                              }),
+                            },
+                          );
+                          const response_json = await response.json();
+                          setTask({
+                            ...task,
+                            events: task.events.map((e) => {
+                              if (e.id === event.id) {
+                                return response_json;
+                              }
+                              return e;
+                            }),
+                          });
+                        }}
+                      >
+                        {category}
+                      </DropdownMenuItem>
+                    );
+                  },
+                )
+              }
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
         )}
         <DropdownMenuItem
           className="text-red-500"
@@ -230,6 +240,7 @@ export const InteractiveEventBadgeForTasks = ({
             });
             const response_json = await response.json();
             setTask(response_json);
+
           }}
         >
           <Trash className="w-4 h-4 mr-2" />

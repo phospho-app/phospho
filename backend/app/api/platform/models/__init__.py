@@ -24,7 +24,7 @@ from app.api.v2.models import (
 
 from .abtests import ABTest, ABTests
 from .clusters import Cluster, Clustering, ClusteringRequest, Clusterings, Clusters
-from .events import EventBackfillRequest
+from .events import EventBackfillRequest, LabelRequest
 from .explore import (
     AggregateMetricsRequest,
     DashboardMetricsFilter,
