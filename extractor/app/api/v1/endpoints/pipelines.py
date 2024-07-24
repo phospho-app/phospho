@@ -1,13 +1,13 @@
 from app.api.v1.models import (
-    PipelineOpentelemetryRequest,
+    LogProcessRequestForMessages,
     LogProcessRequestForTasks,
+    PipelineLangfuseRequest,
     PipelineLangsmithRequest,
+    PipelineOpentelemetryRequest,
     PipelineResults,
     RunMainPipelineOnMessagesRequest,
     RunMainPipelineOnTaskRequest,
     RunRecipeOnTaskRequest,
-    PipelineLangfuseRequest,
-    LogProcessRequestForMessages,
 )
 from app.db.mongo import get_mongo_db
 from app.security.authentication import authenticate_key
@@ -16,7 +16,7 @@ from app.services.connectors import (
     LangsmithConnector,
     OpenTelemetryConnector,
 )
-from app.services.log import process_log_for_tasks
+from app.services.log import process_log_for_tasks, process_logs_for_messages
 from app.services.pipelines import (
     messages_main_pipeline,
     recipe_pipeline,
@@ -25,7 +25,6 @@ from app.services.pipelines import (
 )
 from fastapi import APIRouter, BackgroundTasks, Depends
 from loguru import logger
-
 
 router = APIRouter()
 
@@ -136,7 +135,7 @@ async def post_log_messages(
     logger.info(
         f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
     )
-    await process_log_for_tasks(
+    await process_logs_for_messages(
         project_id=request_body.project_id,
         org_id=request_body.org_id,
         logs_to_process=request_body.logs_to_process,
