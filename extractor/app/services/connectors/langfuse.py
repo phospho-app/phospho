@@ -9,11 +9,11 @@ from langfuse import Langfuse
 from langfuse.client import ObservationsViews
 from loguru import logger
 
-from app.api.v1.models import LogEvent
+from app.api.v1.models import LogEventForTasks
 from app.core import config
 from app.db.mongo import get_mongo_db
 from app.services.connectors.base import BaseConnector
-from app.services.log import process_log
+from app.services.log import process_log_for_tasks
 from app.services.projects import get_project_by_id
 
 
@@ -177,8 +177,8 @@ class LangfuseConnector(BaseConnector):
         current_usage: int,
         max_usage: Optional[int] = None,
     ) -> int:
-        logs_to_process: List[LogEvent] = []
-        extra_logs_to_save: List[LogEvent] = []
+        logs_to_process: List[LogEventForTasks] = []
+        extra_logs_to_save: List[LogEventForTasks] = []
 
         if self.observations is None:
             logger.error(
@@ -191,7 +191,7 @@ class LangfuseConnector(BaseConnector):
                 input = observation.input
                 output = observation.output
 
-                log_event = LogEvent(
+                log_event = LogEventForTasks(
                     created_at=int(observation.start_time.timestamp()),
                     input=input,
                     output=output,
@@ -214,7 +214,7 @@ class LangfuseConnector(BaseConnector):
                 )
 
         await self._update_last_langfuse_extract()
-        await process_log(
+        await process_log_for_tasks(
             project_id=self.project_id,
             org_id=org_id,
             logs_to_process=logs_to_process,
