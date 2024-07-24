@@ -288,7 +288,7 @@ export function getColumns({
       },
       accessorKey: "events",
       cell: (row) => (
-        <div className="group flex items-center justify-between space-y-1">
+        <div className="group flex items-center justify-between">
           <div className="flex flex-wrap items-center justify-center">
             {(row.getValue() as Event[]).map((event: Event) => {
               return (
@@ -419,7 +419,9 @@ export function getColumns({
                   : input
                 : "-"}
             </PopoverTrigger>
-            <PopoverContent className="text-sm">{input}</PopoverContent>
+            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
+              {input}
+            </PopoverContent>
           </Popover>
         );
       },
@@ -444,7 +446,9 @@ export function getColumns({
                   : output
                 : "-"}
             </PopoverTrigger>
-            <PopoverContent className="text-sm">{output}</PopoverContent>
+            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
+              {output}
+            </PopoverContent>
           </Popover>
         );
       },

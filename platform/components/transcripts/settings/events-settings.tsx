@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -38,23 +39,24 @@ export const RunEventsSettings = ({
             <div>Detect event</div>
           </div>
         </DropdownMenuLabel>
-        {eventArray.map(([event_name, event_definition]) => {
-          return (
-            <DropdownMenuItem
-              key={event_definition.event_name}
-              onClick={(mouseEvent) => {
-                // This is used to avoid clicking on the row as well
-                mouseEvent.stopPropagation();
-                setEventDefinition(event_definition);
-                setSheetOpen(true);
-                setSheetToOpen("run");
-              }}
-            >
-              {event_definition.event_name}
-            </DropdownMenuItem>
-          );
-        })}
-        <DropdownMenuSeparator />
+        <DropdownMenuGroup className="overflow-y-auto max-h-[20rem]">
+          {eventArray.map(([event_name, event_definition]) => {
+            return (
+              <DropdownMenuItem
+                key={event_definition.event_name}
+                onClick={(mouseEvent) => {
+                  // This is used to avoid clicking on the row as well
+                  mouseEvent.stopPropagation();
+                  setEventDefinition(event_definition);
+                  setSheetOpen(true);
+                  setSheetToOpen("run");
+                }}
+              >
+                {event_definition.event_name}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuGroup>
         <DropdownMenuItem
           onClick={(mouseEvent) => {
             // This is used to avoid clicking on the row as well

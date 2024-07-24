@@ -330,10 +330,15 @@ export function getColumns({
                   : output
                 : "-"}
             </PopoverTrigger>
-            <PopoverContent className="text-sm">
-              <h1 className="text-m">Latest message in the session:</h1>
-              <br></br>
-              {output}
+            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
+              {output &&
+                output.split("\n").map((line, index) => (
+                  <React.Fragment key={index}>
+                    {line}
+                    <br />
+                    <br />
+                  </React.Fragment>
+                ))}
             </PopoverContent>
           </Popover>
         );

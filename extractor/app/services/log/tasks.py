@@ -353,7 +353,9 @@ async def process_log_with_session_id(
                 # Increment the session length in the database
                 await mongo_db["sessions"].update_one(
                     {"id": session_id},
-                    {"$inc": {"session_length": session_data["session_length"]}},
+                    {
+                        "$inc": {"session_length": session_data["session_length"]},
+                    },
                 )
             else:
                 session = Session(

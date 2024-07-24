@@ -94,7 +94,8 @@ export const EventBadge = ({ event }: { event: Event }) => {
       )}
       {score_type === "category" && (
         <p>
-          {event.event_name}: {event?.score_range?.corrected_label ?? event.score_range?.label}
+          {event.event_name}:{" "}
+          {event?.score_range?.corrected_label ?? event.score_range?.label}
         </p>
       )}
     </Badge>
@@ -176,50 +177,47 @@ export const InteractiveEventBadgeForTasks = ({
           Confirm
         </DropdownMenuItem>
         {event?.score_range?.score_type === "category" && (
-          <DropdownMenuSub >
-            <DropdownMenuSubTrigger>
-              Change class
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent >
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Change class</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
               {// Create one dropdown item for each category
-                eventDefinition?.score_range_settings?.categories?.map(
-                  (category) => {
-                    return (
-                      <DropdownMenuItem
-                        key={category}
-                        onClick={async (mouseEvent) => {
-                          mouseEvent.stopPropagation();
-                          const response = await fetch(
-                            `/api/events/${event.project_id}/label/${event.id}`,
-                            {
-                              method: "POST",
-                              headers: {
-                                Authorization: "Bearer " + accessToken,
-                                "Content-Type": "application/json",
-                              },
-                              body: JSON.stringify({
-                                new_label: category,
-                              }),
+              eventDefinition?.score_range_settings?.categories?.map(
+                (category) => {
+                  return (
+                    <DropdownMenuItem
+                      key={category}
+                      onClick={async (mouseEvent) => {
+                        mouseEvent.stopPropagation();
+                        const response = await fetch(
+                          `/api/events/${event.project_id}/label/${event.id}`,
+                          {
+                            method: "POST",
+                            headers: {
+                              Authorization: "Bearer " + accessToken,
+                              "Content-Type": "application/json",
                             },
-                          );
-                          const response_json = await response.json();
-                          setTask({
-                            ...task,
-                            events: task.events.map((e) => {
-                              if (e.id === event.id) {
-                                return response_json;
-                              }
-                              return e;
+                            body: JSON.stringify({
+                              new_label: category,
                             }),
-                          });
-                        }}
-                      >
-                        {category}
-                      </DropdownMenuItem>
-                    );
-                  },
-                )
-              }
+                          },
+                        );
+                        const response_json = await response.json();
+                        setTask({
+                          ...task,
+                          events: task.events.map((e) => {
+                            if (e.id === event.id) {
+                              return response_json;
+                            }
+                            return e;
+                          }),
+                        });
+                      }}
+                    >
+                      {category}
+                    </DropdownMenuItem>
+                  );
+                },
+              )}
             </DropdownMenuSubContent>
           </DropdownMenuSub>
         )}
@@ -240,7 +238,6 @@ export const InteractiveEventBadgeForTasks = ({
             });
             const response_json = await response.json();
             setTask(response_json);
-
           }}
         >
           <Trash className="w-4 h-4 mr-2" />
@@ -333,7 +330,7 @@ export const AddEventDropdownForTasks = ({
       <DropdownMenuTrigger>
         <Badge
           variant="outline"
-          className={cn("hover:border-green-500", className)}
+          className={cn("hover:border-green-500 mb-1", className)}
         >
           +
         </Badge>
@@ -400,24 +397,24 @@ export const AddEventDropdownForTasks = ({
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
                       {// Create one dropdown item for each category
-                        event.score_range_settings?.categories?.map(
-                          (category) => {
-                            return (
-                              <DropdownMenuItem
-                                key={category}
-                                onClick={async (mouseEvent) => {
-                                  mouseEvent.stopPropagation();
-                                  addEvent({
-                                    event,
-                                    scoreCategoryLabel: category,
-                                  });
-                                }}
-                              >
-                                {category}
-                              </DropdownMenuItem>
-                            );
-                          },
-                        )}
+                      event.score_range_settings?.categories?.map(
+                        (category) => {
+                          return (
+                            <DropdownMenuItem
+                              key={category}
+                              onClick={async (mouseEvent) => {
+                                mouseEvent.stopPropagation();
+                                addEvent({
+                                  event,
+                                  scoreCategoryLabel: category,
+                                });
+                              }}
+                            >
+                              {category}
+                            </DropdownMenuItem>
+                          );
+                        },
+                      )}
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
                 )}
@@ -635,7 +632,7 @@ export const AddEventDropdownForSessions = ({
       <DropdownMenuTrigger>
         <Badge
           variant="outline"
-          className={cn(" hover:border-green-500", className)}
+          className={cn(" hover:border-green-500 mb-1", className)}
         >
           +
         </Badge>
