@@ -63,7 +63,7 @@ class PostgresqlIntegration:
                     detail=f"The organization {org_id} doesn't have access to this feature. Please reach out.",
                 )
 
-        if config.NEON_ADMIN_PASSWORD is None or config.NEON_ADMIN_USERNAME is None:
+        if config.SQLDB_CONNECTION_STRING is None:
             logger.error("Neon admin credentials are not configured")
             raise HTTPException(
                 status_code=500,
@@ -71,9 +71,11 @@ class PostgresqlIntegration:
             )
 
     def _connection_string(self) -> str:
+        # TODO : Add custom connection string in the credentials so that this write operation
+        # can be done on a different database
         if self.credentials is None:
             raise ValueError("No credentials found")
-        return f"postgresql://{config.NEON_ADMIN_USERNAME}:{config.NEON_ADMIN_PASSWORD}@{self.credentials.server}/{self.credentials.database}"
+        return f"{config.SQLDB_CONNECTION_STRING}/{self.credentials.database}"
 
     async def load_config(self):
         """
@@ -117,16 +119,8 @@ class PostgresqlIntegration:
             return
 
         # Create credentials if they don't exist
-        if config.NEON_SERVER is None:
-            logger.error("Neon server is not configured")
-            raise HTTPException(
-                status_code=500,
-                detail="Neon server is not configured",
-            )
 
-        engine = create_engine(
-            f"postgresql://{config.NEON_ADMIN_USERNAME}:{config.NEON_ADMIN_PASSWORD}@{config.NEON_SERVER}/phospho"
-        )
+        engine = create_engine(f"{config.SQLDB_CONNECTION_STRING}/phospho")
         # Create the database if it doesn't exist
         with engine.connect() as connection:
             logger.debug(f"Creating database {slugify_string(self.org_name)}")
@@ -163,11 +157,14 @@ class PostgresqlIntegration:
             connection.commit()
             connection.close()
 
+        # Get the server from the connection string
+        server = config.SQLDB_CONNECTION_STRING.split("@")[1]
+
         self.credentials = PostgresqlCredentials(
             org_id=self.org_id,
             org_name=self.org_name,
             type="postgresql",
-            server=config.NEON_SERVER,
+            server=server,
             database=slugify_string(self.org_name),
             username=username,
             password=password,
