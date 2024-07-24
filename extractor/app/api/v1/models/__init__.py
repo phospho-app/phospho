@@ -1,4 +1,9 @@
-from .log import LogEvent, LogProcessRequest, LogReply, LogRequest, MinimalLogEvent
+from .log import (
+    LogEventForTasks,
+    LogProcessRequestForTasks,
+    MinimalLogEventForTasks,
+    LogProcessRequestForMessages,
+)
 from .pipelines import (
     PipelineResults,
     RunMainPipelineOnMessagesRequest,

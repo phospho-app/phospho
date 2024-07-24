@@ -6,7 +6,7 @@ from loguru import logger
 from app.core import config
 
 # DB
-from app.api.v1.models import LogEvent
+from app.api.v1.models import LogEventForTasks
 from app.db.models import Session, Task
 from app.db.mongo import get_mongo_db
 from app.db.qdrant import get_qdrant, models
@@ -59,7 +59,7 @@ def get_time_created_at(client_created_at: Optional[int], created_at: Optional[i
 
 
 def get_nb_tokens_prompt_tokens(
-    log_event: LogEvent, model: Optional[str], tokenizer: Any
+    log_event: LogEventForTasks, model: Optional[str], tokenizer: Any
 ):
     """
     Returns the number of tokens in the prompt tokens, using
@@ -90,7 +90,7 @@ def get_nb_tokens_prompt_tokens(
 
 
 def get_nb_tokens_completion_tokens(
-    log_event: LogEvent, model: Optional[str], tokenizer: Any
+    log_event: LogEventForTasks, model: Optional[str], tokenizer: Any
 ):
     """
     Returns the number of tokens in the completion tokens, using
@@ -127,7 +127,7 @@ def get_nb_tokens_completion_tokens(
     return 0
 
 
-def collect_metadata(log_event: LogEvent) -> dict:
+def collect_metadata(log_event: LogEventForTasks) -> dict:
     """
     Collect the metadata from the log event.
     - Add all unknown fields to the metadata
@@ -244,7 +244,7 @@ async def add_vectorized_tasks(tasks_id: List[str]):
 def create_task_from_logevent(
     org_id: str,
     project_id: str,
-    log_event: LogEvent,
+    log_event: LogEventForTasks,
     session_id: Optional[str] = None,
     log_event_metadata: Optional[Dict[str, Any]] = None,
 ) -> Task:
@@ -310,7 +310,7 @@ async def ignore_existing_tasks(
 async def process_log_without_session_id(
     project_id: str,
     org_id: str,
-    list_of_log_event: List[LogEvent],
+    list_of_log_event: List[LogEventForTasks],
     trigger_pipeline: bool = True,
 ) -> None:
     """
@@ -372,7 +372,7 @@ async def process_log_without_session_id(
 async def process_log_with_session_id(
     project_id: str,
     org_id: str,
-    list_of_log_event: List[LogEvent],
+    list_of_log_event: List[LogEventForTasks],
     trigger_pipeline: bool = True,
 ) -> None:
     """
@@ -571,11 +571,11 @@ async def process_log_with_session_id(
             await task_main_pipeline(task_data)
 
 
-async def process_log(
+async def process_log_for_tasks(
     project_id: str,
     org_id: str,
-    logs_to_process: List[LogEvent],
-    extra_logs_to_save: List[LogEvent],
+    logs_to_process: List[LogEventForTasks],
+    extra_logs_to_save: List[LogEventForTasks],
 ) -> None:
     """From logs
     - Create Tasks
@@ -593,7 +593,7 @@ async def process_log(
     nonerror_log_events = []
     error_log_events = []
     for log_event in logs_to_process + extra_logs_to_save:
-        if not log_is_error(log_event) and isinstance(log_event, LogEvent):
+        if not log_is_error(log_event) and isinstance(log_event, LogEventForTasks):
             nonerror_log_events.append(log_event)
         else:
             error_log_events.append(log_event)
