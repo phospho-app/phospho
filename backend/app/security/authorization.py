@@ -34,7 +34,7 @@ async def get_quota(project_id: str) -> UsageQuota:
             status_code=404, detail=f"Project {project_id} not found for quota"
         )
     org_id = project["org_id"]
-    return get_quota_for_org(org_id)
+    return await get_quota_for_org(org_id)
 
 
 async def authorize_main_pipeline(project_id: str) -> bool:
