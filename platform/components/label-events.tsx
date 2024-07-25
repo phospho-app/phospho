@@ -221,12 +221,12 @@ export const InteractiveEventBadgeForTasks = ({
             </DropdownMenuSubContent>
           </DropdownMenuSub>
         )}
-        {event?.score_range?.score_type === "range" && (
+        {event?.score_range?.score_type === "range" && (eventDefinition?.score_range_settings?.max != undefined) && (eventDefinition?.score_range_settings?.min != undefined) && (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>Change score</DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
               {// Create one dropdown item for each integer in the range
-                Array.from({ length: eventDefinition?.score_range_settings?.max - eventDefinition?.score_range_settings?.min + 1 }, (_, i) => eventDefinition?.score_range_settings?.min + i).map(
+                Array.from({ length: eventDefinition?.score_range_settings?.max - eventDefinition?.score_range_settings?.min + 1 }, (_, i) => (eventDefinition?.score_range_settings?.min ?? 1) + i).map(
                   (score) => {
                     return (
                       <DropdownMenuItem
