@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import List, Optional, Literal
+from pydantic import BaseModel, Field
+from typing import Dict, List, Optional, Literal
 
 from app.db.models import Task, Event, Recipe
 from phospho.lab import Message
@@ -17,10 +17,10 @@ class RunMainPipelineOnMessagesRequest(BaseModel):
 
 
 class PipelineResults(BaseModel):
-    events: List[Event]
-    flag: Optional[Literal["success", "failure"]]
-    language: Optional[str] = None
-    sentiment: Optional[SentimentObject] = None
+    events: Dict[str, List[Event]]
+    flag: Dict[str, Literal["success", "failure"]]
+    language: Dict[str, Optional[str]] = Field(default_factory=dict)
+    sentiment: Dict[str, Optional[SentimentObject]] = Field(default_factory=dict)
 
 
 class RunRecipeOnTaskRequest(BaseModel):

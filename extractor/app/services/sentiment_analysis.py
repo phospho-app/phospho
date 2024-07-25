@@ -30,7 +30,7 @@ except Exception as e:
     logger.error(f"Error connecting to sentiment analysis: {e}")
 
 
-async def run_sentiment_and_language_analysis(
+async def call_sentiment_and_language_api(
     text: str, score_threshold: float, magnitude_threshold: float
 ) -> tuple[SentimentObject, Optional[str]]:
     """

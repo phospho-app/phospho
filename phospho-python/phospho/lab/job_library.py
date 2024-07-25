@@ -10,7 +10,7 @@ import math
 import os
 import random
 import time
-from typing import List, Literal, Optional, cast
+from typing import List, Literal, Optional, Tuple, cast
 
 from phospho.models import ScoreRange, ScoreRangeSettings
 from phospho.utils import get_number_of_tokens, shorten_text
@@ -171,22 +171,20 @@ async def event_detection(
         )
 
     # We fetch examples for few shot
-    successful_examples = message.metadata.get("successful_examples", [])
-    unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
+    successful_events = message.metadata.get("successful_events", [])
+    unsuccessful_events = message.metadata.get("unsuccessful_events", [])
 
-    assert isinstance(successful_examples, list), "successful_examples is not a list"
-    assert isinstance(
-        unsuccessful_examples, list
-    ), "unsuccessful_examples is not a list"
+    assert isinstance(successful_events, list), "successful_events is not a list"
+    assert isinstance(unsuccessful_events, list), "unsuccessful_events is not a list"
 
     successful_example = None
-    for example in successful_examples:
+    for example in successful_events:
         if event_name == example["event_name"]:
             successful_example = example
             break
 
     unsuccessful_example = None
-    for example in unsuccessful_examples:
+    for example in unsuccessful_events:
         if event_name == example["event_name"]:
             unsuccessful_example = example
             break
@@ -627,21 +625,19 @@ async def evaluate_task(
     provider, model_name = get_provider_and_model(model)
     async_openai_client = get_async_client(provider)
 
-    successful_examples = message.metadata.get("successful_examples", [])
-    unsuccessful_examples = message.metadata.get("unsuccessful_examples", [])
+    successful_evals = message.metadata.get("successful_evals", [])
+    unsuccessful_evals = message.metadata.get("unsuccessful_evals", [])
     evaluation_prompt = message.metadata.get("evaluation_prompt", None)
 
-    assert isinstance(successful_examples, list), "successful_examples is not a list"
-    assert isinstance(
-        unsuccessful_examples, list
-    ), "unsuccessful_examples is not a list"
+    assert isinstance(successful_evals, list), "successful_evals is not a list"
+    assert isinstance(unsuccessful_evals, list), "unsuccessful_evals is not a list"
     assert isinstance(evaluation_prompt, str) or evaluation_prompt is None
 
     # 128k is the max input length for gpt-4o, we remove 1k to be safe
     # TODO : Make this adaptative to model name
     max_tokens_input_lenght = 128 * 1000 - 1000
 
-    merged_examples = successful_examples + unsuccessful_examples
+    merged_examples = successful_evals + unsuccessful_evals
     random.shuffle(merged_examples)
 
     # Additional metadata
@@ -713,7 +709,7 @@ async def evaluate_task(
         message: Message,
         evaluation_prompt: Optional[str] = None,
         merged_examples: List[dict] = [],
-    ) -> str:
+    ) -> Tuple[str, str]:
         """
         Builds a prompt for the evaluation of a task,
         makes use of successful and unsuccessful examples as well as a custom evaluation prompt.
@@ -965,7 +961,8 @@ async def get_topic_of_conversation(
             max_tokens=2,
         )
 
-        llm_response = response.choices[0].message.content.lower()
+        llm_response = response.choices[0].message.content
+        llm_response = llm_response.lower()
 
         return JobResult(
             result_type=ResultType.bool,
