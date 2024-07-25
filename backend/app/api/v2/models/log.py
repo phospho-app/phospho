@@ -21,7 +21,7 @@ class LogEvent(MinimalLogEvent, extra="allow"):
     last_update: Optional[int] = None
     # metadata
     metadata: Optional[Dict[str, object]] = Field(default_factory=dict)
-    session_id: Optional[str] = None
+    session_id: str = Field(default_factory=generate_uuid)
     task_id: str = Field(default_factory=generate_uuid)
     step_id: Optional[str] = None
     version_id: Optional[str] = None

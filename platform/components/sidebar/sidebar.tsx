@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useRedirectFunctions } from "@propelauth/nextjs/client";
 import {
+  AreaChart,
   BarChartBig,
   BookOpenText,
   Boxes,
@@ -16,7 +17,6 @@ import {
   MessagesSquare,
   Settings,
   Shuffle,
-  TestTubeDiagonal,
   TextSearch,
   TriangleAlert,
   Users,
@@ -116,13 +116,13 @@ export function Sidebar() {
         </SideBarElement>
         {(pathname.startsWith("/org/transcripts") || isMobile) && (
           <div className="ml-6 text-muted-foreground">
-            <SideBarElement href="/org/transcripts/tasks">
-              <MessagesSquare className="h-4 w-4 mr-2" />
-              Tasks
-            </SideBarElement>
             <SideBarElement href="/org/transcripts/sessions">
               <List className="h-4 w-4 mr-2" />
               Sessions
+            </SideBarElement>
+            <SideBarElement href="/org/transcripts/tasks">
+              <MessagesSquare className="h-4 w-4 mr-2" />
+              Messages
             </SideBarElement>
             <SideBarElement href="/org/transcripts/users">
               <Users className="h-4 w-4 mr-2" />
@@ -130,11 +130,34 @@ export function Sidebar() {
             </SideBarElement>
           </div>
         )}
-        <SideBarElement href="/org/transcripts/dashboard">
-          <LayoutDashboard className="h-4 w-4 mr-2" />
-          Dashboard
+        <SideBarElement
+          href="/org/dataviz/"
+          icon={<BarChartBig className="h-4 w-4 mr-2" />}
+          collapsible={true}
+        >
+          Dataviz
         </SideBarElement>
+        {(pathname.startsWith("/org/dataviz") || isMobile) && (
+          <div className="ml-6 text-muted-foreground">
+            <SideBarElement href="/org/dataviz/dashboard">
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              Dashboard
+            </SideBarElement>
+            <SideBarElement
+              href="/org/dataviz/studio"
+              icon={<AreaChart size={16} className="mr-2" />}
+            >
+              Studio
+            </SideBarElement>
+          </div>
+        )}
         <WhiteSpaceSeparator />
+        <SideBarElement
+          href="/org/insights/events"
+          icon={<TextSearch size={16} className="mr-2" />}
+        >
+          Analytics
+        </SideBarElement>
         <SideBarElement
           href="/org/insights/clusters"
           icon={<Boxes size={16} className="mr-2" />}
@@ -142,37 +165,25 @@ export function Sidebar() {
           Clusters
         </SideBarElement>
         <SideBarElement
-          href="/org/insights/events"
-          icon={<TextSearch size={16} className="mr-2" />}
-        >
-          Events
-        </SideBarElement>
-        <SideBarElement
-          href="/org/insights/dataviz"
-          icon={<BarChartBig size={16} className="mr-2" />}
-        >
-          Dataviz
-        </SideBarElement>
-        <WhiteSpaceSeparator />
-        <SideBarElement
           href="/org/ab-testing"
           icon={<Shuffle size={16} className="mr-2" />}
         >
           AB Testing
         </SideBarElement>
-        <SideBarElement
+        {/* <SideBarElement
           href="/org/tests"
           icon={<TestTubeDiagonal size={16} className="mr-2" />}
         >
           Tests
-        </SideBarElement>
+        </SideBarElement> */}
+        <WhiteSpaceSeparator />
+        {/* <WhiteSpaceSeparator /> */}
         <SideBarElement
           href="/org/integrations"
           icon={<LayoutGrid size={16} className="mr-2" />}
         >
           Integrations
         </SideBarElement>
-        <WhiteSpaceSeparator />
         <SideBarElement
           href="/org/settings"
           icon={<Settings size={16} className="mr-2" />}

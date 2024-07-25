@@ -5,22 +5,73 @@ import EventsList from "@/components/insights/events/event-list";
 import SuccessRateByEvent from "@/components/insights/events/success-rate-by-event";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { AlertCircle, PlusIcon } from "lucide-react";
+import { AlertCircle, PlusIcon, TextSearch } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
+
+function EventCategoryTitle({
+  title,
+  buttonLabel,
+  description,
+  max_nb_events,
+  current_nb_events,
+  defaultEventCategory,
+}: {
+  title: string;
+  buttonLabel: string;
+  description?: string;
+  max_nb_events: number;
+  current_nb_events: number;
+  defaultEventCategory?: string;
+}) {
+  let isDisabled = max_nb_events && current_nb_events >= max_nb_events;
+  if (isDisabled === 0) {
+    isDisabled = false;
+  }
+
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight pt-4">{title}</h2>
+          <span className="text-muted-foreground text-sm">{description}</span>
+        </div>
+        <SheetTrigger asChild>
+          <Button disabled={isDisabled}>
+            <PlusIcon className="h-4 w-4 mr-1" />
+            {buttonLabel}
+          </Button>
+        </SheetTrigger>
+      </div>
+      <SheetContent className="md:w-1/2 overflow-auto">
+        <CreateEvent
+          setOpen={setOpen}
+          defaultEventCategory={defaultEventCategory}
+        />
+      </SheetContent>
+    </Sheet>
+  );
+}
 
 export default function Page() {
   const { accessToken } = useUser();
 
   const project_id = navigationStateStore((state) => state.project_id);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
-  const [open, setOpen] = useState(false);
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -38,6 +89,57 @@ export default function Page() {
 
   return (
     <>
+      {/* <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Analytics</h2>
+          <span className="text-muted-foreground text-sm">
+            Your data is automatically augmented using these event detectors.{" "}
+            <Link
+              className="underline "
+              href="https://docs.phospho.ai/guides/events"
+            >
+              Learn more
+            </Link>
+          </span>
+        </div> 
+      </div>
+        
+        */}
+      <Card className="bg-secondary">
+        <CardHeader>
+          <div className="flex items-center">
+            <TextSearch className="h-16 w-16 mr-4 hover:text-green-500 transition-colors" />
+            <div>
+              <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center mb-0">
+                Analytics
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Your data is automatically augmented using the event detectors
+                set up below.{" "}
+                <Link
+                  className="underline "
+                  href="https://docs.phospho.ai/guides/events"
+                >
+                  Learn more
+                </Link>
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+      {/* <Button
+            variant="secondary"
+            onClick={() => {
+              router.push(
+                `/onboarding/customize/${project_id}?redirect=events`,
+              );
+            }}
+            disabled={
+              max_nb_events && Object.keys(events).length >= max_nb_events
+            }
+          >
+            <Wand2 className="w-4 h-4 mr-1" /> Event suggestions
+          </Button> */}
       {/* <Alert>
         <Bell className="h-4 w-4" />
         <AlertTitle>
@@ -54,7 +156,7 @@ export default function Page() {
           </Link>
         </AlertDescription>
       </Alert> */}
-      <SuccessRateByEvent />
+
       {
         // too many events
         events && max_nb_events && current_nb_events >= max_nb_events && (
@@ -81,52 +183,36 @@ export default function Page() {
           </Alert>
         )
       }
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight pt-4">
-            Tracked events
-          </h2>
-          <span className="text-muted-foreground text-sm">
-            Set up events to be automatically detected in logs.{" "}
-            <Link
-              className="underline "
-              href="https://docs.phospho.ai/guides/events"
-            >
-              Learn more
-            </Link>
-          </span>
-        </div>
-        <div className="space-x-2">
-          {/* <Button
-            variant="secondary"
-            onClick={() => {
-              router.push(
-                `/onboarding/customize/${project_id}?redirect=events`,
-              );
-            }}
-            disabled={
-              max_nb_events && Object.keys(events).length >= max_nb_events
-            }
-          >
-            <Wand2 className="w-4 h-4 mr-1" /> Event suggestions
-          </Button> */}
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <Button
-                disabled={max_nb_events && current_nb_events >= max_nb_events}
-              >
-                <PlusIcon className="h-4 w-4 mr-1" />
-                Add Event
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="md:w-1/2 overflow-auto">
-              <CreateEvent setOpen={setOpen} />
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
+      <EventCategoryTitle
+        title="Taggers"
+        buttonLabel="Add tagger"
+        description="Detect if a topic is present in the text."
+        max_nb_events={max_nb_events}
+        current_nb_events={current_nb_events}
+        defaultEventCategory="confidence"
+      />
+      <EventsList event_type="confidence" />
 
-      <EventsList />
+      <EventCategoryTitle
+        title="Scorers"
+        buttonLabel="Add scorer"
+        description="Score text on a numerical scale."
+        max_nb_events={max_nb_events}
+        current_nb_events={current_nb_events}
+        defaultEventCategory="range"
+      />
+      <EventsList event_type="range" />
+
+      <EventCategoryTitle
+        title="Classifiers"
+        buttonLabel="Add classifier"
+        description="Classify text into categories."
+        max_nb_events={max_nb_events}
+        current_nb_events={current_nb_events}
+        defaultEventCategory="category"
+      />
+      <EventsList event_type="category" />
+
       <div className="flex justify-center text-muted-foreground">
         {
           // current number of events
@@ -137,6 +223,7 @@ export default function Page() {
           )
         }
       </div>
+      {/* <SuccessRateByEvent /> */}
     </>
   );
 }

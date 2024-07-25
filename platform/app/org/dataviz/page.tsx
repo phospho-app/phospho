@@ -6,5 +6,5 @@ import { redirect } from "next/navigation";
 // the new default page.
 
 export default function Page() {
-  redirect("/org/transcripts/tasks");
+  redirect("/org/dataviz/dashboard");
 }

@@ -445,12 +445,17 @@ async def post_upload_tasks(
         bucket = Bucket(client=config.GCP_BUCKET_CLIENT, name="platform-import-data")
         blob = bucket.blob(filepath)
         blob.upload_from_file(file.file)
+        # Reset the file pointer to the start
+        file.file.seek(0)
 
     # Read file content -> into memory
     file_params = {}
+    logger.info(f"Reading file {file.filename} content.")
     try:
         if file_extension == "csv":
-            tasks_df = pd.read_csv(file.file, sep=None, **file_params)
+            tasks_df = pd.read_csv(
+                file.file, sep=None, engine="python", on_bad_lines="warn", **file_params
+            )
         elif file_extension == "xlsx":
             tasks_df = pd.read_excel(file.file, **file_params)
         else:
