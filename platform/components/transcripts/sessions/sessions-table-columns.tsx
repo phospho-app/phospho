@@ -110,6 +110,65 @@ export function getColumns({
         </span>
       ),
     },
+    // Preview
+    {
+      header: "Preview",
+      accessorKey: "preview",
+      cell: (row) => {
+        const output = row.getValue() as string; // asserting the type as string
+        return (
+          <Popover>
+            <PopoverTrigger
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+              }}
+              className="text-left"
+            >
+              {output
+                ? output.length > 50
+                  ? output.substring(0, 50) + "..."
+                  : output
+                : "-"}
+            </PopoverTrigger>
+            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
+              {output &&
+                output.split("\n").map((line, index) => (
+                  <React.Fragment key={index}>
+                    {line}
+                    <br />
+                    <br />
+                  </React.Fragment>
+                ))}
+            </PopoverContent>
+          </Popover>
+        );
+      },
+    },
+    // Language
+    {
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center space-x-2 justify-between">
+            <div className="flex items-center">
+              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+              Language
+            </div>
+          </div>
+        );
+      },
+      accessorKey: "stats.most_common_language",
+      cell: (row) => (
+        <HoverCard openDelay={80} closeDelay={30}>
+          <HoverCardTrigger>
+            <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
+          </HoverCardTrigger>
+          <HoverCardContent side="top" className="text-sm text-center">
+            {getLanguageLabel(row.getValue() as string)}
+          </HoverCardContent>
+        </HoverCard>
+      ),
+      maxSize: 10,
+    },
     // Eval
     {
       header: ({ column }) => {
@@ -211,31 +270,8 @@ export function getColumns({
         </div>
       ),
     },
-    // Language
-    {
-      header: ({ column }) => {
-        return (
-          <div className="flex items-center space-x-2 justify-between">
-            <div className="flex items-center">
-              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-              Language
-            </div>
-          </div>
-        );
-      },
-      accessorKey: "stats.most_common_language",
-      cell: (row) => (
-        <HoverCard openDelay={80} closeDelay={30}>
-          <HoverCardTrigger>
-            <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="text-sm text-center">
-            {getLanguageLabel(row.getValue() as string)}
-          </HoverCardContent>
-        </HoverCard>
-      ),
-      maxSize: 10,
-    },
+
+    // Sentiment
     {
       header: () => {
         return (
@@ -283,7 +319,7 @@ export function getColumns({
       header: ({ column }) => {
         return (
           <div className="flex flex-row justify-between space-x-2 items-center">
-            Session Length
+            Length
             <Button
               variant="ghost"
               size="icon"
@@ -310,40 +346,7 @@ export function getColumns({
         </span>
       ),
     },
-    // Preview
-    {
-      header: "Preview",
-      accessorKey: "preview",
-      cell: (row) => {
-        const output = row.getValue() as string; // asserting the type as string
-        return (
-          <Popover>
-            <PopoverTrigger
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation();
-              }}
-              className="text-left"
-            >
-              {output
-                ? output.length > 50
-                  ? output.substring(0, 50) + "..."
-                  : output
-                : "-"}
-            </PopoverTrigger>
-            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
-              {output &&
-                output.split("\n").map((line, index) => (
-                  <React.Fragment key={index}>
-                    {line}
-                    <br />
-                    <br />
-                  </React.Fragment>
-                ))}
-            </PopoverContent>
-          </Popover>
-        );
-      },
-    },
+
     {
       header: "",
       accessorKey: "view",
