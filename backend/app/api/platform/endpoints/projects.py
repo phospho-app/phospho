@@ -450,7 +450,7 @@ async def post_upload_tasks(
     file_params = {}
     try:
         if file_extension == "csv":
-            tasks_df = pd.read_csv(file.file, sep=None, **file_params)
+            tasks_df = pd.read_csv(file.file, sep=None, engine="python", **file_params)
         elif file_extension == "xlsx":
             tasks_df = pd.read_excel(file.file, **file_params)
         else:
