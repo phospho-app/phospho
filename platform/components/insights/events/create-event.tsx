@@ -23,7 +23,12 @@ import { SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { DetectionEngine, DetectionScope, Project } from "@/models/models";
+import {
+  DetectionEngine,
+  DetectionScope,
+  Project,
+  ScoreRangeType,
+} from "@/models/models";
 import { ScoreRangeSettings } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,9 +41,11 @@ import { z } from "zod";
 export default function CreateEvent({
   setOpen,
   eventNameToEdit,
+  defaultEventCategory,
 }: {
   setOpen: (open: boolean) => void;
   eventNameToEdit?: string;
+  defaultEventCategory?: string;
 }) {
   // Component to create an event or edit an existing event
 
@@ -123,6 +130,42 @@ export default function CreateEvent({
     is_last_task: z.boolean(),
   });
 
+  let defaultScoreRangeSettings = {
+    score_type: "confidence",
+    min: 0,
+    max: 1,
+    categories: [],
+  } as ScoreRangeSettings;
+  console.log("defaultEventCategory", defaultEventCategory);
+  if (eventToEdit?.score_range_settings) {
+    defaultScoreRangeSettings = eventToEdit.score_range_settings;
+  } else {
+    if (defaultEventCategory === "confidence") {
+      defaultScoreRangeSettings = {
+        score_type: ScoreRangeType.confidence,
+        min: 0,
+        max: 1,
+        categories: [],
+      };
+    }
+    if (defaultEventCategory === "range") {
+      defaultScoreRangeSettings = {
+        score_type: ScoreRangeType.range,
+        min: 1,
+        max: 5,
+        categories: [],
+      };
+    }
+    if (defaultEventCategory === "category") {
+      defaultScoreRangeSettings = {
+        score_type: ScoreRangeType.category,
+        min: 1,
+        max: 1,
+        categories: [],
+      };
+    }
+  }
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -134,7 +177,7 @@ export default function CreateEvent({
       detection_scope: eventToEdit?.detection_scope ?? "task",
       keywords: eventToEdit?.keywords ?? "",
       regex_pattern: eventToEdit?.regex_pattern ?? "",
-      score_range_settings: eventToEdit?.score_range_settings,
+      score_range_settings: defaultScoreRangeSettings,
       is_last_task: eventToEdit?.is_last_task ?? false,
     },
   });
