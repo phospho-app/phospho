@@ -1727,6 +1727,8 @@ async def get_y_pred_y_true(
     assert df_confidence.empty or df_category.empty
     # Create the filter masks for each case
 
+    df = None
+
     if not df_confidence.empty:
         df = df_confidence
         mask_y_pred_true = (
@@ -1890,8 +1892,12 @@ async def get_y_pred_y_true(
             "score_range",
         ].apply(lambda x: x.get("label"))
 
-    y_pred = df["y_pred"].fillna("None")
-    y_true = df["y_true"].fillna("None")
+    if df:
+        y_pred = df["y_pred"].fillna("None")
+        y_true = df["y_true"].fillna("None")
+    else:
+        y_pred = None
+        y_true = None
 
     return y_pred, y_true
 
@@ -1923,9 +1929,16 @@ async def get_events_aggregated_metrics(
             y_pred, y_true = await get_y_pred_y_true(
                 project_id=project_id, filters=filters
             )
-            output["f1_score"] = f1_score(y_true, y_pred, average="weighted")
-            output["precision"] = precision_score(y_true, y_pred, average="weighted")
-            output["recall"] = recall_score(y_true, y_pred, average="weighted")
+            if y_pred and y_true:
+                output["f1_score"] = f1_score(y_true, y_pred, average="weighted")
+                output["precision"] = precision_score(
+                    y_true, y_pred, average="weighted"
+                )
+                output["recall"] = recall_score(y_true, y_pred, average="weighted")
+            else:
+                logger.warning(
+                    "Cannot compute f1_score, precision, recall for a range event"
+                )
     return output
 
 
