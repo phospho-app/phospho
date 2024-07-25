@@ -1624,16 +1624,19 @@ async def get_y_pred_y_true(
                 (df["source"] != "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] == False)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
                 & (df["confirmed"] == False)
                 & (df["removed"] == True)
+                & (df["score_range"].notna())
             )
         )
 
@@ -1642,16 +1645,19 @@ async def get_y_pred_y_true(
                 (df["source"] == "owner")
                 & (df["confirmed"] != True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] == True)
+                & (df["score_range"].notna())
             )
         )
 
@@ -1675,31 +1681,37 @@ async def get_y_pred_y_true(
                 (df["source"] != "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] == False)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
                 & (df["confirmed"] == False)
                 & (df["removed"] == True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
                 & (df["confirmed"] != True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] == True)
+                & (df["score_range"].notna())
             )
         )
         df = df[mask]
