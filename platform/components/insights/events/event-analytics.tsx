@@ -57,7 +57,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
     },
   );
 
-  const { data: F1Score } = useSWR(
+  const { data: classificationMetrics } = useSWR(
     project_id && event?.score_range_settings?.score_type !== "range"
       ? [
         `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
@@ -78,7 +78,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
     },
   );
 
-  const { data: RegressionMetrics } = useSWR(
+  const { data: regressionMetrics } = useSWR(
     project_id && event?.score_range_settings?.score_type === "range"
       ? [
         `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
@@ -103,7 +103,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
   }
 
   console.log(totalNbDetections);
-  console.log("Mean squarred error: ", RegressionMetrics)
+  console.log("Mean squarred error: ", regressionMetrics)
 
   return (
     <>
@@ -111,7 +111,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
         <h4 className="text-xl font-bold">Event : "{event?.event_name}"</h4>
       </div>
       {/* if the score type is range but there is not enough data to compute the scores, we display a not enough feedback message */}
-      {(!RegressionMetrics?.mean_squared_error) && (event?.score_range_settings?.score_type == "range") && (
+      {(!regressionMetrics?.mean_squared_error) && (event?.score_range_settings?.score_type == "range") && (
         <>
           <Card className="bg-secondary">
             <CardHeader>
@@ -144,7 +144,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
           </Card></>
       )}
       {/* if the score type is confidence or category but there is not enough data to compute the scores, we display a not enough feedback message */}
-      {(!F1Score?.f1_score) && (event?.score_range_settings?.score_type != "range") && (
+      {(!classificationMetrics?.f1_score) && (event?.score_range_settings?.score_type != "range") && (
         <>
           <Card className="bg-secondary">
             <CardHeader>
@@ -201,10 +201,10 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>F1-score</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(F1Score?.f1_score && (
-                    <p className="text-xl">{F1Score?.f1_score.toFixed(2)}</p>
+                  {(classificationMetrics?.f1_score && (
+                    <p className="text-xl">{classificationMetrics?.f1_score.toFixed(2)}</p>
                   )) ||
-                    (!F1Score?.f1_score && <p className="text-xl"> ... </p>)}
+                    (!classificationMetrics?.f1_score && <p className="text-xl"> ... </p>)}
                 </CardContent>
               </Card>
               <Card>
@@ -212,10 +212,10 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Precision</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(F1Score?.f1_score && (
-                    <p className="text-xl">{F1Score?.precision.toFixed(2)}</p>
+                  {(classificationMetrics?.f1_score && (
+                    <p className="text-xl">{classificationMetrics?.precision.toFixed(2)}</p>
                   )) ||
-                    (!F1Score?.f1_score && <p className="text-xl">...</p>)}
+                    (!classificationMetrics?.f1_score && <p className="text-xl">...</p>)}
                 </CardContent>
               </Card>
               <Card>
@@ -223,10 +223,10 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Recall</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(F1Score?.f1_score && (
-                    <p className="text-xl">{F1Score?.recall.toFixed(2)}</p>
+                  {(classificationMetrics?.f1_score && (
+                    <p className="text-xl">{classificationMetrics?.recall.toFixed(2)}</p>
                   )) ||
-                    (!F1Score?.f1_score && <p className="text-xl">...</p>)}
+                    (!classificationMetrics?.f1_score && <p className="text-xl">...</p>)}
                 </CardContent>
               </Card>
             </>
@@ -239,9 +239,9 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Mean Squared Error</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(RegressionMetrics?.mean_squared_error !== undefined && RegressionMetrics?.mean_squared_error !== null) ? (
+                  {(regressionMetrics?.mean_squared_error !== undefined && regressionMetrics?.mean_squared_error !== null) ? (
                     <p className="text-xl">
-                      {RegressionMetrics?.mean_squared_error.toFixed(2)}
+                      {regressionMetrics?.mean_squared_error.toFixed(2)}
                     </p>
                   ) : (
                     <p className="text-xl">...</p>
@@ -254,9 +254,9 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>R-squared</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(RegressionMetrics?.mean_squared_error !== undefined && RegressionMetrics?.mean_squared_error !== null) ? (
+                  {(regressionMetrics?.mean_squared_error !== undefined && regressionMetrics?.mean_squared_error !== null) ? (
                     <p className="text-xl">
-                      {RegressionMetrics?.r_squared.toFixed(2)}
+                      {regressionMetrics?.r_squared.toFixed(2)}
                     </p>
                   ) : (
                     <p className="text-xl">...</p>
