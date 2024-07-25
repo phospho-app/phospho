@@ -6,7 +6,13 @@ import datetime
 import math
 from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Tuple, Union
-from sklearn.metrics import f1_score, precision_score, recall_score
+from sklearn.metrics import (
+    f1_score,
+    mean_squared_error,
+    precision_score,
+    recall_score,
+    r2_score,
+)
 
 import pandas as pd
 import pydantic
@@ -27,7 +33,7 @@ from fastapi import HTTPException
 from loguru import logger
 from pymongo import InsertOne, UpdateOne
 
-from phospho.models import Cluster, Clustering, EventDefinition
+from phospho.models import Cluster, Clustering, EventDefinition, Event
 from app.api.platform.models import Pagination
 
 
@@ -1587,9 +1593,8 @@ async def get_total_nb_of_detections(
 async def get_y_pred_y_true(
     project_id: str,
     filters: ProjectDataFilters,
-    event: EventDefinition,
     **kwargs,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
     """
     Get the y_pred for an event.
     """
@@ -1604,26 +1609,34 @@ async def get_y_pred_y_true(
     main_filter["event_definition.id"] = {"$in": filters.event_id}
 
     query_result = await mongo_db["events"].find(main_filter).to_list(length=None)
+    if query_result is None or len(query_result) == 0:
+        logger.info("No events found")
+        return None, None
+
+    first_event = Event.model_validate(query_result[0])
+    event_type = first_event.event_definition.score_range_settings.score_type
 
     # Convert to DataFrame
     df = pd.DataFrame(query_result)
-    logger.debug(event.score_range_settings.score_type)
-    if event.score_range_settings.score_type == "confidence":
+    if event_type == "confidence":
         mask_y_pred_true = (
             (
                 (df["source"] != "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] == False)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
                 & (df["confirmed"] == False)
                 & (df["removed"] == True)
+                & (df["score_range"].notna())
             )
         )
 
@@ -1632,16 +1645,19 @@ async def get_y_pred_y_true(
                 (df["source"] == "owner")
                 & (df["confirmed"] != True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] == True)
+                & (df["score_range"].notna())
             )
         )
 
@@ -1659,37 +1675,43 @@ async def get_y_pred_y_true(
         df["y_pred"] = mask_y_pred_true
         df["y_true"] = mask_y_true_true
 
-    elif event.score_range_settings.score_type == "category":
+    elif event_type == "category":
         mask = (
             (
                 (df["source"] != "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] == False)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
                 & (df["confirmed"] == False)
                 & (df["removed"] == True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
                 & (df["confirmed"] != True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] != True)
+                & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
                 & (df["confirmed"] == True)
                 & (df["removed"] == True)
+                & (df["score_range"].notna())
             )
         )
         df = df[mask]
@@ -1745,6 +1767,30 @@ async def get_y_pred_y_true(
             "score_range",
         ].apply(lambda x: x.get("label"))
 
+    elif event_type == "range":
+        mask = (
+            (df["source"] == "owner")
+            & (df["removed"] != True)
+            & (df["score_range"].notna())
+        ) | (
+            (df["source"] != "owner")
+            & (df["confirmed"] == True)
+            & (df["removed"] != True)
+            & (df["score_range"].notna())
+        )
+
+        df = df[mask]
+
+        df["y_pred"] = df["score_range"].apply(lambda x: x.get("value"))
+        df["y_true"] = df["score_range"].apply(lambda x: x.get("corrected_value"))
+
+        # I fill the y_true with the value if the corrected_value is None
+        df["y_true"] = df["y_true"].fillna(df["y_pred"])
+    else:
+        raise NotImplementedError(
+            f"Event type {event_type} is not implemented for y_pred and y_true"
+        )
+
     if not df.empty:
         y_pred = df["y_pred"].fillna("None")
         y_true = df["y_true"].fillna("None")
@@ -1759,7 +1805,6 @@ async def get_events_aggregated_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
     filters: Optional[ProjectDataFilters] = None,
-    event: Optional[EventDefinition] = None,
 ) -> Dict[str, object]:
     if filters is None:
         filters = ProjectDataFilters()
@@ -1776,21 +1821,40 @@ async def get_events_aggregated_metrics(
         output["total_nb_events"] = await get_total_nb_of_detections(
             project_id=project_id, filters=filters
         )
-    if "f1_score" in metrics or "precision" in metrics or "recall" in metrics:
-        logger.debug(event)
-        if filters.event_id is None:
-            logger.warning("Event ID is required to compute f1_score, precision")
-        elif event.score_range_settings.score_type == "range":
-            logger.warning(
-                "Cannot compute f1_score, precision, recall for a range event"
-            )
-        else:
+
+    # Some metrics require y_pred and y_true
+    performance_metrics = [
+        "mean_squared_error",
+        "r_squared",
+        "f1_score",
+        "precision",
+        "recall",
+    ]
+    if filters.event_id is not None:
+        if len(set(metrics).intersection(set(performance_metrics))) > 0:
             y_pred, y_true = await get_y_pred_y_true(
-                project_id=project_id, filters=filters, event=event
+                project_id=project_id,
+                filters=filters,
             )
-            output["f1_score"] = f1_score(y_true, y_pred, average="weighted")
-            output["precision"] = precision_score(y_true, y_pred, average="weighted")
-            output["recall"] = recall_score(y_true, y_pred, average="weighted")
+            if y_pred is not None and y_true is not None:
+                if "mean_squared_error" in metrics:
+                    output["mean_squared_error"] = mean_squared_error(y_true, y_pred)
+                if "r_squared" in metrics:
+                    output["r_squared"] = r2_score(y_true, y_pred)
+                if "f1_score" in metrics:
+                    output["f1_score"] = f1_score(y_true, y_pred, average="weighted")
+                if "precision" in metrics:
+                    output["precision"] = precision_score(
+                        y_true, y_pred, average="weighted"
+                    )
+                if "recall" in metrics:
+                    output["recall"] = recall_score(y_true, y_pred, average="weighted")
+            else:
+                logger.info(f"No y_pred and y_true found for event {filters.event_id}")
+    else:
+        logger.error(f"Event ID is required to compute performance metrics: {metrics}")
+
+    logger.debug(output)
     return output
 
 
