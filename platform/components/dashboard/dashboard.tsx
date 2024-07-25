@@ -392,7 +392,7 @@ const Dashboard: React.FC = () => {
       <div className="flex flex-row space-x-2 items-center">
         <DatePickerWithRange />
         <FilterComponent variant="tasks" />
-        <Link href="/org/insights/dataviz">
+        <Link href="/org/dataviz/studio">
           <Button variant="default">
             <Plus className="w-3 h-3 " />
             <BarChartBig className="w-4 h-4 mr-2" />

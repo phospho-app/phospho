@@ -117,8 +117,9 @@ class ScoreRange(BaseModel):
     label: Optional[str] = None
     options_confidence: Optional[Dict[Any, float]] = None
     # If the score is a category or a range, and the user labels the event manually,
-    # the label is stored in corrected_label
+    # the label is stored in corrected_label or corrected_value
     corrected_label: Optional[str] = None
+    corrected_value: Optional[float] = None
 
 
 class Event(ProjectElementBaseModel):

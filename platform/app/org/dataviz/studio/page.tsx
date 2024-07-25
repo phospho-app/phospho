@@ -348,7 +348,7 @@ const MetadataForm: React.FC = () => {
                     },
                   );
                   // Redirect to the dashboard
-                  router.push("/org/transcripts/dashboard");
+                  router.push("/org/dataviz/dashboard");
                 });
               } catch (error) {
                 toast({

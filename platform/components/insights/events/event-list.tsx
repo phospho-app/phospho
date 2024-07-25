@@ -278,7 +278,7 @@ function EventsList({ event_type }: { event_type?: string }) {
   // Make this a mapping such that we can write: event_type_to_none_label[event_type ]
   const event_type_to_none_label: { [key: string]: string } = {
     confidence: "Add a tag to get started",
-    range: "Add an evaluation to get started",
+    range: "Add a scorer to get started",
     category: "Add a classifier to get started",
     undefined: "Add an event to get started",
   };

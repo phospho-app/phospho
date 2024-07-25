@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Union
 
 
 class EventBackfillRequest(BaseModel):
@@ -11,3 +11,7 @@ class EventBackfillRequest(BaseModel):
 
 class LabelRequest(BaseModel):
     new_label: str
+
+
+class ScoreRequest(BaseModel):
+    new_value: float
