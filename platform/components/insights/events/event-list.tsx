@@ -18,12 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -34,7 +29,7 @@ import {
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pencil, Sparkles, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -227,7 +222,7 @@ function EventRow({
   );
 }
 
-function EventsList() {
+function EventsList({ event_type }: { event_type?: string }) {
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const { accessToken } = useUser();
@@ -280,33 +275,66 @@ function EventsList() {
     router.push(`/org/insights/events/${encodeURI(eventId)}`);
   };
 
+  // Make this a mapping such that we can write: event_type_to_none_label[event_type ]
+  const event_type_to_none_label: { [key: string]: string } = {
+    confidence: "Add a tag to get started",
+    range: "Add an evaluation to get started",
+    category: "Add a classifier to get started",
+    undefined: "Add an event to get started",
+  };
+
+  const noEvents =
+    events === null ||
+    eventArray.filter(
+      ([eventName, eventDefinition]) =>
+        event_type === undefined ||
+        eventDefinition.score_range_settings?.score_type === event_type,
+    ).length === 0;
+
   return (
     <>
       <Card className="mt-4">
         <CardContent>
-          {events === null && <div>No events</div>}
-          {events && (
-            <Table>
-              <TableHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Name</TableHead>
+                <TableHead className="text-left">Description</TableHead>
+                <TableHead className="text-left">Webhook</TableHead>
+                <TableHead className="text-right justify-end"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!noEvents &&
+                eventArray.map(([eventName, eventDefinition], index) => {
+                  if (
+                    event_type !== undefined &&
+                    eventDefinition.score_range_settings?.score_type !==
+                      event_type
+                  ) {
+                    return null;
+                  }
+                  return (
+                    <EventRow
+                      key={index}
+                      eventDefinition={eventDefinition}
+                      handleDeleteEvent={handleDeleteEvent}
+                      handleOnClick={handleOnClick}
+                    />
+                  );
+                })}
+              {noEvents && (
                 <TableRow>
-                  <TableHead className="w-[100px]">Name</TableHead>
-                  <TableHead className="text-left">Description</TableHead>
-                  <TableHead className="text-left">Webhook</TableHead>
-                  <TableHead className="text-right justify-end"></TableHead>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-muted-foreground"
+                  >
+                    {event_type_to_none_label[event_type ?? "undefined"]}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {eventArray.map(([eventName, eventDefinition], index) => (
-                  <EventRow
-                    key={index}
-                    eventDefinition={eventDefinition}
-                    handleDeleteEvent={handleDeleteEvent}
-                    handleOnClick={handleOnClick}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          )}
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </>
