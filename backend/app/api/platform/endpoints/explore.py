@@ -582,6 +582,7 @@ async def get_event_detection_metrics(
         project_id=project_id,
         metrics=metrics,
         filters=filters,
+        event=event,
     )
     logger.info(f"Event output: {output}")
     return output

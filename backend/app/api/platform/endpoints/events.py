@@ -7,12 +7,21 @@ from loguru import logger
 from phospho.models import ProjectDataFilters
 from propelauth_fastapi import User
 
-from app.api.platform.models import EventBackfillRequest, Event, LabelRequest
+from app.api.platform.models import (
+    EventBackfillRequest,
+    Event,
+    LabelRequest,
+    ScoreRequest,
+)
 from app.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
 )
-from app.services.mongo.events import confirm_event, change_label_event
+from app.services.mongo.events import (
+    confirm_event,
+    change_label_event,
+    change_value_event,
+)
 from app.core import config
 
 router = APIRouter(tags=["Events"])
@@ -114,5 +123,27 @@ async def post_change_label_event(
     org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
     event = await change_label_event(
         project_id=project_id, event_id=event_id, new_label=request.new_label
+    )
+    return event
+
+
+@router.post(
+    "/events/{project_id}/value/{event_id}",
+    response_model=Event,
+    description="Change current label of an event",
+)
+async def post_change_label_event(
+    project_id: str,
+    event_id: str,
+    request: ScoreRequest,
+    user: User = Depends(propelauth.require_user),
+) -> Event:
+    """
+    Change the label of an event.
+    """
+    logger.debug(f"Changing label of event {event_id} to {request.new_value}")
+    org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
+    event = await change_value_event(
+        project_id=project_id, event_id=event_id, new_value=request.new_value
     )
     return event

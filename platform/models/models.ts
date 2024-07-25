@@ -101,6 +101,7 @@ export interface ScoreRange {
   label: string;
   options_confidence: Record<string | number, number>;
   corrected_label?: string;
+  corrected_value?: number;
 }
 
 export interface Event {
