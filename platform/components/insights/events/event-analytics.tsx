@@ -36,11 +36,11 @@ function EventAnalytics({ eventId }: { eventId: string }) {
   const { data: totalNbDetections } = useSWR(
     project_id
       ? [
-          `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
-          accessToken,
-          "total_nb_events",
-          JSON.stringify(eventFilters),
-        ]
+        `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
+        accessToken,
+        "total_nb_events",
+        JSON.stringify(eventFilters),
+      ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
@@ -55,15 +55,34 @@ function EventAnalytics({ eventId }: { eventId: string }) {
   const { data: F1Score } = useSWR(
     project_id
       ? [
-          `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
-          accessToken,
-          "f1_score",
-          JSON.stringify(eventFilters),
-        ]
+        `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
+        accessToken,
+        "f1_score",
+        JSON.stringify(eventFilters),
+      ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["f1_score"],
+        filters: eventFilters,
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+
+  const { data: MeanSquareError } = useSWR(
+    project_id
+      ? [
+        `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
+        accessToken,
+        "mean_square_error",
+        JSON.stringify(eventFilters),
+      ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["mean_square_error"],
         filters: eventFilters,
       }),
     {
@@ -86,48 +105,74 @@ function EventAnalytics({ eventId }: { eventId: string }) {
       <div>
         <h4 className="text-xl font-bold">Event : "{event?.event_name}"</h4>
       </div>
-      {/* if the score type is not confidence, we display a coming soon message */}
-      {event?.score_range_settings?.score_type == "range" && (
-        <div>
-          <ComingSoon />
-        </div>
-      )}
-      {/* if the score type is confidence but there is not enough data to compute the scores, we display a not enough feedback message */}
-      {!F1Score?.f1_score &&
-        event?.score_range_settings?.score_type != "range" && (
-          <>
-            <Card className="bg-secondary">
-              <CardHeader>
-                <div className="flex">
-                  <Tag className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+      {/* if the score type is range but there is not enough data to compute the scores, we display a not enough feedback message */}
+      {(!MeanSquareError?.mean_square_error) && (event?.score_range_settings?.score_type == "range") && (
+        <>
+          <Card className="bg-secondary">
+            <CardHeader>
+              <div className="flex">
+                <Tag className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
 
-                  <div className="flex flex-grow justify-between items-center">
-                    <div>
-                      <CardTitle className="text-2xl font-bold tracking-tight mb-0">
-                        <div className="flex flex-row place-items-center">
-                          Unlock event metrics !
-                        </div>
-                      </CardTitle>
-                      <CardDescription className="flex justify-between flex-col text-muted-foreground space-y-0.5">
-                        <p>
-                          Label more data to compute the F1-score, Precision and
-                          Recall.
-                        </p>
-                      </CardDescription>
-                    </div>
-
-                    <Link href="/org/transcripts/tasks">
-                      <Button variant="default">
-                        Label data
-                        <ChevronRight className="ml-2" />
-                      </Button>
-                    </Link>
+                <div className="flex flex-grow justify-between items-center">
+                  <div>
+                    <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+                      <div className="flex flex-row place-items-center">
+                        Unlock event metrics !
+                      </div>
+                    </CardTitle>
+                    <CardDescription className="flex justify-between flex-col text-muted-foreground space-y-0.5">
+                      <p>
+                        Give us more feedback to compute the Mean Square Error and the R-squared.
+                      </p>
+                    </CardDescription>
                   </div>
+
+                  <Link href="/org/transcripts/tasks">
+                    <Button variant="default">
+                      Give feedback
+                      <ChevronRight className="ml-2" />
+                    </Button>
+                  </Link>
                 </div>
-              </CardHeader>
-            </Card>
-          </>
-        )}
+              </div>
+            </CardHeader>
+          </Card></>
+      )}
+      {/* if the score type is confidence or category but there is not enough data to compute the scores, we display a not enough feedback message */}
+      {(!F1Score?.f1_score) && (event?.score_range_settings?.score_type != "range") && (
+        <>
+          <Card className="bg-secondary">
+            <CardHeader>
+              <div className="flex">
+                <Tag className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+
+                <div className="flex flex-grow justify-between items-center">
+                  <div>
+                    <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+                      <div className="flex flex-row place-items-center">
+                        Unlock event metrics !
+                      </div>
+                    </CardTitle>
+                    <CardDescription className="flex justify-between flex-col text-muted-foreground space-y-0.5">
+                      <p>
+                        Label more data to compute the F1-score, Precision and
+                        Recall.
+                      </p>
+                    </CardDescription>
+                  </div>
+
+                  <Link href="/org/transcripts/tasks">
+                    <Button variant="default">
+                      Label data
+                      <ChevronRight className="ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        </>
+      )}
       {/* In any case we display the Total number of descriptions card */}
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -139,8 +184,8 @@ function EventAnalytics({ eventId }: { eventId: string }) {
               {(totalNbDetections?.total_nb_events === undefined && (
                 <p>...</p>
               )) || (
-                <p className="text-xl">{totalNbDetections?.total_nb_events}</p>
-              )}
+                  <p className="text-xl">{totalNbDetections?.total_nb_events}</p>
+                )}
             </CardContent>
           </Card>
           {/* If we have enough data to compute the scores, we display the F1-score, Precision and Recall cards */}
@@ -177,6 +222,41 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                     <p className="text-xl">{F1Score?.recall.toFixed(2)}</p>
                   )) ||
                     (!F1Score?.f1_score && <p className="text-xl">...</p>)}
+                </CardContent>
+              </Card>
+            </>
+          )}
+          {/* If we have enough data to compute the scores, we display the Mean Square Error and the R-squared */}
+          {event?.score_range_settings?.score_type == "range" && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardDescription>Mean Square Error</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(MeanSquareError?.mean_square_error && (
+                    <p className="text-xl">
+                      {MeanSquareError?.mean_square_error.toFixed(2)}
+                    </p>
+                  )) || (!MeanSquareError?.mean_square_error && (
+                    <p className="text-xl"> ... </p>
+                  ))}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardDescription>R-squared</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(MeanSquareError?.mean_square_error && (
+                    <p className="text-xl">
+                      {MeanSquareError?.r_squared.toFixed(2)}
+                    </p>
+                  )) || (!MeanSquareError?.mean_square_error && (
+                    <p className="text-xl">
+                      ...
+                    </p>
+                  ))}
                 </CardContent>
               </Card>
             </>

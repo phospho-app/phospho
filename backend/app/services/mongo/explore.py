@@ -6,7 +6,13 @@ import datetime
 import math
 from collections import defaultdict
 from typing import Dict, List, Literal, Optional, Tuple, Union
-from sklearn.metrics import f1_score, precision_score, recall_score
+from sklearn.metrics import (
+    f1_score,
+    mean_squared_error,
+    precision_score,
+    recall_score,
+    r2_score,
+)
 
 import pandas as pd
 import pydantic
@@ -1745,6 +1751,49 @@ async def get_y_pred_y_true(
             "score_range",
         ].apply(lambda x: x.get("label"))
 
+    elif event.score_range_settings.score_type == "range":
+        mask = (df["source"] == "owner") | (
+            (df["source"] != "owner")
+            & ((df["confirmed"] != False) | (df["removed"] != False))
+        )
+
+        df = df[mask]
+
+        df["y_pred"] = df["score_range"].apply(lambda x: x.get("value"))
+        df["y_true"] = df["score_range"].apply(lambda x: x.get("value"))
+
+        df.loc[
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] == False)
+            ),
+            "y_true",
+        ] = df.loc[
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] == False)
+            ),
+            "score_range",
+        ].apply(lambda x: x.get("corrected_value"))
+
+        df.loc[
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] != True)
+            ),
+            "y_true",
+        ] = df.loc[
+            (
+                (df["source"] != "owner")
+                & (df["confirmed"] == True)
+                & (df["removed"] != True)
+            ),
+            "score_range",
+        ].apply(lambda x: x.get("corrected_value"))
+
     if not df.empty:
         y_pred = df["y_pred"].fillna("None")
         y_true = df["y_true"].fillna("None")
@@ -1776,6 +1825,20 @@ async def get_events_aggregated_metrics(
         output["total_nb_events"] = await get_total_nb_of_detections(
             project_id=project_id, filters=filters
         )
+    if "mean_squared_error" in metrics or "r_squared" in metrics:
+        logger.debug(event)
+        if filters.event_id is None:
+            logger.warning("Event ID is required to compute mean_squared_error")
+        elif event.score_range_settings.score_type == "range":
+            y_pred, y_true = await get_y_pred_y_true(
+                project_id=project_id, filters=filters, event=event
+            )
+            output["mean_squared_error"] = mean_squared_error(y_true, y_pred)
+            output["r_squared"] = r2_score(y_true, y_pred)
+        else:
+            logger.warning(
+                "Cannot compute mean_squared_error for a category event or a confidence event"
+            )
     if "f1_score" in metrics or "precision" in metrics or "recall" in metrics:
         logger.debug(event)
         if filters.event_id is None:

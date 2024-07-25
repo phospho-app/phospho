@@ -62,7 +62,7 @@ export const EventDetectionDescription = ({
           )}
         {roundedConfidenceScore && event.score_range?.score_type == "range" && (
           <div>
-            Score: {event?.score_range?.corrected_value}/{event.score_range.max}
+            Score: {event?.score_range?.corrected_value ?? event?.score_range?.value}/{event.score_range?.max}
           </div>
         )}
         {event.score_range?.score_type == "category" && (
