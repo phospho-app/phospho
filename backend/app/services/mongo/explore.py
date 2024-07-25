@@ -1752,47 +1752,24 @@ async def get_y_pred_y_true(
         ].apply(lambda x: x.get("label"))
 
     elif event.score_range_settings.score_type == "range":
-        mask = (df["source"] == "owner") | (
+        mask = (
+            (df["source"] == "owner")
+            & (df["removed"] != True)
+            & (df["score_range"].notna())
+        ) | (
             (df["source"] != "owner")
-            & ((df["confirmed"] != False) | (df["removed"] != False))
+            & (df["confirmed"] == True)
+            & (df["removed"] != True)
+            & (df["score_range"].notna())
         )
 
         df = df[mask]
 
         df["y_pred"] = df["score_range"].apply(lambda x: x.get("value"))
-        df["y_true"] = df["score_range"].apply(lambda x: x.get("value"))
+        df["y_true"] = df["score_range"].apply(lambda x: x.get("corrected_value"))
 
-        df.loc[
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] == False)
-            ),
-            "y_true",
-        ] = df.loc[
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] == False)
-            ),
-            "score_range",
-        ].apply(lambda x: x.get("corrected_value"))
-
-        df.loc[
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] != True)
-            ),
-            "y_true",
-        ] = df.loc[
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] != True)
-            ),
-            "score_range",
-        ].apply(lambda x: x.get("corrected_value"))
+        # I fill the y_true with the value if the corrected_value is None
+        df["y_true"] = df["y_true"].fillna(df["y_pred"])
 
     if not df.empty:
         y_pred = df["y_pred"].fillna("None")
@@ -1826,7 +1803,6 @@ async def get_events_aggregated_metrics(
             project_id=project_id, filters=filters
         )
     if "mean_squared_error" in metrics or "r_squared" in metrics:
-        logger.debug(event)
         if filters.event_id is None:
             logger.warning("Event ID is required to compute mean_squared_error")
         elif event.score_range_settings.score_type == "range":
@@ -1840,7 +1816,6 @@ async def get_events_aggregated_metrics(
                 "Cannot compute mean_squared_error for a category event or a confidence event"
             )
     if "f1_score" in metrics or "precision" in metrics or "recall" in metrics:
-        logger.debug(event)
         if filters.event_id is None:
             logger.warning("Event ID is required to compute f1_score, precision")
         elif event.score_range_settings.score_type == "range":
@@ -1854,6 +1829,7 @@ async def get_events_aggregated_metrics(
             output["f1_score"] = f1_score(y_true, y_pred, average="weighted")
             output["precision"] = precision_score(y_true, y_pred, average="weighted")
             output["recall"] = recall_score(y_true, y_pred, average="weighted")
+    logger.debug(output)
     return output
 
 
