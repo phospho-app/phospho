@@ -114,8 +114,8 @@ export default function Page() {
                 Analytics
               </CardTitle>
               <CardDescription className="text-muted-foreground">
-                Your data is automatically augmented using event detectors set
-                up below.{" "}
+                Your data is automatically augmented using the event detectors
+                set up below.{" "}
                 <Link
                   className="underline "
                   href="https://docs.phospho.ai/guides/events"

@@ -168,6 +168,84 @@ export function getColumns({
         </div>
       ),
     },
+    // Input
+    {
+      header: "User input",
+      accessorKey: "input",
+      cell: (row) => {
+        const input = row.getValue() as string; // asserting the type as string
+        return (
+          <Popover>
+            <PopoverTrigger
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+              }}
+              className="text-left"
+            >
+              {input
+                ? input.length > 80
+                  ? input.substring(0, 80) + "..."
+                  : input
+                : "-"}
+            </PopoverTrigger>
+            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
+              {input}
+            </PopoverContent>
+          </Popover>
+        );
+      },
+      minSize: 100,
+    },
+    {
+      header: "System output",
+      accessorKey: "output",
+      cell: (row) => {
+        const output = row.getValue() as string; // asserting the type as string
+        return (
+          <Popover>
+            <PopoverTrigger
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+              }}
+              className="text-left"
+            >
+              {output
+                ? output.length > 80
+                  ? output.substring(0, 80) + "..."
+                  : output
+                : "-"}
+            </PopoverTrigger>
+            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
+              {output}
+            </PopoverContent>
+          </Popover>
+        );
+      },
+      minSize: 100,
+    },
+    // Language
+    {
+      header: () => {
+        return (
+          <div className="flex items-center">
+            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+            Language
+          </div>
+        );
+      },
+      accessorKey: "language",
+      cell: (row) => (
+        <HoverCard openDelay={80} closeDelay={30}>
+          <HoverCardTrigger>
+            <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
+          </HoverCardTrigger>
+          <HoverCardContent side="top" className="text-sm text-center">
+            {getLanguageLabel(row.getValue() as string)}
+          </HoverCardContent>
+        </HoverCard>
+      ),
+      maxSize: 10,
+    },
     // Flag
     {
       header: () => {
@@ -334,29 +412,7 @@ export function getColumns({
         </div>
       ),
     },
-    // Language
-    {
-      header: () => {
-        return (
-          <div className="flex items-center">
-            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-            Language
-          </div>
-        );
-      },
-      accessorKey: "language",
-      cell: (row) => (
-        <HoverCard openDelay={80} closeDelay={30}>
-          <HoverCardTrigger>
-            <Badge variant={"secondary"}>{row.getValue() as string}</Badge>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="text-sm text-center">
-            {getLanguageLabel(row.getValue() as string)}
-          </HoverCardContent>
-        </HoverCard>
-      ),
-      maxSize: 10,
-    },
+
     // Sentiment Analysis
     {
       header: () => {
@@ -400,60 +456,7 @@ export function getColumns({
       },
       maxSize: 10,
     },
-    {
-      header: "Input",
-      accessorKey: "input",
-      cell: (row) => {
-        const input = row.getValue() as string; // asserting the type as string
-        return (
-          <Popover>
-            <PopoverTrigger
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation();
-              }}
-              className="text-left"
-            >
-              {input
-                ? input.length > 80
-                  ? input.substring(0, 80) + "..."
-                  : input
-                : "-"}
-            </PopoverTrigger>
-            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
-              {input}
-            </PopoverContent>
-          </Popover>
-        );
-      },
-      minSize: 100,
-    },
-    {
-      header: "Output",
-      accessorKey: "output",
-      cell: (row) => {
-        const output = row.getValue() as string; // asserting the type as string
-        return (
-          <Popover>
-            <PopoverTrigger
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation();
-              }}
-              className="text-left"
-            >
-              {output
-                ? output.length > 80
-                  ? output.substring(0, 80) + "..."
-                  : output
-                : "-"}
-            </PopoverTrigger>
-            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
-              {output}
-            </PopoverContent>
-          </Popover>
-        );
-      },
-      minSize: 100,
-    },
+
     {
       header: "",
       accessorKey: "view",
