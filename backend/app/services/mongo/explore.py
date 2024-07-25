@@ -27,7 +27,7 @@ from fastapi import HTTPException
 from loguru import logger
 from pymongo import InsertOne, UpdateOne
 
-from phospho.models import Cluster, Clustering
+from phospho.models import Cluster, Clustering, EventDefinition
 from app.api.platform.models import Pagination
 
 
@@ -1587,6 +1587,7 @@ async def get_total_nb_of_detections(
 async def get_y_pred_y_true(
     project_id: str,
     filters: ProjectDataFilters,
+    event: EventDefinition,
     **kwargs,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
@@ -1602,34 +1603,12 @@ async def get_y_pred_y_true(
 
     main_filter["event_definition.id"] = {"$in": filters.event_id}
 
-    main_filter_confidence = main_filter.copy()
-    main_filter_confidence["event_definition.score_range_settings.score_type"] = {
-        "$in": ["confidence"]
-    }
-
-    main_filter_category = main_filter.copy()
-    main_filter_category["event_definition.score_range_settings.score_type"] = {
-        "$in": ["category"]
-    }
-
-    query_result_confidence = (
-        await mongo_db["events"].find(main_filter_confidence).to_list(length=None)
-    )
-    query_result_category = (
-        await mongo_db["events"].find(main_filter_category).to_list(length=None)
-    )
+    query_result = await mongo_db["events"].find(main_filter).to_list(length=None)
 
     # Convert to DataFrame
-    df_confidence = pd.DataFrame(query_result_confidence)
-    df_category = pd.DataFrame(query_result_category)
-
-    assert df_confidence.empty or df_category.empty
-    # Create the filter masks for each case
-
-    df = None
-
-    if not df_confidence.empty:
-        df = df_confidence
+    df = pd.DataFrame(query_result)
+    logger.debug(event.score_range_settings.score_type)
+    if event.score_range_settings.score_type == "confidence":
         mask_y_pred_true = (
             (
                 (df["source"] != "owner")
@@ -1675,37 +1654,12 @@ async def get_y_pred_y_true(
             & (df["confirmed"] == True)
             & (df["removed"] != True)
         )
-
-        mask_y_true_false = (
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] == True)
-            )
-            | (
-                (df["source"] != "owner")
-                & (df["confirmed"] == False)
-                & (df["removed"] == True)
-            )
-            | (
-                (df["source"] == "owner")
-                & (df["confirmed"] != True)
-                & (df["removed"] != True)
-            )
-            | (
-                (df["source"] == "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] == True)
-            )
-        )
         # Apply the masks to get the desired DataFrames
         df = pd.concat([df[mask_y_pred_true], df[mask_y_pred_false]], ignore_index=True)
         df["y_pred"] = mask_y_pred_true
         df["y_true"] = mask_y_true_true
 
-    if not df_category.empty:
-        df = df_category
-
+    elif event.score_range_settings.score_type == "category":
         mask = (
             (
                 (df["source"] != "owner")
@@ -1791,7 +1745,7 @@ async def get_y_pred_y_true(
             "score_range",
         ].apply(lambda x: x.get("label"))
 
-    if df:
+    if not df.empty:
         y_pred = df["y_pred"].fillna("None")
         y_true = df["y_true"].fillna("None")
     else:
@@ -1805,6 +1759,7 @@ async def get_events_aggregated_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
     filters: Optional[ProjectDataFilters] = None,
+    event: Optional[EventDefinition] = None,
 ) -> Dict[str, object]:
     if filters is None:
         filters = ProjectDataFilters()
@@ -1822,22 +1777,20 @@ async def get_events_aggregated_metrics(
             project_id=project_id, filters=filters
         )
     if "f1_score" in metrics or "precision" in metrics or "recall" in metrics:
+        logger.debug(event)
         if filters.event_id is None:
             logger.warning("Event ID is required to compute f1_score, precision")
+        elif event.score_range_settings.score_type == "range":
+            logger.warning(
+                "Cannot compute f1_score, precision, recall for a range event"
+            )
         else:
             y_pred, y_true = await get_y_pred_y_true(
-                project_id=project_id, filters=filters
+                project_id=project_id, filters=filters, event=event
             )
-            if y_pred and y_true:
-                output["f1_score"] = f1_score(y_true, y_pred, average="weighted")
-                output["precision"] = precision_score(
-                    y_true, y_pred, average="weighted"
-                )
-                output["recall"] = recall_score(y_true, y_pred, average="weighted")
-            else:
-                logger.warning(
-                    "Cannot compute f1_score, precision, recall for a range event"
-                )
+            output["f1_score"] = f1_score(y_true, y_pred, average="weighted")
+            output["precision"] = precision_score(y_true, y_pred, average="weighted")
+            output["recall"] = recall_score(y_true, y_pred, average="weighted")
     return output
 
 
