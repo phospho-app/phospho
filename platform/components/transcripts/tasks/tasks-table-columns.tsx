@@ -1,17 +1,16 @@
-import { EvalSettings } from "@/components/eval-settings";
 import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
 } from "@/components/label-events";
-import { SentimentSettings } from "@/components/sentiment-settings";
+import { EvalSettings } from "@/components/transcripts/settings/eval-settings";
+import { RunEventsSettings } from "@/components/transcripts/settings/events-settings";
+import { SentimentSettings } from "@/components/transcripts/settings/sentiment-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -41,13 +40,11 @@ import {
   ArrowUp,
   Check,
   ChevronRight,
-  EllipsisVertical,
   PenSquare,
-  Play,
-  PlusIcon,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
+import React from "react";
 import useSWR, { KeyedMutator } from "swr";
 
 async function flagTask({
@@ -95,9 +92,11 @@ export function getColumns({
   setEventDefinition,
 }: {
   mutateTasks: KeyedMutator<any>;
-  setSheetOpen: (open: boolean) => void;
-  setSheetToOpen: (sheet: string | null) => void;
-  setEventDefinition: (event: EventDefinition | null) => void;
+  setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setSheetToOpen: React.Dispatch<React.SetStateAction<string | null>>;
+  setEventDefinition: React.Dispatch<
+    React.SetStateAction<EventDefinition | null>
+  >;
 }): ColumnDef<TaskWithEvents>[] {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
@@ -113,7 +112,6 @@ export function getColumns({
   const events = selectedProject?.settings?.events || {};
   const eventArray = Object.entries(events);
 
-  let uniqueEventNamesInData: string[] = [];
   const { data: uniqueEvents } = useSWR(
     project_id
       ? [`/api/projects/${project_id}/unique-events`, accessToken]
@@ -123,13 +121,6 @@ export function getColumns({
       keepPreviousData: true,
     },
   );
-  if (project_id && uniqueEvents?.events) {
-    uniqueEventNamesInData = Array.from(
-      new Set(
-        uniqueEvents.events.map((event: Event) => event.event_name as string),
-      ),
-    );
-  }
 
   const columns: ColumnDef<TaskWithEvents>[] = [
     // id
@@ -205,7 +196,7 @@ export function getColumns({
                           ? "destructive"
                           : "secondary"
                     }
-                    className="hover:border-green-500 "
+                    className="hover:border-green-500"
                   >
                     {row.getValue() as string}
                     {row.getValue() === null && <div className="h-3 w-6"></div>}
@@ -286,73 +277,34 @@ export function getColumns({
               <Sparkles className="h-4 w-4 text-green-500" />
               <div>Events</div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <EllipsisVertical className="w-5 h-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>
-                  <div className="flex flex-row items-center">
-                    <Sparkles className="w-4 h-4 text-green-500 mr-1" />
-                    <div>Detect event</div>
-                  </div>
-                </DropdownMenuLabel>
-                {eventArray.map(([event_name, event_definition]) => {
-                  return (
-                    <DropdownMenuItem
-                      key={event_definition.event_name}
-                      onClick={(mouseEvent) => {
-                        // This is used to avoid clicking on the row as well
-                        mouseEvent.stopPropagation();
-                        setEventDefinition(event_definition);
-                        setSheetOpen(true);
-                        setSheetToOpen("run");
-                      }}
-                    >
-                      {event_definition.event_name}
-                    </DropdownMenuItem>
-                  );
-                })}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={(mouseEvent) => {
-                    // This is used to avoid clicking on the row as well
-                    mouseEvent.stopPropagation();
-                    setSheetToOpen("edit");
-                    setSheetOpen(true);
-                    setEventDefinition(null);
-                  }}
-                >
-                  <PlusIcon className="w-4 h-4 mr-1" />
-                  Add new event
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <RunEventsSettings
+              eventArray={eventArray}
+              setSheetOpen={setSheetOpen}
+              setSheetToOpen={setSheetToOpen}
+              setEventDefinition={setEventDefinition}
+            />
           </div>
         );
       },
       accessorKey: "events",
       cell: (row) => (
-        <div className="group flex items-center justify-between space-y-1">
-          <div className="flex flex-wrap space-x-1">
+        <div className="group flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-center">
             {(row.getValue() as Event[]).map((event: Event) => {
               return (
                 <InteractiveEventBadgeForTasks
-                  key={event.event_name}
+                  key={`${event.event_name}_task_${row.row.original.id}`}
                   event={event}
                   task={row.row.original as TaskWithEvents}
                   setTask={(task: TaskWithEvents) => {
                     // Use mutateTasks
                     mutateTasks((data: any) => {
-                      // Edit the Task with the same task id
                       data.tasks = data.tasks.map(
-                        (existingTask: TaskWithEvents) => {
-                          if (existingTask.id === task.id) {
+                        (exisingTask: TaskWithEvents) => {
+                          if (exisingTask.id === task.id) {
                             return task;
                           }
-                          return existingTask;
+                          return exisingTask;
                         },
                       );
                       return data;
@@ -361,25 +313,17 @@ export function getColumns({
                 />
               );
             })}
-          </div>
-          {/* <div className="flex-grow"></div> */}
-          <div className="w-10">
             <AddEventDropdownForTasks
-              key={row.row.original.id}
+              key={`add_event_task_${row.row.original.id}`}
               task={row.row.original as TaskWithEvents}
-              className="hidden group-hover:block"
               setTask={(task: TaskWithEvents) => {
-                // Use mutateTasks
                 mutateTasks((data: any) => {
-                  // Edit the Task with the same task id
-                  data.tasks = data.tasks.map(
-                    (existingTask: TaskWithEvents) => {
-                      if (existingTask.id === task.id) {
-                        return task;
-                      }
-                      return existingTask;
-                    },
-                  );
+                  data.tasks = data.tasks.map((exisingTask: TaskWithEvents) => {
+                    if (exisingTask.id === task.id) {
+                      return task;
+                    }
+                    return exisingTask;
+                  });
                   return data;
                 });
               }}
@@ -475,7 +419,9 @@ export function getColumns({
                   : input
                 : "-"}
             </PopoverTrigger>
-            <PopoverContent className="text-sm">{input}</PopoverContent>
+            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
+              {input}
+            </PopoverContent>
           </Popover>
         );
       },
@@ -500,7 +446,9 @@ export function getColumns({
                   : output
                 : "-"}
             </PopoverTrigger>
-            <PopoverContent className="text-sm">{output}</PopoverContent>
+            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
+              {output}
+            </PopoverContent>
           </Popover>
         );
       },

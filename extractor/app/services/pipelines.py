@@ -20,7 +20,13 @@ from app.services.projects import get_project_by_id
 from app.services.sentiment_analysis import run_sentiment_and_language_analysis
 from app.services.webhook import trigger_webhook
 from phospho import lab
-from phospho.models import EvaluationModel, JobResult, ResultType, SentimentObject
+from phospho.models import (
+    EvaluationModel,
+    JobResult,
+    ResultType,
+    SentimentObject,
+    SessionStats,
+)
 
 
 class EventConfig(lab.JobConfig):
@@ -662,6 +668,7 @@ async def task_scoring_pipeline(
                     }
                 },
             )
+
     return flag
 
 
@@ -695,6 +702,8 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
             flag = await task_scoring_pipeline(task, save_task=save_task)
         else:
             flag = task_in_db.get("flag")
+        if task.session_id is not None:
+            await compute_session_info_pipeline(task.project_id, task.session_id)
     else:
         flag = await task_scoring_pipeline(task, save_task=save_task)
 
@@ -784,6 +793,94 @@ async def messages_main_pipeline(
     )
 
 
+async def compute_session_info_pipeline(project_id: str, session_id: str):
+    """
+    Compute session information from its tasks
+    - Average sentiment score
+    - Average sentiment magnitude
+    - Most common sentiment label
+    - Most common language
+    - Most common flag
+    """
+    logger.debug(f"Compute session info for session {session_id}")
+    mongo_db = await get_mongo_db()
+    tasks = (
+        await mongo_db["tasks"]
+        .find(
+            {
+                "project_id": project_id,
+                "session_id": session_id,
+            },
+        )
+        .to_list(length=None)
+    )
+
+    sentiment_score: list = []
+    sentiment_magnitude: list = []
+    sentiment_label_counter: Dict[str, int] = defaultdict(int)
+    language_counter: Dict[str, int] = defaultdict(int)
+    session_flag: Dict[str, int] = defaultdict(int)
+    preview = ""
+
+    for task in tasks:
+        valid_task = Task.model_validate(task)
+        if valid_task.sentiment is not None and valid_task.sentiment.score is not None:
+            sentiment_score.append(valid_task.sentiment.score)
+        if (
+            valid_task.sentiment is not None
+            and valid_task.sentiment.magnitude is not None
+        ):
+            sentiment_magnitude.append(valid_task.sentiment.magnitude)
+        if valid_task.sentiment is not None and valid_task.sentiment.label is not None:
+            sentiment_label_counter[valid_task.sentiment.label] += 1
+        if valid_task.language is not None:
+            language_counter[valid_task.language] += 1
+        if valid_task.flag is not None:
+            session_flag[valid_task.flag] += 1
+        preview += valid_task.preview() + "\n"
+
+    if len(tasks) > 0:
+        most_common_language = (
+            max(language_counter, key=language_counter.get)
+            if language_counter
+            else None
+        )
+        most_common_label = (
+            max(sentiment_label_counter, key=sentiment_label_counter.get)
+            if sentiment_label_counter
+            else None
+        )
+        most_common_flag = (
+            max(session_flag, key=session_flag.get) if session_flag else None
+        )
+
+        avg_sentiment_score = None
+        if len(sentiment_score) > 0:
+            avg_sentiment_score = sum(sentiment_score) / len(sentiment_score)
+
+        avg_magnitude_score = None
+        if len(sentiment_magnitude) > 0:
+            avg_magnitude_score = sum(sentiment_magnitude) / len(sentiment_magnitude)
+
+        session_task_info = SessionStats(
+            avg_sentiment_score=avg_sentiment_score,
+            avg_magnitude_score=avg_magnitude_score,
+            most_common_sentiment_label=most_common_label,
+            most_common_language=most_common_language,
+            most_common_flag=most_common_flag,
+        )
+
+        await mongo_db["sessions"].update_one(
+            {"id": session_id},
+            {
+                "$set": {
+                    "stats": session_task_info.model_dump(),
+                    "preview": preview if preview else None,
+                }
+            },
+        )
+
+
 async def sentiment_and_language_analysis_pipeline(
     task: Task,
 ) -> tuple[SentimentObject, Optional[str]]:
@@ -853,6 +950,7 @@ async def sentiment_and_language_analysis_pipeline(
     if not project.settings.run_sentiment:
         sentiment_object = None
 
+    # We update the task item
     await mongo_db["tasks"].update_one(
         {
             "id": task.id,

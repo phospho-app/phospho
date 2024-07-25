@@ -5,6 +5,7 @@ from typing import Callable, List, Optional
 import httpx
 import stripe
 from app.api.v2.models import LogEvent, PipelineResults
+from app.api.v3.models import MinimalLogEventForMessages
 from app.core import config
 from app.db.models import Recipe, Task
 from app.security import propelauth
@@ -80,6 +81,30 @@ class ExtractorClient:
         self.org_id = org_id
         self.project_id = project_id
 
+    async def _compute_stripe_usage(self, nb_job_results: int) -> None:
+        """
+        Compute the usage on Stripe
+        """
+        from app.services.mongo.projects import get_project_by_id
+
+        # Fetch the project settings
+        project = await get_project_by_id(self.project_id)
+        # Find out the number of active events and if sentiment and language analysis are enabled
+        usage_per_log = 0
+        if project.settings.run_event_detection:
+            usage_per_log += len(project.settings.events)
+        if project.settings.run_sentiment:
+            usage_per_log += 1
+        if project.settings.run_language:
+            usage_per_log += 1
+        if project.settings.run_evals:
+            usage_per_log += 1
+
+        await bill_on_stripe(
+            org_id=self.org_id,
+            nb_credits_used=nb_job_results * usage_per_log,
+        )
+
     async def _post(
         self,
         endpoint: str,
@@ -127,7 +152,7 @@ class ExtractorClient:
 
         return None
 
-    async def run_log_process(
+    async def run_log_process_for_tasks(
         self,
         logs_to_process: List[LogEvent],
         extra_logs_to_save: Optional[List[LogEvent]] = None,
@@ -151,9 +176,39 @@ class ExtractorClient:
                 "project_id": self.project_id,
                 "org_id": self.org_id,
             },
-            on_success_callback=lambda response: bill_on_stripe(
-                org_id=self.org_id,
-                nb_credits_used=response.json().get("nb_job_results", 0),
+            on_success_callback=lambda response: self._compute_stripe_usage(
+                nb_job_results=response.json().get("nb_job_results", 0),
+            ),
+        )
+
+    async def run_log_process_for_messages(
+        self,
+        logs_to_process: List[MinimalLogEventForMessages],
+        extra_logs_to_save: Optional[List[MinimalLogEventForMessages]] = None,
+    ):
+        """
+        Run the log procesing pipeline on *messages* asynchronously
+
+        This is the v3 version of the function
+        """
+        if extra_logs_to_save is None:
+            extra_logs_to_save = []
+
+        await self._post(
+            "pipelines/log/messages",
+            {
+                "logs_to_process": [
+                    log_event.model_dump(mode="json") for log_event in logs_to_process
+                ],
+                "extra_logs_to_save": [
+                    log_event.model_dump(mode="json")
+                    for log_event in extra_logs_to_save
+                ],
+                "project_id": self.project_id,
+                "org_id": self.org_id,
+            },
+            on_success_callback=lambda response: self._compute_stripe_usage(
+                nb_job_results=response.json().get("nb_job_results", 0),
             ),
         )
 
@@ -209,9 +264,8 @@ class ExtractorClient:
                 "tasks": [task.model_dump(mode="json") for task in tasks],
                 "recipe": recipe.model_dump(mode="json"),
             },
-            on_success_callback=lambda response: bill_on_stripe(
-                org_id=self.org_id,
-                nb_credits_used=response.json().get("nb_job_results", 0),
+            on_success_callback=lambda response: self._compute_stripe_usage(
+                nb_job_results=response.json().get("nb_job_results", 0),
             ),
         )
 
@@ -245,9 +299,8 @@ class ExtractorClient:
                 "current_usage": current_usage,
                 "max_usage": max_usage,
             },
-            on_success_callback=lambda response: bill_on_stripe(
-                org_id=self.org_id,
-                nb_credits_used=response.json().get("nb_job_results", 0),
+            on_success_callback=lambda response: self._compute_stripe_usage(
+                nb_job_results=response.json().get("nb_job_results", 0),
             ),
         )
 
@@ -268,8 +321,7 @@ class ExtractorClient:
                 "current_usage": current_usage,
                 "max_usage": max_usage,
             },
-            on_success_callback=lambda response: bill_on_stripe(
-                org_id=self.org_id,
-                nb_credits_used=response.json().get("nb_job_results", 0),
+            on_success_callback=lambda response: self._compute_stripe_usage(
+                nb_job_results=response.json().get("nb_job_results", 0),
             ),
         )

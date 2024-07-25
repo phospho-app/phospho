@@ -204,7 +204,6 @@ async def get_sessions_project_metrics(
     Get aggregated metrics for the sessions of a project. Used for the Sessions dashboard.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    logger.info(f"Sessions request: {filters}")
     if filters is None:
         filters = ProjectDataFilters(event_name=None)
     if isinstance(filters.event_name, str):

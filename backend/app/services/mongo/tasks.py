@@ -398,9 +398,6 @@ async def get_total_nb_of_tasks(
         project_id=project_id, filters=filters
     )
 
-    logger.info(f"Global filters: {global_filters}")
-    logger.info(f"Collection: {collection}")
-
     query_result = (
         await mongo_db[collection]
         .aggregate(
