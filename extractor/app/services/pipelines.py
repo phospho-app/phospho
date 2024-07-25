@@ -34,6 +34,11 @@ class EventConfig(lab.JobConfig):
     event_description: str
 
 
+class MainPipeline:
+    def __init__(self):
+        pass
+
+
 async def run_event_detection_pipeline(
     workload: lab.Workload, tasks: List[Task]
 ) -> Dict[str, List[Event]]:
