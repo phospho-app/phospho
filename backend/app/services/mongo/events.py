@@ -185,3 +185,35 @@ async def change_label_event(
     event_model.confirmed = True
 
     return event_model
+
+
+async def change_value_event(
+    project_id: str,
+    event_id: str,
+    new_value: str,
+) -> Event:
+    mongo_db = await get_mongo_db()
+    # Get the event
+    event = await mongo_db["events"].find_one(
+        {"project_id": project_id, "id": event_id}
+    )
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    event_model = Event.model_validate(event)
+
+    # Edit the event. Note: this always confirm the event.
+    result = await mongo_db["events"].update_one(
+        {"project_id": project_id, "id": event_id},
+        {
+            "$set": {
+                "score_range.corrected_value": new_value,
+                "confirmed": True,
+            }
+        },
+    )
+
+    event_model.score_range.corrected_value = new_value
+    event_model.confirmed = True
+
+    return event_model
