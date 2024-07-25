@@ -10,15 +10,6 @@ const Authenticate: React.FC = () => {
     <>
       <div className="hidden"></div>
       <div className="h-screen container relative flex-col items-center justify-center md:grid lg:max-w-screen lg:grid-cols-2 lg:px-0 lg:mx-0">
-        {/*<Link
-              href="/dashboard"
-              className={cn(
-                buttonVariants({ variant: "ghost" }),
-                "absolute right-4 top-4 md:right-8 md:top-8"
-              )}
-            >
-              Login
-              </Link>*/}
         <div className="relative hidden h-full flex-col bg-muted p-10 lg:border-r lg:flex">
           <div className="absolute inset-0 bg-gradient-to-r from from-transparent to-green-500" />
           <div className="relative z-20 flex items-center text-lg font-medium">

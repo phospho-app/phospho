@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useRedirectFunctions } from "@propelauth/nextjs/client";
 import {
+  AreaChart,
   BarChartBig,
   BookOpenText,
   Boxes,
@@ -16,7 +17,6 @@ import {
   MessagesSquare,
   Settings,
   Shuffle,
-  TestTubeDiagonal,
   TextSearch,
   TriangleAlert,
   Users,
@@ -130,16 +130,27 @@ export function Sidebar() {
             </SideBarElement>
           </div>
         )}
-        <SideBarElement href="/org/transcripts/dashboard">
-          <LayoutDashboard className="h-4 w-4 mr-2" />
-          Dashboard
-        </SideBarElement>
         <SideBarElement
-          href="/org/insights/dataviz"
-          icon={<BarChartBig size={16} className="mr-2" />}
+          href="/org/dataviz/"
+          icon={<BarChartBig className="h-4 w-4 mr-2" />}
+          collapsible={true}
         >
           Dataviz
         </SideBarElement>
+        {(pathname.startsWith("/org/dataviz") || isMobile) && (
+          <div className="ml-6 text-muted-foreground">
+            <SideBarElement href="/org/dataviz/dashboard">
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              Dashboard
+            </SideBarElement>
+            <SideBarElement
+              href="/org/dataviz/studio"
+              icon={<AreaChart size={16} className="mr-2" />}
+            >
+              Studio
+            </SideBarElement>
+          </div>
+        )}
         <WhiteSpaceSeparator />
         <SideBarElement
           href="/org/insights/events"
