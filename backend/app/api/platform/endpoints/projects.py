@@ -448,9 +448,13 @@ async def post_upload_tasks(
 
     # Read file content -> into memory
     file_params = {}
+    logger.info(f"Reading file {file.filename} content.")
+    logger.info(f"File content: {file.file}")
     try:
         if file_extension == "csv":
-            tasks_df = pd.read_csv(file.file, sep=None, engine="python", **file_params)
+            tasks_df = pd.read_csv(
+                file.file, sep=None, engine="python", on_bad_lines="warn", **file_params
+            )
         elif file_extension == "xlsx":
             tasks_df = pd.read_excel(file.file, **file_params)
         else:
