@@ -10,4 +10,8 @@ class EventBackfillRequest(BaseModel):
 
 
 class LabelRequest(BaseModel):
-    new_label: Union[str, float]
+    new_label: str
+
+
+class ScoreRequest(BaseModel):
+    new_value: float

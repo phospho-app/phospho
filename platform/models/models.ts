@@ -100,7 +100,8 @@ export interface ScoreRange {
   score_type: ScoreRangeType;
   label: string;
   options_confidence: Record<string | number, number>;
-  corrected_label?: string | number;
+  corrected_label?: string;
+  corrected_value?: number;
 }
 
 export interface Event {

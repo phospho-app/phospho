@@ -62,7 +62,7 @@ export const EventDetectionDescription = ({
           )}
         {roundedConfidenceScore && event.score_range?.score_type == "range" && (
           <div>
-            Score: {event?.score_range?.corrected_label}/{event.score_range.max}
+            Score: {event?.score_range?.corrected_value}/{event.score_range.max}
           </div>
         )}
         {event.score_range?.score_type == "category" && (
@@ -89,7 +89,7 @@ export const EventBadge = ({ event }: { event: Event }) => {
       {score_type === "confidence" && <p>{event.event_name}</p>}
       {score_type === "range" && (
         <p>
-          {event.event_name} {event?.score_range?.corrected_label ?? roundedScore}/{event.score_range?.max}
+          {event.event_name} {event?.score_range?.corrected_value ?? roundedScore}/{event.score_range?.max}
         </p>
       )}
       {score_type === "category" && (
@@ -234,7 +234,7 @@ export const InteractiveEventBadgeForTasks = ({
                         onClick={async (mouseEvent) => {
                           mouseEvent.stopPropagation();
                           const response = await fetch(
-                            `/api/events/${event.project_id}/label/${event.id}`,
+                            `/api/events/${event.project_id}/value/${event.id}`,
                             {
                               method: "POST",
                               headers: {
@@ -242,7 +242,7 @@ export const InteractiveEventBadgeForTasks = ({
                                 "Content-Type": "application/json",
                               },
                               body: JSON.stringify({
-                                new_label: score,
+                                new_value: score,
                               }),
                             },
                           );
