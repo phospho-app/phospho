@@ -7,7 +7,11 @@ from loguru import logger
 from phospho.models import ProjectDataFilters
 from propelauth_fastapi import User
 
-from app.api.platform.models import EventBackfillRequest, Event, LabelRequest
+from app.api.platform.models import (
+    EventBackfillRequest,
+    Event,
+    LabelRequest,
+)
 from app.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
