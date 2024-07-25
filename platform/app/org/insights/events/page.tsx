@@ -184,8 +184,8 @@ export default function Page() {
         )
       }
       <EventCategoryTitle
-        title="Tags"
-        buttonLabel="Add tag"
+        title="Taggers"
+        buttonLabel="Add tagger"
         description="Detect if a topic is present in the text."
         max_nb_events={max_nb_events}
         current_nb_events={current_nb_events}
@@ -194,8 +194,8 @@ export default function Page() {
       <EventsList event_type="confidence" />
 
       <EventCategoryTitle
-        title="Evaluations"
-        buttonLabel="Add evaluation"
+        title="Scorers"
+        buttonLabel="Add scorer"
         description="Score text on a numerical scale."
         max_nb_events={max_nb_events}
         current_nb_events={current_nb_events}

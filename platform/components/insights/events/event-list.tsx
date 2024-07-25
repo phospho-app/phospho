@@ -300,8 +300,8 @@ function EventsList({ event_type }: { event_type?: string }) {
               <TableRow>
                 <TableHead className="w-[100px]">Name</TableHead>
                 <TableHead className="text-left">Description</TableHead>
-                <TableHead className="text-left">Webhook</TableHead>
-                <TableHead className="text-right justify-end"></TableHead>
+                <TableHead className="text-left w-[100px]">Webhook</TableHead>
+                <TableHead className="text-right justify-end w-[10%]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
