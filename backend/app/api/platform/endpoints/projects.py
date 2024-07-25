@@ -445,6 +445,8 @@ async def post_upload_tasks(
         bucket = Bucket(client=config.GCP_BUCKET_CLIENT, name="platform-import-data")
         blob = bucket.blob(filepath)
         blob.upload_from_file(file.file)
+        # Reset the file pointer to the start
+        file.file.seek(0)
 
     # Read file content -> into memory
     file_params = {}
