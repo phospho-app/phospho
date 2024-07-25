@@ -33,6 +33,11 @@ function EventAnalytics({ eventId }: { eventId: string }) {
     // created_at_end: dateRange?.created_at_end,
   };
 
+  // In the Record, find the event with the same id as the one passed in the props
+  const eventsAsArray = Object.entries(selectedProject.settings?.events || {});
+  const event = eventsAsArray.find(([, event]) => event.id === eventId)?.[1];
+
+
   const { data: totalNbDetections } = useSWR(
     project_id
       ? [
@@ -53,17 +58,19 @@ function EventAnalytics({ eventId }: { eventId: string }) {
   );
 
   const { data: F1Score } = useSWR(
-    project_id
+    project_id && event?.score_range_settings?.score_type !== "range"
       ? [
         `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
         accessToken,
         "f1_score",
+        "precision",
+        "recall",
         JSON.stringify(eventFilters),
       ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        metrics: ["f1_score"],
+        metrics: ["f1_score", "precision", "recall"],
         filters: eventFilters,
       }),
     {
@@ -71,18 +78,19 @@ function EventAnalytics({ eventId }: { eventId: string }) {
     },
   );
 
-  const { data: MeanSquaredError } = useSWR(
-    project_id
+  const { data: RegressionMetrics } = useSWR(
+    project_id && event?.score_range_settings?.score_type === "range"
       ? [
         `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
         accessToken,
         "mean_squared_error",
+        "r_squared",
         JSON.stringify(eventFilters),
       ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        metrics: ["mean_squared_error"],
+        metrics: ["mean_squared_error", "r_squared"],
         filters: eventFilters,
       }),
     {
@@ -94,12 +102,8 @@ function EventAnalytics({ eventId }: { eventId: string }) {
     return <></>;
   }
 
-  // In the Record, find the event with the same id as the one passed in the props
-  const eventsAsArray = Object.entries(selectedProject.settings?.events || {});
-  const event = eventsAsArray.find(([, event]) => event.id === eventId)?.[1];
-
   console.log(totalNbDetections);
-  console.log("Mean squarred error: ", MeanSquaredError)
+  console.log("Mean squarred error: ", RegressionMetrics)
 
   return (
     <>
@@ -107,7 +111,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
         <h4 className="text-xl font-bold">Event : "{event?.event_name}"</h4>
       </div>
       {/* if the score type is range but there is not enough data to compute the scores, we display a not enough feedback message */}
-      {(!MeanSquaredError?.mean_squared_error) && (event?.score_range_settings?.score_type == "range") && (
+      {(!RegressionMetrics?.mean_squared_error) && (event?.score_range_settings?.score_type == "range") && (
         <>
           <Card className="bg-secondary">
             <CardHeader>
@@ -123,7 +127,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                     </CardTitle>
                     <CardDescription className="flex justify-between flex-col text-muted-foreground space-y-0.5">
                       <p>
-                        Give us more feedback to compute the Mean Square Error and the R-squared.
+                        Give us more feedback to compute the Mean Squared Error and the R-squared.
                       </p>
                     </CardDescription>
                   </div>
@@ -235,9 +239,9 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Mean Squared Error</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(MeanSquaredError?.mean_squared_error !== undefined && MeanSquaredError?.mean_squared_error !== null) ? (
+                  {(RegressionMetrics?.mean_squared_error !== undefined && RegressionMetrics?.mean_squared_error !== null) ? (
                     <p className="text-xl">
-                      {MeanSquaredError?.mean_squared_error.toFixed(2)}
+                      {RegressionMetrics?.mean_squared_error.toFixed(2)}
                     </p>
                   ) : (
                     <p className="text-xl">...</p>
@@ -250,9 +254,9 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>R-squared</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(MeanSquaredError?.mean_squared_error !== undefined && MeanSquaredError?.mean_squared_error !== null) ? (
+                  {(RegressionMetrics?.mean_squared_error !== undefined && RegressionMetrics?.mean_squared_error !== null) ? (
                     <p className="text-xl">
-                      {MeanSquaredError?.r_squared.toFixed(2)}
+                      {RegressionMetrics?.r_squared.toFixed(2)}
                     </p>
                   ) : (
                     <p className="text-xl">...</p>
