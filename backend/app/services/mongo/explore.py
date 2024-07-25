@@ -1609,7 +1609,7 @@ async def get_y_pred_y_true(
     main_filter["event_definition.id"] = {"$in": filters.event_id}
 
     query_result = await mongo_db["events"].find(main_filter).to_list(length=None)
-    if query_result is None:
+    if query_result is None or len(query_result) == 0:
         logger.info("No events found")
         return None, None
 
