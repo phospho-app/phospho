@@ -148,7 +148,7 @@ async def run_event_detection_pipeline(
 
 
 async def task_event_detection_pipeline(
-    task: Task, save_task: bool = False
+    task: Task, save_task: bool = False, project: Optional[lab.Project] = None
 ) -> List[Event]:
     """
     Run the event detection pipeline for a given task
@@ -164,12 +164,10 @@ async def task_event_detection_pipeline(
     else:
         task_context = []
 
-    # Get the project settings
     project_id = task_data.project_id
-    project = await get_project_by_id(project_id)
-    if project.settings is None:
-        logger.warning(f"Project with id {project_id} has no settings")
-        return []
+    # Get the project settings
+    if not project:
+        project = await get_project_by_id(project_id)
     # We check if the event detection is enabled in the project settings
     if (
         project.settings.run_event_detection is not None
@@ -466,7 +464,7 @@ async def task_event_detection_pipeline(
 
 
 async def task_scoring_pipeline(
-    task: Task, save_task: bool = True
+    task: Task, save_task: bool = True, project: Optional[lab.Project] = None
 ) -> Optional[Literal["success", "failure"]]:
     """
     Run the task scoring pipeline for a given task
@@ -475,10 +473,13 @@ async def task_scoring_pipeline(
     mongo_db = await get_mongo_db()
 
     # Fetch run_evals variable in settings in the project, if it doesn't exist, return None
-    project = await mongo_db["projects"].find_one(
-        {"id": task.project_id},
-        {"settings.run_evals": 1},
-    )
+    if not project:
+        project = await mongo_db["projects"].find_one(
+            {"id": task.project_id},
+            {"settings.run_evals": 1},
+        )
+    else:
+        project = project.model_dump()
 
     run_evals = project.get("settings", {}).get("run_evals", None)
     if run_evals is not None and not run_evals:
@@ -687,25 +688,49 @@ async def task_main_pipeline(task: Task, save_task: bool = True) -> PipelineResu
 
     # Do the session scoring -> success, failure
     mongo_db = await get_mongo_db()
+    project = await get_project_by_id(task.project_id)
     # Do the event detection
     if task.test_id is None:
         # Run the event detection pipeline
-        events = await task_event_detection_pipeline(task, save_task=save_task)
+        events = await task_event_detection_pipeline(
+            task, save_task=save_task, project=project
+        )
         # Run sentiment analysis on the user input
         sentiment_object, language = await sentiment_and_language_analysis_pipeline(
-            task
+            task, project=project
         )
 
     if save_task:
         task_in_db = await mongo_db["tasks"].find_one({"id": task.id})
         if task_in_db.get("flag") is None:
-            flag = await task_scoring_pipeline(task, save_task=save_task)
+            flag = await task_scoring_pipeline(
+                task, save_task=save_task, project=project
+            )
         else:
             flag = task_in_db.get("flag")
         if task.session_id is not None:
             await compute_session_info_pipeline(task.project_id, task.session_id)
     else:
-        flag = await task_scoring_pipeline(task, save_task=save_task)
+        flag = await task_scoring_pipeline(task, save_task=save_task, project=project)
+
+    # Update the task metadata with the AB version id from the platform settings
+    if project.settings is not None and project.settings.ab_version_id is not None:
+        mongo_db["tasks"].update_one(
+            {
+                "id": task.id,
+                "$or": [
+                    {
+                        "metadata.version_id": {"$exists": False}
+                    },  # We don't want to overwrite the version_id if it already exists
+                    {"metadata.version_id": None},
+                ],
+            },
+            {
+                "$set": {
+                    "metadata.version_id": project.settings.ab_version_id,
+                }
+            },
+        )
 
     # Optional: add moderation pipeline on input and outputs
 
@@ -882,13 +907,15 @@ async def compute_session_info_pipeline(project_id: str, session_id: str):
 
 
 async def sentiment_and_language_analysis_pipeline(
-    task: Task,
+    task: Task, project: Optional[lab.Project] = None
 ) -> tuple[SentimentObject, Optional[str]]:
     """
     Run the sentiment analysis on the input of a task
     """
     mongo_db = await get_mongo_db()
-    project = await get_project_by_id(task.project_id)
+
+    if not project:
+        project = await get_project_by_id(task.project_id)
 
     if (
         project.settings is not None

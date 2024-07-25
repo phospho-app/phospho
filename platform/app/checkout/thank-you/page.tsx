@@ -24,7 +24,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { useToast } from "@/components/ui/use-toast";
 import { toast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
@@ -263,7 +262,6 @@ export default function Page() {
   // This is a Thank you page displayed after a successful checkout
 
   const router = useRouter();
-  const toast = useToast();
   const searchParams = useSearchParams();
 
   // Get the project_id from the URL, or from the navigation state
@@ -319,7 +317,7 @@ export default function Page() {
     totalNbTasksData?.total_nb_tasks;
 
   function onBoogieClick() {
-    toast.toast({
+    toast({
       title: "We are activating your account 🚀",
       description:
         "You should see changes in a few minutes max. If not, please refresh the page. Contact us if anything - we're here to help.",
