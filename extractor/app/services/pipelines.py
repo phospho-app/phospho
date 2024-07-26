@@ -910,6 +910,11 @@ class MainPipeline:
         """
         Run the main pipeline
         """
+        try:
+            await self.update_version_id()
+        except Exception as e:
+            logger.error(f"Error updating the version id: {e}")
+
         # Run the event detection pipeline
         try:
             events = await self.run_events()
@@ -935,10 +940,6 @@ class MainPipeline:
             await self.compute_session_info_pipeline()
         except Exception as e:
             logger.error(f"Error computing session info: {e}")
-        try:
-            await self.update_version_id()
-        except Exception as e:
-            logger.error(f"Error updating the version id: {e}")
 
         logger.info("Main pipeline completed")
         return PipelineResults(
