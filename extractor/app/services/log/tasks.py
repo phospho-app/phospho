@@ -202,7 +202,7 @@ async def process_log_without_session_id(
                 await main_pipeline.run()
         else:
             await main_pipeline.set_input(tasks_ids=tasks_id_to_process)
-            await main_pipeline
+            await main_pipeline.run()
 
     return None
 
@@ -416,7 +416,7 @@ async def process_log_with_session_id(
                 await main_pipeline.run()
         else:
             await main_pipeline.set_input(tasks_ids=tasks_id_to_process)
-            await main_pipeline
+            await main_pipeline.run()
 
 
 async def process_log_for_tasks(
