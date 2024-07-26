@@ -16,6 +16,11 @@ class EventsMetricsFilter(BaseModel):
     pass
 
 
+class ABTestVersions(BaseModel):
+    versionA: str
+    versionB: str
+
+
 class DashboardMetricsFilter(BaseModel):
     graph_name: Optional[List[str]] = None
 

@@ -1,10 +1,10 @@
 import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Union
 
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 from propelauth_fastapi import User
-
+from app.api.platform.models.explore import ABTestVersions
 from app.api.platform.models import (
     ABTests,
     AggregateMetricsRequest,
@@ -41,6 +41,7 @@ from app.services.mongo.explore import (
     project_has_enough_labelled_tasks,
     project_has_sessions,
     project_has_tasks,
+    get_ab_tests_versions,
 )
 from app.services.mongo.extractor import bill_on_stripe
 from app.services.mongo.events import get_all_events
@@ -585,4 +586,23 @@ async def get_event_detection_metrics(
         event=event,
     )
     logger.info(f"Event output: {output}")
+    return output
+
+
+@router.post(
+    "/explore/{project_id}/ab-tests/compare-versions",
+    description="Get the number of times each item was observed in the two versions of an AB test.",
+)
+async def get_ab_tests_comparison(
+    project_id: str,
+    versions: ABTestVersions,
+    user: User = Depends(propelauth.require_user),
+) -> List[Dict[str, Union[str, float, int]]]:
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    logger.debug(f"AB tests comparison: {versions}")
+    output = await get_ab_tests_versions(
+        project_id=project_id,
+        versionA=versions.versionA,
+        versionB=versions.versionB,
+    )
     return output
