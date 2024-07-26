@@ -132,7 +132,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                     </CardDescription>
                   </div>
 
-                  <Link href="/org/transcripts/tasks">
+                  <Link href="/org/transcripts/sessions">
                     <Button variant="default">
                       Give feedback
                       <ChevronRight className="ml-2" />
@@ -166,7 +166,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                     </CardDescription>
                   </div>
 
-                  <Link href="/org/transcripts/tasks">
+                  <Link href="/org/transcripts/sessions">
                     <Button variant="default">
                       Label data
                       <ChevronRight className="ml-2" />
