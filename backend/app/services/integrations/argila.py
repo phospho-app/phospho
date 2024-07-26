@@ -27,16 +27,14 @@ def check_health_argilla() -> None:
     """
     if config.ARGILLA_URL is None:
         logger.error("Argilla URL is not configured.")
-
     if config.ARGILLA_API_KEY is None:
         logger.error("Argilla API Key is not configured.")
-
-    is_reachable = health_check(f"{config.ARGILLA_URL}/api/_status")
-
-    if is_reachable:
-        logger.info(f"Argilla server is reachable at url {config.ARGILLA_URL}")
-    else:
-        logger.error(f"Argilla server is not reachable at url {config.ARGILLA_URL}")
+    if config.ARGILLA_URL is not None and config.ARGILLA_API_KEY is not None:
+        is_reachable = health_check(f"{config.ARGILLA_URL}/api/_status")
+        if is_reachable:
+            logger.info(f"Argilla server is reachable at url {config.ARGILLA_URL}")
+        else:
+            logger.error(f"Argilla server is not reachable at url {config.ARGILLA_URL}")
 
 
 def get_workspace_datasets(workspace_id: str) -> List[FeedbackDataset]:
