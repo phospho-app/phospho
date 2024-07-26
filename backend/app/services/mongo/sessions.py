@@ -327,8 +327,8 @@ async def event_suggestion(
 async def add_event_to_session(
     session: Session,
     event: EventDefinition,
-    score_range_value,
-    score_category_label,
+    score_range_value: Optional[float] = None,
+    score_category_label: Optional[str] = None,
     event_source: str = "owner",
 ) -> Session:
     """
