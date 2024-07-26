@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { CardHeader } from "@/components/ui/card";
 import { FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Form } from "@/components/ui/form";
-import Icons from "@/components/ui/icons";
 import {
   Popover,
   PopoverContent,
@@ -45,11 +44,31 @@ const CreateNewABTestButton = () => {
       }),
     }).then(() => {
       toast({
-        title: "Settings updated",
+        title: "Version ID updated",
         description: "Your next logs will be updated with the new version id",
       });
     });
     setABButtonClicked(false);
+  }
+
+  async function clearABTest() {
+    await fetch(`/api/projects/${project_id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        settings: {
+          ab_version_id: null,
+        },
+      }),
+    }).then(() => {
+      toast({
+        title: "Version ID cleared",
+        description: "Your next logs will not have a session id",
+      });
+    });
   }
 
   const [aBButtonClicked, setABButtonClicked] = useState(false);
@@ -64,12 +83,17 @@ const CreateNewABTestButton = () => {
   return (
     <>
       <Popover>
-        <PopoverTrigger>
-          <Button>
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Create New AB Test
+        <div className="flex">
+          <PopoverTrigger>
+            <Button>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Create New AB Test
+            </Button>
+          </PopoverTrigger>
+          <Button onClick={clearABTest} className="ml-2">
+            Clear AB Test
           </Button>
-        </PopoverTrigger>
+        </div>
         <PopoverContent align="start" className="w-96 h-120">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>

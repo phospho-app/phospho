@@ -3,6 +3,13 @@
 import { Spinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -13,7 +20,6 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronDown } from "lucide-react";
 import React, { useState } from "react";
-import { useEffect } from "react";
 import {
   Bar,
   BarChart,
@@ -22,6 +28,7 @@ import {
   Tooltip,
   XAxis,
 } from "recharts";
+import useSWR from "swr";
 
 export const ABTestingDataviz = ({
   versionIDs,
@@ -32,22 +39,25 @@ export const ABTestingDataviz = ({
   const project_id = navigationStateStore((state) => state.project_id);
   const [versionIDA, setVersionIDA] = useState<string>("");
   const [versionIDB, setVersionIDB] = useState<string>("");
-  const [graphData, setGraphData] = useState<any>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (project_id && accessToken && versionIDA && versionIDB) {
-        const url = `/api/explore/${encodeURI(project_id)}/ab-tests/compare-versions`;
-        const response = await authFetcher(url, accessToken, "POST", {
-          versionA: versionIDA,
-          versionB: versionIDB,
-        });
-        setGraphData(response);
-      }
-    };
-
-    fetchData();
-  }, [versionIDA, versionIDB]);
+  const { data: graphData } = useSWR(
+    project_id && versionIDA && versionIDB
+      ? [
+          `/api/explore/${encodeURI(project_id)}/ab-tests/compare-versions`,
+          accessToken,
+          versionIDA,
+          versionIDB,
+        ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        versionA: versionIDA,
+        versionB: versionIDB,
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   console.log("graphData", graphData);
 
@@ -141,16 +151,22 @@ export const CustomTooltip = ({
   if (active && payload && payload.length) {
     return (
       <div className="custom-tooltip">
-        <p className="label">{`${label}`}</p>
-        <p>Number of detections, adjusted to number of tasks</p>
-        <div>
-          {payload.map((pld: any) => (
-            <div style={{ display: "inline-block", padding: 10 }}>
-              <div>{pld.value.toFixed(2)}</div>
-              <div>{pld.dataKey}</div>
-            </div>
-          ))}
-        </div>
+        <Card>
+          <CardHeader className="label">
+            <CardTitle>{label}</CardTitle>
+            <CardDescription>
+              Number of detections, adjusted per number of tasks
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {payload.map((pld: any) => (
+              <div style={{ display: "inline-block", padding: 10 }}>
+                <div>{pld.value.toFixed(2)}</div>
+                <div>{pld.dataKey}</div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }
