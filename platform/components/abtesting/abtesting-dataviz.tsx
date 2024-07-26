@@ -18,6 +18,7 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { set } from "date-fns";
 import { ChevronDown } from "lucide-react";
 import React, { useState } from "react";
 import { useEffect } from "react";
@@ -29,6 +30,7 @@ import {
   Tooltip,
   XAxis,
 } from "recharts";
+import useSWR from "swr";
 
 export const ABTestingDataviz = ({
   versionIDs,
@@ -41,20 +43,25 @@ export const ABTestingDataviz = ({
   const [versionIDB, setVersionIDB] = useState<string>("");
   const [graphData, setGraphData] = useState<any>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (project_id && accessToken && versionIDA && versionIDB) {
-        const url = `/api/explore/${encodeURI(project_id)}/ab-tests/compare-versions`;
-        const response = await authFetcher(url, accessToken, "POST", {
-          versionA: versionIDA,
-          versionB: versionIDB,
-        });
-        setGraphData(response);
-      }
-    };
-
-    fetchData();
-  }, [versionIDA, versionIDB, project_id]);
+  useSWR(
+    project_id && versionIDA && versionIDB
+      ? [
+          `/api/explore/${encodeURI(project_id)}/ab-tests/compare-versions`,
+          accessToken,
+          versionIDA,
+          versionIDB,
+        ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        versionA: versionIDA,
+        versionB: versionIDB,
+      }).then((graphData) => {
+        if (graphData) {
+          setGraphData(graphData);
+        }
+      }),
+  );
 
   console.log("graphData", graphData);
 
