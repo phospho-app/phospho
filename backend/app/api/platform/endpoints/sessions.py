@@ -110,7 +110,12 @@ async def post_add_event_to_sessions(
     session = await get_session_by_id(session_id)
     await verify_if_propelauth_user_can_access_project(user, session.project_id)
 
-    updated_session = await add_event_to_session(session=session, event=add_event.event)
+    updated_session = await add_event_to_session(
+        session=session,
+        event=add_event.event,
+        score_range_value=add_event.score_range_value,
+        score_category_label=add_event.score_category_label,
+    )
     return updated_session
 
 
