@@ -9,7 +9,6 @@ from app.api.v1.models import (
     RunMainPipelineOnTaskRequest,
     RunRecipeOnTaskRequest,
 )
-from app.db.mongo import get_mongo_db
 from app.security.authentication import authenticate_key
 from app.services.connectors import (
     LangfuseConnector,

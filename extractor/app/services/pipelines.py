@@ -4,7 +4,6 @@ from typing import Dict, List, Literal, Optional, Tuple
 
 from loguru import logger
 
-from app.api.v1.models.pipelines import PipelineResults
 from app.core import config
 from app.db.models import (
     Eval,
@@ -27,6 +26,7 @@ from phospho.models import (
     SentimentObject,
     SessionStats,
     Project,
+    PipelineResults,
 )
 
 PHOSPHO_EVENT_MODEL_NAMES = ["phospho-6", "owner", "phospho-4"]

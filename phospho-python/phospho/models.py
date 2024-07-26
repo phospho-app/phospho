@@ -737,3 +737,25 @@ class UsageQuota(BaseModel):
     max_usage: Optional[int]
     max_usage_label: str
     balance_transaction: Optional[float] = None
+
+
+class PipelineResults(BaseModel):
+    """
+    The results of a pipeline execution. Contains every category of analytics.
+
+    Each category of analytics is a dict linking the message_id or task_id
+    to the analytics object. This is useful for batching and unordered processing.
+    """
+
+    events: Dict[str, List[Event]] = Field(
+        default_factory=dict, description="Events detected in the messages"
+    )
+    flag: Dict[str, Literal["success", "failure"]] = Field(
+        default_factory=dict, description="Flag of the task: success or failure."
+    )
+    language: Dict[str, Optional[str]] = Field(
+        default_factory=dict, description="Language detected in the messages."
+    )
+    sentiment: Dict[str, Optional[SentimentObject]] = Field(
+        default_factory=dict, description="Sentiment detected in the messages."
+    )

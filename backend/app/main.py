@@ -179,7 +179,10 @@ app.mount("/v2", api_v2)
 app.mount("/v0", api_v2)
 
 
-### V2 API ###
+### V3 API ###
+from app.api.v3.endpoints import run
+
+
 api_v3 = FastAPI(
     title="phospho",
     summary="phospho http api v3",
@@ -192,7 +195,7 @@ api_v3 = FastAPI(
     },
 )
 
-# api_v3.include_router(log.router)
+api_v3.include_router(run.router)
 api_v3.include_router(health.router)
 
 app.mount("/v3", api_v3)

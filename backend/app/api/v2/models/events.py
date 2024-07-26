@@ -1,4 +1,4 @@
-from typing import List, Optional, Literal
+from typing import List
 from pydantic import BaseModel
 from app.db.models import Event
 from phospho.models import Message
@@ -19,8 +19,3 @@ class DetectEventInMessagesRequest(BaseModel):
 
 class EventDetectionReply(BaseModel, extra="allow"):
     events: List[Event]
-
-
-class PipelineResults(BaseModel):
-    events: List[Event]
-    flag: Optional[Literal["success", "failure"]]

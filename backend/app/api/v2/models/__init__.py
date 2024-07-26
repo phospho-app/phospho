@@ -5,7 +5,6 @@ from .events import (
     Event,
     EventDetectionReply,
     Events,
-    PipelineResults,
 )
 from .log import (
     LogError,
