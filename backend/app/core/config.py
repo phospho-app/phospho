@@ -169,14 +169,13 @@ CRON_SECRET_KEY = os.getenv("CRON_SECRET_KEY")
 
 # GCP
 credentials_gcp_bucket = os.getenv("GCP_JSON_CREDENTIALS_BUCKET")
+GCP_BUCKET_CLIENT = None
 if credentials_gcp_bucket:
     credentials_dict = json.loads(b64decode(credentials_gcp_bucket).decode("utf-8"))
     credentials = service_account.Credentials.from_service_account_info(
         credentials_dict
     )
     GCP_BUCKET_CLIENT = Client(credentials=credentials)
-else:
-    GCP_BUCKET_CLIENT = None
 
 ### NEON DB ###
 # TODO : Rename this to generic SQL names

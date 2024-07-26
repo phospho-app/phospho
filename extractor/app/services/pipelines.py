@@ -466,7 +466,11 @@ class MainPipeline:
 
                 if result.value:
                     logger.info(f"Event {event_name} detected for task {task_id}")
-                    if event_definition.webhook is not None:
+                    if (
+                        event_definition.webhook is not None
+                        and event_definition.webhook != ""
+                    ):
+                        logger.info(f"Webhook url: {event_definition.webhook}")
                         await trigger_webhook(
                             url=event_definition.webhook,
                             json=detected_event_data.model_dump(),
@@ -632,82 +636,6 @@ class MainPipeline:
                 },
             )
 
-    async def run(self) -> PipelineResults:
-        """
-        Run the main pipeline
-        """
-        # Run the event detection pipeline
-        try:
-            events = await self.run_events()
-        except Exception as e:
-            logger.error(f"Error running the event detection pipeline: {e}")
-            events = {}
-        # Run sentiment analysis on the user input
-        try:
-            sentiments, languages = await self.run_sentiment_and_language()
-        except Exception as e:
-            logger.error(f"Error running the sentiment analysis pipeline: {e}")
-            sentiments = {}
-            languages = {}
-        # Run the evaluation pipeline
-        try:
-            flag = await self.run_evaluation()
-        except Exception as e:
-            logger.error(f"Error running the evaluation pipeline: {e}")
-            flag = {}
-
-        # Update metadata
-        try:
-            await self.compute_session_info_pipeline()
-        except Exception as e:
-            logger.error(f"Error computing session info: {e}")
-        try:
-            await self.update_version_id()
-        except Exception as e:
-            logger.error(f"Error updating the version id: {e}")
-
-        return PipelineResults(
-            events=events,
-            flag=flag,
-            language=languages,
-            sentiment=sentiments,
-        )
-
-    async def task_main_pipeline(self, task: Task) -> PipelineResults:
-        """
-        Main pipeline to run on a task.
-        - Event detection
-        - Evaluate task success/failure
-        - Language detection
-        - Sentiment analysis
-        """
-        self.start_time = time.time()
-        logger.info(f"Starting main pipeline for task {task.id}")
-        # Set the input for the pipeline
-        await self.set_input(task=task)
-        pipeline_results = await self.run()
-        logger.info(
-            f"Main pipeline completed in {time.time() - self.start_time:.2f} seconds for task {task.id}"
-        )
-
-        return pipeline_results
-
-    async def messages_main_pipeline(
-        self, messages: List[lab.Message]
-    ) -> PipelineResults:
-        """
-        Main pipeline to run on a list of messages.
-        We expect the messages to be in chronological order.
-        Only the last message will be used for the event detection.
-        The previous messages will be used as context.
-
-        - Event detection
-        """
-        await self.set_input(messages=messages)
-        pipeline_results = await self.run()
-
-        return pipeline_results
-
     async def compute_session_info_pipeline(self) -> Dict[str, SessionStats]:
         """
         Compute session information from its tasks
@@ -724,8 +652,9 @@ class MainPipeline:
             task = Task.model_validate(message.metadata.get("task", None))
             if task.session_id is not None:
                 session_ids.append(task.session_id)
+        unique_session_ids = list(set(session_ids))
 
-        for session_id in session_ids:
+        for session_id in unique_session_ids:
             logger.debug(f"Compute session info for session {session_id}")
             mongo_db = await get_mongo_db()
             tasks = (
@@ -961,3 +890,80 @@ class MainPipeline:
             raise NotImplementedError(
                 f"Recipe type {recipe.recipe_type} not implemented"
             )
+
+    async def run(self) -> PipelineResults:
+        """
+        Run the main pipeline
+        """
+        # Run the event detection pipeline
+        try:
+            events = await self.run_events()
+        except Exception as e:
+            logger.error(f"Error running the event detection pipeline: {e}")
+            events = {}
+        # Run sentiment analysis on the user input
+        try:
+            sentiments, languages = await self.run_sentiment_and_language()
+        except Exception as e:
+            logger.error(f"Error running the sentiment analysis pipeline: {e}")
+            sentiments = {}
+            languages = {}
+        # Run the evaluation pipeline
+        try:
+            flag = await self.run_evaluation()
+        except Exception as e:
+            logger.error(f"Error running the evaluation pipeline: {e}")
+            flag = {}
+
+        # Update metadata
+        try:
+            await self.compute_session_info_pipeline()
+        except Exception as e:
+            logger.error(f"Error computing session info: {e}")
+        try:
+            await self.update_version_id()
+        except Exception as e:
+            logger.error(f"Error updating the version id: {e}")
+
+        logger.info("Main pipeline completed")
+        return PipelineResults(
+            events=events,
+            flag=flag,
+            language=languages,
+            sentiment=sentiments,
+        )
+
+    async def task_main_pipeline(self, task: Task) -> PipelineResults:
+        """
+        Main pipeline to run on a task.
+        - Event detection
+        - Evaluate task success/failure
+        - Language detection
+        - Sentiment analysis
+        """
+        self.start_time = time.time()
+        logger.info(f"Starting main pipeline for task {task.id}")
+        # Set the input for the pipeline
+        await self.set_input(task=task)
+        pipeline_results = await self.run()
+        logger.info(
+            f"Main pipeline completed in {time.time() - self.start_time:.2f} seconds for task {task.id}"
+        )
+
+        return pipeline_results
+
+    async def messages_main_pipeline(
+        self, messages: List[lab.Message]
+    ) -> PipelineResults:
+        """
+        Main pipeline to run on a list of messages.
+        We expect the messages to be in chronological order.
+        Only the last message will be used for the event detection.
+        The previous messages will be used as context.
+
+        - Event detection
+        """
+        await self.set_input(messages=messages)
+        pipeline_results = await self.run()
+
+        return pipeline_results

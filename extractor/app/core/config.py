@@ -2,8 +2,13 @@
 App configuration file
 """
 
+import json
 import os
+from base64 import b64decode
+
 from dotenv import load_dotenv
+from google.cloud import language_v2
+from google.oauth2 import service_account
 from loguru import logger
 
 load_dotenv()  # take environment variables from .env.
@@ -63,3 +68,17 @@ if QDRANT_API_KEY is None:
 
 # Evaluation job
 TASK_EVALUATION_JOB_ID = "task_evaluation"
+
+# Sentiment analysis
+credentials_natural_language = os.getenv(
+    "GCP_JSON_CREDENTIALS_NATURAL_LANGUAGE_PROCESSING"
+)
+GCP_SENTIMENT_CLIENT = None
+if credentials_natural_language is not None:
+    credentials_dict = json.loads(
+        b64decode(credentials_natural_language).decode("utf-8")
+    )
+    credentials = service_account.Credentials.from_service_account_info(
+        credentials_dict
+    )
+    GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(credentials=credentials)
