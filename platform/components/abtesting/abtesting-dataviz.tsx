@@ -41,9 +41,8 @@ export const ABTestingDataviz = ({
   const project_id = navigationStateStore((state) => state.project_id);
   const [versionIDA, setVersionIDA] = useState<string>("");
   const [versionIDB, setVersionIDB] = useState<string>("");
-  const [graphData, setGraphData] = useState<any>(null);
 
-  useSWR(
+  const { data: graphData } = useSWR(
     project_id && versionIDA && versionIDB
       ? [
           `/api/explore/${encodeURI(project_id)}/ab-tests/compare-versions`,
@@ -56,10 +55,6 @@ export const ABTestingDataviz = ({
       authFetcher(url, accessToken, "POST", {
         versionA: versionIDA,
         versionB: versionIDB,
-      }).then((graphData) => {
-        if (graphData) {
-          setGraphData(graphData);
-        }
       }),
   );
 
