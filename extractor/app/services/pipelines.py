@@ -403,9 +403,9 @@ class MainPipeline:
         # If the recipe is provided, we use it to run the workload
         # Otherwise, we use the project settings
         if recipe:
-            workload = lab.Workload.from_phospho_recipe(recipe)
-            workload.org_id = recipe.org_id
-            workload.project_id = recipe.project_id
+            self.workload = lab.Workload.from_phospho_recipe(recipe)
+            self.workload.org_id = recipe.org_id
+            self.workload.project_id = recipe.project_id
         else:
             self.workload = lab.Workload.from_phospho_project_config(self.project)
         # Run
@@ -425,8 +425,6 @@ class MainPipeline:
         # Iter over the results
         for message in self.messages:
             results = self.workload.results.get(message.id, {})
-            logger.debug(f"Results for message {message.id}")
-
             for event_name, result in results.items():
                 # event_name is the primary key of the table
                 # Get back the event definition from the job metadata
