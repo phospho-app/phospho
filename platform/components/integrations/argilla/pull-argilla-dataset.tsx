@@ -21,9 +21,60 @@ import { useState } from "react";
 const PullDataset = () => {
     const { accessToken } = useUser();
     const project_id = navigationStateStore((state) => state.project_id);
+    const [isPullingDataset, setIsPullingDataset] = useState(false);
+    const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+    const dataFilters = navigationStateStore((state) => state.dataFilters);
 
     if (!project_id) {
         return <></>;
+    }
+
+    const [datasetName, setDatasetName] = useState("");
+
+    async function pullArgillaDataset() {
+        // Disable the button while we are creating the dataset
+        setIsPullingDataset(true);
+        try {
+            await fetch(`/api/argila/pull`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + accessToken,
+                },
+                body: JSON.stringify({
+                    project_id: project_id,
+                    workspace_id: orgMetadata?.argilla_workspace_id,
+                    dataset_name: datasetName,
+                    filters: dataFilters,
+                }),
+            }).then((response) => {
+                if (response.status == 200) {
+                    toast({
+                        title: "Dataset pulled",
+                        description: "Annotated dataset is now available in your project",
+                    });
+                } else if (response.status == 400) {
+                    response.json().then((data) => {
+                        toast({
+                            title: "Could not pull dataset",
+                            description: data.detail,
+                        });
+                    });
+                } else {
+                    toast({
+                        title: "Could not pull dataset",
+                        description: response.text(),
+                    });
+                }
+                setIsPullingDataset(false);
+            });
+        } catch (e) {
+            toast({
+                title: "Error when pulling dataset",
+                description: JSON.stringify(e),
+            });
+            setIsPullingDataset(false);
+        }
     }
 
     return (
@@ -62,11 +113,17 @@ const PullDataset = () => {
                         type="string"
                         name="dataset_name"
                         id="dataset_name"
+                        value={datasetName}
+                        onChange={(e) => setDatasetName(e.target.value)}
                         className="mt-1 block w-full"
                     />
                 </div>
                 <div className="flex justify-end mt-4">
-                    <Button>
+                    <Button
+                        type="submit"
+                        onClick={pullArgillaDataset}
+                        disabled={isPullingDataset}
+                    >
                         Pull dataset
                     </Button>
                 </div>

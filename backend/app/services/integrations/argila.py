@@ -2,6 +2,7 @@ import argilla as rg
 import pandas as pd
 from app.api.platform.models.integrations import (
     DatasetCreationRequest,
+    DatasetPullRequest,
     DatasetSamplingParameters,
 )
 from app.services.mongo.projects import get_project_by_id
@@ -67,6 +68,32 @@ def dataset_name_is_valid(dataset_name: str, workspace_id: str) -> bool:
             return False
 
         return True
+
+    except Exception as e:
+        logger.warning(e)
+        return False
+
+
+def dataset_name_exists(dataset_name: str, workspace_id: str, project_id: str) -> bool:
+    """
+    For now, checks if the name does not already exist in the workspace
+    """
+    if len(dataset_name) == 0:
+        return False
+
+    # Get the dataset names of this workspace
+    try:
+        dataset_list = rg.FeedbackDataset.list(
+            workspace=workspace_id
+        )  # This line will raise an exception if the workspace does not exist
+        for dataset in dataset_list:
+            if (
+                dataset.name == dataset_name
+                and dataset.metadata_properties[1].values[0] == project_id
+            ):
+                return True
+
+        return False
 
     except Exception as e:
         logger.warning(e)
@@ -288,5 +315,24 @@ async def generate_dataset_from_project(
 
     logger.info(f"dataset : {argilla_dataset}")
 
+    # TODO: add rules
+    return argilla_dataset
+
+
+async def pull_dataset_from_argilla(
+    pull_request: DatasetPullRequest,
+) -> FeedbackDataset:
+    """
+    Extract a dataset from a project and push it to Argilla
+    """
+
+    # Load the project configs, so we know the dataset fields and questions
+    project = await get_project_by_id(pull_request.project_id)
+
+    logger.debug(f"events: {project.settings.events}, project: {project}")
+
+    argilla_dataset = rg.FeedbackDataset.from_argilla(
+        name=pull_request.dataset_name, workspace=pull_request.workspace_id
+    ).pull()
     # TODO: add rules
     return argilla_dataset
