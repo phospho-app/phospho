@@ -245,10 +245,7 @@ function RunAnalyticsForm({
               <div className="text-xs">You can run this later</div>
             </HoverCardContent>
           </HoverCard>
-          <Button
-            type="submit"
-            disabled={form.formState.isSubmitted || form.formState.isSubmitting}
-          >
+          <Button type="submit" disabled={form.formState.isSubmitted}>
             <PlayIcon className="h-4 w-4 mr-2 text-green-500" />
             Run now
           </Button>

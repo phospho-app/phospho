@@ -48,7 +48,7 @@
     "embla-carousel-react": "^8.0.0-rc22",
     "gridstack": "^10.2.1",
     "lucide-react": "^0.378.0",
-    "next": "^14.2.3",
+    "next": "^14.2.5",
     "next-themes": "^0.2.1",
     "node-fetch": "^3.3.2",
     "phospho": "^1.2.2",
