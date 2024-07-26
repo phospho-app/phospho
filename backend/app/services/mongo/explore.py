@@ -2470,7 +2470,7 @@ async def get_ab_tests_versions(
                     "event_type": "$event_definition.score_range_settings.score_type",
                 },
                 "count": {"$sum": 1},
-                "score": {"$sum": "$score_range.value"},
+                "score": {"$avg": "$score_range.value"},
             },
         },
         # For range type events, we need to average the score
