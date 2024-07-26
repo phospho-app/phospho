@@ -18,10 +18,8 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { set } from "date-fns";
 import { ChevronDown } from "lucide-react";
 import React, { useState } from "react";
-import { useEffect } from "react";
 import {
   Bar,
   BarChart,
