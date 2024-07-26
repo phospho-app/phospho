@@ -142,6 +142,7 @@ async def process_log_without_session_id(
     org_id: str,
     list_of_log_event: List[LogEventForTasks],
     trigger_pipeline: bool = True,
+    batch_size: int = 256,
 ) -> None:
     """
     Process a list of log events without session_id
@@ -185,15 +186,19 @@ async def process_log_without_session_id(
             logger.error(error_mesagge)
 
     if trigger_pipeline:
+        logger.info(f"Triggering pipeline for {len(tasks_id_to_process)} tasks")
         # Vectorize them
-        await add_vectorized_tasks(tasks_id_to_process)
-
+        # await add_vectorized_tasks(tasks_id_to_process)
         main_pipeline = MainPipeline(
             project_id=project_id,
             org_id=org_id,
         )
-        await main_pipeline.set_input(tasks_ids=tasks_id_to_process)
-        await main_pipeline.run()
+        # Batch the processing
+        for i in range(0, len(tasks_id_to_process), batch_size):
+            await main_pipeline.set_input(
+                tasks_ids=tasks_id_to_process[i : i + batch_size]
+            )
+            await main_pipeline.run()
 
     return None
 
@@ -203,6 +208,7 @@ async def process_log_with_session_id(
     org_id: str,
     list_of_log_event: List[LogEventForTasks],
     trigger_pipeline: bool = True,
+    batch_size: int = 256,
 ) -> None:
     """
     Process a list of log events with session_id
@@ -391,13 +397,18 @@ async def process_log_with_session_id(
     )
 
     if trigger_pipeline:
+        logger.info(f"Triggering pipeline for {len(tasks_id_to_process)} tasks")
         # await add_vectorized_tasks(tasks_id_to_process)
         main_pipeline = MainPipeline(
             project_id=project_id,
             org_id=org_id,
         )
-        await main_pipeline.set_input(tasks_ids=tasks_id_to_process)
-        await main_pipeline.run()
+        # Batch the processing
+        for i in range(0, len(tasks_id_to_process), batch_size):
+            await main_pipeline.set_input(
+                tasks_ids=tasks_id_to_process[i : i + batch_size]
+            )
+            await main_pipeline.run()
 
 
 async def process_log_for_tasks(
