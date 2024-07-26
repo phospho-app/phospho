@@ -12,8 +12,8 @@ from app.services.log.base import (
     convert_additional_data_to_dict,
     get_time_created_at,
 )
-from app.services.pipelines import task_main_pipeline
-from app.services.tasks import compute_task_position, get_task_by_id
+from app.services.pipelines import MainPipeline
+from app.services.tasks import compute_task_position
 from phospho.models import Session, Task
 
 
@@ -142,6 +142,7 @@ async def process_log_without_session_id(
     org_id: str,
     list_of_log_event: List[LogEventForTasks],
     trigger_pipeline: bool = True,
+    batch_size: int = 256,
 ) -> None:
     """
     Process a list of log events without session_id
@@ -185,16 +186,19 @@ async def process_log_without_session_id(
             logger.error(error_mesagge)
 
     if trigger_pipeline:
+        logger.info(f"Triggering pipeline for {len(tasks_id_to_process)} tasks")
         # Vectorize them
-        await add_vectorized_tasks(tasks_id_to_process)
-
-        # Trigger the pipeline
-        for task_id in tasks_id_to_process:
-            # Fetch the task data from the database
-            # For now it's a double call to the database, but it's not a big deal
-            task_data = await get_task_by_id(task_id)
-            logger.info(f"Project {project_id}: pipeline triggered for task {task_id}")
-            await task_main_pipeline(task_data)
+        # await add_vectorized_tasks(tasks_id_to_process)
+        main_pipeline = MainPipeline(
+            project_id=project_id,
+            org_id=org_id,
+        )
+        # Batch the processing
+        for i in range(0, len(tasks_id_to_process), batch_size):
+            await main_pipeline.set_input(
+                tasks_ids=tasks_id_to_process[i : i + batch_size]
+            )
+            await main_pipeline.run()
 
     return None
 
@@ -204,6 +208,7 @@ async def process_log_with_session_id(
     org_id: str,
     list_of_log_event: List[LogEventForTasks],
     trigger_pipeline: bool = True,
+    batch_size: int = 256,
 ) -> None:
     """
     Process a list of log events with session_id
@@ -392,15 +397,18 @@ async def process_log_with_session_id(
     )
 
     if trigger_pipeline:
-        # Vectorize them
+        logger.info(f"Triggering pipeline for {len(tasks_id_to_process)} tasks")
         # await add_vectorized_tasks(tasks_id_to_process)
-
-        # Trigger the pipeline
-        for task_id in tasks_id_to_process:
-            # Fetch the task data from the database
-            # For now it's a double call to the database, but it's not a big deal
-            task_data = await get_task_by_id(task_id)
-            await task_main_pipeline(task_data)
+        main_pipeline = MainPipeline(
+            project_id=project_id,
+            org_id=org_id,
+        )
+        # Batch the processing
+        for i in range(0, len(tasks_id_to_process), batch_size):
+            await main_pipeline.set_input(
+                tasks_ids=tasks_id_to_process[i : i + batch_size]
+            )
+            await main_pipeline.run()
 
 
 async def process_log_for_tasks(

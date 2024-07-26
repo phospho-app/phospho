@@ -241,9 +241,8 @@ export function TasksTable<TData, TValue>({
           <Alert className="mt-2 ">
             <div className="flex justify-between">
               <div></div>
-              <div className="flex space-x-4">
+              <div className="flex space-x-4 ">
                 <Database className="w-8 h-8" />
-
                 <div>
                   <AlertTitle>Fetch tasks in a pandas Dataframe</AlertTitle>
                   <AlertDescription>
@@ -257,6 +256,7 @@ export function TasksTable<TData, TValue>({
                   <Button>Learn more</Button>
                 </Link>
               </div>
+              <div></div>
             </div>
           </Alert>
         )}

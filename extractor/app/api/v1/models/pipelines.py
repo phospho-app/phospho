@@ -1,26 +1,19 @@
 from pydantic import BaseModel
-from typing import List, Optional, Literal
+from typing import List, Optional
 
 from app.db.models import Task, Event, Recipe
 from phospho.lab import Message
-from phospho.models import SentimentObject
+from phospho.models import SentimentObject, PipelineResults
 
 
 class RunMainPipelineOnTaskRequest(BaseModel):
     task: Task
-    save_results: bool = False
 
 
 class RunMainPipelineOnMessagesRequest(BaseModel):
     project_id: str
+    org_id: str
     messages: List[Message]
-
-
-class PipelineResults(BaseModel):
-    events: List[Event]
-    flag: Optional[Literal["success", "failure"]]
-    language: Optional[str] = None
-    sentiment: Optional[SentimentObject] = None
 
 
 class RunRecipeOnTaskRequest(BaseModel):

@@ -267,7 +267,7 @@ const TasksDataviz: React.FC = () => {
           <div>
             <Card>
               <CardHeader>
-                <CardDescription>Total Nb of Tasks</CardDescription>
+                <CardDescription>Total number of user messages</CardDescription>
               </CardHeader>
               <CardContent>
                 {((totalNbTasks === null || totalNbTasks === undefined) && (
@@ -279,7 +279,7 @@ const TasksDataviz: React.FC = () => {
           <div className="ml-4 mr-4">
             <Card className="overflow-hidden">
               <CardHeader>
-                <CardDescription>Most Detected Event</CardDescription>
+                <CardDescription>Most detected event</CardDescription>
               </CardHeader>
               <CardContent>
                 {(!mostDetectedEvent && <p>...</p>) || (
@@ -291,7 +291,9 @@ const TasksDataviz: React.FC = () => {
           <div>
             <Card>
               <CardHeader>
-                <CardDescription>Average Task Success Rate</CardDescription>
+                <CardDescription>
+                  Average Evaluation Success Rate
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {((globalSuccessRate === null ||
@@ -306,7 +308,7 @@ const TasksDataviz: React.FC = () => {
       <div className="container mx-auto mt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Nb of tasks per day</h3>
+            <h3 className="text-slate-500 mb-2">Nb of user messages per day</h3>
             {(!nbDailyTasks && <Skeleton className="w-[100%] h-[150px]" />) ||
               (nbDailyTasks && (
                 <ResponsiveContainer width="100%" height={150}>
@@ -364,7 +366,7 @@ const TasksDataviz: React.FC = () => {
           </div>
           <div className="flex-1">
             <h3 className="text-slate-500 mb-2">
-              Success Rate per task position
+              Success Rate per position in a Session
             </h3>
             {hasSessions && !successRatePerTaskPosition && (
               <Skeleton className="w-[100%] h-[150px]" />
