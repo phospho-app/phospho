@@ -54,6 +54,9 @@ export const ABTestingDataviz = ({
         versionA: versionIDA,
         versionB: versionIDB,
       }),
+    {
+      keepPreviousData: true,
+    },
   );
 
   console.log("graphData", graphData);
