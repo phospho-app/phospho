@@ -142,7 +142,7 @@ async def process_log_without_session_id(
     org_id: str,
     list_of_log_event: List[LogEventForTasks],
     trigger_pipeline: bool = True,
-    batch_size: Optional[int] = None,
+    batch_size: Optional[int] = 256,
 ) -> None:
     """
     Process a list of log events without session_id
@@ -212,7 +212,7 @@ async def process_log_with_session_id(
     org_id: str,
     list_of_log_event: List[LogEventForTasks],
     trigger_pipeline: bool = True,
-    batch_size: Optional[int] = None,
+    batch_size: Optional[int] = 256,
 ) -> None:
     """
     Process a list of log events with session_id
