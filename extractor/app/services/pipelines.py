@@ -417,10 +417,10 @@ class MainPipeline:
             logger.error("Worlkload.results is None")
             return {}
 
-        events_per_task: Dict[str, List[Event]] = defaultdict(list)
-        detected_events: List[dict] = []
-        job_results: List[dict] = []
-        llm_calls: List[dict] = []
+        events_per_task_to_return: Dict[str, List[Event]] = defaultdict(list)
+        events_to_push_to_db: List[dict] = []
+        job_results_to_push_to_db: List[dict] = []
+        llm_calls_to_push_to_db: List[dict] = []
 
         # Iter over the results
         for message in self.messages:
@@ -446,68 +446,60 @@ class MainPipeline:
                         task_id=task_id,
                         recipe_id=result.job_metadata.get("recipe_id"),
                     )
-                    llm_calls.append(llm_call_obj.model_dump())
+                    llm_calls_to_push_to_db.append(llm_call_obj.model_dump())
                 else:
                     logger.warning(f"No LLM call detected for event {event_name}")
 
-                # When the event is detected, result is True
+                detected_event_data = Event(
+                    event_name=event_name,
+                    # Events detected at the session scope are not linked to a task
+                    task_id=task_id,
+                    session_id=session_id,
+                    project_id=self.project_id,
+                    source=result.metadata.get("evaluation_source", "phospho-unknown"),
+                    webhook=event_definition.webhook,
+                    org_id=self.org_id,
+                    event_definition=event_definition,
+                    task=task,
+                    score_range=result.metadata.get("score_range", None),
+                )
+
                 if result.value:
-                    logger.info(
-                        f"Event {event_name} detected for task {message.metadata['task'].id}"
-                    )
-
-                    # Push event to db
-                    detected_event_data = Event(
-                        event_name=event_name,
-                        # Events detected at the session scope are not linked to a task
-                        task_id=task_id,
-                        session_id=session_id,
-                        project_id=self.project_id,
-                        source=result.metadata.get(
-                            "evaluation_source", "phospho-unknown"
-                        ),
-                        webhook=event_definition.webhook,
-                        org_id=self.org_id,
-                        event_definition=event_definition,
-                        task=task,
-                        score_range=result.metadata.get("score_range", None),
-                    )
-
+                    logger.info(f"Event {event_name} detected for task {task_id}")
                     if event_definition.webhook is not None:
                         await trigger_webhook(
                             url=event_definition.webhook,
                             json=detected_event_data.model_dump(),
                             headers=event_definition.webhook_headers,
                         )
+                    events_to_push_to_db.append(detected_event_data.model_dump())
 
-                    detected_events.append(detected_event_data.model_dump())
-
-                events_per_task[task_id].append(detected_event_data)
+                events_per_task_to_return[task_id].append(detected_event_data)
                 # Save the prediction
                 result.task_id = task_id
                 if result.job_metadata.get("recipe_id") is None:
                     logger.error(f"No recipe_id found for event {event_name}.")
-                job_results.append(result.model_dump())
+                job_results_to_push_to_db.append(result.model_dump())
 
         # Save the detected events and jobs results in the database
         mongo_db = await get_mongo_db()
-        if len(detected_events) > 0:
+        if len(events_to_push_to_db) > 0:
             try:
-                await mongo_db["events"].insert_many(detected_events)
+                await mongo_db["events"].insert_many(events_to_push_to_db)
             except Exception as e:
                 logger.error(f"Error saving detected events to the database: {e}")
-        if len(llm_calls) > 0:
+        if len(llm_calls_to_push_to_db) > 0:
             try:
-                await mongo_db["llm_calls"].insert_many(llm_calls)
+                await mongo_db["llm_calls"].insert_many(llm_calls_to_push_to_db)
             except Exception as e:
                 logger.error(f"Error saving LLM calls to the database: {e}")
-        if len(job_results) > 0:
+        if len(job_results_to_push_to_db) > 0:
             try:
-                await mongo_db["job_results"].insert_many(job_results)
+                await mongo_db["job_results"].insert_many(job_results_to_push_to_db)
             except Exception as e:
                 logger.error(f"Error saving job results to the database: {e}")
 
-        return events_per_task
+        return events_per_task_to_return
 
     async def run_evaluation(self) -> Dict[str, Literal["success", "failure"]]:
         """
@@ -645,15 +637,34 @@ class MainPipeline:
         Run the main pipeline
         """
         # Run the event detection pipeline
-        events = await self.run_events()
+        try:
+            events = await self.run_events()
+        except Exception as e:
+            logger.error(f"Error running the event detection pipeline: {e}")
+            events = {}
         # Run sentiment analysis on the user input
-        sentiments, languages = await self.run_sentiment_and_language()
+        try:
+            sentiments, languages = await self.run_sentiment_and_language()
+        except Exception as e:
+            logger.error(f"Error running the sentiment analysis pipeline: {e}")
+            sentiments = {}
+            languages = {}
         # Run the evaluation pipeline
-        flag = await self.run_evaluation()
+        try:
+            flag = await self.run_evaluation()
+        except Exception as e:
+            logger.error(f"Error running the evaluation pipeline: {e}")
+            flag = {}
 
         # Update metadata
-        await self.compute_session_info_pipeline()
-        await self.update_version_id()
+        try:
+            await self.compute_session_info_pipeline()
+        except Exception as e:
+            logger.error(f"Error computing session info: {e}")
+        try:
+            await self.update_version_id()
+        except Exception as e:
+            logger.error(f"Error updating the version id: {e}")
 
         return PipelineResults(
             events=events,
@@ -814,14 +825,14 @@ class MainPipeline:
         mongo_db = await get_mongo_db()
 
         if not self.project:
-            project = await get_project_by_id(self.project_id)
+            self.project = await get_project_by_id(self.project_id)
 
         if (
-            project.settings is not None
-            and project.settings.run_sentiment is not None
-            and project.settings.run_language is not None
-            and not project.settings.run_sentiment
-            and not project.settings.run_language
+            self.project.settings is not None
+            and self.project.settings.run_sentiment is not None
+            and self.project.settings.run_language is not None
+            and not self.project.settings.run_sentiment
+            and not self.project.settings.run_language
         ):
             logger.info(f"Sentiment analysis is disabled for project {self.project_id}")
             return {}, {}
@@ -830,9 +841,9 @@ class MainPipeline:
         score_threshold = 0.3
         magnitude_threshold = 0.6
         # Try to replace with project settings
-        if project.settings.sentiment_threshold is not None:
-            if project.settings.sentiment_threshold.score is not None:
-                score_threshold = project.settings.sentiment_threshold.score
+        if self.project.settings.sentiment_threshold is not None:
+            if self.project.settings.sentiment_threshold.score is not None:
+                score_threshold = self.project.settings.sentiment_threshold.score
             else:
                 mongo_db["projects"].update_one(
                     {"id": self.project_id},
@@ -843,8 +854,10 @@ class MainPipeline:
                     },
                 )
 
-            if project.settings.sentiment_threshold.magnitude is not None:
-                magnitude_threshold = project.settings.sentiment_threshold.magnitude
+            if self.project.settings.sentiment_threshold.magnitude is not None:
+                magnitude_threshold = (
+                    self.project.settings.sentiment_threshold.magnitude
+                )
             else:
                 mongo_db["projects"].update_one(
                     {"id": self.project_id},
@@ -875,9 +888,9 @@ class MainPipeline:
                 task.input, score_threshold, magnitude_threshold
             )
 
-            if not project.settings.run_language:
+            if not self.project.settings.run_language:
                 language = None
-            if not project.settings.run_sentiment:
+            if not self.project.settings.run_sentiment:
                 sentiment_object = None
 
             # We update the task item
