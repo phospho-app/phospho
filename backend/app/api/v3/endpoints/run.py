@@ -13,13 +13,14 @@ router = APIRouter(tags=["Run"])
 
 @router.post(
     "/run/main/messages",
-    response_model=PipelineResults,
     description="""Run the main pipeline of a project on a task. \
 Returns the events, evals, sentiment, and every other analytics enabled \
 for the phospho project.
 
 The Authorization header must be set with an API key created on the phospho platform. \
 This API key must have billing enabled with a valid payment method.""",
+    response_model=PipelineResults,
+    response_description="The pipelines results are categories of analytics. Each contain a dictionary linking an id to the result values.",
 )
 async def run_main_pipeline_on_messages(
     request: RunPipelineOnMessagesRequest,
