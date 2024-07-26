@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List
 
 
-class Message(BaseModel, extras="allow"):
+class Message(BaseModel, extra="allow"):
     """
     Extras fields are ignored.
     """
