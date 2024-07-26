@@ -2443,6 +2443,11 @@ async def get_ab_tests_versions(
     logger.debug(f"Fetching AB tests for project {project_id}")
     logger.debug(f"Versions: {versionA} and {versionB}")
 
+    if versionA == "None":
+        versionA = None
+    if versionB == "None":
+        versionB = None
+
     pipeline = [
         {
             "$match": {
@@ -2531,6 +2536,8 @@ async def get_ab_tests_versions(
     ]
 
     results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
+
+    logger.debug(f"AB tests results: {results}")
 
     # This dict will have event_names as keys, and the values will be dictionnaries with the version_id as keys and the count as values
     graph_values = {}
@@ -2669,6 +2676,11 @@ async def get_ab_tests_versions(
             logger.error(f"New event type is not handled: {result['event_type']}")
 
     logger.debug(f"AB tests results: {graph_values}")
+
+    if not versionA:
+        versionA = "None"
+    if not versionB:
+        versionB = "None"
 
     formatted_graph_values = []  # List with {event_name: event_name, versionA: value, versionB: value}
     for event_name, values in graph_values.items():
