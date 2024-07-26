@@ -19,6 +19,7 @@ RecipeType = Literal[
     "evaluation",
     "event_detection",
     "sentiment_language",
+    "session_info",
 ]
 
 
