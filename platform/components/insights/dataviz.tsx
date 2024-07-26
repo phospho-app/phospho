@@ -1,10 +1,11 @@
 "use client";
 
+import { Spinner } from "@/components/small-spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React from "react";
 import {
@@ -125,7 +126,7 @@ const DatavizGraph = ({
   // Display the data or "Loading..."
   return (
     <>
-      {!pivotData && pivotLoading && <p>Loading...</p>}
+      {!pivotData && pivotLoading && <Spinner className="my-40 mx-60" />}
       {(pivotData === null || pivotData?.length == 0) && <>No data</>}
       {pivotData?.length == 1 && (
         <>

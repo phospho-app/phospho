@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { PlusIcon } from "lucide-react";
 import React from "react";
 import { useState } from "react";
 
@@ -51,12 +52,20 @@ const CreateNewABTestButton = () => {
   const [date, setDate] = useState(new Date());
   const [currentId, setCurrentId] = useState(date.toLocaleString() ?? "");
   const [aBButtonClicked, setABButtonClicked] = useState(false);
+  const handleVersionsEdit = (
+    event: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    setCurrentId(event.target.value);
+  };
 
   return (
     <>
       <Popover>
         <PopoverTrigger>
-          <Button>Create New AB Test</Button>
+          <Button>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Create New AB Test
+          </Button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-96 h-120">
           <CardHeader>
@@ -65,7 +74,7 @@ const CreateNewABTestButton = () => {
                 id="description"
                 placeholder={`Create a custom ID for your next AB test.`}
                 value={currentId}
-                onChange={handleIdEdit}
+                onChange={handleVersionsEdit}
               />
             </div>
             {aBButtonClicked ? (

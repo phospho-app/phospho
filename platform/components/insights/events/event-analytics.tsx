@@ -12,7 +12,7 @@ import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Tag } from "lucide-react";
-import { Boxes, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
