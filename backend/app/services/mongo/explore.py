@@ -2509,6 +2509,7 @@ async def get_ab_tests_versions(
                 }
             }
         },
+        # TODO : Remove this code and implement it in python instead
         # For event_type == "category", concat by event_name and the label then group by event_name
         # For event_type == "range", concat by event_name and average the score
         # For event_type == "confidence", concat by event_name and count the number of times the event was detected
