@@ -142,7 +142,7 @@ async def process_log_without_session_id(
     org_id: str,
     list_of_log_event: List[LogEventForTasks],
     trigger_pipeline: bool = True,
-    batch_size: int = 256,
+    batch_size: Optional[int] = None,
 ) -> None:
     """
     Process a list of log events without session_id
@@ -194,11 +194,15 @@ async def process_log_without_session_id(
             org_id=org_id,
         )
         # Batch the processing
-        for i in range(0, len(tasks_id_to_process), batch_size):
-            await main_pipeline.set_input(
-                tasks_ids=tasks_id_to_process[i : i + batch_size]
-            )
-            await main_pipeline.run()
+        if batch_size is not None:
+            for i in range(0, len(tasks_id_to_process), batch_size):
+                await main_pipeline.set_input(
+                    tasks_ids=tasks_id_to_process[i : i + batch_size]
+                )
+                await main_pipeline.run()
+        else:
+            await main_pipeline.set_input(tasks_ids=tasks_id_to_process)
+            await main_pipeline
 
     return None
 
@@ -208,7 +212,7 @@ async def process_log_with_session_id(
     org_id: str,
     list_of_log_event: List[LogEventForTasks],
     trigger_pipeline: bool = True,
-    batch_size: int = 256,
+    batch_size: Optional[int] = None,
 ) -> None:
     """
     Process a list of log events with session_id
@@ -404,11 +408,15 @@ async def process_log_with_session_id(
             org_id=org_id,
         )
         # Batch the processing
-        for i in range(0, len(tasks_id_to_process), batch_size):
-            await main_pipeline.set_input(
-                tasks_ids=tasks_id_to_process[i : i + batch_size]
-            )
-            await main_pipeline.run()
+        if batch_size is not None:
+            for i in range(0, len(tasks_id_to_process), batch_size):
+                await main_pipeline.set_input(
+                    tasks_ids=tasks_id_to_process[i : i + batch_size]
+                )
+                await main_pipeline.run()
+        else:
+            await main_pipeline.set_input(tasks_ids=tasks_id_to_process)
+            await main_pipeline
 
 
 async def process_log_for_tasks(
