@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from loguru import logger
 import datetime
 
-from phospho.models import ProjectDataFilters
+from phospho.models import ProjectDataFilters, ScoreRange
 from phospho.utils import is_jsonable
 
 
@@ -325,7 +325,11 @@ async def event_suggestion(
 
 
 async def add_event_to_session(
-    session: Session, event: EventDefinition, event_source: str = "owner"
+    session: Session,
+    event: EventDefinition,
+    score_range_value: Optional[float] = None,
+    score_category_label: Optional[str] = None,
+    event_source: str = "owner",
 ) -> Session:
     """
     Adds an event to a Session
@@ -337,6 +341,26 @@ async def add_event_to_session(
     ]:
         return session
 
+    if (
+        score_range_value is None
+        and score_category_label is not None
+        and event.score_range_settings.score_type == "category"
+        and event.score_range_settings.categories is not None
+    ):
+        score_range_value = (
+            event.score_range_settings.categories.index(score_category_label) + 1
+        )
+    if score_range_value is None:
+        score_range = None
+    else:
+        score_range = ScoreRange(
+            score_type=event.score_range_settings.score_type,
+            min=event.score_range_settings.min,
+            max=event.score_range_settings.max,
+            label=score_category_label,
+            value=score_range_value,
+        )
+
     # Add the event to the events collection and to the session
     detected_event_data = Event(
         event_name=event.event_name,
@@ -347,6 +371,7 @@ async def add_event_to_session(
         org_id=session.org_id,
         event_definition=event,
         confirmed=True,
+        score_range=score_range,
     )
     _ = await mongo_db["events"].insert_one(detected_event_data.model_dump())
 

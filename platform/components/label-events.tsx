@@ -24,6 +24,7 @@ import {
   TaskWithEvents,
 } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
+import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronRight, PlusIcon, Trash } from "lucide-react";
 import useSWR from "swr";
 
@@ -62,7 +63,7 @@ export const EventDetectionDescription = ({
           )}
         {roundedConfidenceScore && event.score_range?.score_type == "range" && (
           <div>
-            Score: {event?.score_range?.corrected_value}/{event.score_range.max}
+            Score: {event?.score_range?.corrected_value ?? event?.score_range?.value}/{event.score_range?.max}
           </div>
         )}
         {event.score_range?.score_type == "category" && (
@@ -381,96 +382,99 @@ export const AddEventDropdownForTasks = ({
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center">
-        {Object.entries(projectEvents).map(([event_name, event]) => {
-          // If the event is already in the task, don't show it
-          if (events?.some((e) => e.event_name === event_name)) {
-            return <></>;
-          }
+        <DropdownMenuGroup className="overflow-y-auto max-h-[20rem]">
+          {Object.entries(projectEvents).map(([event_name, event]) => {
+            // If the event is already in the task, don't show it
+            if (events?.some((e) => e.event_name === event_name)) {
+              return <></>;
+            }
 
-          const score_type =
-            event.score_range_settings?.score_type ?? "confidence";
+            const score_type =
+              event.score_range_settings?.score_type ?? "confidence";
 
-          return (
-            <HoverCard openDelay={0} closeDelay={0}>
-              <HoverCardTrigger>
-                {score_type === "confidence" && (
-                  <DropdownMenuItem
-                    key={event_name}
-                    onClick={async (mouseEvent) => {
-                      mouseEvent.stopPropagation();
-                      addEvent({ event });
-                    }}
-                  >
-                    {event_name}
-                  </DropdownMenuItem>
-                )}
-                {score_type === "range" && (
-                  <DropdownMenuSub key={event_name}>
-                    <DropdownMenuSubTrigger>
+            return (
+              <HoverCard openDelay={0} closeDelay={0}>
+                <HoverCardTrigger>
+                  {score_type === "confidence" && (
+                    <DropdownMenuItem
+                      key={event_name}
+                      onClick={async (mouseEvent) => {
+                        mouseEvent.stopPropagation();
+                        addEvent({ event });
+                      }}
+                    >
                       {event_name}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      {
-                        // Create one dropdown item for each value in the range (min to max)
-                        Array.from(
-                          { length: event.score_range_settings?.max ?? 1 },
-                          (_, i) => i + 1,
-                        ).map((value) => {
-                          return (
-                            <DropdownMenuItem
-                              key={value}
-                              onClick={async (mouseEvent) => {
-                                mouseEvent.stopPropagation();
-                                addEvent({
-                                  event,
-                                  scoreRangeValue: value,
-                                });
-                              }}
-                            >
-                              {value}
-                            </DropdownMenuItem>
-                          );
-                        })
-                      }
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                )}
-                {score_type === "category" && (
-                  <DropdownMenuSub key={event_name}>
-                    <DropdownMenuSubTrigger>
-                      {event_name}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      {// Create one dropdown item for each category
-                        event.score_range_settings?.categories?.map(
-                          (category) => {
+                    </DropdownMenuItem>
+                  )}
+                  {score_type === "range" && (
+                    <DropdownMenuSub key={event_name}>
+                      <DropdownMenuSubTrigger>
+                        {event_name}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {
+                          // Create one dropdown item for each value in the range (min to max)
+                          Array.from(
+                            { length: event.score_range_settings?.max ?? 1 },
+                            (_, i) => i + 1,
+                          ).map((value) => {
                             return (
                               <DropdownMenuItem
-                                key={category}
+                                key={value}
                                 onClick={async (mouseEvent) => {
                                   mouseEvent.stopPropagation();
                                   addEvent({
                                     event,
-                                    scoreCategoryLabel: category,
+                                    scoreRangeValue: value,
                                   });
                                 }}
                               >
-                                {category}
+                                {value}
                               </DropdownMenuItem>
                             );
-                          },
-                        )}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                )}
-              </HoverCardTrigger>
-              <HoverCardContent side="left" className="text-sm w-96">
-                <h2 className="font-bold">{event_name}</h2>
-                <div>{event.description}</div>
-              </HoverCardContent>
-            </HoverCard>
-          );
-        })}
+                          })
+                        }
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  {score_type === "category" && (
+                    <DropdownMenuSub key={event_name}>
+                      <DropdownMenuSubTrigger>
+                        {event_name}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {// Create one dropdown item for each category
+                          event.score_range_settings?.categories?.map(
+                            (category) => {
+                              return (
+                                <DropdownMenuItem
+                                  key={category}
+                                  onClick={async (mouseEvent) => {
+                                    mouseEvent.stopPropagation();
+                                    addEvent({
+                                      event,
+                                      scoreCategoryLabel: category,
+                                    });
+                                  }}
+                                >
+                                  {category}
+                                </DropdownMenuItem>
+                              );
+                            },
+                          )}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                </HoverCardTrigger>
+                <HoverCardContent side="left" className="text-sm w-96">
+                  <h2 className="font-bold">{event_name}</h2>
+                  <div>{event.description}</div>
+                </HoverCardContent>
+              </HoverCard>
+            );
+          })}
+
+        </DropdownMenuGroup>
         {setSheetOpen !== undefined && setSheetToOpen !== undefined && (
           <>
             <DropdownMenuSeparator />
@@ -538,7 +542,7 @@ export const InteractiveEventBadgeForSessions = ({
             mouseEvent.stopPropagation();
             // Call the API to remove the event from the task
             const response = await fetch(
-              `/api/events/${eventDefinition?.project_id}/confirm/${event.id}`,
+              `/api/events/${event.project_id}/confirm/${event.id}`,
               {
                 method: "POST",
                 headers: {
@@ -565,6 +569,96 @@ export const InteractiveEventBadgeForSessions = ({
           <Check className="w-4 h-4 mr-2" />
           Confirm
         </DropdownMenuItem>
+        {event?.score_range?.score_type === "category" && (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Change class</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              {// Create one dropdown item for each category
+                eventDefinition?.score_range_settings?.categories?.map(
+                  (category) => {
+                    return (
+                      <DropdownMenuItem
+                        key={category}
+                        onClick={async (mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          const response = await fetch(
+                            `/api/events/${event.project_id}/label/${event.id}`,
+                            {
+                              method: "POST",
+                              headers: {
+                                Authorization: "Bearer " + accessToken,
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                new_label: category,
+                              }),
+                            },
+                          );
+                          const response_json = await response.json();
+                          setSession({
+                            ...session,
+                            events: session.events.map((e) => {
+                              if (e.id === event.id) {
+                                return response_json;
+                              }
+                              return e;
+                            }),
+                          });
+                        }}
+                      >
+                        {category}
+                      </DropdownMenuItem>
+                    );
+                  },
+                )}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        )}
+        {event?.score_range?.score_type === "range" && (eventDefinition?.score_range_settings?.max != undefined) && (eventDefinition?.score_range_settings?.min != undefined) && (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Change score</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              {// Create one dropdown item for each integer in the range
+                Array.from({ length: eventDefinition?.score_range_settings?.max - eventDefinition?.score_range_settings?.min + 1 }, (_, i) => (eventDefinition?.score_range_settings?.min ?? 1) + i).map(
+                  (score) => {
+                    return (
+                      <DropdownMenuItem
+                        key={score}
+                        onClick={async (mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          const response = await fetch(
+                            `/api/events/${event.project_id}/value/${event.id}`,
+                            {
+                              method: "POST",
+                              headers: {
+                                Authorization: "Bearer " + accessToken,
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                new_value: score,
+                              }),
+                            },
+                          );
+                          const response_json = await response.json();
+                          setSession({
+                            ...session,
+                            events: session.events.map((e) => {
+                              if (e.id === event.id) {
+                                return response_json;
+                              }
+                              return e;
+                            }),
+                          });
+                        }}
+                      >
+                        {score}
+                      </DropdownMenuItem>
+                    );
+                  },
+                )}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        )}
         <DropdownMenuItem
           className="text-red-500"
           onClick={async (mouseEvent) => {
@@ -653,6 +747,7 @@ export const AddEventDropdownForSessions = ({
     scoreCategoryLabel?: string;
   }) {
     // Call the API to add the event to the task
+    console.log("scoreRangeValue", scoreRangeValue)
     console.log("scoreCategoryLabel", scoreCategoryLabel);
     fetch(`/api/sessions/${session.id}/add-event`, {
       method: "POST",
@@ -683,96 +778,98 @@ export const AddEventDropdownForSessions = ({
         </Badge>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center">
-        {Object.entries(projectEvents).map(([event_name, event]) => {
-          // If the event is already in the task, don't show it
-          if (events?.some((e) => e.event_name === event_name)) {
-            return <></>;
-          }
+        <DropdownMenuGroup className="overflow-y-auto max-h-[20rem]">
+          {Object.entries(projectEvents).map(([event_name, event]) => {
+            // If the event is already in the task, don't show it
+            if (events?.some((e) => e.event_name === event_name)) {
+              return <></>;
+            }
 
-          const score_type =
-            event.score_range_settings?.score_type ?? "confidence";
+            const score_type =
+              event.score_range_settings?.score_type ?? "confidence";
 
-          return (
-            <HoverCard openDelay={0} closeDelay={0}>
-              <HoverCardTrigger>
-                {score_type === "confidence" && (
-                  <DropdownMenuItem
-                    key={event_name}
-                    onClick={async (mouseEvent) => {
-                      mouseEvent.stopPropagation();
-                      addEvent({ event });
-                    }}
-                  >
-                    {event_name}
-                  </DropdownMenuItem>
-                )}
-                {score_type === "range" && (
-                  <DropdownMenuSub key={event_name}>
-                    <DropdownMenuSubTrigger>
+            return (
+              <HoverCard openDelay={0} closeDelay={0}>
+                <HoverCardTrigger>
+                  {score_type === "confidence" && (
+                    <DropdownMenuItem
+                      key={event_name}
+                      onClick={async (mouseEvent) => {
+                        mouseEvent.stopPropagation();
+                        addEvent({ event });
+                      }}
+                    >
                       {event_name}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      {
-                        // Create one dropdown item for each value in the range (min to max)
-                        Array.from(
-                          { length: event.score_range_settings?.max ?? 1 },
-                          (_, i) => i + 1,
-                        ).map((value) => {
-                          return (
-                            <DropdownMenuItem
-                              key={value}
-                              onClick={async (mouseEvent) => {
-                                mouseEvent.stopPropagation();
-                                addEvent({
-                                  event,
-                                  scoreRangeValue: value,
-                                });
-                              }}
-                            >
-                              {value}
-                            </DropdownMenuItem>
-                          );
-                        })
-                      }
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                )}
-                {score_type === "category" && (
-                  <DropdownMenuSub key={event_name}>
-                    <DropdownMenuSubTrigger>
-                      {event_name}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      {// Create one dropdown item for each category
-                        event.score_range_settings?.categories?.map(
-                          (category) => {
+                    </DropdownMenuItem>
+                  )}
+                  {score_type === "range" && (
+                    <DropdownMenuSub key={event_name}>
+                      <DropdownMenuSubTrigger>
+                        {event_name}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {
+                          // Create one dropdown item for each value in the range (min to max)
+                          Array.from(
+                            { length: event.score_range_settings?.max ?? 1 },
+                            (_, i) => i + 1,
+                          ).map((value) => {
                             return (
                               <DropdownMenuItem
-                                key={category}
+                                key={value}
                                 onClick={async (mouseEvent) => {
                                   mouseEvent.stopPropagation();
                                   addEvent({
                                     event,
-                                    scoreCategoryLabel: category,
+                                    scoreRangeValue: value,
                                   });
                                 }}
                               >
-                                {category}
+                                {value}
                               </DropdownMenuItem>
                             );
-                          },
-                        )}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                )}
-              </HoverCardTrigger>
-              <HoverCardContent side="left" className="text-sm w-96">
-                <h2 className="font-bold">{event_name}</h2>
-                <div>{event.description}</div>
-              </HoverCardContent>
-            </HoverCard>
-          );
-        })}
+                          })
+                        }
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                  {score_type === "category" && (
+                    <DropdownMenuSub key={event_name}>
+                      <DropdownMenuSubTrigger>
+                        {event_name}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {// Create one dropdown item for each category
+                          event.score_range_settings?.categories?.map(
+                            (category) => {
+                              return (
+                                <DropdownMenuItem
+                                  key={category}
+                                  onClick={async (mouseEvent) => {
+                                    mouseEvent.stopPropagation();
+                                    addEvent({
+                                      event,
+                                      scoreCategoryLabel: category,
+                                    });
+                                  }}
+                                >
+                                  {category}
+                                </DropdownMenuItem>
+                              );
+                            },
+                          )}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  )}
+                </HoverCardTrigger>
+                <HoverCardContent side="left" className="text-sm w-96">
+                  <h2 className="font-bold">{event_name}</h2>
+                  <div>{event.description}</div>
+                </HoverCardContent>
+              </HoverCard>
+            );
+          })}
+        </DropdownMenuGroup>
         {setSheetOpen !== undefined && setSheetToOpen !== undefined && (
           <>
             <DropdownMenuSeparator />
