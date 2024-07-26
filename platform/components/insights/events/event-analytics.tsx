@@ -12,7 +12,7 @@ import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Tag } from "lucide-react";
-import { Boxes, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
@@ -132,7 +132,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                     </CardDescription>
                   </div>
 
-                  <Link href="/org/transcripts/tasks">
+                  <Link href="/org/transcripts/sessions">
                     <Button variant="default">
                       Give feedback
                       <ChevronRight className="ml-2" />
@@ -166,7 +166,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                     </CardDescription>
                   </div>
 
-                  <Link href="/org/transcripts/tasks">
+                  <Link href="/org/transcripts/sessions">
                     <Button variant="default">
                       Label data
                       <ChevronRight className="ml-2" />

@@ -30,6 +30,8 @@ import useSWR from "swr";
 import { TableNavigation } from "../table-navigation";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { getColumns } from "./abtesting-columns";
+import { ABTestingDataviz } from "./abtesting-dataviz";
+import CreateNewABTestButton from "./create-new-ab-test-button";
 
 interface DataTableProps<TData, TValue> {}
 
@@ -62,6 +64,9 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
       keepPreviousData: true,
     },
   );
+
+  // We create a list of all the version IDs
+  const versionIDs = abTests?.map((abtest) => abtest.version_id);
 
   const columns = getColumns();
 
@@ -106,9 +111,12 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
         </Card>
       )}
       <div>
-        <div className="flex flex-row gap-x-2 items-center mb-2 justify-end">
+        <div className="flex flex-row gap-x-2 items-center mb-2 justify-between">
+          <CreateNewABTestButton />
           <TableNavigation table={table} />
         </div>
+
+        <ABTestingDataviz versionIDs={versionIDs} />
 
         <div className="rounded-md border">
           <Table>

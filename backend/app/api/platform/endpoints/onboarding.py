@@ -1,4 +1,3 @@
-from app.services.mongo.files import process_file_upload_into_log_events
 from fastapi import APIRouter, Depends
 from loguru import logger
 from propelauth_fastapi import User
