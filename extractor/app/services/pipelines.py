@@ -53,6 +53,7 @@ class MainPipeline:
         self,
         task: Optional[Task] = None,
         tasks: Optional[List[Task]] = None,
+        tasks_ids: Optional[List[str]] = None,
         messages: Optional[List[lab.Message]] = None,
     ):
         """
@@ -348,6 +349,19 @@ class MainPipeline:
                     task=task, metadata=metadata, previous_tasks=task_context
                 )
             )
+        if tasks_ids:
+            # Fetch the tasks from the database
+            raw_tasks_from_ids = (
+                await mongo_db["tasks"]
+                .find({"id": {"$in": tasks_ids}, "project_id": self.project_id})
+                .to_list(length=None)
+            )
+            valid_tasks_from_ids = [
+                Task.model_validate(task) for task in raw_tasks_from_ids
+            ]
+            if tasks is None:
+                tasks = []
+            tasks.extend(valid_tasks_from_ids)
         if tasks:
             for task in tasks:
                 # Get the data of all the tasks before task[task_id]
@@ -626,7 +640,10 @@ class MainPipeline:
                 },
             )
 
-    async def run_main_pipeline(self) -> PipelineResults:
+    async def run(self) -> PipelineResults:
+        """
+        Run the main pipeline
+        """
         # Run the event detection pipeline
         events = await self.run_events()
         # Run sentiment analysis on the user input
@@ -657,7 +674,7 @@ class MainPipeline:
         logger.info(f"Starting main pipeline for task {task.id}")
         # Set the input for the pipeline
         await self.set_input(task=task)
-        pipeline_results = await self.run_main_pipeline()
+        pipeline_results = await self.run()
         logger.info(
             f"Main pipeline completed in {time.time() - self.start_time:.2f} seconds for task {task.id}"
         )
@@ -676,7 +693,7 @@ class MainPipeline:
         - Event detection
         """
         await self.set_input(messages=messages)
-        pipeline_results = await self.run_main_pipeline()
+        pipeline_results = await self.run()
 
         return pipeline_results
 

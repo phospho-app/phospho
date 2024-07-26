@@ -17,13 +17,8 @@ from app.services.connectors import (
     OpenTelemetryConnector,
 )
 from app.services.log import process_log_for_tasks, process_logs_for_messages
-from app.services.pipelines import (
-    messages_main_pipeline,
-    recipe_pipeline,
-    task_main_pipeline,
-    task_scoring_pipeline,
-)
-from fastapi import APIRouter, BackgroundTasks, Depends
+from app.services.pipelines import MainPipeline
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 
 router = APIRouter()
@@ -39,10 +34,16 @@ async def post_main_pipeline_on_task(
     is_request_authenticated: bool = Depends(authenticate_key),
 ) -> PipelineResults:
     logger.debug(f"task: {request_body.task}")
-    pipeline_results = await task_main_pipeline(
-        task=request_body.task,
-        save_task=request_body.save_results,
+    if request_body.task.org_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Task.org_id is missing.",
+        )
+    main_pipeline = MainPipeline(
+        project_id=request_body.task.project_id,
+        org_id=request_body.task.org_id,
     )
+    pipeline_results = await main_pipeline.task_main_pipeline(task=request_body.task)
     return pipeline_results
 
 
@@ -55,52 +56,43 @@ async def post_eval_pipeline_on_task(
     request_body: RunMainPipelineOnTaskRequest,
     is_request_authenticated: bool = Depends(authenticate_key),
 ) -> PipelineResults:
-    logger.debug(f"task: {request_body.task}")
-    # Do the session scoring -> success, failure
-    mongo_db = await get_mongo_db()
-
-    if request_body.save_results:
-        task_in_db = await mongo_db["tasks"].find_one({"id": request_body.task.id})
-        if task_in_db.get("flag") is None:
-            flag = await task_scoring_pipeline(
-                request_body.task, save_task=request_body.save_results
-            )
-        else:
-            flag = task_in_db.get("flag")
-    else:
-        flag = await task_scoring_pipeline(
-            request_body.task, save_task=request_body.save_results
+    if request_body.task.org_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Task.org_id is missing.",
         )
-
-    pipeline_results = PipelineResults(
-        events=[],
-        flag=flag,
-        language=None,
-        sentiment=None,
+    main_pipeline = MainPipeline(
+        project_id=request_body.task.project_id,
+        org_id=request_body.task.org_id,
     )
-
-    return pipeline_results
+    await main_pipeline.set_input(task=request_body.task)
+    flag = await main_pipeline.run_evaluation()
+    return PipelineResults(
+        flag=flag,
+    )
 
 
 @router.post(
     "/pipelines/main/messages",
-    description="Main extractor pipeline on messages",
+    description="Detect events, eval, and everything else on continuous messages of a single session.",
     response_model=PipelineResults,
 )
 async def post_main_pipeline_on_messages(
     request_body: RunMainPipelineOnMessagesRequest,
     is_request_authenticated: bool = Depends(authenticate_key),
 ) -> PipelineResults:
-    pipeline_results = await messages_main_pipeline(
+    main_pipeline = MainPipeline(
         project_id=request_body.project_id,
-        messages=request_body.messages,
+        org_id=request_body.org_id,
     )
+    await main_pipeline.set_input(messages=request_body.messages)
+    pipeline_results = await main_pipeline.run()
     return pipeline_results
 
 
 @router.post(
     "/pipelines/log",
-    description="Store a batch of log events in database",
+    description="Store and process a batch of log events in the database",
 )
 async def post_log_tasks(
     request_body: LogProcessRequestForTasks,
@@ -125,17 +117,21 @@ async def post_log_tasks(
 
 @router.post(
     "/pipelines/log/messages",
-    description="Store a batch of log events in database",
+    description="! Not implemented",
 )
 async def post_log_messages(
     request_body: LogProcessRequestForMessages,
     background_tasks: BackgroundTasks,
     is_request_authenticated: bool = Depends(authenticate_key),
 ):
+    """
+    Not implemented
+    """
     logger.info(
         f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
     )
-    await process_logs_for_messages(
+    background_tasks.add_task(
+        process_logs_for_messages,
         project_id=request_body.project_id,
         org_id=request_body.org_id,
         logs_to_process=request_body.logs_to_process,
@@ -156,16 +152,23 @@ async def post_run_job_on_task(
     background_tasks: BackgroundTasks,
     is_request_authenticated: bool = Depends(authenticate_key),
 ):
-    # If there are no tasks to process, return
     if len(request.tasks) == 0:
         logger.debug("No tasks to process.")
         return {"status": "no tasks to process", "nb_job_results": 0}
-    # Run the valid recipes
     logger.info(
         f"Running job {request.recipe.recipe_type} on {len(request.tasks)} tasks."
     )
+    if request.recipe.org_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Recipe.org_id is missing.",
+        )
+    main_pipeline = MainPipeline(
+        project_id=request.recipe.project_id,
+        org_id=request.recipe.org_id,
+    )
     background_tasks.add_task(
-        recipe_pipeline,
+        main_pipeline.recipe_pipeline,
         tasks=request.tasks,
         recipe=request.recipe,
     )
@@ -175,12 +178,15 @@ async def post_run_job_on_task(
 @router.post(
     "/pipelines/opentelemetry",
     response_model=dict,
-    description="Store data from OpenTelemetry in database",
+    description="Store data from OpenTelemetry in a dedicated database",
 )
 async def store_opentelemetry_data(
     request: PipelineOpentelemetryRequest,
 ) -> dict:
-    """Store the opentelemetry data in the opentelemetry database"""
+    """
+    Store the opentelemetry data in the opentelemetry database
+    Doesn't process logs
+    """
 
     opentelemetry_connector = OpenTelemetryConnector(
         project_id=request.project_id,
@@ -197,13 +203,12 @@ async def store_opentelemetry_data(
 
 @router.post(
     "/pipelines/langsmith",
-    description="Run the Langsmith pipeline",
+    description="Pull data from Langsmith and process it",
 )
 async def extract_langsmith_data(
     request: PipelineLangsmithRequest,
 ):
     logger.debug(f"Received Langsmith connection data for org id: {request.org_id}")
-
     langsmith_connector = LangsmithConnector(
         project_id=request.project_id,
         langsmith_api_key=request.langsmith_api_key,
@@ -218,19 +223,17 @@ async def extract_langsmith_data(
 
 @router.post(
     "/pipelines/langfuse",
-    description="Run the langfuse pipeline on a task",
+    description="Pull data from LangFuse and process it",
 )
 async def extract_langfuse_data(
     request: PipelineLangfuseRequest,
 ):
     logger.debug(f"Received LangFuse connection data for org id: {request.org_id}")
-
     langfuse_connector = LangfuseConnector(
         project_id=request.project_id,
         langfuse_secret_key=request.langfuse_secret_key,
         langfuse_public_key=request.langfuse_public_key,
     )
-
     return await langfuse_connector.sync(
         org_id=request.org_id,
         current_usage=request.current_usage,

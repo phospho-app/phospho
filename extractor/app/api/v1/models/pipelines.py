@@ -8,17 +8,17 @@ from phospho.models import SentimentObject
 
 class RunMainPipelineOnTaskRequest(BaseModel):
     task: Task
-    save_results: bool = False
 
 
 class RunMainPipelineOnMessagesRequest(BaseModel):
     project_id: str
+    org_id: str
     messages: List[Message]
 
 
 class PipelineResults(BaseModel):
-    events: Dict[str, List[Event]]
-    flag: Dict[str, Literal["success", "failure"]]
+    events: Dict[str, List[Event]] = Field(default_factory=dict)
+    flag: Dict[str, Literal["success", "failure"]] = Field(default_factory=dict)
     language: Dict[str, Optional[str]] = Field(default_factory=dict)
     sentiment: Dict[str, Optional[SentimentObject]] = Field(default_factory=dict)
 
