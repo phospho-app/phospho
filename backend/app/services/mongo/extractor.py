@@ -4,16 +4,16 @@ from typing import Callable, List, Optional
 
 import httpx
 import stripe
-from app.api.v2.models import LogEvent, PipelineResults
+from app.api.v2.models import LogEvent
 from app.api.v3.models import MinimalLogEventForMessages
 from app.core import config
-from app.db.models import Recipe, Task
 from app.security import propelauth
 from app.services.slack import slack_notification
 from app.utils import generate_uuid, health_check
 from loguru import logger
 
 from phospho.lab import Message
+from phospho.models import PipelineResults, Recipe, Task
 
 
 def check_health_extractor():
@@ -223,7 +223,7 @@ class ExtractorClient:
             },
         )
         if result is None or result.status_code != 200:
-            return PipelineResults(events=[], flag=None)
+            return PipelineResults()
         return PipelineResults.model_validate(result.json())
 
     async def run_main_pipeline_on_messages(
@@ -236,7 +236,7 @@ class ExtractorClient:
 
         if len(messages) == 0:
             logger.debug(f"No messages to process for project {self.project_id}")
-            return PipelineResults(events=[], flag=None)
+            return PipelineResults()
 
         result = await self._post(
             "pipelines/main/messages",
@@ -244,9 +244,13 @@ class ExtractorClient:
                 "messages": [message.model_dump(mode="json") for message in messages],
                 "project_id": self.project_id,
             },
+            on_success_callback=lambda response: self._compute_stripe_usage(
+                nb_job_results=1,
+            ),
         )
         if result is None or result.status_code != 200:
-            return PipelineResults(events=[], flag=None)
+            return PipelineResults()
+
         return PipelineResults.model_validate(result.json())
 
     async def run_recipe_on_tasks(

@@ -28,13 +28,23 @@ def check_health_ai_hub():
     """
     Check if the AI Hub server is healthy
     """
-    ai_hub_is_healthy = health_check(f"{config.PHOSPHO_AI_HUB_URL}/v1/health")
-    if not ai_hub_is_healthy:
-        logger.error(
-            f"AI Hub server is not reachable at url {config.PHOSPHO_AI_HUB_URL}"
-        )
-    else:
-        logger.info(f"AI Hub server is reachable at url {config.PHOSPHO_AI_HUB_URL}")
+    if config.PHOSPHO_AI_HUB_URL is None:
+        logger.error("AI Hub URL is not configured.")
+    if config.PHOSPHO_AI_HUB_API_KEY is None:
+        logger.error("AI Hub API Key is not configured.")
+    if (
+        config.PHOSPHO_AI_HUB_URL is not None
+        and config.PHOSPHO_AI_HUB_API_KEY is not None
+    ):
+        ai_hub_is_healthy = health_check(f"{config.PHOSPHO_AI_HUB_URL}/v1/health")
+        if not ai_hub_is_healthy:
+            logger.error(
+                f"AI Hub server is not reachable at url {config.PHOSPHO_AI_HUB_URL}"
+            )
+        else:
+            logger.info(
+                f"AI Hub server is reachable at url {config.PHOSPHO_AI_HUB_URL}"
+            )
 
 
 async def fetch_models(org_id: Optional[str] = None) -> Optional[ModelsResponse]:
