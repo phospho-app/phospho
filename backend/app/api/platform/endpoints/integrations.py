@@ -3,9 +3,14 @@ To check if an organization has access to an argilla workspace, there is a metad
 """
 
 from fastapi import APIRouter, Depends, HTTPException
+from loguru import logger
 from propelauth_py.user import User
+import argilla as rg
 
-from app.api.platform.models.integrations import DatasetCreationRequest
+from app.api.platform.models.integrations import (
+    DatasetCreationRequest,
+    DatasetPullRequest,
+)
 from app.core import config
 from app.security.authentification import (
     propelauth,
@@ -13,7 +18,9 @@ from app.security.authentification import (
 )
 from app.services.integrations import (
     dataset_name_is_valid,
+    dataset_name_exists,
     generate_dataset_from_project,
+    pull_dataset_from_argilla,
     PostgresqlCredentials,
     PostgresqlIntegration,
 )
@@ -94,3 +101,40 @@ async def post_postgresql_push(
     )
     status = await postgres_integration.push()
     return {"status": status}
+
+
+@router.post("/argila/pull")
+async def post_pull_dataset(
+    request: DatasetPullRequest, user: User = Depends(propelauth.require_user)
+):
+    await verify_if_propelauth_user_can_access_project(user, request.project_id)
+    project = await get_project_by_id(request.project_id)
+    org_member_info = propelauth.require_org_member(user, project.org_id)
+    org = propelauth.fetch_org(org_member_info.org_id)
+    # Get the org metadata
+    org_metadata = org.get("metadata", {})
+
+    # Check if the organization has access to the workspace
+    if "argilla_workspace_id" not in org_metadata:
+        raise HTTPException(
+            status_code=400,
+            detail="Your organization does not have access to an Argilla workspace. Contact us to get access to one.",
+        )
+
+    workspace_id = org_metadata["argilla_workspace_id"]
+    if workspace_id is request.workspace_id:
+        raise HTTPException(status_code=400, detail="The workspace_id is not valid.")
+
+    # Authorization checks
+    is_name_valid = dataset_name_exists(
+        request.dataset_name, request.workspace_id, request.project_id
+    )
+    if not is_name_valid:
+        raise HTTPException(
+            status_code=400, detail="The dataset name does not exist for this project."
+        )
+    argilla_dataset = await pull_dataset_from_argilla(request)
+    for record in argilla_dataset.records:
+        if len(record.responses) > 0:
+            logger.debug(f"Argilla dataset: {record}")
+    return {"status": "ok"}
