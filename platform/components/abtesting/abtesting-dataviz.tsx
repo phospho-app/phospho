@@ -3,6 +3,13 @@
 import { Spinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -47,7 +54,7 @@ export const ABTestingDataviz = ({
     };
 
     fetchData();
-  }, [versionIDA, versionIDB]);
+  }, [versionIDA, versionIDB, project_id]);
 
   console.log("graphData", graphData);
 
@@ -141,16 +148,22 @@ export const CustomTooltip = ({
   if (active && payload && payload.length) {
     return (
       <div className="custom-tooltip">
-        <p className="label">{`${label}`}</p>
-        <p>Number of detections, adjusted to number of tasks</p>
-        <div>
-          {payload.map((pld: any) => (
-            <div style={{ display: "inline-block", padding: 10 }}>
-              <div>{pld.value.toFixed(2)}</div>
-              <div>{pld.dataKey}</div>
-            </div>
-          ))}
-        </div>
+        <Card>
+          <CardHeader className="label">
+            <CardTitle>{label}</CardTitle>
+            <CardDescription>
+              Number of detections, adjusted per number of tasks
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {payload.map((pld: any) => (
+              <div style={{ display: "inline-block", padding: 10 }}>
+                <div>{pld.value.toFixed(2)}</div>
+                <div>{pld.dataKey}</div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }
