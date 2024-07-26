@@ -747,6 +747,7 @@ export const AddEventDropdownForSessions = ({
     scoreCategoryLabel?: string;
   }) {
     // Call the API to add the event to the task
+    console.log("scoreRangeValue", scoreRangeValue)
     console.log("scoreCategoryLabel", scoreCategoryLabel);
     fetch(`/api/sessions/${session.id}/add-event`, {
       method: "POST",
