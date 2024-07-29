@@ -19,7 +19,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronDown } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Bar,
   BarChart,
@@ -30,22 +30,11 @@ import {
 } from "recharts";
 import useSWR from "swr";
 
-export const ABTestingDataviz = ({
-  versionIDs,
-}: {
-  versionIDs: string[] | undefined;
-}) => {
+export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-  const [versionIDA, setVersionIDA] = useState<string>("");
-  const [versionIDB, setVersionIDB] = useState<string>("");
-
-  useEffect(() => {
-    if (versionIDs && versionIDs.length > 1) {
-      setVersionIDA(versionIDs[0]);
-      setVersionIDB(versionIDs[1]);
-    }
-  }, [project_id]); // We want to select the first 2 versions when the project_id changes
+  const [versionIDA, setVersionIDA] = useState<string>(versionIDs[0]);
+  const [versionIDB, setVersionIDB] = useState<string>(versionIDs[1]);
 
   const { data: graphData } = useSWR(
     project_id && versionIDA && versionIDB
@@ -68,11 +57,6 @@ export const ABTestingDataviz = ({
 
   if (!project_id || !versionIDs || versionIDs.length < 2) {
     return <></>;
-  }
-
-  if (!versionIDA || !versionIDB) {
-    setVersionIDA(versionIDs[0]);
-    setVersionIDB(versionIDs[1]);
   }
 
   if (!graphData) {
