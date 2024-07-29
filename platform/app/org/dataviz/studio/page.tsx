@@ -103,7 +103,7 @@ const MetadataForm: React.FC = () => {
                   }}
                 >
                   <MessagesSquare className="h-4 w-4 mr-2" />
-                  Tasks count
+                  Nb user messages
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -243,7 +243,7 @@ const MetadataForm: React.FC = () => {
                   }}
                 >
                   <List className="h-4 w-4 mr-2" />
-                  Task position
+                  Message position
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {

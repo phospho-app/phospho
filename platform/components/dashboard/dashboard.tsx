@@ -416,7 +416,7 @@ const Dashboard: React.FC = () => {
       )}
       <Card className="col-span-full lg:col-span-4">
         <CardHeader>
-          <CardTitle>Number of Daily Tasks</CardTitle>
+          <CardTitle>Number of messages per day</CardTitle>
         </CardHeader>
         <CardContent>
           <OverviewLast7Days />
@@ -424,7 +424,7 @@ const Dashboard: React.FC = () => {
       </Card>
       <Card className="col-span-full lg:col-span-4">
         <CardHeader>
-          <CardTitle>Number of Daily Events</CardTitle>
+          <CardTitle>Tags detected per day</CardTitle>
         </CardHeader>
         <CardContent>
           <EventsLast7Days />

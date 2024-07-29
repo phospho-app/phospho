@@ -95,7 +95,7 @@ const RunAnalysisInPast = ({
       id: "evaluation",
       label: "Evaluation",
       description:
-        "Automatically label tasks as a Success or Failure. 1 credit per task.",
+        "Automatically label system responses as a Success or Failure. 1 credit per system response.",
     },
     {
       id: "event_detection",
@@ -105,13 +105,13 @@ const RunAnalysisInPast = ({
         formatedEventList +
         ". " +
         nbrEvents +
-        " credits per tasks, one per event.",
+        " credits per user message, one per event.",
     },
     {
       id: "sentiment_language",
       label: "Sentiment & language",
       description:
-        "Recognize the sentiment (positive, negative) and the language of the user's task input. 2 credits per task.",
+        "Recognize the sentiment (positive, negative) and the language of the user message. 2 credits per user message.",
     },
   ] as const;
 
@@ -263,8 +263,8 @@ const RunAnalysisInPast = ({
             />
             {totalNbTasks && (
               <div>
-                We will run {totalAnalytics} analytics, on {totalNbTasks} tasks,
-                for a total of {totalAnalytics} credits.
+                We will run {totalAnalytics} analytics, on {totalNbTasks}{" "}
+                messages, for a total of {totalAnalytics} credits.
               </div>
             )}
             {hobby && (
@@ -290,7 +290,7 @@ const RunAnalysisInPast = ({
             )}
             {!totalNbTasks && (
               <div>
-                <div>No tasks selected</div>
+                <div>No messages selected</div>
               </div>
             )}
           </form>

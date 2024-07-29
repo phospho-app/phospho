@@ -111,7 +111,7 @@ export default function Page() {
             <TextSearch className="h-16 w-16 mr-4 hover:text-green-500 transition-colors" />
             <div>
               <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center mb-0">
-                Analytics
+                Event Analytics
               </CardTitle>
               <CardDescription className="text-muted-foreground">
                 Your data is automatically augmented using the event detectors
@@ -165,13 +165,13 @@ export default function Page() {
               <AlertCircle className="h-16 w-16" />
               <div>
                 <AlertTitle className="font-bold">
-                  Max event quota reached
+                  Max event detector quota reached
                 </AlertTitle>
                 <AlertDescription>
                   <div className="flex-col space-y-4">
                     <div className="pb-2">
-                      {max_nb_events}/{max_nb_events} events created. Add a
-                      payment method to create more.
+                      {max_nb_events}/{max_nb_events} event detector created.
+                      Add a payment method to create more.
                     </div>
                     <Link href="/org/settings/billing">
                       <Button>Add payment method</Button>
@@ -218,7 +218,7 @@ export default function Page() {
           // current number of events
           events && max_nb_events && current_nb_events < max_nb_events && (
             <p>
-              {current_nb_events}/{max_nb_events} events created
+              {current_nb_events}/{max_nb_events} event detectors created
             </p>
           )
         }

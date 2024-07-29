@@ -331,7 +331,7 @@ const FilterComponent = ({
                 resetPagination();
               }}
             >
-              Is last task
+              Is last message
               <X className="h-4 w-4 ml-2" />
             </Button>
           )}
@@ -624,7 +624,7 @@ const FilterComponent = ({
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   <List className="h-4 w-4 mr-2" />
-                  Task position
+                  Message position
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
                   <DropdownMenuItem
@@ -638,7 +638,7 @@ const FilterComponent = ({
                       resetPagination();
                     }}
                   >
-                    Is last task
+                    Is last message
                   </DropdownMenuItem>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>

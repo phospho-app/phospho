@@ -164,9 +164,10 @@ export default function Page() {
       <FetchOrgProject />
       <Card className="lg:w-1/3 md:w-1/2">
         <CardHeader className="pb-0">
-          <CardTitle>Create your phospho project.</CardTitle>
+          <CardTitle>Create a phospho project</CardTitle>
           <CardDescription>
-            You can create multiple projects to keep your app ordered.
+            Start by giving your project a name. You can always change this
+            later.
           </CardDescription>
         </CardHeader>
         <CardContent className={CARD_STYLE}>
@@ -211,9 +212,9 @@ export default function Page() {
         </div>
         <div>
           <CardHeader className="pb-4">
-            <CardTitle>Explore sample data</CardTitle>
+            <CardTitle>Explore sample project</CardTitle>
             <CardDescription>
-              Get a feel for Phospho by exploring a sample project.
+              Get a feel for phospho by exploring a project with sample data.
             </CardDescription>
           </CardHeader>
         </div>
@@ -233,7 +234,7 @@ export default function Page() {
               disabled={loading || creatingProject || redirecting}
             >
               {redirecting && <Spinner className="mr-1" />}
-              Explore sample data
+              Explore project
             </Button>
           </div>
         </CardContent>

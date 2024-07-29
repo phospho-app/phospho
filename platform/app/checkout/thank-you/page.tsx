@@ -83,7 +83,7 @@ function RunAnalyticsForm({
       id: "evaluation",
       label: "Evaluation",
       description:
-        "Automatically label tasks as a Success or Failure. 1 credit per task.",
+        "Automatically label system responses as a Success or Failure. 1 credit per system response.",
     },
     {
       id: "event_detection",
@@ -93,13 +93,13 @@ function RunAnalyticsForm({
         formatedEventList +
         ". " +
         nbrEvents +
-        " credits per tasks, one per event.",
+        " credits per user message, one per event.",
     },
     {
       id: "sentiment_language",
       label: "Sentiment & language",
       description:
-        "Recognize the sentiment (positive, negative) and the language of the user's task input. 2 credits per task.",
+        "Recognize the sentiment (positive, negative) and the language of the user message. 2 credits per user message.",
     },
   ] as const;
 
