@@ -45,7 +45,7 @@ const CreateNewABTestButton = () => {
     }).then(() => {
       toast({
         title: "Version ID updated",
-        description: "Your next logs will be updated with the new version id",
+        description: "This new version_id will be added to your next logs",
       });
     });
     setABButtonClicked(false);
@@ -66,7 +66,7 @@ const CreateNewABTestButton = () => {
     }).then(() => {
       toast({
         title: "Version ID cleared",
-        description: "Your next logs will not have a session id",
+        description: "No version_id will be added to your logs",
       });
     });
   }
