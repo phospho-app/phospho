@@ -15,7 +15,7 @@ from app.db.models import Task
 from app.core import constants
 from app.services.mongo.tasks import get_all_tasks
 
-# Connect to argila
+# Connect to argilla
 try:
     rg.init(api_url=config.ARGILLA_URL, api_key=config.ARGILLA_API_KEY)
 except Exception as e:
@@ -98,6 +98,28 @@ def dataset_name_exists(dataset_name: str, workspace_id: str, project_id: str) -
     except Exception as e:
         logger.warning(e)
         return False
+
+
+def get_datasets_name(workspace_id: str, project_id: str) -> list[str]:
+    """
+    Get the dataset names of this project
+    """
+
+    datasets = []
+    # Get the dataset names of this workspace
+    try:
+        dataset_list = rg.FeedbackDataset.list(
+            workspace=workspace_id
+        )  # This line will raise an exception if the workspace does not exist
+        for dataset in dataset_list:
+            if dataset.metadata_properties[1].values[0] == project_id:
+                datasets.append(dataset.name)
+
+        return datasets
+
+    except Exception as e:
+        logger.warning(e)
+        return datasets
 
 
 def sample_tasks(
@@ -334,5 +356,5 @@ async def pull_dataset_from_argilla(
     argilla_dataset = rg.FeedbackDataset.from_argilla(
         name=pull_request.dataset_name, workspace=pull_request.workspace_id
     ).pull()
-    # TODO: add rules
+
     return argilla_dataset

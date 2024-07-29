@@ -19,6 +19,7 @@ from app.security.authentification import (
 from app.services.integrations import (
     dataset_name_is_valid,
     dataset_name_exists,
+    get_datasets_name,
     generate_dataset_from_project,
     pull_dataset_from_argilla,
     PostgresqlCredentials,
@@ -29,7 +30,7 @@ from app.services.mongo.projects import get_project_by_id
 router = APIRouter(tags=["Integrations"])
 
 
-@router.post("/argila/datasets")
+@router.post("/argilla/datasets")
 async def post_create_dataset(
     request: DatasetCreationRequest, user: User = Depends(propelauth.require_user)
 ):
@@ -48,7 +49,7 @@ async def post_create_dataset(
         )
 
     workspace_id = org_metadata["argilla_workspace_id"]
-    if workspace_id is request.workspace_id:
+    if request.workspace_id != workspace_id:
         raise HTTPException(status_code=400, detail="The workspace_id is not valid.")
 
     if request.limit > config.MAX_NUMBER_OF_DATASET_SAMPLES:
@@ -103,7 +104,7 @@ async def post_postgresql_push(
     return {"status": status}
 
 
-@router.post("/argila/pull")
+@router.post("/argilla/pull")
 async def post_pull_dataset(
     request: DatasetPullRequest, user: User = Depends(propelauth.require_user)
 ):
@@ -122,7 +123,7 @@ async def post_pull_dataset(
         )
 
     workspace_id = org_metadata["argilla_workspace_id"]
-    if workspace_id is request.workspace_id:
+    if request.workspace_id != workspace_id:
         raise HTTPException(status_code=400, detail="The workspace_id is not valid.")
 
     # Authorization checks
@@ -138,3 +139,40 @@ async def post_pull_dataset(
         if len(record.responses) > 0:
             logger.debug(f"Argilla dataset: {record}")
     return {"status": "ok"}
+
+
+@router.post("/argilla/names")
+async def post_fetch_dataset_names(
+    request: DatasetPullRequest, user: User = Depends(propelauth.require_user)
+):
+    logger.debug(f"Request: {request.model_dump()}")
+    logger.debug(f"project_id: {request.project_id}")
+    logger.debug(f"workspace_id: {request.workspace_id}")
+    await verify_if_propelauth_user_can_access_project(user, request.project_id)
+    project = await get_project_by_id(request.project_id)
+    org_member_info = propelauth.require_org_member(user, project.org_id)
+    org = propelauth.fetch_org(org_member_info.org_id)
+    # Get the org metadata
+    org_metadata = org.get("metadata", {})
+
+    # Check if the organization has access to the workspace
+    if "argilla_workspace_id" not in org_metadata:
+        raise HTTPException(
+            status_code=400,
+            detail="Your organization does not have access to an Argilla workspace. Contact us to get access to one.",
+        )
+
+    workspace_id = org_metadata["argilla_workspace_id"]
+    if request.workspace_id != workspace_id:
+        raise HTTPException(status_code=400, detail="The workspace_id is not valid.")
+
+    datasets_name = get_datasets_name(request.workspace_id, request.project_id)
+
+    logger.debug(f"Datasets name: {datasets_name}")
+
+    if not datasets_name:
+        raise HTTPException(
+            status_code=400, detail="No datasets found for this project."
+        )
+
+    return datasets_name
