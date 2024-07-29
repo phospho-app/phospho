@@ -45,7 +45,7 @@ export const ABTestingDataviz = ({
       setVersionIDA(versionIDs[0]);
       setVersionIDB(versionIDs[1]);
     }
-  }, [versionIDs]);
+  }, [project_id]); // We want to select the first 2 versions when the project_id changes
 
   const { data: graphData } = useSWR(
     project_id && versionIDA && versionIDB

@@ -2547,14 +2547,15 @@ async def get_ab_tests_versions(
         logger.info(f"No tasks found for version {versionB}")
         return []
 
-    total_tasks = total_tasks_with_A + total_tasks_with_B
+    if total_tasks_with_A > total_tasks_with_B:
+        max_tasks = total_tasks_with_A
+    else:
+        max_tasks = total_tasks_with_B
 
     logger.debug(f"Total tasks with version {versionA}: {total_tasks_with_A}")
     logger.debug(f"Total tasks with version {versionB}: {total_tasks_with_B}")
-    logger.debug(f"Total tasks: {total_tasks}")
     logger.debug(f"AB tests results: {results}")
 
-    graph_values = {}
     graph_values = {}
     for result in results:
         if "event_name" not in result:
@@ -2573,13 +2574,7 @@ async def get_ab_tests_versions(
                         graph_values[event_name][event_result["version_id"]] = (
                             event_result["count"]
                         )
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
                         graph_values[event_name][event_result["version_id"]] += (
                             event_result["count"]
                         )
@@ -2587,15 +2582,11 @@ async def get_ab_tests_versions(
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values[event_name]:
                 graph_values[event_name][versionA] = (
-                    graph_values[event_name][versionA]
-                    * total_tasks
-                    / total_tasks_with_A
+                    graph_values[event_name][versionA] * max_tasks / total_tasks_with_A
                 )
             if versionB in graph_values[event_name]:
                 graph_values[event_name][versionB] = (
-                    graph_values[event_name][versionB]
-                    * total_tasks
-                    / total_tasks_with_B
+                    graph_values[event_name][versionB] * max_tasks / total_tasks_with_B
                 )
 
         elif (
@@ -2612,13 +2603,7 @@ async def get_ab_tests_versions(
                         graph_values[event_name][event_result["version_id"]] = (
                             event_result["count"]
                         )
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
                         graph_values[event_name][event_result["version_id"]] += (
                             event_result["count"]
                         )
@@ -2626,13 +2611,13 @@ async def get_ab_tests_versions(
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = (
                         graph_values[event_name][versionA]
-                        * total_tasks
+                        * max_tasks
                         / total_tasks_with_A
                     )
                 if event_result["version_id"] == versionB:
                     graph_values[event_name][versionB] = (
                         graph_values[event_name][versionB]
-                        * total_tasks
+                        * max_tasks
                         / total_tasks_with_B
                     )
 
@@ -2647,9 +2632,6 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            int(event_result["event_label"]) * event_result["count"]
-                        )
                         graph_values[event_name][event_result["version_id"]] = (
                             int(event_result["event_label"]) * event_result["count"]
                         )
@@ -2691,11 +2673,11 @@ async def get_ab_tests_versions(
             # We normalize the score by the total number of tasks with each version
             if versionA in graph_values[event_name]:
                 graph_values[event_name][versionA] = (
-                    graph_values[event_name][versionA] * total_tasks / 5
+                    graph_values[event_name][versionA] * max_tasks / 5
                 )
             if versionB in graph_values[event_name]:
                 graph_values[event_name][versionB] = (
-                    graph_values[event_name][versionB] * total_tasks / 5
+                    graph_values[event_name][versionB] * max_tasks / 5
                 )
 
         else:
