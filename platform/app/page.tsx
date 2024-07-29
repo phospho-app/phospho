@@ -32,7 +32,7 @@ const Page: React.FC = () => {
 
   // Once connected, redirect to the dashboard
   if (projects && projects.length > 0 && project_id) {
-    router.push("/org/transcripts/tasks", { scroll: false });
+    router.push("/org/transcripts/sessions", { scroll: false });
   }
 
   return (
