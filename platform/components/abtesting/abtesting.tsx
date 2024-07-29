@@ -95,8 +95,8 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
                 </CardTitle>
                 <CardDescription>
                   <div className="text-muted-foreground">
-                    When logging tasks, add a version_id in metadata to compare
-                    their success rate.
+                    When logging, add a <code>version_id</code> in{" "}
+                    <code>metadata</code> to compare their success rate.
                   </div>
                 </CardDescription>
               </div>

@@ -13,6 +13,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { ArrowBigDown, Bot, ThumbsDown, ThumbsUp, User } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import * as React from "react";
@@ -48,18 +49,12 @@ function WhatAreTasks() {
       <Card>
         <CardContent className={CARD_STYLE}>
           <div>Your Users interact with an Assistant.</div>
-          <div className="pb-4">
-            We call "task" every meaningful interaction.
-          </div>
           <div className="flex flex-col justify-center text-sm font-normal space-y-2">
             <div className="w-full flex justify-end items-center">
               <div className="rounded-sm bg-blue-600 text-white p-2">
                 What's the capital of France?
               </div>
               <User className="w-6 h-6 ml-2 text-primary" />
-            </div>
-            <div className="w-full flex justify-end items-center text-muted-foreground text-xs italic">
-              Task input
             </div>
             <div className="w-full flex justify-start items-center">
               <Bot className="w-6 h-6 mr-2 text-primary" />
@@ -77,13 +72,6 @@ function WhatAreTasks() {
                 The capital of France is Paris.
               </div>
             </div>
-            <div className="w-full flex justify-start items-center text-muted-foreground text-xs italic">
-              Task output
-            </div>
-          </div>
-          <div className="flex flex-grow justify-center text-muted-foreground font-normal text-sm italic text-center">
-            This a task! It can be anything, not just a question or a
-            conversation.
           </div>
         </CardContent>
       </Card>
@@ -154,10 +142,9 @@ function WhatAreSessions() {
     <div className="p-1">
       <Card>
         <CardContent className={CARD_STYLE}>
-          <div>Provide the full context.</div>
           <div className="pb-10">
-            Group tasks into sessions and add metadata (eg: system prompt or
-            user id)
+            Messages are grouped using <code>session_id</code>,{" "}
+            <code>user_id</code>, and <code>version_id</code>.
           </div>
 
           <div className="flex flex-col justify-center text-sm font-normal space-y-2">
@@ -187,7 +174,7 @@ function WhatAreSessions() {
             </div>
           </div>
           <div className="flex flex-grow justify-center text-muted-foreground font-normal text-sm italic text-center">
-            For example, a conversation is a session.
+            A conversation is a session.
           </div>
         </CardContent>
       </Card>
@@ -202,9 +189,56 @@ function WhatAreEvents() {
     <div className="p-1">
       <Card>
         <CardContent className={CARD_STYLE}>
-          <div className="pt-4">Events are key moments in a session.</div>
-          <div>Events are automatically detected.</div>
-          <div>They are customizable.</div>
+          <div>phospho runs analytics to augment your data.</div>
+          <div>Easily customize them on the platform.</div>
+          <div className="flex flex-col justify-center text-sm font-normal space-y-2 ">
+            <div className="flex justify-end items-center">
+              <div className="rounded-sm bg-blue-600 text-white p-2 w-32"></div>
+              <User className="w-6 h-6 ml-2 text-primary" />
+            </div>
+            <div className="flex justify-start items-top">
+              <Bot className="w-6 h-6 mr-2 text-primary" />
+              <div className="rounded-sm bg-gray-300 p-2 text-gray-800 w-32 h-8"></div>
+            </div>
+            <div className="flex justify-center">
+              <ArrowBigDown className="w-6 h-6" />
+            </div>
+            <div className="flex flex-col space-y-2">
+              <div className="rounded-lg border-muted-foreground border-2 p-1">
+                Tag: Vague question
+              </div>
+              <div className="rounded-lg border-muted-foreground border-2 p-1">
+                Score: Conciseness 1/5
+              </div>
+              <div className="rounded-lg border-muted-foreground border-2 p-1">
+                Category: Product feedback
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function LetsGo() {
+  const router = useRouter();
+
+  return (
+    <div className="p-1">
+      <Card>
+        <CardContent className={CARD_STYLE}>
+          <div className="pt-4">
+            Learn more in the{" "}
+            <Link
+              href="https://docs.phospho.ai/welcome"
+              target="_blank"
+              className="underline"
+            >
+              docs
+            </Link>
+            .
+          </div>
           <div className="flex justify-center pt-6">
             <Button
               onClick={() => router.push("/onboarding/survey")}
@@ -241,9 +275,9 @@ export default function Page() {
               <CarouselItem key={index}>
                 {index === 0 && <WhatIsPhospho />}{" "}
                 {index === 1 && <WhatAreTasks />}{" "}
-                {index === 2 && <WhatIsEvaluation />}
-                {index === 3 && <WhatAreSessions />}
-                {index === 4 && <WhatAreEvents />}
+                {index === 2 && <WhatAreSessions />}
+                {index === 3 && <WhatAreEvents />}
+                {index === 4 && <LetsGo />}
               </CarouselItem>
             ))}
           </CarouselContent>

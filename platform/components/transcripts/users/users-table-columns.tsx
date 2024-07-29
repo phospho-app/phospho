@@ -103,7 +103,7 @@ export function getColumns() {
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Nb tasks
+            Nb messages
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );

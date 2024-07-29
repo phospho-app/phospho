@@ -156,7 +156,7 @@ export default function AddEvents({
         console.error("Error sending feedback to Phospho", e);
       }
     } else {
-      console.error("Phospho task id is null");
+      console.error("Phospho task_id is null");
     }
   };
 
@@ -288,13 +288,13 @@ export default function AddEvents({
     <>
       <Card className="max-w-1/2">
         <CardHeader>
-          <CardTitle>Setup events for this project</CardTitle>
+          <CardTitle>Setup analytics for this project</CardTitle>
           <CardDescription>
-            Phospho helps you monitor your application by tracking events, we
-            can setup events to get you started.
+            phospho runs automated analytics to augment your data with tags,
+            scores, and labels.
           </CardDescription>
           <CardDescription className="pt-2">
-            You can add more events later in Events/Manage section.
+            Select a template to get started (you can change this later).
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col space-y-2 border-gray-500">
@@ -337,9 +337,8 @@ export default function AddEvents({
                 />
               ))}
           </div>
-          <div className="text-muted-foreground">
-            Did you know? You can later setup events to trigger webhooks (slack,
-            email, etc.)
+          <div className="text-muted-foreground text-sm">
+            You can later setup events to trigger webhooks (slack, email, etc.)
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
@@ -353,14 +352,13 @@ export default function AddEvents({
           </Button>
           <Button
             onClick={async () => {
-              console.log("Selected Events:", isSelected);
               setSendEventsLoading(true);
               saveSelectedEvents().then((response) => {
                 setSendEventsLoading(false);
                 router.push(redirectTo);
                 toast({
-                  title: "Your events have been saved! 🎉",
-                  description: `You'll find them in Insights.`,
+                  title: "Your config has been saved! 🎉",
+                  description: `You can change this in Analytics`,
                 });
               });
             }}

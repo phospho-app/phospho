@@ -170,7 +170,7 @@ export function getColumns({
     },
     // Input
     {
-      header: "User input",
+      header: "User message",
       accessorKey: "input",
       cell: (row) => {
         const input = row.getValue() as string; // asserting the type as string
@@ -197,7 +197,7 @@ export function getColumns({
       minSize: 100,
     },
     {
-      header: "System output",
+      header: "System response",
       accessorKey: "output",
       cell: (row) => {
         const output = row.getValue() as string; // asserting the type as string
@@ -448,7 +448,7 @@ export function getColumns({
               </HoverCardTrigger>
               <HoverCardContent side="top" className="text-sm text-left w-50">
                 <h2 className="font-bold">Sentiment label</h2>
-                <p>Automatic sentiment analysis of the Task input</p>
+                <p>Automatic sentiment analysis of the user message</p>
               </HoverCardContent>
             </HoverCard>
           </div>

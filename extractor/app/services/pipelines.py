@@ -401,8 +401,10 @@ class MainPipeline:
         if self.project is None:
             self.project = await get_project_by_id(self.project_id)
 
-        if not self.project.settings.run_events:
-            logger.info(f"run_events is disabled for project {self.project_id}")
+        if not self.project.settings.run_event_detection:
+            logger.info(
+                f"run_event_detection is disabled for project {self.project_id}"
+            )
             return {}
 
         # If the recipe is provided, we use it to run the workload

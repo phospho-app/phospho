@@ -187,7 +187,7 @@ export default function RunEvent({
             {!hasTasks && (
               <div className="flex flex-row space-x-1 items-center">
                 <span>
-                  No tasks found in this project. Log some data to run event.
+                  No messages found in this project. Log some data to run event.
                 </span>
                 <Link
                   href="https://docs.phospho.ai/getting-started"
@@ -205,7 +205,7 @@ export default function RunEvent({
                   This will run event detection on:{" "}
                   <span className="font-semibold ml-1">
                     {Math.floor(totalNbTasks * form.getValues("sample_rate"))}{" "}
-                    tasks
+                    user messages.
                   </span>
                   <HoverCard openDelay={0} closeDelay={0}>
                     <HoverCardTrigger>
@@ -225,7 +225,7 @@ export default function RunEvent({
                 </div>
               )}
             {(totalNbTasks === 0 || totalNbTasks === null) && (
-              <div>No task found in this date range.</div>
+              <div>No messages found in this date range.</div>
             )}
           </div>
           <SheetFooter>

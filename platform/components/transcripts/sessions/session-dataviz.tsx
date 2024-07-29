@@ -132,7 +132,7 @@ const SessionsDataviz: React.FC = () => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
-          <p className="text-secondary font-semibold">{`Session length: ${label == 1 ? label + " task" : label + " tasks"}`}</p>
+          <p className="text-secondary font-semibold">{`Session length: ${label == 1 ? label + " user message" : label + " user messages"}`}</p>
           <p className="text-green-500">{`${payload[0].value === 1 ? payload[0].value + " session" : payload[0].value.toFixed(0) + " sessions"}`}</p>
         </div>
       );
@@ -145,7 +145,7 @@ const SessionsDataviz: React.FC = () => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
-          <p className="text-secondary font-semibold">{`Success rate after ${label == 1 ? label + " task" : label + " tasks"}`}</p>
+          <p className="text-secondary font-semibold">{`Success rate after ${label == 1 ? label + " user message" : label + " user messages"}`}</p>
           <p className="text-green-500">{`${payload[0].value.toFixed(2)}% success rate`}</p>
         </div>
       );
@@ -280,7 +280,7 @@ const SessionsDataviz: React.FC = () => {
           <div>
             <Card>
               <CardHeader>
-                <CardDescription>Last Task Success Rate</CardDescription>
+                <CardDescription>Last Message Success Rate</CardDescription>
               </CardHeader>
               <CardContent>
                 {(!lastTaskSuccessRate && <p>...</p>) || (
@@ -351,7 +351,7 @@ const SessionsDataviz: React.FC = () => {
           </div>
           <div className="flex-1">
             <h3 className="text-slate-500 mb-2">
-              Success Rate per task position
+              Success Rate per message position
             </h3>
             {(!successRatePerTaskPosition && (
               <Skeleton className="w-[100%] h-[150px]" />

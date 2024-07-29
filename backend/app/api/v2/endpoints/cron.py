@@ -29,7 +29,8 @@ async def run_sync_pipeline(
         await run_langsmith_sync_pipeline()
         await run_langfuse_sync_pipeline()
         # Only run the PostgreSQL sync pipeline once a day, at 10am
-        await run_postgresql_sync_pipeline()
+        if datetime.datetime.now().hour == 10:
+            await run_postgresql_sync_pipeline()
         return {"status": "ok", "message": "Pipelines ran successfully"}
     except Exception as e:
         return {"status": "error", "message": f"Error running sync pipeline {e}"}

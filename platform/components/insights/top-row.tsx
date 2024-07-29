@@ -35,7 +35,9 @@ const TopRowKpis = ({
           </Card>
           <Card>
             <CardHeader>
-              <CardDescription>Nb Tasks Bottom 10% {name}</CardDescription>
+              <CardDescription>
+                Nb user messages Bottom 10% {name}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {((bottom10 === null || bottom10 === undefined) && (
@@ -45,7 +47,7 @@ const TopRowKpis = ({
           </Card>
           <Card>
             <CardHeader>
-              <CardDescription>Avg Nb Tasks per {name}</CardDescription>
+              <CardDescription>Avg Nb user messages per {name}</CardDescription>
             </CardHeader>
             <CardContent>
               {((average === null || average === undefined) && <p>...</p>) || (
@@ -55,7 +57,7 @@ const TopRowKpis = ({
           </Card>
           <Card>
             <CardHeader>
-              <CardDescription>Nb Tasks Top 10% {name}</CardDescription>
+              <CardDescription>Nb user messages Top 10% {name}</CardDescription>
             </CardHeader>
             <CardContent>
               {((top10 === null || top10 === undefined) && <p>...</p>) || (

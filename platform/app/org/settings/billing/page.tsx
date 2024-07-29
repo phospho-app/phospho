@@ -83,12 +83,12 @@ export default function Page() {
         <h2 className="text-2xl font-bold tracking-tight">Usage</h2>
         {plan === "usage_based" && (
           <div>
-            <p>You have currently run {currentUsage ?? "..."} detections.</p>
+            <p>You have currently run {currentUsage ?? "..."} analysis.</p>
           </div>
         )}
         {plan === "pro" && (
           <div>
-            <p>You have currently run {currentUsage ?? "..."} detections.</p>
+            <p>You have currently run {currentUsage ?? "..."} analysis.</p>
           </div>
         )}
         {plan === "hobby" && (
@@ -99,10 +99,10 @@ export default function Page() {
             />
             <p>
               You have currently run {currentUsage ?? "..."}/{maxUsage}{" "}
-              detections.
+              analysis.
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Add a payment method to enable more detections.
+              Add a payment method to increase limit.
             </p>
           </>
         )}
