@@ -156,7 +156,7 @@ export default function AddEvents({
         console.error("Error sending feedback to Phospho", e);
       }
     } else {
-      console.error("Phospho task id is null");
+      console.error("Phospho task_id is null");
     }
   };
 
