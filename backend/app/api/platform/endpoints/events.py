@@ -132,16 +132,16 @@ async def post_change_label_event(
     response_model=Event,
     description="Change current label of an event",
 )
-async def post_change_label_event(
+async def post_change_value_event(
     project_id: str,
     event_id: str,
     request: ScoreRequest,
     user: User = Depends(propelauth.require_user),
 ) -> Event:
     """
-    Change the label of an event.
+    Change the value of a range event.
     """
-    logger.debug(f"Changing label of event {event_id} to {request.new_value}")
+    logger.debug(f"Changing value of a range event {event_id} to {request.new_value}")
     org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
     event = await change_value_event(
         project_id=project_id, event_id=event_id, new_value=request.new_value

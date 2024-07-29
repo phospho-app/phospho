@@ -78,9 +78,6 @@ def dataset_name_exists(dataset_name: str, workspace_id: str, project_id: str) -
     """
     For now, checks if the name does not already exist in the workspace
     """
-    if len(dataset_name) == 0:
-        return False
-
     # Get the dataset names of this workspace
     try:
         dataset_list = rg.FeedbackDataset.list(
@@ -149,19 +146,32 @@ async def generate_dataset_from_project(
 
     # Get the labels from the project settings
     # By default project.settings.events is {}
-    labels = {}
+    taggers = {}
+    scorers = {}
+    classifiers = {}
 
     # Add the no-event label (when no event is detected)
-    labels["no-event"] = "No event"
+    taggers["no-tag"] = "No tag"
 
     for key, value in project.settings.events.items():
         # We do not use session level events for now
         if value.detection_engine == "session":
             logger.debug(f"Skipping session event {key} as it is session level")
             continue
-        labels[key] = key
+        if value.score_range_settings.score_type == "confidence":
+            taggers[key] = key
+        elif value.score_range_settings.score_type == "score":
+            scorers[key] = [
+                i
+                for i in range(
+                    int(value.score_range_settings.min),
+                    int(value.score_range_settings.max),
+                )
+            ]
+        elif value.score_range_settings.score_type == "category":
+            classifiers[key] = value.score_range_settings.categories
 
-    if len(labels.keys()) < 2:
+    if len(taggers.keys()) + len(scorers.keys()) + len(classifiers.keys()) < 2:
         logger.warning(
             f"Not enough labels found in project settings {project.id} with filters {creation_request.filters} and limit {creation_request.limit}"
         )
@@ -170,6 +180,52 @@ async def generate_dataset_from_project(
     # Create the dataset
     # Add phospho metadata in the dataset metadata: org_id, project_id, filters, limit,...
     # FeedbackDataset
+
+    questions = [
+        rg.MultiLabelQuestion(
+            name="taggers",
+            title="Taggers",
+            description="Select all the tags that apply",
+            labels=taggers,
+            required=True,
+            visible_labels=len(taggers),
+        ),
+    ]
+
+    for key in scorers.keys():
+        questions.append(
+            rg.RatingQuestion(
+                name=f"{key.replace(' ', '_').lower()}",
+                title=key,
+                description="Select the score",
+                values=scorers[key],
+                required=True,
+            )
+        )
+
+    for key in classifiers.keys():
+        logger.debug(f"classifiers: {classifiers[key]}")
+        logger.debug(type(key))
+
+    for key in classifiers.keys():
+        questions.append(
+            rg.LabelQuestion(
+                name=f"{key.replace(' ', '_').lower()}",
+                title=key,
+                description="Select the category",
+                labels=classifiers[key],
+                required=True,
+            )
+        )
+
+    questions.append(
+        rg.TextQuestion(
+            name="comment",
+            title="Comment",
+            description="Please provide any additional feedback",
+            required=False,
+        )
+    )
     argilla_dataset = rg.FeedbackDataset(
         fields=[
             rg.TextField(
@@ -182,55 +238,7 @@ async def generate_dataset_from_project(
                 use_markdown=True,
             ),
         ],
-        questions=[
-            rg.RatingQuestion(
-                name="sentiment",
-                description="What is the sentiment of the message? (1: Very negative, 3: Neutral, 5: Very positive)",
-                values=[1, 2, 3, 4, 5],
-            ),
-            rg.MultiLabelQuestion(
-                name="event_detection",
-                title="Event detection",
-                description="Select all the events that apply",
-                labels=labels,
-                required=True,
-                visible_labels=max(
-                    3, len(labels)
-                ),  # The min number of labels to display must be equal or greater than 3
-            ),
-            rg.LabelQuestion(
-                name="evaluation",
-                title="Evaluation",
-                description="Evaluate the quality of the assistant's response",
-                labels=["Success", "Failure"],
-                required=False,
-            ),
-            rg.LabelQuestion(
-                name="language",
-                title="Language",
-                description="Select the language of the user input",
-                labels=constants.LANGUAGES_FOR_LABELLING,
-                required=False,
-            ),
-            rg.TextQuestion(
-                name="comment",
-                title="Comment",
-                description="Please provide any additional feedback",
-                required=False,
-            ),
-        ],
-        metadata_properties=[
-            rg.TermsMetadataProperty(
-                name="org_id",
-                title="Organization ID",
-                values=[project.org_id],
-            ),
-            rg.TermsMetadataProperty(
-                name="project_id",
-                title="Project ID",
-                values=[creation_request.project_id],
-            ),
-        ],
+        questions=questions,
     )
 
     # Tasks to dataset records

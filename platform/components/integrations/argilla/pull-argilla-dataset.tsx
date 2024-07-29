@@ -144,9 +144,6 @@ const PullDataset = () => {
                         <SelectTrigger className="py-1 h-8">
                             <span className="flex space-x-1">
                                 <div className="flex items-center">{datasetName || "Select a dataset"}</div>
-                                <SelectValue asChild={true} id={project_id}>
-                                    <div>{datasetName}</div>
-                                </SelectValue>
                             </span>
                         </SelectTrigger>
                         <SelectContent position="popper" className="overflow-y-auto max-h-[40rem]">
