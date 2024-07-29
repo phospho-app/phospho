@@ -2438,7 +2438,7 @@ async def get_ab_tests_versions(
     - For range evnts, shows the average value of the score for each task with the two versions of the model.
     """
     mongo_db = await get_mongo_db()
-    collection_name = "tasks_with_events"
+    collection_name = "events"
 
     logger.debug(f"Fetching AB tests for project {project_id}")
     logger.debug(f"Versions: {versionA} and {versionB}")
@@ -2452,41 +2452,31 @@ async def get_ab_tests_versions(
         {
             "$match": {
                 "project_id": project_id,
-                "metadata.version_id": {"$in": [versionA, versionB]},
+                "removed": {"$ne": ["$events.removed", True]},
+            }
+        },
+        {
+            "$lookup": {
+                "from": "tasks",
+                "localField": "task_id",
+                "foreignField": "id",
+                "as": "task",
+            }
+        },
+        {"$unwind": "$task"},
+        {
+            "$match": {
+                "task.metadata.version_id": {"$in": [versionA, versionB]},
             }
         },
         {
             "$group": {
                 "_id": {
-                    "task_id": "$id",
-                    "version_id": "$metadata.version_id",
-                },
-                "events": {"$push": "$events"},
-            }
-        },
-        {
-            "$project": {
-                "_id": 0,
-                "task_id": "$_id.task_id",
-                "version_id": "$_id.version_id",
-                "events": 1,
-            }
-        },
-        # We now have a list of documents with the task_id, the version_id and the events
-        # Let's count the number of times each event was detected for each version
-        {
-            "$unwind": "$events",
-        },
-        {
-            "$unwind": "$events",
-        },
-        {
-            "$group": {
-                "_id": {
-                    "version_id": "$version_id",
-                    "event_name": "$events.event_name",
-                    "event_label": "$events.score_range.label",
-                    "event_type": "$events.event_definition.score_range_settings.score_type",
+                    "version_id": "$task.metadata.version_id",
+                    "event_definition_id": "$event_definition.id",
+                    "event_label": "$score_range.label",
+                    "event_name": "$event_definition.event_name",
+                    "event_type": "$event_definition.score_range_settings.score_type",
                 },
                 "count": {"$sum": 1},
                 "score": {"$avg": "$events.score_range.value"},
@@ -2502,18 +2492,21 @@ async def get_ab_tests_versions(
                 "event_name": "$_id.event_name",
                 "event_label": "$_id.event_label",
                 "event_type": "$_id.event_type",
+                "event_name": "$_id.event_name",
                 "count": 1,
                 "score": 1,
             },
         },
+        # TODO : Remove this code and implement it in python instead
         # For event_type == "category", concat by event_name and the label then group by event_name
         # For event_type == "range", concat by event_name and average the score
         # For event_type == "confidence", concat by event_name and count the number of times the event was detected
         {
             "$group": {
                 "_id": {
-                    "event_name": "$event_name",
+                    "event_definition_id": "$_id.event_definition_id",
                     "event_type": "$event_type",
+                    "event_name": "$event_name",
                 },
                 "results": {
                     "$push": {
@@ -2528,8 +2521,8 @@ async def get_ab_tests_versions(
         {
             "$project": {
                 "_id": 0,
-                "event_name": "$_id.event_name",
                 "event_type": "$_id.event_type",
+                "event_name": "$_id.event_name",
                 "results": 1,
             },
         },
@@ -2562,7 +2555,10 @@ async def get_ab_tests_versions(
     logger.debug(f"AB tests results: {results}")
 
     graph_values = {}
+    graph_values = {}
     for result in results:
+        if "event_name" not in result:
+            continue
         if (
             "event_type" not in result or result["event_type"] == "confidence"
         ):  # We sum up the count for each version
@@ -2577,7 +2573,13 @@ async def get_ab_tests_versions(
                         graph_values[event_name][event_result["version_id"]] = (
                             event_result["count"]
                         )
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
                         graph_values[event_name][event_result["version_id"]] += (
                             event_result["count"]
                         )
@@ -2610,7 +2612,13 @@ async def get_ab_tests_versions(
                         graph_values[event_name][event_result["version_id"]] = (
                             event_result["count"]
                         )
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
                         graph_values[event_name][event_result["version_id"]] += (
                             event_result["count"]
                         )
@@ -2642,10 +2650,28 @@ async def get_ab_tests_versions(
                         graph_values[event_name][event_result["version_id"]] = (
                             int(event_result["event_label"]) * event_result["count"]
                         )
+                        graph_values[event_name][event_result["version_id"]] = (
+                            int(event_result["event_label"]) * event_result["count"]
+                        )
                     else:
                         graph_values[event_name][event_result["version_id"]] += (
                             int(event_result["event_label"]) * event_result["count"]
                         )
+
+                if event_result["version_id"] not in divide_for_correct_average:
+                    divide_for_correct_average[event_result["version_id"]] = (
+                        event_result["count"]
+                    )
+                else:
+                    divide_for_correct_average[event_result["version_id"]] += (
+                        event_result["count"]
+                    )
+
+            for version in divide_for_correct_average:
+                graph_values[event_name][version] = (
+                    graph_values[event_name][version]
+                    / divide_for_correct_average[version]
+                )
 
                 if event_result["version_id"] not in divide_for_correct_average:
                     divide_for_correct_average[event_result["version_id"]] = (
