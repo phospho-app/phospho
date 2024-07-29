@@ -609,7 +609,7 @@ export default function CreateEvent({
                     />
                   </FormControl>
                   <FormLabel className="font-medium text-muted-foreground">
-                    Only detect on the last task of a session
+                    Only detect on the last message of a session
                   </FormLabel>
                 </FormItem>
               )}

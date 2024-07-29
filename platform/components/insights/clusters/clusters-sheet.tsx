@@ -120,20 +120,20 @@ const RunClusters = ({
         </div>
         {(!totalNbTasks || totalNbTasks < 5) && (
           <div className="mt-4">
-            You need at least 5 tasks to run a cluster analysis, there are
-            currently {totalNbTasks ? totalNbTasks : 0} tasks.
+            You need at least 5 user messages to run a cluster analysis, there
+            are currently {totalNbTasks ? totalNbTasks : 0} user messages.
           </div>
         )}
         {totalNbTasks && totalNbTasks >= 5 && totalNbTasks <= 4000 && (
           <div className="mt-4">
-            We will clusterize {totalNbTasks} tasks for a total of{" "}
+            We will clusterize {totalNbTasks} user messages for a total of{" "}
             {clusteringCost} credits.
           </div>
         )}
         {!hobby && totalNbTasks && totalNbTasks > 4000 && (
           <div className="mt-4">
-            Please filter your selection to less than 4000 tasks. There are
-            currently {totalNbTasks} tasks to clusterize.
+            Please filter your selection to less than 4000 user messages. There
+            are currently {totalNbTasks} user messages to clusterize.
           </div>
         )}
         {hobby && (

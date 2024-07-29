@@ -86,7 +86,7 @@ export default function DisableAnalytics() {
       id: "evaluation",
       label: "Evaluation",
       description:
-        "Automatically label tasks as a Success or Failure. 1 credit per task.",
+        "Automatically label system responses as a Success or Failure. 1 credit per system response.",
     },
     {
       id: "event_detection",
@@ -96,19 +96,19 @@ export default function DisableAnalytics() {
         formatedEventList +
         ". " +
         nbrEvents +
-        " credits per tasks, 1 per event.",
+        " credits per user message, 1 per event.",
     },
     {
       id: "sentiment",
       label: "Sentiment",
       description:
-        "Recognize the sentiment (positive, negative) of the user's task input. 1 credit per task.",
+        "Recognize the sentiment (positive, negative) of the user message. 1 credit per user message.",
     },
     {
       id: "language",
       label: "Language",
       description:
-        "Detect the language of the user's task input. 1 credit per task.",
+        "Detect the language of the user message. 1 credit per user message.",
     },
   ] as const;
 

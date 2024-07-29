@@ -35,8 +35,8 @@ const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
         console.log("Sent email successfully:", data);
         toast({
           // Add a mail emoji
-          title: "✉️ Your tasks are on the way!",
-          description: `After processing, we'll send tasks to ${user.email}`,
+          title: "✉️ Your data is on the way!",
+          description: `After processing, we'll send the files to ${user.email}`,
         });
       }
     } catch (error) {
