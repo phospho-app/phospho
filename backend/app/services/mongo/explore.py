@@ -2530,8 +2530,6 @@ async def get_ab_tests_versions(
 
     results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
 
-    logger.debug(f"AB tests results: {results}")
-
     # This dict will have event_names as keys, and the values will be dictionnaries with the version_id as keys and the count as values
     total_tasks_with_A = await mongo_db["tasks"].count_documents(
         {"project_id": project_id, "metadata.version_id": versionA}
@@ -2639,21 +2637,6 @@ async def get_ab_tests_versions(
                         graph_values[event_name][event_result["version_id"]] += (
                             int(event_result["event_label"]) * event_result["count"]
                         )
-
-                if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[event_result["version_id"]] = (
-                        event_result["count"]
-                    )
-                else:
-                    divide_for_correct_average[event_result["version_id"]] += (
-                        event_result["count"]
-                    )
-
-            for version in divide_for_correct_average:
-                graph_values[event_name][version] = (
-                    graph_values[event_name][version]
-                    / divide_for_correct_average[version]
-                )
 
                 if event_result["version_id"] not in divide_for_correct_average:
                     divide_for_correct_average[event_result["version_id"]] = (
