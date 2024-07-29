@@ -193,7 +193,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
           )}
           {tasksWithoutHumanLabel && tasksWithoutHumanLabel.length === 0 && (
             <div className="flex space-x-4 items-center text-muted-foreground">
-              You labeled all the tasks! 🎉
+              You labeled all the messages! 🎉
             </div>
           )}
         </CardFooter>

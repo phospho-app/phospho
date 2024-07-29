@@ -44,8 +44,8 @@ export function getColumns() {
               </HoverCardTrigger>
               <HoverCardContent>
                 <div className="w-96">
-                  The average success rate is (nb of "success" tasks)/(total nb
-                  of tasks).{" "}
+                  The average success rate is (nb of "success" system
+                  responses)/(total nb of system responses).{" "}
                 </div>
                 <div>Higher is better.</div>
               </HoverCardContent>

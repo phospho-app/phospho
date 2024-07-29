@@ -448,7 +448,7 @@ export function getColumns({
               </HoverCardTrigger>
               <HoverCardContent side="top" className="text-sm text-left w-50">
                 <h2 className="font-bold">Sentiment label</h2>
-                <p>Automatic sentiment analysis of the Task input</p>
+                <p>Automatic sentiment analysis of the user message</p>
               </HoverCardContent>
             </HoverCard>
           </div>

@@ -27,11 +27,11 @@ export default function Page({
   const user_id = decodeURIComponent(params.id);
   const pathname = usePathname();
   let currentTabName = pathname.split("/").pop();
-  if (currentTabName !== "tasks" && currentTabName !== "sessions") {
-    currentTabName = "tasks";
+  if (currentTabName !== "messages" && currentTabName !== "sessions") {
+    currentTabName = "messages";
   }
   const [selected, setSelected] = useState<string>(
-    capitalizeFirstLetter(currentTabName) ?? "Tasks",
+    capitalizeFirstLetter(currentTabName) ?? "Messages",
   );
 
   const handleSelect = (event: Event) => {
@@ -62,7 +62,9 @@ export default function Page({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onSelect={handleSelect}>Tasks</DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleSelect}>
+              Messages
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={handleSelect}>
               Sessions
             </DropdownMenuItem>

@@ -155,7 +155,7 @@ export const CustomTooltip = ({
           <CardHeader className="label">
             <CardTitle>{label}</CardTitle>
             <CardDescription>
-              Number of detections, adjusted per number of tasks
+              Number of detections, adjusted per number of user messages
             </CardDescription>
           </CardHeader>
           <CardContent>

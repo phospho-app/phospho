@@ -189,8 +189,7 @@ export default function UploadDataset({
         if (response.ok) {
           toast({
             title: "Your file is being processed ✅",
-            description:
-              "Tasks will appear in your dashboard in a few minutes.",
+            description: "Data will appear in your dashboard in a few minutes.",
           });
           setOpen(false);
           setLoading(false);

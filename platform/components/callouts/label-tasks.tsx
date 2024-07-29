@@ -48,7 +48,7 @@ export function LabelTasksCallout() {
                     Label{" "}
                     {hasLabelledTasks.enough_labelled_tasks -
                       hasLabelledTasks.currently_labelled_tasks}{" "}
-                    tasks to improve automatic task evaluation
+                    messages to improve automatic evaluation
                   </span>
                   <ThumbsDown size={24} /> <ThumbsUp size={24} />
                 </div>
@@ -60,7 +60,8 @@ export function LabelTasksCallout() {
                   {hasLabelledTasks.enough_labelled_tasks} labels.
                 </p>
                 <p>
-                  Go to a task to label it or automate the process with the API.
+                  Go to a message to label it or automate the process with the
+                  API.
                 </p>
                 <Link
                   href="https://docs.phospho.ai/guides/evaluation"
