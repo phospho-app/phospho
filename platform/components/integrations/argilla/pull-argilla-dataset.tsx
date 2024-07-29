@@ -137,9 +137,6 @@ const PullDataset = () => {
                     </div>
                 </div> */}
                 <div className="mt-4">
-                    <div className="block text-sm font-medium">
-                        Dataset to import
-                    </div>
                     <Select
                         onValueChange={handleValueChange}
                         defaultValue={datasetName}
