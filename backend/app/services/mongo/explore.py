@@ -2540,7 +2540,6 @@ async def get_ab_tests_versions(
     logger.debug(f"AB tests results: {results}")
 
     # This dict will have event_names as keys, and the values will be dictionnaries with the version_id as keys and the count as values
-    graph_values = {}
     total_tasks_with_A = await mongo_db["tasks"].count_documents(
         {"project_id": project_id, "metadata.version_id": versionA}
     )
@@ -2562,6 +2561,7 @@ async def get_ab_tests_versions(
     logger.debug(f"Total tasks: {total_tasks}")
     logger.debug(f"AB tests results: {results}")
 
+    graph_values = {}
     for result in results:
         if (
             "event_type" not in result or result["event_type"] == "confidence"
@@ -2634,33 +2634,33 @@ async def get_ab_tests_versions(
             for event_result in result["results"]:
                 if event_name not in graph_values:
                     graph_values[event_name] = {
-                        event_result["version_id"]: event_result["score"]
+                        event_result["version_id"]: int(event_result["event_label"])
+                        * event_result["count"]
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
                         graph_values[event_name][event_result["version_id"]] = (
-                            event_result["score"]
+                            int(event_result["event_label"]) * event_result["count"]
                         )
                     else:
-                        if event_result["version_id"] not in divide_for_correct_average:
-                            divide_for_correct_average[event_result["version_id"]] = (
-                                event_result["count"]
-                            )
-                        else:
-                            divide_for_correct_average[event_result["version_id"]] += (
-                                event_result["count"]
-                            )
+                        graph_values[event_name][event_result["version_id"]] += (
+                            int(event_result["event_label"]) * event_result["count"]
+                        )
 
-                        if event_result["version_id"] not in graph_values[event_name]:
-                            graph_values[event_name][event_result["version_id"]] = (
-                                event_result["score"]
-                            )
-                        else:
-                            graph_values[event_name][event_result["version_id"]] = (
-                                graph_values[event_name][event_result["version_id"]]
-                                * divide_for_correct_average[event_result["version_id"]]
-                                + event_result["score"] * event_result["count"]
-                            ) / divide_for_correct_average[event_result["version_id"]]
+                if event_result["version_id"] not in divide_for_correct_average:
+                    divide_for_correct_average[event_result["version_id"]] = (
+                        event_result["count"]
+                    )
+                else:
+                    divide_for_correct_average[event_result["version_id"]] += (
+                        event_result["count"]
+                    )
+
+            for version in divide_for_correct_average:
+                graph_values[event_name][version] = (
+                    graph_values[event_name][version]
+                    / divide_for_correct_average[version]
+                )
 
             # We normalize the score by the total number of tasks with each version
             if versionA in graph_values[event_name]:
