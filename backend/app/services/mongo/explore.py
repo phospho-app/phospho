@@ -2479,7 +2479,7 @@ async def get_ab_tests_versions(
                     "event_type": "$event_definition.score_range_settings.score_type",
                 },
                 "count": {"$sum": 1},
-                "score": {"$avg": "$events.score_range.value"},
+                "score": {"$avg": "$score_range.value"},
             },
         },
         # For range type events, we need to average the score
@@ -2492,7 +2492,6 @@ async def get_ab_tests_versions(
                 "event_name": "$_id.event_name",
                 "event_label": "$_id.event_label",
                 "event_type": "$_id.event_type",
-                "event_name": "$_id.event_name",
                 "count": 1,
                 "score": 1,
             },
@@ -2623,19 +2622,20 @@ async def get_ab_tests_versions(
             divide_for_correct_average = {}
             event_name = result["event_name"]
             for event_result in result["results"]:
+                logger.debug(event_result["score"])
                 if event_name not in graph_values:
                     graph_values[event_name] = {
-                        event_result["version_id"]: int(event_result["event_label"])
+                        event_result["version_id"]: event_result["score"]
                         * event_result["count"]
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
                         graph_values[event_name][event_result["version_id"]] = (
-                            int(event_result["event_label"]) * event_result["count"]
+                            event_result["score"] * event_result["count"]
                         )
                     else:
                         graph_values[event_name][event_result["version_id"]] += (
-                            int(event_result["event_label"]) * event_result["count"]
+                            event_result["score"] * event_result["count"]
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
