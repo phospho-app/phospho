@@ -56,7 +56,7 @@ async def test_main_pipeline(db, populated_project):
             test_quantile_value,
         )
 
-        logger.debug("runned compute_nb_items_with_metadata_field")
+        logger.debug("run compute_nb_items_with_metadata_field")
         logger.debug(f"Bottom quantile: {bottom_quantile}")
         logger.debug(f"Average: {average}")
         logger.debug(f"Top quantile: {top_quantile}")
@@ -75,7 +75,7 @@ async def test_main_pipeline(db, populated_project):
             test_metadata_field,
             test_quantile_value,
         )
-        logger.debug("runned compute_session_length_per_metadata")
+        logger.debug("run compute_session_length_per_metadata")
         logger.debug(f"Bottom quantile: {bottom_quantile}")
         logger.debug(f"Average: {average}")
         logger.debug(f"Top quantile: {top_quantile}")
