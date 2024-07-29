@@ -280,7 +280,7 @@ const SessionsDataviz: React.FC = () => {
           <div>
             <Card>
               <CardHeader>
-                <CardDescription>Last Task Success Rate</CardDescription>
+                <CardDescription>Last Message Success Rate</CardDescription>
               </CardHeader>
               <CardContent>
                 {(!lastTaskSuccessRate && <p>...</p>) || (
@@ -351,7 +351,7 @@ const SessionsDataviz: React.FC = () => {
           </div>
           <div className="flex-1">
             <h3 className="text-slate-500 mb-2">
-              Success Rate per task position
+              Success Rate per message position
             </h3>
             {(!successRatePerTaskPosition && (
               <Skeleton className="w-[100%] h-[150px]" />

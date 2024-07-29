@@ -145,11 +145,11 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
                   : "Never"}
               </li>
               <li>
-                <span className="font-bold">Task position:</span>{" "}
+                <span className="font-bold">Message position:</span>{" "}
                 {task.task_position}
               </li>
               <li>
-                <span className="font-bold">Is last task:</span>{" "}
+                <span className="font-bold">Is last message:</span>{" "}
                 {task.is_last_task ? "Yes" : "No"}
               </li>
             </ul>

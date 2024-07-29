@@ -43,10 +43,10 @@ const Sessions: React.FC = () => {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-                  Group tasks into sessions
+                  Group messages by session
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Group your tasks into sessions by adding a{" "}
+                  Group messages into sessions by adding a{" "}
                   <code>session_id</code> when logging.
                 </CardDescription>
               </div>

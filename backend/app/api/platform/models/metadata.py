@@ -1,9 +1,10 @@
+from typing import Optional
 from pydantic import BaseModel, Field
 from phospho.models import ProjectDataFilters
 
 
 class MetadataValueResponse(BaseModel):
-    value: float
+    value: Optional[float]
 
 
 class MetadataPivotResponse(BaseModel):
