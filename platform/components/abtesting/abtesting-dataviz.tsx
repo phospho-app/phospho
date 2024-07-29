@@ -19,7 +19,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronDown } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -35,6 +35,13 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   const project_id = navigationStateStore((state) => state.project_id);
   const [versionIDA, setVersionIDA] = useState<string>(versionIDs[0]);
   const [versionIDB, setVersionIDB] = useState<string>(versionIDs[1]);
+
+  useEffect(() => {
+    if (versionIDs.length >= 2) {
+      setVersionIDA(versionIDs[0]);
+      setVersionIDB(versionIDs[1]);
+    }
+  }, [JSON.stringify(versionIDs)]);
 
   const { data: graphData } = useSWR(
     project_id && versionIDA && versionIDB
