@@ -109,7 +109,13 @@ def get_datasets_name(workspace_id: str, project_id: str) -> list[str]:
             workspace=workspace_id
         )  # This line will raise an exception if the workspace does not exist
         for dataset in dataset_list:
-            if dataset.metadata_properties[1].values[0] == project_id:
+            logger.debug(dataset.name)
+            logger.debug(dataset.metadata_properties)
+        for dataset in dataset_list:
+            if (
+                len(dataset.metadata_properties) > 0
+                and dataset.metadata_properties[1].values[0] == project_id
+            ):
                 datasets.append(dataset.name)
 
         return datasets
@@ -239,6 +245,18 @@ async def generate_dataset_from_project(
             ),
         ],
         questions=questions,
+        metadata_properties=[
+            rg.TermsMetadataProperty(
+                name="org_id",
+                title="Organization ID",
+                values=[project.org_id],
+            ),
+            rg.TermsMetadataProperty(
+                name="project_id",
+                title="Project ID",
+                values=[creation_request.project_id],
+            ),
+        ],
     )
 
     # Tasks to dataset records
@@ -272,8 +290,8 @@ async def generate_dataset_from_project(
                 "assistant_output": task.output if task.output is not None else "",
                 "task_id": task.id,
             }
-            for label in labels:
-                df_record[label] = False
+            for tag in taggers:
+                df_record[tag] = False
 
             if task.events is not None:
                 for event in task.events:
@@ -287,30 +305,30 @@ async def generate_dataset_from_project(
 
         df = pd.DataFrame(df_records)
 
-        labels_to_balance = list(labels.keys()).copy()
+        labels_to_balance = list(taggers.keys()).copy()
         while len(labels_to_balance) > 0:
             # Get the label with the least number of True values
-            label = min(labels_to_balance, key=lambda x: df[x].sum())
-            labels_to_balance.remove(label)
+            tag = min(labels_to_balance, key=lambda x: df[x].sum())
+            labels_to_balance.remove(tag)
 
-            logger.debug(f"Balancing label {label}")
+            logger.debug(f"Balancing label {tag}")
             # Get the number of True values
-            n_true = df[label].sum()
+            n_true = df[tag].sum()
             # Get the number of False values
             n_false = len(df) - n_true
             # Get the number of samples to keep
             n_samples = min(n_true, n_false)
 
             if n_samples <= config.MIN_NUMBER_OF_DATASET_SAMPLES:
-                logger.warning(f"Cannot balance label {label} with {n_samples} samples")
+                logger.warning(f"Cannot balance label {tag} with {n_samples} samples")
                 continue
 
-            logger.debug(f"Balancing label {label} with {n_samples} samples")
+            logger.debug(f"Balancing label {tag} with {n_samples} samples")
             # Balance the dataset
             df = pd.concat(
                 [
-                    df[df[label]].sample(n=n_samples),
-                    df[~df[label]].sample(n=n_samples),
+                    df[df[tag]].sample(n=n_samples),
+                    df[~df[tag]].sample(n=n_samples),
                 ]
             )
 
