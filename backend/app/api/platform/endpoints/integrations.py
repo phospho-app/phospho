@@ -135,12 +135,7 @@ async def post_pull_dataset(
             status_code=400, detail="The dataset name does not exist for this project."
         )
     argilla_dataset = await pull_dataset_from_argilla(request)
-    for record in argilla_dataset.records:
-        if len(record.responses) > 0:
-            for key in record.responses[0].dict()["values"].keys():
-                logger.debug(
-                    f"Event name: {key}, Event value: {record.responses[0].dict()['values'][key]['value']}, Task id = {record.metadata['task_id']}"
-                )
+
     return {"status": "ok"}
 
 

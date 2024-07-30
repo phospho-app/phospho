@@ -1,3 +1,4 @@
+from app.db.mongo import get_mongo_db
 import argilla as rg
 import pandas as pd
 from app.api.platform.models.integrations import (
@@ -14,6 +15,8 @@ from typing import Dict, List
 from app.db.models import Task
 from app.core import constants
 from app.services.mongo.tasks import get_all_tasks
+
+from phospho.models import Event
 
 # Connect to argilla
 try:
@@ -383,4 +386,119 @@ async def pull_dataset_from_argilla(
         name=pull_request.dataset_name, workspace=pull_request.workspace_id
     ).pull()
 
+    columns = []
+
+    for key in argilla_dataset.questions[0].labels.keys():
+        columns.append(key)
+    for i in range(1, len(argilla_dataset.questions) - 1):
+        columns.append(argilla_dataset.questions[i].name)
+
+    columns.append("task_id")
+    df = pd.DataFrame(columns=columns)
+
+    logger.debug(df)
+
+    for record in argilla_dataset.records:
+        if len(record.responses) > 0:
+            row = {"task_id": [record.metadata["task_id"]]}
+
+            #         logger.debug(record.responses)
+            for key in record.responses[0].dict()["values"].keys():
+                if key == "taggers":
+                    for i in range(
+                        len(record.responses[0].dict()["values"][key]["value"])
+                    ):
+                        row[record.responses[0].dict()["values"][key]["value"][i]] = [
+                            True
+                        ]
+
+                else:
+                    row[key] = [record.responses[0].dict()["values"][key]["value"]]
+
+            logger.debug(row)
+            df_aux = pd.DataFrame(row)
+            df = pd.concat([df, df_aux], ignore_index=True)
+
+    df = df.fillna(False)
+    for column in df.columns:
+        logger.debug(df[column])
+
+    mongo_db = await get_mongo_db()
+
+    for i, task_id in enumerate(df["task_id"].to_list()):
+        for column in df.columns:
+            if column != "task_id":
+                event = (
+                    await mongo_db["events"]
+                    .find(
+                        {
+                            "project_id": pull_request.project_id,
+                            "event_name": column,
+                            "task_id": task_id,
+                        }
+                    )
+                    .sort("created_at", -1)
+                    .limit(1)
+                    .to_list(length=1)
+                )
+                if event:
+                    event_id = event[0]["id"]
+                    logger.debug(event_id)
+                # Since to_list returns a list, get the first element
+                event = event[0] if event else None
+                if not event:
+                    if df[column][i] and column != "no-tag":
+                        event = Event(
+                            event_name=column,
+                            source="owner",
+                            confirmed=True,
+                            task_id=task_id,
+                            project_id=pull_request.project_id,
+                        )
+                        event_model = Event.model_validate(event)
+                        await mongo_db["events"].insert_one(event.model_dump())
+
+                else:
+                    event_model = Event.model_validate(event)
+
+                    # Edit the event. Note: this always confirm the event.
+                    if df[column][i] is str:
+                        result = await mongo_db["events"].update_one(
+                            {"project_id": pull_request.project_id, "id": event_id},
+                            {
+                                "$set": {
+                                    "score_range.corrected_label": df[column][i],
+                                    "confirmed": True,
+                                }
+                            },
+                        )
+                    elif df[column][i] is float:
+                        result = await mongo_db["events"].update_one(
+                            {"project_id": pull_request.project_id, "id": event_id},
+                            {
+                                "$set": {
+                                    "score_range.corrected_value": df[column][i],
+                                    "confirmed": True,
+                                }
+                            },
+                        )
+                    elif df[column][i]:
+                        result = await mongo_db["events"].update_one(
+                            {"project_id": pull_request.project_id, "id": event_id},
+                            {
+                                "$set": {
+                                    "confirmed": True,
+                                }
+                            },
+                        )
+
+                    elif not df[column][i]:
+                        result = await mongo_db["events"].update_one(
+                            {"project_id": pull_request.project_id, "id": event_id},
+                            {
+                                "$set": {
+                                    "removed": True,
+                                }
+                            },
+                        )
     return argilla_dataset
