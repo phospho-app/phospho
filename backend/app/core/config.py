@@ -177,6 +177,9 @@ if credentials_gcp_bucket:
     )
     GCP_BUCKET_CLIENT = Client(credentials=credentials)
 
-### NEON DB ###
-# TODO : Rename this to generic SQL names
+### SQL DB ###
 SQLDB_CONNECTION_STRING = os.getenv("SQLDB_CONNECTION_STRING")
+
+
+### Customer.io
+CUSTOMERIO_WRITE_KEY = os.getenv("CUSTOMERIO_WRITE_KEY")
