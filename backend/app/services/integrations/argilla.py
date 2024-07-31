@@ -1,4 +1,11 @@
 from app.db.mongo import get_mongo_db
+from app.services.mongo.events import (
+    change_label_event,
+    change_value_event,
+    confirm_event,
+    get_event_definition_from_event_id,
+    remove_event,
+)
 import argilla as rg
 import pandas as pd
 from app.api.platform.models.integrations import (
@@ -11,12 +18,12 @@ from loguru import logger
 from app.core import config
 from argilla import FeedbackDataset
 from app.utils import health_check
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 from app.db.models import Task
 from app.core import constants
 from app.services.mongo.tasks import get_all_tasks
 
-from phospho.models import Event
+from phospho.models import Event, EventDefinition
 
 # Connect to argilla
 try:
@@ -158,6 +165,18 @@ async def generate_dataset_from_project(
     taggers = {}
     scorers = {}
     classifiers = {}
+    metadata_properties = [
+        rg.TermsMetadataProperty(
+            name="org_id",
+            title="Organization ID",
+            values=[project.org_id],
+        ),
+        rg.TermsMetadataProperty(
+            name="project_id",
+            title="Project ID",
+            values=[creation_request.project_id],
+        ),
+    ]
 
     # Add the no-event label (when no event is detected)
     taggers["no-tag"] = "No tag"
@@ -168,7 +187,15 @@ async def generate_dataset_from_project(
             logger.debug(f"Skipping session event {key} as it is session level")
             continue
         if value.score_range_settings.score_type == "confidence":
-            taggers[key] = key
+            taggers[key] = f"{key.replace(' ', '_').lower()}"
+            metadata_properties.append(
+                rg.TermsMetadataProperty(
+                    name=f"{key.replace(' ', '_').lower()}",
+                    title=key,
+                    values=[value.id],
+                    visible_for_annotators=False,
+                )
+            )
         elif value.score_range_settings.score_type == "score":
             scorers[key] = [
                 i
@@ -177,29 +204,46 @@ async def generate_dataset_from_project(
                     int(value.score_range_settings.max),
                 )
             ]
+            metadata_properties.append(
+                rg.TermsMetadataProperty(
+                    name=f"{key.replace(' ', '_').lower()}",
+                    title=key,
+                    values=[value.id],
+                    visible_for_annotators=False,
+                )
+            )
         elif value.score_range_settings.score_type == "category":
             classifiers[key] = value.score_range_settings.categories
+            metadata_properties.append(
+                rg.TermsMetadataProperty(
+                    name=f"{key.replace(' ', '_').lower()}",
+                    title=key,
+                    values=[value.id],
+                    visible_for_annotators=False,
+                )
+            )
 
-    if len(taggers.keys()) + len(scorers.keys()) + len(classifiers.keys()) < 2:
-        logger.warning(
-            f"Not enough labels found in project settings {project.id} with filters {creation_request.filters} and limit {creation_request.limit}"
+    questions = []
+
+    if len(taggers.keys()) > 2:
+        questions.append(
+            rg.MultiLabelQuestion(
+                name="taggers",
+                title="Taggers",
+                description="Select all the tags that apply",
+                labels=taggers,
+                required=True,
+                visible_labels=len(taggers),
+            )
         )
-        return None
+    else:
+        logger.warning(
+            f"Not enough taggers found in project settings {project.id} with filters {creation_request.filters} and limit {creation_request.limit}"
+        )
 
     # Create the dataset
     # Add phospho metadata in the dataset metadata: org_id, project_id, filters, limit,...
     # FeedbackDataset
-
-    questions = [
-        rg.MultiLabelQuestion(
-            name="taggers",
-            title="Taggers",
-            description="Select all the tags that apply",
-            labels=taggers,
-            required=True,
-            visible_labels=len(taggers),
-        ),
-    ]
 
     for key in scorers.keys():
         questions.append(
@@ -235,6 +279,7 @@ async def generate_dataset_from_project(
             required=False,
         )
     )
+
     argilla_dataset = rg.FeedbackDataset(
         fields=[
             rg.TextField(
@@ -248,18 +293,7 @@ async def generate_dataset_from_project(
             ),
         ],
         questions=questions,
-        metadata_properties=[
-            rg.TermsMetadataProperty(
-                name="org_id",
-                title="Organization ID",
-                values=[project.org_id],
-            ),
-            rg.TermsMetadataProperty(
-                name="project_id",
-                title="Project ID",
-                values=[creation_request.project_id],
-            ),
-        ],
+        metadata_properties=metadata_properties,
     )
 
     # Tasks to dataset records
@@ -386,119 +420,136 @@ async def pull_dataset_from_argilla(
         name=pull_request.dataset_name, workspace=pull_request.workspace_id
     ).pull()
 
-    columns = []
+    # Get the event ids from the metadata properties
+    original_events_ids = {}
+    for i in range(2, len(argilla_dataset.metadata_properties)):
+        event_name = argilla_dataset.metadata_properties[i].name
+        event_id = argilla_dataset.metadata_properties[i].values[0]
+        original_events_ids[event_name] = event_id
 
+    logger.debug(f"original_events_ids: {original_events_ids}")
+
+    # To detect that an event has been removed, we gather all the taggers in the questions.
+    # If the tagger is not present in the annotated record, we will mark it as removed.
+    original_taggers_list = []
     for key in argilla_dataset.questions[0].labels.keys():
-        columns.append(key)
+        if key == "no-tag":
+            continue
+        original_taggers_list.append(key.replace(" ", "_").lower())
+
+    original_classifiers_and_scorers_list = []
     for i in range(1, len(argilla_dataset.questions) - 1):
-        columns.append(argilla_dataset.questions[i].name)
-
-    columns.append("task_id")
-    df = pd.DataFrame(columns=columns)
-
-    logger.debug(df)
-
-    for record in argilla_dataset.records:
-        if len(record.responses) > 0:
-            row = {"task_id": [record.metadata["task_id"]]}
-
-            #         logger.debug(record.responses)
-            for key in record.responses[0].dict()["values"].keys():
-                if key == "taggers":
-                    for i in range(
-                        len(record.responses[0].dict()["values"][key]["value"])
-                    ):
-                        row[record.responses[0].dict()["values"][key]["value"][i]] = [
-                            True
-                        ]
-
-                else:
-                    row[key] = [record.responses[0].dict()["values"][key]["value"]]
-
-            logger.debug(row)
-            df_aux = pd.DataFrame(row)
-            df = pd.concat([df, df_aux], ignore_index=True)
-
-    df = df.fillna(False)
-    for column in df.columns:
-        logger.debug(df[column])
+        original_classifiers_and_scorers_list.append(
+            argilla_dataset.questions[i].name.replace(" ", "_").lower()
+        )
 
     mongo_db = await get_mongo_db()
 
-    for i, task_id in enumerate(df["task_id"].to_list()):
-        for column in df.columns:
-            if column != "task_id":
-                event = (
-                    await mongo_db["events"]
-                    .find(
-                        {
-                            "project_id": pull_request.project_id,
-                            "event_name": column,
-                            "task_id": task_id,
-                        }
-                    )
-                    .sort("created_at", -1)
-                    .limit(1)
-                    .to_list(length=1)
+    # # Fetch the relevant data in argilla records and transform them into a dict we can process
+    for record in argilla_dataset.records:
+        if len(record.responses) == 0:
+            continue
+
+        task_id = record.metadata["task_id"]
+        # taggers is a list of taggers that are present in this task
+        taggers: list[str] = record.responses[0].values["taggers"].value
+
+        for tagger in original_taggers_list:
+            event_id = original_events_ids[tagger]
+            event_definition = await get_event_definition_from_event_id(
+                project_id=pull_request.project_id, event_id=event_id
+            )
+
+            # Loading the most recent occurrence of this exact event for this task in the database
+            last_event_in_db = (
+                await mongo_db["events"]
+                .find(
+                    {
+                        "project_id": pull_request.project_id,
+                        "event_name": event_name,
+                        "task_id": task_id,
+                    }
                 )
-                if event:
-                    event_id = event[0]["id"]
-                    logger.debug(event_id)
-                # Since to_list returns a list, get the first element
-                event = event[0] if event else None
-                if not event:
-                    if df[column][i] and column != "no-tag":
-                        event = Event(
-                            event_name=column,
-                            source="owner",
-                            confirmed=True,
-                            task_id=task_id,
-                            project_id=pull_request.project_id,
-                        )
-                        event_model = Event.model_validate(event)
-                        await mongo_db["events"].insert_one(event.model_dump())
+                .sort("created_at", -1)
+                .limit(1)
+                .to_list(length=1)
+            )
+            last_event_in_db = last_event_in_db[0] if last_event_in_db else None
+            logger.debug(f"last_event_in_db: {last_event_in_db}")
+            if not last_event_in_db or last_event_in_db.removed is True:
+                # Create the event
+                if tagger not in taggers:
+                    continue
+                tagger = Event(
+                    event_name=event_definition.event_name,
+                    source="owner",
+                    confirmed=True,
+                    task_id=task_id,
+                    project_id=pull_request.project_id,
+                    event_definition=event_definition,
+                )
+                event_model = Event.model_validate(tagger)
+                await mongo_db["events"].insert_one(tagger.model_dump())
+            else:
+                event_model = Event.model_validate(last_event_in_db)
 
+                # Confirm the tagger event
+                if tagger in taggers:
+                    _ = confirm_event(
+                        project_id=pull_request.project_id, event_id=event_model.id
+                    )
+
+                # Remove the tagger event
                 else:
-                    event_model = Event.model_validate(event)
+                    _ = remove_event(
+                        project_id=pull_request.project_id, event_id=event_model.id
+                    )
 
-                    # Edit the event. Note: this always confirm the event.
-                    if df[column][i] is str:
-                        result = await mongo_db["events"].update_one(
-                            {"project_id": pull_request.project_id, "id": event_id},
-                            {
-                                "$set": {
-                                    "score_range.corrected_label": df[column][i],
-                                    "confirmed": True,
-                                }
-                            },
-                        )
-                    elif df[column][i] is float:
-                        result = await mongo_db["events"].update_one(
-                            {"project_id": pull_request.project_id, "id": event_id},
-                            {
-                                "$set": {
-                                    "score_range.corrected_value": df[column][i],
-                                    "confirmed": True,
-                                }
-                            },
-                        )
-                    elif df[column][i]:
-                        result = await mongo_db["events"].update_one(
-                            {"project_id": pull_request.project_id, "id": event_id},
-                            {
-                                "$set": {
-                                    "confirmed": True,
-                                }
-                            },
-                        )
+        for classifier_or_scorer in original_classifiers_and_scorers_list:
+            event_id = original_events_ids[classifier_or_scorer]
+            event_definition = await get_event_definition_from_event_id(
+                project_id=pull_request.project_id, event_id=event_id
+            )
+            corrected_label_or_value: Union[str, float] = (
+                record.responses[0].values[classifier_or_scorer].value
+            )
 
-                    elif not df[column][i]:
-                        result = await mongo_db["events"].update_one(
-                            {"project_id": pull_request.project_id, "id": event_id},
-                            {
-                                "$set": {
-                                    "removed": True,
-                                }
-                            },
-                        )
+            last_event_in_db = (
+                await mongo_db["events"]
+                .find(
+                    {
+                        "project_id": pull_request.project_id,
+                        "event_name": event_definition.event_name,
+                        "task_id": task_id,
+                    }
+                )
+                .sort("created_at", -1)
+                .limit(1)
+                .to_list(length=1)
+            )
+            last_event_in_db = last_event_in_db[0] if last_event_in_db else None
+
+            if not last_event_in_db or last_event_in_db.removed is True:
+                logger.warning(
+                    f"Event {classifier_or_scorer} not found in the database"
+                )
+                continue
+
+            event_model = Event.model_validate(last_event_in_db)
+
+            # Edit the event. Note: this always confirm the event.
+            if isinstance(corrected_label_or_value, str):
+                _ = change_label_event(
+                    project_id=pull_request.project_id,
+                    event_id=event_model.id,
+                    new_label=corrected_label_or_value,
+                )
+
+            elif isinstance(corrected_label_or_value, float):
+                _ = change_value_event(
+                    project_id=pull_request.project_id,
+                    event_id=event_model.id,
+                    new_value=corrected_label_or_value,
+                )
+
     return argilla_dataset
