@@ -9,6 +9,7 @@ from app.api.platform.models import (
     Project,
     ProjectCreationRequest,
     Projects,
+    UserCreatedEventWebhook,
 )
 from app.core import config
 from app.security.authentification import propelauth
@@ -21,6 +22,7 @@ from app.services.mongo.organizations import (
 )
 from app.services.mongo.projects import populate_default
 from app.services.slack import slack_notification
+
 
 router = APIRouter(tags=["Organizations"])
 
@@ -301,9 +303,9 @@ async def post_stripe_webhook(
         # Invalid payload
         logger.debug(f"Invalid payload: {e}")
         raise HTTPException(status_code=400, detail=f"Invalid payload: {e}")
-    except stripe.error.SignatureVerificationError as e:
+    except stripe.StripeError as e:
         # Invalid signature
-        logger.debug(f"Invalid signature: {e}")
+        logger.debug(f"Stripe error: {e}")
         raise HTTPException(status_code=400, detail=f"Invalid signature: {e}")
     except Exception as e:
         # Unexpected error
@@ -495,3 +497,27 @@ async def post_create_billing_portal_session(
     except Exception as e:
         logger.error(f"Error creating billing portal session: {e}")
         return {"error": f"Unexpected error: {e}"}
+
+
+@router.post(
+    "/organizations/propelauth-webhook",
+    description="Propelauth webhook to handle events",
+)
+async def post_propelauth_webhook(
+    event: UserCreatedEventWebhook,
+):
+    """
+    Used for keeping track of created users in the platform
+    and syncing emails.
+    """
+    if event.event_type == "user.created":
+        # Sync the user with customer.io
+        config.analytics.identify(
+            event.user_id,
+            {
+                "email": event.email,
+                "first_name": event.first_name,
+                "last_name": event.last_name,
+            },
+        )
+    return {"status": "ok"}

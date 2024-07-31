@@ -46,6 +46,7 @@ google-cloud-storage = "^2.17.0"
 sqlmodel = "^0.0.20"
 psycopg2-binary = "^2.9.9"
 scikit-learn = "^1.5.1"
+customerio-cdp-analytics = "^0.0.2"
 
 [tool.poetry.group.dev]
 optional = true

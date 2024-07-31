@@ -11,6 +11,8 @@ from google.oauth2 import service_account
 from google.cloud.storage import Client
 
 from loguru import logger
+from customerio import analytics
+
 
 load_dotenv()  # take environment variables from .env.
 logger.info("Loading environment variables from .env file")
@@ -177,6 +179,10 @@ if credentials_gcp_bucket:
     )
     GCP_BUCKET_CLIENT = Client(credentials=credentials)
 
-### NEON DB ###
-# TODO : Rename this to generic SQL names
+### SQL DB ###
 SQLDB_CONNECTION_STRING = os.getenv("SQLDB_CONNECTION_STRING")
+
+### Customer.io
+CUSTOMERIO_WRITE_KEY = os.getenv("CUSTOMERIO_WRITE_KEY")
+analytics.write_key = CUSTOMERIO_WRITE_KEY
+analytics.endpoint = "https://cdp-eu.customer.io"  # EU endpoint
