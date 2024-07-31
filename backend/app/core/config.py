@@ -183,3 +183,5 @@ SQLDB_CONNECTION_STRING = os.getenv("SQLDB_CONNECTION_STRING")
 
 ### Customer.io
 CUSTOMERIO_WRITE_KEY = os.getenv("CUSTOMERIO_WRITE_KEY")
+if CUSTOMERIO_WRITE_KEY is None:
+    logger.warning("CUSTOMERIO_WRITE_KEY is missing from the environment variables")
