@@ -414,8 +414,6 @@ async def pull_dataset_from_argilla(
     # Load the project configs, so we know the dataset fields and questions
     project = await get_project_by_id(pull_request.project_id)
 
-    logger.debug(f"events: {project.settings.events}, project: {project}")
-
     argilla_dataset = rg.FeedbackDataset.from_argilla(
         name=pull_request.dataset_name, workspace=pull_request.workspace_id
     ).pull()
@@ -426,8 +424,6 @@ async def pull_dataset_from_argilla(
         event_name = argilla_dataset.metadata_properties[i].name
         event_id = argilla_dataset.metadata_properties[i].values[0]
         original_events_ids[event_name] = event_id
-
-    logger.debug(f"original_events_ids: {original_events_ids}")
 
     # To detect that an event has been removed, we gather all the taggers in the questions.
     # If the tagger is not present in the annotated record, we will mark it as removed.
@@ -475,8 +471,8 @@ async def pull_dataset_from_argilla(
                 .to_list(length=1)
             )
             last_event_in_db = last_event_in_db[0] if last_event_in_db else None
-            logger.debug(f"last_event_in_db: {last_event_in_db}")
-            if not last_event_in_db or last_event_in_db.removed is True:
+
+            if not last_event_in_db or last_event_in_db["removed"] is True:
                 # Create the event
                 if tagger not in taggers:
                     continue
@@ -495,13 +491,13 @@ async def pull_dataset_from_argilla(
 
                 # Confirm the tagger event
                 if tagger in taggers:
-                    _ = confirm_event(
+                    modified_event = await confirm_event(
                         project_id=pull_request.project_id, event_id=event_model.id
                     )
 
                 # Remove the tagger event
                 else:
-                    _ = remove_event(
+                    modified_event = await remove_event(
                         project_id=pull_request.project_id, event_id=event_model.id
                     )
 
@@ -539,14 +535,14 @@ async def pull_dataset_from_argilla(
 
             # Edit the event. Note: this always confirm the event.
             if isinstance(corrected_label_or_value, str):
-                _ = change_label_event(
+                modified_event = await change_label_event(
                     project_id=pull_request.project_id,
                     event_id=event_model.id,
                     new_label=corrected_label_or_value,
                 )
 
             elif isinstance(corrected_label_or_value, float):
-                _ = change_value_event(
+                modified_event = await change_value_event(
                     project_id=pull_request.project_id,
                     event_id=event_model.id,
                     new_value=corrected_label_or_value,
