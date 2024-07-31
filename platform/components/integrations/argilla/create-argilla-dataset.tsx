@@ -101,7 +101,7 @@ const CreateDataset = () => {
     setIsCreatingDataset(true);
     console.log(useSmartSampling);
     try {
-      await fetch(`/api/argilla/datasets`, {
+      await fetch(`/api/argilla/datasets/names`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

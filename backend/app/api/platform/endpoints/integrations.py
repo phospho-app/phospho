@@ -30,7 +30,7 @@ from app.services.mongo.projects import get_project_by_id
 router = APIRouter(tags=["Integrations"])
 
 
-@router.post("/argilla/datasets")
+@router.post("/argilla/datasets/names")
 async def post_create_dataset(
     request: DatasetCreationRequest, user: User = Depends(propelauth.require_user)
 ):
