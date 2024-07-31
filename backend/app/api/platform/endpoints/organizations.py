@@ -22,6 +22,7 @@ from app.services.mongo.organizations import (
 )
 from app.services.mongo.projects import populate_default
 from app.services.slack import slack_notification
+from customerio import analytics
 
 
 router = APIRouter(tags=["Organizations"])
@@ -510,9 +511,12 @@ async def post_propelauth_webhook(
     Used for keeping track of created users in the platform
     and syncing emails.
     """
+    analytics.write_key = config.CUSTOMERIO_WRITE_KEY
+    analytics.endpoint = "https://cdp-eu.customer.io"  # EU endpoint
+
     if event.event_type == "user.created":
         # Sync the user with customer.io
-        config.analytics.identify(
+        analytics.identify(
             event.user_id,
             {
                 "email": event.email,
