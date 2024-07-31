@@ -1,5 +1,4 @@
 from phospho.models import UsageQuota
-from pydantic import BaseModel
 import stripe
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from loguru import logger
@@ -23,8 +22,6 @@ from app.services.mongo.organizations import (
 )
 from app.services.mongo.projects import populate_default
 from app.services.slack import slack_notification
-from customerio import analytics
-import stripe.error
 
 
 router = APIRouter(tags=["Organizations"])
@@ -513,11 +510,9 @@ async def post_propelauth_webhook(
     Used for keeping track of created users in the platform
     and syncing emails.
     """
-    analytics.write_key = config.CUSTOMERIO_WRITE_KEY
-    analytics.endpoint = "https://cdp-eu.customer.io"
     if event.event_type == "user.created":
-        # Sync the user
-        analytics.identify(
+        # Sync the user with customer.io
+        config.analytics.identify(
             event.user_id,
             {
                 "email": event.email,
