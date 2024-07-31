@@ -30,7 +30,7 @@ from app.services.mongo.projects import get_project_by_id
 router = APIRouter(tags=["Integrations"])
 
 
-@router.post("/argilla/datasets/names")
+@router.post("/argilla/datasets/create")
 async def post_create_dataset(
     request: DatasetCreationRequest, user: User = Depends(propelauth.require_user)
 ):
@@ -139,7 +139,7 @@ async def post_pull_dataset(
     return {"status": "ok"}
 
 
-@router.post("/argilla/names")
+@router.post("/argilla/datasets/names")
 async def post_fetch_dataset_names(
     request: DatasetPullRequest, user: User = Depends(propelauth.require_user)
 ):

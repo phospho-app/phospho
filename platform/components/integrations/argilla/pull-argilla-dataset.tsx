@@ -90,7 +90,7 @@ const PullDataset = () => {
     }
 
     const { data: datasets_names }: { data: string[] | undefined } = useSWR(
-        project_id ? [`/api/argilla/names`, accessToken] : null,
+        project_id ? [`/api/argilla/datasets/names`, accessToken] : null,
         ([url, accessToken]) => authFetcher(url, accessToken, "POST", {
             project_id: project_id,
             workspace_id: orgMetadata?.argilla_workspace_id,
