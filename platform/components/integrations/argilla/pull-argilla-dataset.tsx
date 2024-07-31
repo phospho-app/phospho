@@ -47,7 +47,7 @@ const PullDataset = () => {
         // Disable the button while we are creating the dataset
         setIsPullingDataset(true);
         try {
-            await fetch(`/api/argilla/pull`, {
+            await fetch(`/api/argilla/datasets/pull`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

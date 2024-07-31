@@ -104,7 +104,7 @@ async def post_postgresql_push(
     return {"status": status}
 
 
-@router.post("/argilla/pull")
+@router.post("/argilla/datasets/pull")
 async def post_pull_dataset(
     request: DatasetPullRequest, user: User = Depends(propelauth.require_user)
 ):
