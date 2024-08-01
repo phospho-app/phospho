@@ -214,7 +214,7 @@ class PostgresqlIntegration:
 
     async def push(
         self,
-        batch_size: int = 1024,
+        batch_size: int = 256,
     ) -> Literal["success", "failure"]:
         """
         Export the project to the dedicated Postgres database.
