@@ -121,6 +121,7 @@ async def get_project_by_id(project_id: str) -> Project:
 
         # If the project dict is different from project_data, update the project_data
         if project.model_dump() != project_data:
+            logger.info(f"Updating project {project.id}: {project.model_dump()}")
             mongo_db["projects"].update_one(
                 {"_id": project_data["_id"]}, {"$set": project.model_dump()}
             )
@@ -481,9 +482,9 @@ async def get_all_sessions(
             additional_sessions_filter["stats.most_common_language"] = filters.language
 
         if filters.sentiment is not None:
-            additional_sessions_filter["stats.most_common_sentiment_label"] = (
-                filters.sentiment
-            )
+            additional_sessions_filter[
+                "stats.most_common_sentiment_label"
+            ] = filters.sentiment
 
         if filters.metadata is not None:
             for key, value in filters.metadata.items():
@@ -812,9 +813,9 @@ async def populate_default(
         validated_event_definition.id = generate_uuid()
         validated_event_definition.project_id = project_id
         validated_event_definition.org_id = org_id
-        event_definition_pairs[validated_event_definition.event_name] = (
-            validated_event_definition
-        )
+        event_definition_pairs[
+            validated_event_definition.event_name
+        ] = validated_event_definition
         event_definitions.append(validated_event_definition)
     await mongo_db["event_definitions"].insert_many(
         [event_definition.model_dump() for event_definition in event_definitions]

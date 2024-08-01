@@ -90,9 +90,9 @@ const CreateNewABTestButton = () => {
               Create New AB Test
             </Button>
           </PopoverTrigger>
-          <Button onClick={clearABTest} className="ml-2">
+          {/* <Button onClick={clearABTest} className="ml-2">
             Clear AB Test
-          </Button>
+          </Button> */}
         </div>
         <PopoverContent align="start" className="w-96 h-120">
           <Form {...form}>
