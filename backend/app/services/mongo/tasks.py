@@ -95,7 +95,7 @@ async def flag_task(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to create eval: {e}")
 
-    eval_insert = await mongo_db["evals"].insert_one(eval_data.model_dump())
+    await mongo_db["evals"].insert_one(eval_data.model_dump())
 
     # Update the task object
     try:
@@ -104,7 +104,7 @@ async def flag_task(
         if notes is not None:
             update_payload["notes"] = notes
         update_payload["last_eval"] = eval_data.model_dump()
-        task_ref = await mongo_db["tasks"].update_one(
+        await mongo_db["tasks"].update_one(
             {"id": task_model.id},
             {"$set": update_payload},
         )
@@ -152,12 +152,12 @@ async def update_task(
             value=flag,
             source=flag_source,
         )
-        eval_insert = await mongo_db["evals"].insert_one(eval_data.model_dump())
+        await mongo_db["evals"].insert_one(eval_data.model_dump())
         task_model.last_eval = eval_data
 
     # Update the task object
     try:
-        task_ref = await mongo_db["tasks"].update_one(
+        await mongo_db["tasks"].update_one(
             {"id": task_model.id}, {"$set": task_model.model_dump()}
         )
     except Exception as e:
@@ -235,7 +235,7 @@ async def remove_event_from_task(task: Task, event_name: str) -> Task:
     # Check if the event is in the task
     if task.events is not None and event_name in [e.event_name for e in task.events]:
         # Mark the event as removed in the events database
-        event_ref = await mongo_db["events"].update_many(
+        await mongo_db["events"].update_many(
             {"task_id": task.id, "event_name": event_name},
             {
                 "$set": {

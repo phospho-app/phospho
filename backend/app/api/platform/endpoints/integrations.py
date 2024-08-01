@@ -133,7 +133,7 @@ async def post_pull_dataset(
         raise HTTPException(
             status_code=400, detail="The dataset name does not exist for this project."
         )
-    argilla_dataset = await pull_dataset_from_argilla(request)
+    await pull_dataset_from_argilla(request)
 
     return {"status": "ok"}
 

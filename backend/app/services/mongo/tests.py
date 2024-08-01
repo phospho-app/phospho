@@ -147,7 +147,7 @@ async def update_test(
 
     # Update the document if the payload is not empty
     if update_payload:
-        update_result = await mongo_db["tests"].update_one(
+        await mongo_db["tests"].update_one(
             {"id": test.id}, {"$set": update_payload}
         )
 

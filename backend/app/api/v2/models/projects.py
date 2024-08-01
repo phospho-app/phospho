@@ -6,6 +6,7 @@ from app.db.models import (
     Event,
     Session,
     ProjectDataFilters,
+    EventDefinition,  # noqa: F401
 )
 
 

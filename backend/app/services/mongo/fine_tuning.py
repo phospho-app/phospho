@@ -20,7 +20,7 @@ def convert_to_msg(row):
     """
     Takes as input a row from the pandas dataframe and returns a message object
     """
-    detection_scope = row["detection_scope"]
+    row["detection_scope"]
     if row["label"]:
         llm_response = "Yes"
     else:

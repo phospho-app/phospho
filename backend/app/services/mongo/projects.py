@@ -339,7 +339,7 @@ async def email_project_tasks(
             """,
         }
 
-        email = resend.Emails.send(params)
+        resend.Emails.send(params)
         logger.debug(f"Sent error message to user: {user.get('email')}")
 
     if config.ENVIRONMENT != "preview":
