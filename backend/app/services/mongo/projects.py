@@ -105,6 +105,8 @@ async def get_project_by_id(project_id: str) -> Project:
     if project_data is None or len(project_data) == 0:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
     project_data = project_data[0]
+    if "_id" in project_data:
+        del project_data["_id"]
 
     try:
         project = Project.from_previous(project_data)
@@ -120,10 +122,13 @@ async def get_project_by_id(project_id: str) -> Project:
                 project.settings.events[event_name].recipe_id = recipe.id
 
         # If the project dict is different from project_data, update the project_data
-        if project.model_dump() != project_data:
+        project_dump = project.model_dump()
+        del project_dump["settings"]["events"]
+        del project_data["settings"]["events"]
+        if project_dump != project_data:
             logger.info(f"Updating project {project.id}: {project.model_dump()}")
             mongo_db["projects"].update_one(
-                {"_id": project_data["_id"]}, {"$set": project.model_dump()}
+                {"id": project_data["id"]}, {"$set": project.model_dump()}
             )
     except Exception as e:
         logger.warning(
