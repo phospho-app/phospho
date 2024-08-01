@@ -1,19 +1,20 @@
-import os
 import concurrent.futures
-import logging
 import inspect
+import logging
+import os
 import time
-
+from pprint import pprint
+from random import sample
 from types import GeneratorType
-from typing import List, Dict, Optional, Callable, Any, Literal
-from pydantic import BaseModel
+from typing import Any, Callable, Dict, List, Literal, Optional
 
+from phospho.utils import generate_version_id
+from pydantic import BaseModel
+from rich import print
+
+from phospho import extractor
 from phospho.client import Client
 from phospho.tasks import TaskEntity
-from phospho import extractor
-
-from random import sample
-from pprint import pprint
 
 logger = logging.getLogger(__name__)
 
@@ -320,10 +321,11 @@ class DatasetLoader:
 class PhosphoTest:
     client: Client
     functions_to_evaluate: Dict[str, Any]
-    test_id: Optional[str]
+    version_id: Optional[str]
 
     def __init__(
         self,
+        version_id: Optional[str] = None,
         api_key: Optional[str] = None,
         project_id: Optional[str] = None,
     ):
@@ -343,9 +345,15 @@ class PhosphoTest:
         phospho_test.run()
         ```
         """
+        import phospho
+
         self.client = Client(api_key=api_key, project_id=project_id)
         self.functions_to_evaluate: Dict[str, Any] = {}
-        self.test_id: Optional[str] = None
+        if version_id is None:
+            version_id = generate_version_id()
+        self.version_id = version_id
+        self.phospho = phospho
+        self.phospho.init(api_key=api_key, project_id=project_id, version_id=version_id)
 
     def test(
         self,
@@ -438,6 +446,10 @@ class PhosphoTest:
 
         # Ask phospho: what's the best answer to the context_input ?
         print("Evaluating with phospho")
+        self.phospho.log(
+            input=context_input,
+            output=new_output_str,
+        )
 
     def compare(
         self, task_to_compare: Dict[str, Any]
@@ -465,7 +477,7 @@ class PhosphoTest:
             context_input=context_input,
             old_output=old_output_str,
             new_output=new_output_str,
-            test_id=self.test_id,
+            test_id=self.version_id,
         )
 
     def run(
@@ -494,7 +506,7 @@ class PhosphoTest:
         os.environ["PHOSPHO_TEST_ID"] = test_id
 
         for function_name, function_to_eval in self.functions_to_evaluate.items():
-            print(f"Running tests for: {function_name}")
+            # Load the tasks
             source_loader = function_to_eval["source_loader"]
             source_loader_params = function_to_eval["source_loader_params"]
             metrics = function_to_eval["metrics"]
@@ -516,12 +528,11 @@ class PhosphoTest:
                     f"Source loader {source_loader} is not implemented"
                 )
 
+            # TODO : Refacto to use a phospho workload instead
+            # Just execute the functions
+
             for metric in metrics:
                 if metric == "evaluate":
-                    import phospho
-
-                    # For evaluate, we'll need to init phospho and use .log
-                    phospho.init(self.client.api_key, self.client.project_id)
                     evaluation_function = self.evaluate
                 elif metric == "compare":
                     evaluation_function = self.compare
@@ -560,7 +571,7 @@ class PhosphoTest:
                     )
 
                 if metric == "evaluate":
-                    phospho.consumer.send_batch()
+                    self.phospho.flush()
 
         # Stop timer
         end_time = time.time()
@@ -569,7 +580,7 @@ class PhosphoTest:
         print("Finished running the tests")
         print(f"Total number of tasks: {len(list(tasks_linked_to_function))}")
         print(f"Total time: {end_time - start_time} seconds")
-        print(f"Test id: {self.test_id}")
+        print(f"Test id: {self.version_id}")
         print("Waiting for evaluation to finish...")
         # Mark the test as completed and get results
         test_result = self.client.update_test(test_id=test_id, status="completed")
