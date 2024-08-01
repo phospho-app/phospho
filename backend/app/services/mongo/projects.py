@@ -852,15 +852,19 @@ async def populate_default(
         task.last_eval.project_id = project_id = project_id
         task.last_eval.org_id = org_id
         task.last_eval.task_id = task.id
-        if i < 4:
+        if config.ENVIRONMENT == "production":
+            if i < 4:
+                task.session_id = session_ids[0]
+                task.last_eval.session_id = session_ids[0]
+            elif i < 7:
+                task.session_id = session_ids[1]
+                task.last_eval.session_id = session_ids[1]
+            else:
+                task.session_id = session_ids[2]
+                task.last_eval.session_id = session_ids[2]
+        else:
             task.session_id = session_ids[0]
             task.last_eval.session_id = session_ids[0]
-        elif i < 7:
-            task.session_id = session_ids[1]
-            task.last_eval.session_id = session_ids[1]
-        else:
-            task.session_id = session_ids[2]
-            task.last_eval.session_id = session_ids[2]
         task_pairs[old_task_id] = task
         i += 1
         tasks.append(task)
@@ -884,6 +888,7 @@ async def populate_default(
         validated_event.created_at = generate_timestamp()
         validated_event.project_id = project_id
         validated_event.org_id = org_id
+        validated_event.session_id = task_pairs.get(validated_event.task_id).session_id
         validated_event.task_id = task_pairs.get(validated_event.task_id).id
         validated_event.event_definition = event_definition_pairs.get(
             validated_event.event_definition.event_name
