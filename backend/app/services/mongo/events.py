@@ -155,6 +155,31 @@ async def confirm_event(
     return event_model
 
 
+async def remove_event(
+    project_id: str,
+    event_id: str,
+) -> Event:
+    mongo_db = await get_mongo_db()
+    # Get the event
+    event = await mongo_db["events"].find_one(
+        {"project_id": project_id, "id": event_id}
+    )
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    event_model = Event.model_validate(event)
+
+    # Edit the event. Note: this always confirm the event.
+    result = await mongo_db["events"].update_one(
+        {"project_id": project_id, "id": event_id},
+        {"$set": {"removed": True}},
+    )
+
+    event_model.removed = True
+
+    return event_model
+
+
 async def change_label_event(
     project_id: str,
     event_id: str,
@@ -217,3 +242,24 @@ async def change_value_event(
     event_model.confirmed = True
 
     return event_model
+
+
+async def get_last_event_for_task(
+    project_id: str, task_id: str, event_name: str
+) -> Optional[Event]:
+    mongo_db = await get_mongo_db()
+    event = (
+        await mongo_db["events"]
+        .find(
+            {
+                "project_id": project_id,
+                "event_name": event_name,
+                "task_id": task_id,
+            }
+        )
+        .sort("created_at", -1)
+        .limit(1)
+        .to_list(length=1)
+    )
+    event = event[0] if event else None
+    return event
