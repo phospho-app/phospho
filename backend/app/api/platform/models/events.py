@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Union
+from typing import Optional
 
 
 class EventBackfillRequest(BaseModel):

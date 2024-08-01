@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from loguru import logger
 from propelauth_fastapi import User
 
 from app.api.platform.models import (

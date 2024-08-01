@@ -7,12 +7,6 @@ from pydantic import BaseModel, Field
 from phospho.models import (
     ScoreRangeSettings,
     DetectionScope,
-    Message,  # Used in __init__.py
-    ResultType,  # Used in __init__.py
-    JobResult,  # Used in __init__.py
-    EventDefinition,  # Used in __init__.py
-    Project,  # Used in __init__.py
-    Recipe,
 )
 
 from .utils import get_literal_values

@@ -8,7 +8,6 @@ from app.core import config
 import pandas as pd
 
 import openai
-import os
 
 anyscale_client = openai.OpenAI(
     base_url=config.ANYSCALE_BASE_URL, api_key=config.ANYSCALE_API_KEY

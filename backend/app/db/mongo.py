@@ -194,7 +194,7 @@ async def connect_and_init_db():
                         ],
                     }
                 )
-            except Exception as e:
+            except Exception:
                 logger.info("sessions_with_events already exists")
             try:
                 if (
@@ -292,7 +292,7 @@ async def connect_and_init_db():
                         ],
                     }
                 )
-            except Exception as e:
+            except Exception:
                 logger.info("tasks_with_events already exists")
 
             # EventDefinitions

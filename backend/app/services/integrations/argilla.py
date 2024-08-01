@@ -19,12 +19,11 @@ from loguru import logger
 from app.core import config
 from argilla import FeedbackDataset
 from app.utils import health_check
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 from app.db.models import Task
-from app.core import constants
 from app.services.mongo.tasks import get_all_tasks
 
-from phospho.models import Event, EventDefinition
+from phospho.models import Event
 
 # Connect to argilla
 try:

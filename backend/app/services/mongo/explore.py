@@ -33,7 +33,7 @@ from fastapi import HTTPException
 from loguru import logger
 from pymongo import InsertOne, UpdateOne
 
-from phospho.models import Cluster, Clustering, EventDefinition, Event
+from phospho.models import Cluster, Clustering, Event
 from app.api.platform.models import Pagination
 
 

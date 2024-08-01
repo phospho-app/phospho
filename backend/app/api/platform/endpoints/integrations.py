@@ -5,7 +5,6 @@ To check if an organization has access to an argilla workspace, there is a metad
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 from propelauth_py.user import User
-import argilla as rg
 
 from app.api.platform.models.integrations import (
     DatasetCreationRequest,
