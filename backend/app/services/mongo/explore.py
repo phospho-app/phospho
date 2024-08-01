@@ -1209,7 +1209,6 @@ async def fetch_all_clusterings(
     valid_clusterings = [
         Clustering.model_validate(clustering) for clustering in clusterings
     ]
-    logger.info(valid_clusterings)
     return valid_clusterings
 
 

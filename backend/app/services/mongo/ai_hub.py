@@ -170,6 +170,9 @@ async def predict(predict_request: PredictRequest) -> PredictResponse | None:
 
 
 async def clustering(clustering_request: ClusteringRequest) -> None:
+    if config.PHOSPHO_AI_HUB_URL is None:
+        logger.error("AI Hub URL is not configured.")
+        return
     async with httpx.AsyncClient() as client:
         try:
             _ = await client.post(
