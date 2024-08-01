@@ -105,6 +105,8 @@ async def get_project_by_id(project_id: str) -> Project:
     if project_data is None or len(project_data) == 0:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
     project_data = project_data[0]
+    if "_id" in project_data:
+        del project_data["_id"]
 
     try:
         project = Project.from_previous(project_data)
@@ -120,9 +122,13 @@ async def get_project_by_id(project_id: str) -> Project:
                 project.settings.events[event_name].recipe_id = recipe.id
 
         # If the project dict is different from project_data, update the project_data
-        if project.model_dump() != project_data:
+        project_dump = project.model_dump()
+        del project_dump["settings"]["events"]
+        del project_data["settings"]["events"]
+        if project_dump != project_data:
+            logger.info(f"Updating project {project.id}: {project.model_dump()}")
             mongo_db["projects"].update_one(
-                {"_id": project_data["_id"]}, {"$set": project.model_dump()}
+                {"id": project_data["id"]}, {"$set": project_dump}
             )
     except Exception as e:
         logger.warning(
@@ -481,9 +487,9 @@ async def get_all_sessions(
             additional_sessions_filter["stats.most_common_language"] = filters.language
 
         if filters.sentiment is not None:
-            additional_sessions_filter["stats.most_common_sentiment_label"] = (
-                filters.sentiment
-            )
+            additional_sessions_filter[
+                "stats.most_common_sentiment_label"
+            ] = filters.sentiment
 
         if filters.metadata is not None:
             for key, value in filters.metadata.items():
@@ -812,9 +818,9 @@ async def populate_default(
         validated_event_definition.id = generate_uuid()
         validated_event_definition.project_id = project_id
         validated_event_definition.org_id = org_id
-        event_definition_pairs[validated_event_definition.event_name] = (
-            validated_event_definition
-        )
+        event_definition_pairs[
+            validated_event_definition.event_name
+        ] = validated_event_definition
         event_definitions.append(validated_event_definition)
     await mongo_db["event_definitions"].insert_many(
         [event_definition.model_dump() for event_definition in event_definitions]
@@ -846,15 +852,19 @@ async def populate_default(
         task.last_eval.project_id = project_id = project_id
         task.last_eval.org_id = org_id
         task.last_eval.task_id = task.id
-        if i < 4:
+        if config.ENVIRONMENT == "production":
+            if i < 4:
+                task.session_id = session_ids[0]
+                task.last_eval.session_id = session_ids[0]
+            elif i < 7:
+                task.session_id = session_ids[1]
+                task.last_eval.session_id = session_ids[1]
+            else:
+                task.session_id = session_ids[2]
+                task.last_eval.session_id = session_ids[2]
+        else:
             task.session_id = session_ids[0]
             task.last_eval.session_id = session_ids[0]
-        elif i < 7:
-            task.session_id = session_ids[1]
-            task.last_eval.session_id = session_ids[1]
-        else:
-            task.session_id = session_ids[2]
-            task.last_eval.session_id = session_ids[2]
         task_pairs[old_task_id] = task
         i += 1
         tasks.append(task)
@@ -878,6 +888,7 @@ async def populate_default(
         validated_event.created_at = generate_timestamp()
         validated_event.project_id = project_id
         validated_event.org_id = org_id
+        validated_event.session_id = task_pairs.get(validated_event.task_id).session_id
         validated_event.task_id = task_pairs.get(validated_event.task_id).id
         validated_event.event_definition = event_definition_pairs.get(
             validated_event.event_definition.event_name

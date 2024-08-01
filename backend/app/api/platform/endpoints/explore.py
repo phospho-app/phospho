@@ -391,7 +391,10 @@ async def post_detect_clusters(
     # Ignore limits and metering in preview mode
     if config.ENVIRONMENT != "preview":
         if usage_quota.plan == "hobby" or usage_quota.plan is None:
-            if current_usage + clustering_sample_size >= max_usage:
+            if (
+                max_usage is not None
+                and current_usage + clustering_sample_size >= max_usage
+            ):
                 raise HTTPException(
                     status_code=403,
                     detail="Payment details required to run the cluster detection algorithm.",
