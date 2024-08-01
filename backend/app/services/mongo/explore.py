@@ -2554,6 +2554,8 @@ async def get_ab_tests_versions(
     logger.debug(f"AB tests results: {results}")
 
     graph_values = {}
+    events_to_normalize = []
+    events_to_find_max = []
     for result in results:
         if "event_name" not in result:
             continue
@@ -2585,6 +2587,8 @@ async def get_ab_tests_versions(
                 graph_values[event_name][versionB] = (
                     graph_values[event_name][versionB] * max_tasks / total_tasks_with_B
                 )
+
+            events_to_find_max.append(event_name)
 
         elif (
             result["event_type"] == "category"
@@ -2618,11 +2622,12 @@ async def get_ab_tests_versions(
                         / total_tasks_with_B
                     )
 
+            events_to_find_max.append(event_name)
+
         elif result["event_type"] == "range":  # We average the score for each version
             divide_for_correct_average = {}
             event_name = result["event_name"]
             for event_result in result["results"]:
-                logger.debug(event_result["score"])
                 if event_name not in graph_values:
                     graph_values[event_name] = {
                         event_result["version_id"]: event_result["score"]
@@ -2653,20 +2658,28 @@ async def get_ab_tests_versions(
                     / divide_for_correct_average[version]
                 )
 
-            # We normalize the score by the total number of tasks with each version
-            if versionA in graph_values[event_name]:
-                graph_values[event_name][versionA] = (
-                    graph_values[event_name][versionA] * max_tasks / 5
-                )
-            if versionB in graph_values[event_name]:
-                graph_values[event_name][versionB] = (
-                    graph_values[event_name][versionB] * max_tasks / 5
-                )
+            events_to_normalize.append(event_name)
 
         else:
             logger.error(f"New event type is not handled: {result['event_type']}")
 
-    logger.debug(f"AB tests results: {graph_values}")
+    # graph_values is a tree structure, we want to find the leaf with the maximum number of detections
+    max_number_of_detections = 0
+    for event_name in events_to_find_max:
+        for version in graph_values[event_name]:
+            if graph_values[event_name][version] > max_number_of_detections:
+                max_number_of_detections = graph_values[event_name][version]
+
+    # We normalize the score by the max number of detections for each version
+    for event_name in events_to_normalize:
+        if versionA in graph_values[event_name]:
+            graph_values[event_name][versionA] = (
+                graph_values[event_name][versionA] * max_number_of_detections / 5
+            )
+        if versionB in graph_values[event_name]:
+            graph_values[event_name][versionB] = (
+                graph_values[event_name][versionB] * max_number_of_detections / 5
+            )
 
     if not versionA:
         versionA = "None"
