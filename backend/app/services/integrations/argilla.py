@@ -4,6 +4,7 @@ from app.services.mongo.events import (
     change_value_event,
     confirm_event,
     get_event_definition_from_event_id,
+    get_last_event_for_task,
     remove_event,
 )
 import argilla as rg
@@ -422,8 +423,8 @@ async def pull_dataset_from_argilla(
     original_events_ids = {}
     for i in range(2, len(argilla_dataset.metadata_properties)):
         event_name = argilla_dataset.metadata_properties[i].name
-        event_id = argilla_dataset.metadata_properties[i].values[0]
-        original_events_ids[event_name] = event_id
+        event_definition_id = argilla_dataset.metadata_properties[i].values[0]
+        original_events_ids[event_name] = event_definition_id
 
     # To detect that an event has been removed, we gather all the taggers in the questions.
     # If the tagger is not present in the annotated record, we will mark it as removed.
@@ -451,26 +452,17 @@ async def pull_dataset_from_argilla(
         taggers: list[str] = record.responses[0].values["taggers"].value
 
         for tagger in original_taggers_list:
-            event_id = original_events_ids[tagger]
+            event_definition_id = original_events_ids[tagger]
             event_definition = await get_event_definition_from_event_id(
-                project_id=pull_request.project_id, event_id=event_id
+                project_id=pull_request.project_id, event_id=event_definition_id
             )
 
             # Loading the most recent occurrence of this exact event for this task in the database
-            last_event_in_db = (
-                await mongo_db["events"]
-                .find(
-                    {
-                        "project_id": pull_request.project_id,
-                        "event_name": event_name,
-                        "task_id": task_id,
-                    }
-                )
-                .sort("created_at", -1)
-                .limit(1)
-                .to_list(length=1)
+            last_event_in_db = get_last_event_for_task(
+                project_id=pull_request.project_id,
+                event_name=event_definition.event_name,
+                task_id=task_id,
             )
-            last_event_in_db = last_event_in_db[0] if last_event_in_db else None
 
             if not last_event_in_db or last_event_in_db["removed"] is True:
                 # Create the event
@@ -502,35 +494,32 @@ async def pull_dataset_from_argilla(
                     )
 
         for classifier_or_scorer in original_classifiers_and_scorers_list:
-            event_id = original_events_ids[classifier_or_scorer]
+            event_definition_id = original_events_ids[classifier_or_scorer]
             event_definition = await get_event_definition_from_event_id(
-                project_id=pull_request.project_id, event_id=event_id
+                project_id=pull_request.project_id, event_id=event_definition_id
             )
             corrected_label_or_value: Union[str, float] = (
                 record.responses[0].values[classifier_or_scorer].value
             )
 
-            last_event_in_db = (
-                await mongo_db["events"]
-                .find(
-                    {
-                        "project_id": pull_request.project_id,
-                        "event_name": event_definition.event_name,
-                        "task_id": task_id,
-                    }
-                )
-                .sort("created_at", -1)
-                .limit(1)
-                .to_list(length=1)
+            last_event_in_db = get_last_event_for_task(
+                project_id=pull_request.project_id,
+                task_id=task_id,
+                event_name=event_definition.event_name,
             )
-            last_event_in_db = last_event_in_db[0] if last_event_in_db else None
 
             if not last_event_in_db or last_event_in_db.removed is True:
-                logger.warning(
-                    f"Event {classifier_or_scorer} not found in the database"
+                new_event = Event(
+                    event_name=event_definition.event_name,
+                    source="owner",
+                    confirmed=True,
+                    task_id=task_id,
+                    project_id=pull_request.project_id,
+                    event_definition=event_definition,
                 )
-                continue
-
+                event_model = Event.model_validate(new_event)
+                await mongo_db["events"].insert_one(new_event.model_dump())
+            else:
             event_model = Event.model_validate(last_event_in_db)
 
             # Edit the event. Note: this always confirm the event.

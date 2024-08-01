@@ -242,3 +242,26 @@ async def change_value_event(
     event_model.confirmed = True
 
     return event_model
+
+
+async def get_last_event_for_task(
+    project_id: str, task_id: str, event_name: str
+) -> Optional[Event]:
+    mongo_db = await get_mongo_db()
+    event = await mongo_db["events"].find_one(
+        last_event_in_db=(
+            await mongo_db["events"]
+            .find(
+                {
+                    "project_id": project_id,
+                    "event_name": event_name,
+                    "task_id": task_id,
+                }
+            )
+            .sort("created_at", -1)
+            .limit(1)
+            .to_list(length=1)
+        )
+    )
+    event = event[0] if event else None
+    return event
