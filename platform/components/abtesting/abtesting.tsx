@@ -24,12 +24,15 @@ import {
 } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { version } from "os";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { TableNavigation } from "../table-navigation";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { getColumns } from "./abtesting-columns";
+import { ABTestingDataviz } from "./abtesting-dataviz";
+import CreateNewABTestButton from "./create-new-ab-test-button";
 
 interface DataTableProps<TData, TValue> {}
 
@@ -63,6 +66,9 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
     },
   );
 
+  // We create a list of all the version IDs
+  const versionIDs = abTests?.map((abtest) => abtest.version_id);
+
   const columns = getColumns();
 
   const table = useReactTable({
@@ -90,8 +96,8 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
                 </CardTitle>
                 <CardDescription>
                   <div className="text-muted-foreground">
-                    When logging tasks, add a version_id in metadata to compare
-                    their success rate.
+                    When logging, add a <code>version_id</code> in{" "}
+                    <code>metadata</code> to compare their success rate.
                   </div>
                 </CardDescription>
               </div>
@@ -106,9 +112,14 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
         </Card>
       )}
       <div>
-        <div className="flex flex-row gap-x-2 items-center mb-2 justify-end">
+        <div className="flex flex-row items-center mb-2 justify-between">
+          <CreateNewABTestButton />
           <TableNavigation table={table} />
         </div>
+
+        {versionIDs && versionIDs.length > 1 && (
+          <ABTestingDataviz versionIDs={versionIDs} />
+        )}
 
         <div className="rounded-md border">
           <Table>

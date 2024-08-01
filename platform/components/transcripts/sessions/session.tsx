@@ -21,43 +21,41 @@ import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
 import { EventDefinition } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
 
 const SessionOverview = ({ session_id }: { session_id: string }) => {
   const { accessToken } = useUser();
-  const [sessionTasks, setSessionTasks] = useState<TaskWithEvents[]>([]);
   const [refresh, setRefresh] = useState(false);
 
-  // Get the tasks from the API
-  useEffect(() => {
-    (async () => {
-      const headers = {
-        Authorization: "Bearer " + accessToken || "",
-        "Content-Type": "application/json",
-      };
-
-      const task_response = await fetch(`/api/sessions/${session_id}/tasks`, {
-        method: "GET",
-        headers: headers,
-      });
-      const task_response_json = await task_response.json();
-      // If responsse_json tasks are not null, sort them
-      if (
-        task_response_json?.tasks !== undefined &&
-        task_response_json?.tasks !== null &&
-        task_response_json.tasks.length > 0
-      ) {
-        // Sort the tasks by increasing created_at
-        task_response_json.tasks.sort(
-          (a: { created_at: number }, b: { created_at: number }) => {
+  const {
+    data: sessionTasksData,
+    mutate: mutateSessionTasks,
+  }: {
+    data: TaskWithEvents[] | undefined;
+    mutate: (
+      data: TaskWithEvents[] | undefined,
+      shouldRevalidate?: boolean,
+    ) => void;
+  } = useSWR(
+    [`/api/sessions/${session_id}/tasks`, accessToken],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "GET").then((res) => {
+        const tasks = res.tasks as TaskWithEvents[];
+        // If responsse_json tasks are not null, sort them
+        if (tasks !== undefined && tasks !== null && tasks.length > 0) {
+          // Sort the tasks by increasing created_at
+          tasks.sort((a: { created_at: number }, b: { created_at: number }) => {
             return a.created_at - b.created_at;
-          },
-        );
-        setSessionTasks(task_response_json.tasks);
-      }
-    })();
-  }, [session_id, accessToken]);
+          });
+          return tasks;
+        }
+        return [];
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const { data: sessionData }: { data: SessionWithEvents } = useSWR(
     [`/api/sessions/${session_id}`, accessToken],
@@ -74,25 +72,6 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
     (event: Event, index: number, self: Event[]) =>
       index === self.findIndex((e: Event) => e.event_name === event.event_name),
   );
-
-  const setTask = (task: TaskWithEvents) => {
-    console.log("SET TASK", task);
-    const updatedTasks = sessionTasks?.map((t: TaskWithEvents) => {
-      if (t.id === task.id) {
-        t.flag = task.flag;
-        t.last_eval = task.last_eval;
-        t.notes = task.notes;
-        t.events = task.events;
-      }
-      return t;
-    });
-    // sessionTasks = updatedTasks;
-    setSessionTasks(updatedTasks);
-    // mutate(`/api/sessions/${session_id}/tasks`);
-    setRefresh(!refresh);
-  };
-
-  const setFlag = (flag: string) => {};
 
   if (session_with_events === null || session_with_events === undefined) {
     return <></>;
@@ -177,12 +156,30 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
           <CardTitle className="text-xl font-bold ">Transcript</CardTitle>
         </CardHeader>
         <CardContent>
-          {sessionTasks?.map((task: TaskWithEvents, index) => (
+          {sessionTasksData?.map((task: TaskWithEvents, index) => (
             <TaskBox
               key={index}
               task={task}
-              setTask={setTask}
-              setFlag={setFlag}
+              setTask={(task: TaskWithEvents) => {
+                // use mutate session task to change the task with the same id
+                const newTasks = sessionTasksData?.map((t) => {
+                  if (t.id === task.id) {
+                    return task;
+                  }
+                  return t;
+                });
+                mutateSessionTasks(newTasks, false);
+              }}
+              setFlag={(flag: string) => {
+                const newTasks = sessionTasksData?.map((t) => {
+                  if (t.id === task.id) {
+                    t.flag = flag;
+                  }
+                  return t;
+                });
+                mutateSessionTasks(newTasks, false);
+                setRefresh(!refresh);
+              }}
               refresh={refresh}
             ></TaskBox>
           ))}

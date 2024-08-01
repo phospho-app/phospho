@@ -231,9 +231,9 @@ export function SessionsTable<TData, TValue>({
                 <Database className="w-8 h-8" />
 
                 <div>
-                  <AlertTitle>Fetch tasks in a pandas Dataframe</AlertTitle>
+                  <AlertTitle>Fetch data in a pandas Dataframe</AlertTitle>
                   <AlertDescription>
-                    <div>Load tasks with the phospho Python SDK</div>
+                    <div>Load data with the phospho Python SDK</div>
                   </AlertDescription>
                 </div>
                 <Link

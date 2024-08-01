@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import Link from "next/link";
 import React from "react";
@@ -43,10 +43,10 @@ const Sessions: React.FC = () => {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-                  Group tasks into sessions
+                  Group messages by session
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Group your tasks into sessions by adding a{" "}
+                  Group messages into sessions by adding a{" "}
                   <code>session_id</code> when logging.
                 </CardDescription>
               </div>

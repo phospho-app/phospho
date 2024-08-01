@@ -19,6 +19,7 @@ RecipeType = Literal[
     "evaluation",
     "event_detection",
     "sentiment_language",
+    "session_info",
 ]
 
 
@@ -247,10 +248,11 @@ class ProjectSettings(BaseModel):
     run_sentiment: Optional[bool] = True
     run_language: Optional[bool] = True
     run_event_detection: Optional[bool] = True
+    ab_version_id: Optional[str] = None
     dashboard_tiles: List[DashboardTile] = Field(
         default_factory=lambda: [
             DashboardTile(
-                tile_name="Success rate per task position",
+                tile_name="Success rate per message position",
                 metric="Avg Success rate",
                 breakdown_by="task_position",
             ),
@@ -260,7 +262,7 @@ class ProjectSettings(BaseModel):
                 breakdown_by="event_name",
             ),
             DashboardTile(
-                tile_name="Average sentiment score per task position",
+                tile_name="Average sentiment score per message position",
                 metric="Avg",
                 metadata_metric="sentiment_score",
                 breakdown_by="task_position",
@@ -297,17 +299,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name]["event_name"] = (
-                            event_name
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "event_name"
+                        ] = event_name
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["org_id"] = (
-                            project_data["org_id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "org_id"
+                        ] = project_data["org_id"]
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["project_id"] = (
-                            project_data["id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "project_id"
+                        ] = project_data["id"]
 
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:
@@ -597,6 +599,9 @@ class Message(DatedBaseModel):
         if previous_tasks is None:
             previous_tasks = []
 
+        # Add the task to the metadata
+        metadata["task"] = task
+
         previous_messages: List["Message"] = []
         for i, previous_task in enumerate(previous_tasks):
             previous_messages.append(
@@ -732,3 +737,25 @@ class UsageQuota(BaseModel):
     max_usage: Optional[int]
     max_usage_label: str
     balance_transaction: Optional[float] = None
+
+
+class PipelineResults(BaseModel):
+    """
+    The results of a pipeline execution. Contains every category of analytics.
+
+    Each category of analytics is a dict linking the message_id or task_id
+    to the analytics object. This is useful for batching and unordered processing.
+    """
+
+    events: Dict[str, List[Event]] = Field(
+        default_factory=dict, description="Events detected in the messages"
+    )
+    flag: Dict[str, Literal["success", "failure"]] = Field(
+        default_factory=dict, description="Flag of the task: success or failure."
+    )
+    language: Dict[str, Optional[str]] = Field(
+        default_factory=dict, description="Language detected in the messages."
+    )
+    sentiment: Dict[str, Optional[SentimentObject]] = Field(
+        default_factory=dict, description="Sentiment detected in the messages."
+    )

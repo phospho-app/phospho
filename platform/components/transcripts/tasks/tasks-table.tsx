@@ -230,7 +230,7 @@ export function TasksTable<TData, TValue>({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No tasks found.
+                    No messages found.
                   </TableCell>
                 </TableRow>
               )}
@@ -241,13 +241,12 @@ export function TasksTable<TData, TValue>({
           <Alert className="mt-2 ">
             <div className="flex justify-between">
               <div></div>
-              <div className="flex space-x-4">
+              <div className="flex space-x-4 ">
                 <Database className="w-8 h-8" />
-
                 <div>
-                  <AlertTitle>Fetch tasks in a pandas Dataframe</AlertTitle>
+                  <AlertTitle>Fetch data in a pandas Dataframe</AlertTitle>
                   <AlertDescription>
-                    <div>Load tasks with the phospho Python SDK</div>
+                    <div>Load data with the phospho Python SDK</div>
                   </AlertDescription>
                 </div>
                 <Link
@@ -257,6 +256,7 @@ export function TasksTable<TData, TValue>({
                   <Button>Learn more</Button>
                 </Link>
               </div>
+              <div></div>
             </div>
           </Alert>
         )}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { navigationStateStore } from "@/store/store";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { use, useEffect } from "react";
+import { useEffect } from "react";
 
 export default function Page({ params }: { params: { id: string } }) {
   const router = useRouter();

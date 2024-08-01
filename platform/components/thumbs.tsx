@@ -265,7 +265,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
             <div>
               <Textarea
                 id="description"
-                placeholder={`Write a custom note for this task.\nWhen your users give you feedback, you see it here.`}
+                placeholder={`Write a custom note for this message.\nWhen your users give you feedback, you see it here.`}
                 value={currentNotes}
                 onChange={handleNoteEdit}
               />

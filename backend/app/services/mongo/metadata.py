@@ -29,7 +29,7 @@ async def fetch_count(
 
 async def calculate_average_for_metadata(
     project_id: str, collection_name: str, metadata_field: str
-) -> float:
+) -> Optional[float]:
     mongo_db = await get_mongo_db()
 
     pipeline = [
@@ -45,14 +45,14 @@ async def calculate_average_for_metadata(
 
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
     if not result or "average" not in result[0]:
-        raise HTTPException(status_code=404, detail="No data found")
+        return None
     average = result[0]["average"]
     return average
 
 
 async def calculate_top10_percent(
     project_id: str, collection_name: str, metadata_field: str
-) -> int:
+) -> Optional[int]:
     mongo_db = await get_mongo_db()
 
     # Define the pipeline
@@ -77,7 +77,7 @@ async def calculate_top10_percent(
     # Run the aggregation pipeline
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(None)
     if not result or not result[0]["totalKeyCount"]:
-        raise HTTPException(status_code=404, detail="No data found")
+        return None
 
     total_users = result[0]["totalKeyCount"][0]["count"]
     ten_percent_index = max(
@@ -104,7 +104,7 @@ async def calculate_top10_percent(
 
 async def calculate_bottom10_percent(
     project_id: str, collection_name: str, metadata_field: str
-) -> int:
+) -> Optional[int]:
     mongo_db = await get_mongo_db()
 
     # Define the pipeline with ascending sort order
@@ -124,7 +124,7 @@ async def calculate_bottom10_percent(
     # Run the aggregation pipeline
     result = await mongo_db["tasks"].aggregate(pipeline).to_list(None)
     if not result or not result[0]["totalMetadataKeyCount"]:
-        raise HTTPException(status_code=404, detail="No data found")
+        return None
 
     total_users = result[0]["totalMetadataKeyCount"][0]["count"]
     ten_percent_index = min(

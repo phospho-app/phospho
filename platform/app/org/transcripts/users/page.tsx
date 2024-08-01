@@ -107,7 +107,7 @@ const Users = () => {
                     Analyze user activity
                   </CardTitle>
                   <CardDescription>
-                    Group your tasks by user by adding a <code>user_id</code> in
+                    Group messages by user by adding a <code>user_id</code> in
                     metadata when logging.
                   </CardDescription>
                 </div>

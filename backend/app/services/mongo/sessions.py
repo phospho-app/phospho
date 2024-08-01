@@ -55,7 +55,7 @@ async def fetch_session_tasks(session_id: str, limit: int = 1000) -> List[Task]:
     """
     mongo_db = await get_mongo_db()
     tasks = (
-        await mongo_db["tasks"]
+        await mongo_db["tasks_with_events"]
         .find({"session_id": session_id})
         .sort("created_at", -1)
         .to_list(length=limit)

@@ -12,6 +12,7 @@ from google.cloud.storage import Client
 
 from loguru import logger
 
+
 load_dotenv()  # take environment variables from .env.
 logger.info("Loading environment variables from .env file")
 
@@ -169,15 +170,18 @@ CRON_SECRET_KEY = os.getenv("CRON_SECRET_KEY")
 
 # GCP
 credentials_gcp_bucket = os.getenv("GCP_JSON_CREDENTIALS_BUCKET")
+GCP_BUCKET_CLIENT = None
 if credentials_gcp_bucket:
     credentials_dict = json.loads(b64decode(credentials_gcp_bucket).decode("utf-8"))
     credentials = service_account.Credentials.from_service_account_info(
         credentials_dict
     )
     GCP_BUCKET_CLIENT = Client(credentials=credentials)
-else:
-    GCP_BUCKET_CLIENT = None
 
-### NEON DB ###
-# TODO : Rename this to generic SQL names
+### SQL DB ###
 SQLDB_CONNECTION_STRING = os.getenv("SQLDB_CONNECTION_STRING")
+
+### Customer.io
+CUSTOMERIO_WRITE_KEY = os.getenv("CUSTOMERIO_WRITE_KEY")
+if CUSTOMERIO_WRITE_KEY is None:
+    logger.warning("CUSTOMERIO_WRITE_KEY is missing from the environment variables")

@@ -137,6 +137,7 @@ jobs:
           ARGILLA_API_KEY: ${{ secrets.ARGILLA_API_KEY }}
           GCP_JSON_CREDENTIALS_BUCKET: ${{ secrets.GCP_JSON_CREDENTIALS_BUCKET }}
           SQLDB_CONNECTION_STRING: ${{ secrets.SQLDB_CONNECTION_STRING }}
+          CUSTOMERIO_WRITE_KEY: ${{ secrets.CUSTOMERIO_WRITE_KEY }}
         run: |
           gcloud run deploy phospho-backend \
             --project $GCP_PROJECT_ID \
@@ -150,6 +151,6 @@ jobs:
             --set-env-vars EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_URL=$EXTRACTOR_URL,ANYSCALE_API_KEY=$ANYSCALE_API_KEY,IS_MAINTENANCE=$IS_MAINTENANCE \
             --set-env-vars PHOSPHO_AI_HUB_URL=$PHOSPHO_AI_HUB_URL,PHOSPHO_AI_HUB_API_KEY=$PHOSPHO_AI_HUB_API_KEY,CRON_SECRET_KEY=$CRON_SECRET_KEY \
             --set-env-vars ARGILLA_URL=$ARGILLA_URL,ARGILLA_API_KEY=$ARGILLA_API_KEY,GCP_JSON_CREDENTIALS_BUCKET=$GCP_JSON_CREDENTIALS_BUCKET \
-            --set-env-vars SQLDB_CONNECTION_STRING=$SQLDB_CONNECTION_STRING \
+            --set-env-vars SQLDB_CONNECTION_STRING=$SQLDB_CONNECTION_STRING, CUSTOMERIO_WRITE_KEY=$CUSTOMERIO_WRITE_KEY \
             --image europe-west1-docker.pkg.dev/portal-385519/phospho-backend/app:production \
             --min-instances 4
