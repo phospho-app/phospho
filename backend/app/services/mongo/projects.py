@@ -487,9 +487,9 @@ async def get_all_sessions(
             additional_sessions_filter["stats.most_common_language"] = filters.language
 
         if filters.sentiment is not None:
-            additional_sessions_filter[
-                "stats.most_common_sentiment_label"
-            ] = filters.sentiment
+            additional_sessions_filter["stats.most_common_sentiment_label"] = (
+                filters.sentiment
+            )
 
         if filters.metadata is not None:
             for key, value in filters.metadata.items():
@@ -818,9 +818,9 @@ async def populate_default(
         validated_event_definition.id = generate_uuid()
         validated_event_definition.project_id = project_id
         validated_event_definition.org_id = org_id
-        event_definition_pairs[
-            validated_event_definition.event_name
-        ] = validated_event_definition
+        event_definition_pairs[validated_event_definition.event_name] = (
+            validated_event_definition
+        )
         event_definitions.append(validated_event_definition)
     await mongo_db["event_definitions"].insert_many(
         [event_definition.model_dump() for event_definition in event_definitions]
@@ -853,10 +853,10 @@ async def populate_default(
         task.last_eval.org_id = org_id
         task.last_eval.task_id = task.id
         if config.ENVIRONMENT == "production":
-            if i < 4:
+            if i < 2:
                 task.session_id = session_ids[0]
                 task.last_eval.session_id = session_ids[0]
-            elif i < 7:
+            elif i < 5:
                 task.session_id = session_ids[1]
                 task.last_eval.session_id = session_ids[1]
             else:
