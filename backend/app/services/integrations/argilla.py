@@ -39,16 +39,14 @@ def check_health_argilla() -> None:
     """
     if config.ARGILLA_URL is None:
         logger.error("Argilla URL is not configured.")
-
     if config.ARGILLA_API_KEY is None:
         logger.error("Argilla API Key is not configured.")
-
-    is_reachable = health_check(f"{config.ARGILLA_URL}/api/_status")
-
-    if is_reachable:
-        logger.info(f"Argilla server is reachable at url {config.ARGILLA_URL}")
-    else:
-        logger.error(f"Argilla server is not reachable at url {config.ARGILLA_URL}")
+    if config.ARGILLA_URL is not None and config.ARGILLA_API_KEY is not None:
+        is_reachable = health_check(f"{config.ARGILLA_URL}/api/_status")
+        if is_reachable:
+            logger.info(f"Argilla server is reachable at url {config.ARGILLA_URL}")
+        else:
+            logger.error(f"Argilla server is not reachable at url {config.ARGILLA_URL}")
 
 
 def get_workspace_datasets(workspace_id: str) -> List[FeedbackDataset]:
@@ -520,21 +518,21 @@ async def pull_dataset_from_argilla(
                 event_model = Event.model_validate(new_event)
                 await mongo_db["events"].insert_one(new_event.model_dump())
             else:
-            event_model = Event.model_validate(last_event_in_db)
+                event_model = Event.model_validate(last_event_in_db)
 
-            # Edit the event. Note: this always confirm the event.
-            if isinstance(corrected_label_or_value, str):
-                modified_event = await change_label_event(
-                    project_id=pull_request.project_id,
-                    event_id=event_model.id,
-                    new_label=corrected_label_or_value,
-                )
+                # Edit the event. Note: this always confirm the event.
+                if isinstance(corrected_label_or_value, str):
+                    modified_event = await change_label_event(
+                        project_id=pull_request.project_id,
+                        event_id=event_model.id,
+                        new_label=corrected_label_or_value,
+                    )
 
-            elif isinstance(corrected_label_or_value, float):
-                modified_event = await change_value_event(
-                    project_id=pull_request.project_id,
-                    event_id=event_model.id,
-                    new_value=corrected_label_or_value,
-                )
+                elif isinstance(corrected_label_or_value, float):
+                    modified_event = await change_value_event(
+                        project_id=pull_request.project_id,
+                        event_id=event_model.id,
+                        new_value=corrected_label_or_value,
+                    )
 
     return argilla_dataset
