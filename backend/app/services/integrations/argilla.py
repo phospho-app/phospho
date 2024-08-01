@@ -456,7 +456,7 @@ async def pull_dataset_from_argilla(
             )
 
             # Loading the most recent occurrence of this exact event for this task in the database
-            last_event_in_db = get_last_event_for_task(
+            last_event_in_db = await get_last_event_for_task(
                 project_id=pull_request.project_id,
                 event_name=event_definition.event_name,
                 task_id=task_id,
@@ -500,7 +500,7 @@ async def pull_dataset_from_argilla(
                 record.responses[0].values[classifier_or_scorer].value
             )
 
-            last_event_in_db = get_last_event_for_task(
+            last_event_in_db = await get_last_event_for_task(
                 project_id=pull_request.project_id,
                 task_id=task_id,
                 event_name=event_definition.event_name,
