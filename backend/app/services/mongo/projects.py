@@ -128,7 +128,7 @@ async def get_project_by_id(project_id: str) -> Project:
         if project_dump != project_data:
             logger.info(f"Updating project {project.id}: {project.model_dump()}")
             mongo_db["projects"].update_one(
-                {"id": project_data["id"]}, {"$set": project.model_dump()}
+                {"id": project_data["id"]}, {"$set": project_dump}
             )
     except Exception as e:
         logger.warning(
