@@ -495,6 +495,26 @@ test = ["certifi", "cryptography-vectors (==43.0.0)", "pretend", "pytest (>=6.2.
 test-randomorder = ["pytest-randomly"]
 
 [[package]]
+name = "customerio-cdp-analytics"
+version = "0.0.2"
+description = "Customer.io Data Pipelines (CDP) is a customer data platform to improve decision-making with real-time updates and deliver personalized experiences."
+optional = false
+python-versions = ">=3.6.0"
+files = [
+    {file = "customerio_cdp_analytics-0.0.2-py2.py3-none-any.whl", hash = "sha256:0d4249173e7d3b35cd8d80263aaa3e0fae3ef700e51e1e9f516f2ed1bed6c47e"},
+    {file = "customerio_cdp_analytics-0.0.2.tar.gz", hash = "sha256:b2f93fcf8e0da1ea195699f840f134de271243379c629a76a8e321bdee92b430"},
+]
+
+[package.dependencies]
+backoff = ">=2.1,<3.0"
+monotonic = ">=1.5,<2.0"
+python-dateutil = ">=2.2,<3.0"
+requests = ">=2.7,<3.0"
+
+[package.extras]
+test = ["flake8 (==3.7.9)", "mock (==2.0.0)", "pylint (==2.8.0)"]
+
+[[package]]
 name = "deprecated"
 version = "1.2.14"
 description = "Python @deprecated decorator to deprecate old python classes, functions or methods."
@@ -3514,4 +3534,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "a90f569ae151e61a37c2d8fd143b6941dc94e445f30fb9ecc2a7d8c2f6d20305"
+content-hash = "c1da51dee8d1edb852ae3270fd6e35f08359f057f037a01fd19d2282d3ae6a8f"

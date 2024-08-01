@@ -23,3 +23,10 @@ class DatasetCreationRequest(BaseModel):
     sampling_parameters: DatasetSamplingParameters = Field(
         default_factory=lambda: DatasetSamplingParameters(sampling_type="naive")
     )
+
+
+class DatasetPullRequest(BaseModel):
+    project_id: str
+    workspace_id: str  # Argilla workspace id
+    dataset_name: Optional[str] = None  # Must be present in the workspace
+    filters: ProjectDataFilters

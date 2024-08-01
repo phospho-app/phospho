@@ -36,7 +36,7 @@ from .explore import (
     QuerySessionsTasksRequest,
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
-from .organizations import CreateCheckoutRequest
+from .organizations import CreateCheckoutRequest, UserCreatedEventWebhook
 from .projects import (
     AddEventsQuery,
     OnboardingSurvey,

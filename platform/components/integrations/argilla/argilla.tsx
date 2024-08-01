@@ -11,9 +11,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { dataStateStore } from "@/store/store";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, Download } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import PullDataset from "./pull-argilla-dataset";
 
 const ArgillaIntegrations: React.FC = () => {
   const selectedOrgMetadata = dataStateStore(
@@ -66,6 +67,7 @@ const ArgillaIntegrations: React.FC = () => {
                 >
                   <Button>View datasets</Button>
                 </Link>
+                <PullDataset />
                 <CreateDataset />
               </div>
             </div>
