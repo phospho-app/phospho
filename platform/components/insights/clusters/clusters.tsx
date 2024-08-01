@@ -32,7 +32,6 @@ const Clusters: React.FC = () => {
       revalidateIfStale: false,
     },
   );
-  console.log("fetching clusterings 1");
   let latestClustering: Clustering | undefined = undefined;
   if (clusteringsData) {
     latestClustering = clusteringsData?.clusterings[0];

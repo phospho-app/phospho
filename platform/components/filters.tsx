@@ -130,7 +130,6 @@ const FilterComponent = ({
       keepPreviousData: true,
     },
   );
-  console.log("fetching clusterings 2");
   const clusterings = clusteringsData?.clusterings as Clustering[];
 
   // Number of active filters that are not the created_at_start and created_at_end
