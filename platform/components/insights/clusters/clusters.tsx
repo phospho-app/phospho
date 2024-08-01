@@ -30,7 +30,6 @@ const Clusters: React.FC = () => {
     {
       keepPreviousData: true,
       revalidateIfStale: false,
-      refreshInterval: 10,
     },
   );
   let latestClustering: Clustering | undefined = undefined;
