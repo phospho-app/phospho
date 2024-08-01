@@ -89,15 +89,21 @@ def init(
         print(f"Configuration saved in: {global_config}")
 
     # Create the default test file
-    with open(test_file, "w") as f:
-        f.write(
-            """
+    # if it exists, do not overwrite it
+    full_test_file = os.path.abspath(test_file)
+    if os.path.exists(full_test_file):
+        print(
+            f"File {full_test_file} already exists. If you want to create a new one, delete this one first."
+        )
+    else:
+        with open(test_file, "w") as f:
+            f.write(
+                """
 def main():
     print("Running tests")
-            """
-        )
-    full_test_file = os.path.abspath(test_file)
-    print(f"Default test file created: {full_test_file}")
+                """
+            )
+        print(f"Default test file created: {full_test_file}")
     print("[green]🧪 [bold]phospho initialized![bold][/green]")
 
 

@@ -570,8 +570,7 @@ class PhosphoTest:
                         f"Executor type {executor_type} is not implemented"
                     )
 
-                if metric == "evaluate":
-                    self.phospho.flush()
+        self.phospho.flush()
 
         # Stop timer
         end_time = time.time()
