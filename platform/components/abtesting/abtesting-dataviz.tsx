@@ -18,7 +18,7 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import {
   Bar,
@@ -92,6 +92,9 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
                 key={`${versionID}_A`}
                 onClick={() => setVersionIDA(versionID)}
               >
+                {versionID === versionIDA && (
+                  <Check className="h-4 w-4 mr-2 text-green-500" />
+                )}
                 {versionID}
               </DropdownMenuItem>
             ))}
@@ -112,6 +115,9 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
                 key={`${versionID}_B`}
                 onClick={() => setVersionIDB(versionID)}
               >
+                {versionID === versionIDB && (
+                  <Check className="h-4 w-4 mr-2 text-green-500" />
+                )}
                 {versionID}
               </DropdownMenuItem>
             ))}
