@@ -248,7 +248,7 @@ class ProjectSettings(BaseModel):
     run_sentiment: Optional[bool] = True
     run_language: Optional[bool] = True
     run_event_detection: Optional[bool] = True
-    ab_version_id: Optional[str] = Field(default_factory=generate_timestamp)
+    ab_version_id: Optional[str] = "First version"
     dashboard_tiles: List[DashboardTile] = Field(
         default_factory=lambda: [
             DashboardTile(
