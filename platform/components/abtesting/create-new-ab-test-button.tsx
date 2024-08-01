@@ -27,8 +27,10 @@ const FormSchema = z.object({
 const CreateNewABTestButton = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   async function onSubmit(values: z.infer<typeof FormSchema>) {
+    setPopoverOpen(false);
     setABButtonClicked(true);
     // Call the API to create
     await fetch(`/api/projects/${project_id}`, {
@@ -82,9 +84,9 @@ const CreateNewABTestButton = () => {
 
   return (
     <>
-      <Popover>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <div className="flex">
-          <PopoverTrigger>
+          <PopoverTrigger asChild>
             <Button>
               <PlusIcon className="h-4 w-4 mr-2" />
               Create New AB Test
