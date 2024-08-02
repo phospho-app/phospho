@@ -7,6 +7,7 @@ import typer
 from rich import print
 from typing_extensions import Annotated
 from enum import Enum
+from ._version import __version__
 
 app = typer.Typer()
 
@@ -29,15 +30,32 @@ def load_from_file(filepath):
     return py_mod
 
 
-@app.callback()
-def callback():
+def version_callback(value: bool):
+    """
+    Print the current version of phospho
+    """
+    if value:
+        print(f"[green]v{__version__}[/green]")
+        raise typer.Exit()
+
+
+@app.callback(invoke_without_command=True)
+def callback(
+    version: Annotated[
+        Optional[bool],
+        typer.Option("--version", callback=version_callback, help="Print the version"),
+    ] = None,
+):
     """
     phospho: a command line interface for the phospho platform
 
     Learn more: https://docs.phospho.ai
     """
-    print("[green][bold]🧪 phospho[/bold][/green] ")
+    print("[green][bold]Welcome to 🧪phospho[/bold][/green] ")
     print("-> API keys & Project ids: https://platform.phospho.ai")
+    print("-> Run 'phospho init' to configure a new project")
+    print("-> Run 'phospho test' to run tests")
+    print("-> Run 'phospho --help' for more")
     print("")
 
 
@@ -104,14 +122,17 @@ def main():
                 """
             )
         print(f"Default test file created: {full_test_file}")
-    print("[green]🧪 [bold]phospho initialized![bold][/green]")
+    print("")
+    print("[green][bold]🧪phospho tests initialized![bold][/green]")
+    print(f"-> Edit the test file '{test_file}' to add your tests")
+    print("-> Run 'phospho test' to run tests")
 
 
 @app.command()
 def test(
     executor_type: Annotated[
         ExecutorType, typer.Option(help="The type of executor to use.")
-    ] = ExecutorType.PARALLEL,
+    ] = "parallel",
     max_parallelism: Annotated[
         int,
         typer.Option(
@@ -168,6 +189,16 @@ def test(
                 elif key == "PHOSPHO_PROJECT_ID" and phospho_project_id is None:
                     phospho_project_id = value
 
+    if phospho_api_key is not None and phospho_project_id is not None:
+        os.environ["PHOSPHO_API_KEY"] = phospho_api_key
+        os.environ["PHOSPHO_PROJECT_ID"] = phospho_project_id
+        print("Config loaded")
+    else:
+        print(
+            "No phospho API key or project id found. Run 'phospho init' to create one."
+        )
+        raise typer.Exit()
+
     # Verify if the test file exists
     full_test_file = os.path.abspath(test_file)
     if not os.path.exists(test_file):
@@ -181,7 +212,7 @@ def test(
         module = load_from_file(full_test_file)
         # This assumes there is an object called phospho_test
         module.phospho_test.run(
-            executor_type=executor_type, max_parallelism=max_parallelism
+            executor_type=executor_type.value, max_parallelism=max_parallelism
         )
         module.phospho_test.flush()
     except ModuleNotFoundError as e:

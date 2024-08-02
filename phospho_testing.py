@@ -1,7 +1,9 @@
+import os
 import phospho
 
 phospho_test = phospho.PhosphoTest()
 
+os.environ["MISTRAL_API_KEY"] = "your_api_key"
 client = phospho.lab.get_sync_client("mistral")
 
 

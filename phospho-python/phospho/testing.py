@@ -566,7 +566,6 @@ class PhosphoTest:
                     )
                 ]
             )
-
             workload.run(
                 messages=tasks_linked_to_function,
                 executor_type=executor_type,
