@@ -86,10 +86,6 @@ async def get_flattened_tasks(
 ) -> FlattenedTasks:
     """
     Get all the tasks of a project in a flattened format.
-
-    Args:
-        project_id: The id of the project
-        limit: The maximum number of tasks to return
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
 

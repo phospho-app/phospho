@@ -611,7 +611,7 @@ class Workload:
                 # Await all the results
                 semaphore = asyncio.Semaphore(max_parallelism)
                 # Create a progress bar
-                if isinstance(messages, list):
+                if hasattr(messages, "__len__"):
                     t = tqdm(total=len(messages))
                 else:
                     t = tqdm()
@@ -722,9 +722,11 @@ class Workload:
         max_parallelism: int = 10,
     ):
         """Wrapper of Workload.async_run() to run the workload synchronously."""
-        return asyncio.run(
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(
             self.async_run(
-                messages,
+                messages=messages,
                 executor_type=executor_type,
                 max_parallelism=max_parallelism,
             )

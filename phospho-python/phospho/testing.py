@@ -296,7 +296,12 @@ class PhosphoTest:
             version_id = generate_version_id()
         self.version_id = version_id
         self.phospho = phospho
-        self.phospho.init(api_key=api_key, project_id=project_id, version_id=version_id)
+        self.phospho.init(
+            api_key=api_key,
+            project_id=project_id,
+            base_url=base_url,
+            version_id=version_id,
+        )
 
     def test(
         self,
@@ -356,7 +361,10 @@ class PhosphoTest:
 
         # Start timer
         start_time = time.time()
-        print(f"Starting tests with version id: {self.version_id}")
+        print(f"version_id: {self.version_id}")
+        print(f"Executor type: {executor_type}")
+        print(f"Max parallelism: {max_parallelism}")
+
         # os.environ["PHOSPHO_VERSION_ID"] = self.version_id
 
         # Collect the functions.
@@ -372,14 +380,15 @@ class PhosphoTest:
                 # Go to the next function
                 continue
 
+            messages: Loader
             if function_to_eval.source_loader == "backtest":
-                messages: Loader = BacktestLoader(
+                messages = BacktestLoader(
                     client=self.client,
                     agent_function=function_to_eval.function,
                     **function_to_eval.source_loader_params,
                 )
             elif function_to_eval.source_loader == "dataset":
-                messages: Loader = DatasetLoader(
+                messages = DatasetLoader(
                     agent_function=function_to_eval.function,
                     **function_to_eval.source_loader_params,
                 )
@@ -388,9 +397,11 @@ class PhosphoTest:
                     f"Source loader {function_to_eval.source_loader} is not implemented"
                 )
 
-            def evaluate(message: lab.Message):
+            async def evaluate(message: lab.Message):
+                print(f"Running {function_name} on message {message.content[:50]}")
                 try:
                     # The function is fed with a message and all the metadata
+                    print("1")
                     function_input = {
                         "message": message,
                         **message.metadata,
@@ -399,8 +410,10 @@ class PhosphoTest:
                     adapted_function_input = adapt_dict_to_agent_function(
                         function_input, function_to_eval.function
                     )
+                    print("2")
                     response = function_to_eval.function(**adapted_function_input)
                     # Log the input and output to phospho
+                    print("3")
                     self.log(
                         input=message.content,
                         output=response,
@@ -428,8 +441,7 @@ class PhosphoTest:
                 max_parallelism=max_parallelism,
             )
 
-        self.phospho.flush()
-
+        self.flush()
         # Stop timer
         end_time = time.time()
 

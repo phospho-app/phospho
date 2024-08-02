@@ -1,5 +1,4 @@
 import os
-
 import phospho
 
 phospho_test = phospho.PhosphoTest(base_url="http://localhost:8000/v2")
@@ -29,7 +28,7 @@ def test_simple():
 
 @phospho_test.test(
     source_loader="backtest",  # Load data from logged phospho data
-    source_loader_params={"sample_size": 10},
+    source_loader_params={"sample_size": 3},
 )
 def test_backtest(message: phospho.lab.Message) -> str | None:
     response = client.chat.completions.create(
