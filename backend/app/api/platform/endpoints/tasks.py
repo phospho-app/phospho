@@ -78,7 +78,6 @@ async def post_human_eval_task(
     Update the human eval of a task and the flag with "success" or "failure"
     Also signs the origin of the flag with owner
     """
-    logger.debug(f"taskHumanEvalRequest: {taskHumanEvalRequest}")
     if taskHumanEvalRequest.human_eval not in ["success", "failure"]:
         raise HTTPException(
             status_code=400,

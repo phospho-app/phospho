@@ -5,7 +5,7 @@ from phospho.models import ProjectDataFilters, ScoreRange
 from phospho.utils import filter_nonjsonable_keys
 
 import pydantic
-from app.db.models import Eval, EventDefinition, Task, Event
+from app.db.models import Eval, EventDefinition, Task, Event, HumanEval
 from app.db.mongo import get_mongo_db
 from fastapi import HTTPException
 
@@ -156,7 +156,7 @@ async def human_eval_task(
         update_payload: Dict[str, object] = {}
         update_payload["flag"] = flag
         update_payload["last_eval"] = eval_data.model_dump()
-        update_payload["human_eval"] = human_eval
+        update_payload["human_eval.flag"] = human_eval
         await mongo_db["tasks"].update_one(
             {"id": task_model.id},
             {"$set": update_payload},
@@ -164,10 +164,47 @@ async def human_eval_task(
         logger.debug(f"Task {task_model.id} updated with human eval {human_eval}")
         task_model.flag = flag
         task_model.last_eval = eval_data
-        task_model.human_eval = human_eval
+        task_model.human_eval = HumanEval(flag=human_eval)
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to update Task {task_model.id}: {e}"
+        )
+    # Update the session object
+
+    try:
+        tasks = (
+            await mongo_db["tasks"]
+            .find({"session_id": task_model.session_id})
+            .to_list(length=None)
+        )
+        nbr_success = 0
+        nbr_failure = 0
+        for task in tasks:
+            logger.debug(f"Task {task}")
+            validated_task = Task.model_validate(task)
+            if (
+                validated_task.human_eval is None
+                or validated_task.human_eval.flag is None
+            ):
+                continue
+            elif validated_task.human_eval.flag == "success":
+                nbr_success += 1
+            elif validated_task.human_eval.flag == "failure":
+                nbr_failure += 1
+        if nbr_success + nbr_failure == 0:
+            session_flag = None
+        elif nbr_success >= nbr_failure:
+            session_flag = "success"
+        else:
+            session_flag = "failure"
+        await mongo_db["sessions"].update_one(
+            {"id": validated_task.session_id},
+            {"$set": {"stats.human_eval": session_flag}},
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update Session {task_model.session_id}: {e}",
         )
 
     return task_model

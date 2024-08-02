@@ -20,4 +20,5 @@ from phospho.models import (
     Test,
     ProjectDataFilters,
     RecipeType,
+    HumanEval,
 )

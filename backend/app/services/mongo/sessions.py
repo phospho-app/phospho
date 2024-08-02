@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Tuple, cast
 
 from app.db.models import Event, EventDefinition, Project, Session, Task
 from app.db.mongo import get_mongo_db
@@ -416,6 +416,31 @@ async def remove_event_from_session(session: Session, event_name: str) -> Sessio
             status_code=404,
             detail=f"Event {event_name} not found in session {session.id}",
         )
+
+
+async def human_eval_session(
+    session_model: Session,
+    human_eval: str,
+) -> Session:
+    """
+    Update the human eval of a session and the session_flag with "success" or "failure"
+    """
+
+    mongo_db = await get_mongo_db()
+
+    flag = cast(Literal["success", "failure"], human_eval)
+
+    await mongo_db["sessions"].update_one(
+        {"id": session_model.id},
+        {
+            "$set": {
+                "stats.human_eval": flag,
+            }
+        },
+    )
+    session_model.stats.human_eval = flag
+
+    return session_model
 
 
 async def session_filtering_pipeline_match(
