@@ -1,11 +1,11 @@
 import datetime
 from typing import Dict, List, Literal, Optional, Tuple, cast
 from app.api.platform.models.explore import Pagination, Sorting
-from phospho.models import ProjectDataFilters, ScoreRange
+from phospho.models import ProjectDataFilters, ScoreRange, HumanEval
 from phospho.utils import filter_nonjsonable_keys
 
 import pydantic
-from app.db.models import Eval, EventDefinition, Task, Event, HumanEval
+from app.db.models import Eval, EventDefinition, Task, Event
 from app.db.mongo import get_mongo_db
 from fastapi import HTTPException
 
