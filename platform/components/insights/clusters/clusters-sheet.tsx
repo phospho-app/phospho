@@ -40,6 +40,7 @@ const RunClusters = ({
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
 
   useEffect(() => {
     if (totalNbTasks) {
@@ -81,26 +82,30 @@ const RunClusters = ({
       }).then((response) => {
         if (response.status == 200) {
           toast({
-            title: "Cluster detection started",
+            title: "Cluster detection started ⏳",
             description: "This may take a few minutes.",
           });
+          setOpen(false);
         } else {
           toast({
             title: "Error when starting detection",
             description: response.text(),
           });
         }
+        setLoading(false);
       });
     } catch (e) {
       toast({
         title: "Error when starting detection",
         description: JSON.stringify(e),
       });
+      setLoading(false);
+
     }
   }
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger>
         <Button className="default">
           <Sparkles className="w-4 h-4 mr-2 text-green-500" /> Configure
@@ -109,9 +114,12 @@ const RunClusters = ({
         </Button>
       </SheetTrigger>
       <SheetContent className="md:w-1/2 overflow-auto">
-        <SheetTitle>Run analysis on past data</SheetTitle>
+        <SheetTitle>
+          Configure clusters detection
+        </SheetTitle>
         <SheetDescription>
-          Get events, flags, language, and sentiment labels.
+          Run a cluster analysis on your user messages to detect patterns and
+          group similar messages together.
         </SheetDescription>
         <Separator className="my-8" />
         <div className="flex flex-wrap">

@@ -42,6 +42,8 @@ import {
   ChevronRight,
   PenSquare,
   Sparkles,
+  ThumbsDown,
+  ThumbsUp,
 } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -63,14 +65,14 @@ async function flagTask({
   if (!accessToken) return;
   if (!project_id) return;
 
-  const creation_response = await fetch(`/api/tasks/${task_id}/flag`, {
+  const creation_response = await fetch(`/api/tasks/${task_id}/human-eval`, {
     method: "POST",
     headers: {
       Authorization: "Bearer " + accessToken,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      flag: flag,
+      human_eval: flag,
     }),
   });
   mutateTasks((data: any) => {
@@ -223,6 +225,54 @@ export function getColumns({
       },
       minSize: 100,
     },
+    // Human evaluation
+    {
+      header: "Human evaluation",
+      accessorKey: "human_eval.flag",
+      cell: (row) => {
+        const human_eval = row.getValue() as string; // asserting the type as string
+        return (
+          <div className="flex justify-center group">
+            {human_eval && human_eval == "success" && (
+              <ThumbsUp className="h-6 w-6 text-green-500" />
+            )}{" "}
+            {human_eval && human_eval == "failure" && (
+              <ThumbsDown className="h-6 w-6 text-red-500" />
+            )}{" "}
+            {!human_eval && (
+              <div className="flex space-x-2 invisible group group-hover:visible p-6">
+                <ThumbsUp
+                  className="h-6 w-6 text-green-500 cursor-pointer hover:fill-green-500"
+                  onClick={(mouseEvent) => {
+                    mouseEvent.stopPropagation();
+                    flagTask({
+                      task_id: row.row.original.id,
+                      flag: "success",
+                      accessToken: accessToken,
+                      project_id: project_id,
+                      mutateTasks: mutateTasks,
+                    });
+                  }}
+                />
+                <ThumbsDown
+                  className="h-6 w-6 text-red-500 cursor-pointer hover:fill-red-500"
+                  onClick={(mouseEvent) => {
+                    mouseEvent.stopPropagation();
+                    flagTask({
+                      task_id: row.row.original.id,
+                      flag: "failure",
+                      accessToken: accessToken,
+                      project_id: project_id,
+                      mutateTasks: mutateTasks,
+                    });
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
     // Language
     {
       header: () => {
@@ -247,105 +297,105 @@ export function getColumns({
       maxSize: 10,
     },
     // Flag
-    {
-      header: () => {
-        return (
-          <div className="flex items-center space-x-2 justify-between">
-            <div className="flex items-center">
-              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-              Eval
-            </div>
-            <EvalSettings />
-          </div>
-        );
-      },
-      accessorKey: "flag",
-      cell: (row) => (
-        <DropdownMenu>
-          <HoverCard openDelay={0} closeDelay={0}>
-            <DropdownMenuTrigger>
-              <HoverCardTrigger asChild>
-                <div className="flex flex-row items-center">
-                  <Badge
-                    variant={
-                      (row.getValue() as string) === "success"
-                        ? "secondary"
-                        : (row.getValue() as string) === "failure"
-                          ? "destructive"
-                          : "secondary"
-                    }
-                    className="hover:border-green-500"
-                  >
-                    {row.getValue() as string}
-                    {row.getValue() === null && <div className="h-3 w-6"></div>}
-                  </Badge>
-                  {row.row.original.notes && (
-                    <PenSquare className="h-4 w-4 ml-1" />
-                  )}
-                </div>
-              </HoverCardTrigger>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onClick={(mouseEvent) => {
-                  // This is used to avoid clicking on the row as well
-                  mouseEvent.stopPropagation();
-                  // Flag the task as success
-                  flagTask({
-                    task_id: row.row.original.id,
-                    flag: "success",
-                    accessToken: accessToken,
-                    project_id: project_id,
-                    mutateTasks: mutateTasks,
-                  });
-                }}
-              >
-                {(row.getValue() as string) === "success" && (
-                  <Check className="h-4 w-4 mr-1" />
-                )}
-                Success
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(mouseEvent) => {
-                  // This is used to avoid clicking on the row as well
-                  mouseEvent.stopPropagation();
-                  // Flag the task as failure
-                  flagTask({
-                    task_id: row.row.original.id,
-                    flag: "failure",
-                    accessToken: accessToken,
-                    project_id: project_id,
-                    mutateTasks: mutateTasks,
-                  });
-                }}
-              >
-                {(row.getValue() as string) === "failure" && (
-                  <Check className="h-4 w-4 mr-1" />
-                )}
-                Failure
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-            <HoverCardContent align="start">
-              <div className="flex flex-col space-y-1">
-                {!row.row.original.last_eval && <span>No eval</span>}
-                {row.row.original.last_eval && (
-                  <div>
-                    <span className="font-bold">Last eval source: </span>
-                    <span>{row.row.original.last_eval?.source}</span>
-                  </div>
-                )}
-                {row.row.original.notes && (
-                  <div>
-                    <span className="font-bold">Notes: </span>
-                    <span>{row.row.original.notes}</span>
-                  </div>
-                )}
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-        </DropdownMenu>
-      ),
-    },
+    // {
+    //   header: () => {
+    //     return (
+    //       <div className="flex items-center space-x-2 justify-between">
+    //         <div className="flex items-center">
+    //           <Sparkles className="h-4 mr-1 text-green-500" />
+    //           Automatic eval
+    //         </div>
+    //         <EvalSettings />
+    //       </div>
+    //     );
+    //   },
+    //   accessorKey: "flag",
+    //   cell: (row) => (
+    //     <DropdownMenu>
+    //       <HoverCard openDelay={0} closeDelay={0}>
+    //         <DropdownMenuTrigger>
+    //           <HoverCardTrigger asChild>
+    //             <div className="flex flex-row items-center">
+    //               <Badge
+    //                 variant={
+    //                   (row.getValue() as string) === "success"
+    //                     ? "secondary"
+    //                     : (row.getValue() as string) === "failure"
+    //                       ? "destructive"
+    //                       : "secondary"
+    //                 }
+    //                 className="hover:border-green-500"
+    //               >
+    //                 {row.getValue() as string}
+    //                 {row.getValue() === null && <div className="h-3 w-6"></div>}
+    //               </Badge>
+    //               {row.row.original.notes && (
+    //                 <PenSquare className="h-4 w-4 ml-1" />
+    //               )}
+    //             </div>
+    //           </HoverCardTrigger>
+    //         </DropdownMenuTrigger>
+    //         <DropdownMenuContent>
+    //           <DropdownMenuItem
+    //             onClick={(mouseEvent) => {
+    //               // This is used to avoid clicking on the row as well
+    //               mouseEvent.stopPropagation();
+    //               // Flag the task as success
+    //               flagTask({
+    //                 task_id: row.row.original.id,
+    //                 flag: "success",
+    //                 accessToken: accessToken,
+    //                 project_id: project_id,
+    //                 mutateTasks: mutateTasks,
+    //               });
+    //             }}
+    //           >
+    //             {(row.getValue() as string) === "success" && (
+    //               <Check className="h-4 w-4 mr-1" />
+    //             )}
+    //             Success
+    //           </DropdownMenuItem>
+    //           <DropdownMenuItem
+    //             onClick={(mouseEvent) => {
+    //               // This is used to avoid clicking on the row as well
+    //               mouseEvent.stopPropagation();
+    //               // Flag the task as failure
+    //               flagTask({
+    //                 task_id: row.row.original.id,
+    //                 flag: "failure",
+    //                 accessToken: accessToken,
+    //                 project_id: project_id,
+    //                 mutateTasks: mutateTasks,
+    //               });
+    //             }}
+    //           >
+    //             {(row.getValue() as string) === "failure" && (
+    //               <Check className="h-4 w-4 mr-1" />
+    //             )}
+    //             Failure
+    //           </DropdownMenuItem>
+    //         </DropdownMenuContent>
+    //         <HoverCardContent align="start">
+    //           <div className="flex flex-col space-y-1">
+    //             {!row.row.original.last_eval && <span>No eval</span>}
+    //             {row.row.original.last_eval && (
+    //               <div>
+    //                 <span className="font-bold">Last eval source: </span>
+    //                 <span>{row.row.original.last_eval?.source}</span>
+    //               </div>
+    //             )}
+    //             {row.row.original.notes && (
+    //               <div>
+    //                 <span className="font-bold">Notes: </span>
+    //                 <span>{row.row.original.notes}</span>
+    //               </div>
+    //             )}
+    //           </div>
+    //         </HoverCardContent>
+    //       </HoverCard>
+    //     </DropdownMenu>
+    //   ),
+    // },
     // Events
     {
       header: () => {

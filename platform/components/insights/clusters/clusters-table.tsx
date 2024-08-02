@@ -68,10 +68,10 @@ export function ClustersTable<TData, TValue>({
   } = useSWR(
     project_id
       ? [
-          `/api/explore/${project_id}/clusters`,
-          accessToken,
-          selectedClustering?.id,
-        ]
+        `/api/explore/${project_id}/clusters`,
+        accessToken,
+        selectedClustering?.id,
+      ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
@@ -128,8 +128,8 @@ export function ClustersTable<TData, TValue>({
                   <span>
                     {formatUnixTimestampToLiteralDatetime(
                       selectedClustering?.created_at ??
-                        latestClustering?.created_at ??
-                        0,
+                      latestClustering?.created_at ??
+                      0,
                     )}
                   </span>
                 )}
@@ -140,7 +140,7 @@ export function ClustersTable<TData, TValue>({
                 )}
               </div>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="overflow-y-auto max-h-[20rem]">
               <SelectGroup>
                 {clusterings.map((clustering) => (
                   <SelectItem key={clustering.id} value={clustering.id}>
@@ -179,9 +179,9 @@ export function ClustersTable<TData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                       </TableHead>
                     );
                   })}

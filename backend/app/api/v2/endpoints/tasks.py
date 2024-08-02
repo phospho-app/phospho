@@ -8,6 +8,7 @@ from app.api.v2.models import (
     TaskCreationRequest,
     TaskFlagRequest,
     TaskUpdateRequest,
+    TaskHumanEvalRequest,
 )
 from app.core import config
 from app.security.authentification import (
@@ -17,7 +18,13 @@ from app.security.authentification import (
 )
 from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.sessions import get_session_by_id
-from app.services.mongo.tasks import create_task, flag_task, get_task_by_id, update_task
+from app.services.mongo.tasks import (
+    create_task,
+    flag_task,
+    get_task_by_id,
+    update_task,
+    human_eval_task,
+)
 from loguru import logger
 
 router = APIRouter(tags=["Tasks"])
@@ -136,6 +143,64 @@ async def post_flag_task(
         flag=taskFlagRequest.flag,
         source=taskFlagRequest.source,
         notes=taskFlagRequest.notes,
+    )
+    return updated_task
+
+
+@router.post(
+    "/tasks/{task_id}/human-eval",
+    response_model=Task,
+    description="Update the status of a task",
+)
+async def post_human_eval_task(
+    task_id: str,
+    taskHumanEvalRequest: TaskHumanEvalRequest,
+    org: Optional[dict] = Depends(authenticate_org_key_no_exception),
+) -> Task:
+    """
+    Set the human evalutation of the task to be 'success' or 'failure'
+    Also adds a flag and signs the origin of the flag ("owner", "phospho", "user", etc.)
+    """
+    # Get the task object
+    if taskHumanEvalRequest.human_eval not in ["success", "failure"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid flag value {taskHumanEvalRequest.human_eval}. Must be 'success' or 'failure'",
+        )
+    if taskHumanEvalRequest.project_id is None and org is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Please pass the project_id in the request body to flag the task.",
+        )
+
+    # The task may not exist yet, so we try to fetch it multiple times with exponential backoff
+    delay = 0.1
+    for _ in range(5):
+        try:
+            task_model = await get_task_by_id(task_id)
+            break
+        except Exception:
+            logger.warning(f"Task {task_id} not found, retrying in {delay} seconds")
+            await asyncio.sleep(delay)
+            delay *= 2
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task {task_id} not found after multiple retries",
+        )
+
+    if org is not None:
+        await verify_propelauth_org_owns_project_id(org, task_model.project_id)
+    elif task_model.project_id != taskHumanEvalRequest.project_id:
+        await asyncio.sleep(0.1)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid project_id {taskHumanEvalRequest.project_id} for task {task_id}",
+        )
+    updated_task = await human_eval_task(
+        task_model=task_model,
+        human_eval=taskHumanEvalRequest.human_eval,
+        source=taskHumanEvalRequest.source,
     )
     return updated_task
 

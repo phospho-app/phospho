@@ -62,8 +62,7 @@ def lifecheck(request):
     """
     HTTP Cloud Function.
     """
-    request_json = request.get_json(silent=True)
-    request_args = request.args
+    request.get_json(silent=True)
 
     test_platform = test_api_endpoint(
         "https://api.phospho.ai/api/health", "Phospho platform API healthcheck"

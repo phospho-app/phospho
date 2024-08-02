@@ -25,6 +25,7 @@ import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Wand2 } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
@@ -35,6 +36,8 @@ interface SuggestEventProps {
 }
 
 const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
   const generateEventSuggestion = () => {
     // Let's fill eventToEdit?.description with our event prediction
     try {
@@ -126,6 +129,7 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setPopoverOpen(false);
     console.log("Submitting event:", values);
     if (!selectedProject) {
       console.log("Submit: No selected project");
@@ -174,6 +178,10 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
             return { project: selectedProject };
           },
         );
+        toast({
+          title: "Event created",
+          description: `Event "${values.event_name}" has been created`,
+        });
       });
     } catch (error) {
       toast({
@@ -185,8 +193,8 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
 
   return (
     <div>
-      <Popover>
-        <PopoverTrigger>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <PopoverTrigger asChild>
           <button
             className={`mr-1 hover:border-green-500 rounded-full p-1 border-2 `}
             onClick={() => generateEventSuggestion()}

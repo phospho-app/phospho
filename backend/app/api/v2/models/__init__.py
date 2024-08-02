@@ -37,6 +37,7 @@ from .tasks import (
     TaskFlagRequest,
     Tasks,
     TaskUpdateRequest,
+    TaskHumanEvalRequest,
 )
 from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest
 from .train import TrainRequest

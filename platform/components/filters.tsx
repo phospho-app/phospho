@@ -107,10 +107,10 @@ const FilterComponent = ({
   const { data: metadataFieldsToValues } = useSWR(
     selectedProject?.id
       ? [
-          `/api/metadata/${selectedProject?.id}/fields/values`,
-          accessToken,
-          "unique_metadata_fields_to_values",
-        ]
+        `/api/metadata/${selectedProject?.id}/fields/values`,
+        accessToken,
+        "unique_metadata_fields_to_values",
+      ]
       : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {

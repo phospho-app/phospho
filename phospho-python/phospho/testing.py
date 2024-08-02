@@ -1,16 +1,14 @@
 import inspect
 import logging
-import os
 import time
 from random import sample
-from types import GeneratorType
-from typing import Any, Callable, Dict, Iterator, List, Literal, Optional, Union
+from typing import Any, Callable, Dict, Iterator, List, Literal, Optional
 
 from phospho.utils import generate_version_id
 from pydantic import BaseModel, Field
 from rich import print
 
-from phospho import extractor, lab
+from phospho import lab
 from phospho.client import Client
 
 logger = logging.getLogger(__name__)

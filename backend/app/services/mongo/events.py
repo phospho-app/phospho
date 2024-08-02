@@ -145,7 +145,7 @@ async def confirm_event(
     event_model = Event.model_validate(event)
 
     # Edit the event. Note: this always confirm the event.
-    result = await mongo_db["events"].update_one(
+    await mongo_db["events"].update_one(
         {"project_id": project_id, "id": event_id},
         {"$set": {"confirmed": True}},
     )
@@ -170,7 +170,7 @@ async def remove_event(
     event_model = Event.model_validate(event)
 
     # Edit the event. Note: this always confirm the event.
-    result = await mongo_db["events"].update_one(
+    await mongo_db["events"].update_one(
         {"project_id": project_id, "id": event_id},
         {"$set": {"removed": True}},
     )
@@ -196,7 +196,7 @@ async def change_label_event(
     event_model = Event.model_validate(event)
 
     # Edit the event. Note: this always confirm the event.
-    result = await mongo_db["events"].update_one(
+    await mongo_db["events"].update_one(
         {"project_id": project_id, "id": event_id},
         {
             "$set": {
@@ -228,7 +228,7 @@ async def change_value_event(
     event_model = Event.model_validate(event)
 
     # Edit the event. Note: this always confirm the event.
-    result = await mongo_db["events"].update_one(
+    await mongo_db["events"].update_one(
         {"project_id": project_id, "id": event_id},
         {
             "$set": {

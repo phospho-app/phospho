@@ -1,8 +1,8 @@
 """
 Data pipeline related code
 """
+
 from typing import List
-from loguru import logger
 
 from app.services.tasks import get_task_by_id
 from app.db.mongo import get_mongo_db
@@ -22,7 +22,7 @@ async def fetch_previous_tasks(task_id: str) -> List[Task]:
         return [task]
 
     # Get the tasks of the session before the task
-    previous_taks = (
+    previous_tasks = (
         await mongo_db["tasks"]
         .find(
             {
@@ -34,11 +34,11 @@ async def fetch_previous_tasks(task_id: str) -> List[Task]:
         .sort("created_at", -1)
         .to_list(length=None)
     )
-    if previous_taks is None:
+    if previous_tasks is None:
         return [task]
-    previous_taks_models = [Task.model_validate(data) for data in previous_taks]
-    previous_taks_models.append(task)
-    return previous_taks_models
+    previous_tasks_models = [Task.model_validate(data) for data in previous_tasks]
+    previous_tasks_models.append(task)
+    return previous_tasks_models
 
 
 def generate_task_transcript(

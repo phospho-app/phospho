@@ -1,4 +1,3 @@
-import pytest
 from app.main import app as router
 
 from fastapi.testclient import TestClient

@@ -84,7 +84,7 @@ def health_check(url: str) -> bool:
     Will return False if the server is not reachable
     """
     try:
-        response = httpx.get(url)
+        httpx.get(url)
         return True
     except Exception as e:
         logger.error(e)

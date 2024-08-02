@@ -8,7 +8,6 @@ from app.core import config
 import pandas as pd
 
 import openai
-import os
 
 anyscale_client = openai.OpenAI(
     base_url=config.ANYSCALE_BASE_URL, api_key=config.ANYSCALE_API_KEY
@@ -21,7 +20,7 @@ def convert_to_msg(row):
     """
     Takes as input a row from the pandas dataframe and returns a message object
     """
-    detection_scope = row["detection_scope"]
+    row["detection_scope"]
     if row["label"]:
         llm_response = "Yes"
     else:

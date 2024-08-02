@@ -583,7 +583,7 @@ def _wrap(
                     finish_reason = x.choices[0].finish_reason
                     if finish_reason is not None:
                         return True
-                except Exception as e:
+                except Exception:
                     pass
             return False
 
