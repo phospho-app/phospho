@@ -119,7 +119,7 @@ async def get_usage_quota(
 
     # Return the balance transaction if the org has a stripe customer id
     balance_transaction = None
-    if customer_id is not None:
+    if customer_id is not None and config.ENVIRONMENT != "test":
         stripe.api_key = config.STRIPE_SECRET_KEY
         response = stripe.Customer.list_balance_transactions(
             customer_id,

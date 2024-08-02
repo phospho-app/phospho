@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/use-toast";
 import { Task } from "@/models/models";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
@@ -43,6 +44,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
   const [notes, setNotes] = useState(task.notes);
   const [currentNotes, setCurrentNotes] = useState(notes ?? "");
   const [saveNoteButtonClicked, setSaveNoteButtonClicked] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const noteButtonColor =
     notes === null || notes === undefined || notes === ""
@@ -88,6 +90,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
   };
 
   const handleSaveButton = async () => {
+    setPopoverOpen(false);
     console.log("Saving notes");
     if (user === null || user === undefined) return;
     if (task === null || task === undefined) return;
@@ -112,6 +115,10 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
     if (responseBody === null || responseBody === undefined) {
       console.log("Error: no task returned");
       setSaveNoteButtonClicked(false);
+      toast({
+        title: "Error",
+        description: "An error occurred while saving your notes",
+      });
       return;
     }
 
@@ -121,6 +128,11 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
     setTask(updatedTask);
     setNotes(responseBody.notes);
     setSaveNoteButtonClicked(false);
+
+    toast({
+      title: "Notes saved",
+      description: "Your notes have been saved",
+    });
   };
 
   const successByUser = (
@@ -250,7 +262,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         failureByUser}
       {(flag === null || flag === "undefined") && noEval}
 
-      <Popover key={key}>
+      <Popover key={key} open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger>
           <Button
             variant="outline"
@@ -270,13 +282,9 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
                 onChange={handleNoteEdit}
               />
             </div>
-            {saveNoteButtonClicked ? (
-              <Icons.spinner className="mr-1 h-4 w-4 animate-spin" />
-            ) : (
-              <Button className="hover:bg-green-600" onClick={handleSaveButton}>
-                Save
-              </Button>
-            )}
+            <Button className="hover:bg-green-600" onClick={handleSaveButton}>
+              Save
+            </Button>
           </CardHeader>
         </PopoverContent>
       </Popover>
