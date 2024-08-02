@@ -1,7 +1,9 @@
 import time
 from collections import defaultdict
+import traceback
 from typing import Dict, List, Literal, Optional, Tuple
 
+from app.utils import generate_uuid
 from loguru import logger
 
 from app.core import config
@@ -914,20 +916,29 @@ class MainPipeline:
         try:
             events = await self.run_events()
         except Exception as e:
-            logger.error(f"Error running the event detection pipeline: {e}")
+            error_id = generate_uuid()
+            error_message = f"Caught error while running event detection (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            logger.error(error_message)
+            traceback.print_exc()
             events = {}
         # Run sentiment analysis on the user input
         try:
             sentiments, languages = await self.run_sentiment_and_language()
         except Exception as e:
-            logger.error(f"Error running the sentiment analysis pipeline: {e}")
+            error_id = generate_uuid()
+            error_message = f"Caught error while running sentiment analysis (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            logger.error(error_message)
+            traceback.print_exc()
             sentiments = {}
             languages = {}
         # Run the evaluation pipeline
         try:
             flag = await self.run_evaluation()
         except Exception as e:
-            logger.error(f"Error running the evaluation pipeline: {e}")
+            error_id = generate_uuid()
+            error_message = f"Caught error while running evaluation (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            logger.error(error_message)
+            traceback.print_exc()
             flag = {}
 
         # Update metadata
