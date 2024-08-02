@@ -299,17 +299,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name]["event_name"] = (
-                            event_name
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "event_name"
+                        ] = event_name
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["org_id"] = (
-                            project_data["org_id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "org_id"
+                        ] = project_data["org_id"]
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["project_id"] = (
-                            project_data["id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "project_id"
+                        ] = project_data["id"]
 
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:
@@ -607,7 +607,7 @@ class Message(DatedBaseModel):
             previous_messages.append(
                 cls(
                     id="input_" + previous_task.id,
-                    role="User",
+                    role="user",
                     content=previous_task.input,
                 )
             )
@@ -615,7 +615,7 @@ class Message(DatedBaseModel):
                 previous_messages.append(
                     cls(
                         id="output_" + previous_task.id,
-                        role="Assistant",
+                        role="assistant",
                         content=previous_task.output,
                     )
                 )
@@ -624,13 +624,13 @@ class Message(DatedBaseModel):
             previous_messages.append(
                 cls(
                     id="input_" + task.id,
-                    role="User",
+                    role="user",
                     content=task.input,
                 )
             )
             message = cls(
                 id="output_" + task.id,
-                role="Assistant",
+                role="assistant",
                 content=task.output,
                 previous_messages=previous_messages,
                 metadata=metadata,
@@ -638,7 +638,7 @@ class Message(DatedBaseModel):
         else:
             message = cls(
                 id="input_" + task.id,
-                role="User",
+                role="user",
                 content=task.input,
                 previous_messages=previous_messages,
                 metadata=metadata,

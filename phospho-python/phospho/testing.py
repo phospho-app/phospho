@@ -114,7 +114,7 @@ class Loader:
     def __iter__(self):
         raise NotImplementedError
 
-    def __next__(self) -> Dict[str, Any]:
+    def __next__(self) -> lab.Message:
         raise NotImplementedError
 
     def __len__(self) -> int:
@@ -140,15 +140,18 @@ class BacktestLoader(Loader):
             return
 
         # Filter the tasks to only keep the ones that are compatible with the agent function
-        messages: List[Dict[str, Any]] = []
+        messages: List[lab.Message] = []
         for task in tasks:
             # Convert to a lab.Message
-            message = lab.Message.from_task(task)
-            adapted_message = adapt_dict_to_agent_function(
-                message.model_dump(), agent_function
+            message = lab.Message(
+                role="user",
+                content=task.input,
+                metadata={
+                    "task_id": task.id,
+                    "test_id": task.test_id,
+                },
             )
-            if adapted_message is not None:
-                messages.append(adapted_message)
+            messages.append(message)
 
         self.sampled_tasks = iter(
             adapt_to_sample_size(list_to_sample=messages, sample_size=sample_size)
@@ -160,7 +163,7 @@ class BacktestLoader(Loader):
     def __iter__(self):
         return self
 
-    def __next__(self) -> Dict[str, Any]:
+    def __next__(self) -> lab.Message:
         """
         Return the next message to evaluate
         """
@@ -230,17 +233,20 @@ class DatasetLoader(Loader):
     def __iter__(self):
         return self
 
-    def __next__(self) -> Dict[str, Any]:
+    def __next__(self) -> lab.Message:
         next_item = next(self.dataset)
-        # TODO : Verify it has the right columns for the function_to_evaluate
-        function_input = adapt_dict_to_agent_function(
-            next_item, self.function_to_evaluate
+        id = next_item.pop("id", None)
+        role = next_item.pop("role", "user").lower()
+        content = next_item.pop("content", "")
+        created_at = next_item.pop("created_at", None)
+        message = lab.Message(
+            id=id,
+            role=role,
+            content=content,
+            created_at=created_at,
+            metadata=next_item,
         )
-        if function_input is None:
-            raise ValueError(
-                f"Dataset row {next_item} is not compatible with agent function {self.function_to_evaluate.__name__}"
-            )
-        return function_input
+        return message
 
     def __len__(self):
         return self.df.shape[0]
@@ -323,60 +329,6 @@ class PhosphoTest:
         else:
             return meta_wrapper(fn, source_loader, source_loader_params)
 
-    def get_output_from_agent(
-        self,
-        function_input: Dict[str, Any],
-        agent_function: Callable[[Any], Any],
-        metric_name: str,
-    ):
-        """
-        This function will return the output of the agent given an input
-        """
-        print(
-            f"Calling {agent_function.__name__} with input {function_input.__repr__()}"
-        )
-
-        # TODO : Make it so that that we use input or additional_input depending on the
-        # signature (input type) of the agent function
-
-        os.environ["PHOSPHO_TEST_METRIC"] = metric_name
-        new_output = agent_function(**function_input)
-
-        # Handle generators
-        if isinstance(new_output, GeneratorType):
-            full_resp = ""
-            for response in new_output:
-                full_resp += response or ""
-            new_output_str = extractor.detect_str_from_output(full_resp)
-        else:
-            new_output_str = extractor.detect_str_from_output(new_output)
-
-        print(f"Output {agent_function.__name__}: {new_output_str}")
-
-        return new_output_str
-
-    def evaluate(self, task_to_evaluate: Dict[str, Any]):
-        """
-        Run the evaluation pipeline on the task
-        """
-        test_input: TestInput = task_to_evaluate["test_input"]
-        agent_function = task_to_evaluate["agent_function"]
-
-        # Get the output from the agent
-        context_input = test_input.input
-        new_output_str = self.get_output_from_agent(
-            function_input=test_input.function_input,
-            agent_function=agent_function,
-            metric_name="evaluate",
-        )
-
-        # Ask phospho: what's the best answer to the context_input ?
-        print("Evaluating with phospho")
-        self.phospho.log(
-            input=context_input,
-            output=new_output_str,
-        )
-
     def log(
         self,
         input: str,
@@ -392,35 +344,6 @@ class PhosphoTest:
 
     def flush(self):
         self.phospho.flush()
-
-    # def compare(
-    #     self, task_to_compare: Dict[str, Any]
-    # ) -> None:  # task: Task, agent_function: Callable[[Any], Any]):
-    #     """
-    #     Compares the output of the task with the output of the agent function
-    #     """
-
-    #     test_input: TestInput = task_to_compare["test_input"]
-    #     agent_function = task_to_compare["agent_function"]
-    #     print("Comparing task id: ", test_input)
-
-    #     # Get the output from the agent
-    #     context_input = test_input.input
-    #     old_output_str = test_input.output
-    #     new_output_str = self.get_output_from_agent(
-    #         function_input=test_input.function_input,
-    #         agent_function=agent_function,
-    #         metric_name="compare",
-    #     )
-
-    #     # Ask phospho: what's the best answer to the context_input ?
-    #     print(f"Comparing with phospho (task: {test_input.id})")
-    #     self.client.compare(
-    #         context_input=context_input,
-    #         old_output=old_output_str,
-    #         new_output=new_output_str,
-    #         test_id=self.version_id,
-    # )
 
     def run(
         self,
@@ -450,13 +373,13 @@ class PhosphoTest:
                 continue
 
             if function_to_eval.source_loader == "backtest":
-                tasks_linked_to_function: Loader = BacktestLoader(
+                messages: Loader = BacktestLoader(
                     client=self.client,
                     agent_function=function_to_eval.function,
                     **function_to_eval.source_loader_params,
                 )
             elif function_to_eval.source_loader == "dataset":
-                tasks_linked_to_function: Loader = DatasetLoader(
+                messages: Loader = DatasetLoader(
                     agent_function=function_to_eval.function,
                     **function_to_eval.source_loader_params,
                 )
@@ -466,10 +389,29 @@ class PhosphoTest:
                 )
 
             def evaluate(message: lab.Message):
-                response = function_to_eval.function(message=message)
-                self.log(
-                    input=message.content,
-                    output=response,
+                try:
+                    # The function is fed with a message and all the metadata
+                    function_input = {
+                        "message": message,
+                        **message.metadata,
+                    }
+                    # Extra metadata is removed so that the function can be called
+                    adapted_function_input = adapt_dict_to_agent_function(
+                        function_input, function_to_eval.function
+                    )
+                    response = function_to_eval.function(**adapted_function_input)
+                    # Log the input and output to phospho
+                    self.log(
+                        input=message.content,
+                        output=response,
+                    )
+                except Exception as e:
+                    print(f"[red]Error running {function_name}:[/red] {e}")
+                    return None
+
+                return lab.JobResult(
+                    value=response,
+                    result_type=lab.ResultType.dict,
                 )
 
             workload = lab.Workload(
@@ -481,7 +423,7 @@ class PhosphoTest:
                 ]
             )
             workload.run(
-                messages=tasks_linked_to_function,
+                messages=messages,
                 executor_type=executor_type,
                 max_parallelism=max_parallelism,
             )
@@ -493,5 +435,4 @@ class PhosphoTest:
 
         # Display a summary of the results
         print("Finished running the tests")
-        print(f"Total number of tasks: {len(list(tasks_linked_to_function))}")
         print(f"Total time: {end_time - start_time:.3f} seconds")
