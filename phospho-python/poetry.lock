@@ -2720,4 +2720,4 @@ lab = ["cohere", "openai", "pandas", "tiktoken"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4.0"
-content-hash = "11125fb5af369ad90cb9b464f49463265d3f692661badc4cf00826662fbe1aa6"
+content-hash = "86ce0c0db478644368ce9a3e145e31baa39ee05e7a4b3823c6b9ef7feac272fc"
