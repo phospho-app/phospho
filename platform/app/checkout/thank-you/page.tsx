@@ -79,12 +79,12 @@ function RunAnalyticsForm({
   }, [checkedEval, checkedEvent, checkedLangSent, nbrEvents, totalNbTasks]);
 
   const form_choices = [
-    {
-      id: "evaluation",
-      label: "Evaluation",
-      description:
-        "Automatically label system responses as a Success or Failure. 1 credit per system response.",
-    },
+    // {
+    //   id: "evaluation",
+    //   label: "Evaluation",
+    //   description:
+    //     "Automatically label system responses as a Success or Failure. 1 credit per system response.",
+    // },
     {
       id: "event_detection",
       label: "Event detection",
@@ -173,9 +173,9 @@ function RunAnalyticsForm({
                             onCheckedChange={(checked) => {
                               if (checked) {
                                 field.onChange([...field.value, item.id]);
-                                if (item.id === "evaluation") {
-                                  setCheckedEval(true);
-                                }
+                                // if (item.id === "evaluation") {
+                                //   setCheckedEval(true);
+                                // }
                                 if (item.id === "event_detection") {
                                   setCheckedEvent(true);
                                 }
@@ -188,9 +188,9 @@ function RunAnalyticsForm({
                                     (value) => value !== item.id,
                                   ),
                                 );
-                                if (item.id === "evaluation") {
-                                  setCheckedEval(false);
-                                }
+                                // if (item.id === "evaluation") {
+                                //   setCheckedEval(false);
+                                // }
                                 if (item.id === "event_detection") {
                                   setCheckedEvent(false);
                                 }
