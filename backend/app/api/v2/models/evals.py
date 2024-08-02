@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from app.db.models import Comparison, Eval
+from app.db.models import Comparison, Eval  # noqa: F401
 
 
 class ComparisonQuery(BaseModel):

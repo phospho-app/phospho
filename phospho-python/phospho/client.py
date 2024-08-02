@@ -159,19 +159,18 @@ class Client:
         self,
         task_id: str,
         flag: Literal["success", "failure"],
-        source: str = "user",
-        notes: Optional[str] = None,
+        **kwargs,
     ) -> TaskEntity:
         """
         Flag a task as a success or a failure. Returns the task.
         """
 
         response = self._post(
-            f"/tasks/{task_id}/flag",
+            f"/tasks/{task_id}/human-eval",
             payload={
-                "flag": flag,
-                "source": source,
-                "notes": notes,
+                "human_eval": flag,
+                "project_id": self._project_id(),
+                "source": "user",
             },
         )
         return TaskEntity(client=self, task_id=task_id, _content=response.json())

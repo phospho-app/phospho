@@ -25,11 +25,59 @@ import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ChevronRight, Sparkles } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronRight,
+  Sparkles,
+  ThumbsDown,
+  ThumbsUp,
+} from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { KeyedMutator } from "swr";
 import useSWR from "swr";
+
+async function flagSession({
+  session_id,
+  flag,
+  accessToken,
+  project_id,
+  mutateTasks,
+}: {
+  session_id: string;
+  flag: string;
+  accessToken?: string;
+  project_id?: string | null;
+  mutateTasks: KeyedMutator<any>;
+}) {
+  if (!accessToken) return;
+  if (!project_id) return;
+
+  const creation_response = await fetch(
+    `/api/sessions/${session_id}/human-eval`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        human_eval: flag,
+      }),
+    },
+  );
+  mutateTasks((data: any) => {
+    // Edit the Task with the same task id
+    data.session = data.sessions.map((session: SessionWithEvents) => {
+      if (session.id === session_id) {
+        session.stats.human_eval = flag;
+      }
+      return session;
+    });
+    return data;
+  });
+}
 
 export function getColumns({
   mutateSessions,
@@ -144,6 +192,53 @@ export function getColumns({
         );
       },
     },
+    {
+      header: "Human evaluation",
+      accessorKey: "stats.human_eval",
+      cell: (row) => {
+        const human_eval = row.getValue() as string; // asserting the type as string
+        return (
+          <div className="flex justify-center group">
+            {human_eval && human_eval == "success" && (
+              <ThumbsUp className="h-6 w-6 text-green-500" />
+            )}{" "}
+            {human_eval && human_eval == "failure" && (
+              <ThumbsDown className="h-6 w-6 text-red-500" />
+            )}{" "}
+            {!human_eval && (
+              <div className="flex space-x-2 invisible group group-hover:visible p-6">
+                <ThumbsUp
+                  className="h-6 w-6 text-green-500 cursor-pointer hover:fill-green-500"
+                  onClick={(mouseEvent) => {
+                    mouseEvent.stopPropagation();
+                    flagSession({
+                      session_id: row.row.original.id,
+                      flag: "success",
+                      accessToken: accessToken,
+                      project_id: project_id,
+                      mutateTasks: mutateSessions,
+                    });
+                  }}
+                />
+                <ThumbsDown
+                  className="h-6 w-6 text-red-500 cursor-pointer hover:fill-red-500"
+                  onClick={(mouseEvent) => {
+                    mouseEvent.stopPropagation();
+                    flagSession({
+                      session_id: row.row.original.id,
+                      flag: "failure",
+                      accessToken: accessToken,
+                      project_id: project_id,
+                      mutateTasks: mutateSessions,
+                    });
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
     // Language
     {
       header: ({ column }) => {
@@ -170,38 +265,38 @@ export function getColumns({
       maxSize: 10,
     },
     // Eval
-    {
-      header: ({ column }) => {
-        return (
-          <div className="flex items-center space-x-2 justify-between">
-            <div className="flex items-center">
-              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-              Eval
-            </div>
-            <EvalSettings />
-          </div>
-        );
-      },
-      accessorKey: "stats.most_common_flag",
-      cell: (row) => {
-        return (
-          <div>
-            <Badge
-              variant={
-                (row.getValue() as string) === "success"
-                  ? "secondary"
-                  : (row.getValue() as string) === "failure"
-                    ? "destructive"
-                    : "secondary"
-              }
-              className="hover:border-green-500"
-            >
-              {row.getValue() as string}
-            </Badge>
-          </div>
-        );
-      },
-    },
+    // {
+    //   header: ({ column }) => {
+    //     return (
+    //       <div className="flex items-center space-x-2 justify-between">
+    //         <div className="flex items-center">
+    //           <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+    //           Eval
+    //         </div>
+    //         <EvalSettings />
+    //       </div>
+    //     );
+    //   },
+    //   accessorKey: "stats.most_common_flag",
+    //   cell: (row) => {
+    //     return (
+    //       <div>
+    //         <Badge
+    //           variant={
+    //             (row.getValue() as string) === "success"
+    //               ? "secondary"
+    //               : (row.getValue() as string) === "failure"
+    //                 ? "destructive"
+    //                 : "secondary"
+    //           }
+    //           className="hover:border-green-500"
+    //         >
+    //           {row.getValue() as string}
+    //         </Badge>
+    //       </div>
+    //     );
+    //   },
+    // },
     // Events
     {
       header: () => {

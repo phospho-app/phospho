@@ -7,6 +7,7 @@ from app.api.platform.models import (
     TaskUpdateRequest,
     AddEventRequest,
     RemoveEventRequest,
+    TaskHumanEvalRequest,
 )
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
@@ -16,7 +17,9 @@ from app.services.mongo.tasks import (
     update_task,
     add_event_to_task,
     remove_event_from_task,
+    human_eval_task,
 )
+from loguru import logger
 
 router = APIRouter(tags=["Tasks"])
 
@@ -57,6 +60,34 @@ async def post_flag_task(
         task_model=task,
         flag=taskFlagRequest.flag,
         source=taskFlagRequest.source,
+    )
+    return updated_task
+
+
+@router.post(
+    "/tasks/{task_id}/human-eval",
+    response_model=Task,
+    description="Update the human eval of a task and the flag",
+)
+async def post_human_eval_task(
+    task_id: str,
+    taskHumanEvalRequest: TaskHumanEvalRequest,
+    user: User = Depends(propelauth.require_user),
+) -> Task:
+    """
+    Update the human eval of a task and the flag with "success" or "failure"
+    Also signs the origin of the flag with owner
+    """
+    if taskHumanEvalRequest.human_eval not in ["success", "failure"]:
+        raise HTTPException(
+            status_code=400,
+            detail="The human eval must be either 'success' or 'failure'",
+        )
+    task = await get_task_by_id(task_id)
+    await verify_if_propelauth_user_can_access_project(user, task.project_id)
+    updated_task = await human_eval_task(
+        task_model=task,
+        human_eval=taskHumanEvalRequest.human_eval,
     )
     return updated_task
 

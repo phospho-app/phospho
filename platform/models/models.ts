@@ -10,12 +10,17 @@ export interface Task {
   metadata?: Record<string, any>;
   data?: Record<string, any>;
   flag?: string;
+  human_eval?: HumanEval;
   last_eval?: Eval;
   sentiment?: SentimentObject;
   language?: string;
   notes?: string;
   task_position: number;
   is_last_task: boolean;
+}
+
+export interface HumanEval {
+  flag: string;
 }
 
 export interface SentimentObject {
@@ -75,6 +80,7 @@ export interface Stats {
   most_common_sentiment_label: string;
   most_common_language: string;
   most_common_flag: string;
+  human_eval: string;
 }
 export interface SessionWithEvents extends Session {
   events: Event[];

@@ -2,7 +2,6 @@
 
 // Models
 import { Button } from "@/components/ui/button";
-import Icons from "@/components/ui/icons";
 import {
   Popover,
   PopoverContent,
@@ -56,14 +55,14 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
     if (user === null || user === undefined) return;
     if (task === null || task === undefined) return;
 
-    const creation_response = await fetch(`/api/tasks/${task.id}/flag`, {
+    const creation_response = await fetch(`/api/tasks/${task.id}/human-eval`, {
       method: "POST",
       headers: {
         Authorization: "Bearer " + accessToken,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        flag: flag,
+        human_eval: flag,
       }),
     });
 

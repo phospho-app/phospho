@@ -4,10 +4,9 @@ from pydantic import BaseModel, Field
 from app.db.models import (
     Project,
     Event,
-    Task,
     Session,
-    EventDefinition,
     ProjectDataFilters,
+    EventDefinition,  # noqa: F401
 )
 
 

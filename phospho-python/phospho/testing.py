@@ -429,8 +429,7 @@ class PhosphoTest:
         agent_function = task_to_evaluate["agent_function"]
 
         # Get the output from the agent
-        context_input = test_input.input
-        new_output_str = self.get_output_from_agent(
+        self.get_output_from_agent(
             function_input=test_input.function_input,
             agent_function=agent_function,
             metric_name="evaluate",

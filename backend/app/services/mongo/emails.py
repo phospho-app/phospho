@@ -59,7 +59,7 @@ def send_welcome_email(to_email: str):
         "reply_to": "paul-louis@phospho.app",
     }
     if config.ENVIRONMENT != "preview":
-        email = resend.Emails.send(params)
+        resend.Emails.send(params)
 
         logger.info(f"Sent welcome email to {to_email}")
 

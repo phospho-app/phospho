@@ -1,5 +1,4 @@
 import phospho
-import openai
 
 phospho.init()
 

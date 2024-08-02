@@ -147,6 +147,10 @@ class SentimentObject(BaseModel):
     label: Optional[str] = None
 
 
+class HumanEval(BaseModel):
+    flag: Optional[str] = None
+
+
 class Task(ProjectElementBaseModel):
     session_id: Optional[str] = None
     input: str
@@ -158,6 +162,7 @@ class Task(ProjectElementBaseModel):
     # Flag to indicate if the task is success or failure
     flag: Optional[str] = None  # Literal["success", "failure", "undefined"]
     last_eval: Optional[Eval] = None
+    human_eval: Optional[HumanEval] = None
     sentiment: Optional[SentimentObject] = None
     language: Optional[str] = None
     # Events are stored in a subcollection of the task document
@@ -199,6 +204,7 @@ class SessionStats(BaseModel):
     most_common_sentiment_label: Optional[str] = None
     most_common_language: Optional[str] = None
     most_common_flag: Optional[str] = None
+    human_eval: Optional[str] = None
 
 
 class Session(ProjectElementBaseModel):

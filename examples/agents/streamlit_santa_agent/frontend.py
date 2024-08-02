@@ -76,7 +76,7 @@ if prompt := st.chat_input("All I want for Christmas is..."):
 
 def _submit_feedback(feedback: dict):
     santa_claus_agent.feedback(raw_flag=feedback["score"], notes=feedback["text"])
-    st.toast(f"Thank you for your feedback!🎅🏼")
+    st.toast("Thank you for your feedback!🎅🏼")
 
 
 if len(st.session_state.messages) > 1:

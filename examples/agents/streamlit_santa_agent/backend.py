@@ -87,7 +87,7 @@ class SantaClausAgent:
             ChatCompletionChunk
         ] = self.client.chat.completions.create(**full_prompt)
 
-        logged_content = phospho.log(
+        phospho.log(
             input=full_prompt,
             output=streaming_response,
             # We use the session_id to group all the logs of a single chat

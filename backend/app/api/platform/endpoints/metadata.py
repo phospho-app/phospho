@@ -1,7 +1,6 @@
 import datetime
 from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException
-from loguru import logger
 
 from phospho.models import ProjectDataFilters
 from propelauth_fastapi import User

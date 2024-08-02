@@ -3,7 +3,6 @@ Data pipeline related code
 """
 
 from typing import List
-from loguru import logger
 
 from app.services.tasks import get_task_by_id
 from app.db.mongo import get_mongo_db
