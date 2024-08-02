@@ -442,17 +442,20 @@ class Message(DatedBaseModel):
         Return a string representation of the message.
         """
         transcript = ""
-        if max_previous_messages is None or max_previous_messages > len(
-            self.previous_messages
-        ):
-            max_previous_messages = len(self.previous_messages)
-        if max_previous_messages < 0:
-            max_previous_messages = 0
+        if max_previous_messages is not None:
+            if max_previous_messages > len(self.previous_messages):
+                max_previous_messages = len(self.previous_messages)
+            if max_previous_messages < 0:
+                max_previous_messages = 0
+            previous_messages = self.previous_messages[-max_previous_messages:]
+        else:
+            previous_messages = self.previous_messages
+
         if with_previous_messages:
             transcript += "\n".join(
                 [
                     message.transcript(with_role=with_role)
-                    for message in self.previous_messages[-max_previous_messages:]
+                    for message in previous_messages
                 ]
             )
         if not only_previous_messages:
