@@ -166,10 +166,11 @@ class Client:
         """
 
         response = self._post(
-            f"/tasks/{task_id}/human_eval",
+            f"/tasks/{task_id}/human-eval",
             payload={
-                "flag": flag,
+                "human_eval": flag,
                 "project_id": self._project_id(),
+                "source": "user",
             },
         )
         return TaskEntity(client=self, task_id=task_id, _content=response.json())
