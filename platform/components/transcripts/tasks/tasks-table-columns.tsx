@@ -42,6 +42,8 @@ import {
   ChevronRight,
   PenSquare,
   Sparkles,
+  ThumbsDown,
+  ThumbsUp,
 } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -246,14 +248,33 @@ export function getColumns({
       ),
       maxSize: 10,
     },
+    // Human evaluation
+    {
+      header: "Human evaluation",
+      accessorKey: "human_eval",
+      cell: (row) => {
+        const human_eval = row.getValue() as string; // asserting the type as string
+        return (
+          <>
+            {human_eval && human_eval == "success" && (
+              <ThumbsUp className="h-6 w-6 text-green-500" />
+            )}{" "}
+            {human_eval && human_eval == "failure" && (
+              <ThumbsDown className="h-6 w-6 text-red-500" />
+            )}{" "}
+            <></>
+          </>
+        );
+      },
+    },
     // Flag
     {
       header: () => {
         return (
           <div className="flex items-center space-x-2 justify-between">
             <div className="flex items-center">
-              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-              Eval
+              <Sparkles className="h-4 mr-1 text-green-500" />
+              Automatic eval
             </div>
             <EvalSettings />
           </div>
