@@ -16,11 +16,11 @@ from phospho.tasks import TaskCollection, TaskEntity
 logger = logging.getLogger(__name__)
 
 
-class ServerSideError(Exception):
+class PhosphoServerSideError(Exception):
     pass
 
 
-class ClientSideError(Exception):
+class PhosphoClientSideError(Exception):
     pass
 
 
@@ -33,8 +33,8 @@ class Client:
         project_id: Optional[str] = None,
         base_url: Optional[str] = None,
     ) -> None:
-        self.api_key = api_key
-        self.project_id = project_id
+        self.__api_key = api_key
+        self.__project_id = project_id
         # If no api_key is provided, verify that there is an environment variable
         if not api_key:
             self._api_key()
@@ -48,7 +48,7 @@ class Client:
             self.base_url = base_url
 
     def _api_key(self) -> str:
-        token = self.api_key
+        token = self.__api_key
         # Evaluate lazily in case environment variable is set with dotenv, or something
         if token is None:
             token = os.environ.get("PHOSPHO_API_KEY")
@@ -60,7 +60,7 @@ class Client:
         return token
 
     def _project_id(self) -> str:
-        project_id = self.project_id
+        project_id = self.__project_id
         # Evaluate lazily in case environment variable is set with dotenv, or something
         if project_id is None:
             project_id = os.environ.get("PHOSPHO_PROJECT_ID")
@@ -71,6 +71,10 @@ class Client:
                 + "Find your project id on https://platform.phospho.ai in Settings"
             )
         return project_id
+
+    @property
+    def project_id(self) -> str:
+        return self._project_id()
 
     def _headers(self) -> Dict[str, str]:
         # TODO : "User-Agent": f"replicate-python/{__version__}",
@@ -89,11 +93,11 @@ class Client:
         if response.status_code >= 200 and response.status_code < 300:
             return response
         elif response.status_code >= 400 and response.status_code < 500:
-            raise ClientSideError(
+            raise PhosphoClientSideError(
                 f"Client-side error {response.status_code} GET {url}: {response.text}"
             )
         elif response.status_code >= 500:
-            raise ServerSideError(
+            raise PhosphoServerSideError(
                 f"Server-side error {response.status_code} GET {url}: {response.text}"
             )
         else:
@@ -110,16 +114,17 @@ class Client:
         if response.status_code >= 200 and response.status_code < 300:
             return response
         elif response.status_code >= 400 and response.status_code < 500:
-            raise ClientSideError(
-                f"Client-side error {response.status_code} POST {url}: {response.text}"
+            raise PhosphoClientSideError(
+                f"Error {response.status_code} POST {url}: {response.text}."
+                + "\nThere is likely an issue with your config. Make sure you have the correct API key and project id: https://platform.phospho.ai"
             )
         elif response.status_code >= 500:
-            raise ServerSideError(
-                f"Server-side error {response.status_code} POST {url}: {response.text}"
+            raise PhosphoServerSideError(
+                f"Error {response.status_code} POST {url}: {response.text}"
             )
         else:
             raise ValueError(
-                f"Unknwon error {response.status_code} POST {url}: {response.text}"
+                f"Uknown error {response.status_code} POST {url}: {response.text}"
             )
 
     @property

@@ -6,7 +6,7 @@ import time
 from pprint import pprint
 from random import sample
 from types import GeneratorType
-from typing import Any, Callable, Dict, List, Literal, Optional
+from typing import Any, Callable, Dict, Iterator, List, Literal, Optional
 
 from phospho.utils import generate_version_id
 from pydantic import BaseModel, Field
@@ -209,6 +209,8 @@ class Loader:
 
 
 class BacktestLoader(Loader):
+    sampled_tasks: Iterator
+
     def __init__(
         self,
         client: Client,
@@ -220,7 +222,9 @@ class BacktestLoader(Loader):
         # TODO : Add pull from dataset
         tasks = client.tasks.get_all()
         if len(tasks) == 0:
-            raise ValueError("No tasks found in the project")
+            print(f"[red]No tasks found in project {client.project_id}[/red]")
+            self.sampled_tasks = iter([])
+            return
 
         # Filter the tasks to only keep the ones that are compatible with the agent function
         tasks_linked_to_function = []
@@ -351,6 +355,7 @@ class PhosphoTest:
         version_id: Optional[str] = None,
         api_key: Optional[str] = None,
         project_id: Optional[str] = None,
+        base_url: Optional[str] = None,
     ):
         """
         This is used to backtest an agent with phospho.
@@ -370,7 +375,7 @@ class PhosphoTest:
         """
         import phospho
 
-        self.client = Client(api_key=api_key, project_id=project_id)
+        self.client = Client(api_key=api_key, project_id=project_id, base_url=base_url)
         self.functions_to_evaluate = {}
         if version_id is None:
             version_id = generate_version_id()
@@ -580,10 +585,4 @@ class PhosphoTest:
         # Display a summary of the results
         print("Finished running the tests")
         print(f"Total number of tasks: {len(list(tasks_linked_to_function))}")
-        print(f"Total time: {end_time - start_time} seconds")
-        print(f"Test id: {self.version_id}")
-        print("Waiting for evaluation to finish...")
-        # Mark the test as completed and get results
-        test_result = self.client.update_test(test_id=test_id, status="completed")
-        print("Test result:")
-        pprint(test_result.model_dump())
+        print(f"Total time: {end_time - start_time:.3f} seconds")

@@ -46,3 +46,4 @@ from .embeddings import (
     EmbeddingUsage,
     EmbeddingResponse,
 )
+from app.api.platform.models import QuerySessionsTasksRequest

@@ -1,37 +1,34 @@
 from typing import Optional
-from loguru import logger
 
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends
+from loguru import logger
 
 from app.api.v2.models import (
     ComputeJobsRequest,
-    Sessions,
-    Tasks,
     FlattenedTasks,
     FlattenedTasksRequest,
+    QuerySessionsTasksRequest,
+    Sessions,
+    Tasks,
 )
-
-from app.api.platform.models.explore import ProjectDataFilters
-
 from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
-from app.services.mongo.projects import (
-    get_all_sessions,
-    backcompute_recipes,
-)
-from app.services.mongo.tasks import get_all_tasks
-
 from app.services.mongo.explore import (
     fetch_flattened_tasks,
     update_from_flattened_tasks,
 )
+from app.services.mongo.projects import (
+    backcompute_recipes,
+    get_all_sessions,
+)
+from app.services.mongo.tasks import get_all_tasks
 
 router = APIRouter(tags=["Projects"])
 
 
-@router.get(
+@router.post(
     "/projects/{project_id}/sessions",
     response_model=Sessions,
-    description="Get all the sessions of a project",
+    description="Fetch all the sessions of a project",
 )
 async def get_sessions(
     project_id: str,
@@ -43,32 +40,37 @@ async def get_sessions(
     return Sessions(sessions=sessions)
 
 
-@router.get(
+@router.post(
     "/projects/{project_id}/tasks",
     response_model=Tasks,
-    description="Get all the tasks of a project",
+    description="Fetch all the tasks of a project",
 )
-async def get_tasks(
+async def post_tasks(
     project_id: str,
-    limit: int = 1000,
-    filters: Optional[ProjectDataFilters] = None,
+    query: Optional[QuerySessionsTasksRequest] = None,
     org: dict = Depends(authenticate_org_key),
 ) -> Tasks:
     """
-    Get all the tasks of a project. If filters is specified, the tasks will be filtered according to the filter.
+    Fetch all the tasks of a project.
 
-    Args:
-        project_id: The id of the project
-        limit: The maximum number of tasks to return
-        filters: This model is used to filter tasks in the get_tasks endpoint. The filters are applied as AND filters.
+    The filters are combined as AND conditions on the different fields.
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
-    if filters is None:
-        filters = ProjectDataFilters()
-    if isinstance(filters.event_name, str):
-        filters.event_name = [filters.event_name]
+    if query is None:
+        query = QuerySessionsTasksRequest()
+    if query.filters.user_id is not None:
+        if query.filters.metadata is None:
+            query.filters.metadata = {}
+        query.filters.metadata["user_id"] = query.filters.user_id
 
-    tasks = await get_all_tasks(project_id=project_id, limit=limit, filters=filters)
+    tasks = await get_all_tasks(
+        project_id=project_id,
+        limit=None,
+        validate_metadata=True,
+        filters=query.filters,
+        sorting=query.sorting,
+        pagination=query.pagination,
+    )
     return Tasks(tasks=tasks)
 
 

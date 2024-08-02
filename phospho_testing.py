@@ -1,7 +1,8 @@
 import os
+
 import phospho
 
-phospho_test = phospho.PhosphoTest()
+phospho_test = phospho.PhosphoTest(base_url="http://localhost:8000/v2")
 
 os.environ["MISTRAL_API_KEY"] = "your_api_key"
 client = phospho.lab.get_sync_client("mistral")

@@ -252,20 +252,13 @@ async def post_search_sessions(
 @router.post(
     "/projects/{project_id}/tasks",
     response_model=Tasks,
-    description="Get all the tasks of a project",
+    description="Fetch all the tasks of a project",
 )
 async def post_tasks(
     project_id: str,
     query: Optional[QuerySessionsTasksRequest] = None,
     user: User = Depends(propelauth.require_user),
 ):
-    """
-    Get all the tasks of a project.
-
-    Args:
-        project_id: The id of the project
-        limit: The maximum number of tasks to return
-    """
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
 
