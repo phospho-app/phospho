@@ -430,16 +430,23 @@ class Message(DatedBaseModel):
         with_role: bool = True,
         with_previous_messages: bool = False,
         only_previous_messages: bool = False,
+        max_previous_messages: Optional[int] = None,
     ) -> str:
         """
         Return a string representation of the message.
         """
         transcript = ""
+        if max_previous_messages is None or max_previous_messages > len(
+            self.previous_messages
+        ):
+            max_previous_messages = len(self.previous_messages)
+        if max_previous_messages < 0:
+            max_previous_messages = 0
         if with_previous_messages:
             transcript += "\n".join(
                 [
                     message.transcript(with_role=with_role)
-                    for message in self.previous_messages
+                    for message in self.previous_messages[-max_previous_messages:]
                 ]
             )
         if not only_previous_messages:
@@ -584,6 +591,7 @@ class Message(DatedBaseModel):
         task: Task,
         previous_tasks: Optional[List[Task]] = None,
         metadata: Optional[dict] = None,
+        ignore_last_output: bool = False,
     ) -> "Message":
         """
         Create a Message from a Task object.
@@ -619,6 +627,9 @@ class Message(DatedBaseModel):
                         content=previous_task.output,
                     )
                 )
+
+        if ignore_last_output:
+            task.output = None
 
         if task.output is not None:
             previous_messages.append(
