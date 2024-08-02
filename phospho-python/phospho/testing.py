@@ -1,52 +1,27 @@
-import os
-import concurrent.futures
-import logging
 import inspect
+import logging
 import time
-
-from types import GeneratorType
-from typing import List, Dict, Optional, Callable, Any, Literal
-from pydantic import BaseModel
-
-from phospho.client import Client
-from phospho.tasks import TaskEntity
-from phospho import extractor
-
 from random import sample
-from pprint import pprint
+from typing import Any, Callable, Dict, Iterator, List, Literal, Optional
+
+from phospho.utils import generate_version_id
+from pydantic import BaseModel, Field
+from rich import print
+
+from phospho import lab
+from phospho.client import Client
 
 logger = logging.getLogger(__name__)
-
-
-class TestInput(BaseModel, extra="allow"):
-    function_input: dict  # What we pass to the function
-    input: Optional[str] = None
-    additional_input: Optional[dict] = None
-    output: Optional[str] = None
-    task_id: Optional[str] = None
-
-    @classmethod
-    def from_task(cls, task: TaskEntity) -> "TestInput":
-        # Combine the input and additional_input
-        if task.content.additional_input is not None:
-            function_input = task.content.additional_input
-        elif task.content.input is not None:
-            function_input.update({"input": task.content.input})
-        else:
-            function_input = {}
-
-        return TestInput(function_input=function_input, **task.content_as_dict())
 
 
 def adapt_dict_to_agent_function(
     dict_to_adapt: dict, agent_function: Callable[[Any], Any]
 ) -> Optional[dict]:
-    """This function adapts a dict to match the signature of an agent function.
+    """This function adapts a dict to match the signature of the agent_function.
 
-    If the dict is compatible with the agent function, this returns the dict.
-
-    If the dict is not compatible with the agent function, this returns a new dict that
-    is compatible with the agent function, but that has less keys.
+    - If all the dict's keys can be mapped to the agent_function's parameters, this returns the dict.
+    - If the dict has more keys than the agent_function's parameters, this returns a new dict that
+        only contains the keys that are in the agent_function's parameters.
 
     If nothing can be done, this returns None.
     """
@@ -97,77 +72,14 @@ def adapt_dict_to_agent_function(
     return None
 
 
-def adapt_task_to_agent_function(
-    task: TaskEntity, agent_function: Callable[[Any], Any]
-) -> Optional[TestInput]:
-    """This function adapts a task to match the signature of an agent function.
-
-    If the task is compatible with the agent function, this returns the task.
-
-    If the task is not compatible with the agent function, this returns a new task that
-    is compatible with the agent function, but that has less inputs.
-
-    If nothing can be done, this returns None.
-    """
-
-    # The compatibility is based on the parameters names in the agent function signature
-    agent_function_signature: inspect.Signature = inspect.signature(agent_function)
-    task_inputs = set(task.content.additional_input.keys())
-    agent_function_inputs = set(agent_function_signature.parameters.keys())
-
-    if task_inputs == agent_function_inputs:
-        # The task is compatible with the agent function
-        return TestInput.from_task(task)
-    elif task_inputs <= agent_function_inputs:
-        # The agent function takes more inputs than the task provides
-        # Check if those are optional in the agent function
-        for key in agent_function_inputs - task_inputs:
-            if (
-                agent_function_signature.parameters[key].default
-                is inspect.Parameter.empty
-            ):
-                # The agent function takes a non optional input that the task does not provide
-                # We can't adapt the task to the agent function
-                # Log what key is missing from the agent_function
-                logger.warning(
-                    f"Task {task.id} is not compatible with agent function {agent_function.__name__}: {key} is missing from the task"
-                )
-                return None
-        # All of the additional inputs are optional in the agent function
-        # So the task is compatible with the agent function
-        return TestInput.from_task(task)
-    elif task_inputs >= agent_function_inputs:
-        # We filter the task to only keep the keys that are in the agent function signature
-        new_task = TestInput(
-            function_input={
-                key: task.content.additional_input[key] for key in agent_function_inputs
-            },
-            task_id=task.id,
-            **task.content_as_dict(),
-        )
-
-        # Log info that we filtered task inputs
-        logger.info(
-            f"Reduced the number of inputs of task {task.id} to match the agent function {agent_function.__name__}: removed {task_inputs - agent_function_inputs}"
-        )
-        return new_task
-    else:
-        # Check if the agent_function has an argument for any number of keyword arguments
-        for param in agent_function_signature.parameters.values():
-            if param.kind == inspect.Parameter.VAR_KEYWORD:
-                # The agent function takes a **kwargs argument
-                # The task is compatible with the agent function
-                return TestInput.from_task(task)
-
-    return None
-
-
 def adapt_to_sample_size(list_to_sample, sample_size):
     """
-    This function will adapt the list to sample to match the sample size.
+    Adapt list_to_sample to match the sample_size, either by upsampling or downsampling.
     """
     if sample_size < 0:
         raise ValueError("sample_size must be positive")
+    if (len(list_to_sample) == 0) or (sample_size == 0):
+        return []
 
     if sample_size is None:
         # None = all the tasks
@@ -192,7 +104,25 @@ def adapt_to_sample_size(list_to_sample, sample_size):
     return sampled_list
 
 
-class BacktestLoader:
+class Loader:
+    """
+    Abstract class for Loaders
+    """
+
+    def __iter__(self):
+        raise NotImplementedError
+
+    def __next__(self) -> lab.Message:
+        raise NotImplementedError
+
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+
+class BacktestLoader(Loader):
+    sampled_tasks: Iterator
+    sample_size: int
+
     def __init__(
         self,
         client: Client,
@@ -200,43 +130,52 @@ class BacktestLoader:
         sample_size: Optional[int] = 10,
     ):
         # Pull the logs from phospho
-        # TODO : Add time range filter
-        # TODO : Add pull from dataset
-        tasks = client.tasks.get_all()
+        # TODO : Add filters
+        tasks = client.fetch_tasks()
         if len(tasks) == 0:
-            raise ValueError("No tasks found in the project")
+            print(f"[red]No data found in project {client.project_id}[/red]")
+            self.sampled_tasks = iter([])
+            return
 
         # Filter the tasks to only keep the ones that are compatible with the agent function
-        tasks_linked_to_function = []
+        messages: List[lab.Message] = []
         for task in tasks:
-            adapted_task = adapt_task_to_agent_function(task, agent_function)
-            if adapted_task is not None:
-                tasks_linked_to_function.append(
-                    {"test_input": adapted_task, "agent_function": agent_function}
-                )
+            # Convert to a lab.Message
+            message = lab.Message(
+                role="user",
+                content=task.input,
+                metadata={
+                    "task_id": task.id,
+                    "test_id": task.test_id,
+                },
+            )
+            messages.append(message)
 
         self.sampled_tasks = iter(
-            adapt_to_sample_size(
-                list_to_sample=tasks_linked_to_function, sample_size=sample_size
-            )
+            adapt_to_sample_size(list_to_sample=messages, sample_size=sample_size)
         )
+        if sample_size is None:
+            sample_size = len(messages)
+        self.sample_size = sample_size
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> lab.Message:
+        """
+        Return the next message to evaluate
+        """
         return next(self.sampled_tasks)
 
-    def __len__(self):
-        return len(self.sampled_tasks)
+    def __len__(self) -> int:
+        return self.sample_size
 
 
-class DatasetLoader:
+class DatasetLoader(Loader):
     def __init__(
         self,
         agent_function: Callable[[Any], Any],
         path: str,
-        test_n_times: Optional[int] = None,
     ):
         """
         Loads a dataset from a file and returns an iterator over the dataset.
@@ -285,47 +224,51 @@ class DatasetLoader:
                 f"File format {path.split('.')[-1]} is not supported. Supported formats: .csv, .json, .xlsx"
             )
 
-        # If test_n_times is not None, we'll repeat the dataset n times
-        if test_n_times is not None:
-            self.df = pd.concat([self.df] * test_n_times)
-
         # Create an iterator over the dataset
         self.dataset = iter(self.df.to_dict(orient="records"))
-
         self.function_to_evaluate = agent_function
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> lab.Message:
         next_item = next(self.dataset)
-        # TODO : Verify it has the right columns for the function_to_evaluate
-        function_input = adapt_dict_to_agent_function(
-            next_item, self.function_to_evaluate
+        id = next_item.pop("id", None)
+        role = next_item.pop("role", "user").lower()
+        content = next_item.pop("content", "")
+        created_at = next_item.pop("created_at", None)
+        message = lab.Message(
+            id=id,
+            role=role,
+            content=content,
+            created_at=created_at,
+            metadata=next_item,
         )
-        test_input = TestInput(
-            function_input=function_input,
-            input=next_item.get("input", None),
-            output=next_item.get("output", None),
-        )
-        return {
-            "test_input": test_input,
-            "agent_function": self.function_to_evaluate,
-        }
+        return message
 
     def __len__(self):
         return self.df.shape[0]
 
 
+class FunctionToEvaluate(BaseModel):
+    function: Callable[[Any], Any]
+    function_name: str
+    source_loader: Optional[Literal["backtest", "dataset"]] = None
+    source_loader_params: Dict[str, Any] = Field(default_factory=dict)
+
+
 class PhosphoTest:
     client: Client
-    functions_to_evaluate: Dict[str, Any]
-    test_id: Optional[str]
+    functions_to_evaluate: Dict[str, FunctionToEvaluate]
+    version_id: str
+    phospho: Any
 
     def __init__(
         self,
+        version_id: Optional[str] = None,
         api_key: Optional[str] = None,
         project_id: Optional[str] = None,
+        base_url: Optional[str] = None,
     ):
         """
         This is used to backtest an agent with phospho.
@@ -343,235 +286,163 @@ class PhosphoTest:
         phospho_test.run()
         ```
         """
-        self.client = Client(api_key=api_key, project_id=project_id)
-        self.functions_to_evaluate: Dict[str, Any] = {}
-        self.test_id: Optional[str] = None
+        import phospho
+
+        self.client = Client(api_key=api_key, project_id=project_id, base_url=base_url)
+        self.functions_to_evaluate = {}
+        if version_id is None:
+            version_id = generate_version_id()
+        self.version_id = version_id
+        self.phospho = phospho
+        self.phospho.init(
+            api_key=api_key,
+            project_id=project_id,
+            base_url=base_url,
+            version_id=version_id,
+        )
 
     def test(
         self,
         fn: Optional[Callable[[Any], Any]] = None,
-        source_loader: Literal["backtest", "dataset"] = "backtest",
+        source_loader: Optional[Literal["backtest", "dataset"]] = None,
         source_loader_params: Optional[Dict[str, Any]] = None,
-        metrics: Optional[List[Literal["compare", "evaluate"]]] = None,
     ) -> Callable[[Any], Any]:
         """
         Add this as a decorator on top of the evaluation function.
         """
 
-        # TODO: Add task_name as a parameter
-        # TODO: Add custom instructions for comparison and evaluation as a parameter
-        if metrics is None:
-            metrics = ["evaluate"]
-
         if source_loader_params is None:
             source_loader_params = {}
 
         def meta_wrapper(
-            fn: Optional[Callable[[Any], Any]] = None,
-            source_loader: Literal["backtest", "dataset"] = "backtest",
-            source_loader_params: Optional[Dict[str, Any]] = None,
-            metrics: Optional[List[Literal["compare", "evaluate"]]] = None,
+            fn: Callable[[Any], Any],
+            source_loader: Optional[Literal["backtest", "dataset"]],
+            source_loader_params: Dict[str, Any],
         ):
-            self.functions_to_evaluate[fn.__name__] = {
-                "function": fn,
-                "function_name": fn.__name__,
-                "source_loader": source_loader,
-                "source_loader_params": source_loader_params,
-                "metrics": metrics,
-            }
-
+            self.functions_to_evaluate[fn.__name__] = FunctionToEvaluate(
+                function=fn,
+                function_name=fn.__name__,
+                source_loader=source_loader,
+                source_loader_params=source_loader_params,
+            )
             return fn
 
         if fn is None:
-            return lambda fn: meta_wrapper(
-                fn, source_loader, source_loader_params, metrics
-            )
+            return lambda fn: meta_wrapper(fn, source_loader, source_loader_params)
         else:
-            return meta_wrapper(fn, source_loader, source_loader_params, metrics)
+            return meta_wrapper(fn, source_loader, source_loader_params)
 
-    def get_output_from_agent(
+    def log(
         self,
-        function_input: Dict[str, Any],
-        agent_function: Callable[[Any], Any],
-        metric_name: str,
+        input: str,
+        output: str,
+        **kwargs,
     ):
         """
-        This function will return the output of the agent given an input
+        Log the input and output to phospho
         """
-        print(
-            f"Calling {agent_function.__name__} with input {function_input.__repr__()}"
+        self.phospho.log(
+            input=input, output=output, version_id=self.version_id, **kwargs
         )
 
-        # TODO : Make it so that that we use input or additional_input depending on the
-        # signature (input type) of the agent function
-
-        os.environ["PHOSPHO_TEST_METRIC"] = metric_name
-        new_output = agent_function(**function_input)
-
-        # Handle generators
-        if isinstance(new_output, GeneratorType):
-            full_resp = ""
-            for response in new_output:
-                full_resp += response or ""
-            new_output_str = extractor.detect_str_from_output(full_resp)
-        else:
-            new_output_str = extractor.detect_str_from_output(new_output)
-
-        print(f"Output {agent_function.__name__}: {new_output_str}")
-
-        return new_output_str
-
-    def evaluate(self, task_to_evaluate: Dict[str, Any]):
-        """
-        Run the evaluation pipeline on the task
-        """
-        test_input: TestInput = task_to_evaluate["test_input"]
-        agent_function = task_to_evaluate["agent_function"]
-
-        # Get the output from the agent
-        context_input = test_input.input
-        new_output_str = self.get_output_from_agent(
-            function_input=test_input.function_input,
-            agent_function=agent_function,
-            metric_name="evaluate",
-        )
-
-        # Ask phospho: what's the best answer to the context_input ?
-        print("Evaluating with phospho")
-
-    def compare(
-        self, task_to_compare: Dict[str, Any]
-    ) -> None:  # task: Task, agent_function: Callable[[Any], Any]):
-        """
-        Compares the output of the task with the output of the agent function
-        """
-
-        test_input: TestInput = task_to_compare["test_input"]
-        agent_function = task_to_compare["agent_function"]
-        print("Comparing task id: ", test_input)
-
-        # Get the output from the agent
-        context_input = test_input.input
-        old_output_str = test_input.output
-        new_output_str = self.get_output_from_agent(
-            function_input=test_input.function_input,
-            agent_function=agent_function,
-            metric_name="compare",
-        )
-
-        # Ask phospho: what's the best answer to the context_input ?
-        print(f"Comparing with phospho (task: {test_input.id})")
-        self.client.compare(
-            context_input=context_input,
-            old_output=old_output_str,
-            new_output=new_output_str,
-            test_id=self.test_id,
-        )
+    def flush(self):
+        self.phospho.flush()
 
     def run(
         self,
         executor_type: Literal["parallel", "sequential"] = "parallel",
+        max_parallelism: int = 20,
     ):
         """
-        Backtesting: This function pull all the tasks logged to phospho and run the agent on them.
+        Run the tests
         """
 
         # Start timer
         start_time = time.time()
+        print(f"version_id: {self.version_id}")
+        print(f"Executor type: {executor_type}")
+        print(f"Max parallelism: {max_parallelism}")
 
-        test = self.client.create_test(
-            summary={
-                function_name: {
-                    "source_loader": function_to_eval["source_loader"],
-                    "source_loader_params": function_to_eval["source_loader_params"],
-                    "metrics": function_to_eval["metrics"],
-                }
-                for function_name, function_to_eval in self.functions_to_evaluate.items()
-            }
-        )
-        test_id = test.id
-        print(f"Starting test: {test_id}")
-        os.environ["PHOSPHO_TEST_ID"] = test_id
+        # os.environ["PHOSPHO_VERSION_ID"] = self.version_id
 
+        # Collect the functions.
         for function_name, function_to_eval in self.functions_to_evaluate.items():
-            print(f"Running tests for: {function_name}")
-            source_loader = function_to_eval["source_loader"]
-            source_loader_params = function_to_eval["source_loader_params"]
-            metrics = function_to_eval["metrics"]
-            agent_function = function_to_eval["function"]
+            print(f"Running: {function_name}")
+            # Load the tasks
+            if function_to_eval.source_loader is None:
+                # Just execute the function
+                try:
+                    function_to_eval.function()
+                except Exception as e:
+                    print(f"[red]Error running {function_name}:[/red] {e}")
+                # Go to the next function
+                continue
 
-            if source_loader == "backtest":
-                tasks_linked_to_function = BacktestLoader(
+            messages: Loader
+            if function_to_eval.source_loader == "backtest":
+                messages = BacktestLoader(
                     client=self.client,
-                    agent_function=agent_function,
-                    **source_loader_params,
+                    agent_function=function_to_eval.function,
+                    **function_to_eval.source_loader_params,
                 )
-            elif source_loader == "dataset":
-                tasks_linked_to_function = DatasetLoader(
-                    agent_function=agent_function,
-                    **source_loader_params,
+            elif function_to_eval.source_loader == "dataset":
+                messages = DatasetLoader(
+                    agent_function=function_to_eval.function,
+                    **function_to_eval.source_loader_params,
                 )
             else:
                 raise NotImplementedError(
-                    f"Source loader {source_loader} is not implemented"
+                    f"Source loader {function_to_eval.source_loader} is not implemented"
                 )
 
-            for metric in metrics:
-                if metric == "evaluate":
-                    import phospho
-
-                    # For evaluate, we'll need to init phospho and use .log
-                    phospho.init(self.client.api_key, self.client.project_id)
-                    evaluation_function = self.evaluate
-                elif metric == "compare":
-                    evaluation_function = self.compare
-                else:
-                    # TODO : Add more metrics
-                    raise NotImplementedError(
-                        f"Metric {metric} is not implemented. Implemented metrics: 'compare', 'evaluate'"
+            async def evaluate(message: lab.Message):
+                print(f"Running {function_name} on message {message.content[:50]}")
+                try:
+                    # The function is fed with a message and all the metadata
+                    print("1")
+                    function_input = {
+                        "message": message,
+                        **message.metadata,
+                    }
+                    # Extra metadata is removed so that the function can be called
+                    adapted_function_input = adapt_dict_to_agent_function(
+                        function_input, function_to_eval.function
                     )
-
-                # Evaluate the tasks in parallel
-                # TODO : Add more executor types to handle different types of parallelism
-                if executor_type == "parallel":
-                    with concurrent.futures.ThreadPoolExecutor() as executor:
-                        # Submit tasks to the executor
-                        # executor.map(self.evaluate_a_task, task_to_evaluate)
-                        executor.map(evaluation_function, tasks_linked_to_function)
-                elif executor_type == "sequential":
-                    for task_function in tasks_linked_to_function:
-                        evaluation_function(task_function)
-                elif executor_type == "async":
-                    # TODO : Do more tests with async executor and async agent_function
-                    import asyncio
-
-                    loop = asyncio.get_event_loop()
-                    loop.run_until_complete(
-                        asyncio.gather(
-                            *[
-                                evaluation_function(task_function)
-                                for task_function in tasks_linked_to_function
-                            ]
-                        )
+                    print("2")
+                    response = function_to_eval.function(**adapted_function_input)
+                    # Log the input and output to phospho
+                    print("3")
+                    self.log(
+                        input=message.content,
+                        output=response,
                     )
-                else:
-                    raise NotImplementedError(
-                        f"Executor type {executor_type} is not implemented"
+                except Exception as e:
+                    print(f"[red]Error running {function_name}:[/red] {e}")
+                    return None
+
+                return lab.JobResult(
+                    value=response,
+                    result_type=lab.ResultType.dict,
+                )
+
+            workload = lab.Workload(
+                jobs=[
+                    lab.Job(
+                        id=function_name,
+                        job_function=evaluate,
                     )
+                ]
+            )
+            workload.run(
+                messages=messages,
+                executor_type=executor_type,
+                max_parallelism=max_parallelism,
+            )
 
-                if metric == "evaluate":
-                    phospho.consumer.send_batch()
-
+        self.flush()
         # Stop timer
         end_time = time.time()
 
         # Display a summary of the results
         print("Finished running the tests")
-        print(f"Total number of tasks: {len(list(tasks_linked_to_function))}")
-        print(f"Total time: {end_time - start_time} seconds")
-        print(f"Test id: {self.test_id}")
-        print("Waiting for evaluation to finish...")
-        # Mark the test as completed and get results
-        test_result = self.client.update_test(test_id=test_id, status="completed")
-        print("Test result:")
-        pprint(test_result.model_dump())
+        print(f"Total time: {end_time - start_time:.3f} seconds")

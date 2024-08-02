@@ -28,7 +28,7 @@ def convert_to_dict(x: Any) -> Dict[str, object]:
             return dict(x)
         except ValueError as e:
             raise ValueError(f"Could not convert to dict: {x}. Error: {e}")
-        except TypeError as e:
+        except TypeError:
             raise NotImplementedError(
                 f"Dict conversion not implemented for type {type(x)}: {x}"
             )
@@ -104,7 +104,7 @@ def detect_str_from_output(output: RawDataType) -> str:
         try:
             # Assume it may be a json
             output = convert_to_dict(output)
-        except Exception as e:
+        except Exception:
             logger.warning(
                 f"Error while trying to convert output {type(output)} to dict"
             )

@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from propelauth_fastapi import User
 
 from app.api.platform.models import (
     Session,
     SessionUpdateRequest,
     Tasks,
+    SessionHumanEvalRequest,
 )
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
@@ -14,6 +15,7 @@ from app.services.mongo.sessions import (
     format_session_transcript,
     get_session_by_id,
     event_suggestion,
+    human_eval_session,
 )
 from app.api.platform.models import AddEventRequest, RemoveEventRequest
 from app.services.mongo.sessions import add_event_to_session, remove_event_from_session
@@ -140,3 +142,31 @@ async def post_remove_event_from_session(
         event_name=remove_event.event_name,
     )
     return updated_session
+
+
+@router.post(
+    "/sessions/{session_id}/human-eval",
+    response_model=Session,
+    description="Update the human eval of a session and the flag",
+)
+async def post_human_eval_session(
+    session_id: str,
+    sessionHumanEvalRequest: SessionHumanEvalRequest,
+    user: User = Depends(propelauth.require_user),
+) -> Session:
+    """
+    Update the human eval of a session and the session_flag with "success" or "failure"
+    Also signs the origin of the flag with owner
+    """
+    if sessionHumanEvalRequest.human_eval not in ["success", "failure"]:
+        raise HTTPException(
+            status_code=400,
+            detail="The human eval must be either 'success' or 'failure'",
+        )
+    session = await get_session_by_id(session_id)
+    await verify_if_propelauth_user_can_access_project(user, session.project_id)
+    updated_task = await human_eval_session(
+        session_model=session,
+        human_eval=sessionHumanEvalRequest.human_eval,
+    )
+    return updated_task

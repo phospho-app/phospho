@@ -308,7 +308,8 @@ class MessageCallable(Protocol):
     A function whose first argument is a Message.
     """
 
-    def __call__(self, message: Message, *args: Any, **kwargs: Any) -> Any: ...
+    def __call__(self, message: Message, *args: Any, **kwargs: Any) -> Any:
+        ...
 
 
 class Workload:
@@ -610,7 +611,7 @@ class Workload:
                 # Await all the results
                 semaphore = asyncio.Semaphore(max_parallelism)
                 # Create a progress bar
-                if isinstance(messages, list):
+                if hasattr(messages, "__len__"):
                     t = tqdm(total=len(messages))
                 else:
                     t = tqdm()
@@ -713,6 +714,23 @@ class Workload:
 
         # We do not collect the results here, as we want to keep the alternative results
         # They are stored in the job object, in the alternative_results attribute
+
+    def run(
+        self,
+        messages: Iterable[Message],
+        executor_type: Literal["parallel", "sequential"] = "parallel",
+        max_parallelism: int = 10,
+    ):
+        """Wrapper of Workload.async_run() to run the workload synchronously."""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(
+            self.async_run(
+                messages=messages,
+                executor_type=executor_type,
+                max_parallelism=max_parallelism,
+            )
+        )
 
     def optimize_jobs(
         self, accuracy_threshold: float = 1.0, min_count: int = 10

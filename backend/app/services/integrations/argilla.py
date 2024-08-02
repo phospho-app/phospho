@@ -19,12 +19,11 @@ from loguru import logger
 from app.core import config
 from argilla import FeedbackDataset
 from app.utils import health_check
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 from app.db.models import Task
-from app.core import constants
 from app.services.mongo.tasks import get_all_tasks
 
-from phospho.models import Event, EventDefinition
+from phospho.models import Event
 
 # Connect to argilla
 try:
@@ -411,7 +410,7 @@ async def pull_dataset_from_argilla(
     """
 
     # Load the project configs, so we know the dataset fields and questions
-    project = await get_project_by_id(pull_request.project_id)
+    await get_project_by_id(pull_request.project_id)
 
     argilla_dataset = rg.FeedbackDataset.from_argilla(
         name=pull_request.dataset_name, workspace=pull_request.workspace_id
@@ -481,13 +480,13 @@ async def pull_dataset_from_argilla(
 
                 # Confirm the tagger event
                 if tagger in taggers:
-                    modified_event = await confirm_event(
+                    await confirm_event(
                         project_id=pull_request.project_id, event_id=event_model.id
                     )
 
                 # Remove the tagger event
                 else:
-                    modified_event = await remove_event(
+                    await remove_event(
                         project_id=pull_request.project_id, event_id=event_model.id
                     )
 
@@ -522,14 +521,14 @@ async def pull_dataset_from_argilla(
 
                 # Edit the event. Note: this always confirm the event.
                 if isinstance(corrected_label_or_value, str):
-                    modified_event = await change_label_event(
+                    await change_label_event(
                         project_id=pull_request.project_id,
                         event_id=event_model.id,
                         new_label=corrected_label_or_value,
                     )
 
                 elif isinstance(corrected_label_or_value, float):
-                    modified_event = await change_value_event(
+                    await change_value_event(
                         project_id=pull_request.project_id,
                         event_id=event_model.id,
                         new_value=corrected_label_or_value,

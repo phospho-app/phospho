@@ -3,6 +3,7 @@ import json
 import uuid
 import logging
 import pydantic
+import datetime
 
 from typing import (
     Any,
@@ -14,6 +15,7 @@ from typing import (
     Optional,
     Union,
 )
+from random import choice
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,49 @@ def generate_uuid(prefix: str = "") -> str:
     """
     value = uuid.uuid4().hex
     return f"{prefix}{value}"
+
+
+def generate_version_id() -> str:
+    """
+    Generate a version id: 20240813_gentle-pandas
+    """
+    adjectives = [
+        "gentle",
+        "happy",
+        "aggresive",
+        "proud",
+        "sad",
+        "funny",
+        "serious",
+        "boring",
+        "exciting",
+        "junior",
+        "senior",
+        "mega",
+        "blurry",
+        "digital",
+        "bullish",
+        "bearish",
+    ]
+    animals = [
+        "pandas",
+        "tigers",
+        "lions",
+        "elephants",
+        "giraffes",
+        "dogs",
+        "cats",
+        "snakes",
+        "birds",
+        "fishes",
+        "whales",
+        "dolphins",
+        "sharks",
+        "crocodiles",
+        "junior",
+        "pl",
+    ]
+    return f"{datetime.datetime.now().strftime('%Y%m%d')}_{choice(adjectives)}-{choice(animals)}"
 
 
 def is_jsonable(x: Any) -> bool:

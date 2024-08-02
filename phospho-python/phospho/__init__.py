@@ -38,6 +38,7 @@ from .utils import (
     filter_nonjsonable_keys,
     generate_timestamp,
     generate_uuid,
+    generate_version_id,
     is_jsonable,
 )
 
@@ -86,7 +87,7 @@ def init(
     global default_version_id
 
     if version_id is None:
-        version_id = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+        version_id = generate_version_id()
 
     default_version_id = version_id
     client = Client(api_key=api_key, project_id=project_id, base_url=base_url)
@@ -582,7 +583,7 @@ def _wrap(
                     finish_reason = x.choices[0].finish_reason
                     if finish_reason is not None:
                         return True
-                except Exception as e:
+                except Exception:
                     pass
             return False
 

@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-from app.db.models import Task, Event, Recipe
+from app.db.models import Task, Recipe
 from phospho.lab import Message
-from phospho.models import SentimentObject, PipelineResults
+from phospho.models import SentimentObject, PipelineResults  # noqa: F401
 
 
 class RunMainPipelineOnTaskRequest(BaseModel):

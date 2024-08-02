@@ -60,4 +60,4 @@ class EmailEvent:
                 "reply_to": "contact@phospho.app",
             }
 
-            email = resend.Emails.send(params)
+            resend.Emails.send(params)

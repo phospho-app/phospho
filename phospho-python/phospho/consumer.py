@@ -1,5 +1,5 @@
 from .log_queue import LogQueue
-from .client import Client, ClientSideError
+from .client import Client, PhosphoClientSideError
 
 import time
 import atexit
@@ -74,7 +74,7 @@ class Consumer(Thread):
                             {"batched_log_events": batch},
                         )
                         self.nb_consecutive_errors = 0
-            except ClientSideError as e:
+            except PhosphoClientSideError as e:
                 # If the error is a client-side error, we don't want to retry
                 raise e
             except Exception as e:

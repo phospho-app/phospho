@@ -52,15 +52,14 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
     if (task === null || task === undefined) return;
 
     // Create a project object in the database with the URL
-    const creation_response = await fetch(`/api/tasks/${task.id}/flag`, {
+    const creation_response = await fetch(`/api/tasks/${task.id}/human-eval`, {
       method: "POST",
       headers: {
         Authorization: "Bearer " + accessToken,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        flag: flag,
-        source: "owner",
+        human_eval: flag,
       }),
     });
     const creation_response_json = await creation_response.json();

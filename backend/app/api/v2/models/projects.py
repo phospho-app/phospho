@@ -4,10 +4,9 @@ from pydantic import BaseModel, Field
 from app.db.models import (
     Project,
     Event,
-    Task,
     Session,
-    EventDefinition,
     ProjectDataFilters,
+    EventDefinition,  # noqa: F401
 )
 
 
@@ -55,4 +54,8 @@ class FlattenedTasksRequest(BaseModel):
 
 class ComputeJobsRequest(BaseModel):
     job_ids: List[str]
+    filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
+
+
+class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)

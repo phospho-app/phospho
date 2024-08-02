@@ -147,6 +147,10 @@ class SentimentObject(BaseModel):
     label: Optional[str] = None
 
 
+class HumanEval(BaseModel):
+    flag: Optional[str] = None
+
+
 class Task(ProjectElementBaseModel):
     session_id: Optional[str] = None
     input: str
@@ -158,6 +162,7 @@ class Task(ProjectElementBaseModel):
     # Flag to indicate if the task is success or failure
     flag: Optional[str] = None  # Literal["success", "failure", "undefined"]
     last_eval: Optional[Eval] = None
+    human_eval: Optional[HumanEval] = None
     sentiment: Optional[SentimentObject] = None
     language: Optional[str] = None
     # Events are stored in a subcollection of the task document
@@ -199,6 +204,7 @@ class SessionStats(BaseModel):
     most_common_sentiment_label: Optional[str] = None
     most_common_language: Optional[str] = None
     most_common_flag: Optional[str] = None
+    human_eval: Optional[str] = None
 
 
 class Session(ProjectElementBaseModel):
@@ -299,17 +305,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name]["event_name"] = (
-                            event_name
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "event_name"
+                        ] = event_name
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["org_id"] = (
-                            project_data["org_id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "org_id"
+                        ] = project_data["org_id"]
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["project_id"] = (
-                            project_data["id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "project_id"
+                        ] = project_data["id"]
 
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:
@@ -430,16 +436,23 @@ class Message(DatedBaseModel):
         with_role: bool = True,
         with_previous_messages: bool = False,
         only_previous_messages: bool = False,
+        max_previous_messages: Optional[int] = None,
     ) -> str:
         """
         Return a string representation of the message.
         """
         transcript = ""
+        if max_previous_messages is None or max_previous_messages > len(
+            self.previous_messages
+        ):
+            max_previous_messages = len(self.previous_messages)
+        if max_previous_messages < 0:
+            max_previous_messages = 0
         if with_previous_messages:
             transcript += "\n".join(
                 [
                     message.transcript(with_role=with_role)
-                    for message in self.previous_messages
+                    for message in self.previous_messages[-max_previous_messages:]
                 ]
             )
         if not only_previous_messages:
@@ -584,6 +597,7 @@ class Message(DatedBaseModel):
         task: Task,
         previous_tasks: Optional[List[Task]] = None,
         metadata: Optional[dict] = None,
+        ignore_last_output: bool = False,
     ) -> "Message":
         """
         Create a Message from a Task object.
@@ -607,7 +621,7 @@ class Message(DatedBaseModel):
             previous_messages.append(
                 cls(
                     id="input_" + previous_task.id,
-                    role="User",
+                    role="user",
                     content=previous_task.input,
                 )
             )
@@ -615,22 +629,25 @@ class Message(DatedBaseModel):
                 previous_messages.append(
                     cls(
                         id="output_" + previous_task.id,
-                        role="Assistant",
+                        role="assistant",
                         content=previous_task.output,
                     )
                 )
+
+        if ignore_last_output:
+            task.output = None
 
         if task.output is not None:
             previous_messages.append(
                 cls(
                     id="input_" + task.id,
-                    role="User",
+                    role="user",
                     content=task.input,
                 )
             )
             message = cls(
                 id="output_" + task.id,
-                role="Assistant",
+                role="assistant",
                 content=task.output,
                 previous_messages=previous_messages,
                 metadata=metadata,
@@ -638,7 +655,7 @@ class Message(DatedBaseModel):
         else:
             message = cls(
                 id="input_" + task.id,
-                role="User",
+                role="user",
                 content=task.input,
                 previous_messages=previous_messages,
                 metadata=metadata,

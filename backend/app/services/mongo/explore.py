@@ -33,7 +33,7 @@ from fastapi import HTTPException
 from loguru import logger
 from pymongo import InsertOne, UpdateOne
 
-from phospho.models import Cluster, Clustering, EventDefinition, Event
+from phospho.models import Cluster, Clustering, Event
 from app.api.platform.models import Pagination
 
 
@@ -1620,20 +1620,20 @@ async def get_y_pred_y_true(
         mask_y_pred_true = (
             (
                 (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] != True)
+                & (df["confirmed"])
+                & (~df["removed"])
                 & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] == False)
+                & (df["confirmed"])
+                & (~df["removed"])
                 & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
-                & (df["confirmed"] == False)
-                & (df["removed"] == True)
+                & (~df["confirmed"])
+                & (df["removed"])
                 & (df["score_range"].notna())
             )
         )
@@ -1641,33 +1641,27 @@ async def get_y_pred_y_true(
         mask_y_pred_false = (
             (
                 (df["source"] == "owner")
-                & (df["confirmed"] != True)
-                & (df["removed"] != True)
+                & (~df["confirmed"])
+                & (~df["removed"])
                 & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] != True)
+                & (df["confirmed"])
+                & (~df["removed"])
                 & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] == True)
+                & (df["confirmed"])
+                & (df["removed"])
                 & (df["score_range"].notna())
             )
         )
 
         mask_y_true_true = (
-            (df["source"] != "owner")
-            & (df["confirmed"] == True)
-            & (df["removed"] != True)
-        ) | (
-            (df["source"] == "owner")
-            & (df["confirmed"] == True)
-            & (df["removed"] != True)
-        )
+            (df["source"] != "owner") & (df["confirmed"]) & (~df["removed"])
+        ) | ((df["source"] == "owner") & (df["confirmed"]) & (~df["removed"]))
         # Apply the masks to get the desired DataFrames
         df = pd.concat([df[mask_y_pred_true], df[mask_y_pred_false]], ignore_index=True)
         df["y_pred"] = mask_y_pred_true
@@ -1677,38 +1671,38 @@ async def get_y_pred_y_true(
         mask = (
             (
                 (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] != True)
+                & (df["confirmed"])
+                & (~df["removed"])
                 & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] == False)
+                & (df["confirmed"])
+                & (~df["removed"])
                 & (df["score_range"].notna())
             )
             | (
                 (df["source"] != "owner")
-                & (df["confirmed"] == False)
-                & (df["removed"] == True)
+                & (~df["confirmed"])
+                & (df["removed"])
                 & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
-                & (df["confirmed"] != True)
-                & (df["removed"] != True)
+                & (~df["confirmed"])
+                & (~df["removed"])
                 & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] != True)
+                & (df["confirmed"])
+                & (~df["removed"])
                 & (df["score_range"].notna())
             )
             | (
                 (df["source"] == "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] == True)
+                & (df["confirmed"])
+                & (df["removed"])
                 & (df["score_range"].notna())
             )
         )
@@ -1718,62 +1712,36 @@ async def get_y_pred_y_true(
         df["y_true"] = None
 
         df.loc[
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] == False)
-            ),
+            ((df["source"] != "owner") & (df["confirmed"]) & (~df["removed"])),
             "y_true",
         ] = df.loc[
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] == False)
-            ),
+            ((df["source"] != "owner") & (df["confirmed"]) & (~df["removed"])),
             "score_range",
         ].apply(lambda x: x.get("corrected_label"))
 
         df.loc[
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] != True)
-            ),
+            ((df["source"] != "owner") & (df["confirmed"]) & (~df["removed"])),
             "y_true",
         ] = df.loc[
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] != True)
-            ),
+            ((df["source"] != "owner") & (df["confirmed"]) & (~df["removed"])),
             "score_range",
         ].apply(lambda x: x.get("corrected_label"))
 
         df.loc[
-            (
-                (df["source"] == "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] != True)
-            ),
+            ((df["source"] == "owner") & (df["confirmed"]) & (~df["removed"])),
             "y_true",
         ] = df.loc[
-            (
-                (df["source"] == "owner")
-                & (df["confirmed"] == True)
-                & (df["removed"] != True)
-            ),
+            ((df["source"] == "owner") & (df["confirmed"]) & (~df["removed"])),
             "score_range",
         ].apply(lambda x: x.get("label"))
 
     elif event_type == "range":
         mask = (
-            (df["source"] == "owner")
-            & (df["removed"] != True)
-            & (df["score_range"].notna())
+            (df["source"] == "owner") & (~df["removed"]) & (df["score_range"].notna())
         ) | (
             (df["source"] != "owner")
-            & (df["confirmed"] == True)
-            & (df["removed"] != True)
+            & (df["confirmed"])
+            & (~df["removed"])
             & (df["score_range"].notna())
         )
 
