@@ -158,6 +158,7 @@ class Task(ProjectElementBaseModel):
     # Flag to indicate if the task is success or failure
     flag: Optional[str] = None  # Literal["success", "failure", "undefined"]
     last_eval: Optional[Eval] = None
+    human_eval: Optional[str] = None  # Literal["success", "failure", "undefined"]
     sentiment: Optional[SentimentObject] = None
     language: Optional[str] = None
     # Events are stored in a subcollection of the task document
