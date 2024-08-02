@@ -65,14 +65,14 @@ async function flagTask({
   if (!accessToken) return;
   if (!project_id) return;
 
-  const creation_response = await fetch(`/api/tasks/${task_id}/flag`, {
+  const creation_response = await fetch(`/api/tasks/${task_id}/human-eval`, {
     method: "POST",
     headers: {
       Authorization: "Bearer " + accessToken,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      flag: flag,
+      human_eval: flag,
     }),
   });
   mutateTasks((data: any) => {
@@ -260,8 +260,38 @@ export function getColumns({
               <ThumbsUp className="h-6 w-6 text-green-500" />
             )}{" "}
             {human_eval && human_eval == "failure" && (
-              <ThumbsDown className="h-6 w-6 text-red-500" />
+              <ThumbsDown className="h-6 w-6 text-red-500 ml-8" />
             )}{" "}
+            {!human_eval && (
+              <div className="flex space-x-2">
+                <ThumbsUp
+                  className="h-6 w-6 text-green-500 cursor-pointer hover:fill-green-500"
+                  onClick={(mouseEvent) => {
+                    mouseEvent.stopPropagation();
+                    flagTask({
+                      task_id: row.row.original.id,
+                      flag: "success",
+                      accessToken: accessToken,
+                      project_id: project_id,
+                      mutateTasks: mutateTasks,
+                    });
+                  }}
+                />
+                <ThumbsDown
+                  className="h-6 w-6 text-red-500 cursor-pointer hover:fill-red-500"
+                  onClick={(mouseEvent) => {
+                    mouseEvent.stopPropagation();
+                    flagTask({
+                      task_id: row.row.original.id,
+                      flag: "failure",
+                      accessToken: accessToken,
+                      project_id: project_id,
+                      mutateTasks: mutateTasks,
+                    });
+                  }}
+                />
+              </div>
+            )}
             <></>
           </>
         );
