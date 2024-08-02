@@ -195,14 +195,14 @@ class PostgresqlIntegration:
         elif status == "failed":
             updated_credentials = await mongo_db["integrations"].find_one_and_update(
                 {"org_id": self.org_id},
-                {"$pullAll": {"projects_started": self.project_id}},
+                {"$pull": {"projects_started": self.project_id}},
                 return_document=True,
             )
         elif status == "finished":
             updated_credentials = await mongo_db["integrations"].find_one_and_update(
                 {"org_id": self.org_id},
                 {
-                    "$pullAll": {"projects_started": self.project_id},
+                    "$pull": {"projects_started": self.project_id},
                     "$addToSet": {"projects_finished": self.project_id},
                 },
                 return_document=True,
