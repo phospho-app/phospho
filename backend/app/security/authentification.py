@@ -4,7 +4,7 @@ Handle all authentification related tasks.
 We now use Propelauth for authentification.
 """
 
-from typing import Literal, Optional
+from typing import Optional
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
@@ -109,9 +109,7 @@ def authenticate_org_key_no_exception(request: Request) -> Optional[dict]:
     return org
 
 
-async def verify_propelauth_org_owns_project_id(
-    org: dict, project_id: str, bdd: Literal["firebase", "mongo"] = "mongo"
-) -> None:
+async def verify_propelauth_org_owns_project_id(org: dict, project_id: str) -> None:
     """
     Fetch the project and check that the org is the owner of the project.
     Used as a workaround when you don't know the org_id.
@@ -141,7 +139,7 @@ async def verify_propelauth_org_owns_project_id(
 
 
 async def verify_if_propelauth_user_can_access_project(
-    user: User, project_id: str, bdd: Literal["firebase", "mongo"] = "mongo"
+    user: User, project_id: str
 ) -> str:
     """Verify if a Propelauth user can access a project. If not, raise an HTTPException.
 
@@ -179,7 +177,7 @@ async def verify_if_propelauth_user_can_access_project(
     return org_id
 
 
-def raise_error_if_not_in_pro_tier(org: dict, enforce: bool = True) -> None:
+def raise_error_if_not_in_pro_tier(org: dict) -> None:
     """Raise an HTTPException if the org is not in the pro tier."""
     if not config.ENVIRONMENT == "production":
         return

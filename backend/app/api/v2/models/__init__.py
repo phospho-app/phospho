@@ -26,6 +26,7 @@ from .projects import (
     UserMetadata,
     Users,
     ProjectDataFilters,
+    QuerySessionsTasksRequest,
 )
 from .search import SearchQuery, SearchResponse
 from .sessions import Session, SessionCreationRequest, Sessions, SessionUpdateRequest

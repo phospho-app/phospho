@@ -55,3 +55,7 @@ class FlattenedTasksRequest(BaseModel):
 class ComputeJobsRequest(BaseModel):
     job_ids: List[str]
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
+
+
+class QuerySessionsTasksRequest(BaseModel):
+    filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)

@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import Literal, Tuple
 
 import phospho.config as config
 
@@ -43,7 +43,17 @@ def get_provider_and_model(model: str) -> Tuple[str, str]:
     return provider, model_name
 
 
-def get_async_client(provider: str) -> AsyncOpenAI:
+def get_async_client(
+    provider: Literal[
+        "openai",
+        "mistral",
+        "ollama",
+        "solar",
+        "together",
+        "anyscale",
+        "fireworks",
+    ],
+) -> AsyncOpenAI:
     if provider == "openai":
         return AsyncOpenAI()
     if provider == "mistral":
@@ -79,7 +89,17 @@ def get_async_client(provider: str) -> AsyncOpenAI:
     raise NotImplementedError(f"Provider {provider} is not supported.")
 
 
-def get_sync_client(provider: str) -> OpenAI:
+def get_sync_client(
+    provider: Literal[
+        "openai",
+        "mistral",
+        "ollama",
+        "solar",
+        "together",
+        "anyscale",
+        "fireworks",
+    ],
+) -> OpenAI:
     if provider == "openai":
         return OpenAI()
     if provider == "mistral":
