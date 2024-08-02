@@ -1,7 +1,7 @@
 import imp
 import os
 import os.path
-from typing import Optional
+from typing import Optional, Tuple
 
 import typer
 from rich import print
@@ -30,6 +30,34 @@ def load_from_file(filepath):
     return py_mod
 
 
+def load_config(
+    global_config: str,
+    phospho_api_key: Optional[str] = None,
+    phospho_project_id: Optional[str] = None,
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Load the configuration from the global config file or the provided arguments
+    """
+    if phospho_api_key is None or phospho_project_id is None:
+        # Load the global config
+        global_config = os.path.expanduser(global_config)
+        if not os.path.exists(global_config):
+            print(
+                f"Global config not found at {global_config}\nRun 'phospho init' to create one"
+            )
+            raise typer.Exit()
+        with open(global_config, "r") as f:
+            # Replace missing values with the ones from the global config
+            for line in f:
+                key, value = line.strip().split("=")
+                if key == "PHOSPHO_API_KEY" and phospho_api_key is None:
+                    phospho_api_key = value
+                elif key == "PHOSPHO_PROJECT_ID" and phospho_project_id is None:
+                    phospho_project_id = value
+
+    return phospho_api_key, phospho_project_id
+
+
 def version_callback(value: bool):
     """
     Print the current version of phospho
@@ -56,6 +84,29 @@ def callback(
     print("-> Run 'phospho init' to configure a new project")
     print("-> Run 'phospho test' to run tests")
     print("-> Run 'phospho --help' for more")
+    print("")
+
+
+@app.command()
+def config():
+    """
+    Show the current global configuration
+    """
+    global_config = "~/.phospho/config"
+
+    print("[b]🧪phospho global config[/b]")
+    print("-----------------------")
+    full_path = os.path.expanduser(global_config)
+    print(f"Global config file: {full_path}")
+    phospho_api_key, phospho_project_id = load_config(full_path)
+    if phospho_api_key is not None:
+        total_length = len(phospho_api_key)
+        if total_length > 4:
+            phospho_api_key = phospho_api_key[:4] + "*" * (total_length - 4)
+        else:
+            phospho_api_key = "*" * total_length
+    print(f"PHOSPHO_API_KEY: {phospho_api_key}")
+    print(f"PHOSPHO_PROJECT_ID: {phospho_project_id}")
     print("")
 
 
@@ -167,27 +218,12 @@ def test(
     ] = "~/.phospho/config",
 ):
     """
-    Run tests for the project on the specified file.
-
-    The file should contain a function called main() that runs the tests.
+    Run the project's tests. By default, this executes the functions marked with @phospho_test.test() in 'phospho_testing.py'
     """
 
-    if phospho_api_key is None or phospho_project_id is None:
-        # Load the global config
-        global_config = os.path.expanduser(global_config)
-        if not os.path.exists(global_config):
-            print(
-                f"Global config not found at {global_config}\nRun 'phospho init' to create one"
-            )
-            raise typer.Exit()
-        with open(global_config, "r") as f:
-            # Replace missing values with the ones from the global config
-            for line in f:
-                key, value = line.strip().split("=")
-                if key == "PHOSPHO_API_KEY" and phospho_api_key is None:
-                    phospho_api_key = value
-                elif key == "PHOSPHO_PROJECT_ID" and phospho_project_id is None:
-                    phospho_project_id = value
+    phospho_api_key, phospho_project_id = load_config(
+        global_config, phospho_api_key, phospho_project_id
+    )
 
     if phospho_api_key is not None and phospho_project_id is not None:
         os.environ["PHOSPHO_API_KEY"] = phospho_api_key
@@ -195,7 +231,7 @@ def test(
         print("Config loaded")
     else:
         print(
-            "No phospho API key or project id found. Run 'phospho init' to create one."
+            "No phospho API key or project id found. Run 'phospho init' to set them up."
         )
         raise typer.Exit()
 
@@ -222,6 +258,4 @@ def test(
             f"Error importing {test_file} module: {e}.\nRun 'phospho init' to create one."
         )
     except AttributeError as e:
-        print(
-            f"Error running tests in {test_file}: {e}.\nMake sure the function main() is defined."
-        )
+        print(f"Error running tests in {test_file}: {e}")

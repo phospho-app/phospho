@@ -9,7 +9,14 @@ from typing import Dict, List, Literal, Optional
 import requests
 
 import phospho.config as config
-from phospho.models import Comparison, FlattenedTask, Project, Test
+from phospho.models import (
+    Comparison,
+    FlattenedTask,
+    Project,
+    Test,
+    Task,
+    ProjectDataFilters,
+)
 from phospho.sessions import SessionCollection
 from phospho.tasks import TaskCollection, TaskEntity
 
@@ -209,6 +216,20 @@ class Client:
             },
         )
         return Test(**response.json())
+
+    def fetch_tasks(self, filters: Optional[ProjectDataFilters] = None) -> List[Task]:
+        """
+        Get the tasks of a project.
+        """
+        if filters is None:
+            filters = ProjectDataFilters()
+        response = self._post(
+            f"/projects/{self._project_id()}/tasks",
+            payload={
+                "filters": filters.model_dump(),
+            },
+        )
+        return [Task.model_validate(task) for task in response.json()["tasks"]]
 
     def tasks_flat(
         self,

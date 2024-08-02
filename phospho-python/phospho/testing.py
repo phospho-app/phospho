@@ -1,12 +1,10 @@
-import concurrent.futures
 import inspect
 import logging
 import os
 import time
-from pprint import pprint
 from random import sample
 from types import GeneratorType
-from typing import Any, Callable, Dict, Iterator, List, Literal, Optional
+from typing import Any, Callable, Dict, Iterator, List, Literal, Optional, Union
 
 from phospho.utils import generate_version_id
 from pydantic import BaseModel, Field
@@ -14,40 +12,18 @@ from rich import print
 
 from phospho import extractor, lab
 from phospho.client import Client
-from phospho.tasks import TaskEntity
 
 logger = logging.getLogger(__name__)
-
-
-class TestInput(BaseModel, extra="allow"):
-    function_input: dict  # What we pass to the function
-    input: Optional[str] = None
-    additional_input: Optional[dict] = None
-    output: Optional[str] = None
-    task_id: Optional[str] = None
-
-    @classmethod
-    def from_task(cls, task: TaskEntity) -> "TestInput":
-        # Combine the input and additional_input
-        if task.content.additional_input is not None:
-            function_input = task.content.additional_input
-        elif task.content.input is not None:
-            function_input.update({"input": task.content.input})
-        else:
-            function_input = {}
-
-        return TestInput(function_input=function_input, **task.content_as_dict())
 
 
 def adapt_dict_to_agent_function(
     dict_to_adapt: dict, agent_function: Callable[[Any], Any]
 ) -> Optional[dict]:
-    """This function adapts a dict to match the signature of an agent function.
+    """This function adapts a dict to match the signature of the agent_function.
 
-    If the dict is compatible with the agent function, this returns the dict.
-
-    If the dict is not compatible with the agent function, this returns a new dict that
-    is compatible with the agent function, but that has less keys.
+    - If all the dict's keys can be mapped to the agent_function's parameters, this returns the dict.
+    - If the dict has more keys than the agent_function's parameters, this returns a new dict that
+        only contains the keys that are in the agent_function's parameters.
 
     If nothing can be done, this returns None.
     """
@@ -98,77 +74,14 @@ def adapt_dict_to_agent_function(
     return None
 
 
-def adapt_task_to_agent_function(
-    task: TaskEntity, agent_function: Callable[[Any], Any]
-) -> Optional[TestInput]:
-    """This function adapts a task to match the signature of an agent function.
-
-    If the task is compatible with the agent function, this returns the task.
-
-    If the task is not compatible with the agent function, this returns a new task that
-    is compatible with the agent function, but that has less inputs.
-
-    If nothing can be done, this returns None.
-    """
-
-    # The compatibility is based on the parameters names in the agent function signature
-    agent_function_signature: inspect.Signature = inspect.signature(agent_function)
-    task_inputs = set(task.content.additional_input.keys())
-    agent_function_inputs = set(agent_function_signature.parameters.keys())
-
-    if task_inputs == agent_function_inputs:
-        # The task is compatible with the agent function
-        return TestInput.from_task(task)
-    elif task_inputs <= agent_function_inputs:
-        # The agent function takes more inputs than the task provides
-        # Check if those are optional in the agent function
-        for key in agent_function_inputs - task_inputs:
-            if (
-                agent_function_signature.parameters[key].default
-                is inspect.Parameter.empty
-            ):
-                # The agent function takes a non optional input that the task does not provide
-                # We can't adapt the task to the agent function
-                # Log what key is missing from the agent_function
-                logger.warning(
-                    f"Task {task.id} is not compatible with agent function {agent_function.__name__}: {key} is missing from the task"
-                )
-                return None
-        # All of the additional inputs are optional in the agent function
-        # So the task is compatible with the agent function
-        return TestInput.from_task(task)
-    elif task_inputs >= agent_function_inputs:
-        # We filter the task to only keep the keys that are in the agent function signature
-        new_task = TestInput(
-            function_input={
-                key: task.content.additional_input[key] for key in agent_function_inputs
-            },
-            task_id=task.id,
-            **task.content_as_dict(),
-        )
-
-        # Log info that we filtered task inputs
-        logger.info(
-            f"Reduced the number of inputs of task {task.id} to match the agent function {agent_function.__name__}: removed {task_inputs - agent_function_inputs}"
-        )
-        return new_task
-    else:
-        # Check if the agent_function has an argument for any number of keyword arguments
-        for param in agent_function_signature.parameters.values():
-            if param.kind == inspect.Parameter.VAR_KEYWORD:
-                # The agent function takes a **kwargs argument
-                # The task is compatible with the agent function
-                return TestInput.from_task(task)
-
-    return None
-
-
 def adapt_to_sample_size(list_to_sample, sample_size):
     """
-    This function will adapt the list to sample to match the sample size.
+    Adapt list_to_sample to match the sample_size, either by upsampling or downsampling.
     """
     if sample_size < 0:
         raise ValueError("sample_size must be positive")
+    if (len(list_to_sample) == 0) or (sample_size == 0):
+        return []
 
     if sample_size is None:
         # None = all the tasks
@@ -195,21 +108,22 @@ def adapt_to_sample_size(list_to_sample, sample_size):
 
 class Loader:
     """
-    Abstract class for loaders
+    Abstract class for Loaders
     """
 
     def __iter__(self):
         raise NotImplementedError
 
-    def __next__(self):
+    def __next__(self) -> Dict[str, Any]:
         raise NotImplementedError
 
-    def __len__(self):
+    def __len__(self) -> int:
         raise NotImplementedError
 
 
 class BacktestLoader(Loader):
     sampled_tasks: Iterator
+    sample_size: int
 
     def __init__(
         self,
@@ -218,37 +132,42 @@ class BacktestLoader(Loader):
         sample_size: Optional[int] = 10,
     ):
         # Pull the logs from phospho
-        # TODO : Add time range filter
-        # TODO : Add pull from dataset
-        tasks = client.tasks.get_all()
+        # TODO : Add filters
+        tasks = client.fetch_tasks()
         if len(tasks) == 0:
-            print(f"[red]No tasks found in project {client.project_id}[/red]")
+            print(f"[red]No data found in project {client.project_id}[/red]")
             self.sampled_tasks = iter([])
             return
 
         # Filter the tasks to only keep the ones that are compatible with the agent function
-        tasks_linked_to_function = []
+        messages: List[Dict[str, Any]] = []
         for task in tasks:
-            adapted_task = adapt_task_to_agent_function(task, agent_function)
-            if adapted_task is not None:
-                tasks_linked_to_function.append(
-                    {"test_input": adapted_task, "agent_function": agent_function}
-                )
+            # Convert to a lab.Message
+            message = lab.Message.from_task(task)
+            adapted_message = adapt_dict_to_agent_function(
+                message.model_dump(), agent_function
+            )
+            if adapted_message is not None:
+                messages.append(adapted_message)
 
         self.sampled_tasks = iter(
-            adapt_to_sample_size(
-                list_to_sample=tasks_linked_to_function, sample_size=sample_size
-            )
+            adapt_to_sample_size(list_to_sample=messages, sample_size=sample_size)
         )
+        if sample_size is None:
+            sample_size = len(messages)
+        self.sample_size = sample_size
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> Dict[str, Any]:
+        """
+        Return the next message to evaluate
+        """
         return next(self.sampled_tasks)
 
-    def __len__(self):
-        return len(self.sampled_tasks)
+    def __len__(self) -> int:
+        return self.sample_size
 
 
 class DatasetLoader(Loader):
@@ -256,7 +175,6 @@ class DatasetLoader(Loader):
         self,
         agent_function: Callable[[Any], Any],
         path: str,
-        test_n_times: Optional[int] = None,
     ):
         """
         Loads a dataset from a file and returns an iterator over the dataset.
@@ -305,33 +223,24 @@ class DatasetLoader(Loader):
                 f"File format {path.split('.')[-1]} is not supported. Supported formats: .csv, .json, .xlsx"
             )
 
-        # If test_n_times is not None, we'll repeat the dataset n times
-        if test_n_times is not None:
-            self.df = pd.concat([self.df] * test_n_times)
-
         # Create an iterator over the dataset
         self.dataset = iter(self.df.to_dict(orient="records"))
-
         self.function_to_evaluate = agent_function
 
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> Dict[str, Any]:
         next_item = next(self.dataset)
         # TODO : Verify it has the right columns for the function_to_evaluate
         function_input = adapt_dict_to_agent_function(
             next_item, self.function_to_evaluate
         )
-        test_input = TestInput(
-            function_input=function_input,
-            input=next_item.get("input", None),
-            output=next_item.get("output", None),
-        )
-        return {
-            "test_input": test_input,
-            "agent_function": self.function_to_evaluate,
-        }
+        if function_input is None:
+            raise ValueError(
+                f"Dataset row {next_item} is not compatible with agent function {self.function_to_evaluate.__name__}"
+            )
+        return function_input
 
     def __len__(self):
         return self.df.shape[0]
