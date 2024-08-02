@@ -117,7 +117,7 @@ def test(
         typer.Option(
             help="If executor_type is parallel, the maximum number of parallel tests to trigger.",
         ),
-    ] = 4,
+    ] = 20,
     test_file: Annotated[
         str,
         typer.Option(
@@ -180,7 +180,9 @@ def test(
         print(f"Running tests: {test_file}")
         module = load_from_file(full_test_file)
         # This assumes there is an object called phospho_test
-        module.phospho_test.run()
+        module.phospho_test.run(
+            executor_type=executor_type, max_parallelism=max_parallelism
+        )
         module.phospho_test.flush()
     except ModuleNotFoundError as e:
         print(f"Module {test_file} not found {e}.\nRun 'phospho init' to create one.")

@@ -9,10 +9,10 @@ from types import GeneratorType
 from typing import Any, Callable, Dict, List, Literal, Optional
 
 from phospho.utils import generate_version_id
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from rich import print
 
-from phospho import extractor
+from phospho import extractor, lab
 from phospho.client import Client
 from phospho.tasks import TaskEntity
 
@@ -333,10 +333,18 @@ class DatasetLoader(Loader):
         return self.df.shape[0]
 
 
+class FunctionToEvaluate(BaseModel):
+    function: Callable[[Any], Any]
+    function_name: str
+    source_loader: Optional[Literal["backtest", "dataset"]] = None
+    source_loader_params: Dict[str, Any] = Field(default_factory=dict)
+
+
 class PhosphoTest:
     client: Client
-    functions_to_evaluate: Dict[str, Any]
-    version_id: Optional[str]
+    functions_to_evaluate: Dict[str, FunctionToEvaluate]
+    version_id: str
+    phospho: Any
 
     def __init__(
         self,
@@ -363,7 +371,7 @@ class PhosphoTest:
         import phospho
 
         self.client = Client(api_key=api_key, project_id=project_id)
-        self.functions_to_evaluate: Dict[str, Any] = {}
+        self.functions_to_evaluate = {}
         if version_id is None:
             version_id = generate_version_id()
         self.version_id = version_id
@@ -373,44 +381,33 @@ class PhosphoTest:
     def test(
         self,
         fn: Optional[Callable[[Any], Any]] = None,
-        source_loader: Optional[Literal["backtest", "dataset"]] = "backtest",
+        source_loader: Optional[Literal["backtest", "dataset"]] = None,
         source_loader_params: Optional[Dict[str, Any]] = None,
-        metrics: Optional[List[Literal["compare", "evaluate"]]] = None,
     ) -> Callable[[Any], Any]:
         """
         Add this as a decorator on top of the evaluation function.
         """
 
-        # TODO: Add task_name as a parameter
-        # TODO: Add custom instructions for comparison and evaluation as a parameter
-        if metrics is None:
-            metrics = ["evaluate"]
-
         if source_loader_params is None:
             source_loader_params = {}
 
         def meta_wrapper(
-            fn: Optional[Callable[[Any], Any]] = None,
-            source_loader: Optional[Literal["backtest", "dataset"]] = None,
-            source_loader_params: Optional[Dict[str, Any]] = None,
-            metrics: Optional[List[Literal["compare", "evaluate"]]] = None,
+            fn: Callable[[Any], Any],
+            source_loader: Optional[Literal["backtest", "dataset"]],
+            source_loader_params: Dict[str, Any],
         ):
-            self.functions_to_evaluate[fn.__name__] = {
-                "function": fn,
-                "function_name": fn.__name__,
-                "source_loader": source_loader,
-                "source_loader_params": source_loader_params,
-                "metrics": metrics,
-            }
-
+            self.functions_to_evaluate[fn.__name__] = FunctionToEvaluate(
+                function=fn,
+                function_name=fn.__name__,
+                source_loader=source_loader,
+                source_loader_params=source_loader_params,
+            )
             return fn
 
         if fn is None:
-            return lambda fn: meta_wrapper(
-                fn, source_loader, source_loader_params, metrics
-            )
+            return lambda fn: meta_wrapper(fn, source_loader, source_loader_params)
         else:
-            return meta_wrapper(fn, source_loader, source_loader_params, metrics)
+            return meta_wrapper(fn, source_loader, source_loader_params)
 
     def get_output_from_agent(
         self,
@@ -473,7 +470,7 @@ class PhosphoTest:
         **kwargs,
     ):
         """
-        Add this as a decorator on top of the evaluation function.
+        Log the input and output to phospho
         """
         self.phospho.log(
             input=input, output=output, version_id=self.version_id, **kwargs
@@ -482,126 +479,99 @@ class PhosphoTest:
     def flush(self):
         self.phospho.flush()
 
-    def compare(
-        self, task_to_compare: Dict[str, Any]
-    ) -> None:  # task: Task, agent_function: Callable[[Any], Any]):
-        """
-        Compares the output of the task with the output of the agent function
-        """
+    # def compare(
+    #     self, task_to_compare: Dict[str, Any]
+    # ) -> None:  # task: Task, agent_function: Callable[[Any], Any]):
+    #     """
+    #     Compares the output of the task with the output of the agent function
+    #     """
 
-        test_input: TestInput = task_to_compare["test_input"]
-        agent_function = task_to_compare["agent_function"]
-        print("Comparing task id: ", test_input)
+    #     test_input: TestInput = task_to_compare["test_input"]
+    #     agent_function = task_to_compare["agent_function"]
+    #     print("Comparing task id: ", test_input)
 
-        # Get the output from the agent
-        context_input = test_input.input
-        old_output_str = test_input.output
-        new_output_str = self.get_output_from_agent(
-            function_input=test_input.function_input,
-            agent_function=agent_function,
-            metric_name="compare",
-        )
+    #     # Get the output from the agent
+    #     context_input = test_input.input
+    #     old_output_str = test_input.output
+    #     new_output_str = self.get_output_from_agent(
+    #         function_input=test_input.function_input,
+    #         agent_function=agent_function,
+    #         metric_name="compare",
+    #     )
 
-        # Ask phospho: what's the best answer to the context_input ?
-        print(f"Comparing with phospho (task: {test_input.id})")
-        self.client.compare(
-            context_input=context_input,
-            old_output=old_output_str,
-            new_output=new_output_str,
-            test_id=self.version_id,
-        )
+    #     # Ask phospho: what's the best answer to the context_input ?
+    #     print(f"Comparing with phospho (task: {test_input.id})")
+    #     self.client.compare(
+    #         context_input=context_input,
+    #         old_output=old_output_str,
+    #         new_output=new_output_str,
+    #         test_id=self.version_id,
+    # )
 
     def run(
         self,
         executor_type: Literal["parallel", "sequential"] = "parallel",
+        max_parallelism: int = 20,
     ):
         """
-        Backtesting: This function pull all the tasks logged to phospho and run the agent on them.
+        Run the tests
         """
 
         # Start timer
         start_time = time.time()
-
-        test = self.client.create_test(
-            summary={
-                function_name: {
-                    "source_loader": function_to_eval["source_loader"],
-                    "source_loader_params": function_to_eval["source_loader_params"],
-                    "metrics": function_to_eval["metrics"],
-                }
-                for function_name, function_to_eval in self.functions_to_evaluate.items()
-            }
-        )
-        test_id = test.id
-        print(f"Starting test: {test_id}")
-        os.environ["PHOSPHO_TEST_ID"] = test_id
+        print(f"Starting tests with version id: {self.version_id}")
+        # os.environ["PHOSPHO_VERSION_ID"] = self.version_id
 
         # Collect the functions.
-
         for function_name, function_to_eval in self.functions_to_evaluate.items():
+            print(f"Running: {function_name}")
             # Load the tasks
-            source_loader = function_to_eval["source_loader"]
-            source_loader_params = function_to_eval["source_loader_params"]
-            metrics = function_to_eval["metrics"]
-            agent_function = function_to_eval["function"]
+            if function_to_eval.source_loader is None:
+                # Just execute the function
+                try:
+                    function_to_eval.function()
+                except Exception as e:
+                    print(f"[red]Error running {function_name}:[/red] {e}")
+                # Go to the next function
+                continue
 
-            if source_loader == "backtest":
+            if function_to_eval.source_loader == "backtest":
                 tasks_linked_to_function: Loader = BacktestLoader(
                     client=self.client,
-                    agent_function=agent_function,
-                    **source_loader_params,
+                    agent_function=function_to_eval.function,
+                    **function_to_eval.source_loader_params,
                 )
-            elif source_loader == "dataset":
+            elif function_to_eval.source_loader == "dataset":
                 tasks_linked_to_function: Loader = DatasetLoader(
-                    agent_function=agent_function,
-                    **source_loader_params,
+                    agent_function=function_to_eval.function,
+                    **function_to_eval.source_loader_params,
                 )
             else:
                 raise NotImplementedError(
-                    f"Source loader {source_loader} is not implemented"
+                    f"Source loader {function_to_eval.source_loader} is not implemented"
                 )
 
-            # TODO : Refacto to use a phospho workload instead
-            # Just execute the functions
+            def evaluate(message: lab.Message):
+                response = function_to_eval.function(message=message)
+                self.log(
+                    input=message.content,
+                    output=response,
+                )
 
-            for metric in metrics:
-                if metric == "evaluate":
-                    evaluation_function = self.evaluate
-                elif metric == "compare":
-                    evaluation_function = self.compare
-                else:
-                    # TODO : Add more metrics
-                    raise NotImplementedError(
-                        f"Metric {metric} is not implemented. Implemented metrics: 'compare', 'evaluate'"
+            workload = lab.Workload(
+                jobs=[
+                    lab.Job(
+                        id=function_name,
+                        job_function=evaluate,
                     )
+                ]
+            )
 
-                # # Evaluate the tasks in parallel
-                # # TODO : Add more executor types to handle different types of parallelism
-                # if executor_type == "parallel":
-                #     with concurrent.futures.ThreadPoolExecutor() as executor:
-                #         # Submit tasks to the executor
-                #         # executor.map(self.evaluate_a_task, task_to_evaluate)
-                #         executor.map(evaluation_function, tasks_linked_to_function)
-                # elif executor_type == "sequential":
-                #     for task_function in tasks_linked_to_function:
-                #         evaluation_function(task_function)
-                # elif executor_type == "async":
-                #     # TODO : Do more tests with async executor and async agent_function
-                #     import asyncio
-
-                #     loop = asyncio.get_event_loop()
-                #     loop.run_until_complete(
-                #         asyncio.gather(
-                #             *[
-                #                 evaluation_function(task_function)
-                #                 for task_function in tasks_linked_to_function
-                #             ]
-                #         )
-                #     )
-                # else:
-                #     raise NotImplementedError(
-                #         f"Executor type {executor_type} is not implemented"
-                #     )
+            workload.run(
+                messages=tasks_linked_to_function,
+                executor_type=executor_type,
+                max_parallelism=max_parallelism,
+            )
 
         self.phospho.flush()
 
