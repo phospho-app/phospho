@@ -26,6 +26,7 @@ from .projects import (
     UserMetadata,
     Users,
     ProjectDataFilters,
+    QuerySessionsTasksRequest,
 )
 from .search import SearchQuery, SearchResponse
 from .sessions import Session, SessionCreationRequest, Sessions, SessionUpdateRequest
@@ -46,4 +47,3 @@ from .embeddings import (
     EmbeddingUsage,
     EmbeddingResponse,
 )
-from app.api.platform.models import QuerySessionsTasksRequest
