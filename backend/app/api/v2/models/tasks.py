@@ -34,6 +34,7 @@ class TaskFlagRequest(BaseModel):
 class TaskHumanEvalRequest(BaseModel):
     human_eval: Optional[Literal["success", "failure"]] = None
     project_id: Optional[str] = None
+    source: Optional[str] = "owner"
 
 
 class TaskUpdateRequest(BaseModel):

@@ -148,7 +148,7 @@ async def post_flag_task(
 
 
 @router.post(
-    "/tasks/{task_id}/human_eval",
+    "/tasks/{task_id}/human-eval",
     response_model=Task,
     description="Update the status of a task",
 )
@@ -200,6 +200,7 @@ async def post_human_eval_task(
     updated_task = await human_eval_task(
         task_model=task_model,
         human_eval=taskHumanEvalRequest.human_eval,
+        source=taskHumanEvalRequest.source,
     )
     return updated_task
 

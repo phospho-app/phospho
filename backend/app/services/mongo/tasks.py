@@ -76,6 +76,9 @@ async def flag_task(
     source: Optional[str] = None,
     notes: Optional[str] = None,
 ) -> Task:
+    """
+    Flags a task with a success or failure flag and updates evaluation data
+    """
     mongo_db = await get_mongo_db()
 
     if source is None:
@@ -122,13 +125,16 @@ async def flag_task(
 async def human_eval_task(
     task_model: Task,
     human_eval: str,
+    source: Optional[str] = None,
 ) -> Task:
     """
     Adds a human evaluation to a task and updates evaluation data for retrocompatibility
     """
 
     mongo_db = await get_mongo_db()
-    source = "user"
+
+    if source is None:
+        source = "owner"
 
     # Create the Evaluation object and store it in the db
     try:
@@ -155,6 +161,7 @@ async def human_eval_task(
             {"id": task_model.id},
             {"$set": update_payload},
         )
+        logger.debug(f"Task {task_model.id} updated with human eval {human_eval}")
         task_model.flag = flag
         task_model.last_eval = eval_data
         task_model.human_eval = human_eval

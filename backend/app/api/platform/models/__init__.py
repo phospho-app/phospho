@@ -20,6 +20,7 @@ from app.api.v2.models import (
     Tests,
     UserMetadata,
     Users,
+    TaskHumanEvalRequest,
 )
 
 from .abtests import ABTest, ABTests
