@@ -10,6 +10,7 @@ export interface Task {
   metadata?: Record<string, any>;
   data?: Record<string, any>;
   flag?: string;
+  human_eval?: string;
   last_eval?: Eval;
   sentiment?: SentimentObject;
   language?: string;
