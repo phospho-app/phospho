@@ -193,7 +193,22 @@ def adapt_to_sample_size(list_to_sample, sample_size):
     return sampled_list
 
 
-class BacktestLoader:
+class Loader:
+    """
+    Abstract class for loaders
+    """
+
+    def __iter__(self):
+        raise NotImplementedError
+
+    def __next__(self):
+        raise NotImplementedError
+
+    def __len__(self):
+        raise NotImplementedError
+
+
+class BacktestLoader(Loader):
     def __init__(
         self,
         client: Client,
@@ -232,7 +247,7 @@ class BacktestLoader:
         return len(self.sampled_tasks)
 
 
-class DatasetLoader:
+class DatasetLoader(Loader):
     def __init__(
         self,
         agent_function: Callable[[Any], Any],
@@ -358,7 +373,7 @@ class PhosphoTest:
     def test(
         self,
         fn: Optional[Callable[[Any], Any]] = None,
-        source_loader: Literal["backtest", "dataset"] = "backtest",
+        source_loader: Optional[Literal["backtest", "dataset"]] = "backtest",
         source_loader_params: Optional[Dict[str, Any]] = None,
         metrics: Optional[List[Literal["compare", "evaluate"]]] = None,
     ) -> Callable[[Any], Any]:
@@ -376,7 +391,7 @@ class PhosphoTest:
 
         def meta_wrapper(
             fn: Optional[Callable[[Any], Any]] = None,
-            source_loader: Literal["backtest", "dataset"] = "backtest",
+            source_loader: Optional[Literal["backtest", "dataset"]] = None,
             source_loader_params: Optional[Dict[str, Any]] = None,
             metrics: Optional[List[Literal["compare", "evaluate"]]] = None,
         ):
@@ -451,6 +466,22 @@ class PhosphoTest:
             output=new_output_str,
         )
 
+    def log(
+        self,
+        input: str,
+        output: str,
+        **kwargs,
+    ):
+        """
+        Add this as a decorator on top of the evaluation function.
+        """
+        self.phospho.log(
+            input=input, output=output, version_id=self.version_id, **kwargs
+        )
+
+    def flush(self):
+        self.phospho.flush()
+
     def compare(
         self, task_to_compare: Dict[str, Any]
     ) -> None:  # task: Task, agent_function: Callable[[Any], Any]):
@@ -505,6 +536,8 @@ class PhosphoTest:
         print(f"Starting test: {test_id}")
         os.environ["PHOSPHO_TEST_ID"] = test_id
 
+        # Collect the functions.
+
         for function_name, function_to_eval in self.functions_to_evaluate.items():
             # Load the tasks
             source_loader = function_to_eval["source_loader"]
@@ -513,13 +546,13 @@ class PhosphoTest:
             agent_function = function_to_eval["function"]
 
             if source_loader == "backtest":
-                tasks_linked_to_function = BacktestLoader(
+                tasks_linked_to_function: Loader = BacktestLoader(
                     client=self.client,
                     agent_function=agent_function,
                     **source_loader_params,
                 )
             elif source_loader == "dataset":
-                tasks_linked_to_function = DatasetLoader(
+                tasks_linked_to_function: Loader = DatasetLoader(
                     agent_function=agent_function,
                     **source_loader_params,
                 )
@@ -542,33 +575,33 @@ class PhosphoTest:
                         f"Metric {metric} is not implemented. Implemented metrics: 'compare', 'evaluate'"
                     )
 
-                # Evaluate the tasks in parallel
-                # TODO : Add more executor types to handle different types of parallelism
-                if executor_type == "parallel":
-                    with concurrent.futures.ThreadPoolExecutor() as executor:
-                        # Submit tasks to the executor
-                        # executor.map(self.evaluate_a_task, task_to_evaluate)
-                        executor.map(evaluation_function, tasks_linked_to_function)
-                elif executor_type == "sequential":
-                    for task_function in tasks_linked_to_function:
-                        evaluation_function(task_function)
-                elif executor_type == "async":
-                    # TODO : Do more tests with async executor and async agent_function
-                    import asyncio
+                # # Evaluate the tasks in parallel
+                # # TODO : Add more executor types to handle different types of parallelism
+                # if executor_type == "parallel":
+                #     with concurrent.futures.ThreadPoolExecutor() as executor:
+                #         # Submit tasks to the executor
+                #         # executor.map(self.evaluate_a_task, task_to_evaluate)
+                #         executor.map(evaluation_function, tasks_linked_to_function)
+                # elif executor_type == "sequential":
+                #     for task_function in tasks_linked_to_function:
+                #         evaluation_function(task_function)
+                # elif executor_type == "async":
+                #     # TODO : Do more tests with async executor and async agent_function
+                #     import asyncio
 
-                    loop = asyncio.get_event_loop()
-                    loop.run_until_complete(
-                        asyncio.gather(
-                            *[
-                                evaluation_function(task_function)
-                                for task_function in tasks_linked_to_function
-                            ]
-                        )
-                    )
-                else:
-                    raise NotImplementedError(
-                        f"Executor type {executor_type} is not implemented"
-                    )
+                #     loop = asyncio.get_event_loop()
+                #     loop.run_until_complete(
+                #         asyncio.gather(
+                #             *[
+                #                 evaluation_function(task_function)
+                #                 for task_function in tasks_linked_to_function
+                #             ]
+                #         )
+                #     )
+                # else:
+                #     raise NotImplementedError(
+                #         f"Executor type {executor_type} is not implemented"
+                #     )
 
         self.phospho.flush()
 

@@ -181,6 +181,7 @@ def test(
         module = load_from_file(full_test_file)
         # This assumes there is an object called phospho_test
         module.phospho_test.run()
+        module.phospho_test.flush()
     except ModuleNotFoundError as e:
         print(f"Module {test_file} not found {e}.\nRun 'phospho init' to create one.")
     except ImportError as e:
