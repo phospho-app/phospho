@@ -119,6 +119,53 @@ async def flag_task(
     return task_model
 
 
+async def human_eval_task(
+    task_model: Task,
+    human_eval: str,
+) -> Task:
+    """
+    Adds a human evaluation to a task and updates evaluation data for retrocompatibility
+    """
+
+    mongo_db = await get_mongo_db()
+    source = "user"
+
+    # Create the Evaluation object and store it in the db
+    try:
+        flag = cast(Literal["success", "failure"], human_eval)
+        eval_data = Eval(
+            project_id=task_model.project_id,
+            session_id=task_model.session_id,
+            task_id=task_model.id,
+            value=flag,
+            source=source,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to create eval: {e}")
+
+    await mongo_db["evals"].insert_one(eval_data.model_dump())
+
+    # Update the task object
+    try:
+        update_payload: Dict[str, object] = {}
+        update_payload["flag"] = flag
+        update_payload["last_eval"] = eval_data.model_dump()
+        update_payload["human_eval"] = human_eval
+        await mongo_db["tasks"].update_one(
+            {"id": task_model.id},
+            {"$set": update_payload},
+        )
+        task_model.flag = flag
+        task_model.last_eval = eval_data
+        task_model.human_eval = human_eval
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update Task {task_model.id}: {e}"
+        )
+
+    return task_model
+
+
 async def update_task(
     task_model: Task,
     metadata: Optional[dict] = None,
