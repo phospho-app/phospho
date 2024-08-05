@@ -182,7 +182,7 @@ def init(
 import os
 import phospho
 
-phospho_test = phospho.PhosphoTest(base_url="http://localhost:8000/v2")
+phospho_test = phospho.PhosphoTest()
 
 os.environ["MISTRAL_API_KEY"] = "your-api-key"
 model = "mistral-small"

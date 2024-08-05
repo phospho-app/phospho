@@ -256,7 +256,7 @@ Here is the context of the conversation:
     elif event_scope == "task_input_only":
         message_list = message.as_list()
         # Filter to keep only the user messages
-        message_list = [m for m in message_list if m.role == "User"]
+        message_list = [m for m in message_list if m.role.lower() == "user"]
         if len(message_list) == 0:
             return JobResult(
                 result_type=ResultType.bool,
@@ -279,7 +279,7 @@ User: {truncated_context}
     elif event_scope == "task_output_only":
         message_list = message.as_list()
         # Filter to keep only the assistant messages
-        message_list = [m for m in message_list if m.role == "Assistant"]
+        message_list = [m for m in message_list if m.role.lower() == "assistant"]
         truncated_context = shorten_text(
             message_list[-1].content,
             MAX_TOKENS,
