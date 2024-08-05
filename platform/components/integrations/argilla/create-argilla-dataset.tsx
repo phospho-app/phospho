@@ -10,6 +10,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
+import { generateSlug } from "@/lib/utils";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -35,66 +36,7 @@ const CreateDataset = () => {
     return <></>;
   }
 
-  // We create a function to generate a dataset name that is nice for humans
-  const colors = [
-    "green",
-    "neon",
-    "crimson",
-    "azure",
-    "emerald",
-    "sapphire",
-    "amber",
-    "violet",
-    "coral",
-    "indigo",
-    "teal",
-    "scarlet",
-    "jade",
-    "slate",
-    "ivory",
-    "bearish",
-    "bullish",
-  ];
-
-  const fruits = [
-    "mango",
-    "kiwi",
-    "pineapple",
-    "dragonfruit",
-    "papaya",
-    "lychee",
-    "pomegranate",
-    "guava",
-    "fig",
-    "passionfruit",
-    "starfruit",
-    "coconut",
-    "jackfruit",
-    "banana",
-    "pl",
-    "apple",
-  ];
-
-  function getRandomItem<T>(array: T[]): T {
-    return array[Math.floor(Math.random() * array.length)];
-  }
-
-  function getCompactDate() {
-    const date = new Date();
-    const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    return `${year}${month}${day}`;
-  }
-
-  function generateDatasetName() {
-    const color = getRandomItem(colors);
-    const fruit = getRandomItem(fruits);
-    const date = getCompactDate();
-    return `${color}-${fruit}-${date}`;
-  }
-
-  const [datasetName, setDatasetName] = useState(generateDatasetName());
+  const [datasetName, setDatasetName] = useState(generateSlug());
 
   async function createNewDataset() {
     // Disable the button while we are creating the dataset

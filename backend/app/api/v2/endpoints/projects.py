@@ -68,8 +68,6 @@ async def post_tasks(
         limit=None,
         validate_metadata=True,
         filters=query.filters,
-        sorting=query.sorting,
-        pagination=query.pagination,
     )
     return Tasks(tasks=tasks)
 
