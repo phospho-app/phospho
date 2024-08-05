@@ -95,6 +95,16 @@ def config():
     global_config = "~/.phospho/config"
 
     print("[b]🧪phospho global config[/b]")
+    print(
+        """[green]
+           __                     __        
+    ____  / /_  ____  _________  / /_  ____ 
+   / __ \/ __ \/ __ \/ ___/ __ \/ __ \/ __ \\
+  / /_/ / / / / /_/ (__  ) /_/ / / / / /_/ /
+ / .___/_/ /_/\____/____/ .___/_/ /_/\____/ 
+/_/                    /_/                  
+        [/green]"""
+    )
     print("-----------------------")
     full_path = os.path.expanduser(global_config)
     print(f"Global config file: {full_path}")
@@ -172,7 +182,7 @@ def init(
 import os
 import phospho
 
-phospho_test = phospho.PhosphoTest(base_url="http://localhost:8000/v2")
+phospho_test = phospho.PhosphoTest()
 
 os.environ["MISTRAL_API_KEY"] = "your-api-key"
 model = "mistral-small"
