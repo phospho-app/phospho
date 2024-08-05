@@ -111,7 +111,7 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
           </CardHeader>
         </Card>
       )}
-      <div>
+      <div className="pb-10">
         <div className="flex flex-row items-center mb-2 justify-between">
           <CreateNewABTestButton />
           <TableNavigation table={table} />

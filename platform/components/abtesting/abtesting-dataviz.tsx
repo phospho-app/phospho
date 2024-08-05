@@ -19,6 +19,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, ChevronDown } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import {
   Bar,
@@ -31,15 +32,41 @@ import {
 import useSWR from "swr";
 
 export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
+  // In the URL, use the search params ?a=version_id&b=version_id to set the default versions in the dropdown
+
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-  const [versionIDA, setVersionIDA] = useState<string>(versionIDs[0]);
-  const [versionIDB, setVersionIDB] = useState<string>(versionIDs[1]);
+
+  // Get the version IDs from the URL. If not present, use the first two version IDs
+  const searchParams = useSearchParams();
+
+  function computeVersionsIds() {
+    let versionADefault = searchParams.get("a");
+    let versionBDefault = searchParams.get("b");
+    if (versionADefault) {
+      versionADefault = decodeURIComponent(versionADefault);
+    } else {
+      versionADefault = versionIDs[0];
+    }
+    if (versionBDefault) {
+      versionBDefault = decodeURIComponent(versionBDefault);
+    } else {
+      versionBDefault = versionIDs[1];
+    }
+    return { versionADefault, versionBDefault };
+  }
+
+  const [versionIDA, setVersionIDA] = useState<string>(
+    computeVersionsIds().versionADefault,
+  );
+  const [versionIDB, setVersionIDB] = useState<string>(
+    computeVersionsIds().versionBDefault,
+  );
 
   useEffect(() => {
     if (versionIDs.length >= 2) {
-      setVersionIDA(versionIDs[0]);
-      setVersionIDB(versionIDs[1]);
+      setVersionIDA(computeVersionsIds().versionADefault);
+      setVersionIDB(computeVersionsIds().versionBDefault);
     }
   }, [JSON.stringify(versionIDs)]);
 
@@ -125,7 +152,7 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
         </DropdownMenu>
       </div>
       <div className="flex flex-col items-center">
-        <ResponsiveContainer width={1000} height={400}>
+        <ResponsiveContainer width={"100%"} height={400}>
           <BarChart data={graphData}>
             <XAxis dataKey="event_name" />
             <Tooltip

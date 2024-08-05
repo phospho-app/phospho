@@ -100,7 +100,7 @@ const Clusters: React.FC = () => {
           </div>
         </CardHeader>
       </Card>
-      <div className="h-full flex-1 flex-col space-y-2 md:flex ">
+      <div className="flex-col space-y-2 md:flex pb-10">
         <ClustersTable clusterings={clusteringsData?.clusterings} />
       </div>
     </>
