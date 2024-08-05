@@ -141,7 +141,7 @@ class Job:
             # generate all the possible configuration from the model
             self.alternative_configs = self.config.generate_configurations()
         else:
-            logger.warning("No job_config provided. Running with empty config")
+            logger.debug("No job_config provided. Running with empty config")
             self.config = JobConfig()
             self.alternative_configs = []
 
@@ -718,19 +718,95 @@ class Workload:
     def run(
         self,
         messages: Iterable[Message],
-        executor_type: Literal["parallel", "sequential"] = "parallel",
+        executor_type: Literal["parallel", "sequential", "parallel_jobs"] = "parallel",
         max_parallelism: int = 10,
     ):
-        """Wrapper of Workload.async_run() to run the workload synchronously."""
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        return loop.run_until_complete(
-            self.async_run(
-                messages=messages,
-                executor_type=executor_type,
-                max_parallelism=max_parallelism,
+        """
+        Runs all the jobs on the message.
+
+        Args:
+        :param messages: The messages to run the jobs on.
+        :param executor_type: The type of executor to use. Can be "parallel" or "sequential".
+        :param max_parallelism: The maximum number of parallel jobs to run per seconds.
+            Use this to adhere to rate limits. Only used if executor_type is "parallel" or "parallel_jobs".
+
+        Returns: a mapping of message.id -> job_id -> job_result
+        """
+
+        # Run the jobs sequentially on every message
+        # TODO : For Jobs, implement a batched_run method that takes a list of messages
+        if executor_type == "parallel":
+            for job_id, job in self.jobs.items():
+                # Create a progress bar
+                if hasattr(messages, "__len__"):
+                    t = tqdm(total=len(messages))
+                else:
+                    t = tqdm()
+
+                def job_limit_wrap(message: Message):
+                    # Account for the semaphore (rate limit, max_parallelism)
+                    if job.sample >= 1 or random.random() < job.sample:
+                        asyncio.run(job.async_run(message))
+                    # Update the progress bar
+                    t.update()
+
+                t.display()
+                with concurrent.futures.ThreadPoolExecutor(
+                    max_workers=max_parallelism
+                ) as executor:
+                    # Submit tasks to the executor
+                    executor_results = executor.map(job_limit_wrap, messages)
+
+                t.close()
+        elif executor_type == "parallel_jobs":
+            # Create a progress bar
+            if isinstance(messages, list):
+                t = tqdm(total=len(messages) * len(self.jobs))
+            else:
+                t = tqdm()
+
+            messages_and_jobs = itertools.product(messages, self.jobs.values())
+
+            def message_job_limit_wrap(message_and_job: Tuple[Message, Job]):
+                message, job = message_and_job
+                if job.sample >= 1 or random.random() < job.sample:
+                    asyncio.run(job.async_run(message))
+                # Update the progress bar
+                t.update()
+
+            t.display()
+            # Account for the semaphore (rate limit, max_parallelism)
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=max_parallelism
+            ) as executor:
+                # Submit tasks to the executor
+                executor_results = executor.map(
+                    message_job_limit_wrap, messages_and_jobs
+                )
+
+            t.close()
+        elif executor_type == "sequential":
+            for job_id, job in self.jobs.items():
+                for one_message in tqdm(messages):
+                    if job.sample >= 1 or random.random() < job.sample:
+                        asyncio.run(job.async_run(one_message))
+        else:
+            raise NotImplementedError(
+                f"Executor type {executor_type} is not implemented"
             )
-        )
+
+        # Collect the results:
+        # Result is a mapping of message.id -> job_id -> job_result
+        results: Dict[str, Dict[str, JobResult]] = {}
+        for one_message in messages:
+            results[one_message.id] = {}
+            for job_id, job in self.jobs.items():
+                job_result = job.results.get(one_message.id, None)
+                if job_result is not None:
+                    results[one_message.id][job.id] = job_result
+
+        self._results = results
+        return results
 
     def optimize_jobs(
         self, accuracy_threshold: float = 1.0, min_count: int = 10

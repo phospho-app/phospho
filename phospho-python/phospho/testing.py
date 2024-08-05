@@ -359,7 +359,7 @@ class PhosphoTest:
 
         # Start timer
         start_time = time.time()
-        print(f"version_id: {self.version_id}")
+        print(f"Running tests for version_id: '{self.version_id}'")
         print(f"Executor type: {executor_type}")
         print(f"Max parallelism: {max_parallelism}")
 
@@ -367,7 +367,7 @@ class PhosphoTest:
 
         # Collect the functions.
         for function_name, function_to_eval in self.functions_to_evaluate.items():
-            print(f"Running: {function_name}")
+            print(f"Running test: [green]🧪 {function_name}[/green]")
             # Load the tasks
             if function_to_eval.source_loader is None:
                 # Just execute the function
@@ -396,10 +396,8 @@ class PhosphoTest:
                 )
 
             async def evaluate(message: lab.Message):
-                print(f"Running {function_name} on message {message.content[:50]}")
                 try:
                     # The function is fed with a message and all the metadata
-                    print("1")
                     function_input = {
                         "message": message,
                         **message.metadata,
@@ -408,10 +406,8 @@ class PhosphoTest:
                     adapted_function_input = adapt_dict_to_agent_function(
                         function_input, function_to_eval.function
                     )
-                    print("2")
                     response = function_to_eval.function(**adapted_function_input)
                     # Log the input and output to phospho
-                    print("3")
                     self.log(
                         input=message.content,
                         output=response,
@@ -444,5 +440,8 @@ class PhosphoTest:
         end_time = time.time()
 
         # Display a summary of the results
-        print("Finished running the tests")
+        print("🧪[green]Finished running the tests![/green]")
         print(f"Total time: {end_time - start_time:.3f} seconds")
+        print(
+            f"[b][green]Results:[/green] https://platform.phospho.ai/org/ab-testing?b={self.version_id}[/b]"
+        )

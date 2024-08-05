@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import { generateSlug } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -78,7 +79,7 @@ const CreateNewABTestButton = () => {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      version_id: new Date().toLocaleString() ?? "",
+      version_id: generateSlug() ?? "",
     },
   });
 

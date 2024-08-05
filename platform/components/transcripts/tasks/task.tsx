@@ -114,7 +114,7 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
         <CardHeader>
           <CardTitle className="text-xl font-bold tracking-tight">
             <div className="flex justify-between">
-              Task
+              Messages
               {task.session_id && (
                 <Link href={`/org/transcripts/sessions/${task.session_id}`}>
                   <Button variant="secondary">Go to Session</Button>
