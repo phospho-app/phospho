@@ -95,6 +95,16 @@ def config():
     global_config = "~/.phospho/config"
 
     print("[b]🧪phospho global config[/b]")
+    print(
+        """[green]
+           __                     __        
+    ____  / /_  ____  _________  / /_  ____ 
+   / __ \/ __ \/ __ \/ ___/ __ \/ __ \/ __ \\
+  / /_/ / / / / /_/ (__  ) /_/ / / / / /_/ /
+ / .___/_/ /_/\____/____/ .___/_/ /_/\____/ 
+/_/                    /_/                  
+        [/green]"""
+    )
     print("-----------------------")
     full_path = os.path.expanduser(global_config)
     print(f"Global config file: {full_path}")
