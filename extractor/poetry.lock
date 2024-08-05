@@ -1386,7 +1386,7 @@ xml = ["lxml (>=4.9.2)"]
 
 [[package]]
 name = "phospho"
-version = "0.3.31"
+version = "0.3.32"
 description = "Text Analytics for LLM apps"
 optional = false
 python-versions = ">=3.9,<4.0"
