@@ -57,20 +57,41 @@ function EventAnalytics({ eventId }: { eventId: string }) {
     },
   );
 
-  const { data: classificationMetrics } = useSWR(
-    project_id && event?.score_range_settings?.score_type !== "range"
+  const { data: binaryMetrics } = useSWR(
+    project_id && event?.score_range_settings?.score_type === "confidence"
       ? [
         `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
         accessToken,
-        "f1_score",
-        "precision",
-        "recall",
+        "f1_score_binary",
+        "precision_binary",
+        "recall_binary",
         JSON.stringify(eventFilters),
       ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        metrics: ["f1_score", "precision", "recall"],
+        metrics: ["f1_score_binary", "precision_binary", "recall_binary"],
+        filters: eventFilters,
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+
+  const { data: classificationMetrics } = useSWR(
+    project_id && event?.score_range_settings?.score_type === "category"
+      ? [
+        `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
+        accessToken,
+        "f1_score_multiclass",
+        "precision_multiclass",
+        "recall_multiclass",
+        JSON.stringify(eventFilters),
+      ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["f1_score_multiclass", "precision_multiclass", "recall_multiclass"],
         filters: eventFilters,
       }),
     {
@@ -144,7 +165,41 @@ function EventAnalytics({ eventId }: { eventId: string }) {
           </Card></>
       )}
       {/* if the score type is confidence or category but there is not enough data to compute the scores, we display a not enough feedback message */}
-      {(!classificationMetrics?.f1_score) && (event?.score_range_settings?.score_type != "range") && (
+      {(!classificationMetrics?.f1_score_multiclass) && (event?.score_range_settings?.score_type === "category") && (
+        <>
+          <Card className="bg-secondary">
+            <CardHeader>
+              <div className="flex">
+                <Tag className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+
+                <div className="flex flex-grow justify-between items-center">
+                  <div>
+                    <CardTitle className="text-2xl font-bold tracking-tight mb-0">
+                      <div className="flex flex-row place-items-center">
+                        Unlock event metrics !
+                      </div>
+                    </CardTitle>
+                    <CardDescription className="flex justify-between flex-col text-muted-foreground space-y-0.5">
+                      <p>
+                        Label more data to compute the F1-score, Precision and
+                        Recall.
+                      </p>
+                    </CardDescription>
+                  </div>
+
+                  <Link href="/org/transcripts/sessions">
+                    <Button variant="default">
+                      Label data
+                      <ChevronRight className="ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        </>
+      )}
+      {(!binaryMetrics?.f1_score_binary) && (event?.score_range_settings?.score_type === "confidence") && (
         <>
           <Card className="bg-secondary">
             <CardHeader>
@@ -194,17 +249,17 @@ function EventAnalytics({ eventId }: { eventId: string }) {
             </CardContent>
           </Card>
           {/* If we have enough data to compute the scores, we display the F1-score, Precision and Recall cards */}
-          {event?.score_range_settings?.score_type != "range" && (
+          {event?.score_range_settings?.score_type === "category" && (
             <>
               <Card>
                 <CardHeader>
                   <CardDescription>F1-score</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(classificationMetrics?.f1_score && (
-                    <p className="text-xl">{classificationMetrics?.f1_score.toFixed(2)}</p>
+                  {(classificationMetrics?.f1_score_multiclass && (
+                    <p className="text-xl">{classificationMetrics?.f1_score_multiclass.toFixed(2)}</p>
                   )) ||
-                    (!classificationMetrics?.f1_score && <p className="text-xl"> ... </p>)}
+                    (!classificationMetrics?.f1_score_multiclass && <p className="text-xl"> ... </p>)}
                 </CardContent>
               </Card>
               <Card>
@@ -212,10 +267,10 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Precision</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(classificationMetrics?.f1_score && (
-                    <p className="text-xl">{classificationMetrics?.precision.toFixed(2)}</p>
+                  {(classificationMetrics?.f1_score_multiclass && (
+                    <p className="text-xl">{classificationMetrics?.precision_multiclass.toFixed(2)}</p>
                   )) ||
-                    (!classificationMetrics?.f1_score && <p className="text-xl">...</p>)}
+                    (!classificationMetrics?.f1_score_multiclass && <p className="text-xl">...</p>)}
                 </CardContent>
               </Card>
               <Card>
@@ -223,10 +278,47 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Recall</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(classificationMetrics?.f1_score && (
-                    <p className="text-xl">{classificationMetrics?.recall.toFixed(2)}</p>
+                  {(classificationMetrics?.f1_score_multiclass && (
+                    <p className="text-xl">{classificationMetrics?.recall_multiclass.toFixed(2)}</p>
                   )) ||
-                    (!classificationMetrics?.f1_score && <p className="text-xl">...</p>)}
+                    (!classificationMetrics?.f1_score_multiclass && <p className="text-xl">...</p>)}
+                </CardContent>
+              </Card>
+            </>
+          )}
+          {event?.score_range_settings?.score_type === "confidence" && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardDescription>F1-score</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(binaryMetrics?.f1_score_binary && (
+                    <p className="text-xl">{binaryMetrics?.f1_score_binary.toFixed(2)}</p>
+                  )) ||
+                    (!binaryMetrics?.f1_score_binary && <p className="text-xl"> ... </p>)}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardDescription>Precision</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(binaryMetrics?.f1_score_binary && (
+                    <p className="text-xl">{binaryMetrics?.precision_binary.toFixed(2)}</p>
+                  )) ||
+                    (!binaryMetrics?.f1_score_binary && <p className="text-xl">...</p>)}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardDescription>Recall</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {(binaryMetrics?.f1_score_binary && (
+                    <p className="text-xl">{binaryMetrics?.recall_binary.toFixed(2)}</p>
+                  )) ||
+                    (!binaryMetrics?.f1_score_binary && <p className="text-xl">...</p>)}
                 </CardContent>
               </Card>
             </>
