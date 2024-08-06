@@ -4,27 +4,22 @@ from typing import Callable, List, Optional
 
 import httpx
 import stripe
+
 from app.api.v2.models import LogEvent
 from app.api.v3.models import MinimalLogEventForMessages
 from app.core import config
-from app.security import propelauth
 from app.services.slack import slack_notification
-from app.utils import generate_uuid, health_check
+from app.utils import generate_uuid
+from app.temporal.pydantic_converter import pydantic_data_converter
+from app.security import propelauth
 from loguru import logger
 
 from phospho.lab import Message
 from phospho.models import PipelineResults, Recipe, Task
 
+from temporalio.client import Client, TLSConfig
 
-def check_health_extractor():
-    """
-    Check if the extractor server is healthy
-    """
-    extractor_is_healthy = health_check(f"{config.EXTRACTOR_URL}/v1/health")
-    if not extractor_is_healthy:
-        logger.error(f"Extractor server is not reachable at url {config.EXTRACTOR_URL}")
-    else:
-        logger.info(f"Extractor server is reachable at url {config.EXTRACTOR_URL}")
+import os
 
 
 async def bill_on_stripe(
@@ -81,29 +76,22 @@ class ExtractorClient:
         self.org_id = org_id
         self.project_id = project_id
 
-    async def _compute_stripe_usage(self, nb_job_results: int) -> None:
+    async def _fetch_stripe_customer_id(self) -> Optional[str]:
         """
-        Compute the usage on Stripe
+        Fetch the Stripe customer id from the organization metadata
         """
-        from app.services.mongo.projects import get_project_by_id
 
-        # Fetch the project settings
-        project = await get_project_by_id(self.project_id)
-        # Find out the number of active events and if sentiment and language analysis are enabled
-        usage_per_log = 0
-        if project.settings.run_event_detection:
-            usage_per_log += len(project.settings.events)
-        if project.settings.run_sentiment:
-            usage_per_log += 1
-        if project.settings.run_language:
-            usage_per_log += 1
-        if project.settings.run_evals:
-            usage_per_log += 1
+        if config.ENVIRONMENT == "preview" or config.ENVIRONMENT == "test":
+            logger.debug("Preview environment, stripe billing disabled")
+            return None
 
-        await bill_on_stripe(
-            org_id=self.org_id,
-            nb_credits_used=nb_job_results * usage_per_log,
-        )
+        if self.org_id is None:
+            logger.error("Org_id is missing.")
+            return None
+
+        org = await propelauth.fetch_org(self.org_id)
+        org_metadata = org.get("metadata", {})
+        return org_metadata.get("customer_id", None)
 
     async def _post(
         self,
@@ -114,41 +102,42 @@ class ExtractorClient:
         """
         Post data to the extractor server
         """
-        url = f"{config.EXTRACTOR_URL}/v1/{endpoint}"
-        headers = {
-            "Authorization": f"Bearer {config.EXTRACTOR_SECRET_KEY}",
-            "Content-Type": "application/json",
-        }
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(
-                    url, json=data, headers=headers, timeout=60
-                )
-                if response.status_code != 200:
-                    logger.error(
-                        f"Error returned when calling extractor API (status code: {response.status_code}): {response.text}"
-                    )
-                    # If we are in production, send a Slack message
-                    if config.ENVIRONMENT == "production":
-                        await slack_notification(
-                            f"Error returned when calling extractor API (status code: {response.status_code}): {response.text}"
-                        )
-                if response.status_code == 200 and on_success_callback:
-                    await on_success_callback(response)
 
-                return response
-            except Exception as e:
-                error_id = generate_uuid()
-                error_message = f"Caught error while calling extractor API (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
-                logger.error(error_message)
+        try:
+            with open(os.getenv("TEMPORAL_MTLS_TLS_CERT"), "rb") as f:
+                client_cert = f.read()
+            with open(os.getenv("TEMPORAL_MTLS_TLS_KEY"), "rb") as f:
+                client_key = f.read()
 
-                traceback.print_exc()
-                if config.ENVIRONMENT == "production":
-                    if len(error_message) > 300:
-                        slack_message = error_message[:300]
-                    else:
-                        slack_message = error_message
-                    await slack_notification(slack_message)
+            client: Client = await Client.connect(
+                os.getenv("TEMPORAL_HOST_URL"),
+                namespace=os.getenv("TEMPORAL_NAMESPACE"),
+                tls=TLSConfig(
+                    client_cert=client_cert,
+                    client_private_key=client_key,
+                ),
+                data_converter=pydantic_data_converter,
+            )
+
+            response = await client.execute_workflow(
+                endpoint, data, id="extractor", task_queue="default"
+            )
+
+            if on_success_callback:
+                await on_success_callback(response)
+
+        except Exception as e:
+            error_id = generate_uuid()
+            error_message = f"Caught error while calling temporal workflow (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            logger.error(error_message)
+
+            traceback.print_exc()
+            if config.ENVIRONMENT == "production":
+                if len(error_message) > 300:
+                    slack_message = error_message[:300]
+                else:
+                    slack_message = error_message
+                await slack_notification(slack_message)
 
         return None
 
@@ -164,7 +153,7 @@ class ExtractorClient:
             extra_logs_to_save = []
 
         await self._post(
-            "pipelines/log",
+            "post_log_tasks",
             {
                 "logs_to_process": [
                     log_event.model_dump(mode="json") for log_event in logs_to_process
@@ -175,6 +164,7 @@ class ExtractorClient:
                 ],
                 "project_id": self.project_id,
                 "org_id": self.org_id,
+                "customer_id": await self._fetch_stripe_customer_id(),
             },
             on_success_callback=lambda response: self._compute_stripe_usage(
                 nb_job_results=response.json().get("nb_job_results", 0),
@@ -195,7 +185,7 @@ class ExtractorClient:
             extra_logs_to_save = []
 
         await self._post(
-            "pipelines/log/messages",
+            "run_process_logs_for_messages_workflow",
             {
                 "logs_to_process": [
                     log_event.model_dump(mode="json") for log_event in logs_to_process
@@ -216,10 +206,16 @@ class ExtractorClient:
         """
         Run the log procesing pipeline on a task
         """
+
+        if task.org_id is None:
+            logger.error("Task.org_id is missing.")
+            return PipelineResults()
+
         result = await self._post(
-            "pipelines/main/task",
+            "post_main_pipeline_on_task_workflow",
             {
                 "task": task.model_dump(mode="json"),
+                "customer_id": await self._fetch_stripe_customer_id(),
             },
         )
         if result is None or result.status_code != 200:
@@ -238,15 +234,18 @@ class ExtractorClient:
             logger.debug(f"No messages to process for project {self.project_id}")
             return PipelineResults()
 
+        if self.org_id is None:
+            logger.error("Org_id is missing.")
+            return PipelineResults()
+
         result = await self._post(
-            "pipelines/main/messages",
+            "run_main_pipeline_on_messages_workflow",
             {
                 "messages": [message.model_dump(mode="json") for message in messages],
                 "project_id": self.project_id,
+                "org_id": self.org_id,
+                "customer_id": await self._fetch_stripe_customer_id(),
             },
-            on_success_callback=lambda response: self._compute_stripe_usage(
-                nb_job_results=1,
-            ),
         )
         if result is None or result.status_code != 200:
             return PipelineResults()
@@ -262,23 +261,24 @@ class ExtractorClient:
             logger.debug(f"No tasks to process for recipe {recipe.id}")
             return
 
-        await self._post(
-            "pipelines/recipes",
-            {
-                "tasks": [task.model_dump(mode="json") for task in tasks],
-                "recipe": recipe.model_dump(mode="json"),
-            },
-            on_success_callback=lambda response: self._compute_stripe_usage(
-                nb_job_results=response.json().get("nb_job_results", 0),
-            ),
-        )
+        if recipe.org_id is None:
+            logger.error("recipe.org_id is missing.")
+        else:
+            await self._post(
+                "run_recipe_on_task_workflow",
+                {
+                    "tasks": [task.model_dump(mode="json") for task in tasks],
+                    "recipe": recipe.model_dump(mode="json"),
+                    "customer_id": await self._fetch_stripe_customer_id(),
+                },
+            )
 
     async def store_open_telemetry_data(
         self,
         open_telemetry_data: dict,
     ):
         await self._post(
-            "pipelines/opentelemetry",
+            "store_open_telemetry_data_workflow",
             {
                 "open_telemetry_data": open_telemetry_data,
                 "project_id": self.project_id,
@@ -294,7 +294,7 @@ class ExtractorClient:
         max_usage: Optional[int] = None,
     ):
         await self._post(
-            "pipelines/langsmith",
+            "extract_langsmith_data_workflow",
             {
                 "langsmith_api_key": langsmith_api_key,
                 "langsmith_project_name": langsmith_project_name,
@@ -302,10 +302,8 @@ class ExtractorClient:
                 "org_id": self.org_id,
                 "current_usage": current_usage,
                 "max_usage": max_usage,
+                "customer_id": await self._fetch_stripe_customer_id(),
             },
-            on_success_callback=lambda response: self._compute_stripe_usage(
-                nb_job_results=response.json().get("nb_job_results", 0),
-            ),
         )
 
     async def collect_langfuse_data(
@@ -316,7 +314,7 @@ class ExtractorClient:
         max_usage: Optional[int] = None,
     ):
         await self._post(
-            "pipelines/langfuse",
+            "extract_langfuse_data_workflow",
             {
                 "langfuse_secret_key": langfuse_secret_key,
                 "langfuse_public_key": langfuse_public_key,
@@ -324,8 +322,6 @@ class ExtractorClient:
                 "org_id": self.org_id,
                 "current_usage": current_usage,
                 "max_usage": max_usage,
+                "customer_id": await self._fetch_stripe_customer_id(),
             },
-            on_success_callback=lambda response: self._compute_stripe_usage(
-                nb_job_results=response.json().get("nb_job_results", 0),
-            ),
         )

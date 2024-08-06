@@ -37,7 +37,7 @@ async def post_run_recipes(
     if (
         not customer_id
         and org_id != config.PHOSPHO_ORG_ID
-        and config.ENVIRONMENT != "preview"
+        and config.ENVIRONMENT in ["production", "staging"]
     ):
         raise HTTPException(
             status_code=402,
