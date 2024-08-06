@@ -47,6 +47,7 @@ sqlmodel = "^0.0.20"
 psycopg2-binary = "^2.9.9"
 scikit-learn = "^1.5.1"
 customerio-cdp-analytics = "^0.0.2"
+temporalio = "^1.6.0"
 
 [tool.poetry.group.dev]
 optional = true
