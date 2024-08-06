@@ -1,5 +1,5 @@
 from app.services.mongo.recipes import (
-    get_recipe_from_event_id,
+    get_recipe_from_event_definition_id,
     run_recipe_on_tasks_batched,
 )
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -71,10 +71,9 @@ async def post_backfill_event(
         created_at_start=event_backfill_request.created_at_start,
         created_at_end=event_backfill_request.created_at_end,
     )
-    recipe = await get_recipe_from_event_id(
-        project_id=project_id, event_id=event_backfill_request.event_id
+    recipe = await get_recipe_from_event_definition_id(
+        project_id=project_id, event_definition_id=event_backfill_request.event_id
     )
-
     background_tasks.add_task(
         run_recipe_on_tasks_batched,
         project_id=project_id,

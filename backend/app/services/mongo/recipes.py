@@ -8,7 +8,7 @@ from app.services.mongo.projects import get_project_by_id
 from app.services.mongo.tasks import get_all_tasks, get_total_nb_of_tasks
 from fastapi import HTTPException
 from loguru import logger
-from phospho.models import ProjectDataFilters, Recipe
+from phospho.models import EventDefinition, ProjectDataFilters, Recipe
 
 
 async def get_recipe_by_id(recipe_id: str) -> Recipe:
@@ -34,6 +34,24 @@ async def get_recipe_from_event_id(project_id: str, event_id: str) -> Recipe:
         )
 
     recipe = await get_recipe_by_id(recipe_id=event_definition.recipe_id)
+    return recipe
+
+
+async def get_recipe_from_event_definition_id(
+    project_id: str, event_definition_id: str
+) -> Recipe:
+    mongo_db = await get_mongo_db()
+    event_definition = await mongo_db["event_definitions"].find_one(
+        {"id": event_definition_id}
+    )
+    event_definition_validated = EventDefinition.model_validate(event_definition)
+    if event_definition_validated.recipe_id is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Event {event_definition.event_name} has no recipe_id for project {project_id}.",
+        )
+
+    recipe = await get_recipe_by_id(recipe_id=event_definition_validated.recipe_id)
     return recipe
 
 
