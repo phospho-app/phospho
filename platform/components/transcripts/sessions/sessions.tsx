@@ -1,5 +1,6 @@
 "use client";
 
+import { SendDataCallout } from "@/components/callouts/import-data";
 import SessionsDataviz from "@/components/transcripts/sessions/session-dataviz";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,13 +32,21 @@ const Sessions: React.FC = () => {
   );
   const hasSessions: boolean = hasSessionData?.has_sessions;
 
+  const { data: hasTasksData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
+  );
+  const hasTasks: boolean = hasTasksData?.has_tasks;
+
   if (!project_id) {
     return <></>;
   }
 
   return (
     <>
-      {!hasSessions && (
+      <SendDataCallout />
+      {hasTasks && !hasSessions && (
         <Card className="bg-secondary">
           <CardHeader>
             <div className="flex justify-between items-center">
