@@ -13,7 +13,6 @@ ENVIRONMENT="test"
 EXTRACTOR_SECRET_KEY=""
 MONGODB_NAME="test"
 MONGODB_URL=""
-COHERE_API_KEY=""
 OPENAI_API_KEY=""
 TEST_PROPELAUTH_ORG_ID=""
 GCP_JSON_CREDENTIALS='{}'
@@ -30,6 +29,7 @@ poetry install --with dev
 ```bash
 poetry run uvicorn app.main:app --reload --port 7605
 ```
+
 **Warning:** You have to put your EXTRACTOR_SECRET_KEY in your backend .env.
 
 ## Security
