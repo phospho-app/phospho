@@ -63,9 +63,9 @@ const TaskBox = ({
           key={task.id}
         />
       </div>
-      <div className="flex flex-col space-y-0.5 ">
+      <div className="flex flex-col space-y-2">
         {task.metadata?.system_prompt && (
-          <div className="flex justify-start pt-1">
+          <div className="flex justify-start">
             <div className="flex flex-col">
               <div className="text-muted-foreground ml-4 text-xs">
                 System Prompt:
@@ -79,7 +79,7 @@ const TaskBox = ({
           </div>
         )}
         <div className="flex justify-start">
-          <div>
+          <div className="flex flex-col">
             <div className="text-muted-foreground ml-4 text-xs">User:</div>
             <div className="bg-green-500 text-secondary min-w-[200px] rounded-lg px-2 py-1 mx-2 whitespace-pre-wrap">
               {task.input && (
@@ -89,7 +89,7 @@ const TaskBox = ({
           </div>
         </div>
         {task.output && (
-          <div className="flex justify-start pt-1">
+          <div className="flex justify-start">
             <div className="flex flex-col">
               <div className="text-muted-foreground ml-4 text-xs">
                 Assistant:
