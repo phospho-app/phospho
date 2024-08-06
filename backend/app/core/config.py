@@ -78,8 +78,8 @@ QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 
 ### WATCHERS ###
 EVALUATION_SOURCE = "phospho-6"  # If phospho
-FEW_SHOT_MIN_NUMBER_OF_EXAMPLES = 10  # Make it even
-# FEW_SHOT_MAX_NUMBER_OF_EXAMPLES = 50  # Imposed by Cohere API # unused
+# Display a nudge to annotate until this number of examples is reached
+ANNOTATION_NUDGE_UNTIL_N_EXAMPLES = 10
 
 ### ARGILLA SERVER (annotations) ###
 ARGILLA_URL = os.getenv("ARGILLA_URL", None)
