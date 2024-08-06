@@ -117,7 +117,7 @@ async def post_project_has_enough_labelled_tasks(
         )
     await verify_if_propelauth_user_can_access_project(user, project_id)
     # The number of labelled tasks to consider the project as having enough labelled tasks
-    enough = config.FEW_SHOT_MIN_NUMBER_OF_EXAMPLES
+    enough = config.ANNOTATION_NUDGE_UNTIL_N_EXAMPLES
     currently_labelled_tasks = await project_has_enough_labelled_tasks(
         project_id=project_id, enough=enough
     )
