@@ -121,6 +121,8 @@ class LangfuseConnector(BaseConnector):
             return last_langfuse_extract
         elif isinstance(last_langfuse_extract, str):
             return datetime.strptime(last_langfuse_extract, "%Y-%m-%d %H:%M:%S.%f")
+        elif last_langfuse_extract is None:
+            return None
         else:
             logger.error(
                 f"Error while getting last Langfuse extract for project {self.project_id}: {last_langfuse_extract} is neither a datetime nor a string: {type(last_langfuse_extract)}"
