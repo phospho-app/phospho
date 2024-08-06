@@ -58,7 +58,6 @@ jobs:
           PHOSPHO_BACKEND_URL: ${{ vars.PHOSPHO_BACKEND_URL }}
           TEST_PROPELAUTH_ORG_ID: ${{ vars.TEST_PROPELAUTH_ORG_ID }}
           TEST_PROPELAUTH_USER_ID: ${{ vars.TEST_PROPELAUTH_USER_ID }}
-          COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
           PHOSPHO_API_KEY_ONBOARDING: ${{ secrets.PHOSPHO_API_KEY_ONBOARDING }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }} # Note: this is a dummy variable in test environment

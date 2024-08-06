@@ -28,6 +28,7 @@ Learn more in the full [documentation](https://docs.phospho.ai/welcome).
 </div>
 
 ## Demo
+
 https://github.com/phospho-app/phospho/assets/66426745/5422d3b5-4f78-4445-be72-ff51eba26efb
 
 ## Quickstart: Discover the phospho lab in pure python
@@ -68,7 +69,6 @@ git clone git@github.com:phospho-app/phospho.git && cd phospho
 2. Register to the core external services:
 
 - [OpenAI](https://platform.openai.com) if you do not want to use Ollama
-- [Cohere](https://cohere.com) optional (the free developer tier is enough for testing purposes)
 - [Propelauth](https://www.propelauth.com) (the free tier is enough for testing purposes)
 
 3. Create a copy of the `.env.example` file as a `.env.docker` files
