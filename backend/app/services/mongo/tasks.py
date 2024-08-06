@@ -285,16 +285,13 @@ async def add_event_to_task(
         score_range_value = (
             event.score_range_settings.categories.index(score_category_label) + 1
         )
-    if score_range_value is None:
-        score_range = None
-    else:
-        score_range = ScoreRange(
-            score_type=event.score_range_settings.score_type,
-            min=event.score_range_settings.min,
-            max=event.score_range_settings.max,
-            label=score_category_label,
-            value=score_range_value,
-        )
+    score_range = ScoreRange(
+        score_type=event.score_range_settings.score_type,
+        min=event.score_range_settings.min,
+        max=event.score_range_settings.max,
+        label=score_category_label,
+        value=score_range_value,
+    )
 
     # Add the event to the events collection and to the task
     detected_event_data = Event(
