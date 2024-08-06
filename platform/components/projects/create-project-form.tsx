@@ -107,7 +107,7 @@ const CreateProjectDialog = ({
       setIsCreating(false);
       setOpen(false);
       // Redirect to the new project
-      router.push(`/org/transcripts/tasks`);
+      router.push(`/org/transcripts`);
     } else {
       setIsCreated(false);
       setIsCreating(false);
