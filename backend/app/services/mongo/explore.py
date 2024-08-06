@@ -1607,15 +1607,19 @@ async def get_y_pred_y_true(
     main_filter["event_definition.id"] = {"$in": filters.event_id}
 
     query_result = await mongo_db["events"].find(main_filter).to_list(length=None)
+    logger.debug(f"Query result: {len(query_result)}")
     if query_result is None or len(query_result) == 0:
         logger.info("No events found")
         return None, None
 
     first_event = Event.model_validate(query_result[0])
+    logger.debug(f"First event: {first_event.event_name}")
     event_type = first_event.event_definition.score_range_settings.score_type
+    logger.debug(f"Event type: {event_type}")
 
     # Convert to DataFrame
     df = pd.DataFrame(query_result)
+    logger.debug(f"DataFrame: {df['confirmed']}")
     if event_type == "confidence":
         mask_y_pred_true = (
             (
@@ -1639,24 +1643,9 @@ async def get_y_pred_y_true(
         )
 
         mask_y_pred_false = (
-            (
-                (df["source"] == "owner")
-                & (~df["confirmed"])
-                & (~df["removed"])
-                & (df["score_range"].notna())
-            )
-            | (
-                (df["source"] == "owner")
-                & (df["confirmed"])
-                & (~df["removed"])
-                & (df["score_range"].notna())
-            )
-            | (
-                (df["source"] == "owner")
-                & (df["confirmed"])
-                & (df["removed"])
-                & (df["score_range"].notna())
-            )
+            ((df["source"] == "owner") & (~df["confirmed"]) & (~df["removed"]))
+            | ((df["source"] == "owner") & (df["confirmed"]) & (~df["removed"]))
+            | ((df["source"] == "owner") & (df["confirmed"]) & (df["removed"]))
         )
 
         mask_y_true_true = (
@@ -1763,7 +1752,6 @@ async def get_y_pred_y_true(
     else:
         y_pred = None
         y_true = None
-
     return y_pred, y_true
 
 
@@ -1792,9 +1780,12 @@ async def get_events_aggregated_metrics(
     performance_metrics = [
         "mean_squared_error",
         "r_squared",
-        "f1_score",
-        "precision",
-        "recall",
+        "f1_score_binary",
+        "precision_binary",
+        "recall_binary",
+        "f1_score_multiclass",
+        "precision_multiclass",
+        "recall_multiclass",
     ]
     if filters.event_id is not None:
         if len(set(metrics).intersection(set(performance_metrics))) > 0:
@@ -1807,14 +1798,24 @@ async def get_events_aggregated_metrics(
                     output["mean_squared_error"] = mean_squared_error(y_true, y_pred)
                 if "r_squared" in metrics:
                     output["r_squared"] = r2_score(y_true, y_pred)
-                if "f1_score" in metrics:
-                    output["f1_score"] = f1_score(y_true, y_pred, average="weighted")
-                if "precision" in metrics:
-                    output["precision"] = precision_score(
+                if "f1_score_binary" in metrics:
+                    output["f1_score_binary"] = f1_score(y_true, y_pred)
+                if "precision_binary" in metrics:
+                    output["precision_binary"] = precision_score(y_true, y_pred)
+                if "recall_binary" in metrics:
+                    output["recall_binary"] = recall_score(y_true, y_pred)
+                if "f1_score_multiclass" in metrics:
+                    output["f1_score_multiclass"] = f1_score(
                         y_true, y_pred, average="weighted"
                     )
-                if "recall" in metrics:
-                    output["recall"] = recall_score(y_true, y_pred, average="weighted")
+                if "precision_multiclass" in metrics:
+                    output["precision_multiclass"] = precision_score(
+                        y_true, y_pred, average="weighted"
+                    )
+                if "recall_multiclass" in metrics:
+                    output["recall_multiclass"] = recall_score(
+                        y_true, y_pred, average="weighted"
+                    )
             else:
                 logger.info(f"No y_pred and y_true found for event {filters.event_id}")
     else:
