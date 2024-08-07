@@ -9,7 +9,10 @@ class BacktestLoader:
     sampled_tasks: Optional[Iterator[phospho.lab.Message]]
     sample_size: int
 
-    def __init__(self, project_id: str):
+    def __init__(
+        self,
+        project_id: str,
+    ):
         self.sampled_tasks = None
         self.project_id = project_id
         self.sample_size = 0
@@ -20,6 +23,7 @@ class BacktestLoader:
     async def __anext__(self) -> phospho.lab.Message:
         if self.sampled_tasks is None:
             # Fetch tasks
+            # TODO : Add filter on version_id
             tasks = await get_all_tasks(project_id=self.project_id)
             messages: List[phospho.lab.Message] = []
             for task in tasks:
@@ -84,14 +88,7 @@ async def run_backtests(
         ]
         await extractor_client.run_log_process_for_tasks(logs_to_process)
 
-    workload = phospho.lab.Workload(
-        jobs=[
-            phospho.lab.Job(
-                id="run_model",
-                job_function=run_model,
-            )
-        ]
-    )
+    workload = phospho.lab.Workload(jobs=[run_model])
     workload.run(
         messages=messages,
         executor_type="parallel",
