@@ -12,10 +12,12 @@ class BacktestLoader:
     def __init__(
         self,
         project_id: str,
+        filters: Optional[phospho.models.ProjectDataFilters] = None,
     ):
         self.sampled_tasks = None
         self.project_id = project_id
         self.sample_size = 0
+        self.filters = filters
 
     async def __aiter__(self):
         return self
@@ -24,7 +26,9 @@ class BacktestLoader:
         if self.sampled_tasks is None:
             # Fetch tasks
             # TODO : Add filter on version_id
-            tasks = await get_all_tasks(project_id=self.project_id)
+            tasks = await get_all_tasks(
+                project_id=self.project_id, filters=self.filters
+            )
             messages: List[phospho.lab.Message] = []
             for task in tasks:
                 # Convert to a lab.Message
@@ -53,11 +57,12 @@ async def run_backtests(
     version_id: str,
     project_id: str,
     org_id: str,
+    filters: phospho.models.ProjectDataFilters,
 ) -> None:
     provider, model = phospho.lab.get_provider_and_model(provider_and_model)
     client = phospho.lab.get_async_client(provider)
 
-    messages: Iterator[phospho.lab.Message] = BacktestLoader(project_id=project_id)
+    messages = BacktestLoader(project_id=project_id, filters=filters)
 
     extractor_client = ExtractorClient(
         project_id=project_id,
@@ -90,9 +95,11 @@ async def run_backtests(
 
     workload = phospho.lab.Workload(jobs=[run_model])
     workload.run(
-        messages=messages,
+        messages=[m async for m in messages],
         executor_type="parallel",
         max_parallelism=20,
     )
+
+    # TODO: Add billing
 
     return None

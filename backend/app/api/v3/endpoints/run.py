@@ -7,7 +7,7 @@ from app.services.backtest import run_backtests
 from app.services.mongo.extractor import ExtractorClient
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
-from phospho.models import PipelineResults
+from phospho.models import PipelineResults, ProjectDataFilters
 
 router = APIRouter(tags=["Run"])
 
@@ -67,6 +67,10 @@ async def post_run_backtests(
             status_code=403,
             detail="Usage quota exceeded",
         )
+
+    if request.filters is None:
+        request.filters = ProjectDataFilters()
+
     background_tasks.add_task(
         run_backtests,
         system_prompt_template=request.system_prompt_template,
@@ -75,8 +79,10 @@ async def post_run_backtests(
         version_id=request.version_id,
         project_id=request.project_id,
         org_id=org_id,
+        filters=request.filters,
     )
     return {
-        "message": "Backtests are running in the background",
+        "message": "Backtests are running in the background.",
+        "url": "https://platform.phospho.ai/",
         # todo: add url
     }
