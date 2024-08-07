@@ -1,3 +1,9 @@
+"""
+This file comes from the Temporal Python SDK, it follows temporal's recommendations to pass pydantic models
+
+https://github.com/temporalio/samples-python/tree/main/pydantic_converter
+"""
+
 import json
 from typing import Any, Optional
 
