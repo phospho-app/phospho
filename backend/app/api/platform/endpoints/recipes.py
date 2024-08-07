@@ -8,6 +8,7 @@ from app.security.authentification import (
     verify_if_propelauth_user_can_access_project,
 )
 from app.core import config
+from loguru import logger
 
 router = APIRouter(tags=["Recipes"])
 
@@ -43,6 +44,10 @@ async def post_run_recipes(
             status_code=402,
             detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
         )
+
+    logger.debug(
+        f"Runinng follwoing recipes on project {project_id}: {run_recipe_request.recipe_type_list}"
+    )
 
     background_tasks.add_task(
         run_recipe_types_on_tasks,

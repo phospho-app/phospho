@@ -53,7 +53,7 @@ const RunAnalysisInPast = ({
 }) => {
   const router = useRouter();
   const { accessToken } = useUser();
-  const [checkedEval, setCheckedEval] = useState(true);
+  const [checkedEval, setCheckedEval] = useState(false);
   const [checkedEvent, setCheckedEvent] = useState(true);
   const [checkedLangSent, setCheckedLangSent] = useState(true);
   const [totalAnalytics, setTotalAnalytics] = useState(0);
@@ -118,7 +118,7 @@ const RunAnalysisInPast = ({
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      recipe_type_list: ["evaluation", "event_detection", "sentiment_language"],
+      recipe_type_list: ["event_detection", "sentiment_language"], // "evaluation"
     },
   });
 
