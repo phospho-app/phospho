@@ -76,7 +76,9 @@ const RunClusters = ({
     return <></>;
   }
 
-  async function runClusterAnalysis() {
+  async function runClusterAnalysis(
+    messages_or_sessions: "messages" | "sessions" = "messages",
+  ) {
     setLoading(true);
     mutateClusterings((data: any) => {
       const newClustering: Clustering = {
@@ -87,6 +89,7 @@ const RunClusters = ({
         created_at: Date.now() / 1000,
         status: "started",
         clusters_ids: [],
+        messages_or_sessions: messages_or_sessions,
       };
       const newData = {
         clusterings: [newClustering, ...data?.clusterings],
@@ -102,6 +105,7 @@ const RunClusters = ({
         },
         body: JSON.stringify({
           filters: dataFilters,
+          messages_or_sessions: messages_or_sessions,
         }),
       }).then((response) => {
         if (response.status == 200) {
@@ -179,7 +183,7 @@ const RunClusters = ({
               <div className="flex justify-end">
                 <Button
                   type="submit"
-                  onClick={runClusterAnalysis}
+                  onClick={() => runClusterAnalysis(messagesOrSessions)}
                   disabled={clusteringUnavailable || loading}
                 >
                   {(loading || clusteringUnavailable) && <Spinner className="mr-2" />}
@@ -210,7 +214,7 @@ const RunClusters = ({
               <div className="flex justify-end">
                 <Button
                   type="submit"
-                  onClick={runClusterAnalysis}
+                  onClick={() => runClusterAnalysis(messagesOrSessions)}
                   disabled={clusteringUnavailable || loading}
                 >
                   {(loading || clusteringUnavailable) && <Spinner className="mr-2" />}

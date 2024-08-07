@@ -456,7 +456,7 @@ async def session_filtering_pipeline_match(
 
     match: Dict[str, object] = {"project_id": project_id}
 
-    if filters.session_ids is not None:
+    if filters.sessions_ids is not None:
         match["id"] = {"$in": filters.session_ids}
 
     if isinstance(filters.created_at_start, datetime.datetime):

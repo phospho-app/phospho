@@ -262,6 +262,7 @@ export interface Clustering {
   clusters_ids: string[];
   status?: "started" | "summaries" | "completed";
   clusters?: Cluster[] | null;
+  messages_or_sessions: "messages" | "sessions";
 }
 
 export interface CustomDateRange {

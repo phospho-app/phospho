@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Literal, Optional
 from phospho.models import ProjectDataFilters
 
 
@@ -42,8 +42,9 @@ class QuerySessionsTasksRequest(BaseModel):
 
 
 class DetectClustersRequest(BaseModel):
-    limit: Optional[int] = None
+    limit: Optional[int] = 999999
     filters: Optional[ProjectDataFilters] = Field(default_factory=ProjectDataFilters)
+    messages_or_sessions: Literal["messages", "sessions"] = "messages"
 
 
 class FetchClustersRequest(BaseModel):

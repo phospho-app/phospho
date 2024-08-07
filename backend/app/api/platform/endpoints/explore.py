@@ -37,6 +37,7 @@ from app.services.mongo.explore import (
     get_events_aggregated_metrics,
     get_sessions_aggregated_metrics,
     get_tasks_aggregated_metrics,
+    get_total_nb_of_sessions,
     nb_items_with_a_metadata_field,
     project_has_enough_labelled_tasks,
     project_has_sessions,
@@ -379,13 +380,29 @@ async def post_detect_clusters(
     if query is None:
         query = DetectClustersRequest()
 
-    total_nb_tasks = await get_total_nb_of_tasks(project_id)
-    if total_nb_tasks:
-        clustering_sample_size = min(total_nb_tasks, query.limit)
+    if query.messages_or_sessions == "messages":
+        total_nb_tasks = await get_total_nb_of_tasks(project_id)
+        if total_nb_tasks:
+            clustering_sample_size = min(total_nb_tasks, query.limit)
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="No tasks found in the project.",
+            )
+    elif query.messages_or_sessions == "sessions":
+        total_nb_sessions = await get_total_nb_of_sessions(project_id)
+        if total_nb_sessions:
+            clustering_sample_size = min(total_nb_sessions, query.limit)
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="No sessions found in the project.",
+            )
+
     else:
         raise HTTPException(
-            status_code=404,
-            detail="No tasks found in the project.",
+            status_code=400,
+            detail="messages_or_sessions must be either 'messages' or 'sessions'.",
         )
 
     # Ignore limits and metering in preview mode
@@ -411,6 +428,7 @@ async def post_detect_clusters(
             org_id=org_id,
             limit=query.limit,
             filters=query.filters,
+            messages_or_sessions=query.messages_or_sessions,
         )
     )
     return {"status": "ok"}
