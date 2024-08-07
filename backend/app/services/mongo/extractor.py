@@ -95,8 +95,8 @@ class ExtractorClient:
 
     async def _post(
         self,
-        endpoint: str,
-        data: dict,
+        endpoint: str,  # Should be the name of the workflow
+        data: dict,  # Should be just one pydantic model
         on_success_callback: Optional[Callable] = None,
     ) -> Optional[httpx.Response]:
         """
@@ -153,7 +153,7 @@ class ExtractorClient:
             extra_logs_to_save = []
 
         await self._post(
-            "post_log_tasks",
+            "run_process_log_for_tasks_workflow",
             {
                 "logs_to_process": [
                     log_event.model_dump(mode="json") for log_event in logs_to_process
@@ -196,10 +196,8 @@ class ExtractorClient:
                 ],
                 "project_id": self.project_id,
                 "org_id": self.org_id,
+                "customer_id": await self._fetch_stripe_customer_id(),
             },
-            on_success_callback=lambda response: self._compute_stripe_usage(
-                nb_job_results=response.json().get("nb_job_results", 0),
-            ),
         )
 
     async def run_main_pipeline_on_task(self, task: Task) -> PipelineResults:
@@ -212,7 +210,7 @@ class ExtractorClient:
             return PipelineResults()
 
         result = await self._post(
-            "post_main_pipeline_on_task_workflow",
+            "run_main_pipeline_on_task_workflow",
             {
                 "task": task.model_dump(mode="json"),
                 "customer_id": await self._fetch_stripe_customer_id(),

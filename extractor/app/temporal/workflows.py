@@ -33,6 +33,9 @@ with workflow.unsafe.imports_passed_through():
 class extract_langsmith_data_workflow:
     @workflow.run
     async def run(self, request: PipelineLangsmithRequest):
+        """
+        Extracts data from LangSmith through its python package, stores and processes the data, then bills the organization.
+        """
         retry_policy = RetryPolicy(
             maximum_attempts=1,
             maximum_interval=timedelta(minutes=5),
@@ -50,7 +53,7 @@ class extract_langsmith_data_workflow:
                 BillOnStripeRequest(
                     org_id=request.org_id,
                     project_id=request.project_id,
-                    nb_job_results=response.json().get("nb_job_results", 0),
+                    nb_job_results=response.get("nb_job_results", 0),
                     customer_id=request.customer_id,
                 ),
                 start_to_close_timeout=timedelta(minutes=1),
@@ -70,6 +73,9 @@ class extract_langsmith_data_workflow:
 class extract_langfuse_data_workflow:
     @workflow.run
     async def run(self, request: PipelineLangfuseRequest):
+        """
+        Extracts data from LangFuse through its python package, stores and processes the data, then bills the organization.
+        """
         retry_policy = RetryPolicy(
             maximum_attempts=1,
             maximum_interval=timedelta(minutes=5),
@@ -87,7 +93,7 @@ class extract_langfuse_data_workflow:
                 BillOnStripeRequest(
                     org_id=request.org_id,
                     project_id=request.project_id,
-                    nb_job_results=response.json().get("nb_job_results", 0),
+                    nb_job_results=response.get("nb_job_results", 0),
                     customer_id=request.customer_id,
                 ),
                 start_to_close_timeout=timedelta(minutes=1),
@@ -107,6 +113,9 @@ class extract_langfuse_data_workflow:
 class store_open_telemetry_data_workflow:
     @workflow.run
     async def run(self, request: PipelineOpentelemetryRequest):
+        """
+        Stores open telemetry logs without handling them.
+        """
         retry_policy = RetryPolicy(
             maximum_attempts=1,
             maximum_interval=timedelta(minutes=2),
@@ -124,6 +133,10 @@ class store_open_telemetry_data_workflow:
 class run_recipe_on_task_workflow:
     @workflow.run
     async def run(self, request: RunRecipeOnTaskRequest):
+        """
+        Runs a recipe on tasks, then bills the organization.
+        Used to run the main pipeline on past data.
+        """
         retry_policy = RetryPolicy(
             maximum_attempts=1,
             maximum_interval=timedelta(minutes=5),
@@ -215,7 +228,7 @@ class run_process_logs_for_messages_workflow:
                 BillOnStripeRequest(
                     org_id=request.org_id,
                     project_id=request.project_id,
-                    nb_job_results=response.json().get("nb_job_results", 0),
+                    nb_job_results=response.get("nb_job_results", 0),
                     customer_id=request.customer_id,
                 ),
                 start_to_close_timeout=timedelta(minutes=1),
@@ -240,6 +253,9 @@ class run_process_log_for_tasks_workflow:
 
     @workflow.run
     async def run(self, request: LogProcessRequestForTasks):
+        logger.info(
+            f"Processing {len(request.logs_to_process)} logs and saving {len(request.extra_logs_to_save)} extra logs."
+        )
         retry_policy = RetryPolicy(
             maximum_attempts=1,
             maximum_interval=timedelta(minutes=5),
@@ -257,7 +273,7 @@ class run_process_log_for_tasks_workflow:
                 BillOnStripeRequest(
                     org_id=request.org_id,
                     project_id=request.project_id,
-                    nb_job_results=response.json().get("nb_job_results", 0),
+                    nb_job_results=response.get("nb_job_results", 0),
                     customer_id=request.customer_id,
                 ),
                 start_to_close_timeout=timedelta(minutes=1),

@@ -57,6 +57,7 @@ class LogProcessRequestForTasks(BaseModel):
     extra_logs_to_save: List[LogEventForTasks]
     project_id: str
     org_id: str
+    customer_id: Optional[str] = None
 
 
 class MinimalLogEventForMessages(BaseModel, extra="allow"):
@@ -76,3 +77,4 @@ class LogProcessRequestForMessages(BaseModel):
     extra_logs_to_save: List[MinimalLogEventForMessages]
     project_id: str
     org_id: str
+    customer_id: Optional[str] = None
