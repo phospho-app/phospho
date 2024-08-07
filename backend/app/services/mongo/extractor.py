@@ -103,6 +103,16 @@ class ExtractorClient:
         Post data to the extractor server
         """
 
+        # We check that "org_id", "project_id" and "customer_id" are present in the data
+        if endpoint not in ["store_open_telemetry_data_workflow"] and (
+            "org_id" not in data
+            or "project_id" not in data
+            or "customer_id" not in data
+        ):
+            logger.error(
+                f"Missing org_id, project_id or customer_id in data for endpoint {endpoint}"
+            )
+            return None
         try:
             client_cert = bytes(os.getenv("TEMPORAL_MTLS_TLS_CERT"), "utf-8")
             client_key = bytes(os.getenv("TEMPORAL_MTLS_TLS_KEY"), "utf-8")
@@ -212,6 +222,8 @@ class ExtractorClient:
             {
                 "task": task.model_dump(mode="json"),
                 "customer_id": await self._fetch_stripe_customer_id(),
+                "project_id": self.project_id,
+                "org_id": self.org_id,
             },
         )
         if result is None or result.status_code != 200:
@@ -266,6 +278,8 @@ class ExtractorClient:
                     "tasks": [task.model_dump(mode="json") for task in tasks],
                     "recipe": recipe.model_dump(mode="json"),
                     "customer_id": await self._fetch_stripe_customer_id(),
+                    "project_id": self.project_id,
+                    "org_id": self.org_id,
                 },
             )
 
@@ -279,6 +293,7 @@ class ExtractorClient:
                 "open_telemetry_data": open_telemetry_data,
                 "project_id": self.project_id,
                 "org_id": self.org_id,
+                # No customer_id because we don't bill for open telemetry data, we simply log
             },
         )
 

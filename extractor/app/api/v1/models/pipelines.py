@@ -16,6 +16,9 @@ class BillOnStripeRequest(BaseModel):
 
 class RunMainPipelineOnTaskRequest(BaseModel):
     task: Task
+    project_id: str
+    org_id: str
+    customer_id: Optional[str] = None
 
 
 class RunMainPipelineOnMessagesRequest(BaseModel):
@@ -29,6 +32,8 @@ class RunRecipeOnTaskRequest(BaseModel):
     tasks: List[Task]
     recipe: Recipe
     customer_id: Optional[str] = None
+    org_id: str
+    project_id: str
 
 
 class PipelineOpentelemetryRequest(BaseModel):
