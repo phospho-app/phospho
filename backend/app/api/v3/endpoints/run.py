@@ -51,7 +51,12 @@ async def run_main_pipeline_on_messages(
     return pipeline_result
 
 
-@router.post("/run/backtest")
+@router.post(
+    "/run/backtest",
+    response_model=dict,
+    description="Run a backtest on a project. This gathers all input messages from the project, "
+    + "and calls the specified LLM with the proper system prompt.",
+)
 async def post_run_backtests(
     request: RunBacktestRequest,
     background_tasks: BackgroundTasks,
@@ -70,6 +75,8 @@ async def post_run_backtests(
 
     if request.filters is None:
         request.filters = ProjectDataFilters()
+    if request.system_prompt_variables is None:
+        request.system_prompt_variables = {}
 
     background_tasks.add_task(
         run_backtests,

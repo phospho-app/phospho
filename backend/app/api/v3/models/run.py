@@ -24,9 +24,9 @@ class RunBacktestRequest(BaseModel):
     project_id: str = Field(..., description="The phospho project_id")
     system_prompt_template: str = Field(
         ...,
-        description="The system prompt template. The templated variables are in the format of \{variable\}.",
+        description="The system prompt template. Templated variables can be passed in the format of \{variable\}.",
     )
-    system_prompt_variables: dict = Field(
+    system_prompt_variables: Optional[dict] = Field(
         ..., description="The system prompt variables as a dictionary."
     )
     provider_and_model: str = Field(
