@@ -1,5 +1,4 @@
 import os
-from base64 import b64decode
 import asyncio
 import sentry_sdk
 
