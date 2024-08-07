@@ -16,7 +16,6 @@ loguru = "^0.7.2"
 requests = "^2.32.3"
 tiktoken = "^0.6.0"
 openai = "^1.12.0"
-cohere = "^4.48"
 pytest = "^8.0.1"
 pytest-asyncio = "^0.23.5"
 sentry-sdk = { extras = ["fastapi"], version = "^2.10" }
@@ -28,6 +27,7 @@ langsmith = "^0.1.63"
 pycryptodome = "^3.20.0"
 langfuse = "^2.36.2"
 numpy = "1.26.4"
+aiohttp = "^3.10.1"
 
 [tool.poetry.group.dev]
 optional = true
