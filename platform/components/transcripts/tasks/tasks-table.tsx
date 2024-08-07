@@ -167,12 +167,10 @@ export function TasksTable<TData, TValue>({
   return (
     <div>
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <div className="flex flex-row justify-between items-center mb-2 gap-x-2">
-          <div className="flex flew-row  gap-x-2">
-            <DatePickerWithRange />
-            <FilterComponent variant="tasks" />
-            <RunAnalysisInPast totalNbTasks={totalNbTasks} />
-          </div>
+        <div className="flex flex-row justify-between items-center space-x-2 mb-2">
+          <DatePickerWithRange />
+          <FilterComponent variant="tasks" />
+          <RunAnalysisInPast totalNbTasks={totalNbTasks} />
           <TableNavigation table={table} />
         </div>
         <div className="rounded-md border">
