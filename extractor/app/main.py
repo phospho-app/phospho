@@ -22,13 +22,13 @@ if config.ENVIRONMENT == "production":
 
 import dataclasses
 from app.temporal.workflows import (
-    extract_langsmith_data_workflow,
-    extract_langfuse_data_workflow,
-    store_open_telemetry_data_workflow,
-    run_recipe_on_task_workflow,
-    run_process_log_for_tasks_workflow,
-    run_main_pipeline_on_messages_workflow,
-    run_process_logs_for_messages_workflow,
+    ExtractLangSmithDataWorkflow,
+    ExtractLangfuseDataWorkflow,
+    StoreOpenTelemetryDataWorkflow,
+    RunRecipeOnTaskWorkflow,
+    RunProcessLogForTasksWorkflow,
+    RunMainPipelineOnMessagesWorkflow,
+    RunProcessLogsForMessagesWorkflow,
 )
 from app.temporal.activities import (
     extract_langsmith_data,
@@ -92,13 +92,13 @@ async def main():
         client,
         task_queue="default",
         workflows=[  # We add workflows that our worker can process here
-            extract_langsmith_data_workflow,
-            extract_langfuse_data_workflow,
-            store_open_telemetry_data_workflow,
-            run_recipe_on_task_workflow,
-            run_process_log_for_tasks_workflow,
-            run_main_pipeline_on_messages_workflow,
-            run_process_logs_for_messages_workflow,
+            ExtractLangSmithDataWorkflow,
+            ExtractLangfuseDataWorkflow,
+            StoreOpenTelemetryDataWorkflow,
+            RunRecipeOnTaskWorkflow,
+            RunProcessLogForTasksWorkflow,
+            RunMainPipelineOnMessagesWorkflow,
+            RunProcessLogsForMessagesWorkflow,
         ],
         activities=[  # And the linked activities here
             extract_langsmith_data,

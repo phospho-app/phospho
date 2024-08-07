@@ -47,12 +47,10 @@ with workflow.unsafe.imports_passed_through():
 class BaseWorkflow:
     def __init__(
         self,
-        name,
         activity_func,
         request_class,
         bill=True,
     ):
-        self.name = name
         self.activity_func = activity_func
         self.request_class = request_class
         self.bill = bill
@@ -83,7 +81,7 @@ class BaseWorkflow:
                     start_to_close_timeout=timedelta(minutes=1),
                 )
         except Exception as e:
-            error_message = f"Caught error while calling temporal workflow {self.name}: {e}\n{traceback.format_exception(e)}"
+            error_message = f"Caught error while calling temporal workflow {self.__class__.__name__}: {e}\n{traceback.format_exception(e)}"
             logger.error(f"Error in {self.name}: {e}")
             if config.ENVIRONMENT in ["production", "staging"]:
                 slack_message = (
@@ -93,10 +91,9 @@ class BaseWorkflow:
 
 
 @workflow.defn(name="extract_langsmith_data_workflow")
-class extract_langsmith_data_workflow(BaseWorkflow):
+class ExtractLangSmithDataWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
-            name="extract_langsmith_data_workflow",
             activity_func=extract_langsmith_data,
             request_class=PipelineLangsmithRequest,
         )
@@ -107,10 +104,9 @@ class extract_langsmith_data_workflow(BaseWorkflow):
 
 
 @workflow.defn(name="extract_langfuse_data_workflow")
-class extract_langfuse_data_workflow(BaseWorkflow):
+class ExtractLangfuseDataWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
-            name="extract_langfuse_data_workflow",
             activity_func=extract_langfuse_data,
             request_class=PipelineLangfuseRequest,
         )
@@ -121,10 +117,9 @@ class extract_langfuse_data_workflow(BaseWorkflow):
 
 
 @workflow.defn(name="store_open_telemetry_data_workflow")
-class store_open_telemetry_data_workflow(BaseWorkflow):
+class StoreOpenTelemetryDataWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
-            name="store_open_telemetry_data_workflow",
             activity_func=store_open_telemetry_data,
             request_class=PipelineOpentelemetryRequest,
             bill=False,
@@ -136,10 +131,9 @@ class store_open_telemetry_data_workflow(BaseWorkflow):
 
 
 @workflow.defn(name="run_recipe_on_task_workflow")
-class run_recipe_on_task_workflow(BaseWorkflow):
+class RunRecipeOnTaskWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
-            name="run_recipe_on_task_workflow",
             activity_func=run_recipe_on_task,
             request_class=RunRecipeOnTaskRequest,
         )
@@ -150,10 +144,9 @@ class run_recipe_on_task_workflow(BaseWorkflow):
 
 
 @workflow.defn(name="run_main_pipeline_on_messages_workflow")
-class run_main_pipeline_on_messages_workflow(BaseWorkflow):
+class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
-            name="run_main_pipeline_on_messages_workflow",
             activity_func=run_main_pipeline_on_messages,
             request_class=RunMainPipelineOnMessagesRequest,
         )
@@ -164,10 +157,9 @@ class run_main_pipeline_on_messages_workflow(BaseWorkflow):
 
 
 @workflow.defn(name="run_process_logs_for_messages_workflow")
-class run_process_logs_for_messages_workflow(BaseWorkflow):
+class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
-            name="run_process_logs_for_messages_workflow",
             activity_func=run_process_logs_for_messages,
             request_class=LogProcessRequestForMessages,
         )
@@ -178,10 +170,9 @@ class run_process_logs_for_messages_workflow(BaseWorkflow):
 
 
 @workflow.defn(name="run_process_log_for_tasks_workflow")
-class run_process_log_for_tasks_workflow(BaseWorkflow):
+class RunProcessLogForTasksWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
-            name="run_process_log_for_tasks_workflow",
             activity_func=run_process_log_for_tasks,
             request_class=LogProcessRequestForTasks,
         )
