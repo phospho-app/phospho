@@ -21,6 +21,18 @@ import { ChevronRight, Sparkles } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MessagesOrSessions } from "@/components/messages-or-sessions";
 
 const RunClusters = ({
   totalNbTasks,
@@ -122,9 +134,11 @@ const RunClusters = ({
           group similar messages together.
         </SheetDescription>
         <Separator className="my-8" />
-        <div className="flex flex-wrap">
+        <div className="flex">
           <DatePickerWithRange className="mr-2" />
+          <MessagesOrSessions className="mr-2" />
           <FilterComponent variant="tasks" />
+
         </div>
         {(!totalNbTasks || totalNbTasks < 5) && (
           <div className="mt-4">
