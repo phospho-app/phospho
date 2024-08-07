@@ -1,4 +1,5 @@
 import time
+from base64 import b64decode
 import traceback
 from typing import Callable, List, Optional
 
@@ -19,6 +20,7 @@ from phospho.models import PipelineResults, Recipe, Task
 
 from temporalio.client import Client, TLSConfig
 
+from app.core import config
 import os
 
 
@@ -114,8 +116,8 @@ class ExtractorClient:
             )
             return None
         try:
-            client_cert = bytes(os.getenv("TEMPORAL_MTLS_TLS_CERT"), "utf-8")
-            client_key = bytes(os.getenv("TEMPORAL_MTLS_TLS_KEY"), "utf-8")
+            client_cert = config.TEMPORAL_MTLS_TLS_CERT
+            client_key = config.TEMPORAL_MTLS_TLS_KEY
 
             client: Client = await Client.connect(
                 os.getenv("TEMPORAL_HOST_URL"),

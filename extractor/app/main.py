@@ -1,4 +1,5 @@
 import os
+from base64 import b64decode
 import asyncio
 import sentry_sdk
 
@@ -75,8 +76,8 @@ interrupt_event = asyncio.Event()
 
 async def main():
     await connect_and_init_db()
-    client_cert = bytes(os.getenv("TEMPORAL_MTLS_TLS_CERT"), "utf-8")
-    client_key = bytes(os.getenv("TEMPORAL_MTLS_TLS_KEY"), "utf-8")
+    client_cert = config.TEMPORAL_MTLS_TLS_CERT
+    client_key = config.TEMPORAL_MTLS_TLS_KEY
 
     client: Client = await Client.connect(
         os.getenv("TEMPORAL_HOST_URL"),
