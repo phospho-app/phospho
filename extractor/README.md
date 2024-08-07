@@ -24,6 +24,28 @@ Install the dependencies if you are running loccaly in dev mode:
 poetry install --with dev
 ```
 
+## Generating New Certificates
+
+To generate new certificates, we recommend you use certstrap: https://learn.temporal.io/getting_started/python/run_workers_with_cloud_python/
+
+You can install it in three easy steps
+
+```bash
+$ git clone https://github.com/square/certstrap
+$ cd certstrap
+$ go build
+```
+
+You can now create a certificate authority and use this certificate for the namespace.
+Just run
+
+```bash
+./certstrap init --common-name "phospho-example-namespace"
+```
+
+This will generate a .crt, this is the certificate we need to upload to temporal
+You will also generate a .key which is PRIVATE, do not share this key, it is needed on the client to connect to temporal
+
 # Running the server
 
 ```bash

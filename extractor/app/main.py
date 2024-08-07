@@ -75,10 +75,8 @@ interrupt_event = asyncio.Event()
 
 async def main():
     await connect_and_init_db()
-    with open(os.getenv("TEMPORAL_MTLS_TLS_CERT"), "rb") as f:
-        client_cert = f.read()
-    with open(os.getenv("TEMPORAL_MTLS_TLS_KEY"), "rb") as f:
-        client_key = f.read()
+    client_cert = bytes(os.getenv("TEMPORAL_MTLS_TLS_CERT"), "utf-8")
+    client_key = bytes(os.getenv("TEMPORAL_MTLS_TLS_KEY"), "utf-8")
 
     client: Client = await Client.connect(
         os.getenv("TEMPORAL_HOST_URL"),
