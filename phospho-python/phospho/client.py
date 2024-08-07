@@ -66,6 +66,19 @@ class Client:
             )
         return token
 
+    def _displayable_api_key(self) -> str:
+        """
+        Display the first few characters of the API key
+        """
+        api_key = self._api_key()
+        if api_key and len(api_key) > 5:
+            first_few_chars = api_key[:5] + "..."
+        elif api_key:
+            first_few_chars = "***"
+        else:
+            first_few_chars = "None"
+        return first_few_chars
+
     def _project_id(self) -> str:
         project_id = self.__project_id
         # Evaluate lazily in case environment variable is set with dotenv, or something
@@ -122,7 +135,7 @@ class Client:
             return response
         elif response.status_code >= 400 and response.status_code < 500:
             raise PhosphoClientSideError(
-                f"Error {response.status_code} POST {url}: {response.text}."
+                f"Error {response.status_code} POST {url} with API key {self._displayable_api_key()} : {response.text}."
                 + "\nThere is likely an issue with your config. Make sure you have the correct API key and project id: https://platform.phospho.ai"
             )
         elif response.status_code >= 500:

@@ -1,4 +1,3 @@
-import datetime
 import logging
 from copy import deepcopy
 from typing import (
@@ -64,6 +63,7 @@ def init(
     tick: float = 0.5,
     raise_error_on_fail_to_send: bool = False,
     version_id: Optional[str] = None,
+    auto_log: bool = True,
 ) -> None:
     """
     Initialize the phospho logging module.
@@ -80,6 +80,8 @@ def init(
     :param raise_error_on_fail_to_send: whether to raise an error if the consumer fails to send logs
     :param version_id: the version of the code that generated the logs. If None, the version_id
         will be set to the current date.
+    :param auto_log: If true, will log all OpenAI API calls automatically. If false,
+        you will need to call `phospho.log` manually.
     """
     global client
     global log_queue
@@ -100,6 +102,10 @@ def init(
     )
     # Start the consumer on a separate thread (this will periodically send logs to backend)
     consumer.start()
+
+    # Wrap the OpenAI API calls
+    if auto_log:
+        integrations.wrap_openai(wrap=wrap)
 
 
 def new_session() -> str:
@@ -1021,4 +1027,18 @@ try:
         client.update_tasks_flat(flattened_tasks)
 
 except ImportError:
-    pass
+
+    def tasks_df(
+        limit: int = 1000,
+        with_events: bool = True,
+        with_sessions: bool = True,
+        with_removed_events: bool = False,
+    ) -> None:
+        raise ImportError(
+            "phospho.tasks_df() requires the pandas library. Install it with `pip install pandas`."
+        )
+
+    def push_tasks_df(tasks_df: pd.DataFrame) -> None:
+        raise ImportError(
+            "phospho.push_tasks_df() requires the pandas library. Install it with `pip install pandas`."
+        )
