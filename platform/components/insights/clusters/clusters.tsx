@@ -57,6 +57,25 @@ const Clusters: React.FC = () => {
   const totalNbTasks: number | null | undefined =
     totalNbTasksData?.total_nb_tasks;
 
+  const { data: totalNbSessionsData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/sessions`,
+      accessToken,
+      JSON.stringify(dataFilters),
+      "total_nb_sessions",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_sessions"],
+        filters: { ...dataFilters },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const totalNbSessions: number | null | undefined =
+    totalNbSessionsData?.total_nb_sessions;
+
   useEffect(() => {
     if (latestClustering?.status === "completed") {
       setClusteringUnavailable(false);
@@ -87,6 +106,7 @@ const Clusters: React.FC = () => {
             <div className="flex flex-col space-y-1 justify-center items-center">
               <RunClusters
                 totalNbTasks={totalNbTasks}
+                totalNbSessions={totalNbSessions}
                 mutateClusterings={mutateClusterings}
                 clusteringUnavailable={clusteringUnavailable}
               />

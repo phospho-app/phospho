@@ -18,7 +18,7 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ChevronRight, Sparkles } from "lucide-react";
-import React from "react";
+import React, { use } from "react";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import * as SelectPrimitive from "@radix-ui/react-select";
@@ -36,10 +36,12 @@ import { MessagesOrSessions } from "@/components/messages-or-sessions";
 
 const RunClusters = ({
   totalNbTasks,
+  totalNbSessions,
   mutateClusterings,
   clusteringUnavailable,
 }: {
   totalNbTasks: number | null | undefined;
+  totalNbSessions: number | null | undefined;
   mutateClusterings: any;
   clusteringUnavailable: boolean;
 }) => {
@@ -54,11 +56,21 @@ const RunClusters = ({
   const [loading, setLoading] = React.useState(false);
   const [open, setOpen] = React.useState(false);
 
-  useEffect(() => {
-    if (totalNbTasks) {
-      setClusteringCost(totalNbTasks * 2);
-    }
-  }, [totalNbTasks]);
+  const messagesOrSessions = navigationStateStore((state) => state.messagesOrSessions);
+
+  if (messagesOrSessions === "sessions") {
+    useEffect(() => {
+      if (totalNbSessions) {
+        setClusteringCost(totalNbSessions * 2);
+      }
+    }, [totalNbSessions]);
+  } else {
+    useEffect(() => {
+      if (totalNbTasks) {
+        setClusteringCost(totalNbTasks * 2);
+      }
+    }, [totalNbTasks]);
+  }
 
   if (!project_id) {
     return <></>;
@@ -129,10 +141,16 @@ const RunClusters = ({
         <SheetTitle>
           Configure clusters detection
         </SheetTitle>
-        <SheetDescription>
-          Run a cluster analysis on your user messages to detect patterns and
-          group similar messages together.
-        </SheetDescription>
+        {messagesOrSessions === "messages" && (
+          <SheetDescription>
+            Run a cluster analysis on your user messages to detect patterns and group similar messages together.
+          </SheetDescription>
+        )}
+        {messagesOrSessions === "sessions" && (
+          <SheetDescription>
+            Run a cluster analysis on your user sessions to detect patterns and group similar sessions together.
+          </SheetDescription>
+        )}
         <Separator className="my-8" />
         <div className="flex">
           <DatePickerWithRange className="mr-2" />
@@ -140,46 +158,69 @@ const RunClusters = ({
           <FilterComponent variant="tasks" />
 
         </div>
-        {(!totalNbTasks || totalNbTasks < 5) && (
-          <div className="mt-4">
-            You need at least 5 user messages to run a cluster analysis, there
-            are currently {totalNbTasks ? totalNbTasks : 0} user messages.
-          </div>
+        {messagesOrSessions === "messages" && (
+          <>
+            {(!totalNbTasks || totalNbTasks < 5) && (
+              <div className="mt-4">
+                You need at least 5 user messages to run a cluster analysis. There are currently {totalNbTasks ? totalNbTasks : 0} user messages.
+              </div>
+            )}
+            {totalNbTasks && totalNbTasks >= 5 && (
+              <div className="mt-4">
+                We will clusterize {totalNbTasks} user messages for a total of {clusteringCost} credits.
+              </div>
+            )}
+            {hobby && (
+              <div className="flex justify-end mt-4">
+                <UpgradeButton tagline="Run cluster analysis" green={false} />
+              </div>
+            )}
+            {!hobby && totalNbTasks && totalNbTasks >= 5 && (
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  onClick={runClusterAnalysis}
+                  disabled={clusteringUnavailable || loading}
+                >
+                  {(loading || clusteringUnavailable) && <Spinner className="mr-2" />}
+                  Run cluster analysis
+                </Button>
+              </div>
+            )}
+          </>
         )}
-        {totalNbTasks && totalNbTasks >= 5 && totalNbTasks <= 4000 && (
-          <div className="mt-4">
-            We will clusterize {totalNbTasks} user messages for a total of{" "}
-            {clusteringCost} credits.
-          </div>
+        {messagesOrSessions === "sessions" && (
+          <>
+            {(!totalNbSessions || totalNbSessions < 5) && (
+              <div className="mt-4">
+                You need at least 5 user sessions to run a cluster analysis. There are currently {totalNbSessions ? totalNbSessions : 0} user sessions.
+              </div>
+            )}
+            {totalNbSessions && totalNbSessions >= 5 && (
+              <div className="mt-4">
+                We will clusterize {totalNbSessions} user sessions for a total of {clusteringCost} credits.
+              </div>
+            )}
+            {hobby && (
+              <div className="flex justify-end mt-4">
+                <UpgradeButton tagline="Run cluster analysis" green={false} />
+              </div>
+            )}
+            {!hobby && totalNbSessions && totalNbSessions >= 5 && (
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  onClick={runClusterAnalysis}
+                  disabled={clusteringUnavailable || loading}
+                >
+                  {(loading || clusteringUnavailable) && <Spinner className="mr-2" />}
+                  Run cluster analysis
+                </Button>
+              </div>
+            )}
+          </>
         )}
-        {!hobby && totalNbTasks && totalNbTasks > 4000 && (
-          <div className="mt-4">
-            Please filter your selection to less than 4000 user messages. There
-            are currently {totalNbTasks} user messages to clusterize.
-          </div>
-        )}
-        {hobby && (
-          <div className="flex justify-end mt-4">
-            <UpgradeButton tagline="Run cluster analysis" green={false} />
-          </div>
-        )}
-        {!hobby &&
-          totalNbTasks &&
-          totalNbTasks >= 5 &&
-          totalNbTasks <= 4000 && (
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                onClick={runClusterAnalysis}
-                disabled={clusteringUnavailable || loading}
-              >
-                {(loading || clusteringUnavailable) && (
-                  <Spinner className="mr-2" />
-                )}
-                Run cluster analysis
-              </Button>
-            </div>
-          )}
+
       </SheetContent>
     </Sheet>
   );
