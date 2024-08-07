@@ -112,8 +112,11 @@ def wrap_openai(wrap: Callable) -> None:
     """
     Wrap OpenAI API calls with a logging function.
     """
-    from openai.resources.chat import completions
+    try:
+        from openai.resources.chat import completions
 
-    global original_create
-    original_create = completions.Completions.create
-    completions.Completions.create = wrap(original_create)
+        global original_create
+        original_create = completions.Completions.create
+        completions.Completions.create = wrap(original_create)
+    except ImportError:
+        pass
