@@ -39,10 +39,12 @@ import { getColumns } from "./clusters-table-columns";
 
 interface DataTableProps<TData, TValue> {
   clusterings?: Clustering[];
+  setSheetOpen: (value: boolean) => void;
 }
 
 export function ClustersTable<TData, TValue>({
   clusterings = [],
+  setSheetOpen,
 }: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
@@ -68,10 +70,10 @@ export function ClustersTable<TData, TValue>({
   } = useSWR(
     project_id
       ? [
-        `/api/explore/${project_id}/clusters`,
-        accessToken,
-        selectedClustering?.id,
-      ]
+          `/api/explore/${project_id}/clusters`,
+          accessToken,
+          selectedClustering?.id,
+        ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
@@ -85,7 +87,7 @@ export function ClustersTable<TData, TValue>({
     },
   );
 
-  const columns = getColumns();
+  const columns = getColumns({ setSheetOpen: setSheetOpen });
 
   const table = useReactTable({
     data: clustersData ?? [],
@@ -128,8 +130,8 @@ export function ClustersTable<TData, TValue>({
                   <span>
                     {formatUnixTimestampToLiteralDatetime(
                       selectedClustering?.created_at ??
-                      latestClustering?.created_at ??
-                      0,
+                        latestClustering?.created_at ??
+                        0,
                     )}
                   </span>
                 )}
@@ -179,9 +181,9 @@ export function ClustersTable<TData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
                       </TableHead>
                     );
                   })}
