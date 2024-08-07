@@ -1,11 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Cluster } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { ColumnDef } from "@tanstack/react-table";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Pickaxe } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export function getColumns() {
+export function getColumns({
+  setSheetOpen,
+}: {
+  setSheetOpen: (value: boolean) => void;
+}) {
   const router = useRouter();
 
   // Create the columns for the data table
@@ -40,7 +45,6 @@ export function getColumns() {
         return <>{row.original.name}</>;
       },
     },
-
     // description
     {
       header: "Description",
@@ -49,23 +53,47 @@ export function getColumns() {
         return <>{row.original.description}</>;
       },
     },
-
+    // view
     {
       header: "",
       accessorKey: "view",
       cell: ({ row }) => {
         const cluster_id = row.original.id;
+        const clustering_id = row.original.clustering_id;
         // Match the task object with this key
         // Handle undefined edge case
+        const dataFilters = navigationStateStore((state) => state.dataFilters);
+        const setDataFilters = navigationStateStore(
+          (state) => state.setDataFilters,
+        );
+
         if (!cluster_id) return <></>;
         return (
-          <Link
-            href={`/org/insights/clusters/${encodeURIComponent(cluster_id)}`}
-          >
-            <Button variant="ghost" size="icon">
-              <ChevronRight />
+          <div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(mouseEvent) => {
+                mouseEvent.stopPropagation();
+                setSheetOpen(true);
+                const currentClustersIds = dataFilters.clusters_ids ?? [];
+                setDataFilters({
+                  ...dataFilters,
+                  clustering_id: clustering_id,
+                  clusters_ids: [cluster_id],
+                });
+              }}
+            >
+              <Pickaxe className="w-6 h-6" />
             </Button>
-          </Link>
+            <Link
+              href={`/org/insights/clusters/${encodeURIComponent(cluster_id)}`}
+            >
+              <Button variant="ghost" size="icon">
+                <ChevronRight className="w-6 h-6" />
+              </Button>
+            </Link>
+          </div>
         );
       },
       size: 10,

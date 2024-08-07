@@ -107,10 +107,10 @@ const FilterComponent = ({
   const { data: metadataFieldsToValues } = useSWR(
     selectedProject?.id
       ? [
-        `/api/metadata/${selectedProject?.id}/fields/values`,
-        accessToken,
-        "unique_metadata_fields_to_values",
-      ]
+          `/api/metadata/${selectedProject?.id}/fields/values`,
+          accessToken,
+          "unique_metadata_fields_to_values",
+        ]
       : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {
@@ -144,222 +144,218 @@ const FilterComponent = ({
   }
 
   return (
-    <div>
+    <div className="flex flex-wrap space-x-2 space-y-2 items-end">
       <DropdownMenu>
-        <div className="flex flex-wrap align-content space-x-2">
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <ListFilter className="h-4 w-4 mr-1" />
-              Filters
-            </Button>
-          </DropdownMenuTrigger>
-          {dataFilters.flag && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDataFilters({
-                  ...dataFilters,
-                  flag: null,
-                });
-                resetPagination();
-              }}
-            >
-              {dataFilters.flag}
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-          {dataFilters.has_notes && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDataFilters({
-                  ...dataFilters,
-                  has_notes: false,
-                });
-                resetPagination();
-              }}
-            >
-              Has notes
-              <X className="h-4 w-4 ml-2" />
-            </Button>
-          )}
-          {dataFilters.event_name &&
-            dataFilters.event_name.map((event_name) => {
-              return (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setDataFilters({ ...dataFilters, event_name: null });
-                    resetPagination();
-                  }}
-                >
-                  {dataFilters.event_name}
-                  <X className="h-4 w-4 ml-2" />
-                </Button>
-              );
-            })}
-          {dataFilters.language && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDataFilters({
-                  ...dataFilters,
-                  language: null,
-                });
-                resetPagination();
-              }}
-            >
-              {getLanguageLabel(dataFilters.language)}
-              <X className="h-4 w-4 ml-2" />
-            </Button>
-          )}
-          {dataFilters.sentiment && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDataFilters({
-                  ...dataFilters,
-                  sentiment: null,
-                });
-                resetPagination();
-              }}
-            >
-              {dataFilters.sentiment}
-              <X className="h-4 w-4 ml-2" />
-            </Button>
-          )}
-          {dataFilters.last_eval_source && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDataFilters({
-                  ...dataFilters,
-                  last_eval_source: null,
-                });
-                resetPagination();
-              }}
-            >
-              {dataFilters.last_eval_source}
-              <X className="h-4 w-4 ml-2" />
-            </Button>
-          )}
-          {dataFilters.metadata &&
-            Object.entries(dataFilters.metadata).map(([key, value]) => {
-              return (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    // Delete this metadata filter
-                    if (!dataFilters.metadata) {
-                      return;
-                    }
-                    delete dataFilters.metadata[key];
-                    setDataFilters({
-                      ...dataFilters,
-                    });
-                    resetPagination();
-                  }}
-                >
-                  {key}:{" "}
-                  {value.length > 20 ? value.substring(0, 20) + "..." : value}
-                  <X className="h-4 w-4 ml-2" />
-                </Button>
-              );
-            })}
-          {dataFilters.clustering_id && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDataFilters({
-                  ...dataFilters,
-                  clustering_id: null,
-                  clusters_ids: null,
-                });
-                resetPagination();
-              }}
-            >
-              clustering:{" "}
-              {formatUnixTimestampToLiteralDatetime(
-                clusterings?.find(
-                  (clustering) => clustering.id === dataFilters.clustering_id,
-                )?.created_at ?? 0,
-              )}
-              <X className="h-4 w-4 ml-2" />
-            </Button>
-          )}
-          {dataFilters.clusters_ids &&
-            dataFilters.clusters_ids.map((cluster_id) => {
-              const clustering = clusterings?.find((clustering) =>
-                clustering.clusters?.find(
-                  (cluster) => cluster.id === cluster_id,
-                ),
-              );
-              const cluster = clustering?.clusters?.find(
-                (cluster) => cluster.id === cluster_id,
-              ) ?? { name: "" };
-
-              return (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const currentClustersIds = dataFilters.clusters_ids ?? [];
-                    setDataFilters({
-                      ...dataFilters,
-                      clusters_ids: currentClustersIds.filter(
-                        (id) => id !== cluster_id,
-                      ),
-                    });
-                    resetPagination();
-                  }}
-                >
-                  cluster: {""}
-                  {cluster?.name.length > 20
-                    ? cluster?.name.substring(0, 20) + "..."
-                    : cluster?.name}
-                  <X className="h-4 w-4 ml-2" />
-                </Button>
-              );
-            })}
-          {dataFilters.is_last_task && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDataFilters({
-                  ...dataFilters,
-                  is_last_task: null,
-                });
-                resetPagination();
-              }}
-            >
-              Is last message
-              <X className="h-4 w-4 ml-2" />
-            </Button>
-          )}
-          {dataFilters && activeFilterCount > 0 && (
-            <HoverCard openDelay={0} closeDelay={0}>
-              <HoverCardTrigger>
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setDataFilters({
-                      created_at_start: dateRange?.created_at_start,
-                      created_at_end: dateRange?.created_at_end,
-                    });
-                    resetPagination();
-                  }}
-                >
-                  <FilterX className="h-4 w-4" />
-                </Button>
-              </HoverCardTrigger>
-              <HoverCardContent
-                className="m-0 text-xs text-background bg-foreground"
-                align="center"
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline">
+            <ListFilter className="h-4 w-4 mr-1" />
+            Filters
+          </Button>
+        </DropdownMenuTrigger>
+        {dataFilters.flag && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                flag: null,
+              });
+              resetPagination();
+            }}
+          >
+            {dataFilters.flag}
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+        {dataFilters.has_notes && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                has_notes: false,
+              });
+              resetPagination();
+            }}
+          >
+            Has notes
+            <X className="h-4 w-4 ml-2" />
+          </Button>
+        )}
+        {dataFilters.event_name &&
+          dataFilters.event_name.map((event_name) => {
+            return (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDataFilters({ ...dataFilters, event_name: null });
+                  resetPagination();
+                }}
               >
-                Clear all filters
-              </HoverCardContent>
-            </HoverCard>
-          )}
-        </div>
+                {dataFilters.event_name}
+                <X className="h-4 w-4 ml-2" />
+              </Button>
+            );
+          })}
+        {dataFilters.language && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                language: null,
+              });
+              resetPagination();
+            }}
+          >
+            {getLanguageLabel(dataFilters.language)}
+            <X className="h-4 w-4 ml-2" />
+          </Button>
+        )}
+        {dataFilters.sentiment && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                sentiment: null,
+              });
+              resetPagination();
+            }}
+          >
+            {dataFilters.sentiment}
+            <X className="h-4 w-4 ml-2" />
+          </Button>
+        )}
+        {dataFilters.last_eval_source && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                last_eval_source: null,
+              });
+              resetPagination();
+            }}
+          >
+            {dataFilters.last_eval_source}
+            <X className="h-4 w-4 ml-2" />
+          </Button>
+        )}
+        {dataFilters.metadata &&
+          Object.entries(dataFilters.metadata).map(([key, value]) => {
+            return (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Delete this metadata filter
+                  if (!dataFilters.metadata) {
+                    return;
+                  }
+                  delete dataFilters.metadata[key];
+                  setDataFilters({
+                    ...dataFilters,
+                  });
+                  resetPagination();
+                }}
+              >
+                {key}:{" "}
+                {value.length > 20 ? value.substring(0, 20) + "..." : value}
+                <X className="h-4 w-4 ml-2" />
+              </Button>
+            );
+          })}
+        {dataFilters.clustering_id && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                clustering_id: null,
+                clusters_ids: null,
+              });
+              resetPagination();
+            }}
+          >
+            clustering:{" "}
+            {formatUnixTimestampToLiteralDatetime(
+              clusterings?.find(
+                (clustering) => clustering.id === dataFilters.clustering_id,
+              )?.created_at ?? 0,
+            )}
+            <X className="h-4 w-4 ml-2" />
+          </Button>
+        )}
+        {dataFilters.clusters_ids &&
+          dataFilters.clusters_ids.map((cluster_id) => {
+            const clustering = clusterings?.find((clustering) =>
+              clustering.clusters?.find((cluster) => cluster.id === cluster_id),
+            );
+            const cluster = clustering?.clusters?.find(
+              (cluster) => cluster.id === cluster_id,
+            ) ?? { name: "" };
+
+            return (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const currentClustersIds = dataFilters.clusters_ids ?? [];
+                  setDataFilters({
+                    ...dataFilters,
+                    clusters_ids: currentClustersIds.filter(
+                      (id) => id !== cluster_id,
+                    ),
+                  });
+                  resetPagination();
+                }}
+              >
+                cluster: {""}
+                {cluster?.name.length > 50
+                  ? cluster?.name.substring(0, 50) + "..."
+                  : cluster?.name}
+                <X className="h-4 w-4 ml-2" />
+              </Button>
+            );
+          })}
+        {dataFilters.is_last_task && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                is_last_task: null,
+              });
+              resetPagination();
+            }}
+          >
+            Is last message
+            <X className="h-4 w-4 ml-2" />
+          </Button>
+        )}
+        {dataFilters && activeFilterCount > 0 && (
+          <HoverCard openDelay={0} closeDelay={0}>
+            <HoverCardTrigger>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setDataFilters({
+                    created_at_start: dateRange?.created_at_start,
+                    created_at_end: dateRange?.created_at_end,
+                  });
+                  resetPagination();
+                }}
+              >
+                <FilterX className="h-4 w-4" />
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent
+              className="m-0 text-xs text-background bg-foreground"
+              align="center"
+            >
+              Clear all filters
+            </HoverCardContent>
+          </HoverCard>
+        )}
         <DropdownMenuContent className="w-56" align="start">
           <DropdownMenuLabel>Filters to apply</DropdownMenuLabel>
           <DropdownMenuSeparator />

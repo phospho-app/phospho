@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
 import UpgradeButton from "@/components/upgrade-button";
-import { authFetcher } from "@/lib/fetcher";
-import { Clustering, Project } from "@/models/models";
+import { Clustering } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -20,16 +19,19 @@ import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ChevronRight, Sparkles } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
 
 const RunClusters = ({
   totalNbTasks,
   mutateClusterings,
   clusteringUnavailable,
+  sheetOpen,
+  setSheetOpen,
 }: {
   totalNbTasks: number | null | undefined;
   mutateClusterings: any;
   clusteringUnavailable: boolean;
+  sheetOpen: boolean;
+  setSheetOpen: (value: boolean) => void;
 }) => {
   const { accessToken } = useUser();
   const [clusteringCost, setClusteringCost] = useState(0);
@@ -40,7 +42,6 @@ const RunClusters = ({
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
 
   useEffect(() => {
     if (totalNbTasks) {
@@ -85,7 +86,7 @@ const RunClusters = ({
             title: "Cluster detection started ⏳",
             description: "This may take a few minutes.",
           });
-          setOpen(false);
+          setSheetOpen(false);
         } else {
           toast({
             title: "Error when starting detection",
@@ -100,12 +101,11 @@ const RunClusters = ({
         description: JSON.stringify(e),
       });
       setLoading(false);
-
     }
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
       <SheetTrigger>
         <Button className="default">
           <Sparkles className="w-4 h-4 mr-2 text-green-500" /> Configure
@@ -114,16 +114,14 @@ const RunClusters = ({
         </Button>
       </SheetTrigger>
       <SheetContent className="md:w-1/2 overflow-auto">
-        <SheetTitle>
-          Configure clusters detection
-        </SheetTitle>
+        <SheetTitle>Configure clusters detection</SheetTitle>
         <SheetDescription>
           Run a cluster analysis on your user messages to detect patterns and
           group similar messages together.
         </SheetDescription>
         <Separator className="my-8" />
-        <div className="flex flex-wrap">
-          <DatePickerWithRange className="mr-2" />
+        <div className="flex flex-wrap space-x-2">
+          <DatePickerWithRange />
           <FilterComponent variant="tasks" />
         </div>
         {(!totalNbTasks || totalNbTasks < 5) && (
