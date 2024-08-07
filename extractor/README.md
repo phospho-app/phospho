@@ -26,25 +26,21 @@ poetry install --with dev
 
 ## Generating New Certificates
 
-To generate new certificates, we recommend you use certstrap: https://learn.temporal.io/getting_started/python/run_workers_with_cloud_python/
+To generate new certificates, we recommend you use tcld: https://learn.temporal.io/getting_started/python/run_workers_with_cloud_python/
 
-You can install it in three easy steps
-
-```bash
-$ git clone https://github.com/square/certstrap
-$ cd certstrap
-$ go build
-```
-
-You can now create a certificate authority and use this certificate for the namespace.
-Just run
+Follow these lines
 
 ```bash
-./certstrap init --common-name "phospho-example-namespace"
+tcld gen ca --org "your-organisation" -d 365d --ca-cert ca.pem --ca-key ca.key
+tcld gen leaf --org "your-organsation" -d 364d --ca-cert ca.pem --ca-key ca.key --cert client.pem --key client.key
+openssl x509 -in ca.pem -text -noout
 ```
 
-This will generate a .crt, this is the certificate we need to upload to temporal
-You will also generate a .key which is PRIVATE, do not share this key, it is needed on the client to connect to temporal
+You then have to encrypt the client key and client certificate in base 64 like so, using openssl
+
+```bash
+openssl base64 -in client.pem -out client-base64-pem
+```
 
 # Running the server
 
