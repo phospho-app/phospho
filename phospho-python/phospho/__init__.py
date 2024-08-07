@@ -59,11 +59,11 @@ logger = logging.getLogger(__name__)
 def init(
     api_key: Optional[str] = None,
     project_id: Optional[str] = None,
+    auto_log: bool = True,
     base_url: Optional[str] = None,
     tick: float = 0.5,
     raise_error_on_fail_to_send: bool = False,
     version_id: Optional[str] = None,
-    auto_log: bool = True,
 ) -> None:
     """
     Initialize the phospho logging module.
@@ -74,14 +74,14 @@ def init(
 
     :param api_key: Phospho API key
     :param project_id: Phospho project id
+    :param auto_log: If true, will log all OpenAI API calls automatically. If false,
+    you will need to call `phospho.log` manually.
     :param base_url: URL to the phospho backend
-    :param verbose: whether to display logs
     :param tick: how frequently the consumer tries to push logs to the backend (in seconds)
     :param raise_error_on_fail_to_send: whether to raise an error if the consumer fails to send logs
     :param version_id: the version of the code that generated the logs. If None, the version_id
         will be set to the current date.
-    :param auto_log: If true, will log all OpenAI API calls automatically. If false,
-        you will need to call `phospho.log` manually.
+
     """
     global client
     global log_queue

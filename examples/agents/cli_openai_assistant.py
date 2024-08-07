@@ -21,6 +21,8 @@ import phospho
 
 load_dotenv()
 
+# By default, phospho will look for the PHOSPHO_PROJECT_ID and PHOSPHO_API_KEY environment variables
+# All the chat.completions calls of the OpenAI module will be logged to phospho
 phospho.init()
 client = phospho.lab.get_sync_client("mistral")
 
@@ -38,8 +40,6 @@ while True:
         model="mistral-small",
         stream=True,
     )
-
-    # phospho.log(input=query, output=response, stream=True)
 
     print("\nAssistant: ", end="")
     for r in response:
