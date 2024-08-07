@@ -22,4 +22,4 @@ COPY ./app /src/app
 EXPOSE 7605
 
 # Run the worker
-CMD ["poetry", "run", "python", "src/app/main.py"]
+CMD ["poetry", "run", "python", "app/main.py"]
