@@ -68,10 +68,6 @@ def init(
     """
     Initialize the phospho logging module.
 
-    This sets up a log_queue, stored in memory, and a consumer. Calls to `phospho.log()`
-    push logs content to the log_queue. Every tick, the consumer tries to push the content
-    of the log_queue to the phospho backend.
-
     :param api_key: Phospho API key
     :param project_id: Phospho project id
     :param auto_log: If true, will log all OpenAI API calls automatically. If false,
@@ -83,6 +79,11 @@ def init(
         will be set to the current date.
 
     """
+
+    # This sets up a log_queue, stored in memory, and a consumer. Calls to `phospho.log()`
+    # push logs content to the log_queue. Every tick, the consumer tries to push the content
+    # of the log_queue to the phospho backend.
+
     global client
     global log_queue
     global consumer
