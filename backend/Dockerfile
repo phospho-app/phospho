@@ -20,5 +20,5 @@ RUN poetry install --with dev --no-interaction --no-ansi
 # Copy source code
 COPY ./app /src/app
 
-# Command to run app
-CMD ["poetry", "run", "python", "src/app/main:app"]
+# Run the server on port 80
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
