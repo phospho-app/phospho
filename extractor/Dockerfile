@@ -25,11 +25,7 @@ RUN poetry install --with dev --no-interaction --no-ansi
 COPY ./app /src/app
 COPY ./main.py /src/main.py
 
-EXPOSE 7605
-
-# So GCP can send probe
-ENV HOSTNAME="0.0.0.0" 
-
+EXPOSE 443
 
 # Run the worker
 CMD ["poetry", "run", "python", "main.py"]
