@@ -383,7 +383,10 @@ async def post_detect_clusters(
     if query.scope == "messages":
         total_nb_tasks = await get_total_nb_of_tasks(project_id)
         if total_nb_tasks:
-            clustering_sample_size = min(total_nb_tasks, query.limit)
+            if query.limit is None:
+                clustering_sample_size = total_nb_tasks
+            else:
+                clustering_sample_size = min(total_nb_tasks, query.limit)
         else:
             raise HTTPException(
                 status_code=404,
@@ -392,7 +395,10 @@ async def post_detect_clusters(
     elif query.scope == "sessions":
         total_nb_sessions = await get_total_nb_of_sessions(project_id)
         if total_nb_sessions:
-            clustering_sample_size = min(total_nb_sessions, query.limit)
+            if query.limit is None:
+                clustering_sample_size = total_nb_sessions
+            else:
+                clustering_sample_size = min(total_nb_sessions, query.limit)
         else:
             raise HTTPException(
                 status_code=404,

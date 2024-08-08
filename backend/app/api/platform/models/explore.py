@@ -43,7 +43,7 @@ class QuerySessionsTasksRequest(BaseModel):
 
 
 class DetectClustersRequest(BaseModel):
-    limit: Optional[int] = 999999
+    limit: Optional[int] = None
     filters: Optional[ProjectDataFilters] = Field(default_factory=ProjectDataFilters)
     scope: Literal["messages", "sessions"] = "messages"
 
