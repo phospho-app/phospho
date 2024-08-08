@@ -175,15 +175,30 @@ async def clustering(clustering_request: ClusteringRequest) -> None:
         return
     async with httpx.AsyncClient() as client:
         try:
-            _ = await client.post(
-                f"{config.PHOSPHO_AI_HUB_URL}/v1/clusterings",
-                json=clustering_request.model_dump(mode="json"),
-                headers={
-                    "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
-                    "Content-Type": "application/json",
-                },
-                timeout=60,
-            )
+            if clustering_request.scope == "messages":
+                _ = await client.post(
+                    f"{config.PHOSPHO_AI_HUB_URL}/v1/clusterings-messages",
+                    json=clustering_request.model_dump(mode="json"),
+                    headers={
+                        "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                    timeout=60,
+                )
+            elif clustering_request.scope == "sessions":
+                _ = await client.post(
+                    f"{config.PHOSPHO_AI_HUB_URL}/v1/clusterings-sessions",
+                    json=clustering_request.model_dump(mode="json"),
+                    headers={
+                        "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                    timeout=60,
+                )
+            else:
+                raise ValueError(
+                    f"Invalid value for messages_or_sessions: {clustering_request.scope}"
+                )
 
         except Exception as e:
             errror_id = generate_uuid()
