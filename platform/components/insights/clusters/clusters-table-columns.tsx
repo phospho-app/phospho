@@ -65,6 +65,7 @@ export function getColumns({
       cell: ({ row }) => {
         const cluster_id = row.original.id;
         const clustering_id = row.original.clustering_id;
+        const cluster_size = row.original.size;
         // Match the task object with this key
         // Handle undefined edge case
         const dataFilters = navigationStateStore((state) => state.dataFilters);
@@ -75,28 +76,30 @@ export function getColumns({
         if (!cluster_id) return <></>;
         return (
           <div>
-            <HoverCard openDelay={0} closeDelay={0}>
-              <HoverCardTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={(mouseEvent) => {
-                    mouseEvent.stopPropagation();
-                    setSheetOpen(true);
-                    setDataFilters({
-                      ...dataFilters,
-                      clustering_id: clustering_id,
-                      clusters_ids: [cluster_id],
-                    });
-                  }}
-                >
-                  <Pickaxe className="w-6 h-6" />
-                </Button>
-              </HoverCardTrigger>
-              <HoverCardContent>
-                <p>Breakdown cluster into smaller ones</p>
-              </HoverCardContent>
-            </HoverCard>
+            {cluster_size > 5 && (
+              <HoverCard openDelay={0} closeDelay={0}>
+                <HoverCardTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(mouseEvent) => {
+                      mouseEvent.stopPropagation();
+                      setSheetOpen(true);
+                      setDataFilters({
+                        ...dataFilters,
+                        clustering_id: clustering_id,
+                        clusters_ids: [cluster_id],
+                      });
+                    }}
+                  >
+                    <Pickaxe className="w-6 h-6" />
+                  </Button>
+                </HoverCardTrigger>
+                <HoverCardContent>
+                  <p>Break cluster</p>
+                </HoverCardContent>
+              </HoverCard>
+            )}
             <Link
               href={`/org/insights/clusters/${encodeURIComponent(cluster_id)}`}
             >
