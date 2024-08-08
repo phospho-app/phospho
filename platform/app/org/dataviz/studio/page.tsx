@@ -364,7 +364,7 @@ const MetadataForm: React.FC = () => {
           </Button>
         </div>
 
-        <div className="flex flex-row space-x-2 items-center">
+        <div className="flex flex-row space-x-2 items-end">
           <DatePickerWithRange />
           <FilterComponent variant="tasks" />
         </div>

@@ -389,7 +389,7 @@ const Dashboard: React.FC = () => {
   // The normal dashboard displays a session overview
   const normalDashboard = (
     <>
-      <div className="flex flex-row space-x-2 items-center">
+      <div className="flex flex-row space-x-2 items-end">
         <DatePickerWithRange />
         <FilterComponent variant="tasks" />
         <Link href="/org/dataviz/studio">
