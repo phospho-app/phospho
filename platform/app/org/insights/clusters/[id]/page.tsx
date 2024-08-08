@@ -1,5 +1,6 @@
 "use client";
 
+import { SessionsTable } from "@/components/transcripts/sessions/sessions-table";
 import { TasksTable } from "@/components/transcripts/tasks/tasks-table";
 import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
@@ -25,6 +26,8 @@ export default function Page({ params }: { params: { id: string } }) {
     { keepPreviousData: true },
   );
   const tasks_ids = cluster?.tasks_ids;
+  const sessions_ids = cluster?.sessions_ids;
+  console.log("sessions_ids", sessions_ids);
 
   return (
     <>
@@ -41,11 +44,16 @@ export default function Page({ params }: { params: { id: string } }) {
           <div className="text-muted-foreground">{cluster.description}</div>
         )}
       </div>
-      {tasks_ids && (
+      {((Array.isArray(tasks_ids) && tasks_ids.length > 0) && (
         <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
           <TasksTable tasks_ids={tasks_ids} />
         </div>
-      )}
+      ))}
+      {((Array.isArray(sessions_ids) && sessions_ids.length > 0) && (
+        <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
+          <SessionsTable sessions_ids={sessions_ids} />
+        </div>
+      ))}
     </>
   );
 }

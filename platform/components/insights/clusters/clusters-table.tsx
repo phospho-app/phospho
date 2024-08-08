@@ -70,10 +70,10 @@ export function ClustersTable<TData, TValue>({
   } = useSWR(
     project_id
       ? [
-          `/api/explore/${project_id}/clusters`,
-          accessToken,
-          selectedClustering?.id,
-        ]
+        `/api/explore/${project_id}/clusters`,
+        accessToken,
+        selectedClustering?.id,
+      ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
@@ -128,11 +128,14 @@ export function ClustersTable<TData, TValue>({
               <div>
                 {clusterings?.length > 0 && (
                   <span>
-                    {formatUnixTimestampToLiteralDatetime(
-                      selectedClustering?.created_at ??
+                    {selectedClustering?.name ??
+                      formatUnixTimestampToLiteralDatetime(
+                        selectedClustering?.created_at ?? 0) ??
+                      latestClustering?.name ??
+                      formatUnixTimestampToLiteralDatetime(
                         latestClustering?.created_at ??
                         0,
-                    )}
+                      )}
                   </span>
                 )}
                 {clusterings?.length === 0 && (
@@ -146,7 +149,7 @@ export function ClustersTable<TData, TValue>({
               <SelectGroup>
                 {clusterings.map((clustering) => (
                   <SelectItem key={clustering.id} value={clustering.id}>
-                    {formatUnixTimestampToLiteralDatetime(
+                    {clustering?.name ?? formatUnixTimestampToLiteralDatetime(
                       clustering.created_at,
                     )}
                   </SelectItem>
@@ -181,9 +184,9 @@ export function ClustersTable<TData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                       </TableHead>
                     );
                   })}
