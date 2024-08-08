@@ -128,7 +128,7 @@ class ExtractorClient:
             )
 
             response = await client.execute_workflow(
-                endpoint, data, id="extractor", task_queue="default"
+                endpoint, data, id=generate_uuid(), task_queue="default"
             )
 
             if on_success_callback:
