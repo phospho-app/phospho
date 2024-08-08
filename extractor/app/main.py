@@ -1,6 +1,5 @@
 import os
 import asyncio
-import sentry_sdk
 
 from app.core import config
 from app.db.mongo import close_mongo_db, connect_and_init_db
@@ -10,15 +9,8 @@ from temporalio.worker import Worker
 
 from loguru import logger
 
-
-if config.ENVIRONMENT == "production":
-    sentry_sdk.init(
-        dsn=config.EXTRACTOR_SENTRY_DSN,
-        traces_sample_rate=0.1,
-        profiles_sample_rate=0.1,
-    )
-    sentry_sdk.set_level("warning")
-
+import sentry_sdk
+from app.sentry.interceptor import SentryInterceptor
 
 import dataclasses
 from app.temporal.workflows import (
@@ -74,6 +66,14 @@ interrupt_event = asyncio.Event()
 
 
 async def main():
+    if config.ENVIRONMENT == "production":
+        sentry_sdk.init(
+            dsn=os.getenv("SENTRY_DSN"),
+            traces_sample_rate=0.1,
+            profiles_sample_rate=0.1,
+        )
+        sentry_sdk.set_level("warning")
+
     await connect_and_init_db()
     client_cert = config.TEMPORAL_MTLS_TLS_CERT
     client_key = config.TEMPORAL_MTLS_TLS_KEY
@@ -111,6 +111,7 @@ async def main():
             run_process_logs_for_messages,
         ],
         workflow_runner=new_sandbox_runner(),
+        interceptors=[SentryInterceptor()],
     ):
         logger.info("Worker started")
         await interrupt_event.wait()
