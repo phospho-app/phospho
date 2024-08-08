@@ -37,10 +37,11 @@ import { getColumns } from "./sessions-table-columns";
 
 interface DataTableProps<TData, TValue> {
   userFilter?: string | null;
+  sessions_ids?: string[];
 }
 
 export function SessionsTable<TData, TValue>({
-  userFilter = null,
+  userFilter = null, sessions_ids,
 }: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
 
@@ -74,16 +75,20 @@ export function SessionsTable<TData, TValue>({
   const { data: sessionsData, mutate: mutateSessions } = useSWR(
     project_id
       ? [
-          `/api/projects/${project_id}/sessions`,
-          accessToken,
-          sessionPagination.pageIndex,
-          JSON.stringify(dataFilters),
-          JSON.stringify(sessionsSorting),
-        ]
+        `/api/projects/${project_id}/sessions`,
+        accessToken,
+        sessionPagination.pageIndex,
+        JSON.stringify(dataFilters),
+        JSON.stringify(sessionsSorting),
+        JSON.stringify(sessions_ids),
+      ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        filters: dataFilters,
+        ilters: {
+          ...dataFilters,
+          tasks_ids: sessions_ids,
+        },
         pagination: {
           page: sessionPagination.pageIndex,
           page_size: sessionPagination.pageSize,
@@ -109,7 +114,10 @@ export function SessionsTable<TData, TValue>({
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_sessions"],
-        filters: dataFilters,
+        filters: {
+          ...dataFilters,
+          sessions_ids: sessions_ids,
+        },
       }),
     {
       keepPreviousData: true,
@@ -153,11 +161,9 @@ export function SessionsTable<TData, TValue>({
   return (
     <div>
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <div className="flex flex-row justify-between gap-x-2 items-center mb-2">
-          <div className="flex flex-row space-x-2 items-center">
-            <DatePickerWithRange />
-            <FilterComponent variant="sessions" />
-          </div>
+        <div className="flex flex-row justify-between items-center space-x-2 mb-2">
+          <DatePickerWithRange />
+          <FilterComponent variant="sessions" />
           <TableNavigation table={table} />
         </div>
 
@@ -178,9 +184,9 @@ export function SessionsTable<TData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                       </TableHead>
                     );
                   })}

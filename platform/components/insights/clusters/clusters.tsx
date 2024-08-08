@@ -23,6 +23,7 @@ const Clusters: React.FC = () => {
   const { accessToken } = useUser();
 
   const [clusteringUnavailable, setClusteringUnavailable] = useState(true);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data: clusteringsData, mutate: mutateClusterings } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
@@ -57,6 +58,25 @@ const Clusters: React.FC = () => {
   const totalNbTasks: number | null | undefined =
     totalNbTasksData?.total_nb_tasks;
 
+  const { data: totalNbSessionsData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/sessions`,
+      accessToken,
+      JSON.stringify(dataFilters),
+      "total_nb_sessions",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_sessions"],
+        filters: { ...dataFilters },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const totalNbSessions: number | null | undefined =
+    totalNbSessionsData?.total_nb_sessions;
+
   useEffect(() => {
     if (latestClustering?.status === "completed") {
       setClusteringUnavailable(false);
@@ -87,8 +107,11 @@ const Clusters: React.FC = () => {
             <div className="flex flex-col space-y-1 justify-center items-center">
               <RunClusters
                 totalNbTasks={totalNbTasks}
+                totalNbSessions={totalNbSessions}
                 mutateClusterings={mutateClusterings}
                 clusteringUnavailable={clusteringUnavailable}
+                sheetOpen={sheetOpen}
+                setSheetOpen={setSheetOpen}
               />
               <div className="text-muted-foreground text-xs">
                 Last update:{" "}
@@ -101,7 +124,10 @@ const Clusters: React.FC = () => {
         </CardHeader>
       </Card>
       <div className="flex-col space-y-2 md:flex pb-10">
-        <ClustersTable clusterings={clusteringsData?.clusterings} />
+        <ClustersTable
+          clusterings={clusteringsData?.clusterings}
+          setSheetOpen={setSheetOpen}
+        />
       </div>
     </>
   );

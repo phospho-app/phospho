@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
 import UpgradeButton from "@/components/upgrade-button";
-import { authFetcher } from "@/lib/fetcher";
-import { Clustering, Project } from "@/models/models";
+import { Clustering } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -20,16 +19,28 @@ import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ChevronRight, Sparkles } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 const RunClusters = ({
   totalNbTasks,
+  totalNbSessions,
   mutateClusterings,
   clusteringUnavailable,
+  sheetOpen,
+  setSheetOpen,
 }: {
   totalNbTasks: number | null | undefined;
+  totalNbSessions: number | null | undefined;
   mutateClusterings: any;
   clusteringUnavailable: boolean;
+  sheetOpen: boolean;
+  setSheetOpen: (value: boolean) => void;
 }) => {
   const { accessToken } = useUser();
   const [clusteringCost, setClusteringCost] = useState(0);
@@ -40,19 +51,24 @@ const RunClusters = ({
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
+  const [scope, setScope] = React.useState("messages");
+
 
   useEffect(() => {
-    if (totalNbTasks) {
+    if (totalNbTasks && scope == "messages") {
       setClusteringCost(totalNbTasks * 2);
     }
-  }, [totalNbTasks]);
+    else if (totalNbSessions && scope == "sessions") {
+      setClusteringCost(totalNbSessions * 2);
+    }
+  }, [totalNbSessions, totalNbTasks, scope]);
 
   if (!project_id) {
     return <></>;
   }
 
-  async function runClusterAnalysis() {
+  async function runClusterAnalysis(
+  ) {
     setLoading(true);
     mutateClusterings((data: any) => {
       const newClustering: Clustering = {
@@ -63,6 +79,7 @@ const RunClusters = ({
         created_at: Date.now() / 1000,
         status: "started",
         clusters_ids: [],
+        scope: scope as "messages" | "sessions",
       };
       const newData = {
         clusterings: [newClustering, ...data?.clusterings],
@@ -78,6 +95,7 @@ const RunClusters = ({
         },
         body: JSON.stringify({
           filters: dataFilters,
+          scope: scope,
         }),
       }).then((response) => {
         if (response.status == 200) {
@@ -85,7 +103,7 @@ const RunClusters = ({
             title: "Cluster detection started ⏳",
             description: "This may take a few minutes.",
           });
-          setOpen(false);
+          setSheetOpen(false);
         } else {
           toast({
             title: "Error when starting detection",
@@ -100,12 +118,19 @@ const RunClusters = ({
         description: JSON.stringify(e),
       });
       setLoading(false);
-
     }
   }
+  let canRunClusterAnalysis = (scope === "messages" && totalNbTasks && totalNbTasks >= 5)
+    || (scope === "sessions" && totalNbSessions && totalNbSessions >= 5);
+
+  let nbElements = (scope === "messages" && totalNbTasks)
+    ? totalNbTasks
+    : (scope === "sessions" && totalNbSessions)
+      ? totalNbSessions
+      : 0;
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
       <SheetTrigger>
         <Button className="default">
           <Sparkles className="w-4 h-4 mr-2 text-green-500" /> Configure
@@ -114,34 +139,37 @@ const RunClusters = ({
         </Button>
       </SheetTrigger>
       <SheetContent className="md:w-1/2 overflow-auto">
-        <SheetTitle>
-          Configure clusters detection
-        </SheetTitle>
+        <SheetTitle>Configure clusters detection</SheetTitle>
         <SheetDescription>
-          Run a cluster analysis on your user messages to detect patterns and
-          group similar messages together.
+          Run a cluster analysis on your user sessions to detect patterns and group similar messages together.
         </SheetDescription>
         <Separator className="my-8" />
-        <div className="flex flex-wrap">
-          <DatePickerWithRange className="mr-2" />
+        <div className="flex flex-wrap space-x-2 space-y-2 items-end">
+          <DatePickerWithRange />
+          <Select
+            onValueChange={setScope}
+            defaultValue={scope}
+          >
+            <SelectTrigger className="max-w-[20rem]">
+              {scope === "messages" ? "Messages" : "Sessions"}
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="messages">Messages</SelectItem>
+                <SelectItem value="sessions">Sessions</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
           <FilterComponent variant="tasks" />
         </div>
-        {(!totalNbTasks || totalNbTasks < 5) && (
+        {(!canRunClusterAnalysis) && (
           <div className="mt-4">
-            You need at least 5 user messages to run a cluster analysis, there
-            are currently {totalNbTasks ? totalNbTasks : 0} user messages.
+            You need at least 5 {scope} to run a cluster analysis. There are currently {nbElements} {scope}.
           </div>
         )}
-        {totalNbTasks && totalNbTasks >= 5 && totalNbTasks <= 4000 && (
+        {canRunClusterAnalysis && (
           <div className="mt-4">
-            We will clusterize {totalNbTasks} user messages for a total of{" "}
-            {clusteringCost} credits.
-          </div>
-        )}
-        {!hobby && totalNbTasks && totalNbTasks > 4000 && (
-          <div className="mt-4">
-            Please filter your selection to less than 4000 user messages. There
-            are currently {totalNbTasks} user messages to clusterize.
+            We will clusterize {nbElements} user messages for a total of {clusteringCost} credits.
           </div>
         )}
         {hobby && (
@@ -149,25 +177,22 @@ const RunClusters = ({
             <UpgradeButton tagline="Run cluster analysis" green={false} />
           </div>
         )}
-        {!hobby &&
-          totalNbTasks &&
-          totalNbTasks >= 5 &&
-          totalNbTasks <= 4000 && (
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                onClick={runClusterAnalysis}
-                disabled={clusteringUnavailable || loading}
-              >
-                {(loading || clusteringUnavailable) && (
-                  <Spinner className="mr-2" />
-                )}
-                Run cluster analysis
-              </Button>
-            </div>
-          )}
+        {!hobby && canRunClusterAnalysis && (
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              onClick={runClusterAnalysis}
+              disabled={clusteringUnavailable || loading}
+            >
+              {(loading || clusteringUnavailable) && <Spinner className="mr-2" />}
+              Run cluster analysis
+            </Button>
+          </div>
+        )}
+
+
       </SheetContent>
-    </Sheet>
+    </Sheet >
   );
 };
 

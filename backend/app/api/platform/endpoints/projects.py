@@ -139,6 +139,8 @@ async def post_sessions(
     if isinstance(query.filters.created_at_end, datetime.datetime):
         query.filters.created_at_end = int(query.filters.created_at_end.timestamp())
 
+    logger.debug(query.sessions_ids)
+
     sessions = await get_all_sessions(
         project_id=project_id,
         get_events=True,
@@ -146,6 +148,7 @@ async def post_sessions(
         filters=query.filters,
         pagination=query.pagination,
         sorting=query.sorting,
+        sessions_ids=query.sessions_ids,
     )
     return Sessions(sessions=sessions)
 

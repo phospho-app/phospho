@@ -23,7 +23,7 @@ services:
   extractor:
     build: ./extractor
     ports:
-      - "7605:7605"
+      - "8080:8080"
     env_file:
       - ./.env.docker
     networks:

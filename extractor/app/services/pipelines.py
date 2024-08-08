@@ -759,7 +759,7 @@ class MainPipeline:
         return outputs
 
     async def run_sentiment_and_language(
-        self
+        self,
     ) -> Tuple[Dict[str, Optional[SentimentObject]], Dict[str, Optional[str]]]:
         """
         Run the sentiment analysis on the input of a task

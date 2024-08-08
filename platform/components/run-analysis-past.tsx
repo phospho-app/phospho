@@ -53,7 +53,7 @@ const RunAnalysisInPast = ({
 }) => {
   const router = useRouter();
   const { accessToken } = useUser();
-  const [checkedEval, setCheckedEval] = useState(true);
+  const [checkedEval, setCheckedEval] = useState(false);
   const [checkedEvent, setCheckedEvent] = useState(true);
   const [checkedLangSent, setCheckedLangSent] = useState(true);
   const [totalAnalytics, setTotalAnalytics] = useState(0);
@@ -118,7 +118,7 @@ const RunAnalysisInPast = ({
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      recipe_type_list: ["evaluation", "event_detection", "sentiment_language"],
+      recipe_type_list: ["event_detection", "sentiment_language"], // "evaluation"
     },
   });
 
@@ -158,7 +158,7 @@ const RunAnalysisInPast = ({
 
   return (
     <Sheet>
-      <SheetTrigger>
+      <SheetTrigger asChild>
         <Button variant={"outline"}>
           <Sparkles className="text-green-500 h-4 w-4 mr-2" />
           Detect
@@ -184,8 +184,8 @@ const RunAnalysisInPast = ({
                       {selectedProject?.project_name}'
                     </FormLabel>
                   </div>
-                  <div className="flex flex-wrap">
-                    <DatePickerWithRange className="mr-2" />
+                  <div className="flex flex-wrap space-x-2">
+                    <DatePickerWithRange />
                     <FilterComponent variant="tasks" />
                   </div>
                   {form_choices.map((item) => (

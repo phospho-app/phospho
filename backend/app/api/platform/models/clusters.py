@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Literal, Optional
 from phospho.models import Cluster, Clustering, ProjectDataFilters
 
 
@@ -16,3 +16,4 @@ class ClusteringRequest(BaseModel):
     org_id: str
     limit: Optional[int] = 2000
     filters: ProjectDataFilters
+    scope: Literal["messages", "sessions"] = "messages"

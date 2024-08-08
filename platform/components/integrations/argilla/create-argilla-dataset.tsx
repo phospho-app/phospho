@@ -107,8 +107,8 @@ const CreateDataset = () => {
           Export your project data into a dataset for labelling
         </SheetDescription>
         <Separator className="my-8" />
-        <div className="flex flex-wrap mt-4">
-          <DatePickerWithRange className="mr-2" />
+        <div className="flex flex-wrap mt-4 space-x-2">
+          <DatePickerWithRange />
           <FilterComponent variant="tasks" />
         </div>
         {/* <div className="items-top flex space-x-2 mt-4">

@@ -1,9 +1,7 @@
 # phospho extractor
 
-This is the extractor service for the phospho project. It is responsible for extracting the requried data from tasks and sessions :
-
-- evaluations
-- events
+The extractor is a temporal worker that runs long and tedious workflows.
+A worker is composed of activities.
 
 ## Installation
 
@@ -24,14 +22,10 @@ EXTRACTOR_SECRET_KEY=""
 poetry add <module-name>
 ```
 
-## Running the server
+## Running the worker
 
-> Make sure to use the right port, so you can have 2 servers running at the same time.
+> To run the worker simply run main.py
 
 ```bash
-poetry run uvicorn app.main:app --reload --port 7605
+python3.11 app/main.py
 ```
-
-## Security
-
-Requests to this server are considered already authenticated and authorized. This is because the server is behind our phospho backend. A secret key (`EXTRACTOR_SECRET_KEY`) for the FastAPI app, any request will be rejected if the secret key is not provided in the request headers.
