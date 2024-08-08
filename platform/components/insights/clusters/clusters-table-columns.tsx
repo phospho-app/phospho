@@ -1,4 +1,9 @@
 import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Cluster } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { ColumnDef } from "@tanstack/react-table";
@@ -70,22 +75,28 @@ export function getColumns({
         if (!cluster_id) return <></>;
         return (
           <div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation();
-                setSheetOpen(true);
-                const currentClustersIds = dataFilters.clusters_ids ?? [];
-                setDataFilters({
-                  ...dataFilters,
-                  clustering_id: clustering_id,
-                  clusters_ids: [cluster_id],
-                });
-              }}
-            >
-              <Pickaxe className="w-6 h-6" />
-            </Button>
+            <HoverCard openDelay={0} closeDelay={0}>
+              <HoverCardTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(mouseEvent) => {
+                    mouseEvent.stopPropagation();
+                    setSheetOpen(true);
+                    setDataFilters({
+                      ...dataFilters,
+                      clustering_id: clustering_id,
+                      clusters_ids: [cluster_id],
+                    });
+                  }}
+                >
+                  <Pickaxe className="w-6 h-6" />
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent>
+                <p>Breakdown cluster into smaller ones</p>
+              </HoverCardContent>
+            </HoverCard>
             <Link
               href={`/org/insights/clusters/${encodeURIComponent(cluster_id)}`}
             >
