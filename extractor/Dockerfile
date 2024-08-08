@@ -19,7 +19,9 @@ RUN poetry install --with dev --no-interaction --no-ansi
 
 # Copy source code
 COPY ./app /src/app
+COPY ./main.py /src/main.py
 EXPOSE 7605
 
-# Run the worker # "poetry", "run",
-CMD ["python", "app/main.py"]
+# Run the worker
+RUN ls -la
+CMD ["poetry", "run", "python", "main.py"]

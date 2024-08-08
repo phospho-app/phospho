@@ -3,4 +3,3 @@
 .other_secrets
 tests
 .pytest_cache
-.venv/
