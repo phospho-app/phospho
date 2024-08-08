@@ -126,11 +126,14 @@ export function ClustersTable<TData, TValue>({
               <div>
                 {clusterings?.length > 0 && (
                   <span>
-                    {formatUnixTimestampToLiteralDatetime(
-                      selectedClustering?.created_at ??
-                      latestClustering?.created_at ??
-                      0,
-                    )}
+                    {selectedClustering?.name ??
+                      formatUnixTimestampToLiteralDatetime(
+                        selectedClustering?.created_at ?? 0) ??
+                      latestClustering?.name ??
+                      formatUnixTimestampToLiteralDatetime(
+                        latestClustering?.created_at ??
+                        0,
+                      )}
                   </span>
                 )}
                 {clusterings?.length === 0 && (
@@ -144,7 +147,7 @@ export function ClustersTable<TData, TValue>({
               <SelectGroup>
                 {clusterings.map((clustering) => (
                   <SelectItem key={clustering.id} value={clustering.id}>
-                    {formatUnixTimestampToLiteralDatetime(
+                    {clustering?.name ?? formatUnixTimestampToLiteralDatetime(
                       clustering.created_at,
                     )}
                   </SelectItem>

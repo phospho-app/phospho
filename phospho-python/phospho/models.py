@@ -753,6 +753,7 @@ class Clustering(ProjectElementBaseModel):
     status: Optional[Literal["started", "summaries", "completed"]] = None
     clusters: Optional[List[Cluster]] = None
     scope: Optional[Literal["messages", "sessions"]] = None
+    name: Optional[str] = None
 
 
 class UsageQuota(BaseModel):

@@ -265,6 +265,7 @@ export interface Clustering {
   status?: "started" | "summaries" | "completed";
   clusters?: Cluster[] | null;
   scope: "messages" | "sessions";
+  name?: string;
 }
 
 export interface CustomDateRange {
