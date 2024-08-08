@@ -15,6 +15,7 @@ app = typer.Typer()
 class ExecutorType(Enum):
     SEQUENTIAL = "sequential"
     PARALLEL = "parallel"
+    PARALLEL_JOBS = "parallel_jobs"
 
 
 def load_from_file(filepath):
