@@ -12,6 +12,17 @@ files = [
 ]
 
 [[package]]
+name = "aiohealthcheck"
+version = "2018.7.1"
+description = "aiohealthcheck: super-simple TCP health-check endpoint"
+optional = false
+python-versions = "*"
+files = [
+    {file = "aiohealthcheck-2018.7.1-py2.py3-none-any.whl", hash = "sha256:7b242832ddd053bee2fd67fd613c6d17c205331c935db01945901a108c8978fa"},
+    {file = "aiohealthcheck-2018.7.1.tar.gz", hash = "sha256:bbd9824c36e899df2ff38f9ba778edd23a58d9dab5b47fd49a0723a901492fc2"},
+]
+
+[[package]]
 name = "aiohttp"
 version = "3.10.1"
 description = "Async http client/server framework (asyncio)"
@@ -2420,4 +2431,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c51b511a9482a34d7273cd4bb6516cfd08bf04705c2ce6acc14439f5e4d08319"
+content-hash = "8a687ffcc21063aa5809758d313966ed4261b154c234ba1657eba9392e94b5cb"

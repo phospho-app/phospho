@@ -66,7 +66,7 @@ jobs:
         run: |
           gcloud run deploy phospho-extractor \
             --project $GCP_PROJECT_ID \
-            --port 443 \
+            --port 8080 \
             --memory 4Gi \
             --region europe-west1 \
             --allow-unauthenticated \

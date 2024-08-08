@@ -65,7 +65,7 @@ jobs:
         run: |
           gcloud run deploy phospho-extractor-staging \
             --project $GCP_PROJECT_ID \
-            --port 443 \
+            --port 8080 \
             --region europe-west1 \
             --allow-unauthenticated \
             --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,ENVIRONMENT=staging,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME,EXTRACTOR_SECRET_KEY=$EXTRACTOR_SECRET_KEY,EXTRACTOR_SENTRY_DSN=$EXTRACTOR_SENTRY_DSN,QDRANT_URL=$QDRANT_URL,QDRANT_API_KEY=$QDRANT_API_KEY,GCP_JSON_CREDENTIALS_NATURAL_LANGUAGE_PROCESSING=$GCP_JSON_CREDENTIALS_NATURAL_LANGUAGE_PROCESSING \

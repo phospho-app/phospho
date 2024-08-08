@@ -25,7 +25,7 @@ RUN poetry install --with dev --no-interaction --no-ansi
 COPY ./app /src/app
 COPY ./main.py /src/main.py
 
-EXPOSE 443
+EXPOSE 8080
 
 # Run the worker
 CMD ["poetry", "run", "python", "main.py"]

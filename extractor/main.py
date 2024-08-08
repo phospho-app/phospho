@@ -8,6 +8,7 @@ from temporalio.worker.workflow_sandbox import (
     SandboxRestrictions,
 )
 import sentry_sdk
+import aiohealthcheck
 from app.sentry.interceptor import SentryInterceptor
 
 from loguru import logger
@@ -121,6 +122,7 @@ async def main():
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     try:
+        loop.create_task(aiohealthcheck.tcp_health_endpoint(port=8080))
         loop.run_until_complete(main())
     except KeyboardInterrupt:
         interrupt_event.set()
