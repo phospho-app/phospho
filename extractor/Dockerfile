@@ -24,12 +24,12 @@ RUN poetry install --with dev --no-interaction --no-ansi
 # Copy source code
 COPY ./app /src/app
 COPY ./main.py /src/main.py
+
 EXPOSE 7605
 
-WORKDIR /home/.cache/pypoetry/virtualenvs
-RUN ls -la
-WORKDIR /src
+# So GCP can send probe
+ENV HOSTNAME="0.0.0.0" 
+
 
 # Run the worker
-RUN ls -la
 CMD ["poetry", "run", "python", "main.py"]
