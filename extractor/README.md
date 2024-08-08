@@ -42,10 +42,10 @@ You then have to encrypt the client key and client certificate in base 64 like s
 openssl base64 -in client.pem -out client-base64-pem
 ```
 
-# Running the server
+# Running the worker
 
 ```bash
-poetry run uvicorn app.main:app --reload --port 7605
+poetry run main.py
 ```
 
 **Warning:** You have to put your EXTRACTOR_SECRET_KEY in your backend .env.
