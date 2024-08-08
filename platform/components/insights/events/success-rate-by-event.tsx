@@ -77,7 +77,7 @@ function SuccessRateByEvent() {
 
   return (
     <div className="flex flex-col space-y-2">
-      <div className="flex flex-row space-x-2">
+      <div className="flex flex-row space-x-2 items-center">
         <DatePickerWithRange />
         <FilterComponent variant="tasks" />
       </div>

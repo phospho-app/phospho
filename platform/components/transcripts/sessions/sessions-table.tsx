@@ -153,11 +153,9 @@ export function SessionsTable<TData, TValue>({
   return (
     <div>
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <div className="flex flex-row justify-between gap-x-2 items-center mb-2">
-          <div className="flex flex-row space-x-2 items-center">
-            <DatePickerWithRange />
-            <FilterComponent variant="sessions" />
-          </div>
+        <div className="flex flex-row justify-between items-center space-x-2 mb-2">
+          <DatePickerWithRange />
+          <FilterComponent variant="sessions" />
           <TableNavigation table={table} />
         </div>
 
