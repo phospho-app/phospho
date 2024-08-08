@@ -66,7 +66,7 @@ interrupt_event = asyncio.Event()
 
 
 async def main():
-    if config.ENVIRONMENT == "production":
+    if config.ENVIRONMENT == "production" or config.ENVIRONMENT == "staging":
         sentry_sdk.init(
             dsn=os.getenv("SENTRY_DSN"),
             traces_sample_rate=0.1,
@@ -111,7 +111,7 @@ async def main():
         ],
         workflow_runner=new_sandbox_runner(),
         interceptors=[SentryInterceptor()]
-        if config.ENVIRONMENT == "production"
+        if config.ENVIRONMENT == "production" or config.ENVIRONMENT == "staging"
         else [],
     ):
         logger.info("Worker started")
