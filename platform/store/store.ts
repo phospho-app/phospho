@@ -45,9 +45,6 @@ interface navigationState {
   setmetadata_metric: (metadata: string | null) => void;
   selectedGroupBy: string;
   setSelectedGroupBy: (groupBy: string) => void;
-
-  messagesOrSessions: "messages" | "sessions";
-  setMessagesOrSessions: (messagesOrSessions: "messages" | "sessions") => void;
 }
 
 export const navigationStateStore = create(
@@ -249,9 +246,6 @@ export const navigationStateStore = create(
       selectedGroupBy: "flag",
       setSelectedGroupBy: (groupBy: string) =>
         set(() => ({ selectedGroupBy: groupBy })),
-      messagesOrSessions: "messages",
-      setMessagesOrSessions: (messagesOrSessions: "messages" | "sessions") =>
-        set(() => ({ messagesOrSessions: messagesOrSessions })),
     }),
 
 

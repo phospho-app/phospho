@@ -248,7 +248,9 @@ export interface Cluster {
   name: string;
   description: string;
   size: number;
-  tasks_ids: string[];
+  tasks_ids: string[] | null;
+  sessions_ids: string[] | null;
+  scope: "messages" | "sessions";
 }
 
 export interface Clustering {
@@ -262,7 +264,7 @@ export interface Clustering {
   clusters_ids: string[];
   status?: "started" | "summaries" | "completed";
   clusters?: Cluster[] | null;
-  messages_or_sessions: "messages" | "sessions";
+  scope: "messages" | "sessions";
 }
 
 export interface CustomDateRange {
