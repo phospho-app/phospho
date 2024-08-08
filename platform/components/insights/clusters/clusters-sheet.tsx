@@ -185,7 +185,6 @@ const RunClusters = ({
               disabled={clusteringUnavailable || loading}
             >
               {(loading || clusteringUnavailable) && <Spinner className="mr-2" />}
-              console.log(scope)
               Run cluster analysis
             </Button>
           </div>
