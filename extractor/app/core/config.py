@@ -80,7 +80,7 @@ if credentials_natural_language is not None:
     )
     GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(credentials=credentials)
 
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET")
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 SLACK_URL = os.getenv("SLACK_URL")
 
 # These orgs are exempted from the quota
