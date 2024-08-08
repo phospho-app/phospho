@@ -117,6 +117,6 @@ def wrap_openai(wrap: Callable) -> None:
 
         global original_create
         original_create = completions.Completions.create
-        completions.Completions.create = wrap(original_create)
+        completions.Completions.create = wrap(original_create, auto_log=True)
     except ImportError:
         pass
