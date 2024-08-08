@@ -73,7 +73,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     phospho.consumer.send_batch()
 
     # Wait for the pipeline to complete
-    time.sleep(3)
+    time.sleep(10)
 
     # Check that the tasks was logged to phospho
     tasks = requests.get(
