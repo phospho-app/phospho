@@ -11,7 +11,12 @@ COPY ./pyproject.toml /src/pyproject.toml
 COPY ./poetry.lock /src/poetry.lock
 
 # Install dependencies
-RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
+# RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
+
+# Create virtualenv at .venv in the project instead of ~/.cache/
+RUN poetry config virtualenvs.in-project true
+# Install production dependencies 
+RUN poetry install --no-dev --no-ansi
 
 # Copy phospho package
 COPY ./phospho-python /phospho-python
