@@ -110,7 +110,9 @@ async def main():
             run_process_logs_for_messages,
         ],
         workflow_runner=new_sandbox_runner(),
-        interceptors=[SentryInterceptor()],
+        interceptors=[SentryInterceptor()]
+        if config.ENVIRONMENT == "production"
+        else [],
     ):
         logger.info("Worker started")
         await interrupt_event.wait()
