@@ -12,4 +12,5 @@ from .pipelines import (
     PipelineOpentelemetryRequest,
     PipelineLangsmithRequest,
     PipelineLangfuseRequest,
+    BillOnStripeRequest,
 )

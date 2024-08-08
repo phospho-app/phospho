@@ -39,10 +39,12 @@ import { getColumns } from "./clusters-table-columns";
 
 interface DataTableProps<TData, TValue> {
   clusterings?: Clustering[];
+  setSheetOpen: (value: boolean) => void;
 }
 
 export function ClustersTable<TData, TValue>({
   clusterings = [],
+  setSheetOpen,
 }: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
@@ -85,7 +87,7 @@ export function ClustersTable<TData, TValue>({
     },
   );
 
-  const columns = getColumns();
+  const columns = getColumns({ setSheetOpen: setSheetOpen });
 
   const table = useReactTable({
     data: clustersData ?? [],

@@ -10,8 +10,12 @@ RUN pip install poetry
 COPY ./pyproject.toml /src/pyproject.toml
 COPY ./poetry.lock /src/poetry.lock
 
+
+# Create virtualenv at .venv in the project instead of ~/.cache/
+RUN poetry config virtualenvs.in-project true
+
 # Install dependencies
-RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
+RUN poetry install --no-interaction --no-ansi
 
 # Copy phospho package
 COPY ./phospho-python /phospho-python
@@ -19,6 +23,9 @@ RUN poetry install --with dev --no-interaction --no-ansi
 
 # Copy source code
 COPY ./app /src/app
+COPY ./main.py /src/main.py
 
-# Run the server on port 80
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7605"]
+EXPOSE 8080
+
+# Run the worker
+CMD ["poetry", "run", "python", "main.py"]

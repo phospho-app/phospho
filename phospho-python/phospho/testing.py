@@ -350,7 +350,7 @@ class PhosphoTest:
 
     def run(
         self,
-        executor_type: Literal["parallel", "sequential"] = "parallel",
+        executor_type: Literal["parallel", "sequential", "parallel_jobs"] = "parallel",
         max_parallelism: int = 20,
     ):
         """

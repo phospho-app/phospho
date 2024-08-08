@@ -23,6 +23,7 @@ const Clusters: React.FC = () => {
   const { accessToken } = useUser();
 
   const [clusteringUnavailable, setClusteringUnavailable] = useState(true);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data: clusteringsData, mutate: mutateClusterings } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
@@ -109,6 +110,8 @@ const Clusters: React.FC = () => {
                 totalNbSessions={totalNbSessions}
                 mutateClusterings={mutateClusterings}
                 clusteringUnavailable={clusteringUnavailable}
+                sheetOpen={sheetOpen}
+                setSheetOpen={setSheetOpen}
               />
               <div className="text-muted-foreground text-xs">
                 Last update:{" "}
@@ -121,7 +124,10 @@ const Clusters: React.FC = () => {
         </CardHeader>
       </Card>
       <div className="flex-col space-y-2 md:flex pb-10">
-        <ClustersTable clusterings={clusteringsData?.clusterings} />
+        <ClustersTable
+          clusterings={clusteringsData?.clusterings}
+          setSheetOpen={setSheetOpen}
+        />
       </div>
     </>
   );

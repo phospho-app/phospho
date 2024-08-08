@@ -1,4 +1,4 @@
-from typing import Dict, Any, Union, Optional
+from typing import Callable, Dict, Any, Union, Optional
 
 try:
     from langchain_core.callbacks import BaseCallbackHandler, AsyncCallbackHandler
@@ -106,3 +106,17 @@ try:
 
 except ImportError:
     pass
+
+
+def wrap_openai(wrap: Callable) -> None:
+    """
+    Wrap OpenAI API calls with a logging function.
+    """
+    try:
+        from openai.resources.chat import completions
+
+        global original_create
+        original_create = completions.Completions.create
+        completions.Completions.create = wrap(original_create, auto_log=True)
+    except ImportError:
+        pass

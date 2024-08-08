@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+from typing import Optional, List
 from app.api.platform.models.explore import Pagination
 from app.db.mongo import get_mongo_db
 from app.services.mongo.events import get_event_definition_from_event_id
@@ -110,7 +110,7 @@ async def run_recipe_on_tasks_batched(
 
 async def run_recipe_types_on_tasks(
     project_id: str,
-    recipe_types: str,
+    recipe_types: List[str],
     org_id: str,
     filters: Optional[ProjectDataFilters],
 ) -> None:
@@ -119,6 +119,8 @@ async def run_recipe_types_on_tasks(
     """
     if filters is None:
         filters = ProjectDataFilters()
+
+    logger.debug(f"Running recipes of types {recipe_types} on project {project_id}")
 
     for recipe_type in recipe_types:
         if recipe_type == "event_detection":

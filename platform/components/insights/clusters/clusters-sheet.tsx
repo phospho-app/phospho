@@ -19,28 +19,28 @@ import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ChevronRight, Sparkles } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
-import { set } from "date-fns";
 
 const RunClusters = ({
   totalNbTasks,
   totalNbSessions,
   mutateClusterings,
   clusteringUnavailable,
+  sheetOpen,
+  setSheetOpen,
 }: {
   totalNbTasks: number | null | undefined;
   totalNbSessions: number | null | undefined;
   mutateClusterings: any;
   clusteringUnavailable: boolean;
+  sheetOpen: boolean;
+  setSheetOpen: (value: boolean) => void;
 }) => {
   const { accessToken } = useUser();
   const [clusteringCost, setClusteringCost] = useState(0);
@@ -51,7 +51,6 @@ const RunClusters = ({
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);
-  const [open, setOpen] = React.useState(false);
   const [scope, setScope] = React.useState("messages");
 
 
@@ -104,7 +103,7 @@ const RunClusters = ({
             title: "Cluster detection started ⏳",
             description: "This may take a few minutes.",
           });
-          setOpen(false);
+          setSheetOpen(false);
         } else {
           toast({
             title: "Error when starting detection",
@@ -131,7 +130,7 @@ const RunClusters = ({
       : 0;
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
       <SheetTrigger>
         <Button className="default">
           <Sparkles className="w-4 h-4 mr-2 text-green-500" /> Configure
@@ -140,9 +139,7 @@ const RunClusters = ({
         </Button>
       </SheetTrigger>
       <SheetContent className="md:w-1/2 overflow-auto">
-        <SheetTitle>
-          Configure clusters detection
-        </SheetTitle>
+        <SheetTitle>Configure clusters detection</SheetTitle>
         <SheetDescription>
           Run a cluster analysis on your user sessions to detect patterns and group similar messages together.
         </SheetDescription>
