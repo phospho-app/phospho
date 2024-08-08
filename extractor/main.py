@@ -35,6 +35,8 @@ from app.temporal.activities import (
 )
 from app.temporal.pydantic_converter import pydantic_data_converter
 
+logger.info("Starting worker")
+
 
 # Due to known issues with Pydantic's use of issubclass and our inability to
 # override the check in sandbox, Pydantic will think datetime is actually date
