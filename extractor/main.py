@@ -72,7 +72,6 @@ async def main():
             traces_sample_rate=0.1,
             profiles_sample_rate=0.1,
         )
-        sentry_sdk.set_level("warning")
 
     await connect_and_init_db()
     client_cert = config.TEMPORAL_MTLS_TLS_CERT
