@@ -40,6 +40,7 @@ You then have to encrypt the client key and client certificate in base 64 like s
 
 ```bash
 openssl base64 -in client.pem -out client-base64-pem
+openssl base64 -in client.key -out client-base64-key
 ```
 
 # Running the worker
