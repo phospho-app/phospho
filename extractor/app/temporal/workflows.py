@@ -50,14 +50,16 @@ class BaseWorkflow:
         activity_func,
         request_class,
         bill=True,
+        max_retries=1,
     ):
         self.activity_func = activity_func
         self.request_class = request_class
         self.bill = bill
+        self.max_retries = max_retries
 
     async def run_activity(self, request):
         retry_policy = RetryPolicy(
-            maximum_attempts=1,
+            maximum_attempts=self.max_retries,
             maximum_interval=timedelta(minutes=5),
             non_retryable_error_types=["ValueError"],
         )
@@ -175,6 +177,7 @@ class RunProcessLogForTasksWorkflow(BaseWorkflow):
         super().__init__(
             activity_func=run_process_log_for_tasks,
             request_class=LogProcessRequestForTasks,
+            max_retries=2,
         )
 
     @workflow.run
