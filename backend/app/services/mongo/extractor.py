@@ -19,7 +19,6 @@ from phospho.models import PipelineResults, Recipe, Task
 
 from temporalio.client import Client, TLSConfig
 
-from app.core import config
 import os
 
 
@@ -90,7 +89,7 @@ class ExtractorClient:
             logger.error("Org_id is missing.")
             return None
 
-        org = await propelauth.fetch_org(self.org_id)
+        org = propelauth.fetch_org(self.org_id)
         org_metadata = org.get("metadata", {})
         return org_metadata.get("customer_id", None)
 
