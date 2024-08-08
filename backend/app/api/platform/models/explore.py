@@ -39,12 +39,13 @@ class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     pagination: Optional[Pagination] = None
     sorting: Optional[List[Sorting]] = None
+    sessions_ids: Optional[List[str]] = None
 
 
 class DetectClustersRequest(BaseModel):
     limit: Optional[int] = 999999
     filters: Optional[ProjectDataFilters] = Field(default_factory=ProjectDataFilters)
-    messages_or_sessions: Literal["messages", "sessions"] = "messages"
+    scope: Literal["messages", "sessions"] = "messages"
 
 
 class FetchClustersRequest(BaseModel):

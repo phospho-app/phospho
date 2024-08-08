@@ -463,6 +463,7 @@ async def get_all_sessions(
     get_tasks: bool = False,
     pagination: Optional[Pagination] = None,
     sorting: Optional[List[Sorting]] = None,
+    sessions_ids: Optional[List[str]] = None,
 ) -> List[Session]:
     mongo_db = await get_mongo_db()
     collection_name = "sessions"
@@ -579,6 +580,16 @@ async def get_all_sessions(
             ]
         )
 
+    if sessions_ids is not None:
+        pipeline.extend(
+            [
+                {
+                    "$match": {
+                        "id": {"$in": sessions_ids},
+                    }
+                }
+            ]
+        )
     # ... and then we add the lookup and the deduplication
     pipeline.extend(
         [

@@ -16,4 +16,4 @@ class ClusteringRequest(BaseModel):
     org_id: str
     limit: Optional[int] = 2000
     filters: ProjectDataFilters
-    messages_or_sessions: Literal["messages", "sessions"] = "messages"
+    scope: Literal["messages", "sessions"] = "messages"

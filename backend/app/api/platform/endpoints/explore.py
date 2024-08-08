@@ -380,7 +380,7 @@ async def post_detect_clusters(
     if query is None:
         query = DetectClustersRequest()
 
-    if query.messages_or_sessions == "messages":
+    if query.scope == "messages":
         total_nb_tasks = await get_total_nb_of_tasks(project_id)
         if total_nb_tasks:
             clustering_sample_size = min(total_nb_tasks, query.limit)
@@ -389,7 +389,7 @@ async def post_detect_clusters(
                 status_code=404,
                 detail="No tasks found in the project.",
             )
-    elif query.messages_or_sessions == "sessions":
+    elif query.scope == "sessions":
         total_nb_sessions = await get_total_nb_of_sessions(project_id)
         if total_nb_sessions:
             clustering_sample_size = min(total_nb_sessions, query.limit)
@@ -428,7 +428,7 @@ async def post_detect_clusters(
             org_id=org_id,
             limit=query.limit,
             filters=query.filters,
-            messages_or_sessions=query.messages_or_sessions,
+            scope=query.scope,
         )
     )
     return {"status": "ok"}
