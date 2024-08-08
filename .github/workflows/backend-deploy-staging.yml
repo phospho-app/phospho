@@ -215,6 +215,10 @@ jobs:
           ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
           ARGILLA_URL: ${{ vars.ARGILLA_URL }}
           ARGILLA_API_KEY: ${{ secrets.ARGILLA_API_KEY }}
+          TEMPORAL_HOST_URL: ${{ vars.TEMPORAL_HOST_URL }}
+          TEMPORAL_NAMESPACE: ${{ vars.TEMPORAL_NAMESPACE }}
+          TEMPORAL_MTLS_TLS_CERT_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_CERT_BASE64 }}
+          TEMPORAL_MTLS_TLS_KEY_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_KEY_BASE64 }}
         # Specify here the tests you want to run after the -k flag
         run: |
           source .venv/bin/activate
