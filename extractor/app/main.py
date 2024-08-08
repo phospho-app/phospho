@@ -1,6 +1,12 @@
 import os
 import asyncio
 import dataclasses
+from temporalio.client import Client, TLSConfig
+from temporalio.worker import Worker
+from temporalio.worker.workflow_sandbox import (
+    SandboxedWorkflowRunner,
+    SandboxRestrictions,
+)
 import sentry_sdk
 from app.sentry.interceptor import SentryInterceptor
 
@@ -28,12 +34,6 @@ from app.temporal.activities import (
     run_process_logs_for_messages,
 )
 from app.temporal.pydantic_converter import pydantic_data_converter
-from temporalio.client import Client, TLSConfig
-from temporalio.worker import Worker
-from temporalio.worker.workflow_sandbox import (
-    SandboxedWorkflowRunner,
-    SandboxRestrictions,
-)
 
 
 # Due to known issues with Pydantic's use of issubclass and our inability to

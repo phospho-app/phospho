@@ -21,5 +21,5 @@ RUN poetry install --with dev --no-interaction --no-ansi
 COPY ./app /src/app
 EXPOSE 7605
 
-# Run the worker
-CMD ["poetry", "run", "python", "app/main.py"]
+# Run the worker # "poetry", "run",
+CMD ["python", "app/main.py"]
