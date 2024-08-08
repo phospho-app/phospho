@@ -174,9 +174,6 @@ class ExtractorClient:
                 "org_id": self.org_id,
                 "customer_id": await self._fetch_stripe_customer_id(),
             },
-            on_success_callback=lambda response: self._compute_stripe_usage(
-                nb_job_results=response.json().get("nb_job_results", 0),
-            ),
         )
 
     async def run_log_process_for_messages(
