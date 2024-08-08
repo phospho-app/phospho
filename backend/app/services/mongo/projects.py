@@ -496,6 +496,38 @@ async def get_all_sessions(
             for key, value in filters.metadata.items():
                 additional_sessions_filter[f"metadata.{key}"] = value
 
+        if filters.clustering_id is not None and filters.clusters_ids is None:
+            # Fetch the clusterings
+            mongo_db = await get_mongo_db()
+            clustering = await mongo_db["private-clusterings"].find_one(
+                {"id": filters.clustering_id}
+            )
+            if clustering:
+                filters.clusters_ids = []
+                filters.clusters_ids.extend(clustering.get("clusters_ids", []))
+
+        if filters.clusters_ids is not None:
+            # Fetch the cluster
+            mongo_db = await get_mongo_db()
+            clusters = (
+                await mongo_db["private-clusters"]
+                .find({"id": {"$in": filters.clusters_ids}})
+                .to_list(length=None)
+            )
+            if clusters:
+                new_sessions_ids = []
+                for cluster in clusters:
+                    new_sessions_ids.extend(cluster.get("sessions_ids", []))
+                current_sessions_ids = additional_sessions_filter.get(
+                    "id", {"$in": []}
+                )["$in"]
+                if current_sessions_ids:
+                    # Do the intersection of the current task ids and the new task ids
+                    new_sessions_ids = list(
+                        set(current_sessions_ids).intersection(new_sessions_ids)
+                    )
+                additional_sessions_filter["id"] = {"$in": new_sessions_ids}
+
     pipeline: List[Dict[str, object]] = [
         {
             "$match": {
@@ -590,6 +622,7 @@ async def get_all_sessions(
                 }
             ]
         )
+
     # ... and then we add the lookup and the deduplication
     pipeline.extend(
         [
