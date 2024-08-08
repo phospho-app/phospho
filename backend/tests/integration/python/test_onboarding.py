@@ -99,7 +99,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
             assert task["events"] is not None, tasks_content
             # assert task["flag"] is not None, tasks_content
 
-    time.sleep(3)
+    time.sleep(10)
 
     # Check that the session was created
     sessions = requests.get(
