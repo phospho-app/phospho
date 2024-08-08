@@ -117,7 +117,9 @@ class LangfuseConnector(BaseConnector):
         """
         project = await get_project_by_id(self.project_id)
         last_langfuse_extract = project.settings.last_langfuse_extract
-        if isinstance(last_langfuse_extract, datetime):
+        if last_langfuse_extract is None:
+            return None
+        elif isinstance(last_langfuse_extract, datetime):
             return last_langfuse_extract
         elif isinstance(last_langfuse_extract, str):
             return datetime.strptime(last_langfuse_extract, "%Y-%m-%d %H:%M:%S.%f")

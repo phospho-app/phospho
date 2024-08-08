@@ -122,15 +122,15 @@ class LangsmithConnector(BaseConnector):
         """
         project = await get_project_by_id(self.project_id)
         last_langsmith_extract = project.settings.last_langsmith_extract
-        if isinstance(last_langsmith_extract, datetime):
+        if last_langsmith_extract is None:
+            return None
+        elif isinstance(last_langsmith_extract, datetime):
             return last_langsmith_extract
         elif isinstance(last_langsmith_extract, str):
             return datetime.strptime(last_langsmith_extract, "%Y-%m-%d %H:%M:%S.%f")
-        elif last_langsmith_extract is None:
-            return None
         else:
             logger.error(
-                f"Error while getting last Langsmith extract for project {self.project_id}: {last_langsmith_extract} is neither a datetime nor a string"
+                f"Error while getting last Langsmith extract for project {self.project_id}: {last_langsmith_extract} is neither a datetime nor a string, it is a {type(last_langsmith_extract)}"
             )
             return None
 

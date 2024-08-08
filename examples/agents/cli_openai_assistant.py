@@ -7,24 +7,25 @@ Create `.env` file:
 ```
 PHOSPHO_PROJECT_ID=...
 PHOSPHO_API_KEY=...
-OPENAI_API_KEY=...
+MISTRAL_API_KEY=...
 ```
 
 Launch the script:
 ```
-python wrapper.py
+python cli_openai_assistant.py
 ```
 """
+from dotenv import load_dotenv
 
 import phospho
-import openai
-
-from dotenv import load_dotenv
 
 load_dotenv()
 
+# By default, phospho will look for the PHOSPHO_PROJECT_ID and PHOSPHO_API_KEY environment variables
+# All the chat.completions calls of the OpenAI module will be logged to phospho
 phospho.init()
-openai_client = openai.OpenAI()
+client = phospho.lab.get_sync_client("mistral")
+
 
 messages = []
 
@@ -34,14 +35,11 @@ while True:
     prompt = input("\n>")
     messages.append({"role": "user", "content": prompt})
 
-    query = {
-        "messages": messages,
-        "model": "gpt-3.5-turbo",
-        "stream": True,
-    }
-    response = openai_client.chat.completions.create(**query)
-
-    phospho.log(input=query, output=response, stream=True)
+    response = client.chat.completions.create(
+        messages=messages,
+        model="mistral-small",
+        stream=True,
+    )
 
     print("\nAssistant: ", end="")
     for r in response:

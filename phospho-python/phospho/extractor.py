@@ -92,6 +92,8 @@ def detect_str_from_output(output: RawDataType) -> str:
     This function extracts from an arbitrary output its string representation.
     For example, from an OpenAI's ChatCompletion, extract the message displayed to the
     end user.
+
+    To support more types of outputs, add more conditions to this function.
     """
     output_class_name = output.__class__.__name__
     output_module = output.__class__.__module__
@@ -99,7 +101,7 @@ def detect_str_from_output(output: RawDataType) -> str:
         f"Detecting str from output class_name:{output_class_name} ; module:{output_module}"
     )
 
-    # If streaming and receiving bytes
+    # If streaming and receiving bytes (Ollama)
     if isinstance(output, bytes):
         try:
             # Assume it may be a json

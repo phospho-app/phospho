@@ -10,3 +10,4 @@ secrets.toml
 .research
 .venv/
 local/
+temporal-certs/

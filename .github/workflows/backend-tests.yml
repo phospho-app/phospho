@@ -65,6 +65,8 @@ jobs:
           ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
           PHOSPHO_AI_HUB_URL: ${{ vars.PHOSPHO_AI_HUB_URL }}
           PHOSPHO_AI_HUB_API_KEY: ${{ secrets.PHOSPHO_AI_HUB_API_KEY }}
+          TEMPORAL_MTLS_TLS_CERT_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_CERT_BASE64 }}
+          TEMPORAL_MTLS_TLS_KEY_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_KEY_BASE64 }}
         # Specify here the tests you want to run after the -k flag
         run: |
           cd backend
