@@ -28,6 +28,7 @@ temporalio = "^1.6.0"
 requests = "^2.32.3"
 stripe = "^10.6.0"
 sentry-sdk = "^2.1"
+aiohealthcheck = "^2018.7.1"
 
 [tool.poetry.group.dev]
 optional = true
