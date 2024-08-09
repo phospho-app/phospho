@@ -164,12 +164,11 @@ async def process_file_upload_into_log_events(
             logger.error(f"Error converting created_at to timestamp: {e}")
             tasks_df.drop("created_at", axis=1, inplace=True)
 
-    logs_to_process: List[LogEvent] = []
-    extra_logs_to_save: List[LogEvent] = []
-
     usage_quota = await get_quota(project_id)
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
+
+    extractor_client = ExtractorClient(org_id=org_id, project_id=project_id)
 
     for _, row in tasks_df.iterrows():
         # Create a task for each row
@@ -187,18 +186,17 @@ async def process_file_upload_into_log_events(
             if max_usage is None or (
                 max_usage is not None and current_usage < max_usage
             ):
-                logs_to_process.append(valid_log_event)
                 current_usage += 1
+                # Send tasks to the extractor
+                await extractor_client.run_log_process_for_tasks(
+                    logs_to_process=[valid_log_event],
+                )
             else:
                 logger.warning(f"Max usage quota reached for project: {project_id}")
                 await send_quota_exceeded_email(project_id)
-                extra_logs_to_save.append(valid_log_event)
+                await extractor_client.run_log_process_for_tasks(
+                    logs_to_process=[],
+                    extra_logs_to_save=[valid_log_event],
+                )
         except ValidationError as e:
             logger.error(f"Error when uploading csv and LogEvent creation: {e}")
-
-    # Send tasks to the extractor
-    extractor_client = ExtractorClient(org_id=org_id, project_id=project_id)
-    await extractor_client.run_log_process_for_tasks(
-        logs_to_process=logs_to_process,
-        extra_logs_to_save=extra_logs_to_save,
-    )

@@ -19,6 +19,7 @@ RUN poetry run pip install --upgrade phospho[lab]
 
 # Copy source code
 COPY ./app /src/app
+COPY ./main.py /src/main.py
 
 # Run the server on port 80
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7605"]
+CMD ["poetry", "run", "python", "main.py"]

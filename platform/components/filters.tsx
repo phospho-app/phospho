@@ -144,7 +144,7 @@ const FilterComponent = ({
   }
 
   return (
-    <div className="flex flex-wrap space-x-2 space-y-2 items-end">
+    <div className="flex flex-wrap space-x-2 items-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline">

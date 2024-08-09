@@ -128,7 +128,7 @@ class ExtractorClient:
             )
 
             response = await client.execute_workflow(
-                endpoint, data, id="extractor", task_queue="default"
+                endpoint, data, id=generate_uuid(), task_queue="default"
             )
 
             if on_success_callback:
@@ -136,7 +136,7 @@ class ExtractorClient:
 
         except Exception as e:
             error_id = generate_uuid()
-            error_message = f"Caught error while calling temporal workflow (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            error_message = f"Caught error while calling temporal workflow {endpoint} (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)
 
             traceback.print_exc()

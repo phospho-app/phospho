@@ -17,7 +17,7 @@ from temporalio.worker import (
 )
 
 with workflow.unsafe.imports_passed_through():
-    from sentry_sdk import Hub, capture_exception, set_context, set_tag
+    from sentry_sdk import capture_exception, set_context, set_tag, isolation_scope
 
 
 def _set_common_workflow_tags(info: Union[workflow.Info, activity.Info]):
@@ -28,7 +28,7 @@ def _set_common_workflow_tags(info: Union[workflow.Info, activity.Info]):
 class _SentryActivityInboundInterceptor(ActivityInboundInterceptor):
     async def execute_activity(self, input: ExecuteActivityInput) -> Any:
         # https://docs.sentry.io/platforms/python/troubleshooting/#addressing-concurrency-issues
-        with Hub(Hub.current):
+        with isolation_scope():
             set_tag("temporal.execution_type", "activity")
             set_tag("module", input.fn.__module__ + "." + input.fn.__qualname__)
 
@@ -52,7 +52,7 @@ class _SentryActivityInboundInterceptor(ActivityInboundInterceptor):
 class _SentryWorkflowInterceptor(WorkflowInboundInterceptor):
     async def execute_workflow(self, input: ExecuteWorkflowInput) -> Any:
         # https://docs.sentry.io/platforms/python/troubleshooting/#addressing-concurrency-issues
-        with Hub(Hub.current):
+        with isolation_scope():
             set_tag("temporal.execution_type", "workflow")
             set_tag("module", input.run_fn.__module__ + "." + input.run_fn.__qualname__)
             workflow_info = workflow.info()

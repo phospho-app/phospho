@@ -61,6 +61,7 @@ async def run_recipe_on_tasks_batched(
     org_id: str,
     sample_rate: Optional[float] = None,
     filters: Optional[ProjectDataFilters] = None,
+    batch_size: int = 16,
 ) -> None:
     """
     Run a recipe_id on all tasks of a project.
@@ -88,7 +89,6 @@ async def run_recipe_on_tasks_batched(
         sample_size = total_nb_tasks
 
     # Batch the tasks to avoid memory issues
-    batch_size = 128
     nb_batches = sample_size // batch_size
     extractor_client = ExtractorClient(
         project_id=project_id,
