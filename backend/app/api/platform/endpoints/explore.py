@@ -377,6 +377,8 @@ async def post_detect_clusters(
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
 
+    logger.debug(query.instruction)
+
     if query is None:
         query = DetectClustersRequest()
 
@@ -427,6 +429,7 @@ async def post_detect_clusters(
             limit=query.limit,
             filters=query.filters,
             scope=query.scope,
+            instruction=query.instruction,
         )
     )
     return {"status": "ok"}
