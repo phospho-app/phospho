@@ -19,7 +19,7 @@ import pydantic
 
 # Models
 from app.api.platform.models import ABTest, ProjectDataFilters
-from app.db.models import Eval, FlattenedTask
+from app.db.models import AnalyticsQuery, Eval, FlattenedTask
 from app.db.mongo import get_mongo_db
 from app.services.mongo.events import get_all_events
 from app.services.mongo.tasks import get_all_tasks
@@ -468,6 +468,165 @@ async def get_most_detected_event_name(
 
     most_detected_event_name = result[0]["_id"]
     return most_detected_event_name
+
+
+async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
+    """
+    Function to run complex analytics queries, returned as a list of dictionaries.
+    For instance, it should be used for the frontend dataviz.
+    TODO: try to use it as much as possible in more specific functions below.
+
+    The `AnalyticsQuery` model defines the expected input:
+    - project_id: The project id
+    - collection: The collection to aggregate (e.g., tasks, sessions, events,)
+    - aggregation: The type of aggregation to perform (COUNT, SUM, AVG, MIN, MAX)
+    - dimensions: The dimensions to group by (e.g., product, region, day (need to be generated from the created_at field), month, minute)
+    - filters: Optional filters to apply, passed in MongoDB query format if need be (e.g., {"created_at": {"$gte": 1723218277}})
+    - sort: Optional sorting criteria (e.g., {"date": 1} for ascending, {"date": -1} for descending)
+    - limit: Optional limit on the number of results to return
+
+    In dimensions, the following special values are supported:
+    - "minute": the minute part of the created_at field, "YYYY-MM-DD HH:mm"
+    - hour": the hour part of the created_at field, "YYYY-MM-DD HH"
+    - "day": the date part of the created_at field, "YYYY-MM-DD"
+    - "month": the month part of the created_at field, "YYYY-MM"
+    They will be generated from the created_at field in a new field with the same name.
+
+    If the query is not valid, mongo will raise an hunhandled error.
+
+    Returns a list of dictionaries.
+    """
+
+    mongo_db = await get_mongo_db()
+
+    # Let's build the pipeline
+    pipeline: List[Dict[str, object]] = [
+        {"$match": {"project_id": query.project_id}},
+    ]
+
+    # Add the filters
+    if query.filters:
+        pipeline.append({"$match": query.filters})
+
+    # If there is some dimensions month, day, hour, minute, we need to generate them from the created_at field UNIX timestamp in seconds
+    # It's in a new field with the same name
+
+    # Generate the query to create new fields for the dimensions
+    for dimension in query.dimensions:
+        if dimension == "minute":
+            pipeline.append(
+                {
+                    "$addFields": {
+                        "minute": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%d %H:%M",
+                                "date": {
+                                    "$toDate": {"$multiply": ["$created_at", 1000]}
+                                },
+                            }
+                        }
+                    }
+                }
+            )
+        elif dimension == "hour":
+            pipeline.append(
+                {
+                    "$addFields": {
+                        "hour": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%d %H",
+                                "date": {
+                                    "$toDate": {"$multiply": ["$created_at", 1000]}
+                                },
+                            }
+                        }
+                    }
+                }
+            )
+        elif dimension == "day":
+            pipeline.append(
+                {
+                    "$addFields": {
+                        "day": {
+                            "$dateToString": {
+                                "format": "%Y-%m-%d",
+                                "date": {
+                                    "$toDate": {"$multiply": ["$created_at", 1000]}
+                                },
+                            }
+                        }
+                    }
+                }
+            )
+        elif dimension == "month":
+            pipeline.append(
+                {
+                    "$addFields": {
+                        "month": {
+                            "$dateToString": {
+                                "format": "%Y-%m",
+                                "date": {
+                                    "$toDate": {"$multiply": ["$created_at", 1000]}
+                                },
+                            }
+                        }
+                    }
+                }
+            )
+        # Then we add the other dimensions
+        else:
+            pipeline.append({"$addFields": {dimension: f"${dimension}"}})
+
+    # Add the group by
+    if query.aggregation_operation == "count":
+        pipeline.append(
+            {
+                "$group": {
+                    "_id": {
+                        dimension: f"${dimension}" for dimension in query.dimensions
+                    },
+                    "value": {"$sum": 1},
+                }
+            }
+        )
+    else:
+        assert (
+            query.aggregation_field is not None
+        ), "Field is required for non-count aggregation"
+        pipeline.append(
+            {
+                "$group": {
+                    "_id": {
+                        dimension: f"${dimension}" for dimension in query.dimensions
+                    },
+                    "value": {
+                        f"${query.aggregation_operation}": f"${query.aggregation_field}"
+                    },
+                }
+            }
+        )
+
+    # Add the $project stage to unpack _id
+    pipeline.append(
+        {
+            "$project": {
+                "_id": 0,  # Exclude the _id field
+                **{dimension: f"$_id.{dimension}" for dimension in query.dimensions},
+                "value": 1,  # Include the value field
+            }
+        }
+    )
+
+    # Add the sort
+    if query.sort:
+        pipeline.append({"$sort": query.sort})
+
+    # Run the query
+    result = (
+        await mongo_db[query.collection].aggregate(pipeline).to_list(length=query.limit)
+    )
+
+    return result
 
 
 async def get_nb_of_daily_tasks(
