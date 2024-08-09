@@ -886,14 +886,17 @@ class MainPipeline:
 
         return results_sentiment, results_language
 
-    async def recipe_pipeline(self, tasks: List[Task], recipe: Recipe):
+    async def recipe_pipeline(
+        self,
+        recipe: Recipe,
+        tasks: Optional[List[Task]] = None,
+        tasks_ids: Optional[List[str]] = None,
+    ):
         """
         Run a recipe on a task
         """
-        logger.info(
-            f"RECIPE PIPELINE: Running recipe {recipe.recipe_type} {recipe.id} on {len(tasks)} tasks"
-        )
-        await self.set_input(tasks=tasks)
+        logger.info(f"RECIPE PIPELINE: Running recipe {recipe.recipe_type} {recipe.id}")
+        await self.set_input(tasks=tasks, tasks_ids=tasks_ids)
 
         if recipe.recipe_type == "event_detection":
             await self.run_events(recipe=recipe)

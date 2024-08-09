@@ -128,7 +128,7 @@ class ExtractorClient:
             )
 
             response = await client.execute_workflow(
-                endpoint, data, id="extractor", task_queue="default"
+                endpoint, data, id=generate_uuid(), task_queue="default"
             )
 
             if on_success_callback:
@@ -136,7 +136,7 @@ class ExtractorClient:
 
         except Exception as e:
             error_id = generate_uuid()
-            error_message = f"Caught error while calling temporal workflow (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            error_message = f"Caught error while calling temporal workflow {endpoint} (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)
 
             traceback.print_exc()
@@ -259,10 +259,10 @@ class ExtractorClient:
 
     async def run_recipe_on_tasks(
         self,
-        tasks: List[Task],
+        tasks_ids: List[str],
         recipe: Recipe,
     ):
-        if len(tasks) == 0:
+        if len(tasks_ids) == 0:
             logger.debug(f"No tasks to process for recipe {recipe.id}")
             return
 
@@ -272,7 +272,7 @@ class ExtractorClient:
             await self._post(
                 "run_recipe_on_task_workflow",
                 {
-                    "tasks": [task.model_dump(mode="json") for task in tasks],
+                    "tasks_ids": tasks_ids,
                     "recipe": recipe.model_dump(mode="json"),
                     "customer_id": await self._fetch_stripe_customer_id(),
                     "project_id": self.project_id,

@@ -46,7 +46,7 @@ openssl base64 -in client.key -out client-base64-key
 # Running the worker
 
 ```bash
-poetry run main.py
+poetry run python main.py
 ```
 
 **Warning:** You have to put your EXTRACTOR_SECRET_KEY in your backend .env.

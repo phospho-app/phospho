@@ -1,4 +1,3 @@
-import asyncio
 from typing import Optional, List
 from app.api.platform.models.explore import Pagination
 from app.db.mongo import get_mongo_db
@@ -61,6 +60,7 @@ async def run_recipe_on_tasks_batched(
     org_id: str,
     sample_rate: Optional[float] = None,
     filters: Optional[ProjectDataFilters] = None,
+    batch_size: int = 16,
 ) -> None:
     """
     Run a recipe_id on all tasks of a project.
@@ -88,7 +88,6 @@ async def run_recipe_on_tasks_batched(
         sample_size = total_nb_tasks
 
     # Batch the tasks to avoid memory issues
-    batch_size = 128
     nb_batches = sample_size // batch_size
     extractor_client = ExtractorClient(
         project_id=project_id,
@@ -101,11 +100,9 @@ async def run_recipe_on_tasks_batched(
             pagination=Pagination(page=i, per_page=batch_size),
         )
         await extractor_client.run_recipe_on_tasks(
-            tasks=tasks,
+            tasks_ids=[task.id for task in tasks],
             recipe=recipe,
         )
-        # Add a sleep to avoid overloading the extractor
-        await asyncio.sleep(5)
 
 
 async def run_recipe_types_on_tasks(

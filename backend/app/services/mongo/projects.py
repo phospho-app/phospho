@@ -696,7 +696,9 @@ async def get_all_users_metadata(project_id: str) -> List[UserMetadata]:
     return users
 
 
-async def backcompute_recipe(job_id: str, tasks: List[Task]) -> None:
+async def backcompute_recipe(
+    job_id: str, tasks: List[Task], batch_size: int = 16
+) -> None:
     """
     Run predictions for a job on all the tasks of a project that have not been processed yet.
     """
@@ -705,25 +707,28 @@ async def backcompute_recipe(job_id: str, tasks: List[Task]) -> None:
     recipe = await mongo_db["recipes"].find_one({"id": job_id})
     recipe = Recipe.model_validate(recipe)
 
-    # For each task, check if a prediction has a job_id and a task_id matching the task
-    tasks_to_process = []
+    # Get the task IDs that have already been processed for this job
+    processed_task_ids = [
+        result["task_id"]
+        for result in await mongo_db["job_results"]
+        .find({"job_metadata.recipe_id": recipe.id}, {"task_id": 1})
+        .to_list(None)
+    ]
 
-    for task in tasks:
-        prediction = await mongo_db["job_results"].find_one(
-            {"task_id": task.id, "job_metadata.recipe_id": recipe.id}
-        )
-        if prediction is None:
-            tasks_to_process.append(task)
+    # Filter out the tasks that have already been processed
+    tasks_to_process = [task for task in tasks if task.id not in processed_task_ids]
 
     # Send the task to the job pipeline of the extractor
     extractor_client = ExtractorClient(
         org_id=recipe.org_id,
         project_id=recipe.project_id,
     )
-    await extractor_client.run_recipe_on_tasks(
-        tasks=tasks_to_process,
-        recipe=recipe,
-    )
+    for i in range(0, len(tasks_to_process), batch_size):
+        tasks_batch = tasks_to_process[i : i + batch_size]
+        await extractor_client.run_recipe_on_tasks(
+            tasks=tasks_batch,
+            recipe=recipe,
+        )
 
 
 async def backcompute_recipes(
