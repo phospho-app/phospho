@@ -259,10 +259,10 @@ class ExtractorClient:
 
     async def run_recipe_on_tasks(
         self,
-        tasks: List[Task],
+        tasks_ids: List[str],
         recipe: Recipe,
     ):
-        if len(tasks) == 0:
+        if len(tasks_ids) == 0:
             logger.debug(f"No tasks to process for recipe {recipe.id}")
             return
 
@@ -272,8 +272,7 @@ class ExtractorClient:
             await self._post(
                 "run_recipe_on_task_workflow",
                 {
-                    # Pass only the ids to avoid memory issues
-                    "tasks_ids": [task.id for task in tasks],
+                    "tasks": tasks_ids,
                     "recipe": recipe.model_dump(mode="json"),
                     "customer_id": await self._fetch_stripe_customer_id(),
                     "project_id": self.project_id,

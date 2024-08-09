@@ -1,4 +1,3 @@
-import asyncio
 from typing import Optional, List
 from app.api.platform.models.explore import Pagination
 from app.db.mongo import get_mongo_db
@@ -101,7 +100,7 @@ async def run_recipe_on_tasks_batched(
             pagination=Pagination(page=i, per_page=batch_size),
         )
         await extractor_client.run_recipe_on_tasks(
-            tasks=tasks,
+            tasks_ids=[task.id for task in tasks],
             recipe=recipe,
         )
 
