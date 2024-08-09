@@ -85,7 +85,7 @@ async def store_batch_of_log_events(
                 current_usage += 1
                 nbr_valid_logs += 1
 
-                await extractor_client.run_log_process_for_tasks(
+                await extractor_client.run_process_log_for_tasks(
                     logs_to_process=[valid_log_event],
                 )
             else:
@@ -97,7 +97,7 @@ async def store_batch_of_log_events(
                     )
                 )
                 nbr_extra_logs += 1
-                await extractor_client.run_log_process_for_tasks(
+                await extractor_client.run_process_log_for_tasks(
                     logs_to_process=[],
                     extra_logs_to_save=[valid_log_event],
                 )

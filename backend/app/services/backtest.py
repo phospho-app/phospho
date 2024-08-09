@@ -84,7 +84,7 @@ async def run_backtests(
             ],
         )
         response_text = response.choices[0].message.content
-        await extractor_client.run_log_process_for_tasks(
+        await extractor_client.run_process_log_for_tasks(
             logs_to_process=[
                 LogEvent(
                     project_id=project_id,

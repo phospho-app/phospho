@@ -188,13 +188,13 @@ async def process_file_upload_into_log_events(
             ):
                 current_usage += 1
                 # Send tasks to the extractor
-                await extractor_client.run_log_process_for_tasks(
+                await extractor_client.run_process_log_for_tasks(
                     logs_to_process=[valid_log_event],
                 )
             else:
                 logger.warning(f"Max usage quota reached for project: {project_id}")
                 await send_quota_exceeded_email(project_id)
-                await extractor_client.run_log_process_for_tasks(
+                await extractor_client.run_process_log_for_tasks(
                     logs_to_process=[],
                     extra_logs_to_save=[valid_log_event],
                 )

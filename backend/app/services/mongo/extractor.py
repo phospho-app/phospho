@@ -149,7 +149,7 @@ class ExtractorClient:
 
         return None
 
-    async def run_log_process_for_tasks(
+    async def run_process_log_for_tasks(
         self,
         logs_to_process: List[LogEvent],
         extra_logs_to_save: Optional[List[LogEvent]] = None,
@@ -159,6 +159,15 @@ class ExtractorClient:
         """
         if extra_logs_to_save is None:
             extra_logs_to_save = []
+
+        # Ignore the intermediate_inputs of log_events because it's too big
+        # They are collected in the Langchain integration
+        # TODO: Fix this
+        for log_event in logs_to_process:
+            # Remove additional_inputs.intermediate_inputs from the log_event if it exists
+            if hasattr(log_event, "raw_input"):
+                if isinstance(log_event.raw_input, dict) and "intermediate_inputs" in log_event.raw_input.keys()
+                    del log_event.raw_input["intermediate_inputs"]
 
         await self._post(
             "run_process_log_for_tasks_workflow",
