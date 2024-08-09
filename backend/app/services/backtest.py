@@ -1,6 +1,7 @@
 from typing import Iterator, List, Optional
 from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.tasks import get_all_tasks
+from fastapi import HTTPException
 import phospho
 from app.api.v2.models import LogEvent
 
@@ -59,6 +60,7 @@ async def run_backtests(
     org_id: str,
     filters: phospho.models.ProjectDataFilters,
 ) -> None:
+    # Provider verification has been done in the API endpoint
     provider, model = phospho.lab.get_provider_and_model(provider_and_model)
     client = phospho.lab.get_async_client(provider)
 
@@ -79,19 +81,16 @@ async def run_backtests(
             ],
         )
         response_text = response.choices[0].message.content
-        phospho.log(
-            input=message.content,
-            output=response_text,
-            version_id=version_id,
+        await extractor_client.run_log_process_for_tasks(
+            logs_to_process=[
+                LogEvent(
+                    project_id=project_id,
+                    input=message.content,
+                    output=response_text,
+                    version_id=version_id,
+                )
+            ]
         )
-        logs_to_process = [
-            LogEvent(
-                project_id=project_id,
-                input=message.content,
-                output="input",
-            )
-        ]
-        await extractor_client.run_log_process_for_tasks(logs_to_process)
 
     workload = phospho.lab.Workload(jobs=[run_model])
     workload.run(
@@ -99,7 +98,5 @@ async def run_backtests(
         executor_type="parallel",
         max_parallelism=20,
     )
-
-    # TODO: Add billing
 
     return None

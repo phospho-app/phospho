@@ -8,6 +8,7 @@ from app.services.mongo.extractor import ExtractorClient
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 from phospho.models import PipelineResults, ProjectDataFilters
+from phospho import lab
 
 router = APIRouter(tags=["Run"])
 
@@ -77,6 +78,12 @@ async def post_run_backtests(
         request.filters = ProjectDataFilters()
     if request.system_prompt_variables is None:
         request.system_prompt_variables = {}
+
+    try:
+        provider, model = lab.get_provider_and_model(request.provider_and_model)
+        client = lab.get_async_client(provider)
+    except NotImplementedError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid provider: {e}")
 
     background_tasks.add_task(
         run_backtests,
