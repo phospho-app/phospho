@@ -231,7 +231,7 @@ Choice: """
     comparison_data = Comparison(
         project_id=project_id,
         test_id=test_id,
-        s=instructions,
+        instructions=instructions,
         context_input=context,
         old_output=old_output_str,
         new_output=new_output_str,
