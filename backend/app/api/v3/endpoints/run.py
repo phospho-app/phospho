@@ -97,6 +97,5 @@ async def post_run_backtests(
     )
     return {
         "message": "Backtests are running in the background.",
-        "url": "https://platform.phospho.ai/",
-        # todo: add url
+        "url": "https://platform.phospho.ai/org/ab-testing",
     }
