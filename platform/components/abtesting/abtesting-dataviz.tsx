@@ -168,7 +168,6 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
 
 export const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    console.log("payload", payload);
     return (
       <div className="custom-tooltip">
         <Card>
