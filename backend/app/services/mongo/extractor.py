@@ -166,8 +166,8 @@ class ExtractorClient:
         for log_event in logs_to_process:
             # Remove additional_inputs.intermediate_inputs from the log_event if it exists
             if hasattr(log_event, "raw_input"):
-                if hasattr(log_event.raw_input, "intermediate_inputs"):
-                    del log_event.raw_input.intermediate_inputs
+                if isinstance(log_event.raw_input, dict) and "intermediate_inputs" in log_event.raw_input.keys()
+                    del log_event.raw_input["intermediate_inputs"]
 
         await self._post(
             "run_process_log_for_tasks_workflow",
