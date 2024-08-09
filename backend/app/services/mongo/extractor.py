@@ -136,13 +136,16 @@ class ExtractorClient:
 
         except Exception as e:
             error_id = generate_uuid()
-            error_message = f"Caught error while calling temporal workflow {endpoint} (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            error_message = (
+                f"Caught error while calling temporal workflow {endpoint} "
+                + f"(error_id: {error_id} project_id: {self.project_id} organisation_id: {self.org_id}): {e}\n{traceback.format_exception(e)}"
+            )
             logger.error(error_message)
 
             traceback.print_exc()
             if config.ENVIRONMENT == "production":
-                if len(error_message) > 300:
-                    slack_message = error_message[:300]
+                if len(error_message) > 800:
+                    slack_message = error_message[:800]
                 else:
                     slack_message = error_message
                 await slack_notification(slack_message)
@@ -170,7 +173,20 @@ class ExtractorClient:
                     isinstance(log_event.raw_input, dict)
                     and "intermediate_inputs" in log_event.raw_input.keys()
                 ):
+                    logger.info(
+                        f"Removing intermediate_inputs from log_event project {self.project_id}"
+                    )
                     del log_event.raw_input["intermediate_inputs"]
+            if hasattr(log_event, "raw_output"):
+                if (
+                    isinstance(log_event.raw_output, dict)
+                    and "intermediate_outputs" in log_event.raw_output.keys()
+                ):
+                    logger.info(
+                        f"Removing intermediate_outputs from log_event project {self.project_id}"
+                    )
+
+                    del log_event.raw_output["intermediate_outputs"]
 
         await self._post(
             "run_process_log_for_tasks_workflow",
