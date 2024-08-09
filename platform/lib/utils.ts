@@ -187,5 +187,5 @@ export function generateSlug() {
   const color = getRandomItem(colors);
   const fruit = getRandomItem(fruits);
   const date = getCompactDate();
-  return `${date}_${color}-${fruit}`;
+  return `${date}-${color}-${fruit}`;
 }
