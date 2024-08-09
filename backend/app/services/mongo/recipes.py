@@ -61,7 +61,7 @@ async def run_recipe_on_tasks_batched(
     org_id: str,
     sample_rate: Optional[float] = None,
     filters: Optional[ProjectDataFilters] = None,
-    batch_size: int = 32,
+    batch_size: int = 16,
 ) -> None:
     """
     Run a recipe_id on all tasks of a project.
