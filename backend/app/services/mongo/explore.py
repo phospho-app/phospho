@@ -2512,18 +2512,9 @@ async def get_ab_tests_versions(
         logger.info(f"No tasks found for version {versionB}")
         return []
 
-    if total_tasks_with_A > total_tasks_with_B:
-        max_tasks = total_tasks_with_A
-    else:
-        max_tasks = total_tasks_with_B
-
-    logger.debug(f"Total tasks with version {versionA}: {total_tasks_with_A}")
-    logger.debug(f"Total tasks with version {versionB}: {total_tasks_with_B}")
-    logger.debug(f"AB tests results: {results}")
-
     graph_values = {}
+    graph_values_range = {}
     events_to_normalize = []
-    events_to_find_max = []
     for result in results:
         if "event_name" not in result:
             continue
@@ -2548,15 +2539,9 @@ async def get_ab_tests_versions(
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values[event_name]:
-                graph_values[event_name][versionA] = (
-                    graph_values[event_name][versionA] * max_tasks / total_tasks_with_A
-                )
+                graph_values[event_name][versionA] = graph_values[event_name][versionA]
             if versionB in graph_values[event_name]:
-                graph_values[event_name][versionB] = (
-                    graph_values[event_name][versionB] * max_tasks / total_tasks_with_B
-                )
-
-            events_to_find_max.append(event_name)
+                graph_values[event_name][versionB] = graph_values[event_name][versionB]
 
         elif (
             result["event_type"] == "category"
@@ -2578,37 +2563,31 @@ async def get_ab_tests_versions(
                         )
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
-                    graph_values[event_name][versionA] = (
-                        graph_values[event_name][versionA]
-                        * max_tasks
-                        / total_tasks_with_A
-                    )
+                    graph_values[event_name][versionA] = graph_values[event_name][
+                        versionA
+                    ]
                 if event_result["version_id"] == versionB:
-                    graph_values[event_name][versionB] = (
-                        graph_values[event_name][versionB]
-                        * max_tasks
-                        / total_tasks_with_B
-                    )
-
-            events_to_find_max.append(event_name)
+                    graph_values[event_name][versionB] = graph_values[event_name][
+                        versionB
+                    ]
 
         elif result["event_type"] == "range":  # We average the score for each version
             divide_for_correct_average = {}
             event_name = result["event_name"]
             for event_result in result["results"]:
-                if event_name not in graph_values:
-                    graph_values[event_name] = {
-                        event_result["version_id"]: event_result["score"]
+                if event_name not in graph_values_range:
+                    graph_values_range[event_name] = {
+                        event_result["version_id"]: int(event_result["event_label"])
                         * event_result["count"]
                     }
                 else:
-                    if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["score"] * event_result["count"]
+                    if event_result["version_id"] not in graph_values_range[event_name]:
+                        graph_values_range[event_name][event_result["version_id"]] = (
+                            int(event_result["event_label"]) * event_result["count"]
                         )
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["score"] * event_result["count"]
+                        graph_values_range[event_name][event_result["version_id"]] += (
+                            int(event_result["event_label"]) * event_result["count"]
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
@@ -2621,8 +2600,8 @@ async def get_ab_tests_versions(
                     )
 
             for version in divide_for_correct_average:
-                graph_values[event_name][version] = (
-                    graph_values[event_name][version]
+                graph_values_range[event_name][version] = (
+                    graph_values_range[event_name][version]
                     / divide_for_correct_average[version]
                 )
 
@@ -2631,36 +2610,30 @@ async def get_ab_tests_versions(
         else:
             logger.error(f"New event type is not handled: {result['event_type']}")
 
-    # graph_values is a tree structure, we want to find the leaf with the maximum number of detections
-    max_number_of_detections = 0
-    for event_name in events_to_find_max:
-        for version in graph_values[event_name]:
-            if graph_values[event_name][version] > max_number_of_detections:
-                max_number_of_detections = graph_values[event_name][version]
-
-    # We normalize the score by the max number of detections for each version
-    for event_name in events_to_normalize:
-        if versionA in graph_values[event_name]:
-            graph_values[event_name][versionA] = (
-                graph_values[event_name][versionA] * max_number_of_detections / 5
-            )
-        if versionB in graph_values[event_name]:
-            graph_values[event_name][versionB] = (
-                graph_values[event_name][versionB] * max_number_of_detections / 5
-            )
-
     if not versionA:
         versionA = "None"
     if not versionB:
         versionB = "None"
 
-    formatted_graph_values = []  # List with {event_name: event_name, versionA: value, versionB: value}
+    formatted_graph_values = []
     for event_name, values in graph_values.items():
         formatted_graph_values.append(
             {
                 "event_name": event_name,
-                versionA: values.get(versionA, 0),
-                versionB: values.get(versionB, 0),
+                versionA: values.get(versionA, 0) / total_tasks_with_A,
+                versionB: values.get(versionB, 0) / total_tasks_with_B,
+                versionA + "_tooltip": values.get(versionA, 0),
+                versionB + "_tooltip": values.get(versionB, 0),
+            }
+        )
+    for event_name, values in graph_values_range.items():
+        formatted_graph_values.append(
+            {
+                "event_name": event_name,
+                versionA: values.get(versionA, 0) / 5,
+                versionB: values.get(versionB, 0) / 5,
+                versionA + "_tooltip": values.get(versionA, 0),
+                versionB + "_tooltip": values.get(versionB, 0),
             }
         )
 
@@ -2668,7 +2641,5 @@ async def get_ab_tests_versions(
     formatted_graph_values = sorted(
         formatted_graph_values, key=lambda x: x["event_name"]
     )
-
-    logger.debug(formatted_graph_values)
 
     return formatted_graph_values
