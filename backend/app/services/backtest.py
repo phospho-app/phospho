@@ -73,7 +73,7 @@ async def run_backtests(
         org_id=org_id,
     )
 
-    async def run_model(message: phospho.lab.Message) -> str:
+    async def run_model(message: phospho.lab.Message) -> Optional[str]:
         system_prompt = system_prompt_template.format(**system_prompt_variables)
         response = await client.chat.completions.create(
             model=model,
