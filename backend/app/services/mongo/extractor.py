@@ -272,7 +272,7 @@ class ExtractorClient:
             await self._post(
                 "run_recipe_on_task_workflow",
                 {
-                    "tasks": tasks_ids,
+                    "tasks_ids": tasks_ids,
                     "recipe": recipe.model_dump(mode="json"),
                     "customer_id": await self._fetch_stripe_customer_id(),
                     "project_id": self.project_id,

@@ -84,7 +84,7 @@ class BaseWorkflow:
                 )
         except Exception as e:
             error_message = f"Caught error while calling temporal workflow {self.__class__.__name__}: {e}\n{traceback.format_exception(e)}"
-            logger.error(f"Error in {self.name}: {e}")
+            logger.error(f"Error in {self.__class__.__name__}: {e}")
             if config.ENVIRONMENT in ["production", "staging"]:
                 slack_message = (
                     error_message[:300] if len(error_message) > 300 else error_message
