@@ -37,6 +37,12 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 export default function CreateEvent({
   setOpen,
@@ -560,43 +566,50 @@ export default function CreateEvent({
                 )}
               />
             )}
-            <h2 className="text-sm font-semibold pt-4">
-              Advanced settings (optional)
-            </h2>
-            <Separator />
-            <div className="flex flex-row space-x-2 w-full">
-              <FormField
-                control={form.control}
-                name="webhook"
-                render={({ field }) => (
-                  <FormItem className="flex-grow">
-                    <FormLabel className="text-muted-foreground">
-                      Webhook URL
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="https://your-api.com/webhook"
-                        {...field}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="webhook_auth_header"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-muted-foreground">
-                      Authorization Header
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Bearer sk-..." {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger>
+                  Advanced settings (optional)
+                </AccordionTrigger>
+                <AccordionContent>
+
+                  <Separator />
+                  <div className="flex flex-row space-x-2 w-full mt-2">
+                    <FormField
+                      control={form.control}
+                      name="webhook"
+                      render={({ field }) => (
+                        <FormItem className="flex-grow">
+                          <FormLabel className="text-muted-foreground">
+                            Webhook URL
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://your-api.com/webhook"
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="webhook_auth_header"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-muted-foreground">
+                            Authorization Header
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="Bearer sk-..." {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
             <FormField
               control={form.control}
               name="is_last_task"
