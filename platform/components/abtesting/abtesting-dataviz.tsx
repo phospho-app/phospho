@@ -155,9 +155,7 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
         <ResponsiveContainer width={"100%"} height={400}>
           <BarChart data={graphData}>
             <XAxis dataKey="event_name" />
-            <Tooltip
-              content={<CustomTooltip active={""} payload={""} label={""} />}
-            />
+            <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Bar dataKey={versionIDA} fill="#28BB62" />
             <Bar dataKey={versionIDB} fill="#82ca9d" />
@@ -168,16 +166,9 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   );
 };
 
-export const CustomTooltip = ({
-  active,
-  payload,
-  label,
-}: {
-  active: any;
-  payload: any;
-  label: any;
-}) => {
+export const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    console.log("payload", payload);
     return (
       <div className="custom-tooltip">
         <Card>
@@ -190,7 +181,7 @@ export const CustomTooltip = ({
           <CardContent>
             {payload.map((pld: any) => (
               <div style={{ display: "inline-block", padding: 10 }}>
-                <div>{pld.value.toFixed(2)}</div>
+                <div>{pld.payload[pld.dataKey + "_tooltip"].toFixed(2)}</div>
                 <div>{pld.dataKey}</div>
               </div>
             ))}
