@@ -164,8 +164,10 @@ class ExtractorClient:
         # They are collected in the Langchain integration
         # TODO: Fix this
         for log_event in logs_to_process:
-            if hasattr(log_event, "intermediate_inputs"):
-                delattr(log_event, "intermediate_inputs")
+            # Remove additional_inputs.intermediate_inputs from the log_event if it exists
+            if hasattr(log_event, "raw_input"):
+                if hasattr(log_event.raw_input, "intermediate_inputs"):
+                    del log_event.raw_input.intermediate_inputs
 
         await self._post(
             "run_process_log_for_tasks_workflow",
