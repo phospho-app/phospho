@@ -54,6 +54,14 @@ async def store_batch_of_log_events(
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
 
+    extractor_client = ExtractorClient(
+        project_id=project_id,
+        org_id=org["org"].get("org_id"),
+    )
+
+    nbr_valid_logs = 0
+    nbr_extra_logs = 0
+
     for log_event_model in log_request.batched_log_events:
         # We now validate the logs
         try:
@@ -74,8 +82,12 @@ async def store_batch_of_log_events(
             if max_usage is None or (
                 max_usage is not None and current_usage < max_usage
             ):
-                logs_to_process.append(valid_log_event)
                 current_usage += 1
+                nbr_valid_logs += 1
+
+                await extractor_client.run_log_process_for_tasks(
+                    logs_to_process=[valid_log_event],
+                )
             else:
                 logger.warning(f"Max usage quota reached for project: {project_id}")
                 background_tasks.add_task(send_quota_exceeded_email, project_id)
@@ -84,7 +96,11 @@ async def store_batch_of_log_events(
                         error_in_log=f"Max usage quota reached for project {project_id}: {current_usage}/{max_usage} logs"
                     )
                 )
-                extra_logs_to_save.append(valid_log_event)
+                nbr_extra_logs += 1
+                await extractor_client.run_log_process_for_tasks(
+                    logs_to_process=[],
+                    extra_logs_to_save=[valid_log_event],
+                )
         except ValidationError as e:
             logger.info(f"Skip logevent processing due to validation error: {e}")
             logged_events.append(LogError(error_in_log=str(e)))
@@ -98,18 +114,7 @@ async def store_batch_of_log_events(
 
     log_reply = LogReply(logged_events=logged_events)
     logger.debug(
-        f"Project {project_id} replying to log request with {len(logged_events)}: {len(logs_to_process)} valid logs and {len(extra_logs_to_save)} extra logs to save."
-    )
-
-    # All the tasks to process were deemed as valid and the org had enough credits to process them
-    extractor_client = ExtractorClient(
-        project_id=project_id,
-        org_id=org["org"].get("org_id"),
-    )
-    background_tasks.add_task(
-        extractor_client.run_log_process_for_tasks,
-        logs_to_process=logs_to_process,
-        extra_logs_to_save=extra_logs_to_save,
+        f"Project {project_id} replying to log request with {len(logged_events)}: {nbr_valid_logs} valid logs and {nbr_extra_logs} extra logs to save."
     )
 
     return log_reply
