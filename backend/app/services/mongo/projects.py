@@ -696,7 +696,9 @@ async def get_all_users_metadata(project_id: str) -> List[UserMetadata]:
     return users
 
 
-async def backcompute_recipe(job_id: str, tasks: List[Task]) -> None:
+async def backcompute_recipe(
+    job_id: str, tasks: List[Task], batch_size: int = 16
+) -> None:
     """
     Run predictions for a job on all the tasks of a project that have not been processed yet.
     """
@@ -720,10 +722,12 @@ async def backcompute_recipe(job_id: str, tasks: List[Task]) -> None:
         org_id=recipe.org_id,
         project_id=recipe.project_id,
     )
-    await extractor_client.run_recipe_on_tasks(
-        tasks=tasks_to_process,
-        recipe=recipe,
-    )
+    for i in range(0, len(tasks_to_process), batch_size):
+        tasks_batch = tasks_to_process[i : i + batch_size]
+        await extractor_client.run_recipe_on_tasks(
+            tasks=tasks_batch,
+            recipe=recipe,
+        )
 
 
 async def backcompute_recipes(
