@@ -44,7 +44,10 @@ class BacktestLoader:
             self.sample_size = len(messages)
             self.sampled_tasks = iter(messages)
 
-        return next(self.sampled_tasks)
+        try:
+            return next(self.sampled_tasks)
+        except StopIteration:
+            raise StopAsyncIteration
 
     def __len__(self) -> int:
         return self.sample_size
@@ -70,7 +73,7 @@ async def run_backtests(
         org_id=org_id,
     )
 
-    async def run_model(message: phospho.lab.Message) -> None:
+    async def run_model(message: phospho.lab.Message) -> str:
         system_prompt = system_prompt_template.format(**system_prompt_variables)
         response = await client.chat.completions.create(
             model=model,
@@ -90,6 +93,7 @@ async def run_backtests(
                 )
             ]
         )
+        return response_text
 
     workload = phospho.lab.Workload(jobs=[run_model])
     workload.run(
