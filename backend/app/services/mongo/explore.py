@@ -470,7 +470,9 @@ async def get_most_detected_event_name(
     return most_detected_event_name
 
 
-async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
+async def run_analytics_query(
+    query: AnalyticsQuery, fill_missing_dates: bool = False
+) -> List[dict]:
     """
     Function to run complex analytics queries, returned as a list of dictionaries.
     For instance, it should be used for the frontend dataviz.
@@ -484,6 +486,8 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
     - filters: Optional filters to apply, passed in MongoDB query format if need be (e.g., {"created_at": {"$gte": 1723218277}})
     - sort: Optional sorting criteria (e.g., {"date": 1} for ascending, {"date": -1} for descending)
     - limit: Optional limit on the number of results to return
+
+    fill_missing_dates: If True, fill missing dates between start and end with 0. Default is False.
 
     In dimensions, the following special values are supported:
     - "minute": the minute part of the created_at field, "YYYY-MM-DD HH:mm"
@@ -625,6 +629,11 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
     result = (
         await mongo_db[query.collection].aggregate(pipeline).to_list(length=query.limit)
     )
+
+    # Fill missing dates with 0
+    if fill_missing_dates:
+        # TODO: Implement the fill_missing_dates with 0
+        logger.warning("Filling missing dates with 0 is not implemented yet.")
 
     return result
 
