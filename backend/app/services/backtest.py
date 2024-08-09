@@ -20,13 +20,12 @@ class BacktestLoader:
         self.sample_size = 0
         self.filters = filters
 
-    async def __aiter__(self):
+    def __aiter__(self):
         return self
 
     async def __anext__(self) -> phospho.lab.Message:
         if self.sampled_tasks is None:
             # Fetch tasks
-            # TODO : Add filter on version_id
             tasks = await get_all_tasks(
                 project_id=self.project_id, filters=self.filters
             )
@@ -64,7 +63,7 @@ async def run_backtests(
     provider, model = phospho.lab.get_provider_and_model(provider_and_model)
     client = phospho.lab.get_async_client(provider)
 
-    messages = BacktestLoader(project_id=project_id, filters=filters)
+    all_messages = BacktestLoader(project_id=project_id, filters=filters)
 
     extractor_client = ExtractorClient(
         project_id=project_id,
@@ -94,7 +93,7 @@ async def run_backtests(
 
     workload = phospho.lab.Workload(jobs=[run_model])
     workload.run(
-        messages=[m async for m in messages],
+        messages=[m async for m in all_messages],
         executor_type="parallel",
         max_parallelism=20,
     )
