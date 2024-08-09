@@ -2577,17 +2577,17 @@ async def get_ab_tests_versions(
             for event_result in result["results"]:
                 if event_name not in graph_values_range:
                     graph_values_range[event_name] = {
-                        event_result["version_id"]: int(event_result["event_label"])
+                        event_result["version_id"]: event_result["score"]
                         * event_result["count"]
                     }
                 else:
                     if event_result["version_id"] not in graph_values_range[event_name]:
                         graph_values_range[event_name][event_result["version_id"]] = (
-                            int(event_result["event_label"]) * event_result["count"]
+                            event_result["score"] * event_result["count"]
                         )
                     else:
                         graph_values_range[event_name][event_result["version_id"]] += (
-                            int(event_result["event_label"]) * event_result["count"]
+                            event_result["score"] * event_result["count"]
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
