@@ -61,10 +61,11 @@ async def run_backtests(
     project_id: str,
     org_id: str,
     filters: phospho.models.ProjectDataFilters,
+    openai_api_key: str,
 ) -> None:
     # Provider verification has been done in the API endpoint
     provider, model = phospho.lab.get_provider_and_model(provider_and_model)
-    client = phospho.lab.get_async_client(provider)
+    client = phospho.lab.get_async_client(provider, api_key=openai_api_key)
 
     all_messages = BacktestLoader(project_id=project_id, filters=filters)
 
