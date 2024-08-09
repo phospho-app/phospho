@@ -86,7 +86,7 @@ export function SessionsTable<TData, TValue>({
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        ilters: {
+        filters: {
           ...dataFilters,
           tasks_ids: sessions_ids,
         },
