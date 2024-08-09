@@ -55,11 +55,8 @@ const RunClusters = ({
 
 
   useEffect(() => {
-    if (totalNbTasks && scope == "messages") {
+    if (totalNbTasks) {
       setClusteringCost(totalNbTasks * 2);
-    }
-    else if (totalNbSessions && scope == "sessions") {
-      setClusteringCost(totalNbSessions * 2);
     }
   }, [totalNbSessions, totalNbTasks, scope]);
 
@@ -169,7 +166,7 @@ const RunClusters = ({
         )}
         {canRunClusterAnalysis && (
           <div className="mt-4">
-            We will clusterize {nbElements} user messages for a total of {clusteringCost} credits.
+            We will clusterize {nbElements} {scope} {scope === "sessions" && <>containing {totalNbTasks} messages</>} for a total of {clusteringCost} credits.
           </div>
         )}
         {hobby && (
@@ -178,7 +175,7 @@ const RunClusters = ({
           </div>
         )}
         {!hobby && canRunClusterAnalysis && (
-          <div className="flex justify-end">
+          <div className="flex justify-end mt-4">
             <Button
               type="submit"
               onClick={runClusterAnalysis}

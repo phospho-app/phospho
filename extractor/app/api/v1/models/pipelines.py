@@ -29,11 +29,12 @@ class RunMainPipelineOnMessagesRequest(BaseModel):
 
 
 class RunRecipeOnTaskRequest(BaseModel):
-    tasks: List[Task]
+    tasks: Optional[List[Task]] = None
     recipe: Recipe
     customer_id: Optional[str] = None
     org_id: str
     project_id: str
+    tasks_ids: Optional[List[str]] = None
 
 
 class PipelineOpentelemetryRequest(BaseModel):
