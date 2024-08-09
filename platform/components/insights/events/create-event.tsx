@@ -566,6 +566,23 @@ export default function CreateEvent({
                 )}
               />
             )}
+            <FormField
+              control={form.control}
+              name="is_last_task"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-1 space-y-0 py-1">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="font-medium text-muted-foreground">
+                    Only detect on the last message of a session
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
                 <AccordionTrigger>
@@ -610,23 +627,6 @@ export default function CreateEvent({
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            <FormField
-              control={form.control}
-              name="is_last_task"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-1 space-y-0 py-1">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="font-medium text-muted-foreground">
-                    Only detect on the last message of a session
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
           </div>
           <SheetFooter>
             <Button
