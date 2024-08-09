@@ -1,31 +1,22 @@
 import { DatePickerWithRange } from "@/components/date-range";
 import FilterComponent from "@/components/filters";
 import { Spinner } from "@/components/small-spinner";
-import { Button } from "@/components/ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "@/components/ui/use-toast";
-import UpgradeButton from "@/components/upgrade-button";
-import { Clustering } from "@/models/models";
-import { dataStateStore } from "@/store/store";
-import { navigationStateStore } from "@/store/store";
-import { useUser } from "@propelauth/nextjs/client";
-import { Separator } from "@radix-ui/react-dropdown-menu";
-import { ChevronRight, Sparkles } from "lucide-react";
-import React from "react";
-import { useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -33,17 +24,26 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input"
-import * as z from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { toast } from "@/components/ui/use-toast";
+import UpgradeButton from "@/components/upgrade-button";
+import { Clustering } from "@/models/models";
+import { dataStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useUser } from "@propelauth/nextjs/client";
+import { Separator } from "@radix-ui/react-dropdown-menu";
+import { ChevronRight, Sparkles, TriangleAlert } from "lucide-react";
+import React from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const RunClusters = ({
   totalNbTasks,
@@ -72,7 +72,6 @@ const RunClusters = ({
   const [scope, setScope] = React.useState("messages");
   const [instruction, setInstruction] = React.useState("");
 
-
   useEffect(() => {
     if (totalNbTasks) {
       setClusteringCost(totalNbTasks * 2);
@@ -83,8 +82,7 @@ const RunClusters = ({
     return <></>;
   }
 
-  async function runClusterAnalysis(
-  ) {
+  async function runClusterAnalysis() {
     setLoading(true);
     mutateClusterings((data: any) => {
       const newClustering: Clustering = {
@@ -96,7 +94,7 @@ const RunClusters = ({
         status: "started",
         clusters_ids: [],
         scope: scope as "messages" | "sessions",
-        instruction: (instruction === "") ? "user intent" : instruction,
+        instruction: instruction === "" ? "user intent" : instruction,
       };
       const newData = {
         clusterings: [newClustering, ...data?.clusterings],
@@ -113,7 +111,7 @@ const RunClusters = ({
         body: JSON.stringify({
           filters: dataFilters,
           scope: scope,
-          instruction: (instruction === "") ? "user intent" : instruction,
+          instruction: instruction === "" ? "user intent" : instruction,
         }),
       }).then((response) => {
         if (response.status == 200) {
@@ -154,14 +152,16 @@ const RunClusters = ({
     },
   });
 
-  let canRunClusterAnalysis = (scope === "messages" && totalNbTasks && totalNbTasks >= 5)
-    || (scope === "sessions" && totalNbSessions && totalNbSessions >= 5);
+  let canRunClusterAnalysis =
+    (scope === "messages" && totalNbTasks && totalNbTasks >= 5) ||
+    (scope === "sessions" && totalNbSessions && totalNbSessions >= 5);
 
-  let nbElements = (scope === "messages" && totalNbTasks)
-    ? totalNbTasks
-    : (scope === "sessions" && totalNbSessions)
-      ? totalNbSessions
-      : 0;
+  let nbElements =
+    scope === "messages" && totalNbTasks
+      ? totalNbTasks
+      : scope === "sessions" && totalNbSessions
+        ? totalNbSessions
+        : 0;
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     console.log("Instructions: ", data.instruction);
@@ -180,18 +180,19 @@ const RunClusters = ({
       </SheetTrigger>
       <SheetContent className="md:w-1/2 overflow-auto">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-2">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6 mt-2"
+          >
             <SheetTitle>Configure clusters detection</SheetTitle>
             <SheetDescription>
-              Run a cluster analysis on your user sessions to detect patterns and group similar messages together.
+              Run a cluster analysis on your user sessions to detect patterns
+              and group similar messages together.
             </SheetDescription>
             <Separator className="my-8" />
             <div className="flex flex-wrap space-x-2 space-y-2 items-end">
               <DatePickerWithRange />
-              <Select
-                onValueChange={setScope}
-                defaultValue={scope}
-              >
+              <Select onValueChange={setScope} defaultValue={scope}>
                 <SelectTrigger className="max-w-[20rem]">
                   {scope === "messages" ? "Messages" : "Sessions"}
                 </SelectTrigger>
@@ -204,14 +205,19 @@ const RunClusters = ({
               </Select>
               <FilterComponent variant="tasks" />
             </div>
-            {(!canRunClusterAnalysis) && (
+            {!canRunClusterAnalysis && (
               <div className="mt-4">
-                You need at least 5 {scope} to run a cluster analysis. There are currently {nbElements} {scope}.
+                You need at least 5 {scope} to run a cluster analysis. There are
+                currently {nbElements} {scope}.
               </div>
             )}
             {canRunClusterAnalysis && (
               <div className="mt-4">
-                We will clusterize {nbElements} {scope} {scope === "sessions" && <>containing {totalNbTasks} messages</>} for a total of {clusteringCost} credits.
+                We will clusterize {nbElements} {scope}{" "}
+                {scope === "sessions" && (
+                  <>containing {totalNbTasks} messages</>
+                )}{" "}
+                for a total of {clusteringCost} credits.
               </div>
             )}
             <Accordion type="single" collapsible className="w-full">
@@ -219,32 +225,31 @@ const RunClusters = ({
                 <AccordionTrigger>
                   Advanced settings (optional)
                 </AccordionTrigger>
-                <AccordionContent>
-
-                  <div>
-                    The clustering is automatically performed based on the user's intent.
-                  </div>
-                  <div className="mt-2">
-                    Personalize the instruction :
-                    <FormField
-                      control={form.control}
-                      name="instruction"
-                      render={({ field }) => (
-                        <FormItem className="flex-grow">
-                          <FormControl>
-                            <Input
-                              placeholder="user intent"
-                              maxLength={32}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="mt-2">
-                    BE CAREFUL : Changing the instruction may deteriorate the quality of the clustering.
+                <AccordionContent className="space-y-3 space-x-1">
+                  <FormLabel>
+                    By default, we clusterize your {scope} based on:{" "}
+                    <i>user intent</i>, you can change it here:
+                  </FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="instruction"
+                    render={({ field }) => (
+                      <FormItem className="flex-grow">
+                        <FormControl>
+                          <Input
+                            placeholder="user intent"
+                            maxLength={32}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex">
+                    <TriangleAlert className="w-5 h-5 mr-2" />
+                    Changing the instruction may deteriorate the quality of your
+                    clustering.
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -260,17 +265,17 @@ const RunClusters = ({
                   type="submit"
                   disabled={clusteringUnavailable || loading}
                 >
-                  {(loading || clusteringUnavailable) && <Spinner className="mr-2" />}
+                  {(loading || clusteringUnavailable) && (
+                    <Spinner className="mr-2" />
+                  )}
                   Run cluster analysis
                 </Button>
               </div>
             )}
           </form>
         </Form>
-
-
-      </SheetContent >
-    </Sheet >
+      </SheetContent>
+    </Sheet>
   );
 };
 
