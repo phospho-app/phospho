@@ -2512,8 +2512,7 @@ async def get_ab_tests_versions(
         logger.info(f"No tasks found for version {versionB}")
         return []
 
-    graph_values_confidence = {}
-    graph_values_category = {}
+    graph_values = {}
     graph_values_range = {}
     events_to_normalize = []
     for result in results:
@@ -2524,63 +2523,53 @@ async def get_ab_tests_versions(
         ):  # We sum up the count for each version
             event_name = result["event_name"]
             for event_result in result["results"]:
-                if event_name not in graph_values_confidence:
-                    graph_values_confidence[event_name] = {
+                if event_name not in graph_values:
+                    graph_values[event_name] = {
                         event_result["version_id"]: event_result["count"]
                     }
                 else:
-                    if (
-                        event_result["version_id"]
-                        not in graph_values_confidence[event_name]
-                    ):
-                        graph_values_confidence[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                    if event_result["version_id"] not in graph_values[event_name]:
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values_confidence[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
 
             # We normalize the count by the total number of tasks with each version to get the percentage
-            if versionA in graph_values_confidence[event_name]:
-                graph_values_confidence[event_name][versionA] = graph_values_confidence[
-                    event_name
-                ][versionA]
-            if versionB in graph_values_confidence[event_name]:
-                graph_values_confidence[event_name][versionB] = graph_values_confidence[
-                    event_name
-                ][versionB]
+            if versionA in graph_values[event_name]:
+                graph_values[event_name][versionA] = graph_values[event_name][versionA]
+            if versionB in graph_values[event_name]:
+                graph_values[event_name][versionB] = graph_values[event_name][versionB]
 
         elif (
             result["event_type"] == "category"
         ):  # We sum up up the count for each label for each version
             for event_result in result["results"]:
                 event_name = result["event_name"] + "- " + event_result["event_label"]
-                if event_name not in graph_values_category:
-                    graph_values_category[event_name] = {
+                if event_name not in graph_values:
+                    graph_values[event_name] = {
                         event_result["version_id"]: event_result["count"]
                     }
                 else:
-                    if (
-                        event_result["version_id"]
-                        not in graph_values_category[event_name]
-                    ):
-                        graph_values_category[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                    if event_result["version_id"] not in graph_values[event_name]:
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values_category[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
-                    graph_values_category[event_name][versionA] = graph_values_category[
-                        event_name
-                    ][versionA]
+                    graph_values[event_name][versionA] = graph_values[event_name][
+                        versionA
+                    ]
                 if event_result["version_id"] == versionB:
-                    graph_values_category[event_name][versionB] = graph_values_category[
-                        event_name
-                    ][versionB]
+                    graph_values[event_name][versionB] = graph_values[event_name][
+                        versionB
+                    ]
 
         elif result["event_type"] == "range":  # We average the score for each version
             divide_for_correct_average = {}
@@ -2627,17 +2616,7 @@ async def get_ab_tests_versions(
         versionB = "None"
 
     formatted_graph_values = []
-    for event_name, values in graph_values_confidence.items():
-        formatted_graph_values.append(
-            {
-                "event_name": event_name,
-                versionA: values.get(versionA, 0) / total_tasks_with_A,
-                versionB: values.get(versionB, 0) / total_tasks_with_B,
-                versionA + "_tooltip": values.get(versionA, 0),
-                versionB + "_tooltip": values.get(versionB, 0),
-            }
-        )
-    for event_name, values in graph_values_category.items():
+    for event_name, values in graph_values.items():
         formatted_graph_values.append(
             {
                 "event_name": event_name,
