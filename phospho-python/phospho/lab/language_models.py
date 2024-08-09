@@ -1,5 +1,5 @@
 import os
-from typing import Literal, Tuple
+from typing import Literal, Optional, Tuple
 
 import phospho.config as config
 
@@ -53,13 +53,14 @@ def get_async_client(
         "anyscale",
         "fireworks",
     ],
+    api_key: Optional[str] = None,
 ) -> AsyncOpenAI:
     if provider == "openai":
         return AsyncOpenAI()
     if provider == "mistral":
         return AsyncOpenAI(
             base_url="https://api.mistral.ai/v1/",
-            api_key=os.getenv("MISTRAL_API_KEY"),
+            api_key=api_key or os.getenv("MISTRAL_API_KEY"),
         )
     if provider == "ollama":
         return AsyncOpenAI(
@@ -69,22 +70,22 @@ def get_async_client(
     if provider == "solar":
         return AsyncOpenAI(
             base_url="https://api.upstage.ai/v1/solar/",
-            api_key=os.getenv("SOLAR_API_KEY"),
+            api_key=api_key or os.getenv("SOLAR_API_KEY"),
         )
     if provider == "together":
         return AsyncOpenAI(
             base_url="https://api.together.xyz/v1/",
-            api_key=os.getenv("TOGETHER_API_KEY"),
+            api_key=api_key or os.getenv("TOGETHER_API_KEY"),
         )
     if provider == "anyscale":
         return AsyncOpenAI(
             base_url="https://api.endpoints.anyscale.com/v1/",
-            api_key=os.getenv("ANYSCALE_API_KEY"),
+            api_key=api_key or os.getenv("ANYSCALE_API_KEY"),
         )
     if provider == "fireworks":
         return AsyncOpenAI(
             base_url="https://api.fireworks.ai/inference/v1/",
-            api_key=os.getenv("FIREWORKS_API_KEY"),
+            api_key=api_key or os.getenv("FIREWORKS_API_KEY"),
         )
     raise NotImplementedError(f"Provider {provider} is not supported.")
 
@@ -99,13 +100,14 @@ def get_sync_client(
         "anyscale",
         "fireworks",
     ],
+    api_key: Optional[str] = None,
 ) -> OpenAI:
     if provider == "openai":
         return OpenAI()
     if provider == "mistral":
         return OpenAI(
             base_url="https://api.mistral.ai/v1/",
-            api_key=os.getenv("MISTRAL_API_KEY"),
+            api_key=api_key or os.getenv("MISTRAL_API_KEY"),
         )
     if provider == "ollama":
         return OpenAI(
@@ -115,21 +117,21 @@ def get_sync_client(
     if provider == "solar":
         return OpenAI(
             base_url="https://api.upstage.ai/v1/solar/",
-            api_key=os.getenv("SOLAR_API_KEY"),
+            api_key=api_key or os.getenv("SOLAR_API_KEY"),
         )
     if provider == "together":
         return OpenAI(
             base_url="https://api.together.xyz/v1/",
-            api_key=os.getenv("TOGETHER_API_KEY"),
+            api_key=api_key or os.getenv("TOGETHER_API_KEY"),
         )
     if provider == "anyscale":
         return OpenAI(
             base_url="https://api.endpoints.anyscale.com/v1/",
-            api_key=os.getenv("ANYSCALE_API_KEY"),
+            api_key=api_key or os.getenv("ANYSCALE_API_KEY"),
         )
     if provider == "fireworks":
         return OpenAI(
             base_url="https://api.fireworks.ai/inference/v1/",
-            api_key=os.getenv("FIREWORKS_API_KEY"),
+            api_key=api_key or os.getenv("FIREWORKS_API_KEY"),
         )
     raise NotImplementedError(f"Provider {provider} is not supported.")
