@@ -17,3 +17,4 @@ class ClusteringRequest(BaseModel):
     limit: Optional[int] = 2000
     filters: ProjectDataFilters
     scope: Literal["messages", "sessions"] = "messages"
+    instruction: Optional[str] = "user intent"

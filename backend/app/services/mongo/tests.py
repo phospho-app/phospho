@@ -147,9 +147,7 @@ async def update_test(
 
     # Update the document if the payload is not empty
     if update_payload:
-        await mongo_db["tests"].update_one(
-            {"id": test.id}, {"$set": update_payload}
-        )
+        await mongo_db["tests"].update_one({"id": test.id}, {"$set": update_payload})
 
     # Return the updated document
     updated_test = await get_test_by_id(test.id)
@@ -233,7 +231,7 @@ Choice: """
     comparison_data = Comparison(
         project_id=project_id,
         test_id=test_id,
-        instructions=instructions,
+        s=instructions,
         context_input=context,
         old_output=old_output_str,
         new_output=new_output_str,
