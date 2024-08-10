@@ -1,3 +1,4 @@
+import sys
 from typing import List, Union
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -47,8 +48,6 @@ async def store_batch_of_log_events(
 
     # We return the valid log events
     logged_events: List[Union[LogEvent, LogError]] = []
-    logs_to_process: List[LogEvent] = []
-    extra_logs_to_save: List[LogEvent] = []
 
     usage_quota = await get_quota(project_id)
     current_usage = usage_quota.current_usage
@@ -77,14 +76,21 @@ async def store_batch_of_log_events(
                 log_event_model.model_dump(), strict=True
             )
             logged_events.append(valid_log_event)
-            # Process this log only if the usage quota is not reached
 
+            # Compute the object size in bytes
+            object_size = sys.getsizeof(valid_log_event.model_dump())
+            if object_size > 2_000_000:
+                logger.warning(
+                    f"Large log event project {project_id}: {object_size} bytes"
+                    + f"\n{valid_log_event.model_dump()}"
+                )
+
+            # Process this log only if the usage quota is not reached
             if max_usage is None or (
                 max_usage is not None and current_usage < max_usage
             ):
                 current_usage += 1
                 nbr_valid_logs += 1
-
                 await extractor_client.run_process_log_for_tasks(
                     logs_to_process=[valid_log_event],
                 )
