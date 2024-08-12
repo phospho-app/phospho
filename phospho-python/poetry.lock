@@ -75,13 +75,13 @@ files = [
 
 [[package]]
 name = "astroid"
-version = "3.3.1"
+version = "3.3.2"
 description = "An abstract syntax tree for Python with inference support."
 optional = false
 python-versions = ">=3.9.0"
 files = [
-    {file = "astroid-3.3.1-py3-none-any.whl", hash = "sha256:a1a30b911ef8d74988c2a3a59d55ddf9cb973382f115479e213752a4fad36c7c"},
-    {file = "astroid-3.3.1.tar.gz", hash = "sha256:98eb59d8b92d141d618f92435407cbcd5c12dc9f5f4f0c5570fc2e4ba4ddc6aa"},
+    {file = "astroid-3.3.2-py3-none-any.whl", hash = "sha256:9f8136ce9770e0f912401b25a0f15d5c2ec20b50e99b1b413ac0778fe53ff6f1"},
+    {file = "astroid-3.3.2.tar.gz", hash = "sha256:99e9b5b602cbb005434084309213d6af32bf7a9b743c836749168b8e2b330cbd"},
 ]
 
 [package.dependencies]
@@ -1020,13 +1020,13 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.40.2"
+version = "1.40.3"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.40.2-py3-none-any.whl", hash = "sha256:38068f858f310b4fd4b0ea8734c3efcfde3c15a2978311e1453bd84817231b96"},
-    {file = "openai-1.40.2.tar.gz", hash = "sha256:2180e9070bd36084328248b3ce668964e8ddd2e9019e1d426e31dc54cc117bb5"},
+    {file = "openai-1.40.3-py3-none-any.whl", hash = "sha256:09396cb6e2e15c921a5d872bf92841a60a9425da10dcd962b45fe7c4f48f8395"},
+    {file = "openai-1.40.3.tar.gz", hash = "sha256:f2ffe907618240938c59d7ccc67dd01dc8c50be203c0077240db6758d2f02480"},
 ]
 
 [package.dependencies]
@@ -2295,13 +2295,13 @@ files = [
 
 [[package]]
 name = "zipp"
-version = "3.19.2"
+version = "3.20.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "zipp-3.19.2-py3-none-any.whl", hash = "sha256:f091755f667055f2d02b32c53771a7a6c8b47e1fdbc4b72a8b9072b3eef8015c"},
-    {file = "zipp-3.19.2.tar.gz", hash = "sha256:bf1dcf6450f873a13e952a29504887c89e6de7506209e5b1bcc3460135d4de19"},
+    {file = "zipp-3.20.0-py3-none-any.whl", hash = "sha256:58da6168be89f0be59beb194da1250516fdaa062ccebd30127ac65d30045e10d"},
+    {file = "zipp-3.20.0.tar.gz", hash = "sha256:0145e43d89664cfe1a2e533adc75adafed82fe2da404b4bbb6b026c0157bdb31"},
 ]
 
 [package.extras]

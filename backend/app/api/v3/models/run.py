@@ -1,5 +1,7 @@
+from phospho.models import ProjectDataFilters
+from phospho.utils import generate_version_id
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
 
 class Message(BaseModel, extra="allow"):
@@ -16,4 +18,26 @@ class RunPipelineOnMessagesRequest(BaseModel):
     messages: List[Message] = Field(
         default_factory=list,
         description="Ordered and continuous messages in a single session. Similar to the OpenAI api.",
+    )
+
+
+class RunBacktestRequest(BaseModel):
+    project_id: str = Field(description="The phospho project_id")
+    system_prompt_template: str = Field(
+        description="The system prompt template. Templated variables can be passed in the format of \{variable\}.",
+    )
+    system_prompt_variables: Optional[dict] = Field(
+        None, description="The system prompt variables as a dictionary."
+    )
+    provider_and_model: str = Field(
+        description="The provider and model slug that will be used for the backtest.",
+        examples=["openai:gpt-3.5-turbo", "mistral:mistral-small"],
+    )
+    version_id: str = Field(
+        default_factory=generate_version_id,
+        description="A nickname for the candidate version, currently testing.",
+    )
+    filters: Optional[ProjectDataFilters] = Field(
+        None,
+        description="The filters to be applied to the project data. If None, no filters are applied.",
     )

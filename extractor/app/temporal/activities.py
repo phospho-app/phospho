@@ -112,12 +112,10 @@ async def extract_langfuse_data(
 async def run_recipe_on_task(
     request: RunRecipeOnTaskRequest,
 ):
-    if len(request.tasks) == 0:
+    if request.tasks is None and request.tasks_ids is None:
         logger.debug("No tasks to process.")
         return {"status": "no tasks to process", "nb_job_results": 0}
-    logger.info(
-        f"Running job {request.recipe.recipe_type} on {len(request.tasks)} tasks."
-    )
+    logger.info(f"Running job {request.recipe.recipe_type}")
     if request.recipe.org_id is None:
         logger.error("Recipe.org_id is missing.")
         return {"status": "error", "nb_job_results": 0}
@@ -126,8 +124,15 @@ async def run_recipe_on_task(
         project_id=request.recipe.project_id,
         org_id=request.recipe.org_id,
     )
-    await main_pipeline.recipe_pipeline(tasks=request.tasks, recipe=request.recipe)
-    return {"status": "ok", "nb_job_results": len(request.tasks)}
+    await main_pipeline.recipe_pipeline(
+        tasks=request.tasks, recipe=request.recipe, tasks_ids=request.tasks_ids
+    )
+    total_len = 0
+    if request.tasks is not None:
+        total_len += len(request.tasks)
+    if request.tasks_ids is not None:
+        total_len += len(request.tasks_ids)
+    return {"status": "ok", "nb_job_results": total_len}
 
 
 @activity.defn(name="store_opentelemetry_data")

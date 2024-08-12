@@ -136,20 +136,23 @@ class ExtractorClient:
 
         except Exception as e:
             error_id = generate_uuid()
-            error_message = f"Caught error while calling temporal workflow {endpoint} (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
+            error_message = (
+                f"Caught error while calling temporal workflow {endpoint} "
+                + f"(error_id: {error_id} project_id: {self.project_id} organisation_id: {self.org_id}): {e}\n{traceback.format_exception(e)}"
+            )
             logger.error(error_message)
 
             traceback.print_exc()
             if config.ENVIRONMENT == "production":
-                if len(error_message) > 300:
-                    slack_message = error_message[:300]
+                if len(error_message) > 800:
+                    slack_message = error_message[:800]
                 else:
                     slack_message = error_message
                 await slack_notification(slack_message)
 
         return None
 
-    async def run_log_process_for_tasks(
+    async def run_process_log_for_tasks(
         self,
         logs_to_process: List[LogEvent],
         extra_logs_to_save: Optional[List[LogEvent]] = None,
@@ -159,6 +162,31 @@ class ExtractorClient:
         """
         if extra_logs_to_save is None:
             extra_logs_to_save = []
+
+        # Ignore the intermediate_inputs of log_events because it's too big
+        # They are collected in the Langchain integration
+        # TODO: Fix this
+        for log_event in logs_to_process:
+            # Remove additional_inputs.intermediate_inputs from the log_event if it exists
+            if hasattr(log_event, "raw_input"):
+                if (
+                    isinstance(log_event.raw_input, dict)
+                    and "intermediate_inputs" in log_event.raw_input.keys()
+                ):
+                    logger.info(
+                        f"Removing intermediate_inputs from log_event project {self.project_id}"
+                    )
+                    del log_event.raw_input["intermediate_inputs"]
+            if hasattr(log_event, "raw_output"):
+                if (
+                    isinstance(log_event.raw_output, dict)
+                    and "intermediate_outputs" in log_event.raw_output.keys()
+                ):
+                    logger.info(
+                        f"Removing intermediate_outputs from log_event project {self.project_id}"
+                    )
+
+                    del log_event.raw_output["intermediate_outputs"]
 
         await self._post(
             "run_process_log_for_tasks_workflow",
@@ -259,10 +287,10 @@ class ExtractorClient:
 
     async def run_recipe_on_tasks(
         self,
-        tasks: List[Task],
+        tasks_ids: List[str],
         recipe: Recipe,
     ):
-        if len(tasks) == 0:
+        if len(tasks_ids) == 0:
             logger.debug(f"No tasks to process for recipe {recipe.id}")
             return
 
@@ -272,7 +300,7 @@ class ExtractorClient:
             await self._post(
                 "run_recipe_on_task_workflow",
                 {
-                    "tasks": [task.model_dump(mode="json") for task in tasks],
+                    "tasks_ids": tasks_ids,
                     "recipe": recipe.model_dump(mode="json"),
                     "customer_id": await self._fetch_stripe_customer_id(),
                     "project_id": self.project_id,

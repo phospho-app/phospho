@@ -377,32 +377,24 @@ async def post_detect_clusters(
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
 
+    logger.debug(query.instruction)
+
     if query is None:
         query = DetectClustersRequest()
 
-    if query.scope == "messages":
-        total_nb_tasks = await get_total_nb_of_tasks(project_id)
+    if query.scope == "messages" or query.scope == "sessions":
+        total_nb_tasks = await get_total_nb_of_tasks(
+            project_id=project_id, filters=query.filters
+        )
         if total_nb_tasks:
             if query.limit is None:
-                clustering_sample_size = total_nb_tasks
+                clustering_billing = total_nb_tasks * 2
             else:
-                clustering_sample_size = min(total_nb_tasks, query.limit)
+                clustering_billing = min(total_nb_tasks, query.limit) * 2
         else:
             raise HTTPException(
                 status_code=404,
                 detail="No tasks found in the project.",
-            )
-    elif query.scope == "sessions":
-        total_nb_sessions = await get_total_nb_of_sessions(project_id)
-        if total_nb_sessions:
-            if query.limit is None:
-                clustering_sample_size = total_nb_sessions
-            else:
-                clustering_sample_size = min(total_nb_sessions, query.limit)
-        else:
-            raise HTTPException(
-                status_code=404,
-                detail="No sessions found in the project.",
             )
 
     else:
@@ -411,19 +403,21 @@ async def post_detect_clusters(
             detail="messages_or_sessions must be either 'messages' or 'sessions'.",
         )
 
+    logger.info(f"Clustering billing: {clustering_billing}")
+
     # Ignore limits and metering in preview mode
     if config.ENVIRONMENT != "preview":
         if usage_quota.plan == "hobby" or usage_quota.plan is None:
             if (
                 max_usage is not None
-                and current_usage + clustering_sample_size >= max_usage
+                and current_usage + clustering_billing >= max_usage
             ):
                 raise HTTPException(
                     status_code=403,
                     detail="Payment details required to run the cluster detection algorithm.",
                 )
 
-        await bill_on_stripe(org_id=org_id, nb_credits_used=clustering_sample_size * 2)
+        await bill_on_stripe(org_id=org_id, nb_credits_used=clustering_billing)
 
     if query.filters is None:
         query.filters = ProjectDataFilters()
@@ -435,6 +429,7 @@ async def post_detect_clusters(
             limit=query.limit,
             filters=query.filters,
             scope=query.scope,
+            instruction=query.instruction,
         )
     )
     return {"status": "ok"}
