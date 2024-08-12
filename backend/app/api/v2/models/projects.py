@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Literal, Dict
 from pydantic import BaseModel, Field
 
 from app.db.models import (
@@ -59,3 +59,25 @@ class ComputeJobsRequest(BaseModel):
 
 class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
+
+
+class AnalyticsQueryRequest(BaseModel):
+    """Represents an analytics query request without the project_id field."""
+
+    collection: Literal[
+        "events",
+        "job_results",
+        "clusters",  #
+        "embeddings",  #
+        "sessions",
+        "tasks",
+    ]
+    aggregation_operation: Literal["count", "sum", "avg", "min", "max"]
+    aggregation_field: Optional[str] = None  # Not required for count
+    dimensions: Optional[List[str]] = Field(default_factory=list)
+    filters: Optional[dict] = Field(default_factory=dict)
+    sort: Optional[Dict[str, int]] = Field(default_factory=dict)
+    limit: Optional[int] = 1000
+    fill_missing_dates: Optional[bool] = (
+        False  # Fill missing dates in the result series
+    )

@@ -43,6 +43,8 @@ PLAN_HOBBY_MAX_USERS = 1
 PLAN_PRO_MAX_USERS = 15
 PLAN_SELFHOSTED_MAX_USERS = os.getenv("PLAN_SELFHOSTED_MAX_USERS", 100)
 
+QUERY_MAX_LEN_LIMIT = 2000  # Limit the number of returned rows for a query to run_analytics_query() service
+
 ### DOCUMENTATION ##
 
 ADMIN_EMAIL = "notifications@phospho.app"  # Used when new users sign up

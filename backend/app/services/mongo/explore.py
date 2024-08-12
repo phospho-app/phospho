@@ -36,6 +36,8 @@ from pymongo import InsertOne, UpdateOne
 from phospho.models import Cluster, Clustering, Event
 from app.api.platform.models import Pagination
 
+from app.core import config
+
 
 async def project_has_tasks(project_id: str) -> bool:
     """
@@ -470,6 +472,43 @@ async def get_most_detected_event_name(
     return most_detected_event_name
 
 
+def extract_date_range(filters: dict) -> Tuple[datetime.datetime, datetime.datetime]:
+    start_date = end_date = None
+    if filters and "created_at" in filters:
+        if "$gte" in filters["created_at"]:
+            start_date = datetime.datetime.utcfromtimestamp(
+                filters["created_at"]["$gte"]
+            )
+        if "$lte" in filters["created_at"]:
+            end_date = datetime.datetime.utcfromtimestamp(filters["created_at"]["$lte"])
+    return start_date, end_date
+
+
+def generate_date_range(
+    start_date: datetime.datetime, end_date: datetime.datetime, time_dimension: str
+) -> List[str]:
+    date_list = []
+    current_date = start_date
+
+    while current_date <= end_date:
+        if time_dimension == "minute":
+            date_list.append(current_date.strftime("%Y-%m-%d %H:%M"))
+            current_date += datetime.timedelta(minutes=1)
+        elif time_dimension == "hour":
+            date_list.append(current_date.strftime("%Y-%m-%d %H"))
+            current_date += datetime.timedelta(hours=1)
+        elif time_dimension == "day":
+            date_list.append(current_date.strftime("%Y-%m-%d"))
+            current_date += datetime.timedelta(days=1)
+        elif time_dimension == "month":
+            date_list.append(current_date.strftime("%Y-%m"))
+            current_date = (
+                current_date.replace(day=1) + datetime.timedelta(days=32)
+            ).replace(day=1)
+
+    return date_list
+
+
 async def run_analytics_query(
     query: AnalyticsQuery, fill_missing_dates: bool = False
 ) -> List[dict]:
@@ -480,9 +519,10 @@ async def run_analytics_query(
 
     The `AnalyticsQuery` model defines the expected input:
     - project_id: The project id
-    - collection: The collection to aggregate (e.g., tasks, sessions, events,)
-    - aggregation: The type of aggregation to perform (COUNT, SUM, AVG, MIN, MAX)
-    - dimensions: The dimensions to group by (e.g., product, region, day (need to be generated from the created_at field), month, minute)
+    - collection: The collection to aggregate (e.g., tasks, sessions, events, clusters)
+    - aggregation_operation: The type of aggregation to perform ("count", "sum", "avg", "min", "max")
+    - aggregation_field: The field to aggregate on. Not required for count. Can be `metadata.{field_name}` for metadata fields or any nested field.
+    - dimensions: The dimensions to group by (e.g., product, region, day (need to be generated from the created_at field), month, minute). Can be `metadata.{field_name}` for metadata fields or any nested field.
     - filters: Optional filters to apply, passed in MongoDB query format if need be (e.g., {"created_at": {"$gte": 1723218277}})
     - sort: Optional sorting criteria (e.g., {"date": 1} for ascending, {"date": -1} for descending)
     - limit: Optional limit on the number of results to return
@@ -579,7 +619,17 @@ async def run_analytics_query(
             )
         # Then we add the other dimensions
         else:
-            pipeline.append({"$addFields": {dimension: f"${dimension}"}})
+            # If there is some . in the dimension, we need to rename the field as it's not supported by mongo
+            dimension_name = dimension
+            if "." in dimension_name:
+                dimension_name = dimension_name.replace(".", "_")
+            pipeline.append({"$addFields": {dimension_name: f"${dimension}"}})
+
+    # from now on, we need to refere to the new field names
+    dimension_names = [
+        dimension if "." not in dimension else dimension.replace(".", "_")
+        for dimension in query.dimensions
+    ]
 
     # Add the group by
     if query.aggregation_operation == "count":
@@ -587,7 +637,7 @@ async def run_analytics_query(
             {
                 "$group": {
                     "_id": {
-                        dimension: f"${dimension}" for dimension in query.dimensions
+                        dimension: f"${dimension}" for dimension in dimension_names
                     },
                     "value": {"$sum": 1},
                 }
@@ -601,7 +651,7 @@ async def run_analytics_query(
             {
                 "$group": {
                     "_id": {
-                        dimension: f"${dimension}" for dimension in query.dimensions
+                        dimension: f"${dimension}" for dimension in dimension_names
                     },
                     "value": {
                         f"${query.aggregation_operation}": f"${query.aggregation_field}"
@@ -615,7 +665,7 @@ async def run_analytics_query(
         {
             "$project": {
                 "_id": 0,  # Exclude the _id field
-                **{dimension: f"$_id.{dimension}" for dimension in query.dimensions},
+                **{dimension: f"$_id.{dimension}" for dimension in dimension_names},
                 "value": 1,  # Include the value field
             }
         }
@@ -632,8 +682,62 @@ async def run_analytics_query(
 
     # Fill missing dates with 0
     if fill_missing_dates:
-        # TODO: Implement the fill_missing_dates with 0
-        logger.warning("Filling missing dates with 0 is not implemented yet.")
+        # we select the smallest time dimension for the date range
+        time_dimension = next(
+            (d for d in query.dimensions if d in ["minute", "hour", "day", "month"]),
+            None,
+        )
+        if time_dimension:
+            # Extract date range from filters
+            start_date, end_date = extract_date_range(query.filters)
+            logger.debug(f"Start date: {start_date}, End date: {end_date}")
+
+            if start_date and end_date:
+                # Generate all dates in the range
+                all_dates = generate_date_range(start_date, end_date, time_dimension)
+                logger.debug(f"Generated nb of dates: {len(all_dates)}")
+
+                # Create a dictionary of existing results
+                result_dict = {
+                    tuple(item[d] for d in query.dimensions): item for item in result
+                }
+
+                # Fill in missing dates with zero values
+                filled_result = []
+                for date in all_dates:
+                    key = tuple(
+                        date if d == time_dimension else "" for d in query.dimensions
+                    )
+                    if key in result_dict:
+                        filled_result.append(result_dict[key])
+                    else:
+                        filled_result.append(
+                            {
+                                **{
+                                    d: (date if d == time_dimension else "")
+                                    for d in query.dimensions
+                                },
+                                "value": 0,
+                            }
+                        )
+
+                result = filled_result
+            else:
+                logger.warning(
+                    f"Fill missing dates is enabled but no start and end filters for project {query.project_id}"
+                )
+
+        else:
+            logger.warning(
+                f"Fill missing dates is enabled but no time dimension found in the query dimensions for project {query.project_id}"
+            )
+
+    # To avoid blocking the backend when sending back a massive list, we limit the number of results to QUERY_MAX_LEN_LIMIT
+    if len(result) >= config.QUERY_MAX_LEN_LIMIT:
+        logger.warning(
+            f"Query returned {len(result)} results for project {query.project_id}. Returning truncated list of size {config.QUERY_MAX_LEN_LIMIT} (the limit)"
+        )
+        result = result[: config.QUERY_MAX_LEN_LIMIT]
 
     return result
 
