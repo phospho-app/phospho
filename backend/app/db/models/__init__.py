@@ -3,6 +3,7 @@ The db models are in the phospho module.
 """
 
 from phospho.models import (
+    AnalyticsQuery,
     Comparison,
     ComparisonResults,
     DatasetRow,

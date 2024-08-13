@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "phospho"
-version = "0.3.34"
+version = "0.3.36"
 description = "Text Analytics for LLM apps"
-authors = ["Pierre-Louis Biojout <contact@phospho.app>"]
+authors = ["phospho <contact@phospho.ai>"]
 readme = "README.md"
 homepage = "https://github.com/phospho-app/phospho"
 documentation = "https://docs.phospho.ai"

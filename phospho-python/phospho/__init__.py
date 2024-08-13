@@ -1039,7 +1039,7 @@ except ImportError:
             "phospho.tasks_df() requires the pandas library. Install it with `pip install pandas`."
         )
 
-    def push_tasks_df(tasks_df: pd.DataFrame) -> None:
+    def push_tasks_df(tasks_df) -> None:
         raise ImportError(
             "phospho.push_tasks_df() requires the pandas library. Install it with `pip install pandas`."
         )

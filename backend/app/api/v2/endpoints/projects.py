@@ -4,6 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends
 from loguru import logger
 
 from app.api.v2.models import (
+    AnalyticsQueryRequest,
     ComputeJobsRequest,
     FlattenedTasks,
     FlattenedTasksRequest,
@@ -11,10 +12,12 @@ from app.api.v2.models import (
     Sessions,
     Tasks,
 )
+from app.db.models import AnalyticsQuery
 from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
 from app.services.mongo.explore import (
     fetch_flattened_tasks,
     update_from_flattened_tasks,
+    run_analytics_query,
 )
 from app.services.mongo.projects import (
     backcompute_recipes,
@@ -158,3 +161,46 @@ async def post_backcompute_job(
     )
 
     return {"message": "Backcompute job started"}
+
+
+@router.post("/projects/{project_id}/query", description="Run a query on the project")
+async def post_run_query(
+    project_id: str,
+    analytics_query_request: AnalyticsQueryRequest,
+    org: dict = Depends(authenticate_org_key),
+):
+    """
+    Run a query on the project.
+    The main purpose of this endpoint is to enable customers:
+    - to build their own analytics on top of the data produced by phospho (white label)
+    - to run custom queries on the data for data science purposes
+
+    Result max size is limited to config.QUERY_MAX_LEN_LIMIT rows.
+    """
+    await verify_propelauth_org_owns_project_id(org, project_id)
+
+    # Add checks on the query here
+    # ...
+
+    if analytics_query_request.collection == "clusters":
+        analytics_query_request.collection = "private-clusters"
+    elif analytics_query_request.collection == "embeddings":
+        analytics_query_request.collection = "private-embeddings"
+
+    query = AnalyticsQuery(
+        project_id=project_id,
+        collection=analytics_query_request.collection,
+        aggregation_operation=analytics_query_request.aggregation_operation,
+        aggregation_field=analytics_query_request.aggregation_field,
+        dimensions=analytics_query_request.dimensions,
+        filters=analytics_query_request.filters,
+        sort=analytics_query_request.sort,
+        limit=analytics_query_request.limit,
+    )
+
+    # Run the query
+    query_result = await run_analytics_query(
+        query, fill_missing_dates=analytics_query_request.fill_missing_dates
+    )
+
+    return query_result
