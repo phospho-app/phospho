@@ -232,6 +232,26 @@ class Threshold(BaseModel):
     magnitude: Optional[float] = None
 
 
+class AnalyticsQuery(BaseModel):
+    """Represents a query to run analytics on the data."""
+
+    project_id: str
+    collection: Literal[
+        "events",
+        "job_results",
+        "private-clusters",
+        "private-embeddings",
+        "sessions",
+        "tasks",
+    ]
+    aggregation_operation: Literal["count", "sum", "avg", "min", "max"]
+    aggregation_field: Optional[str] = None  # Not required for count
+    dimensions: List[str] = Field(default_factory=list)
+    filters: dict = Field(default_factory=dict)
+    sort: Dict[str, int] = Field(default_factory=dict)
+    limit: int = 1000
+
+
 class DashboardTile(BaseModel):
     id: str = Field(default_factory=generate_uuid)
     tile_name: str
