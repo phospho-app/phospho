@@ -5,6 +5,7 @@ from loguru import logger
 
 from app.api.v2.models import (
     AnalyticsQueryRequest,
+    AnalyticsQueryResponse,
     ComputeJobsRequest,
     FlattenedTasks,
     FlattenedTasksRequest,
@@ -163,7 +164,11 @@ async def post_backcompute_job(
     return {"message": "Backcompute job started"}
 
 
-@router.post("/projects/{project_id}/query", description="Run a query on the project")
+@router.post(
+    "/projects/{project_id}/query",
+    description="Run a query on the project",
+    response_model=AnalyticsQueryResponse,
+)
 async def post_run_query(
     project_id: str,
     analytics_query_request: AnalyticsQueryRequest,
@@ -182,14 +187,15 @@ async def post_run_query(
     # Add checks on the query here
     # ...
 
-    if analytics_query_request.collection == "clusters":
-        analytics_query_request.collection = "private-clusters"
-    elif analytics_query_request.collection == "embeddings":
-        analytics_query_request.collection = "private-embeddings"
+    # Parse the collection names with the private prefix
+    collection_name = analytics_query_request.collection
+
+    if collection_name in ["private-clusters", "private-embeddings"]:
+        collection_name = f"private-{collection_name}"
 
     query = AnalyticsQuery(
         project_id=project_id,
-        collection=analytics_query_request.collection,
+        collection=collection_name,
         aggregation_operation=analytics_query_request.aggregation_operation,
         aggregation_field=analytics_query_request.aggregation_field,
         dimensions=analytics_query_request.dimensions,
@@ -203,4 +209,4 @@ async def post_run_query(
         query, fill_missing_dates=analytics_query_request.fill_missing_dates
     )
 
-    return query_result
+    return AnalyticsQueryResponse(result=query_result)

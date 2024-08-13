@@ -17,6 +17,7 @@ from .models import Model, ModelsResponse
 from .predict import PredictRequest, PredictResponse
 from .projects import (
     AnalyticsQueryRequest,
+    AnalyticsQueryResponse,
     ComputeJobsRequest,
     EventDefinition,
     FlattenedTasksRequest,
