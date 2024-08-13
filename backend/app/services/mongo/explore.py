@@ -522,7 +522,7 @@ async def run_analytics_query(
     - collection: The collection to aggregate (e.g., tasks, sessions, events, clusters)
     - aggregation_operation: The type of aggregation to perform ("count", "sum", "avg", "min", "max")
     - aggregation_field: The field to aggregate on. Not required for count. Can be `metadata.{field_name}` for metadata fields or any nested field.
-    - dimensions: The dimensions to group by (e.g., product, region, day (need to be generated from the created_at field), month, minute). Can be `metadata.{field_name}` for metadata fields or any nested field.
+    - dimensions: The dimensions to group by (e.g., flag, metadata.model, ...). Can be `month`, `day`, `hour`, or`minute`, which will be computed from the created_at field. Can be `metadata.{field_name}` for metadata fields or any nested field.
     - filters: Optional filters to apply, passed in MongoDB query format if need be (e.g., {"created_at": {"$gte": 1723218277}})
     - sort: Optional sorting criteria (e.g., {"date": 1} for ascending, {"date": -1} for descending)
     - limit: Optional limit on the number of results to return
