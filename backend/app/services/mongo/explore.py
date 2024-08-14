@@ -485,6 +485,12 @@ def extract_date_range(filters: dict) -> Tuple[datetime.datetime, datetime.datet
         else:
             # we use the current timestamp
             end_date = datetime.datetime.now(datetime.timezone.utc)
+
+    if start_date is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Start timestamp is required to fill missing dates",
+        )
     return start_date, end_date
 
 
