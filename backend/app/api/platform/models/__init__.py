@@ -1,4 +1,6 @@
 from app.api.v2.models import (
+    AnalyticsQueryRequest,
+    AnalyticsQueryResponse,
     Eval,
     Event,
     EventDefinition,

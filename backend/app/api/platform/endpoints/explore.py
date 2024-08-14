@@ -4,10 +4,13 @@ from typing import List, Optional, Dict, Union
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 from propelauth_fastapi import User
+
 from app.api.platform.models.explore import ABTestVersions
 from app.api.platform.models import (
     ABTests,
     AggregateMetricsRequest,
+    AnalyticsQueryRequest,
+    AnalyticsQueryResponse,
     Cluster,
     Clusterings,
     Clusters,
@@ -18,10 +21,14 @@ from app.api.platform.models import (
     ProjectDataFilters,
     ClusteringRequest,
 )
+from app.db.models import AnalyticsQuery
+
 from app.core import config
+
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
 from app.security.authorization import get_quota
+
 from app.services.mongo.ai_hub import clustering
 from app.services.mongo.events import get_event_definition_from_event_id
 from app.services.mongo.explore import (
@@ -43,6 +50,7 @@ from app.services.mongo.explore import (
     project_has_sessions,
     project_has_tasks,
     get_ab_tests_versions,
+    run_analytics_query,
 )
 from app.services.mongo.extractor import bill_on_stripe
 from app.services.mongo.events import get_all_events
@@ -627,3 +635,21 @@ async def get_ab_tests_comparison(
         versionB=versions.versionB,
     )
     return output
+
+
+@router.post(
+    "/explore/{project_id}/query",
+    description="Run an analytics query on the project",
+    response_model=AnalyticsQueryResponse,
+)
+async def post_analytics_query(
+    project_id: str,
+    analytics_query: AnalyticsQuery,
+    user: User = Depends(propelauth.require_user),
+) -> AnalyticsQueryResponse:
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+
+    # Run the query
+    query_result = await run_analytics_query(analytics_query)
+
+    return AnalyticsQueryResponse(result=query_result)

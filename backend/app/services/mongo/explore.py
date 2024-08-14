@@ -16,6 +16,7 @@ from sklearn.metrics import (
 
 import pandas as pd
 import pydantic
+from fastapi import HTTPException
 
 # Models
 from app.api.platform.models import ABTest, ProjectDataFilters
@@ -481,6 +482,9 @@ def extract_date_range(filters: dict) -> Tuple[datetime.datetime, datetime.datet
             )
         if "$lte" in filters["created_at"]:
             end_date = datetime.datetime.utcfromtimestamp(filters["created_at"]["$lte"])
+        else:
+            # we use the current timestamp
+            end_date = datetime.datetime.now(datetime.timezone.utc)
     return start_date, end_date
 
 
@@ -509,9 +513,7 @@ def generate_date_range(
     return date_list
 
 
-async def run_analytics_query(
-    query: AnalyticsQuery, fill_missing_dates: bool = False
-) -> List[dict]:
+async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
     """
     Function to run complex analytics queries, returned as a list of dictionaries.
     For instance, it should be used for the frontend dataviz.
@@ -526,8 +528,8 @@ async def run_analytics_query(
     - filters: Optional filters to apply, passed in MongoDB query format if need be (e.g., {"created_at": {"$gte": 1723218277}})
     - sort: Optional sorting criteria (e.g., {"date": 1} for ascending, {"date": -1} for descending)
     - limit: Optional limit on the number of results to return
-
-    fill_missing_dates: If True, fill missing dates between start and end with 0. Default is False.
+    - fill_missing_dates: If True, fill missing dates between start timestamp and end timestamp (or current timestamp) with 0. Default is False.
+    - filter_out_null_values: If True, filter out null values from the result. Default is False.
 
     In dimensions, the following special values are supported:
     - "minute": the minute part of the created_at field, "YYYY-MM-DD HH:mm"
@@ -676,12 +678,25 @@ async def run_analytics_query(
         pipeline.append({"$sort": query.sort})
 
     # Run the query
-    result = (
-        await mongo_db[query.collection].aggregate(pipeline).to_list(length=query.limit)
-    )
+    try:
+        result = (
+            await mongo_db[query.collection]
+            .aggregate(pipeline)
+            .to_list(length=query.limit)
+        )
+    except Exception as e:
+        logger.error(f"Error while running the analytics query: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error while running the analytics query for project {query.project_id}. This can be due to an invalid query.",
+        )
+
+    # Filter out null values
+    if query.filter_out_null_values:
+        result = [item for item in result if item["value"] is not None]
 
     # Fill missing dates with 0
-    if fill_missing_dates:
+    if query.fill_missing_dates:
         # we select the smallest time dimension for the date range
         time_dimension = next(
             (d for d in query.dimensions if d in ["minute", "hour", "day", "month"]),
@@ -724,7 +739,7 @@ async def run_analytics_query(
                 result = filled_result
             else:
                 logger.warning(
-                    f"Fill missing dates is enabled but no start and end filters for project {query.project_id}"
+                    f"Fill missing dates is enabled but no start timestamp given for project {query.project_id}"
                 )
 
         else:

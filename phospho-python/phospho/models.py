@@ -246,10 +246,12 @@ class AnalyticsQuery(BaseModel):
     ]
     aggregation_operation: Literal["count", "sum", "avg", "min", "max"]
     aggregation_field: Optional[str] = None  # Not required for count
-    dimensions: List[str] = Field(default_factory=list)
-    filters: dict = Field(default_factory=dict)
-    sort: Dict[str, int] = Field(default_factory=dict)
-    limit: int = 1000
+    dimensions: Optional[List[str]] = Field(default_factory=list)
+    filters: Optional[dict] = Field(default_factory=dict)
+    sort: Optional[Dict[str, int]] = Field(default_factory=dict)
+    limit: Optional[int] = 1000
+    fill_missing_dates: Optional[bool] = False
+    filter_out_null_values: Optional[bool] = False
 
 
 class DashboardTile(BaseModel):
