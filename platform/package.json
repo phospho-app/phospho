@@ -60,7 +60,7 @@
     "react-dom": "18.2.0",
     "react-hook-form": "^7.46.1",
     "react-markdown": "^9.0.1",
-    "recharts": "^2.8.0",
+    "recharts": "^2.12.7",
     "supports-color": "^8.1.1",
     "swr": "^2.2.4",
     "tailwind-merge": "^1.14.0",

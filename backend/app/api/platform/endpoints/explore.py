@@ -50,10 +50,13 @@ from app.services.mongo.explore import (
     project_has_tasks,
     get_ab_tests_versions,
     run_analytics_query,
+    analytics_query_result_to_timeseries,
 )
 from app.services.mongo.extractor import bill_on_stripe
 from app.services.mongo.events import get_all_events
 from app.services.mongo.tasks import get_total_nb_of_tasks
+
+from app.utils import generate_timestamp
 
 router = APIRouter(tags=["Explore"])
 
@@ -637,18 +640,50 @@ async def get_ab_tests_comparison(
 
 
 @router.post(
-    "/explore/{project_id}/query",
+    "/explore/analytics-query",
     description="Run an analytics query on the project",
     response_model=AnalyticsQueryResponse,
 )
 async def post_analytics_query(
-    project_id: str,
     analytics_query: AnalyticsQuery,
+    asFilledTimeSeries: Optional[
+        bool
+    ] = False,  # Whether to fill the time series with 0s on missing dates.
     user: User = Depends(propelauth.require_user),
 ) -> AnalyticsQueryResponse:
-    await verify_if_propelauth_user_can_access_project(user, project_id)
+    await verify_if_propelauth_user_can_access_project(user, analytics_query.project_id)
 
     # Run the query
     query_result = await run_analytics_query(analytics_query)
 
+    # Fill the time series with 0s on missing dates if requested
+    if asFilledTimeSeries:
+        end_timestamp = generate_timestamp()
+        if analytics_query.filters.created_at_end is not None:
+            end_timestamp = analytics_query.filters.created_at_end
+        query_result = analytics_query_result_to_timeseries(
+            query_result,
+            "day",
+            analytics_query.filters.created_at_start,
+            end_timestamp,
+        )
+
     return AnalyticsQueryResponse(result=query_result)
+
+
+@router.post(
+    "/explore/analytics-timeseries",
+    description="Run an analytics query on the project and get time series data",
+    response_model=AnalyticsQueryResponse,
+)
+async def post_analytics_query(
+    analytics_query: AnalyticsQuery,
+    user: User = Depends(propelauth.require_user),
+) -> AnalyticsQueryResponse:
+    """
+    We always fill the time series with 0s on missing dates.
+    """
+    await verify_if_propelauth_user_can_access_project(user, analytics_query.project_id)
+
+    # Run the query
+    query_result = await run_analytics_query(analytics_query)

@@ -768,6 +768,72 @@ def analytic_query_result_fill_missing_times(
     return filled_query_result
 
 
+def analytics_query_result_to_timeseries(
+    result: List[dict],
+    time_dimension: str,
+    start_date_timestamp: int,
+    end_date_timestamp: int,
+) -> List[dict]:
+    """
+    Convert the result of an analytics query to a timeseries format.
+    The result should be a list of dictionaries with the format {"time": time, "mergeddimensiosn1": value, "mergeddimensions2": value, ...}
+    The time dimension should be in the format "YYYY-MM-DD HH:mm" for minute, "YYYY-MM-DD HH" for hour, "YYYY-MM-DD" for day, "YYYY-MM" for month.
+    """
+    # Use pandas
+    df = pd.DataFrame(result)
+
+    # Get the dimensions
+    dimensions = [col for col in df.columns if col not in [time_dimension, "value"]]
+
+    # For columns in the dimensions, we replace Nan by "None" string
+    for dimension in dimensions:
+        df[dimension] = df[dimension].fillna("None")
+
+    if len(dimensions) > 0:
+        # We need to pivot the dataframe
+        df = df.pivot(
+            index=time_dimension, columns=dimensions, values="value"
+        ).reset_index()
+
+        # We change column names to a string by concatenating the dimensions
+        df.columns = [
+            "::".join(col) if isinstance(col, tuple) else col
+            for col in df.columns.values
+        ]
+        print(df.columns)
+        # Remove the :: in the time column
+        if f"{time_dimension}::" in df.columns:
+            df[time_dimension] = df[f"{time_dimension}::"].str.replace("::", "")
+            df.drop(columns=[f"{time_dimension}::"], inplace=True)
+
+    # We order the rows by ascending date (which is the index)
+    df = df.sort_values(by=time_dimension)
+
+    # Now, we add the full range of dates from start_date to end_date
+    start_date = datetime.datetime.fromtimestamp(
+        start_date_timestamp, datetime.timezone.utc
+    )
+    end_date = datetime.datetime.fromtimestamp(
+        end_date_timestamp, datetime.timezone.utc
+    )
+
+    date_range = generate_date_range(start_date, end_date, time_dimension)
+
+    # We create a new dataframe with the full range of dates
+    full_df = pd.DataFrame({time_dimension: date_range})
+
+    # We merge the two dataframes
+    df = pd.merge(full_df, df, on=time_dimension, how="left")
+
+    # We fill NaN with 0
+    df = df.fillna(0)
+
+    # DF to dict
+    result = df.to_dict(orient="records")
+
+    return result
+
+
 async def get_nb_of_daily_tasks(
     project_id: str,
     filters: ProjectDataFilters,

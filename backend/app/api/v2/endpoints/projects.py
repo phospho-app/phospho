@@ -19,7 +19,7 @@ from app.services.mongo.explore import (
     fetch_flattened_tasks,
     update_from_flattened_tasks,
     run_analytics_query,
-    analytic_query_result_fill_missing_times,
+    analytics_query_result_to_timeseries,
 )
 from app.services.mongo.projects import (
     backcompute_recipes,
@@ -195,15 +195,21 @@ async def post_run_query(
     # Add checks on the query here
     # ...
 
-    # Parse the collection names with the private prefix
-    collection_name = analytics_query_request.collection
-
     # Run the query
     query_result = await run_analytics_query(analytics_query_request)
 
-    # Fill missing times
-    filled_result = analytic_query_result_fill_missing_times(
-        query_result, "hour", generate_timestamp() - 24 * 3600, generate_timestamp()
+    # # Fill missing times
+    # filled_result = analytic_query_result_fill_missing_times(
+    #     query_result, "hour", generate_timestamp() - 24 * 3600, generate_timestamp()
+    # )
+    end_timestamp = generate_timestamp()
+    if analytics_query_request.filters.created_at_end is not None:
+        end_timestamp = analytics_query_request.filters.created_at_end
+    result = analytics_query_result_to_timeseries(
+        query_result,
+        "day",
+        analytics_query_request.filters.created_at_start,
+        end_timestamp,
     )
 
-    return AnalyticsQueryResponse(result=filled_result)
+    return AnalyticsQueryResponse(result=result)
