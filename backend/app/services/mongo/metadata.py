@@ -1,30 +1,15 @@
 from typing import Dict, List, Literal, Optional
-from app.api.v2.models.projects import UserMetadata
-from app.services.mongo.tasks import task_filtering_pipeline_match
 from fastapi import HTTPException
 from loguru import logger
+
+from app.api.v2.models.projects import UserMetadata
+from phospho.models import ProjectDataFilters, AnalyticsQuery
+
+from app.services.mongo.tasks import task_filtering_pipeline_match
 from app.services.mongo.sessions import compute_task_position, compute_session_length
+from app.services.mongo.explore import run_analytics_query
 
 from app.db.mongo import get_mongo_db
-from phospho.models import ProjectDataFilters
-
-
-async def fetch_count(
-    project_id: str, collection_name: str, metadata_field: str
-) -> int:
-    """
-    Fetch the number of users that are in a projects
-    """
-    mongo_db = await get_mongo_db()
-    nb_users = await mongo_db[collection_name].distinct(
-        key=f"metadata.{metadata_field}",
-        filter={
-            "project_id": project_id,
-            # Ignore null values
-            f"metadata.{metadata_field}": {"$ne": None},
-        },
-    )
-    return len(nb_users)
 
 
 async def calculate_average_for_metadata(
@@ -52,54 +37,33 @@ async def calculate_average_for_metadata(
 
 async def calculate_top10_percent(
     project_id: str, collection_name: str, metadata_field: str
-) -> Optional[int]:
-    mongo_db = await get_mongo_db()
+) -> int:
+    query = AnalyticsQuery(
+        project_id=project_id,
+        collection=collection_name,
+        aggregation_operation="count",
+        dimensions=[f"metadata.{metadata_field}"],  # was designed for user_id initially
+        sort={"value": 1},
+        filter_out_null_values=True,
+        filter_out_null_dimensions=True,
+    )
 
-    # Define the pipeline
-    pipeline = [
-        {"$match": {"project_id": project_id}},
-        {"$match": {f"metadata.{metadata_field}": {"$exists": True}}},
-        {
-            "$group": {
-                "_id": f"$metadata.{metadata_field}",
-                "metadataValueCount": {"$sum": 1},
-            }
-        },
-        {"$sort": {"metadataValueCount": -1}},
-        {
-            "$facet": {
-                "totalKeyCount": [{"$count": "count"}],
-                "sortedData": [{"$match": {}}],
-            }
-        },
-    ]
+    analytics_query_result = await run_analytics_query(query)
 
-    # Run the aggregation pipeline
-    result = await mongo_db[collection_name].aggregate(pipeline).to_list(None)
-    if not result or not result[0]["totalKeyCount"]:
-        return None
-
-    total_users = result[0]["totalKeyCount"][0]["count"]
-    ten_percent_index = max(
-        int(total_users * 0.1) - 1, 0
-    )  # Calculate the 10% index, ensure it's not negative
-
-    # Retrieve the task count of the user at the 10% threshold
-    # Ensure that the list is long enough
-    if ten_percent_index < len(result[0]["sortedData"]):
-        ten_percent_user_task_count = result[0]["sortedData"][ten_percent_index][
-            "metadataValueCount"
-        ]
-        logger.debug(
-            f"{metadata_field} count at the 10% threshold in {collection_name}: {ten_percent_user_task_count}"
-        )
-        return ten_percent_user_task_count
-
-    else:
+    if len(analytics_query_result) == 0:
         logger.warning(
-            "The dataset does not have enough users to determine the 10% threshold."
+            f"The dataset does not have enough {metadata_field} to determine the 10% threshold."
         )
         return 0
+
+    # Get the 10% threshold
+    top_ten_percent_index = max(
+        int(len(analytics_query_result) * 0.9), 0
+    )  # Calculate the 10% index, ensure it's not negative
+
+    top_ten_percent_value = analytics_query_result[top_ten_percent_index]["value"]
+
+    return top_ten_percent_value
 
 
 async def calculate_bottom10_percent(

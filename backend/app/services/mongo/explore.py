@@ -536,6 +536,7 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
     - limit: Optional limit on the number of results to return
     - fill_missing_dates: If True, fill missing dates between start timestamp and end timestamp (or current timestamp) with 0. Default is False.
     - filter_out_null_values: If True, filter out null values from the result. Default is False.
+    - filter_out_null_dimensions: If True, filter out null dimensions from the result. Default is False. This applies to all dimensions.
 
     In dimensions, the following special values are supported:
     - "minute": the minute part of the created_at field, "YYYY-MM-DD HH:mm"
@@ -638,6 +639,11 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
         dimension if "." not in dimension else dimension.replace(".", "_")
         for dimension in query.dimensions
     ]
+
+    # Filter out null dimensions if requested
+    if query.filter_out_null_dimensions:
+        null_filter = {dimension: {"$ne": None} for dimension in dimension_names}
+        pipeline.append({"$match": null_filter})
 
     # Add the group by
     if query.aggregation_operation == "count":

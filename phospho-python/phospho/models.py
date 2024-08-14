@@ -252,6 +252,7 @@ class AnalyticsQuery(BaseModel):
     limit: Optional[int] = 1000
     fill_missing_dates: Optional[bool] = False
     filter_out_null_values: Optional[bool] = False
+    filter_out_null_dimensions: Optional[bool] = False
 
 
 class DashboardTile(BaseModel):

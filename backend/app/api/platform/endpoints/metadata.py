@@ -1,6 +1,7 @@
 import datetime
 from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException
+from loguru import logger
 
 from phospho.models import ProjectDataFilters
 from propelauth_fastapi import User
@@ -10,7 +11,6 @@ from app.security import verify_if_propelauth_user_can_access_project
 # Service
 from app.services.mongo.metadata import (
     collect_unique_metadata_field_values,
-    fetch_count,
     calculate_average_for_metadata,
     calculate_top10_percent,
     calculate_bottom10_percent,
@@ -18,6 +18,7 @@ from app.services.mongo.metadata import (
     collect_unique_metadata_fields,
     breakdown_by_sum_of_metadata_field,
 )
+from app.services.mongo.explore import run_analytics_query
 
 # Models
 from app.api.platform.models import (
@@ -26,13 +27,14 @@ from app.api.platform.models import (
     MetadataPivotResponse,
     MetadataPivotQuery,
 )
+from app.db.models import AnalyticsQuery
 
 router = APIRouter(tags=["Metadata"])
 
 
 @router.get(
     "/metadata/{project_id}/count/{collection_name}/{metadata_field}",
-    description="Get the number of different metadata values in a project.",
+    description="Get the number of different metadata values in a project, excluding None.",
     response_model=MetadataValueResponse,
 )
 async def get_metadata_count(
@@ -45,12 +47,25 @@ async def get_metadata_count(
     Get the number of different metadata values in a project.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    count = await fetch_count(
+
+    query = AnalyticsQuery(
         project_id=project_id,
-        collection_name=collection_name,
-        metadata_field=metadata_field,
+        collection=collection_name,
+        aggregation_operation="count",
+        dimensions=[f"metadata.{metadata_field}"],
+        filter_out_null_values=True,
     )
-    return MetadataValueResponse(value=count)
+
+    analytics_query_result = await run_analytics_query(query)
+
+    # Remove the item that has the user_id as None
+    analytics_query_result = [
+        item
+        for item in analytics_query_result
+        if item.get(f"metadata_{metadata_field}") is not None
+    ]
+
+    return MetadataValueResponse(value=len(analytics_query_result))
 
 
 @router.get(
