@@ -98,10 +98,6 @@ class AnalyticsQueryRequest(BaseModel):
         description=f"Limit on the number or rows returned. Cannot exceed {config.QUERY_MAX_LEN_LIMIT} records.",
     )
     # Optional parameters for the query service
-    fill_missing_dates: Optional[bool] = Field(
-        False,  # Fill missing dates in the result series
-        description="If True and if min and max filters on created_ate are defined, missing dates will be filled with 0 values between the min and max dates of the filters.",
-    )
     filter_out_null_values: Optional[bool] = Field(
         False, description="Filter out null values from the result series."
     )

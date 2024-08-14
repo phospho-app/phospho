@@ -261,7 +261,6 @@ class AnalyticsQuery(BaseModel):
     )
     sort: Optional[Dict[str, int]] = Field(default_factory=dict)
     limit: Optional[int] = 1000
-    fill_missing_dates: Optional[bool] = False
     filter_out_null_values: Optional[bool] = False
     filter_out_null_dimensions: Optional[bool] = False
 

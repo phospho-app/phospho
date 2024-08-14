@@ -540,7 +540,6 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
     - filters: Optional filters to apply, passed in MongoDB query format if need be (e.g., {"created_at": {"$gte": 1723218277}})
     - sort: Optional sorting criteria (e.g., {"date": 1} for ascending, {"date": -1} for descending)
     - limit: Optional limit on the number of results to return
-    - fill_missing_dates: If True, fill missing dates between start timestamp and end timestamp (or current timestamp) with 0. Default is False.
     - filter_out_null_values: If True, filter out null values from the result. Default is False.
     - filter_out_null_dimensions: If True, filter out null dimensions from the result. Default is False. This applies to all dimensions.
 
@@ -729,67 +728,6 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
     # Filter out null values
     if query.filter_out_null_values:
         result = [item for item in result if item["value"] is not None]
-
-    # Fill missing dates with 0
-    if query.fill_missing_dates:
-        # we select the smallest time dimension for the date range
-        time_dimension = next(
-            (d for d in query.dimensions if d in ["minute", "hour", "day", "month"]),
-            None,
-        )
-        if time_dimension:
-            # Check the start and end date in the filters
-            if query.filters.created_at_start is not None:
-                end_date = query.filters.created_at_end
-                if end_date is None:
-                    end_date = generate_timestamp()
-
-                if end_date < query.filters.created_at_start:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="End timestamp is smaller than start timestamp",
-                    )
-
-                # Generate all dates in the range
-                all_dates = generate_date_range(
-                    query.filters.created_at_start, end_date, time_dimension
-                )
-                logger.debug(f"Generated nb of dates: {len(all_dates)}")
-
-                # Create a dictionary of existing results
-                result_dict = {
-                    tuple(item[d] for d in query.dimensions): item for item in result
-                }
-
-                # Fill in missing dates with zero values
-                filled_result = []
-                for date in all_dates:
-                    key = tuple(
-                        date if d == time_dimension else "" for d in query.dimensions
-                    )
-                    if key in result_dict:
-                        filled_result.append(result_dict[key])
-                    else:
-                        filled_result.append(
-                            {
-                                **{
-                                    d: (date if d == time_dimension else "")
-                                    for d in query.dimensions
-                                },
-                                "value": 0,
-                            }
-                        )
-
-                result = filled_result
-            else:
-                logger.warning(
-                    f"Fill missing dates is enabled but no start timestamp given for project {query.project_id}"
-                )
-
-        else:
-            logger.warning(
-                f"Fill missing dates is enabled but no time dimension found in the query dimensions for project {query.project_id}"
-            )
 
     # To avoid blocking the backend when sending back a massive list, we limit the number of results to QUERY_MAX_LEN_LIMIT
     if len(result) >= config.QUERY_MAX_LEN_LIMIT:
