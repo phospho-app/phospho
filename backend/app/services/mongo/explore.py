@@ -473,36 +473,11 @@ async def get_most_detected_event_name(
     return most_detected_event_name
 
 
-def extract_date_range(filters: dict) -> Tuple[datetime.datetime, datetime.datetime]:
-    start_date = end_date = None
-    if filters and "created_at" in filters:
-        if "$gte" in filters["created_at"]:
-            start_date = datetime.datetime.utcfromtimestamp(
-                filters["created_at"]["$gte"]
-            )
-        if "$lte" in filters["created_at"]:
-            end_date = datetime.datetime.utcfromtimestamp(filters["created_at"]["$lte"])
-        else:
-            # we use the current timestamp
-            end_date = datetime.datetime.now(datetime.timezone.utc)
-
-    if start_date is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Start timestamp is required to fill missing dates",
-        )
-    return start_date, end_date
-
-
 def generate_date_range(
-    start_date_timestamp: int,
-    end_date_timestamp: int,
+    start_date: datetime.datetime,
+    end_date: datetime.datetime,
     time_dimension: Literal["minute", "hour", "day", "month"],
 ) -> List[str]:
-    # Convert the timestamps to datetime objects
-    start_date = datetime.datetime.utcfromtimestamp(start_date_timestamp)
-    end_date = datetime.datetime.utcfromtimestamp(end_date_timestamp)
-
     date_list = []
     current_date = start_date
 
@@ -737,6 +712,60 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
         result = result[: config.QUERY_MAX_LEN_LIMIT]
 
     return result
+
+
+def analytic_query_result_fill_missing_times(
+    query_result: List[dict],
+    time_dimension: Literal["minute", "hour", "day", "month"],
+    start_date_timestamp: int,
+    end_date_timestamp: int,
+) -> List[dict]:
+    """
+    query_result: output of the run_analytics_query function, needs to be ordered by the time_dimension
+    time_dimension: the dimension used to group the data (e.g., "minute", "hour", "day", "month")
+
+    In the result of an analytics query, the tome dimension is formated a s a string in the format "YYYY-MM-DD HH:mm" for minute, "YYYY-MM-DD HH" for hour, "YYYY-MM-DD" for day, "YYYY-MM" for month.
+
+    Fill missing times in the result of an analytics query.
+    For data vizualisation, so we can pass it to Recharts
+    """
+    # If there is no data, we return an empty list
+    if not query_result:
+        return []
+
+    # Only works for a time dimension and the value
+    if len(query_result[0].keys()) != 2:
+        raise HTTPException(
+            status_code=500,
+            detail="The query result must contain only the time dimension and the value to apply a temporal fill.",
+        )
+
+    # Generate the date range
+    start_date = datetime.datetime.fromtimestamp(
+        start_date_timestamp, datetime.timezone.utc
+    )
+    end_date = datetime.datetime.fromtimestamp(
+        end_date_timestamp, datetime.timezone.utc
+    )
+
+    date_range = generate_date_range(start_date, end_date, time_dimension)
+
+    # Fill the missing times
+    filled_query_result = []
+    for date in date_range:
+        # Check if the date is in the result
+        date_in_result = False
+        for item in query_result:
+            if item[time_dimension] == date:
+                filled_query_result.append(item)
+                date_in_result = True
+                break
+        if not date_in_result:
+            # Add the date with 0 value and the other dimensions
+            new_item = {time_dimension: date, "value": 0}
+            filled_query_result.append(new_item)
+
+    return filled_query_result
 
 
 async def get_nb_of_daily_tasks(
