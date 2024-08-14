@@ -15,23 +15,28 @@ from app.db.mongo import get_mongo_db
 async def calculate_average_for_metadata(
     project_id: str, collection_name: str, metadata_field: str
 ) -> Optional[float]:
-    mongo_db = await get_mongo_db()
+    query = AnalyticsQuery(
+        project_id=project_id,
+        collection=collection_name,
+        aggregation_operation="count",
+        dimensions=[f"metadata.{metadata_field}"],  # was designed for user_id initially
+        sort={"value": 1},
+        filter_out_null_values=True,
+        filter_out_null_dimensions=True,
+    )
 
-    pipeline = [
-        {
-            "$match": {
-                "project_id": project_id,
-                f"metadata.{metadata_field}": {"$exists": True},
-            }
-        },  # Filter for a specific project_id
-        {"$group": {"_id": f"$metadata.{metadata_field}", "count": {"$sum": 1}}},
-        {"$group": {"_id": None, "average": {"$avg": "$count"}}},
-    ]
+    analytics_query_result = await run_analytics_query(query)
 
-    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
-    if not result or "average" not in result[0]:
-        return None
-    average = result[0]["average"]
+    if len(analytics_query_result) == 0:
+        logger.warning(
+            f"The dataset does not have enough {metadata_field} to compute the average."
+        )
+        return 0
+
+    # Compute the average value of the metadata count
+    total_metadata_count = sum([item["value"] for item in analytics_query_result])
+    average = total_metadata_count / len(analytics_query_result)
+
     return average
 
 
