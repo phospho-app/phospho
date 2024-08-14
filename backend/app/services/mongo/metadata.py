@@ -12,9 +12,13 @@ from app.services.mongo.explore import run_analytics_query
 from app.db.mongo import get_mongo_db
 
 
-async def calculate_average_for_metadata(
+async def get_object_distrib_by_metadata_field(
     project_id: str, collection_name: str, metadata_field: str
-) -> Optional[float]:
+) -> List[dict]:
+    """
+    Used to get the distribution of objects in a collection by a metadata field.
+    Used to compute bottom 10%  and top 10% thresholds, and the average value of a metadata field.
+    """
     query = AnalyticsQuery(
         project_id=project_id,
         collection=collection_name,
@@ -26,6 +30,16 @@ async def calculate_average_for_metadata(
     )
 
     analytics_query_result = await run_analytics_query(query)
+
+    return analytics_query_result
+
+
+async def calculate_average_for_metadata(
+    project_id: str, collection_name: str, metadata_field: str
+) -> Optional[float]:
+    analytics_query_result = await get_object_distrib_by_metadata_field(
+        project_id, collection_name, metadata_field
+    )
 
     if len(analytics_query_result) == 0:
         logger.warning(
@@ -43,17 +57,9 @@ async def calculate_average_for_metadata(
 async def calculate_top10_percent(
     project_id: str, collection_name: str, metadata_field: str
 ) -> int:
-    query = AnalyticsQuery(
-        project_id=project_id,
-        collection=collection_name,
-        aggregation_operation="count",
-        dimensions=[f"metadata.{metadata_field}"],  # was designed for user_id initially
-        sort={"value": 1},
-        filter_out_null_values=True,
-        filter_out_null_dimensions=True,
+    analytics_query_result = await get_object_distrib_by_metadata_field(
+        project_id, collection_name, metadata_field
     )
-
-    analytics_query_result = await run_analytics_query(query)
 
     if len(analytics_query_result) == 0:
         logger.warning(
@@ -74,48 +80,24 @@ async def calculate_top10_percent(
 async def calculate_bottom10_percent(
     project_id: str, collection_name: str, metadata_field: str
 ) -> Optional[int]:
-    mongo_db = await get_mongo_db()
+    analytics_query_result = await get_object_distrib_by_metadata_field(
+        project_id, collection_name, metadata_field
+    )
 
-    # Define the pipeline with ascending sort order
-    pipeline = [
-        {"$match": {"project_id": project_id}},
-        {"$match": {f"metadata.{metadata_field}": {"$exists": True}}},
-        {"$group": {"_id": "$metadata.user_id", "metadataValueCount": {"$sum": 1}}},
-        {"$sort": {"metadataValueCount": 1}},  # Sort in ascending order
-        {
-            "$facet": {
-                "totalMetadataKeyCount": [{"$count": "count"}],
-                "sortedData": [{"$match": {}}],
-            }
-        },
-    ]
-
-    # Run the aggregation pipeline
-    result = await mongo_db["tasks"].aggregate(pipeline).to_list(None)
-    if not result or not result[0]["totalMetadataKeyCount"]:
-        return None
-
-    total_users = result[0]["totalMetadataKeyCount"][0]["count"]
-    ten_percent_index = min(
-        int(total_users * 0.1), total_users - 1
-    )  # Calculate the bottom 10% index
-
-    # Retrieve the task count of the user at the bottom 10% threshold
-    # Ensure that the list is long enough
-    if ten_percent_index < len(result[0]["sortedData"]):
-        bottom_ten_percent_user_task_count = result[0]["sortedData"][ten_percent_index][
-            "metadataValueCount"
-        ]
-        logger.debug(
-            f"{metadata_field} count at the 10% bottom threshold in {collection_name}: {bottom_ten_percent_user_task_count}"
-        )
-        return bottom_ten_percent_user_task_count
-
-    else:
+    if len(analytics_query_result) == 0:
         logger.warning(
-            "The dataset does not have enough users to determine the bottom 10% threshold."
+            f"The dataset does not have enough {metadata_field} to determine the 10% threshold."
         )
         return 0
+
+    # Get the 10% threshold
+    bottom_ten_percent_index = max(
+        int(len(analytics_query_result) * 0.1), 0
+    )  # Calculate the 10% index, ensure it's not negative
+
+    bottom_ten_percent_value = analytics_query_result[bottom_ten_percent_index]["value"]
+
+    return bottom_ten_percent_value
 
 
 async def fetch_user_metadata(
