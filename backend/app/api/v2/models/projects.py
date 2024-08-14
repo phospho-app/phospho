@@ -1,4 +1,4 @@
-from typing import List, Optional, Literal, Dict
+from typing import List, Optional, Literal, Dict, Any
 from pydantic import BaseModel, Field
 from app.core import config
 
@@ -101,3 +101,64 @@ class AnalyticsQueryRequest(BaseModel):
         False,  # Fill missing dates in the result series
         description="If True and if min and max filters on created_ate are defined, missing dates will be filled with 0 values between the min and max dates of the filters.",
     )
+
+    # Let's provide an example of a query
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "collection": "tasks",
+                    "aggregation_operation": "count",
+                    "dimensions": ["minute", "environment"],
+                    "filters": {"created_at": {"$gte": 1723218277}},
+                    "sort": {"date": 1},
+                    "limit": 2000,
+                }
+            ]
+        }
+    }
+
+
+class AnalyticsQueryResponse(BaseModel):
+    """
+    Response model for the analytics query endpoint.
+    """
+
+    result: List[Dict[str, Any]]
+
+    # Let's provide an example of a query
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "result": [
+                        {
+                            "value": 1,
+                            "minute": "2024-08-12 21:59",
+                            "environment": "default environment",
+                        },
+                        {
+                            "value": 1,
+                            "minute": "2024-08-11 08:43",
+                            "environment": "default environment",
+                        },
+                        {
+                            "value": 1,
+                            "minute": "2024-08-11 19:14",
+                            "environment": "default environment",
+                        },
+                        {
+                            "value": 1,
+                            "minute": "2024-08-11 19:01",
+                            "environment": "default environment",
+                        },
+                        {
+                            "value": 1,
+                            "minute": "2024-08-10 15:45",
+                            "environment": "default environment",
+                        },
+                    ]
+                }
+            ]
+        }
+    }
