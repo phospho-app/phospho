@@ -495,8 +495,14 @@ def extract_date_range(filters: dict) -> Tuple[datetime.datetime, datetime.datet
 
 
 def generate_date_range(
-    start_date: datetime.datetime, end_date: datetime.datetime, time_dimension: str
+    start_date_timestamp: int,
+    end_date_timestamp: int,
+    time_dimension: Literal["minute", "hour", "day", "month"],
 ) -> List[str]:
+    # Convert the timestamps to datetime objects
+    start_date = datetime.datetime.utcfromtimestamp(start_date_timestamp)
+    end_date = datetime.datetime.utcfromtimestamp(end_date_timestamp)
+
     date_list = []
     current_date = start_date
 
@@ -557,9 +563,26 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
         {"$match": {"project_id": query.project_id}},
     ]
 
-    # Add the filters
-    if query.filters:
-        pipeline.append({"$match": query.filters})
+    # We seprate the match condition from the project_id match for security reasons (no injection)
+    match_condition = {}
+
+    # Add date range filters if provided
+    if (
+        query.filters.created_at_start is not None
+        or query.filters.created_at_end is not None
+    ):
+        match_condition["created_at"] = {}
+        if query.filters.created_at_start is not None:
+            match_condition["created_at"]["$gte"] = query.filters.created_at_start
+        if query.filters.created_at_end is not None:
+            match_condition["created_at"]["$lte"] = query.filters.created_at_end
+
+    # Add raw filters if provided
+    if query.filters.raw_filters:
+        match_condition.update(query.filters.raw_filters)
+
+    # Build the pipeline with a single $match stage
+    pipeline.append({"$match": match_condition})
 
     # If there is some dimensions month, day, hour, minute, we need to generate them from the created_at field UNIX timestamp in seconds
     # It's in a new field with the same name
@@ -715,13 +738,22 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
             None,
         )
         if time_dimension:
-            # Extract date range from filters
-            start_date, end_date = extract_date_range(query.filters)
-            logger.debug(f"Start date: {start_date}, End date: {end_date}")
+            # Check the start and end date in the filters
+            if query.filters.created_at_start is not None:
+                end_date = query.filters.created_at_end
+                if end_date is None:
+                    end_date = generate_timestamp()
 
-            if start_date and end_date:
+                if end_date < query.filters.created_at_start:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="End timestamp is smaller than start timestamp",
+                    )
+
                 # Generate all dates in the range
-                all_dates = generate_date_range(start_date, end_date, time_dimension)
+                all_dates = generate_date_range(
+                    query.filters.created_at_start, end_date, time_dimension
+                )
                 logger.debug(f"Generated nb of dates: {len(all_dates)}")
 
                 # Create a dictionary of existing results

@@ -232,6 +232,15 @@ class Threshold(BaseModel):
     magnitude: Optional[float] = None
 
 
+class AnalyticsQueryFilters(BaseModel):
+    created_at_start: Optional[int] = None  # UNIX timestamp in seconds
+    created_at_end: Optional[int] = None  # UNIX timestamp in seconds
+    raw_filters: Optional[dict] = Field(
+        default_factory=dict,
+        description="Raw filters to be passed to the MongoDB query",
+    )
+
+
 class AnalyticsQuery(BaseModel):
     """Represents a query to run analytics on the data."""
 
@@ -247,7 +256,9 @@ class AnalyticsQuery(BaseModel):
     aggregation_operation: Literal["count", "sum", "avg", "min", "max"]
     aggregation_field: Optional[str] = None  # Not required for count
     dimensions: Optional[List[str]] = Field(default_factory=list)
-    filters: Optional[dict] = Field(default_factory=dict)
+    filters: Optional[AnalyticsQueryFilters] = Field(
+        default_factory=AnalyticsQueryFilters
+    )
     sort: Optional[Dict[str, int]] = Field(default_factory=dict)
     limit: Optional[int] = 1000
     fill_missing_dates: Optional[bool] = False

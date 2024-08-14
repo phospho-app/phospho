@@ -44,7 +44,6 @@ from app.services.mongo.explore import (
     get_events_aggregated_metrics,
     get_sessions_aggregated_metrics,
     get_tasks_aggregated_metrics,
-    get_total_nb_of_sessions,
     nb_items_with_a_metadata_field,
     project_has_enough_labelled_tasks,
     project_has_sessions,

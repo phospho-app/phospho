@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 
 from app.api.v2.models import (
@@ -25,6 +25,7 @@ from app.services.mongo.projects import (
     get_all_sessions,
 )
 from app.services.mongo.tasks import get_all_tasks
+from phospho.models import AnalyticsQueryFilters
 
 router = APIRouter(tags=["Projects"])
 
@@ -171,7 +172,7 @@ async def post_backcompute_job(
 )
 async def post_run_query(
     project_id: str,
-    analytics_query_request: AnalyticsQueryRequest,
+    analytics_query_request: AnalyticsQuery,
     org: dict = Depends(authenticate_org_key),
 ):
     """
@@ -183,30 +184,18 @@ async def post_run_query(
     Result max size is limited to config.QUERY_MAX_LEN_LIMIT rows.
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
-
+    if analytics_query_request.project_id != project_id:
+        raise HTTPException(
+            status_code=403,
+            detail="The project_id in the query does not match the project_id in the URL",
+        )
     # Add checks on the query here
     # ...
 
     # Parse the collection names with the private prefix
     collection_name = analytics_query_request.collection
 
-    if collection_name in ["private-clusters", "private-embeddings"]:
-        collection_name = f"private-{collection_name}"
-
-    query = AnalyticsQuery(
-        project_id=project_id,
-        collection=collection_name,
-        aggregation_operation=analytics_query_request.aggregation_operation,
-        aggregation_field=analytics_query_request.aggregation_field,
-        dimensions=analytics_query_request.dimensions,
-        filters=analytics_query_request.filters,
-        sort=analytics_query_request.sort,
-        limit=analytics_query_request.limit,
-    )
-
     # Run the query
-    query_result = await run_analytics_query(
-        query, fill_missing_dates=analytics_query_request.fill_missing_dates
-    )
+    query_result = await run_analytics_query(analytics_query_request)
 
     return AnalyticsQueryResponse(result=query_result)
