@@ -290,7 +290,7 @@ const TasksDataviz: React.FC = () => {
       collection: "events",
       aggregation_operation: "count",
       dimensions: ["event_name"],
-
+      sort: { nb_events: -1 },
     };
 
     return (

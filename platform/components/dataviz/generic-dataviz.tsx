@@ -11,7 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   AnalyticsQuery,
 } from "@/models/models";
-
+import { authFetcher } from "@/lib/fetcher";
+import useSWR from 'swr';
 
 
 type DatavizParams = {
@@ -116,9 +117,6 @@ const PieChartViz: React.FC<{ data: any[], xField: string, yField: string }> = (
     }
   });
 
-  console.log('pie chartData', dataWithFill);
-
-
   return (
 
     <ChartContainer
@@ -143,7 +141,7 @@ const PieChartViz: React.FC<{ data: any[], xField: string, yField: string }> = (
 };
 
 const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, asFilledTimeSeries, xField, yFields, chartType }) => {
-  const [data, setData] = useState<any[]>([]);
+  const [oldData, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const { accessToken } = useUser();
@@ -155,62 +153,39 @@ const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, asFilledTimeS
     }
   } satisfies ChartConfig
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!accessToken) return;
-      try {
-        const queryParams = asFilledTimeSeries ? "?asFilledTimeSeries=True" : "";
-        const response = await fetch(`/api/explore/analytics-query${queryParams}`, {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer " + accessToken,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(analyticsQuery),
-        });
-        const data = await response.json();
-        setData(data.result);
-        setLoading(false);
-        console.log("Data fetched:", data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
+  const queryParams = asFilledTimeSeries ? '?asFilledTimeSeries=True' : '';
+  const url = `/api/explore/analytics-query${queryParams}`;
 
-    fetchData();
-  }, [analyticsQuery, accessToken]);
+  const { data, error } = useSWR(
+    accessToken ? [url, accessToken, analyticsQuery] : null,
+    ([url, token, query]) => authFetcher(url, token, "POST", query)
+  );
 
   const keys = useMemo(() => {
-    if (!data || data.length === 0) return [];
-    return Object.keys(data[0]).filter(key => key !== 'day');
+    if (!data?.result || data.result.length === 0) return [];
+    return Object.keys(data.result[0]).filter((key) => key !== 'day');
   }, [data]);
+
+  if (error) return <div className='text-muted'>error</div>;
+  if (!data) return <Skeleton className="w-full" />;
+
+  const chartData = data.result;
 
   return (
     <div>
-      {loading ? (
-        <Skeleton className="w-full" />
-      ) : data.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">No Data</div>
-        </div>
-      ) : (
-        <>
-          {chartType === "stackedBar" ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChartViz data={data} xField={xField} keys={keys} />
-            </ResponsiveContainer>
-          ) : chartType === "line" ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChartViz data={data} xField={xField} keys={keys} />
-            </ResponsiveContainer>
-          ) : chartType === "pie" ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChartViz data={data} xField={xField} yField={yFields[0]} />
-            </ResponsiveContainer>
-          ) : null}
-        </>
-      )
-      }
+      {chartType === "stackedBar" ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChartViz data={chartData} xField={xField} keys={keys} />
+        </ResponsiveContainer>
+      ) : chartType === "line" ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChartViz data={chartData} xField={xField} keys={keys} />
+        </ResponsiveContainer>
+      ) : chartType === "pie" ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChartViz data={chartData} xField={xField} yField={yFields[0]} />
+        </ResponsiveContainer>
+      ) : null}
     </div >
   );
 }
