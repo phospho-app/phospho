@@ -232,39 +232,6 @@ class Threshold(BaseModel):
     magnitude: Optional[float] = None
 
 
-class AnalyticsQueryFilters(BaseModel):
-    created_at_start: Optional[int] = None  # UNIX timestamp in seconds
-    created_at_end: Optional[int] = None  # UNIX timestamp in seconds
-    raw_filters: Optional[dict] = Field(
-        default_factory=dict,
-        description="Raw filters to be passed to the MongoDB query",
-    )
-
-
-class AnalyticsQuery(BaseModel):
-    """Represents a query to run analytics on the data."""
-
-    project_id: str
-    collection: Literal[
-        "events",
-        "job_results",
-        "private-clusters",
-        "private-embeddings",
-        "sessions",
-        "tasks",
-    ]
-    aggregation_operation: Literal["count", "sum", "avg", "min", "max"]
-    aggregation_field: Optional[str] = None  # Not required for count
-    dimensions: Optional[List[str]] = Field(default_factory=list)
-    filters: Optional[AnalyticsQueryFilters] = Field(
-        default_factory=AnalyticsQueryFilters
-    )
-    sort: Optional[Dict[str, int]] = Field(default_factory=dict)
-    limit: Optional[int] = 1000
-    filter_out_null_values: Optional[bool] = False
-    filter_out_null_dimensions: Optional[bool] = False
-
-
 class DashboardTile(BaseModel):
     id: str = Field(default_factory=generate_uuid)
     tile_name: str
@@ -818,3 +785,25 @@ class PipelineResults(BaseModel):
     sentiment: Dict[str, Optional[SentimentObject]] = Field(
         default_factory=dict, description="Sentiment detected in the messages."
     )
+
+
+class AnalyticsQuery(BaseModel):
+    """Represents a query to run analytics on the data."""
+
+    project_id: str
+    collection: Literal[
+        "events",
+        "job_results",
+        "private-clusters",
+        "private-embeddings",
+        "sessions",
+        "tasks",
+    ]
+    aggregation_operation: Literal["count", "sum", "avg", "min", "max"]
+    aggregation_field: Optional[str] = None  # Not required for count
+    dimensions: Optional[List[str]] = Field(default_factory=list)
+    filters: Optional[ProjectDataFilters] = Field(default_factory=ProjectDataFilters)
+    sort: Optional[Dict[str, int]] = Field(default_factory=dict)
+    limit: Optional[int] = 1000
+    filter_out_null_values: Optional[bool] = False
+    filter_out_null_dimensions: Optional[bool] = False

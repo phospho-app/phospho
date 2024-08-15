@@ -551,9 +551,7 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
         if query.filters.created_at_end is not None:
             match_condition["created_at"]["$lte"] = query.filters.created_at_end
 
-    # Add raw filters if provided
-    if query.filters.raw_filters:
-        match_condition.update(query.filters.raw_filters)
+    # TODO: we ignore the other filters for now
 
     # Build the pipeline with a single $match stage
     pipeline.append({"$match": match_condition})
@@ -686,6 +684,8 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
     if query.sort:
         pipeline.append({"$sort": query.sort})
 
+    result = []
+
     # Run the query
     try:
         result = (
@@ -779,8 +779,23 @@ def analytics_query_result_to_timeseries(
     The result should be a list of dictionaries with the format {"time": time, "mergeddimensiosn1": value, "mergeddimensions2": value, ...}
     The time dimension should be in the format "YYYY-MM-DD HH:mm" for minute, "YYYY-MM-DD HH" for hour, "YYYY-MM-DD" for day, "YYYY-MM" for month.
     """
+    # If the result is empty, we return a list with only the time dimension
+    if len(result) == 0:
+        start_date = datetime.datetime.fromtimestamp(
+            start_date_timestamp, datetime.timezone.utc
+        )
+        end_date = datetime.datetime.fromtimestamp(
+            end_date_timestamp, datetime.timezone.utc
+        )
+        date_range = generate_date_range(start_date, end_date, time_dimension)
+        result = [{time_dimension: date} for date in date_range]
+
+        return result
+
     # Use pandas
     df = pd.DataFrame(result)
+
+    # Get the time dimension from
 
     # Get the dimensions
     dimensions = [col for col in df.columns if col not in [time_dimension, "value"]]

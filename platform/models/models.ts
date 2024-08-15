@@ -314,3 +314,16 @@ export interface ProjectDataFilters {
   is_last_task?: boolean | null;
   session_ids?: string[] | null;
 }
+
+export interface AnalyticsQuery {
+  project_id: string;
+  collection: string;
+  aggregation_operation: string;
+  aggregation_field?: string;
+  dimensions?: string[];
+  filters?: ProjectDataFilters;
+  sort?: Record<string, number>;
+  limit?: number;
+  filter_out_null_values?: boolean;
+  filter_out_null_dimensions?: boolean;
+};

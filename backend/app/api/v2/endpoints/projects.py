@@ -26,7 +26,6 @@ from app.services.mongo.projects import (
     get_all_sessions,
 )
 from app.services.mongo.tasks import get_all_tasks
-from phospho.models import AnalyticsQueryFilters
 
 from app.utils import generate_timestamp
 

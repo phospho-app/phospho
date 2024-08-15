@@ -2,47 +2,24 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import React from 'react';
-import { ResponsiveContainer, BarChart, XAxis, YAxis, Tooltip, Bar, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, Pie, PieChart, Line, LineChart, BarChart, XAxis, YAxis, Tooltip, Bar, CartesianGrid } from 'recharts';
 import { useUser } from "@propelauth/nextjs/client";
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart"
 import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import {
-  Card,
-  CardTitle,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardFooter,
-} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AnalyticsQuery,
+} from "@/models/models";
 
-interface AnalyticsQueryFilters {
-  created_at_start?: number; // UNIX timestamp in seconds
-  created_at_end?: number; // UNIX timestamp in seconds
-  raw_filters?: Record<string, any>; // Raw filters to be passed to the MongoDB query
-}
 
-type AnalyticsQuery = {
-  project_id: string;
-  collection: string;
-  aggregation_operation: string;
-  aggregation_field?: string;
-  dimensions?: string[];
-  filters?: AnalyticsQueryFilters;
-  sort?: Record<string, number>;
-  limit?: number;
-  filter_out_null_values?: boolean;
-  filter_out_null_dimensions?: boolean;
-};
 
 type DatavizParams = {
   analyticsQuery: AnalyticsQuery;
+  asFilledTimeSeries?: boolean; // If true, the chart will be displayed as a filled time serie
   xField: string; // Field to be used on the x-axis
   yFields: string[]; // Fields to be used on the y-axis
   chartType: string; // line, bar, pie, etc.
-  title: string;
-  subtitle: string;
   // showTotal: boolean; // Show total value in the chart
 };
 
@@ -51,20 +28,22 @@ const CustomTooltipNbrTasks = () => {
   return null;
 };
 
-const ChartContent: React.FC<{ data: any[], xField: string, keys: string[] }> = ({ data, xField, keys }) => {
+const colors = ["#22c55e", "#f66d9b", "#f6ad55", "#10b759", "#6c5ce7", "#ff6b6b", "#48dbfb", "#feca57"];
+
+const BarChartViz: React.FC<{ data: any[], xField: string, keys: string[] }> = ({ data, xField, keys }) => {
   // Generate the colors for the chart
-  const colors = ["#2563eb", "#f66d9b", "#f6ad55", "#10b759", "#6c5ce7", "#ff6b6b", "#48dbfb", "#feca57"];
   // pass it to the config
   const config = {
     desktop: {
     }
   } satisfies ChartConfig
   return (
-    <ChartContainer config={config} className="min-h-[200px] w-full">
+    <ChartContainer config={config} className="w-full h-full">
       <BarChart accessibilityLayer data={data}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey={xField}
+          tick={false}
           tickLine={false}
           tickMargin={10}
           axisLine={false}
@@ -79,7 +58,91 @@ const ChartContent: React.FC<{ data: any[], xField: string, keys: string[] }> = 
   );
 };
 
-const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, xField, yFields, chartType, title, subtitle }) => {
+const LineChartViz: React.FC<{ data: any[], xField: string, keys: string[] }> = ({ data, xField, keys }) => {
+  // pass it to the config
+  const config = {
+    desktop: {
+    }
+  } satisfies ChartConfig
+  return (
+    <ChartContainer config={config} className="w-full h-full">
+      <LineChart accessibilityLayer data={data}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey={xField}
+          tickLine={false}
+          tick={false}
+          tickMargin={10}
+          axisLine={false}
+          tickFormatter={(value) => value.slice(0, 3)}
+        />
+        <ChartTooltip content={<ChartTooltipContent />} />
+        {keys.map((key, index) => (
+          <Line
+            dataKey={key}
+            type="monotone"
+            stroke={colors[index % colors.length]}
+            strokeWidth={2}
+            dot={false} />
+        ))}
+      </LineChart>
+    </ChartContainer>
+  );
+};
+
+const PieChartViz: React.FC<{ data: any[], xField: string, yField: string }> = ({ data, xField, yField }) => {
+
+  // pass it to the config
+  const config = {
+    desktop: {
+    }
+  } satisfies ChartConfig
+
+  // Generate a chartData object by addding the fill var to the data
+  // Example
+  // const chartData = [
+  //   { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
+  //   { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
+  //   { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" },
+  //   { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
+  //   { browser: "other", visitors: 90, fill: "var(--color-other)" },
+  // ];
+
+  // We add a field fill to the data with a random color
+  const dataWithFill = data.map((item, index) => {
+    return {
+      ...item,
+      fill: colors[index % colors.length]
+    }
+  });
+
+  console.log('pie chartData', dataWithFill);
+
+
+  return (
+
+    <ChartContainer
+      config={config}
+      className="w-full h-full"
+    >
+      <PieChart>
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent hideLabel />}
+        />
+        <Pie
+          data={dataWithFill}
+          dataKey={yField}
+          nameKey={xField}
+          innerRadius="50%"
+          outerRadius="70%"
+        />
+      </PieChart>
+    </ChartContainer >
+  );
+};
+
+const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, asFilledTimeSeries, xField, yFields, chartType }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -88,14 +151,16 @@ const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, xField, yFiel
   const chartConfig = {
     desktop: {
       label: yFields[0],
-      color: "#2563eb",
+      color: "#FFFFFF",
     }
   } satisfies ChartConfig
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!accessToken) return;
       try {
-        const response = await fetch("/api/explore/analytics-query?asFilledTimeSeries=True", {
+        const queryParams = asFilledTimeSeries ? "?asFilledTimeSeries=True" : "";
+        const response = await fetch(`/api/explore/analytics-query${queryParams}`, {
           method: "POST",
           headers: {
             Authorization: "Bearer " + accessToken,
@@ -120,24 +185,33 @@ const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, xField, yFiel
     return Object.keys(data[0]).filter(key => key !== 'day');
   }, [data]);
 
-  console.log('keys', keys);
-
   return (
-    <>
-      <Card className='max-w-[500px] mx-auto'>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{subtitle}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <Skeleton className="min-h-[200px] w-full" />
-          ) : (
-            <ChartContent data={data} xField={xField} keys={keys} />
-          )}
-        </CardContent>
-      </Card>
-    </>
+    <div>
+      {loading ? (
+        <Skeleton className="w-full" />
+      ) : data.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">No Data</div>
+        </div>
+      ) : (
+        <>
+          {chartType === "stackedBar" ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChartViz data={data} xField={xField} keys={keys} />
+            </ResponsiveContainer>
+          ) : chartType === "line" ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChartViz data={data} xField={xField} keys={keys} />
+            </ResponsiveContainer>
+          ) : chartType === "pie" ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChartViz data={data} xField={xField} yField={yFields[0]} />
+            </ResponsiveContainer>
+          ) : null}
+        </>
+      )
+      }
+    </div >
   );
 }
 

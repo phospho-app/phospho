@@ -655,6 +655,7 @@ async def post_analytics_query(
 
     # Run the query
     query_result = await run_analytics_query(analytics_query)
+    logger.debug(f"Query result: {query_result}")
 
     # Fill the time series with 0s on missing dates if requested
     if asFilledTimeSeries:
@@ -669,21 +670,3 @@ async def post_analytics_query(
         )
 
     return AnalyticsQueryResponse(result=query_result)
-
-
-@router.post(
-    "/explore/analytics-timeseries",
-    description="Run an analytics query on the project and get time series data",
-    response_model=AnalyticsQueryResponse,
-)
-async def post_analytics_query(
-    analytics_query: AnalyticsQuery,
-    user: User = Depends(propelauth.require_user),
-) -> AnalyticsQueryResponse:
-    """
-    We always fill the time series with 0s on missing dates.
-    """
-    await verify_if_propelauth_user_can_access_project(user, analytics_query.project_id)
-
-    # Run the query
-    query_result = await run_analytics_query(analytics_query)

@@ -22,6 +22,7 @@ import {
   YAxis,
 } from "recharts";
 import useSWR from "swr";
+import GenericDataviz from "@/components/dataviz/generic-dataviz";
 
 interface NbDailyTasks {
   day: string;
@@ -260,6 +261,50 @@ const TasksDataviz: React.FC = () => {
     return <></>;
   }
 
+  // Build the dataviz components
+  const DailyTasksDataviz = () => {
+    const analyticsQuery = {
+      project_id: project_id,
+      collection: "tasks",
+      aggregation_operation: "count",
+      dimensions: ["day"],
+      filters: {
+        created_at_start: Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 7, // Last 7 days
+      },
+    };
+
+    return (
+      <GenericDataviz
+        analyticsQuery={analyticsQuery}
+        asFilledTimeSeries={true}
+        xField="day"
+        yFields={["value"]}
+        chartType="stackedBar"
+      />
+    );
+  };
+
+  const ForPieDataviz = () => {
+    const analyticsQuery = {
+      project_id: project_id,
+      collection: "events",
+      aggregation_operation: "count",
+      dimensions: ["event_name"],
+
+    };
+
+    return (
+      <GenericDataviz
+        analyticsQuery={analyticsQuery}
+        xField="event_name"
+        yFields={["value"]}
+        chartType="pie"
+      />
+    );
+  };
+
+  // Clustering dataviz
+
   return (
     <div>
       <div className="container mx-auto">
@@ -298,8 +343,8 @@ const TasksDataviz: React.FC = () => {
               <CardContent>
                 {((globalSuccessRate === null ||
                   globalSuccessRate === undefined) && <p>...</p>) || (
-                  <p className="text-xl">{globalSuccessRate} %</p>
-                )}
+                    <p className="text-xl">{globalSuccessRate} %</p>
+                  )}
               </CardContent>
             </Card>
           </div>
@@ -308,65 +353,20 @@ const TasksDataviz: React.FC = () => {
       <div className="container mx-auto mt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Nb of user messages per day</h3>
-            {(!nbDailyTasks && <Skeleton className="w-[100%] h-[150px]" />) ||
-              (nbDailyTasks && (
-                <ResponsiveContainer width="100%" height={150}>
-                  <BarChart
-                    width={300}
-                    height={250}
-                    data={nbDailyTasks}
-                    barGap={0}
-                    barCategoryGap={0}
-                  >
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Tooltip content={CustomTooltipNbrTasks} />
-                    <Bar
-                      dataKey="nb_tasks"
-                      fill="#22c55e"
-                      radius={[4, 4, 0, 0]}
-                      barSize={20}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              ))}
+            <h3 className="text-slate-500 mb-2">Messages per day</h3>
+            <div className="max-h-[150px]">
+              <DailyTasksDataviz />
+            </div>
           </div>
           <div className="flex-1">
             <h3 className="text-slate-500 mb-2">Top events</h3>
-            {(!eventsRanking && <Skeleton className="w-[100%] h-[150px]" />) ||
-              (eventsRanking && (
-                <ResponsiveContainer className="flex justify-end" height={150}>
-                  <BarChart
-                    // width={300}
-                    height={250}
-                    data={eventsRanking}
-                    barGap={0}
-                    barCategoryGap={0}
-                    layout="horizontal"
-                  >
-                    <YAxis type="number" />
-                    <XAxis
-                      dataKey="event_name"
-                      type="category"
-                      fontSize={12}
-                      overflow={"visible"}
-                      // angle={-45} // Rotate the labels by 45 degrees
-                    />
-                    <Tooltip content={CustomTooltipEvent} />
-                    <Bar
-                      dataKey="nb_events"
-                      fill="#22c55e"
-                      radius={[4, 4, 0, 0]}
-                      barSize={20}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              ))}
+            <div className="max-h-[150px]">
+              <ForPieDataviz />
+            </div>
           </div>
           <div className="flex-1">
             <h3 className="text-slate-500 mb-2">
-              Success Rate per position in a Session
+              Clusters
             </h3>
             {hasSessions && !successRatePerTaskPosition && (
               <Skeleton className="w-[100%] h-[150px]" />
@@ -391,7 +391,7 @@ const TasksDataviz: React.FC = () => {
                   width={730}
                   height={250}
                   data={successRatePerTaskPosition}
-                  // margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                // margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                 >
                   <defs>
                     <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
