@@ -478,12 +478,30 @@ const MetadataForm: React.FC = () => {
               if (!selectedProject.settings) return;
 
               // Generate a tile name based on the query
+              //
               let tileName = `${selectedAnalyticsQuery.collection}`;
-              if (selectedAnalyticsQuery.dimensions) {
+
+              if (selectedAnalyticsQuery.aggregation_operation && selectedAnalyticsQuery.aggregation_operation !== "count") {
+                tileName += ` - ${selectedAnalyticsQuery.aggregation_operation} of ${selectedAnalyticsQuery.aggregation_field}`;
+              }
+
+              if (selectedAnalyticsQuery.dimensions && selectedAnalyticsQuery.dimensions.length > 0) {
                 tileName += ` by ${selectedAnalyticsQuery.dimensions.join(", ")}`;
               }
+
               if (selectedAnalyticsQuery.time_step) {
                 tileName += ` every ${selectedAnalyticsQuery.time_step}`;
+              }
+
+              // If a date range is specified, include it in the tile name
+              if (selectedAnalyticsQuery.filters?.created_at_start) {
+                const startDate = new Date(selectedAnalyticsQuery.filters.created_at_start * 1000);
+                const endDate = selectedAnalyticsQuery.filters.created_at_end
+                  ? new Date(selectedAnalyticsQuery.filters.created_at_end * 1000)
+                  : new Date();
+                tileName += ` from ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}`;
+              } else {
+                tileName += ` (All time)`;
               }
 
               const newTile = {
