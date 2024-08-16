@@ -646,26 +646,41 @@ async def get_ab_tests_comparison(
 )
 async def post_analytics_query(
     analytics_query: AnalyticsQuery,
-    asFilledTimeSeries: Optional[
-        bool
-    ] = False,  # Whether to fill the time series with 0s on missing dates.
     user: User = Depends(propelauth.require_user),
 ) -> AnalyticsQueryResponse:
     await verify_if_propelauth_user_can_access_project(user, analytics_query.project_id)
+
+    # Check the query
+    if analytics_query.aggregation_operation != "count":
+        # There must be an aggregation field
+        if analytics_query.aggregation_field is None:
+            raise HTTPException(
+                status_code=400,
+                detail="No aggregation field found in the query. An aggregation field is required when the aggregation operation is not 'count'.",
+            )
 
     # Run the query
     query_result = await run_analytics_query(analytics_query)
     logger.debug(f"Query result: {query_result}")
 
     # Fill the time series with 0s on missing dates if requested
-    if asFilledTimeSeries:
+    if analytics_query.time_step is not None:
+        logger.info(
+            f"Filling the time series with 0s on missing dates for time step {analytics_query.time_step}"
+        )
+        start_timestamp = (
+            generate_timestamp() - 7 * 24 * 60 * 60
+        )  # Default to 7 days ago
+        if analytics_query.filters.created_at_start is not None:
+            start_timestamp = analytics_query.filters.created_at_start
         end_timestamp = generate_timestamp()
         if analytics_query.filters.created_at_end is not None:
             end_timestamp = analytics_query.filters.created_at_end
+
         query_result = analytics_query_result_to_timeseries(
             query_result,
-            "day",
-            analytics_query.filters.created_at_start,
+            analytics_query.time_step,
+            start_timestamp,
             end_timestamp,
         )
 

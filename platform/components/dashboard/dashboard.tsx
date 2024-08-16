@@ -48,6 +48,7 @@ import { DatePickerWithRange } from "../date-range";
 import FilterComponent from "../filters";
 import { Form, FormField, FormItem, FormLabel } from "../ui/form";
 import { useToast } from "../ui/use-toast";
+import GenericDataviz from "@/components/dataviz/generic-dataviz";
 
 interface RenameDashboardTileProps {
   tile: DashboardTile;
@@ -405,11 +406,29 @@ const Dashboard: React.FC = () => {
         <div className="grid-stack">
           {customDashboardTiles.map((tile, index) => (
             <DashboardTileCard key={tile.id} tile={tile} grid={grid}>
-              <DatavizGraph
-                metric={tile.metric}
-                metadata_metric={tile.metadata_metric}
-                breakdown_by={tile.breakdown_by}
-              />
+              {tile.type === "pivot" ? (
+                <DatavizGraph
+                  metric={tile.metric}
+                  metadata_metric={tile.metadata_metric}
+                  breakdown_by={tile.breakdown_by}
+                />
+              ) : tile.type === "pie" && tile.query ? (
+                <GenericDataviz
+                  analyticsQuery={tile.query}
+                  xField={tile.query.dimensions ? tile.query.dimensions[0] : ""}
+                  yFields={["value"]}
+                  chartType="pie"
+                />
+              ) : tile.type && tile.query ? (
+                <GenericDataviz
+                  analyticsQuery={tile.query}
+                  xField={tile.query.dimensions ? tile.query.dimensions[0] : ""}
+                  yFields={tile.query.dimensions ? tile.query.dimensions.slice(1) : []}
+                  chartType={tile.type === "line" || tile.type === "stackedBar" ? tile.type : "line"}
+                />
+              ) : (
+                <div>Error: Unable to display the tile</div>
+              )}
             </DashboardTileCard>
           ))}
         </div>

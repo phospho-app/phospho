@@ -232,12 +232,68 @@ class Threshold(BaseModel):
     magnitude: Optional[float] = None
 
 
+class ProjectDataFilters(BaseModel):
+    """
+    This is a model used to filter tasks, sessions or events in
+    different endpoints.
+    """
+
+    created_at_start: Optional[Union[int, datetime.datetime]] = None
+    created_at_end: Optional[Union[int, datetime.datetime]] = None
+    event_name: Optional[List[str]] = None
+    event_id: Optional[List[str]] = None
+    flag: Optional[str] = None
+    metadata: Optional[dict] = None
+    user_id: Optional[str] = None
+    last_eval_source: Optional[str] = None
+    sentiment: Optional[str] = None
+    language: Optional[str] = None
+    has_notes: Optional[bool] = None
+    tasks_ids: Optional[List[str]] = None
+    clustering_id: Optional[str] = None  # A group of clusters
+    clusters_ids: Optional[List[str]] = None  # A list of clusters
+    is_last_task: Optional[bool] = None
+    sessions_ids: Optional[List[str]] = None
+
+
+class AnalyticsQuery(BaseModel):
+    """Represents a query to run analytics on the data."""
+
+    project_id: str
+    collection: Literal[
+        "events",
+        "job_results",
+        "private-clusters",
+        "private-embeddings",
+        "sessions",
+        "tasks",
+    ]
+    aggregation_operation: Literal["count", "sum", "avg", "min", "max"]
+    aggregation_field: Optional[str] = None  # Not required for count
+    dimensions: Optional[List[str]] = Field(default_factory=list)
+    time_step: Optional[Literal["minute", "hour", "day"]] = (
+        None  # If set, we add the time_step to the group_by dimensions and also fill the gaps
+    )
+    filters: Optional[ProjectDataFilters] = Field(default_factory=ProjectDataFilters)
+    sort: Optional[Dict[str, int]] = Field(default_factory=dict)
+    limit: Optional[int] = 1000
+    filter_out_null_values: Optional[bool] = False
+    filter_out_null_dimensions: Optional[bool] = False
+
+
 class DashboardTile(BaseModel):
     id: str = Field(default_factory=generate_uuid)
     tile_name: str
-    metric: str
-    breakdown_by: str
-    metadata_metric: Optional[str] = None
+    # Legacy params of the pivot viz
+    metric: Optional[str] = None  # Optional
+    breakdown_by: Optional[str] = None  # Optional
+    metadata_metric: Optional[str] = None  # Optional
+
+    query: Optional[AnalyticsQuery | None] = None  # None for legacy tiles
+    type: Literal["pivot", "line", "stackedBar", "pie"] = (
+        "pivot"  # The type of dataviz tile. Default to pivot, the legacy one for compatibility
+    )
+
     # Position
     x: Optional[int] = None
     y: Optional[int] = None
@@ -708,30 +764,6 @@ class JobResult(DatedBaseModel, extra="allow"):
     task_id: Optional[str] = None
 
 
-class ProjectDataFilters(BaseModel):
-    """
-    This is a model used to filter tasks, sessions or events in
-    different endpoints.
-    """
-
-    created_at_start: Optional[Union[int, datetime.datetime]] = None
-    created_at_end: Optional[Union[int, datetime.datetime]] = None
-    event_name: Optional[List[str]] = None
-    event_id: Optional[List[str]] = None
-    flag: Optional[str] = None
-    metadata: Optional[dict] = None
-    user_id: Optional[str] = None
-    last_eval_source: Optional[str] = None
-    sentiment: Optional[str] = None
-    language: Optional[str] = None
-    has_notes: Optional[bool] = None
-    tasks_ids: Optional[List[str]] = None
-    clustering_id: Optional[str] = None  # A group of clusters
-    clusters_ids: Optional[List[str]] = None  # A list of clusters
-    is_last_task: Optional[bool] = None
-    sessions_ids: Optional[List[str]] = None
-
-
 class Cluster(ProjectElementBaseModel):
     model: Literal["intent-embed", "intent-embed-2", "intent-embed-3"] = "intent-embed"
     clustering_id: str  # all the clusters in the same cluster have the same
@@ -785,25 +817,3 @@ class PipelineResults(BaseModel):
     sentiment: Dict[str, Optional[SentimentObject]] = Field(
         default_factory=dict, description="Sentiment detected in the messages."
     )
-
-
-class AnalyticsQuery(BaseModel):
-    """Represents a query to run analytics on the data."""
-
-    project_id: str
-    collection: Literal[
-        "events",
-        "job_results",
-        "private-clusters",
-        "private-embeddings",
-        "sessions",
-        "tasks",
-    ]
-    aggregation_operation: Literal["count", "sum", "avg", "min", "max"]
-    aggregation_field: Optional[str] = None  # Not required for count
-    dimensions: Optional[List[str]] = Field(default_factory=list)
-    filters: Optional[ProjectDataFilters] = Field(default_factory=ProjectDataFilters)
-    sort: Optional[Dict[str, int]] = Field(default_factory=dict)
-    limit: Optional[int] = 1000
-    filter_out_null_values: Optional[bool] = False
-    filter_out_null_dimensions: Optional[bool] = False

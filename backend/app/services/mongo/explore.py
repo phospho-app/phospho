@@ -512,6 +512,7 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
     - aggregation_operation: The type of aggregation to perform ("count", "sum", "avg", "min", "max")
     - aggregation_field: The field to aggregate on. Not required for count. Can be `metadata.{field_name}` for metadata fields or any nested field.
     - dimensions: The dimensions to group by (e.g., flag, metadata.model, ...). Can be `month`, `day`, `hour`, or`minute`, which will be computed from the created_at field. Can be `metadata.{field_name}` for metadata fields or any nested field.
+    - time_step: The time step to use for the time dimensions (e.g., "day", "hour", "minute") if any
     - filters: Optional filters to apply, passed in MongoDB query format if need be (e.g., {"created_at": {"$gte": 1723218277}})
     - sort: Optional sorting criteria (e.g., {"date": 1} for ascending, {"date": -1} for descending)
     - limit: Optional limit on the number of results to return
@@ -558,6 +559,10 @@ async def run_analytics_query(query: AnalyticsQuery) -> List[dict]:
 
     # If there is some dimensions month, day, hour, minute, we need to generate them from the created_at field UNIX timestamp in seconds
     # It's in a new field with the same name
+
+    # Append the time step to the dimensions if it's not already in the dimensions
+    if query.time_step is not None and query.time_step not in query.dimensions:
+        query.dimensions.append(query.time_step)
 
     # Generate the query to create new fields for the dimensions
     for dimension in query.dimensions:

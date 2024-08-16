@@ -184,9 +184,15 @@ export interface SentimentThreshold {
 export interface DashboardTile {
   id: string;
   tile_name: string;
-  metric: string;
-  breakdown_by: string;
+  // Legacy
+  metric?: string;
+  breakdown_by?: string;
   metadata_metric?: string;
+
+  // New
+  query?: AnalyticsQuery;
+  type: string; // default to pivot for legacy
+
   x?: number;
   y?: number;
   w: number;
@@ -321,6 +327,7 @@ export interface AnalyticsQuery {
   aggregation_operation: string;
   aggregation_field?: string;
   dimensions?: string[];
+  time_step?: string; // "day", "hour", "minute"
   filters?: ProjectDataFilters;
   sort?: Record<string, number>;
   limit?: number;

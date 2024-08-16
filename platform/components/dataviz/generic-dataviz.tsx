@@ -41,7 +41,7 @@ const BarChartViz: React.FC<{ data: any[], xField: string, keys: string[] }> = (
   return (
     <ChartContainer config={config} className="w-full h-full">
       <BarChart accessibilityLayer data={data}>
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={true} />
         <XAxis
           dataKey={xField}
           tick={false}
@@ -68,7 +68,7 @@ const LineChartViz: React.FC<{ data: any[], xField: string, keys: string[] }> = 
   return (
     <ChartContainer config={config} className="w-full h-full">
       <LineChart accessibilityLayer data={data}>
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={true} />
         <XAxis
           dataKey={xField}
           tickLine={false}
@@ -140,7 +140,7 @@ const PieChartViz: React.FC<{ data: any[], xField: string, yField: string }> = (
   );
 };
 
-const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, asFilledTimeSeries, xField, yFields, chartType }) => {
+const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, xField, yFields, chartType }) => {
   const [oldData, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -153,8 +153,7 @@ const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, asFilledTimeS
     }
   } satisfies ChartConfig
 
-  const queryParams = asFilledTimeSeries ? '?asFilledTimeSeries=True' : '';
-  const url = `/api/explore/analytics-query${queryParams}`;
+  const url = `/api/explore/analytics-query`;
 
   const { data, error } = useSWR(
     accessToken ? [url, accessToken, analyticsQuery] : null,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { DatavizCallout } from "@/components/callouts/import-data";
 import { DatePickerWithRange } from "@/components/date-range";
 import FilterComponent from "@/components/filters";
@@ -34,6 +35,10 @@ import {
 import { useRouter } from "next/navigation";
 import React from "react";
 import useSWR, { mutate } from "swr";
+import GenericDataviz from "@/components/dataviz/generic-dataviz";
+import { AnalyticsQuery } from "@/models/models";
+import { set } from "date-fns";
+import { fi } from "date-fns/locale";
 
 const MetadataForm: React.FC = () => {
   // create a page with 2 dropdowns :
@@ -63,6 +68,24 @@ const MetadataForm: React.FC = () => {
     (state) => state.setSelectedGroupBy,
   );
 
+  // New elements fo the AnanlyticsQuery
+  const selectedAnalyticsQuery = navigationStateStore(
+    (state) => state.selectedAnalyticsQuery,
+  );
+  const setSelectAnalyticsQuery = navigationStateStore(
+    (state) => state.setSelectAnalyticsQuery,
+  );
+
+  const updateAnalyticsQuery = (updates: Partial<AnalyticsQuery>) => {
+    setSelectAnalyticsQuery({
+      ...selectedAnalyticsQuery,
+      ...updates,
+    });
+  };
+
+  const chartType = navigationStateStore((state) => state.chartType);
+  const setChartType = navigationStateStore((state) => state.setChartType);
+
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
@@ -82,233 +105,371 @@ const MetadataForm: React.FC = () => {
   const numberMetadataFields: string[] | undefined = data?.number;
   const categoryMetadataFields: string[] | undefined = data?.string;
 
+  // Hardcoded fields that can be selected as aggregation fields
+  const TasksFields = ["sentiment.score", "sentiment.magnitude", "sentiment.label", "task_position"];
+  const SessionsFields = ["stats.avg_sentiment_score", "stats.avg_magnitude_score", "stats.avg_sentiment_label", "session_length"];
+
+  // Add the numberMetadataFields to the list of TasksFields that can be selected as aggregation fields for tasks with a prefrix `metadata.`
+  numberMetadataFields?.forEach((field) => {
+    TasksFields.push(`metadata.${field}`);
+  });
+
+  // Hardcoded fields that can be selected as dimensions
+  const TimeDimensions = ["day"]; // "minute", "hour", month
+  const TasksDimensions = ["flag", "last_eval", "language", "environment", "task_position", "is_last_task"];
+  const SessionsDimensions = ["stats.most_common_sentiment_label", "stats.most_common_language", "stats.most_common_flag", "stats.human_eval", "environment", "session_length"];
+  const EventsDimension = ["event_name"];
+
+  // Add the categoryMetadataFields to the list of TasksFields that can be selected as dimensions for tasks with a prefrix `metadata.`
+  categoryMetadataFields?.forEach((field) => {
+    TasksDimensions.push(`metadata.${field}`);
+  });
+
+  // Types of charts available
+  const ChartTypes = ["line", "stackedBar", "pie"];
+
+  // Update the AnalyticsQuery with the current project_id
+  useEffect(() => {
+    if (selectedProject) {
+      updateAnalyticsQuery({
+        project_id: selectedProject.id,
+      });
+    }
+  }, [selectedProject]);
+
+  // Get the selected DateRangePreset from the navigationStateStore
+  const dateRangePreset = navigationStateStore((state) => state.dateRangePreset);
+
+  // Handle date selection in the date picker
+  useEffect(() => {
+    // Handle the date range preset cases
+    if (dateRangePreset === "last-24-hours") {
+      updateAnalyticsQuery(
+        {
+          filters: {
+            created_at_start: Math.floor(Date.now() / 1000) - 60 * 60 * 24,
+          }
+        });
+    }
+    if (dateRangePreset === "last-7-days") {
+      updateAnalyticsQuery(
+        {
+          filters: {
+            created_at_start: Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 7,
+          }
+        });
+    }
+    if (dateRangePreset === "last-30-days") {
+      updateAnalyticsQuery(
+        {
+          filters: {
+            created_at_start: Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 30,
+          }
+        });
+    }
+    if (dateRangePreset === "all-time") {
+      updateAnalyticsQuery(
+        {
+          filters: {}
+        });
+    }
+  }, [navigationStateStore((state) => state.dateRange)]);
+
+  console.log("selectedProject ->", selectedProject);
+
+  console.log("selectedAnalyticsQuery ->", selectedAnalyticsQuery)
+
   return (
     <>
       <div className="flex flex-col space-y-2">
         <DatavizCallout />
+        <div className="flex flex-row space-x-2 items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Collection: {selectedAnalyticsQuery.collection}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  updateAnalyticsQuery({
+                    collection: "sessions",
+                    dimensions: [],
+                  });
+                }}
+              >
+                sessions
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  updateAnalyticsQuery({
+                    collection: "tasks",
+                    dimensions: []
+                  });
+                }}
+              >
+                tasks
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  updateAnalyticsQuery({
+                    collection: "events",
+                    dimensions: []
+                  });
+                }}
+              >
+                events
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Operation: {selectedAnalyticsQuery.aggregation_operation}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {selectedAnalyticsQuery.collection === "events" ? (
+                <DropdownMenuItem
+                  onClick={() => {
+                    updateAnalyticsQuery({
+                      aggregation_operation: "count",
+                    });
+                  }}
+                >
+                  count
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      updateAnalyticsQuery({
+                        aggregation_operation: "count",
+                      });
+                    }}
+                  >
+                    count
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      updateAnalyticsQuery({
+                        aggregation_operation: "sum",
+                      });
+                    }}
+                  >
+                    sum
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      updateAnalyticsQuery(
+                        {
+                          aggregation_operation: "avg",
+                        });
+                    }}
+                  >
+                    avg
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      updateAnalyticsQuery(
+                        {
+                          aggregation_operation: "min",
+                        });
+                    }}
+                  >
+                    min
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      updateAnalyticsQuery(
+                        {
+                          aggregation_operation: "max",
+                        });
+                    }}
+                  >
+                    max
+                  </DropdownMenuItem>
+                </>)}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {selectedAnalyticsQuery.aggregation_operation !== "count" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  OperationField: {selectedAnalyticsQuery.aggregation_field ?? "Select field"}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {selectedAnalyticsQuery.collection === "tasks"
+                  ? TasksFields.map((field) => (
+                    <DropdownMenuItem
+                      key={field}
+                      onClick={() => {
+                        updateAnalyticsQuery({
+                          aggregation_field: field,
+                        });
+                      }}
+                    >
+                      {field}
+                    </DropdownMenuItem>
+                  ))
+                  : SessionsFields.map((field) => (
+                    <DropdownMenuItem
+                      key={field}
+                      onClick={() => {
+                        updateAnalyticsQuery({
+                          aggregation_field: field,
+                        });
+                      }}
+                    >
+                      {field}
+                    </DropdownMenuItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
+        {/* Now, we have a section where you can add a new diemnsion or delete a dimension in the selected dimensions.
+        First you have the already selected dimension, with a delete button, and then a dropdown to add a new dimension */}
+        <div className="flex flex-row space-x-2 items-center">
+          <div className="flex flex-row space-x-2 items-center">
+            <p>Dimensions: </p>
+            {selectedAnalyticsQuery.dimensions?.map((dimension) => (
+              <div key={dimension} className="flex flex-row space-x-2 items-center">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    if (!selectedAnalyticsQuery.dimensions) return;
+                    updateAnalyticsQuery({
+                      dimensions: selectedAnalyticsQuery.dimensions.filter((d) => d !== dimension),
+                    });
+                  }}
+                >
+                  {dimension} X
+                </Button>
+              </div>
+            ))}
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                Add dimension
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {selectedAnalyticsQuery.collection === "tasks"
+                ? TasksDimensions.map((field) => (
+                  <DropdownMenuItem
+                    key={field}
+                    onClick={() => {
+                      updateAnalyticsQuery({
+                        dimensions: [...(selectedAnalyticsQuery.dimensions || []), field],
+                      });
+                    }}
+                  >
+                    {field}
+                  </DropdownMenuItem>
+                )) : selectedAnalyticsQuery.collection === "sessions"
+                  ?
+                  SessionsDimensions.map((field) => (
+                    <DropdownMenuItem
+                      key={field}
+                      onClick={() => {
+                        updateAnalyticsQuery({
+                          dimensions: [...(selectedAnalyticsQuery.dimensions || []), field],
+                        });
+                      }}
+                    >
+                      {field}
+                    </DropdownMenuItem>
+                  )) : EventsDimension.map((field) => (
+                    <DropdownMenuItem
+                      key={field}
+                      onClick={() => {
+                        updateAnalyticsQuery({
+                          dimensions: [...(selectedAnalyticsQuery.dimensions || []), field],
+                        });
+                      }}
+                    >
+                      {field}
+                    </DropdownMenuItem>
+                  ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        {/* yo */}
+        <div className="flex flex-row space-x-2 items-center">
+          <div className="flex flex-row space-x-2 items-center">
+            <p>Chart type: </p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                {chartType}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {ChartTypes.map((field) => (
+                <DropdownMenuItem
+                  key={field}
+                  onClick={() => {
+                    setChartType(field);
+                    // If it is pie, we update the time step to Null
+                    if (field === "pie") {
+                      updateAnalyticsQuery({
+                        time_step: undefined,
+                      });
+                    }
+                    else {
+                      updateAnalyticsQuery({
+                        time_step: "day",
+                      });
+                    }
+                  }
+                  }
+                >
+                  {field}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {chartType !== "pie" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Time step: {selectedAnalyticsQuery.time_step ?? ""}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {TimeDimensions.map((field) => (
+                  <DropdownMenuItem
+                    key={field}
+                    onClick={() => { // update the tiem_step field of the updateAnalyticsQuery
+                      updateAnalyticsQuery({
+                        time_step: field,
+                      });
+                    }}
+                  >
+                    {field}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+        </div>
+        {/* start to delete */}
         <div className="flex flex-row justify-between">
           <div className="flex flex-row space-x-2 items-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  Metric: {selectedMetric} {metadata_metric ?? ""}{" "}
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedMetric("Nb tasks");
-                    setmetadata_metric(null);
-                  }}
-                >
-                  <MessagesSquare className="h-4 w-4 mr-2" />
-                  Nb user messages
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedMetric("Nb sessions");
-                    setmetadata_metric(null);
-                  }}
-                >
-                  <List className="h-4 w-4 mr-2" />
-                  Sessions count
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedMetric("Event count");
-                    setmetadata_metric(null);
-                  }}
-                >
-                  <TextSearch className="h-4 w-4 mr-2" />
-                  Event count
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedMetric("Event distribution");
-                    setmetadata_metric(null);
-                  }}
-                >
-                  <TextSearch className="h-4 w-4 mr-2" />
-                  Event distribution
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedMetric("Avg Success rate");
-                    setmetadata_metric(null);
-                  }}
-                >
-                  <Flag className="h-4 w-4 mr-2" />
-                  Success rate
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedMetric("Avg session length");
-                    setmetadata_metric(null);
-                  }}
-                >
-                  <List className="h-4 w-4 mr-2" />
-                  Avg session length
-                </DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Code className="h-4 w-4 mr-2" />
-                    Avg of metadata
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      {numberMetadataFields?.length === 0 && (
-                        <DropdownMenuItem disabled>
-                          No numeric metadata found
-                        </DropdownMenuItem>
-                      )}
-                      {numberMetadataFields?.map((field) => (
-                        // TODO : Add a way to indicate this is a sum
-                        <DropdownMenuItem
-                          key={field}
-                          onClick={() => {
-                            setSelectedMetric("Avg");
-                            setmetadata_metric(field);
-                          }}
-                        >
-                          {`${field}_avg`}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Code className="h-4 w-4 mr-2" />
-                    Sum of metadata
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      {numberMetadataFields?.length === 0 && (
-                        <DropdownMenuItem disabled>
-                          No numeric metadata found
-                        </DropdownMenuItem>
-                      )}
-                      {numberMetadataFields?.map((field) => (
-                        // TODO : Add a way to indicate this is a sum
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedMetric("Sum");
-                            setmetadata_metric(field);
-                          }}
-                          key={`${field}_sum`}
-                        >
-                          {field}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  Breakdown by: {breakdown_by}{" "}
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedGroupBy("None");
-                  }}
-                >
-                  None
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedGroupBy("event_name");
-                  }}
-                >
-                  <TextSearch className="h-4 w-4 mr-2" />
-                  Event name
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedGroupBy("flag");
-                  }}
-                >
-                  <Flag className="h-4 w-4 mr-2" />
-                  Eval
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedGroupBy("task_position");
-                  }}
-                >
-                  <List className="h-4 w-4 mr-2" />
-                  Message position
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedGroupBy("session_length");
-                  }}
-                >
-                  <List className="h-4 w-4 mr-2" />
-                  Session length
-                </DropdownMenuItem>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Timer className="h-4 w-4 mr-2" />
-                    Time
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedGroupBy("day");
-                        }}
-                      >
-                        Day
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedGroupBy("week");
-                        }}
-                      >
-                        Week
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedGroupBy("month");
-                        }}
-                      >
-                        Month
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <Code className="h-4 w-4 mr-2" />
-                    Metadata
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      {categoryMetadataFields?.length === 0 && (
-                        <DropdownMenuItem disabled>
-                          No categorical metadata found
-                        </DropdownMenuItem>
-                      )}
-                      {categoryMetadataFields?.map((field) => (
-                        <DropdownMenuItem
-                          onClick={() => setSelectedGroupBy(field)}
-                          key={`${field}_metadata`}
-                        >
-                          {field}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <DatePickerWithRange />
           </div>
           <Button
             onClick={async () => {
@@ -316,15 +477,19 @@ const MetadataForm: React.FC = () => {
               if (!selectedProject) return;
               if (!selectedProject.settings) return;
 
-              const tileName = metadata_metric
-                ? `${metadata_metric} by ${breakdown_by}`
-                : `${selectedMetric} by ${breakdown_by}`;
+              // Generate a tile name based on the query
+              let tileName = `${selectedAnalyticsQuery.collection}`;
+              if (selectedAnalyticsQuery.dimensions) {
+                tileName += ` by ${selectedAnalyticsQuery.dimensions.join(", ")}`;
+              }
+              if (selectedAnalyticsQuery.time_step) {
+                tileName += ` every ${selectedAnalyticsQuery.time_step}`;
+              }
 
               const newTile = {
                 tile_name: tileName,
-                metric: selectedMetric,
-                metadata_metric: metadata_metric,
-                breakdown_by: breakdown_by,
+                query: selectedAnalyticsQuery,
+                type: chartType,
               } as DashboardTile;
               selectedProject.settings.dashboard_tiles.push(newTile);
 
@@ -363,19 +528,14 @@ const MetadataForm: React.FC = () => {
             Add to dashboard
           </Button>
         </div>
-
-        <div className="flex flex-row space-x-2 items-end">
-          <DatePickerWithRange />
-          <FilterComponent variant="tasks" />
-        </div>
-      </div>
-      <div className="h-3/4">
-        <DatavizGraph
-          metric={selectedMetric}
-          metadata_metric={metadata_metric}
-          breakdown_by={breakdown_by}
-        />
-      </div>
+      </div >
+      {
+        chartType !== "pie" ? (
+          <GenericDataviz analyticsQuery={selectedAnalyticsQuery} xField={selectedAnalyticsQuery?.time_step ?? "day"} yFields={selectedAnalyticsQuery.dimensions ?? []} chartType={chartType} />
+        ) : (
+          <GenericDataviz analyticsQuery={selectedAnalyticsQuery} xField={selectedAnalyticsQuery.dimensions ? selectedAnalyticsQuery.dimensions[0] : ""} yFields={["value"]} chartType={chartType} />
+        )
+      }
     </>
   );
 };

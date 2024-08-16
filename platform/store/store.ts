@@ -1,4 +1,5 @@
 import {
+  AnalyticsQuery,
   CustomDateRange,
   HasEnoughLabelledTasks,
   OrgMetadata,
@@ -45,6 +46,13 @@ interface navigationState {
   setmetadata_metric: (metadata: string | null) => void;
   selectedGroupBy: string;
   setSelectedGroupBy: (groupBy: string) => void;
+  
+  // Analytics Visualization
+  selectedAnalyticsQuery: AnalyticsQuery;
+  setSelectAnalyticsQuery: (analyticsQuery: AnalyticsQuery) => void;
+
+  chartType: string;
+  setChartType: (chartType: string) => void;
 }
 
 export const navigationStateStore = create(
@@ -246,10 +254,25 @@ export const navigationStateStore = create(
       selectedGroupBy: "flag",
       setSelectedGroupBy: (groupBy: string) =>
         set(() => ({ selectedGroupBy: groupBy })),
+
+      // Analytics
+      selectedAnalyticsQuery: {
+        project_id: "", // The project id is required as a string
+        collection: "tasks",
+        aggregation_operation: "count",
+        aggregation_field: undefined,
+        dimensions: [],
+        time_step: "day",
+        filters: {
+          created_at_start: Date.now() / 1000 - 60 * 60 * 24 * 14, // 14 days
+        },
+      },
+      setSelectAnalyticsQuery: (analyticsQuery: AnalyticsQuery) =>
+        set(() => ({ selectedAnalyticsQuery: analyticsQuery })),
+
+      chartType: "line",   
+      setChartType: (chartType: string) => set(() => ({ chartType: chartType })),
     }),
-
-
-
     {
       name: "navigation-storage",
       storage: createJSONStorage(() => sessionStorage),

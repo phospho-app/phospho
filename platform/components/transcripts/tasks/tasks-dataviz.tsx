@@ -221,6 +221,25 @@ const TasksDataviz: React.FC = () => {
     );
   };
 
+  const LangPieDataviz = () => {
+    const analyticsQuery = {
+      project_id: project_id,
+      collection: "tasks",
+      aggregation_operation: "count",
+      dimensions: ["language"],
+      sort: { nb_events: -1 },
+    };
+
+    return (
+      <GenericDataviz
+        analyticsQuery={analyticsQuery}
+        xField="language"
+        yFields={["value"]}
+        chartType="pie"
+      />
+    );
+  };
+
   // Clustering dataviz
 
   return (
@@ -284,52 +303,9 @@ const TasksDataviz: React.FC = () => {
           </div>
           <div className="flex-1">
             <h3 className="text-slate-500 mb-2">
-              Clusters
+              Language
             </h3>
-            {hasSessions && !successRatePerTaskPosition && (
-              <Skeleton className="w-[100%] h-[150px]" />
-            )}
-            {!hasSessions && !successRatePerTaskPosition && (
-              // Add a button in the center with a CTA "setup session tracking"
-              <div className="flex flex-col text-center items-center h-full">
-                <p className="text-muted-foreground mb-2 text-sm pt-6">
-                  Only available with session tracking
-                </p>
-                <Link
-                  href="https://docs.phospho.ai/guides/sessions-and-users#sessions"
-                  target="_blank"
-                >
-                  <Button variant="outline">Setup session tracking</Button>
-                </Link>
-              </div>
-            )}
-            {successRatePerTaskPosition && (
-              <ResponsiveContainer width="100%" height={150}>
-                <AreaChart
-                  width={730}
-                  height={250}
-                  data={successRatePerTaskPosition}
-                // margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="task_position" className="text-slate-500" />
-                  <YAxis unit="%" />
-                  <Tooltip content={CustomTooltipSuccessRate} />
-                  <Area
-                    type="monotone"
-                    dataKey="success_rate"
-                    stroke="#22c55e"
-                    fillOpacity={1}
-                    fill="url(#colorUv)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
+            <LangPieDataviz />
           </div>
         </div>
       </div>
