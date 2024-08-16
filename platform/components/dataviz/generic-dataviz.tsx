@@ -157,7 +157,11 @@ const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, xField, yFiel
 
   const { data, error } = useSWR(
     accessToken ? [url, accessToken, analyticsQuery] : null,
-    ([url, token, query]) => authFetcher(url, token, "POST", query)
+    ([url, token, query]) => authFetcher(url, token, "POST", query),
+    {
+      onSuccess: () => setLoading(false),
+      onError: () => setLoading(false),
+    }
   );
 
   const keys = useMemo(() => {
@@ -167,6 +171,7 @@ const GenericDataviz: React.FC<DatavizParams> = ({ analyticsQuery, xField, yFiel
 
   if (error) return <div className='text-muted'>error</div>;
   if (!data) return <Skeleton className="w-full" />;
+  if (loading) return <div className='text-muted'>loading...</div>;
 
   const chartData = data.result;
 
