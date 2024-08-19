@@ -179,6 +179,7 @@ app.mount("/v0", api_v2)
 
 ### V3 API ###
 from app.api.v3.endpoints import run
+from app.api.v3.endpoints import export
 
 
 api_v3 = FastAPI(
@@ -193,8 +194,9 @@ api_v3 = FastAPI(
     },
 )
 
+api_v3.include_router(health.router, include_in_schema=False)
 api_v3.include_router(run.router)
-api_v3.include_router(health.router)
+api_v3.include_router(export.router)
 
 app.mount("/v3", api_v3)
 
