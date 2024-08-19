@@ -24,14 +24,13 @@ router = APIRouter(tags=["Export"])
     response_model=AnalyticsResponse,
 )
 async def post_metadata_pivot(
-    project_id: str,
     pivot_query: AnalyticsQuery,
     org: dict = Depends(authenticate_org_key),
 ) -> AnalyticsResponse:
     """
     Create a pivot table for metadata in a project.
     """
-    await verify_propelauth_org_owns_project_id(org, project_id)
+    await verify_propelauth_org_owns_project_id(org, pivot_query.project_id)
 
     if pivot_query.filters is None:
         pivot_query.filters = ProjectDataFilters()
@@ -46,7 +45,7 @@ async def post_metadata_pivot(
         )
 
     pivot_table = await breakdown_by_sum_of_metadata_field(
-        project_id=project_id,
+        project_id=pivot_query.project_id,
         metric=pivot_query.metric,
         metadata_field=pivot_query.metric_metadata,
         breakdown_by=pivot_query.breakdown_by,
