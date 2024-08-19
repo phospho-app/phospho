@@ -197,18 +197,25 @@ async def post_run_query(
     # Run the query
     query_result = await run_analytics_query(analytics_query_request)
 
-    # # Fill missing times
-    # filled_result = analytic_query_result_fill_missing_times(
-    #     query_result, "hour", generate_timestamp() - 24 * 3600, generate_timestamp()
-    # )
-    end_timestamp = generate_timestamp()
-    if analytics_query_request.filters.created_at_end is not None:
-        end_timestamp = analytics_query_request.filters.created_at_end
-    result = analytics_query_result_to_timeseries(
-        query_result,
-        "day",
-        analytics_query_request.filters.created_at_start,
-        end_timestamp,
-    )
+    # Fill the time series with 0s on missing dates if requested
+    if analytics_query_request.time_step is not None:
+        logger.info(
+            f"Filling the time series with 0s on missing dates for time step {analytics_query_request.time_step}"
+        )
+        start_timestamp = (
+            generate_timestamp() - 7 * 24 * 60 * 60
+        )  # Default to 7 days ago
+        if analytics_query_request.filters.created_at_start is not None:
+            start_timestamp = analytics_query_request.filters.created_at_start
+        end_timestamp = generate_timestamp()
+        if analytics_query_request.filters.created_at_end is not None:
+            end_timestamp = analytics_query_request.filters.created_at_end
 
-    return AnalyticsQueryResponse(result=result)
+        query_result = analytics_query_result_to_timeseries(
+            query_result,
+            analytics_query_request.time_step,
+            start_timestamp,
+            end_timestamp,
+        )
+
+    return AnalyticsQueryResponse(result=query_result)
