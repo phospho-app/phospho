@@ -193,9 +193,10 @@ api_v3 = FastAPI(
     },
 )
 
+api_v3.include_router(log.router)
 api_v3.include_router(run.router)
 api_v3.include_router(health.router)
-api_v3.include_router(log.router)
+
 
 app.mount("/v3", api_v3)
 
