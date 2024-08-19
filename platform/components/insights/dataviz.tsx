@@ -67,7 +67,7 @@ const DatavizGraph = ({
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metric: metric.toLowerCase(),
-        metric_metadata: metadata_metric.toLowerCase(),
+        metric_metadata: metadata_metric?.toLowerCase(),
         breakdown_by: breakdown_by.toLowerCase(),
         filters: dataFilters,
       }).then((response) => {
