@@ -439,7 +439,7 @@ async def collect_unique_metadata_field_values(
 async def breakdown_by_sum_of_metadata_field(
     project_id: str,
     metric: str,
-    metadata_field: str,
+    metadata_field: Optional[str] = None,
     breakdown_by: Optional[str] = None,
     filters: Optional[ProjectDataFilters] = None,
 ):
