@@ -145,7 +145,7 @@ class StoreOpenTelemetryDataWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_recipe_on_task_workflow")
+@workflow.defn(name="run_recipe_on_task_workflow", sandboxed=False)
 class RunRecipeOnTaskWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
@@ -158,7 +158,7 @@ class RunRecipeOnTaskWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_main_pipeline_on_messages_workflow")
+@workflow.defn(name="run_main_pipeline_on_messages_workflow", sandboxed=False)
 class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
@@ -171,7 +171,7 @@ class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_process_logs_for_messages_workflow")
+@workflow.defn(name="run_process_logs_for_messages_workflow", sandboxed=False)
 class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
@@ -184,7 +184,7 @@ class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_process_log_for_tasks_workflow")
+@workflow.defn(name="run_process_log_for_tasks_workflow", sandboxed=False)
 class RunProcessLogForTasksWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
