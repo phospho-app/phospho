@@ -19,6 +19,20 @@ from temporalio import workflow
 from temporalio.common import RetryPolicy
 
 with workflow.unsafe.imports_passed_through():
+    import stripe
+    import asyncio
+    import httpx
+    from loguru import logger
+    from app.core import config
+    from app.services.slack import slack_notification
+    from app.services.pipelines import MainPipeline
+    from app.services.connectors import (
+        LangsmithConnector,
+        LangfuseConnector,
+        OpenTelemetryConnector,
+    )
+    from app.services.log import process_log_for_tasks, process_logs_for_messages
+    from app.services.projects import get_project_by_id
     from app.temporal.activities import (
         extract_langsmith_data,
         extract_langfuse_data,
@@ -30,18 +44,17 @@ with workflow.unsafe.imports_passed_through():
         bill_on_stripe,
     )
     from app.api.v1.models import (
+        LogProcessRequestForMessages,
+        LogProcessRequestForTasks,
         PipelineLangfuseRequest,
         PipelineLangsmithRequest,
         PipelineOpentelemetryRequest,
+        PipelineResults,
         RunMainPipelineOnMessagesRequest,
+        RunMainPipelineOnTaskRequest,
         RunRecipeOnTaskRequest,
-        LogProcessRequestForMessages,
-        LogProcessRequestForTasks,
         BillOnStripeRequest,
     )
-    from loguru import logger
-    from app.core import config
-    from app.services.slack import slack_notification
 
 
 class BaseWorkflow:
