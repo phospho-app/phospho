@@ -38,6 +38,7 @@
     "@types/node": "20.5.9",
     "@types/react": "18.2.21",
     "@types/react-dom": "18.2.7",
+    "axios": "^1.7.4",
     "async_hooks": "^1.0.0",
     "autoprefixer": "10.4.15",
     "class-variance-authority": "^0.7.0",
