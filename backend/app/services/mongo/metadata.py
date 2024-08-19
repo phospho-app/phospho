@@ -440,8 +440,6 @@ async def breakdown_by_sum_of_metadata_field(
     project_id: str,
     metric: str,
     metadata_field: str,
-    number_metadata_fields: List[str],
-    category_metadata_fields: List[str],
     breakdown_by: Optional[str] = None,
     filters: Optional[ProjectDataFilters] = None,
 ):
@@ -477,8 +475,6 @@ async def breakdown_by_sum_of_metadata_field(
         "project_id": project_id,
         "metric": metric,
         "metadata_field": metadata_field,
-        "number_metadata_fields": number_metadata_fields,
-        "category_metadata_fields": category_metadata_fields,
         "breakdown_by": breakdown_by,
         "filters": filters,
     }
@@ -532,8 +528,18 @@ async def breakdown_by_sum_of_metadata_field(
         {"$match": main_filter},
     ]
 
+    number_metadata_fields = []
+    category_metadata_fields = await collect_unique_metadata_fields(
+        project_id=project_id, type="string"
+    )
+    number_metadata_fields = await collect_unique_metadata_fields(
+        project_id=project_id, type="number"
+    )
+    logger.debug(f"Category metadata fields: {category_metadata_fields}")
+    logger.debug(f"Number metadata fields: {number_metadata_fields}")
     if breakdown_by in category_metadata_fields:
         breakdown_by_col = f"metadata.{breakdown_by}"
+
     elif breakdown_by == "None":
         breakdown_by_col = "id"
     elif breakdown_by in ["day", "week", "month"]:
@@ -746,6 +752,9 @@ async def breakdown_by_sum_of_metadata_field(
                 },
             ]
         else:
+            logger.error(
+                f"Metric 'sum' is only supported for number metadata fields. Provided metadata field: {metadata_field}"
+            )
             raise HTTPException(
                 status_code=400,
                 detail="Metric 'sum' is only supported for number metadata fields",
@@ -772,6 +781,9 @@ async def breakdown_by_sum_of_metadata_field(
                 },
             ]
         else:
+            logger.error(
+                f"Metric 'avg' is only supported for number metadata fields. Provided metadata field: {metadata_field}"
+            )
             raise HTTPException(
                 status_code=400,
                 detail="Metric 'avg' is only supported for number metadata fields",
@@ -783,6 +795,15 @@ async def breakdown_by_sum_of_metadata_field(
         ]
     )
     pipeline.append({"$sort": {"breakdown_by": 1, "metric": 1}})
+    # $project to select the fields to return
+
+    pipeline.append(
+        {
+            "$project": {
+                "_id": 0,
+            }
+        }
+    )
 
     logger.info(f"Running pipeline: {pipeline}")
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=200)

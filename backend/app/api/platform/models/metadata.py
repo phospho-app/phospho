@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, Field
 from phospho.models import ProjectDataFilters
 
@@ -39,15 +39,29 @@ class MetadataPivotQuery(BaseModel):
     - "session_length"
     """
 
-    metric: str = Field(
-        ...,
-        description="The metric to be analyzed. Can be one of the following: sum, avg, nb tasks, avg success rate, avg session length, event distribution",
+    metric: Literal[
+        "sum",
+        "avg",
+        "nb tasks",
+        "avg success rate",
+        "avg session length",
+        "event distribution",
+    ] = Field(
+        "nb tasks",
+        description="The metric to be analyzed.",
     )
-    metric_metadata: str | None
-    number_metadata_fields: list[str] = Field(default_factory=list)
-    category_metadata_fields: list[str] = Field(default_factory=list)
-    breakdown_by: str | None = Field(
-        None,
+    metric_metadata: str | None = (
+        Field(
+            None,
+            description="The metadata field to be analyzed.",
+        ),
+    )
+    breakdown_by: (
+        Literal["day", "week", "month", "event_name", "task_position", "session_length"]
+        | str
+        | None
+    ) = Field(
+        "day",
         description="The field to break down the metric by. Can be a metadata field, a time field, event_name, task_position, None, session_length",
     )
     filters: ProjectDataFilters | None = None

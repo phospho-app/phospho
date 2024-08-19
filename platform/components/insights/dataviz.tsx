@@ -62,17 +62,13 @@ const DatavizGraph = ({
       metric,
       metadata_metric,
       breakdown_by,
-      numberMetadataFields,
-      categoryMetadataFields,
       JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        metric: metric,
-        metric_metadata: metadata_metric,
-        breakdown_by: breakdown_by,
-        number_metadata_fields: numberMetadataFields,
-        category_metadata_fields: categoryMetadataFields,
+        metric: metric.toLowerCase(),
+        metric_metadata: metadata_metric.toLowerCase(),
+        breakdown_by: breakdown_by.toLowerCase(),
         filters: dataFilters,
       }).then((response) => {
         return response?.pivot_table;
