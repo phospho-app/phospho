@@ -221,8 +221,6 @@ async def post_metadata_pivot(
         metric=pivot_query.metric,
         metadata_field=pivot_query.metric_metadata,
         breakdown_by=pivot_query.breakdown_by,
-        number_metadata_fields=pivot_query.number_metadata_fields,
-        category_metadata_fields=pivot_query.category_metadata_fields,
         filters=pivot_query.filters,
     )
 
