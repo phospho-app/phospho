@@ -122,5 +122,11 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
-    asyncio.run(aiohealthcheck.tcp_health_endpoint("localhost", 8080))
+    loop = asyncio.new_event_loop()
+    try:
+        loop.create_task(aiohealthcheck.tcp_health_endpoint(port=8080))
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        interrupt_event.set()
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
