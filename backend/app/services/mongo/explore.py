@@ -357,7 +357,9 @@ async def get_total_success_rate(
         project_id=project_id, filters=filters, collection=collection
     )
     pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
+        {
+            "$match": main_filter,
+        },
     ]
     # Add the success rate computation
     pipeline.extend(
@@ -382,7 +384,7 @@ async def get_total_success_rate(
     return total_success_rate
 
 
-async def get_most_detected_event_name(
+async def get_most_detected_tagger_name(
     project_id: str,
     flag: Optional[Literal["success", "failure"]] = None,
     event_name: Optional[Union[str, List[str]]] = None,
@@ -395,12 +397,13 @@ async def get_most_detected_event_name(
     **kwargs,
 ) -> Optional[str]:
     """
-    Get the most detected event name of a project.
+    Get the most detected tagger name for a project.
     """
     mongo_db = await get_mongo_db()
     main_filter: Dict[str, object] = {
         "project_id": project_id,
         "removed": {"$ne": True},
+        "event_definition.score_range_settings.score_type": "confidence",
     }
     # Filter on the event name
     if event_name is not None:
@@ -796,20 +799,21 @@ async def get_nb_of_daily_tasks(
     return nb_tasks_per_day[["date", "nb_tasks"]].to_dict(orient="records")
 
 
-async def get_top_event_names_and_count(
+async def get_top_taggers_names_and_count(
     project_id: str,
     filters: ProjectDataFilters,
     limit: int = 3,
     **kwargs,
 ) -> List[Dict[str, object]]:
     """
-    Get the top event names and count of a project.
+    Get the top taggers analytics names and count of a project.
     """
     mongo_db = await get_mongo_db()
 
     main_filter: Dict[str, object] = {
         "project_id": project_id,
         "removed": {"$ne": True},
+        "event_definition.score_range_settings.score_type": "confidence",
     }
     if filters.event_name is not None:
         main_filter["event_name"] = {"$in": filters.event_name}
@@ -959,6 +963,8 @@ async def get_tasks_aggregated_metrics(
             "nb_daily_tasks",
             "events_ranking",
             "success_rate_per_task_position",
+            "date_last_clustering_timestamp",
+            "last_clustering_composition",
         ]
 
     today_datetime = datetime.datetime.now(datetime.timezone.utc)
@@ -979,7 +985,7 @@ async def get_tasks_aggregated_metrics(
             project_id=project_id, filters=filters
         )
     if "most_detected_event" in metrics:
-        output["most_detected_event"] = await get_most_detected_event_name(
+        output["most_detected_event"] = await get_most_detected_tagger_name(
             project_id=project_id,
             **filters.model_dump(),
         )
@@ -988,7 +994,7 @@ async def get_tasks_aggregated_metrics(
             project_id=project_id, filters=filters
         )
     if "events_ranking" in metrics:
-        output["events_ranking"] = await get_top_event_names_and_count(
+        output["events_ranking"] = await get_top_taggers_names_and_count(
             project_id=project_id,
             limit=5,
             filters=filters,
@@ -1004,7 +1010,69 @@ async def get_tasks_aggregated_metrics(
         ] = await get_success_rate_per_task_position(
             project_id=project_id, filters=filters
         )
+    if "date_last_clustering_timestamp" in metrics:
+        output[
+            "date_last_clustering_timestamp"
+        ] = await get_date_last_clustering_timestamp(project_id=project_id)
+    if "last_clustering_composition" in metrics:
+        output["last_clustering_composition"] = await get_last_clustering_composition(
+            project_id=project_id
+        )
     return output
+
+
+async def get_date_last_clustering_timestamp(
+    project_id: str,
+) -> Optional[int]:
+    """
+    Get the timestamp date of the last clustering for a given project.
+    """
+    mongo_db = await get_mongo_db()
+
+    result = (
+        await mongo_db["private-clusterings"]
+        .find({"project_id": project_id})
+        .sort([("created_at", -1)])
+        .limit(1)
+        .to_list(length=1)
+    )
+    if len(result) == 0:
+        return None
+    date_last_clustering_timestamp = result[0]["created_at"]
+    return date_last_clustering_timestamp
+
+
+async def get_last_clustering_composition(
+    project_id: str,
+) -> Optional[List[Dict[str, object]]]:
+    """
+    Get the composition of the last clustering for a given project.
+    """
+    mongo_db = await get_mongo_db()
+
+    clustering = (
+        await mongo_db["private-clusterings"]
+        .find({"project_id": project_id})
+        .sort([("created_at", -1)])
+        .limit(1)
+        .to_list(length=1)
+    )
+    if len(clustering) == 0:
+        return None
+
+    clusters = (
+        await mongo_db["private-clusters"]
+        .find(
+            {"clustering_id": clustering[0]["id"]},
+            {"name": 1, "description": 1, "size": 1},
+        )
+        .to_list(length=None)
+    )
+    clusters = [
+        {"name": c["name"], "description": c["description"], "size": c["size"]}
+        for c in clusters
+    ]
+    return clusters
 
 
 async def get_total_nb_of_sessions(

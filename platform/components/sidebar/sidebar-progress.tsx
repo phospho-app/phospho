@@ -80,9 +80,6 @@ export const OnboardingProgress = () => {
 
   const isProjectPresent = project_id !== null;
   const isEventDefined = current_nb_events > 0;
-  const isEvalDefined =
-    evaluation_model?.system_prompt !==
-    "Answer positively when the interaction talks about ... and negatively when it does not.";
   const isBillingDefined =
     !selectedOrgMetadata?.plan ||
     selectedOrgMetadata?.plan === "usage_based" ||
@@ -91,11 +88,10 @@ export const OnboardingProgress = () => {
     totalNbTasks !== null && totalNbTasks !== undefined && totalNbTasks > 0;
 
   const progress =
-    (isProjectPresent ? 20 : 0) +
-    (isEventDefined ? 20 : 0) +
-    (isEvalDefined ? 20 : 0) +
-    (isBillingDefined ? 20 : 0) +
-    (isDataImported ? 20 : 0);
+    (isProjectPresent ? 25 : 0) +
+    (isEventDefined ? 25 : 0) +
+    (isBillingDefined ? 25 : 0) +
+    (isDataImported ? 25 : 0);
 
   if (progress === 100) {
     return null;
@@ -113,7 +109,6 @@ export const OnboardingProgress = () => {
             progress={progress}
             isProjectPresent={isProjectPresent}
             isEventDefined={isEventDefined}
-            isEvalDefined={isEvalDefined}
             isBillingDefined={isBillingDefined}
             isDataImported={isDataImported}
           />
@@ -173,7 +168,6 @@ const OnboardingProgressPopover = ({
   progress,
   isProjectPresent,
   isEventDefined,
-  isEvalDefined,
   isBillingDefined,
   isDataImported,
 }: {
@@ -181,7 +175,6 @@ const OnboardingProgressPopover = ({
   progress: number;
   isProjectPresent: boolean;
   isEventDefined: boolean;
-  isEvalDefined: boolean;
   isBillingDefined: boolean;
   isDataImported: boolean;
 }) => {
@@ -281,12 +274,6 @@ const OnboardingProgressPopover = ({
       description: "Detect specific events in your app",
       onClick: handleEventsClick,
       completed: isEventDefined,
-    },
-    {
-      title: "Setup a custom evaluation",
-      description: "Track user interactions",
-      onClick: handleEvalClick,
-      completed: isEvalDefined,
     },
     {
       title: "Setup a billing method to enable analytics",
