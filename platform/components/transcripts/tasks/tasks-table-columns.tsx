@@ -2,17 +2,10 @@ import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
 } from "@/components/label-events";
-import { EvalSettings } from "@/components/transcripts/settings/eval-settings";
 import { RunEventsSettings } from "@/components/transcripts/settings/events-settings";
 import { SentimentSettings } from "@/components/transcripts/settings/sentiment-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   HoverCard,
   HoverCardContent,
@@ -38,9 +31,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowDown,
   ArrowUp,
-  Check,
   ChevronRight,
-  PenSquare,
   Sparkles,
   ThumbsDown,
   ThumbsUp,

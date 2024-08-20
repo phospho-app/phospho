@@ -8,7 +8,6 @@ from loguru import logger
 
 from app.core import config
 from app.db.models import (
-    Eval,
     Event,
     EventDefinition,
     LlmCall,
@@ -22,7 +21,6 @@ from app.services.sentiment_analysis import call_sentiment_and_language_api
 from app.services.webhook import trigger_webhook
 from phospho import lab
 from phospho.models import (
-    EvaluationModel,
     JobResult,
     ResultType,
     SentimentObject,
@@ -244,98 +242,9 @@ class MainPipeline:
             .to_list(length=None)
         )
 
-        # We want 50/50 success and failure examples
-        nb_success = int(config.FEW_SHOT_MAX_NUMBER_OF_EXAMPLES / 2)
-        nb_failure = int(config.FEW_SHOT_MAX_NUMBER_OF_EXAMPLES / 2)
-
-        # Get the user evals from the db
-        successful_evals = (
-            await mongo_db["evals"]
-            .aggregate(
-                [
-                    {
-                        "$match": {
-                            "project_id": self.project_id,
-                            "value": "success",
-                            "source": {"$nin": PHOSPHO_EVAL_MODEL_NAMES},
-                        }
-                    },
-                    {"$sort": {"created_at": -1}},
-                    {"$limit": nb_success},
-                    {
-                        "$lookup": {
-                            "from": "tasks",
-                            "localField": "task_id",
-                            "foreignField": "id",
-                            "as": "task",
-                        }
-                    },
-                    {"$unwind": "$task"},
-                    {
-                        "$addFields": {
-                            "flag": "$value",
-                            "output": "$task.output",
-                            "input": "$task.input",
-                        }
-                    },
-                    {"$project": {"input": 1, "output": 1, "flag": 1}},
-                ]
-            )
-            .to_list(length=None)
-        )
-
-        # Get the failure examples
-        unsuccessful_evals = (
-            await mongo_db["evals"]
-            .aggregate(
-                [
-                    {
-                        "$match": {
-                            "project_id": self.project_id,
-                            "source": {"$nin": PHOSPHO_EVAL_MODEL_NAMES},
-                            "value": "failure",
-                        }
-                    },
-                    {"$sort": {"created_at": -1}},
-                    {"$limit": nb_failure},
-                    {
-                        "$lookup": {
-                            "from": "tasks",
-                            "localField": "task_id",
-                            "foreignField": "id",
-                            "as": "task",
-                        }
-                    },
-                    {"$unwind": "$task"},
-                    {
-                        "$addFields": {
-                            "flag": "$value",
-                            "output": "$task.output",
-                            "input": "$task.input",
-                        }
-                    },
-                    {"$project": {"input": 1, "output": 1, "flag": 1}},
-                ]
-            )
-            .to_list(length=None)
-        )
-
-        evaluation_model = await mongo_db["evaluation_model"].find_one(
-            {"project_id": self.project_id, "removed": False},
-        )
-        evaluation_prompt = None
-        if evaluation_model is not None:
-            validated_evaluation_model = EvaluationModel.model_validate(
-                evaluation_model
-            )
-            evaluation_prompt = validated_evaluation_model.system_prompt
-
         metadata = {
             "successful_events": successful_events,
             "unsuccessful_events": unsuccessful_events,
-            "successful_evals": successful_evals,
-            "unsuccessful_evals": unsuccessful_evals,
-            "evaluation_prompt": evaluation_prompt,
         }
 
         self.messages = []
@@ -514,108 +423,6 @@ class MainPipeline:
                 logger.error(f"Error saving job results to the database: {e}")
 
         return events_per_task_to_return
-
-    async def run_evaluation(self) -> Dict[str, Literal["success", "failure"]]:
-        """
-        Run the task scoring pipeline for a given task
-        """
-        mongo_db = await get_mongo_db()
-
-        if self.project is None:
-            self.project = await get_project_by_id(self.project_id)
-
-        if not self.project.settings.run_evals:
-            logger.info(f"run_evals is disabled for project {self.project_id}")
-            return {}
-
-        logger.info(
-            f"Running evaluation pipeline for project {self.project_id} on {len(self.messages)} messages"
-        )
-        self.workload = lab.Workload()
-        self.workload.add_job(
-            lab.Job(
-                id="evaluate_task",
-                job_function=lab.job_library.evaluate_task,
-                metadata={
-                    "recipe_id": "generic_evaluation",
-                    "recipe_type": "evaluation",
-                },
-            )
-        )
-        self.workload.org_id = self.org_id
-        self.workload.project_id = self.project_id
-
-        await self.workload.async_run(messages=self.messages, executor_type="parallel")
-        if self.workload.results is None:
-            logger.error("Worlkload.results is None")
-            return {}
-
-        output: Dict[str, Literal["success", "failure"]] = {}
-        for message in self.messages:
-            results = self.workload.results.get(message.id, {}).get(
-                "evaluate_task", None
-            )
-            if results is None:
-                logger.error("Job result in workload is None")
-                return {}
-
-            flag = results.value
-            task = message.metadata.get("task", None)
-            task_id = task.id if task is not None else None
-            session_id = task.session_id if task is not None else None
-            test_id = task.test_id if task is not None else None
-
-            llm_call = results.metadata.get("llm_call", None)
-            if llm_call is not None:
-                llm_call_obj = LlmCall(
-                    **llm_call,
-                    org_id=self.org_id,
-                    task_id=task_id,
-                    recipe_id=results.job_metadata.get("recipe_id"),
-                    project_id=self.project_id,
-                )
-                mongo_db["llm_calls"].insert_one(llm_call_obj.model_dump())
-
-            logger.debug(f"Flag for task {message.metadata['task'].id} : {flag}")
-            # Create the Evaluation object and store it in the db
-            evaluation_data = Eval(
-                project_id=self.project_id,
-                session_id=session_id,
-                task_id=task_id,
-                value=flag,
-                source=config.EVALUATION_SOURCE,
-                test_id=test_id,
-                org_id=self.org_id,
-            )
-
-            mongo_db["evals"].insert_one(evaluation_data.model_dump())
-
-            # Save the prediction
-            results.task_id = task_id
-            mongo_db["job_results"].insert_one(results.model_dump())
-
-            # Update the task object if the flag is None (no previous evaluation)
-            mongo_db["tasks"].update_one(
-                {
-                    "id": task_id,
-                    "project_id": self.project_id,
-                    "$or": [
-                        {"flag": None},
-                        {"flag": {"$exists": False}},
-                    ],
-                },
-                {
-                    "$set": {
-                        "flag": flag,
-                        "last_eval": evaluation_data.model_dump(),
-                        "evaluation_source": config.EVALUATION_SOURCE,
-                    }
-                },
-            )
-
-            output[task_id] = flag
-
-        return output
 
     async def update_version_id(self):
         if self.project is None:
@@ -900,8 +707,6 @@ class MainPipeline:
 
         if recipe.recipe_type == "event_detection":
             await self.run_events(recipe=recipe)
-        elif recipe.recipe_type == "evaluation":
-            await self.run_evaluation()
         elif recipe.recipe_type == "sentiment_language":
             await self.run_sentiment_and_language()
         elif recipe.recipe_type == "session_info":
@@ -934,15 +739,6 @@ class MainPipeline:
             traceback.print_exc()
             sentiments = {}
             languages = {}
-        # Run the evaluation pipeline
-        try:
-            flag = await self.run_evaluation()
-        except Exception as e:
-            error_id = generate_uuid()
-            error_message = f"Caught error while running evaluation (error_id: {error_id}): {e}\n{traceback.format_exception(e)}"
-            logger.error(error_message)
-            traceback.print_exc()
-            flag = {}
 
         # Update metadata
         try:
@@ -957,7 +753,6 @@ class MainPipeline:
         logger.info("Main pipeline completed")
         return PipelineResults(
             events=events,
-            flag=flag,
             language=languages,
             sentiment=sentiments,
         )

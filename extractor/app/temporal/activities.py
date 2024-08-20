@@ -206,22 +206,6 @@ async def run_main_pipeline_on_messages(
     return pipeline_results
 
 
-@activity.defn(name="post_eval_pipeline_on_tasks")
-async def post_eval_pipeline_on_tasks(
-    request_body: RunMainPipelineOnTaskRequest,
-) -> PipelineResults:
-    logger.info(f"Running eval pipeline on task {request_body.task}")
-    main_pipeline = MainPipeline(
-        project_id=request_body.task.project_id,
-        org_id=request_body.task.org_id,
-    )
-    await main_pipeline.set_input(task=request_body.task)
-    flag = await main_pipeline.run_evaluation()
-    return PipelineResults(
-        flag=flag,
-    )
-
-
 @activity.defn(name="post_main_pipeline_on_task")
 async def post_main_pipeline_on_task(
     request_body: RunMainPipelineOnTaskRequest,
