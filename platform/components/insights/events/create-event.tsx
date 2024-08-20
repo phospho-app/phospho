@@ -26,6 +26,7 @@ import { authFetcher } from "@/lib/fetcher";
 import {
   DetectionEngine,
   DetectionScope,
+  EventDefinition,
   Project,
   ScoreRangeType,
 } from "@/models/models";
@@ -46,11 +47,11 @@ import {
 
 export default function CreateEvent({
   setOpen,
-  eventNameToEdit,
+  eventToEdit,
   defaultEventCategory,
 }: {
   setOpen: (open: boolean) => void;
-  eventNameToEdit?: string;
+  eventToEdit?: EventDefinition;
   defaultEventCategory?: string;
 }) {
   // Component to create an event or edit an existing event
@@ -69,7 +70,6 @@ export default function CreateEvent({
   );
 
   const currentEvents = selectedProject?.settings?.events || {};
-  const eventToEdit = eventNameToEdit ? currentEvents[eventNameToEdit] : null;
 
   // Max number of events depends on the plan
   const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
@@ -199,13 +199,12 @@ export default function CreateEvent({
       return;
     }
     if (
-      eventNameToEdit !== null &&
-      eventNameToEdit !== undefined &&
-      eventNameToEdit !== values.event_name
+      eventToEdit !== undefined &&
+      eventToEdit.event_name !== values.event_name
     ) {
       // Editing the event means that we remove the previous event and add the new one
       // This is in case the event name has changed
-      delete selectedProject.settings.events[eventNameToEdit];
+      delete selectedProject.settings.events[eventToEdit.event_name];
     }
 
     // On purpose, we do not pass the job_id, so a new job object will be created for this event
@@ -262,10 +261,10 @@ export default function CreateEvent({
         >
           <SheetHeader>
             <SheetTitle className="text-xl">
-              {(eventNameToEdit === null || eventNameToEdit === undefined) && (
+              {(!eventToEdit) && (
                 <div>Setup new event</div>
               )}
-              {eventNameToEdit && <div>Edit event "{eventNameToEdit}"</div>}
+              {eventToEdit && <div>Edit event "{eventToEdit?.event_name}"</div>}
             </SheetTitle>
           </SheetHeader>
           {/* <Separator /> */}
@@ -351,7 +350,7 @@ export default function CreateEvent({
                     <FormControl>
                       <Input
                         spellCheck
-                        placeholder="e.g.: rude tone of voice, user frustration, user says 'I want to cancel'..."
+                        placeholder={"e.g.: rude tone of voice, user frustration, user says 'I want to cancel'..."}
                         {...field}
                       />
                     </FormControl>
@@ -398,7 +397,7 @@ export default function CreateEvent({
                   <FormControl>
                     <Textarea
                       id="description"
-                      placeholder="Use simple language. Refer to speakers as 'the user' and 'the assistant'."
+                      placeholder={ "Use simple language. Refer to speakers as 'the user' and 'the assistant'."}
                       {...field}
                     />
                   </FormControl>
@@ -635,16 +634,16 @@ export default function CreateEvent({
                 loading ||
                 // !form.formState.isValid ||
                 // too many events
-                ((eventNameToEdit === null || eventNameToEdit === undefined) &&
+                ((!eventToEdit ) &&
                   currentEvents &&
                   max_nb_events &&
                   current_nb_events + 1 >= max_nb_events)
               }
             >
-              {(eventNameToEdit === null || eventNameToEdit === undefined) && (
+              {(!eventToEdit) && (
                 <div>Add event</div>
               )}
-              {eventNameToEdit && <div>Save edits</div>}
+              {eventToEdit && <div>Save edits</div>}
             </Button>
           </SheetFooter>
         </form>
