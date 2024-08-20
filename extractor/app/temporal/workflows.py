@@ -22,6 +22,7 @@ with workflow.unsafe.imports_passed_through():
     import stripe
     import asyncio
     import httpx
+    import threading
     from loguru import logger
     from app.core import config
     from app.services.slack import slack_notification
@@ -145,7 +146,7 @@ class StoreOpenTelemetryDataWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_recipe_on_task_workflow", sandboxed=False)
+@workflow.defn(name="run_recipe_on_task_workflow")
 class RunRecipeOnTaskWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
@@ -158,7 +159,7 @@ class RunRecipeOnTaskWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_main_pipeline_on_messages_workflow", sandboxed=False)
+@workflow.defn(name="run_main_pipeline_on_messages_workflow")
 class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
@@ -171,7 +172,7 @@ class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_process_logs_for_messages_workflow", sandboxed=False)
+@workflow.defn(name="run_process_logs_for_messages_workflow")
 class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
@@ -184,7 +185,7 @@ class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_process_log_for_tasks_workflow", sandboxed=False)
+@workflow.defn(name="run_process_log_for_tasks_workflow")
 class RunProcessLogForTasksWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
