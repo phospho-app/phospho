@@ -21,6 +21,7 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pickaxe } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { use, useEffect } from "react";
 import useSWR from "swr";
 
@@ -33,6 +34,7 @@ export function ClustersCards({
 }) {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
+  const router = useRouter();
 
   const { data: clusteringsData } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
@@ -203,14 +205,25 @@ export function ClustersCards({
                   <Pickaxe className="w-6 h-6 ml-1 pickaxe-animation" />
                 </Button>
               )}
-              <Link
-                href={`/org/insights/clusters/${encodeURIComponent(cluster.id)}`}
+
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={(mouseEvent) => {
+                  mouseEvent.stopPropagation();
+                  setDataFilters({
+                    ...dataFilters,
+                    clustering_id: cluster.clustering_id,
+                    clusters_ids: [cluster.id],
+                  });
+                  router.push(
+                    `/org/insights/clusters/${encodeURIComponent(cluster.id)}`,
+                  );
+                }}
               >
-                <Button variant="secondary" size="sm">
-                  Explore
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
+                Explore
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
             </div>
           </Card>
         ))}

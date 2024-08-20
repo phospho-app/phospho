@@ -65,6 +65,7 @@ const RunClusters = ({
   const project_id = navigationStateStore((state) => state.project_id);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const setDataFilters = navigationStateStore((state) => state.setDataFilters);
 
   const hobby = orgMetadata?.plan === "hobby";
 
@@ -137,6 +138,19 @@ const RunClusters = ({
     }
   }
 
+  function setSheetOpenWrapper(value: boolean) {
+    // Reset the dataFilters when the sheet is closed
+    if (!value) {
+      const currentDataFilters = dataFilters;
+      delete currentDataFilters.clustering_id;
+      delete currentDataFilters.clusters_ids;
+      setDataFilters(
+        dataFilters
+      );
+    }
+    setSheetOpen(value);
+  }
+
   const FormSchema = z.object({
     instruction: z
       .string({
@@ -170,7 +184,7 @@ const RunClusters = ({
   }
 
   return (
-    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpenWrapper}>
       <SheetTrigger>
         <Button className="default">
           <Sparkles className="w-4 h-4 mr-2 text-green-500" /> Configure
@@ -178,7 +192,7 @@ const RunClusters = ({
           <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
       </SheetTrigger>
-      <SheetContent className="md:w-1/2 overflow-auto">
+      <SheetContent className="md:w-1/2 overflow-auto" >
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
