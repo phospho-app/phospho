@@ -117,7 +117,7 @@ async def process_file_upload_into_log_events(
 
     Columns: input, output
 
-    Optional columns: session_id, created_at, task_id
+    Optional columns: session_id, created_at, task_id, user_id
     """
 
     # session_id: if provided, concatenate with project_id to avoid collisions
