@@ -376,7 +376,7 @@ const SessionsDataviz: React.FC = () => {
                     dataKey="size"
                     nameKey="name"
                     labelLine={false}
-                    innerRadius={40}
+                    innerRadius={60}
                     outerRadius={80}
                   >
                     <Label
@@ -446,7 +446,7 @@ const SessionsDataviz: React.FC = () => {
                     dataKey="nb_events"
                     nameKey="event_name"
                     labelLine={false}
-                    innerRadius={40}
+                    innerRadius={60}
                     outerRadius={80}
                   >
                     <Label
