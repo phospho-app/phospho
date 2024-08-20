@@ -22,6 +22,8 @@ with workflow.unsafe.imports_passed_through():
     import stripe
     import asyncio
     import httpx
+    import threading
+    import sentry_sdk
     from loguru import logger
     from app.core import config
     from app.services.slack import slack_notification
@@ -76,33 +78,24 @@ class BaseWorkflow:
             maximum_interval=timedelta(minutes=5),
             non_retryable_error_types=["ValueError"],
         )
-        try:
-            request = self.request_class(**request)
-            response = await workflow.execute_activity(
-                self.activity_func,
-                request,
-                start_to_close_timeout=timedelta(minutes=15),
-                retry_policy=retry_policy,
+        request = self.request_class(**request)
+        response = await workflow.execute_activity(
+            self.activity_func,
+            request,
+            start_to_close_timeout=timedelta(minutes=15),
+            retry_policy=retry_policy,
+        )
+        if self.bill:
+            await workflow.execute_activity(
+                bill_on_stripe,
+                BillOnStripeRequest(
+                    org_id=request.org_id,
+                    project_id=request.project_id,
+                    nb_job_results=response.get("nb_job_results", 0),
+                    customer_id=request.customer_id,
+                ),
+                start_to_close_timeout=timedelta(minutes=1),
             )
-            if self.bill:
-                await workflow.execute_activity(
-                    bill_on_stripe,
-                    BillOnStripeRequest(
-                        org_id=request.org_id,
-                        project_id=request.project_id,
-                        nb_job_results=response.get("nb_job_results", 0),
-                        customer_id=request.customer_id,
-                    ),
-                    start_to_close_timeout=timedelta(minutes=1),
-                )
-        except Exception as e:
-            error_message = f"Caught error while calling temporal workflow {self.__class__.__name__}: {e}\n{traceback.format_exception(e)}"
-            logger.error(f"Error in {self.__class__.__name__}: {e}")
-            if config.ENVIRONMENT in ["production", "staging"]:
-                slack_message = (
-                    error_message[:300] if len(error_message) > 300 else error_message
-                )
-                await slack_notification(slack_message)
 
 
 @workflow.defn(name="extract_langsmith_data_workflow")
@@ -145,7 +138,7 @@ class StoreOpenTelemetryDataWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_recipe_on_task_workflow", sandboxed=False)
+@workflow.defn(name="run_recipe_on_task_workflow")
 class RunRecipeOnTaskWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
@@ -158,7 +151,7 @@ class RunRecipeOnTaskWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_main_pipeline_on_messages_workflow", sandboxed=False)
+@workflow.defn(name="run_main_pipeline_on_messages_workflow")
 class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
@@ -171,7 +164,7 @@ class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_process_logs_for_messages_workflow", sandboxed=False)
+@workflow.defn(name="run_process_logs_for_messages_workflow")
 class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
@@ -184,7 +177,7 @@ class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_process_log_for_tasks_workflow", sandboxed=False)
+@workflow.defn(name="run_process_log_for_tasks_workflow")
 class RunProcessLogForTasksWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
