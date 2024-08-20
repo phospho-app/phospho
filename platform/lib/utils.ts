@@ -35,6 +35,28 @@ export const countObjectsPerDay = (data: Session[]): Record<string, number> => {
   );
 };
 
+export const graphColors = [
+  "#22c55e",
+  "#ff7c7c",
+  "#ffbb43",
+  "#4a90e2",
+  "#a259ff",
+  "#FFDE82",
+  "#CBA74E",
+  "#917319",
+  "#E2E3D8",
+  "#68EDCB",
+  "#00C4FF",
+  "#9FAFA1",
+  "#EB6D00",
+  "#D3D663",
+  "#92CF56",
+  "#FA003C",
+  "#9FA8DF",
+  "#005400",
+  "#505C8D",
+];
+
 // list of 55 languages supported by langdetect
 export function getLanguageLabel(isoCode: string | null): string {
   const languageMap: Record<string, string> = {
