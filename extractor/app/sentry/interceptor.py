@@ -45,7 +45,7 @@ class _SentryActivityInboundInterceptor(ActivityInboundInterceptor):
                 if len(input.args) == 1 and is_dataclass(input.args[0]):
                     set_context("temporal.activity.input", asdict(input.args[0]))
                 set_context("temporal.activity.info", activity.info().__dict__)
-                capture_exception()
+                capture_exception(e)
                 raise e
 
 
@@ -69,7 +69,7 @@ class _SentryWorkflowInterceptor(WorkflowInboundInterceptor):
 
                 if not workflow.unsafe.is_replaying():
                     with workflow.unsafe.sandbox_unrestricted():
-                        capture_exception()
+                        capture_exception(e)
                 raise e
 
 

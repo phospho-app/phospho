@@ -68,7 +68,7 @@ interrupt_event = asyncio.Event()
 async def main():
     if config.ENVIRONMENT == "production" or config.ENVIRONMENT == "staging":
         sentry_sdk.init(
-            dsn=os.getenv("SENTRY_DSN"),
+            dsn=os.getenv("EXTRACTOR_SENTRY_DSN"),
             traces_sample_rate=0.1,
             profiles_sample_rate=0.1,
         )
