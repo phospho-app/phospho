@@ -124,10 +124,7 @@ const Clusters: React.FC = () => {
         </CardHeader>
       </Card>
       <div className="flex-col space-y-2 md:flex pb-10">
-        <ClustersCards
-          clusterings={clusteringsData?.clusterings}
-          setSheetOpen={setSheetOpen}
-        />
+        <ClustersCards setSheetOpen={setSheetOpen} />
       </div>
     </>
   );
