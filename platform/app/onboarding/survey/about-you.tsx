@@ -145,9 +145,9 @@ export default function AboutYou({
     <>
       <Card className="lg:w-1/3 md:w-1/2">
         <CardHeader className="pb-0">
-          <CardTitle>Tell us more about yourself</CardTitle>
+          <CardTitle>Welcome to phospho!</CardTitle>
           <CardDescription>
-            This will help us setup your account.
+            Help us setup your account by telling us a bit more about you.
           </CardDescription>
         </CardHeader>
         <CardContent className={CARD_STYLE}>
@@ -210,7 +210,9 @@ export default function AboutYou({
                   name="customCustomer"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tell us more about who you are</FormLabel>
+                      <FormLabel>
+                        Who <i>are</i> you then?
+                      </FormLabel>
                       <Input
                         placeholder="Researcher, student, ..."
                         {...field}
@@ -259,10 +261,10 @@ export default function AboutYou({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Tell us more about how you heard about phospho:
+                        Give us more details about how you found us
                       </FormLabel>
                       <Input
-                        placeholder="Employees, customers, ..."
+                        placeholder="Github, google search, research papers..."
                         {...field}
                       />
                       <FormMessage />

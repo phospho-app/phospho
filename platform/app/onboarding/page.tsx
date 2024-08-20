@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 export default function Page() {
-  redirect("/onboarding/welcome");
+  redirect("/onboarding/survey");
 
   return <></>;
 }

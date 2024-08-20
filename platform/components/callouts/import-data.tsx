@@ -38,6 +38,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   BarChartBig,
+  CloudUpload,
   CopyIcon,
   LoaderCircle,
   Lock,
@@ -160,6 +161,7 @@ export default function UploadDataset({
 
   const [loading, setLoading] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
+  const [fileName, setFileName] = React.useState<string | null>(null);
 
   const onSubmit = () => {
     if (showModal) {
@@ -216,48 +218,64 @@ export default function UploadDataset({
   return (
     <div className="flex flex-col space-y-2">
       <div className="text-sm mb-1">
-        Upload a file with your historical data. The file should contain the
-        following columns: <code>input</code>, <code>output</code>. Optionally,
-        you can also include <code>session_id</code> and <code>created_at</code>{" "}
+        The file should contain your historical data with the following columns:{" "}
+        <code>input</code>, <code>output</code>.
       </div>
-      <u>
-        <a href="/files/example_csv_phospho.csv" download="example_csv_phospho">
+      <div className="text-sm mb-1">
+        <span>Other columns are optional (look at the example below). </span>
+        <a
+          href="/files/example_csv_phospho.csv"
+          download="example_csv_phospho"
+          className="underline"
+        >
           Download example CSV
         </a>
-      </u>
+      </div>
       <CopyBlock
-        text={`input;output;task_id;session_id;created_at
-"What's the capital of France?";"The capital of France is Paris";task_1;session_1;"2021-09-01 12:00:00"`}
+        text={`input;output;task_id;session_id;user_id;created_at
+"What's the capital of France?";"The capital of France is Paris";task_1;session_1;user_bob;"2021-09-01 12:00:00"`}
         language={"text"}
         showLineNumbers={true}
         theme={dracula}
         wrapLongLines={true}
       />
+
       {/* <form className="w-full flex flex-col space-y-2"> */}
-      <div className="flex flex-row space-x-2 items-center">
-        <Plus className="w-4 h-4 mr-1" />
+      <div className="relative cursor-pointer w-full h-40 mt-2 border-2 border-dashed rounded-3xl">
+        <div className="absolute inset-x-1/4 inset-y-1/4 w-1/2 flex flex-col items-center">
+          <div>
+            <CloudUpload className="w-10 h-10" />
+          </div>
+          <div className="text-xl font-bold">
+            {fileName ?? "Click box to upload"}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Supported formats: .csv, .xlsx
+          </div>
+        </div>
         <Input
+          className="w-full h-full opacity-0 cursor-pointer"
           type="file"
           accept=".csv,.xlsx"
           placeholder="Pick file to upload"
           onChange={(e) => {
             if (e.target.files && e.target.files.length > 0) {
               setFile(e.target.files[0]);
+              setFileName(e.target.files[0].name);
             }
           }}
         />
       </div>
-
       {file !== null && !loading && (
         <Button onClick={onSubmit}>
-          <Upload className="mr-1 w-4 h-4" />
-          Confirm
+          Send file
+          <Upload className="ml-1 w-4 h-4" />
         </Button>
       )}
       {loading && (
         <Button disabled>
-          <Spinner className="mr-1" />
           Uploading...
+          <Spinner className="ml-1" />
         </Button>
       )}
       {/* </form> */}
@@ -491,12 +509,10 @@ export const SendDataAlertDialog = ({
             <div className="flex justify-between">
               <div>
                 <AlertDialogTitle className="text-2xl font-bold tracking-tight mb-1">
-                  Start sending data to phospho
+                  Send data to phospho
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  <p>
-                    phospho detects events in the text data of your LLM app.
-                  </p>
+                  <p>phospho needs text data to generate insights.</p>
                 </AlertDialogDescription>
               </div>
               <X onClick={handleClose} className="cursor-pointer h-8 w-8" />
@@ -505,136 +521,6 @@ export const SendDataAlertDialog = ({
           <div className="overflow-y-auto">
             <SidebarSendData setOpen={setOpen} />
             <div className="space-y-2 flex flex-col">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-xl">
-                    I need to log messages.
-                  </CardTitle>
-                  <CardDescription>
-                    What's your app's backend language?
-                  </CardDescription>
-                  <ToggleGroup
-                    type="single"
-                    value={selectedTab}
-                    onValueChange={(value) => setSelectedTab(value)}
-                    className="justify-start"
-                  >
-                    <ToggleGroupItem value="python">
-                      <ToggleButton>
-                        <PythonIcon />
-                        Python
-                      </ToggleButton>
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="javascript">
-                      <ToggleButton>
-                        <JavaScriptIcon />
-                        JavaScript
-                      </ToggleButton>
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="api">
-                      <ToggleButton>API</ToggleButton>
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="other">
-                      <ToggleButton>Other</ToggleButton>
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-
-                  {selectedTab == "python" && (
-                    <div className="flex-col space-y-4">
-                      <div className="text-sm">
-                        Use the following code snippets to log your app messages
-                        to phospho.
-                      </div>
-                      <CopyBlock
-                        text={`pip install --upgrade phospho`}
-                        language={"shell"}
-                        showLineNumbers={false}
-                        theme={dracula}
-                      />
-                      <CopyBlock
-                        text={`import phospho
-              
-phospho.init(api_key="YOUR_API_KEY", project_id="${project_id}")
-
-input_str = "Hello! This is what the user asked to the system"
-output_str = "This is the response showed to the user by the app."
-phospho.log(input=input_str, output=output_str)`}
-                        language={"python"}
-                        showLineNumbers={false}
-                        theme={dracula}
-                        wrapLongLines={true}
-                      />
-                      <APIKeyAndProjectId />
-                    </div>
-                  )}
-                  {selectedTab == "javascript" && (
-                    <div className="flex-col space-y-4">
-                      <div className="text-sm">
-                        Use the following code snippets to log your app messages
-                        to phospho.
-                      </div>
-                      <CopyBlock
-                        text={`npm i phospho`}
-                        language={"shell"}
-                        showLineNumbers={false}
-                        theme={dracula}
-                      />
-                      <CopyBlock
-                        text={`import { phospho } from "phospho";
-
-phospho.init({apiKey: "YOUR_API_KEY", projectId: "${project_id}"});
-
-const input = "Hello! This is what the user asked to the system";
-const output = "This is the response showed to the user by the app.";
-phospho.log({input, output});`}
-                        language={"javascript"}
-                        showLineNumbers={false}
-                        theme={dracula}
-                        wrapLongLines={true}
-                      />
-                      <APIKeyAndProjectId />
-                    </div>
-                  )}
-                  {selectedTab == "api" && (
-                    <div className="flex-col space-y-4">
-                      <div className="text-sm">
-                        Use the following code snippets to log your app messages
-                        to phospho.
-                      </div>
-                      <CopyBlock
-                        text={`curl -X POST https://api.phospho.ai/v2/log/${project_id} \\
--H "Authorization: Bearer $PHOSPHO_API_KEY" \\
--H "Content-Type: application/json" \\
--d '{"batched_log_events": [
-      {"input": "your_input", "output": "your_output"}
-]}'`}
-                        language={"bash"}
-                        showLineNumbers={false}
-                        theme={dracula}
-                        wrapLongLines={true}
-                      />
-                      <APIKeyAndProjectId />
-                    </div>
-                  )}
-                  {selectedTab == "other" && (
-                    <div className="flex-col space-y-4">
-                      <div className="flex space-x-2">
-                        <Link
-                          href="https://docs.phospho.ai/getting-started#how-to-setup-logging"
-                          target="_blank"
-                        >
-                          <Button className="w-96">
-                            Discover all integrations
-                          </Button>
-                        </Link>
-                        <Link href="mailto:contact@phospho.app" target="_blank">
-                          <Button variant="secondary">Contact us</Button>
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </CardHeader>
-              </Card>
               <Card>
                 <CardHeader>
                   <CardTitle className="text-xl">
@@ -872,6 +758,136 @@ phospho.log({input, output});`}
                   )}
                 </CardHeader>
               </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">
+                    I need to log messages.
+                  </CardTitle>
+                  <CardDescription>
+                    What's your app's backend language?
+                  </CardDescription>
+                  <ToggleGroup
+                    type="single"
+                    value={selectedTab}
+                    onValueChange={(value) => setSelectedTab(value)}
+                    className="justify-start"
+                  >
+                    <ToggleGroupItem value="python">
+                      <ToggleButton>
+                        <PythonIcon />
+                        Python
+                      </ToggleButton>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="javascript">
+                      <ToggleButton>
+                        <JavaScriptIcon />
+                        JavaScript
+                      </ToggleButton>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="api">
+                      <ToggleButton>API</ToggleButton>
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="other">
+                      <ToggleButton>Other</ToggleButton>
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+
+                  {selectedTab == "python" && (
+                    <div className="flex-col space-y-4">
+                      <div className="text-sm">
+                        Use the following code snippets to log your app messages
+                        to phospho.
+                      </div>
+                      <CopyBlock
+                        text={`pip install --upgrade phospho`}
+                        language={"shell"}
+                        showLineNumbers={false}
+                        theme={dracula}
+                      />
+                      <CopyBlock
+                        text={`import phospho
+              
+phospho.init(api_key="YOUR_API_KEY", project_id="${project_id}")
+
+input_str = "Hello! This is what the user asked to the system"
+output_str = "This is the response showed to the user by the app."
+phospho.log(input=input_str, output=output_str)`}
+                        language={"python"}
+                        showLineNumbers={false}
+                        theme={dracula}
+                        wrapLongLines={true}
+                      />
+                      <APIKeyAndProjectId />
+                    </div>
+                  )}
+                  {selectedTab == "javascript" && (
+                    <div className="flex-col space-y-4">
+                      <div className="text-sm">
+                        Use the following code snippets to log your app messages
+                        to phospho.
+                      </div>
+                      <CopyBlock
+                        text={`npm i phospho`}
+                        language={"shell"}
+                        showLineNumbers={false}
+                        theme={dracula}
+                      />
+                      <CopyBlock
+                        text={`import { phospho } from "phospho";
+
+phospho.init({apiKey: "YOUR_API_KEY", projectId: "${project_id}"});
+
+const input = "Hello! This is what the user asked to the system";
+const output = "This is the response showed to the user by the app.";
+phospho.log({input, output});`}
+                        language={"javascript"}
+                        showLineNumbers={false}
+                        theme={dracula}
+                        wrapLongLines={true}
+                      />
+                      <APIKeyAndProjectId />
+                    </div>
+                  )}
+                  {selectedTab == "api" && (
+                    <div className="flex-col space-y-4">
+                      <div className="text-sm">
+                        Use the following code snippets to log your app messages
+                        to phospho.
+                      </div>
+                      <CopyBlock
+                        text={`curl -X POST https://api.phospho.ai/v2/log/${project_id} \\
+-H "Authorization: Bearer $PHOSPHO_API_KEY" \\
+-H "Content-Type: application/json" \\
+-d '{"batched_log_events": [
+      {"input": "your_input", "output": "your_output"}
+]}'`}
+                        language={"bash"}
+                        showLineNumbers={false}
+                        theme={dracula}
+                        wrapLongLines={true}
+                      />
+                      <APIKeyAndProjectId />
+                    </div>
+                  )}
+                  {selectedTab == "other" && (
+                    <div className="flex-col space-y-4">
+                      <div className="flex space-x-2">
+                        <Link
+                          href="https://docs.phospho.ai/getting-started#how-to-setup-logging"
+                          target="_blank"
+                        >
+                          <Button className="w-96">
+                            Discover all integrations
+                          </Button>
+                        </Link>
+                        <Link href="mailto:contact@phospho.app" target="_blank">
+                          <Button variant="secondary">Contact us</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </CardHeader>
+              </Card>
               <Alert>
                 <AlertTitle className="text-sm">
                   I don't have an LLM app
@@ -994,7 +1010,7 @@ export const SendDataCallout = () => {
               <div className="flex flex-grow justify-between items-center">
                 <div>
                   <CardTitle className="text-2xl font-bold tracking-tight mb-0">
-                    Start sending data to phospho
+                    Send data to phospho
                   </CardTitle>
                   <CardDescription className="flex justify-between">
                     We'll show you how to get started
