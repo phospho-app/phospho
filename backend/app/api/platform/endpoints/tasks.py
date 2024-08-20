@@ -3,7 +3,6 @@ from propelauth_fastapi import User
 
 from app.api.platform.models import (
     Task,
-    TaskFlagRequest,
     TaskUpdateRequest,
     AddEventRequest,
     RemoveEventRequest,
@@ -18,7 +17,6 @@ from app.services.mongo.tasks import (
     remove_event_from_task,
     human_eval_task,
 )
-from loguru import logger
 
 router = APIRouter(tags=["Tasks"])
 
