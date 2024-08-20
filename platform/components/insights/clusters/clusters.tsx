@@ -15,7 +15,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
-import { ClustersTable } from "./clusters-table";
+import { ClustersCards } from "./clusters-cards";
 
 const Clusters: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
@@ -124,7 +124,7 @@ const Clusters: React.FC = () => {
         </CardHeader>
       </Card>
       <div className="flex-col space-y-2 md:flex pb-10">
-        <ClustersTable
+        <ClustersCards
           clusterings={clusteringsData?.clusterings}
           setSheetOpen={setSheetOpen}
         />
