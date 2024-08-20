@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { generateSlug } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -63,9 +64,9 @@ export default function Page() {
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    // defaultValues: {
-    //   project_name: "Default project",
-    // },
+    defaultValues: {
+      project_name: generateSlug(false),
+    },
   });
 
   async function defaultProject() {
@@ -164,10 +165,9 @@ export default function Page() {
       <FetchOrgProject />
       <Card className="lg:w-1/3 md:w-1/2">
         <CardHeader className="pb-0">
-          <CardTitle>Create a phospho project</CardTitle>
+          <CardTitle>Create your first phospho project</CardTitle>
           <CardDescription>
-            Start by giving your project a name. You can always change this
-            later.
+            Give your project a name. You can always change this later.
           </CardDescription>
         </CardHeader>
         <CardContent className={CARD_STYLE}>

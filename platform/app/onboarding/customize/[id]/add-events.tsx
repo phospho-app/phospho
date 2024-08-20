@@ -294,7 +294,7 @@ export default function AddEvents({
             scores, and labels.
           </CardDescription>
           <CardDescription className="pt-2">
-            Select a template to get started (you can change this later).
+            Select a template to get started.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col space-y-2 border-gray-500">
@@ -338,7 +338,7 @@ export default function AddEvents({
               ))}
           </div>
           <div className="text-muted-foreground text-sm">
-            You can later setup events to trigger webhooks (slack, email, etc.)
+            You can customize these later in the Analytics section.
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">

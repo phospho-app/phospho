@@ -9,6 +9,8 @@ import {
   BookOpenText,
   Boxes,
   BriefcaseBusiness,
+  ChevronDown,
+  ChevronUp,
   CircleUser,
   KeyRound,
   LayoutDashboard,
@@ -35,6 +37,8 @@ interface SideBarElementProps {
   href?: string;
   icon?: any;
   collapsible?: boolean;
+  collapsibleState?: boolean;
+  setCollapsibleState?: (state: boolean) => void;
   onClick?: () => void;
 }
 
@@ -43,37 +47,64 @@ const SideBarElement: React.FC<SideBarElementProps> = ({
   href,
   icon,
   collapsible = false,
+  collapsibleState,
+  setCollapsibleState,
   onClick,
 }) => {
   const pathname = usePathname();
 
-  return (
-    <>
-      {onClick && (
-        <Button
-          variant={"ghost"}
-          className="w-full justify-start h-min py-1"
-          onClick={onClick}
-        >
+  if (!href) {
+    return (
+      <Button
+        variant={"ghost"}
+        className="w-full justify-start h-min py-1"
+        onClick={onClick}
+      >
+        {icon}
+        {children}
+      </Button>
+    );
+  }
+
+  if (collapsible) {
+    return (
+      <Button
+        variant={"ghost"}
+        className="w-full justify-between h-min py-1"
+        onClick={() => setCollapsibleState?.(!collapsibleState)}
+      >
+        <div className="flex flex-grow justify-between items-center">
+          <div className="flex h-min items-center">
+            {icon}
+            {children}
+          </div>
+          <div>
+            {collapsibleState && <ChevronUp className="w-4 h-4" />}
+            {!collapsibleState && <ChevronDown className="w-4 h-4" />}
+          </div>
+        </div>
+      </Button>
+    );
+  }
+
+  if (href && pathname.startsWith(href)) {
+    return (
+      <div className="flex justify-start items-center bg-secondary rounded-md text-sm font-medium h-min px-4 py-1">
+        {icon} {children}
+      </div>
+    );
+  }
+
+  if (href) {
+    return (
+      <Link href={href}>
+        <Button variant={"ghost"} className="w-full justify-start h-min py-1">
           {icon}
           {children}
         </Button>
-      )}
-      {href && (!pathname.startsWith(href) || collapsible) && (
-        <Link href={href}>
-          <Button variant={"ghost"} className="w-full justify-start h-min py-1">
-            {icon}
-            {children}
-          </Button>
-        </Link>
-      )}
-      {href && pathname.startsWith(href) && !collapsible && (
-        <div className="flex justify-start items-center bg-secondary rounded-md text-sm font-medium h-min px-4 py-1">
-          {icon} {children}
-        </div>
-      )}
-    </>
-  );
+      </Link>
+    );
+  }
 };
 
 function WhiteSpaceSeparator() {
@@ -88,6 +119,14 @@ export function Sidebar() {
   const [isMobile, setIsMobile] = useState(false);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const { redirectToOrgApiKeysPage } = useRedirectFunctions();
+
+  const [transcriptOpen, setTranscriptOpen] = useState(
+    pathname.includes("transcripts"),
+  );
+  const [datavizOpen, setDatavizOpen] = useState(pathname.includes("dataviz"));
+  const [settingsOpen, setSettingsOpen] = useState(
+    pathname.includes("settings"),
+  );
 
   useEffect(() => {
     const handleResize = () => {
@@ -111,10 +150,12 @@ export function Sidebar() {
           href="/org/transcripts/"
           icon={<BookOpenText size={16} className="mr-2" />}
           collapsible={true}
+          collapsibleState={transcriptOpen}
+          setCollapsibleState={setTranscriptOpen}
         >
           Transcripts
         </SideBarElement>
-        {(pathname.startsWith("/org/transcripts") || isMobile) && (
+        {(transcriptOpen || isMobile) && (
           <div className="ml-6 text-muted-foreground">
             <SideBarElement href="/org/transcripts/sessions">
               <List className="h-4 w-4 mr-2" />
@@ -134,10 +175,12 @@ export function Sidebar() {
           href="/org/dataviz/"
           icon={<BarChartBig className="h-4 w-4 mr-2" />}
           collapsible={true}
+          collapsibleState={datavizOpen}
+          setCollapsibleState={setDatavizOpen}
         >
           Dataviz
         </SideBarElement>
-        {(pathname.startsWith("/org/dataviz") || isMobile) && (
+        {(datavizOpen || isMobile) && (
           <div className="ml-6 text-muted-foreground">
             <SideBarElement href="/org/dataviz/dashboard">
               <LayoutDashboard className="h-4 w-4 mr-2" />
@@ -188,10 +231,12 @@ export function Sidebar() {
           href="/org/settings"
           icon={<Settings size={16} className="mr-2" />}
           collapsible={true}
+          collapsibleState={settingsOpen}
+          setCollapsibleState={setSettingsOpen}
         >
           Settings
         </SideBarElement>
-        {(pathname.startsWith("/org/settings") || isMobile) && (
+        {(settingsOpen || isMobile) && (
           <div className="ml-6 text-muted-foreground">
             <SideBarElement href="/org/settings/project">
               <BriefcaseBusiness size={16} className="mr-2" />

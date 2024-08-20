@@ -124,7 +124,7 @@ export function getLanguageLabel(isoCode: string | null): string {
   return languageMap[isoCode.toLowerCase()] || "Unknown";
 }
 
-export function generateSlug() {
+export function generateSlug(addDate = true): string {
   // Generate a random slug
 
   function getRandomItem<T>(array: T[]): T {
@@ -171,6 +171,10 @@ export function generateSlug() {
     "turquoise",
     "lavender",
     "rose",
+    "redish",
+    "ultraviolet",
+    "aqua",
+    "yellow",
   ];
 
   const fruits = [
@@ -204,10 +208,19 @@ export function generateSlug() {
     "potato",
     "carrot",
     "beet",
+    "radish",
+    "turnip",
+    "parsnip",
+    "rutabaga",
+    "squash",
   ];
 
   const color = getRandomItem(colors);
   const fruit = getRandomItem(fruits);
+  if (!addDate) {
+    return `${color}-${fruit}`;
+  }
+  // Add the date to the slug
   const date = getCompactDate();
   return `${date}-${color}-${fruit}`;
 }
