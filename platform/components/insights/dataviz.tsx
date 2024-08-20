@@ -4,6 +4,7 @@ import { Spinner } from "@/components/small-spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
+import { graphColors } from "@/lib/utils";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -78,28 +79,6 @@ const DatavizGraph = ({
     },
   );
 
-  const graphColors = [
-    "#22c55e",
-    "#ff7c7c",
-    "#ffbb43",
-    "#4a90e2",
-    "#a259ff",
-    "#FFDE82",
-    "#CBA74E",
-    "#917319",
-    "#E2E3D8",
-    "#68EDCB",
-    "#00C4FF",
-    "#9FAFA1",
-    "#EB6D00",
-    "#D3D663",
-    "#92CF56",
-    "#FFDE82",
-    "#FA003C",
-    "#9FA8DF",
-    "#005400",
-    "#505C8D",
-  ];
   const isStacked = pivotData?.length > 1 && "stack" in pivotData[0];
 
   if (!numberMetadataFields || !categoryMetadataFields) {
