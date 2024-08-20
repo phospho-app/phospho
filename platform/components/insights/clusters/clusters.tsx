@@ -24,7 +24,6 @@ const Clusters: React.FC = () => {
 
   const [clusteringUnavailable, setClusteringUnavailable] = useState(true);
   const [sheetClusterOpen, setSheetClusterOpen] = useState(false);
-  const [sheetEventOpen, setSheetEventOpen] = useState(false);
 
   const { data: clusteringsData, mutate: mutateClusterings } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
@@ -125,11 +124,7 @@ const Clusters: React.FC = () => {
         </CardHeader>
       </Card>
       <div className="flex-col space-y-2 md:flex pb-10">
-        <ClustersCards
-          sheetEventOpen={sheetEventOpen}
-          setSheetEventOpen={setSheetEventOpen}
-          setSheetClusterOpen={setSheetClusterOpen}
-        />
+        <ClustersCards setSheetClusterOpen={setSheetClusterOpen} />
       </div>
     </>
   );
