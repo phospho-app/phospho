@@ -46,7 +46,7 @@ export function ClustersCards({
   );
   const clusterings = (clusteringsData?.clusterings as Clustering[]) ?? [];
 
-  let latestClustering = undefined;
+  let latestClustering: Clustering | undefined = undefined;
   if (clusterings.length > 0) {
     console.log("clusterings", clusterings);
     latestClustering = clusterings[0];
