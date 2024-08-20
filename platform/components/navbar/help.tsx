@@ -103,7 +103,7 @@ export function NavBarHelp() {
                 >
                   <div className="flex flex-row items-center">
                     <FolderInput className="w-4 h-4 mr-1" />
-                    Start sending data
+                    Send data
                   </div>
                 </AlertDialogTrigger>
               </DropdownMenuItem>

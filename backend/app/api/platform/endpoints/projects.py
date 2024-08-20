@@ -416,6 +416,7 @@ async def post_upload_tasks(
     Optional columns:
     - task_id: the task id
     - session_id: the session id to which the task is associated
+    - user_id: the user id who created the task
     - created_at: the creation date of the task
     """
     project = await get_project_by_id(project_id)
@@ -466,6 +467,16 @@ async def post_upload_tasks(
 
     # Strip and lowercase the columns
     tasks_df.columns = tasks_df.columns.str.strip().str.lower()
+    logger.debug(f"Columns: {tasks_df.columns}")
+
+    # Rename task_input to input and task_output to output
+    tasks_df.rename(
+        columns={
+            "task_input": "input",
+            "task_output": "output",
+        },
+        inplace=True,
+    )
 
     # Verify if the required columns are present
     required_columns = ["input", "output"]
