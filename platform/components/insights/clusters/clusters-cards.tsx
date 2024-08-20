@@ -14,23 +14,30 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { Cluster, Clustering } from "@/models/models";
-import { navigationStateStore } from "@/store/store";
+import { Cluster, Clustering, EventDefinition } from "@/models/models";
+import { Project } from "@/models/models";
+import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { ChevronRight, Pickaxe } from "lucide-react";
+import { ChevronRight, Pickaxe, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { use, useEffect } from "react";
 import useSWR from "swr";
 
+import CreateEvent from "../events/create-event";
 import "./style.css";
 
 export function ClustersCards({
-  setSheetOpen,
+  sheetEventOpen: sheetEventOpen,
+  setSheetEventOpen: setSheetEventOpen,
+  setSheetClusterOpen: setSheetClusterOpen,
 }: {
-  setSheetOpen: (value: boolean) => void;
+  sheetEventOpen: boolean;
+  setSheetEventOpen: (value: boolean) => void;
+  setSheetClusterOpen: (value: boolean) => void;
 }) {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
@@ -100,6 +107,23 @@ export function ClustersCards({
   if (!project_id) {
     return <></>;
   }
+
+  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+
+  const events = selectedProject?.settings?.events || {};
+
+  // Max number of events depends on the plan
+  const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
+  const current_nb_events = Object.keys(events).length;
+  let isDisabled = max_nb_events && current_nb_events >= max_nb_events;
 
   return (
     <div>
@@ -186,6 +210,33 @@ export function ClustersCards({
               {cluster.description}
             </p>
             <div className="mt-auto pt-2 flex justify-end space-x-2">
+              <Sheet open={sheetEventOpen} onOpenChange={setSheetEventOpen}>
+                <SheetTrigger asChild>
+                  <Button disabled={isDisabled} size="sm">
+                    <PlusIcon className="h-4 w-4 mr-1" />
+                    Add tagger
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="md:w-1/2 overflow-auto">
+                  <CreateEvent
+                    key={cluster.id}
+                    setOpen={setSheetEventOpen}
+                    eventToEdit={
+                      {
+                        project_id: project_id,
+                        org_id: selectedProject.org_id,
+                        event_name: cluster.name,
+                        description: cluster.description,
+                        score_range_settings: {
+                          min: 0,
+                          max: 1,
+                          score_type: "confidence",
+                        },
+                      } as EventDefinition
+                    }
+                  />
+                </SheetContent>
+              </Sheet>
               {cluster.size > 5 && (
                 <Button
                   className="pickaxe-button"
@@ -193,7 +244,7 @@ export function ClustersCards({
                   size="sm"
                   onClick={(mouseEvent) => {
                     mouseEvent.stopPropagation();
-                    setSheetOpen(true);
+                    setSheetClusterOpen(true);
                     setDataFilters({
                       ...dataFilters,
                       clustering_id: cluster.clustering_id,

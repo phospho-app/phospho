@@ -210,7 +210,7 @@ function EventRow({
               {sheetToOpen === "edit" && (
                 <CreateEvent
                   setOpen={setOpen}
-                  eventNameToEdit={eventDefinition.event_name}
+                  eventToEdit={eventDefinition}
                   key={eventDefinition.id}
                 />
               )}
