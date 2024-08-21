@@ -144,156 +144,158 @@ export function Sidebar() {
   }, []);
 
   return (
-    <div className="flex flex-col py-4 overflow-y-auto border-secondary h-full ">
-      <div>
-        <SideBarElement
-          href="/org/transcripts/"
-          icon={<BookOpenText size={16} className="mr-2" />}
-          collapsible={true}
-          collapsibleState={transcriptOpen}
-          setCollapsibleState={setTranscriptOpen}
-        >
-          Transcripts
-        </SideBarElement>
-        {(transcriptOpen || isMobile) && (
-          <div className="ml-6 text-muted-foreground">
-            <SideBarElement href="/org/transcripts/sessions">
-              <List className="h-4 w-4 mr-2" />
-              Sessions
-            </SideBarElement>
-            <SideBarElement href="/org/transcripts/tasks">
-              <MessagesSquare className="h-4 w-4 mr-2" />
-              Messages
-            </SideBarElement>
-            <SideBarElement href="/org/transcripts/users">
-              <Users className="h-4 w-4 mr-2" />
-              Users
-            </SideBarElement>
-          </div>
-        )}
-        <SideBarElement
-          href="/org/dataviz/"
-          icon={<BarChartBig className="h-4 w-4 mr-2" />}
-          collapsible={true}
-          collapsibleState={datavizOpen}
-          setCollapsibleState={setDatavizOpen}
-        >
-          Dataviz
-        </SideBarElement>
-        {(datavizOpen || isMobile) && (
-          <div className="ml-6 text-muted-foreground">
-            <SideBarElement href="/org/dataviz/dashboard">
-              <LayoutDashboard className="h-4 w-4 mr-2" />
-              Dashboard
-            </SideBarElement>
-            <SideBarElement
-              href="/org/dataviz/studio"
-              icon={<AreaChart size={16} className="mr-2" />}
-            >
-              Studio
-            </SideBarElement>
-          </div>
-        )}
-        <WhiteSpaceSeparator />
-        <SideBarElement
-          href="/org/insights/events"
-          icon={<TextSearch size={16} className="mr-2" />}
-        >
-          Analytics
-        </SideBarElement>
-        <SideBarElement
-          href="/org/insights/clusters"
-          icon={<Boxes size={16} className="mr-2" />}
-        >
-          Clusters
-        </SideBarElement>
-        <SideBarElement
-          href="/org/ab-testing"
-          icon={<Shuffle size={16} className="mr-2" />}
-        >
-          AB Testing
-        </SideBarElement>
-        {/* <SideBarElement
+    <div className="overflow-y-auto max-h-[100dvh] md:max-h-full md:h-full">
+      <div className="flex flex-col py-4 border-secondary h-full">
+        <div>
+          <SideBarElement
+            href="/org/transcripts/"
+            icon={<BookOpenText size={16} className="mr-2" />}
+            collapsible={true}
+            collapsibleState={transcriptOpen}
+            setCollapsibleState={setTranscriptOpen}
+          >
+            Transcripts
+          </SideBarElement>
+          {(transcriptOpen || isMobile) && (
+            <div className="ml-6 text-muted-foreground">
+              <SideBarElement href="/org/transcripts/sessions">
+                <List className="h-4 w-4 mr-2" />
+                Sessions
+              </SideBarElement>
+              <SideBarElement href="/org/transcripts/tasks">
+                <MessagesSquare className="h-4 w-4 mr-2" />
+                Messages
+              </SideBarElement>
+              <SideBarElement href="/org/transcripts/users">
+                <Users className="h-4 w-4 mr-2" />
+                Users
+              </SideBarElement>
+            </div>
+          )}
+          <SideBarElement
+            href="/org/dataviz/"
+            icon={<BarChartBig className="h-4 w-4 mr-2" />}
+            collapsible={true}
+            collapsibleState={datavizOpen}
+            setCollapsibleState={setDatavizOpen}
+          >
+            Dataviz
+          </SideBarElement>
+          {(datavizOpen || isMobile) && (
+            <div className="ml-6 text-muted-foreground">
+              <SideBarElement href="/org/dataviz/dashboard">
+                <LayoutDashboard className="h-4 w-4 mr-2" />
+                Dashboard
+              </SideBarElement>
+              <SideBarElement
+                href="/org/dataviz/studio"
+                icon={<AreaChart size={16} className="mr-2" />}
+              >
+                Studio
+              </SideBarElement>
+            </div>
+          )}
+          <WhiteSpaceSeparator />
+          <SideBarElement
+            href="/org/insights/events"
+            icon={<TextSearch size={16} className="mr-2" />}
+          >
+            Analytics
+          </SideBarElement>
+          <SideBarElement
+            href="/org/insights/clusters"
+            icon={<Boxes size={16} className="mr-2" />}
+          >
+            Clusters
+          </SideBarElement>
+          <SideBarElement
+            href="/org/ab-testing"
+            icon={<Shuffle size={16} className="mr-2" />}
+          >
+            AB Testing
+          </SideBarElement>
+          {/* <SideBarElement
           href="/org/tests"
           icon={<TestTubeDiagonal size={16} className="mr-2" />}
         >
           Tests
         </SideBarElement> */}
-        <WhiteSpaceSeparator />
-        {/* <WhiteSpaceSeparator /> */}
-        <SideBarElement
-          href="/org/integrations"
-          icon={<LayoutGrid size={16} className="mr-2" />}
-        >
-          Integrations
-        </SideBarElement>
-        <SideBarElement
-          href="/org/settings"
-          icon={<Settings size={16} className="mr-2" />}
-          collapsible={true}
-          collapsibleState={settingsOpen}
-          setCollapsibleState={setSettingsOpen}
-        >
-          Settings
-        </SideBarElement>
-        {(settingsOpen || isMobile) && (
-          <div className="ml-6 text-muted-foreground">
-            <SideBarElement href="/org/settings/project">
-              <BriefcaseBusiness size={16} className="mr-2" />
-              Project
-            </SideBarElement>
-            <SideBarElement
-              icon={
-                <KeyRound size={16} className="scale-x-[-1] rotate-90 mr-2" />
-              }
-              onClick={() => {
-                redirectToOrgApiKeysPage(selectedOrgId ?? "", {
-                  redirectBackToUrl: window.location.hostname,
-                });
-              }}
-            >
-              API Keys
-            </SideBarElement>
-            <SideBarElement href="/org/settings/account">
-              <CircleUser size={16} className="mr-2" />
-              Account
-            </SideBarElement>
-            <SideBarElement href="/org/settings/billing">
-              <WalletMinimal size={16} className="mr-2" />
-              Billing
-            </SideBarElement>
+          <WhiteSpaceSeparator />
+          {/* <WhiteSpaceSeparator /> */}
+          <SideBarElement
+            href="/org/integrations"
+            icon={<LayoutGrid size={16} className="mr-2" />}
+          >
+            Integrations
+          </SideBarElement>
+          <SideBarElement
+            href="/org/settings"
+            icon={<Settings size={16} className="mr-2" />}
+            collapsible={true}
+            collapsibleState={settingsOpen}
+            setCollapsibleState={setSettingsOpen}
+          >
+            Settings
+          </SideBarElement>
+          {(settingsOpen || isMobile) && (
+            <div className="ml-6 text-muted-foreground">
+              <SideBarElement href="/org/settings/project">
+                <BriefcaseBusiness size={16} className="mr-2" />
+                Project
+              </SideBarElement>
+              <SideBarElement
+                icon={
+                  <KeyRound size={16} className="scale-x-[-1] rotate-90 mr-2" />
+                }
+                onClick={() => {
+                  redirectToOrgApiKeysPage(selectedOrgId ?? "", {
+                    redirectBackToUrl: window.location.hostname,
+                  });
+                }}
+              >
+                API Keys
+              </SideBarElement>
+              <SideBarElement href="/org/settings/account">
+                <CircleUser size={16} className="mr-2" />
+                Account
+              </SideBarElement>
+              <SideBarElement href="/org/settings/billing">
+                <WalletMinimal size={16} className="mr-2" />
+                Billing
+              </SideBarElement>
+            </div>
+          )}
+        </div>
+
+        {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
+          <div className="flex justify-center mt-4 mx-0.5">
+            <Card className="border-red-500 ml-4">
+              <CardTitle className="text-sm flex flex-row font-bold p-1">
+                <TriangleAlert className="h-6 w-6 mr-2" />
+                <h2>Your account is missing billing information</h2>
+              </CardTitle>
+              <CardContent className="flex flex-col justify-center px-2">
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Advanced analytics are <b>not</b> enabled.
+                </p>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Add payment now to get 10$ of free credits 🎁
+                </p>
+                <div className="flex justify-center">
+                  <UpgradeButton
+                    tagline="Enable analytics"
+                    enlarge={false}
+                    green={true}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
-      </div>
 
-      {selectedOrgMetadata && selectedOrgMetadata?.plan === "hobby" && (
-        <div className="flex justify-center mt-4 mx-0.5">
-          <Card className="border-red-500 ml-4">
-            <CardTitle className="text-sm flex flex-row font-bold p-1">
-              <TriangleAlert className="h-6 w-6 mr-2" />
-              <h2>Your account is missing billing information</h2>
-            </CardTitle>
-            <CardContent className="flex flex-col justify-center px-2">
-              <p className="mb-2 text-xs text-muted-foreground">
-                Advanced analytics are <b>not</b> enabled.
-              </p>
-              <p className="mb-2 text-xs text-muted-foreground">
-                Add payment now to get 10$ of free credits 🎁
-              </p>
-              <div className="flex justify-center">
-                <UpgradeButton
-                  tagline="Enable analytics"
-                  enlarge={false}
-                  green={true}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      <div className="absolute bottom-5">
+        <div className="md:flex-grow" />
         <OnboardingProgress />
+        <div className="h-10" />
       </div>
     </div>
   );

@@ -2,18 +2,14 @@
 
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import getConfig from "next/config";
 import Link from "next/link";
 import React from "react";
 
-import { Separator } from "../ui/separator";
 import { NavBarHelp } from "./help";
 import { NavBarSettings } from "./navsettings";
 import { NavBarProject } from "./project";
@@ -36,27 +32,31 @@ export function Navbar({
   return (
     <div>
       <nav
-        className={cn("relative flex flex-row justify-center", className)}
+        className={cn(
+          "relative flex flex-row w-full md:justify-center",
+          className,
+        )}
         {...props}
       >
-        <div className="flex flex-row items-center justify-between py-1.5 md:w-10/12">
-          <div className="flex flex-row items-center space-x-2">
+        <div className="flex flex-row  w-full items-center justify-between mx-1.5 my-1.5 md:w-10/12">
+          <div className="flex flex-row items-center space-x-2 ">
             <div className="block md:hidden">
-              <DropdownMenu open={open} onOpenChange={setOpen}>
-                <DropdownMenuTrigger asChild>
+              <Sheet open={open} onOpenChange={setOpen}>
+                <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
                     <Menu className="h-6 w-6 text-muted-foreground" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
+                </SheetTrigger>
+                <SheetContent
+                  side="left"
                   onClick={(mouseEvent) => {
                     mouseEvent.stopPropagation();
                     setOpen(false);
                   }}
                 >
                   <Sidebar />
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </SheetContent>
+              </Sheet>
             </div>
             <Link href="/">
               <h2 className="text-xl font-semibold text-green-500 flex-none">
