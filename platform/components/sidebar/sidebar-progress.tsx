@@ -98,7 +98,12 @@ export const OnboardingProgress = () => {
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger className="text-primary-500 hover:text-green-500 text-sm flex flex-col items-start mx-2">
+      <AlertDialogTrigger
+        className="text-primary-500 hover:text-green-500 text-sm flex flex-col items-start mx-2"
+        onClick={(mouseEvent) => {
+          mouseEvent.stopPropagation();
+        }}
+      >
         Finish onboarding
         <Progress value={progress} />
       </AlertDialogTrigger>
@@ -128,9 +133,6 @@ const OnboardingTask = ({
   onClick: () => void;
   completed: boolean;
 }) => {
-  const handleEventsClick = async () => {
-    onClick();
-  };
   if (!completed) {
     return (
       <Card>
@@ -141,7 +143,7 @@ const OnboardingTask = ({
           </div>
           <Button
             variant="outline"
-            onClick={handleEventsClick}
+            onClick={onClick}
             className="my-auto mr-4 bg-green-500 text-white hover:bg-green-600 hover:text-white"
           >
             Start
