@@ -282,11 +282,6 @@ export default function Pricing({
       },
       {
         type: "section",
-        label: "Custom Evaluations",
-        tiers: { hobby: true, usage_based: true, pro: true, enterprise: true },
-      },
-      {
-        type: "section",
         label: "Event Detection",
         tiers: { hobby: true, usage_based: true, pro: true, enterprise: true },
       },
@@ -348,17 +343,6 @@ export default function Pricing({
       },
     ],
   };
-
-  //   const allPricingCards = Object.entries(pricingData.tiers).map(
-  //     ([tierName, tier]) => (
-  //       <PricingCard
-  //         currentPlan={plan}
-  //         tierName={tierName}
-  //         tier={tier}
-  //         pricingData={pricingData}
-  //       />
-  //     )
-  //   );
 
   const hobbyPricingCard = (
     <PricingCard

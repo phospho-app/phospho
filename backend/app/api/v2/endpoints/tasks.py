@@ -20,7 +20,6 @@ from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.sessions import get_session_by_id
 from app.services.mongo.tasks import (
     create_task,
-    flag_task,
     get_task_by_id,
     update_task,
     human_eval_task,
@@ -86,65 +85,6 @@ async def get_task(task_id: str, org: dict = Depends(authenticate_org_key)) -> T
     task = await get_task_by_id(task_id)
     await verify_propelauth_org_owns_project_id(org, task.project_id)
     return task
-
-
-@router.post(
-    "/tasks/{task_id}/flag",
-    response_model=Task,
-    description="Update the status of a task",
-)
-async def post_flag_task(
-    task_id: str,
-    taskFlagRequest: TaskFlagRequest,
-    org: Optional[dict] = Depends(authenticate_org_key_no_exception),
-) -> Task:
-    """
-    Set the flag of the task to be 'success' or 'failure'
-    Sign the origin of the flag ("owner", "phospho", "user", etc.)
-    """
-    # Get the task object
-    if taskFlagRequest.flag not in ["success", "failure"]:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid flag value {taskFlagRequest.flag}. Must be 'success' or 'failure'",
-        )
-    if taskFlagRequest.project_id is None and org is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Please pass the project_id in the request body to flag the task.",
-        )
-
-    # The task may not exist yet, so we try to fetch it multiple times with exponential backoff
-    delay = 0.1
-    for _ in range(5):
-        try:
-            task_model = await get_task_by_id(task_id)
-            break
-        except Exception:
-            logger.warning(f"Task {task_id} not found, retrying in {delay} seconds")
-            await asyncio.sleep(delay)
-            delay *= 2
-    else:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Task {task_id} not found after multiple retries",
-        )
-
-    if org is not None:
-        await verify_propelauth_org_owns_project_id(org, task_model.project_id)
-    elif task_model.project_id != taskFlagRequest.project_id:
-        await asyncio.sleep(0.1)
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid project_id {taskFlagRequest.project_id} for task {task_id}",
-        )
-    updated_task = await flag_task(
-        task_model=task_model,
-        flag=taskFlagRequest.flag,
-        source=taskFlagRequest.source,
-        notes=taskFlagRequest.notes,
-    )
-    return updated_task
 
 
 @router.post(

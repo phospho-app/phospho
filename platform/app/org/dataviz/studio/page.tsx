@@ -330,17 +330,14 @@ const MetadataForm: React.FC = () => {
 
               // Push updates
               try {
-                const creation_response = await fetch(
-                  `/api/projects/${selectedProject.id}`,
-                  {
-                    method: "POST",
-                    headers: {
-                      Authorization: "Bearer " + accessToken,
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(selectedProject),
+                await fetch(`/api/projects/${selectedProject.id}`, {
+                  method: "POST",
+                  headers: {
+                    Authorization: "Bearer " + accessToken,
+                    "Content-Type": "application/json",
                   },
-                ).then((response) => {
+                  body: JSON.stringify(selectedProject),
+                }).then((response) => {
                   mutate(
                     [`/api/projects/${selectedProject.id}`, accessToken],
                     async (data: any) => {

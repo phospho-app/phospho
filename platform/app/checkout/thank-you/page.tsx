@@ -79,12 +79,6 @@ function RunAnalyticsForm({
   }, [checkedEval, checkedEvent, checkedLangSent, nbrEvents, totalNbTasks]);
 
   const form_choices = [
-    // {
-    //   id: "evaluation",
-    //   label: "Evaluation",
-    //   description:
-    //     "Automatically label system responses as a Success or Failure. 1 credit per system response.",
-    // },
     {
       id: "event_detection",
       label: "Event detection",

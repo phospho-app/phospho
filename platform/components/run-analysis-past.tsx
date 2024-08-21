@@ -53,7 +53,6 @@ const RunAnalysisInPast = ({
 }) => {
   const router = useRouter();
   const { accessToken } = useUser();
-  const [checkedEval, setCheckedEval] = useState(false);
   const [checkedEvent, setCheckedEvent] = useState(true);
   const [checkedLangSent, setCheckedLangSent] = useState(true);
   const [totalAnalytics, setTotalAnalytics] = useState(0);
@@ -80,23 +79,15 @@ const RunAnalysisInPast = ({
   React.useEffect(() => {
     if (totalNbTasks) {
       setTotalAnalytics(
-        ((checkedEval ? 1 : 0) +
-          (checkedEvent ? nbrEvents : 0) +
-          (checkedLangSent ? 2 : 0)) *
+        ((checkedEvent ? nbrEvents : 0) + (checkedLangSent ? 2 : 0)) *
           totalNbTasks,
       );
     } else {
       setTotalAnalytics(0);
     }
-  }, [checkedEval, checkedEvent, checkedLangSent, nbrEvents, totalNbTasks]);
+  }, [checkedEvent, checkedLangSent, nbrEvents, totalNbTasks]);
 
   const form_choices = [
-    // {
-    //   id: "evaluation",
-    //   label: "Evaluation",
-    //   description:
-    //     "Automatically label system responses as a Success or Failure. 1 credit per system response.",
-    // },
     {
       id: "event_detection",
       label: "Event detection",
@@ -118,7 +109,7 @@ const RunAnalysisInPast = ({
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      recipe_type_list: ["event_detection", "sentiment_language"], // "evaluation"
+      recipe_type_list: ["event_detection", "sentiment_language"],
     },
   });
 
@@ -206,9 +197,6 @@ const RunAnalysisInPast = ({
                                 onCheckedChange={(checked) => {
                                   if (checked) {
                                     field.onChange([...field.value, item.id]);
-                                    // if (item.id === "evaluation") {
-                                    //   setCheckedEval(true);
-                                    // }
                                     if (item.id === "event_detection") {
                                       setCheckedEvent(true);
                                     }
@@ -221,9 +209,6 @@ const RunAnalysisInPast = ({
                                         (value) => value !== item.id,
                                       ),
                                     );
-                                    // if (item.id === "evaluation") {
-                                    //   setCheckedEval(false);
-                                    // }
                                     if (item.id === "event_detection") {
                                       setCheckedEvent(false);
                                     }

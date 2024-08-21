@@ -151,8 +151,8 @@ def test_create_and_update_task(
 
         # Flag the task
         response = client.post(
-            f"/api/tasks/{task['id']}/flag",
-            json={"flag": "success"},
+            f"/api/tasks/{task['id']}/human-eval",
+            json={"human_eval": "success"},
             headers={"Authorization": f"Bearer {access_token}"},
         )
         assert response.status_code == 200, response.text
@@ -187,8 +187,8 @@ def test_create_and_update_task(
 
         # Flag the task
         response = client.post(
-            f"/v2/tasks/{task['id']}/flag",
-            json={"flag": "failure"},
+            f"/v2/tasks/{task['id']}/human-eval",
+            json={"human_eval": "failure"},
             headers={"Authorization": f"Bearer {api_key}"},
         )
         assert response.status_code == 200, response.text

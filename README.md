@@ -18,7 +18,8 @@ Learn more in the full [documentation](https://docs.phospho.ai/welcome).
 ## Key Features
 
 - Flexible logging
-- Automatic evaluation
+- Data Clustering
+- A/B testing
 - Insights extraction
 - Data visualization
 - Collaboration

@@ -25,9 +25,6 @@ export default function DisableAnalytics() {
     },
   );
 
-  const [checkedEval, setCheckedEval] = useState(
-    selectedProject.settings?.run_evals,
-  );
   const [checkedEvent, setCheckedEvent] = useState(
     selectedProject.settings?.run_event_detection,
   );
@@ -49,7 +46,6 @@ export default function DisableAnalytics() {
     if (!accessToken) return;
     if (!selectedProject) return;
     if (!selectedProject.id) return;
-    if (checkedEval === undefined) return;
     if (checkedEvent === undefined) return;
     if (checkedLanguage === undefined) return;
     if (checkedSentiment === undefined) return;
@@ -62,7 +58,6 @@ export default function DisableAnalytics() {
         },
         body: JSON.stringify({
           settings: {
-            run_evals: id === "evaluation" ? !checkedEval : checkedEval,
             run_event_detection:
               id === "event_detection" ? !checkedEvent : checkedEvent,
             run_language:
@@ -82,12 +77,6 @@ export default function DisableAnalytics() {
   };
 
   const analytics = [
-    {
-      id: "evaluation",
-      label: "Evaluation",
-      description:
-        "Automatically label system responses as a Success or Failure. 1 credit per system response.",
-    },
     {
       id: "event_detection",
       label: "Event detection",
@@ -127,19 +116,14 @@ export default function DisableAnalytics() {
           <div key={item.id} className="flex flex-row items-center space-x-2">
             <Checkbox
               checked={
-                item.id === "evaluation"
-                  ? checkedEval
-                  : item.id === "event_detection"
-                    ? checkedEvent
-                    : item.id === "sentiment"
-                      ? checkedSentiment
-                      : checkedLanguage
+                item.id === "event_detection"
+                  ? checkedEvent
+                  : item.id === "sentiment"
+                    ? checkedSentiment
+                    : checkedLanguage
               }
               onCheckedChange={(checked) => {
                 if (checked) {
-                  if (item.id === "evaluation") {
-                    setCheckedEval(true);
-                  }
                   if (item.id === "event_detection") {
                     setCheckedEvent(true);
                   }
@@ -150,9 +134,6 @@ export default function DisableAnalytics() {
                     setCheckedLanguage(true);
                   }
                 } else {
-                  if (item.id === "evaluation") {
-                    setCheckedEval(false);
-                  }
                   if (item.id === "event_detection") {
                     setCheckedEvent(false);
                   }
