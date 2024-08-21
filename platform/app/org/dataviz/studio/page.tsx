@@ -98,7 +98,7 @@ const MetadataForm: React.FC = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Nb tasks");
+                    setSelectedMetric("nb tasks");
                     setmetadata_metric(null);
                   }}
                 >
@@ -107,7 +107,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Nb sessions");
+                    setSelectedMetric("nb sessions");
                     setmetadata_metric(null);
                   }}
                 >
@@ -116,7 +116,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Event count");
+                    setSelectedMetric("event count");
                     setmetadata_metric(null);
                   }}
                 >
@@ -125,7 +125,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Event distribution");
+                    setSelectedMetric("event distribution");
                     setmetadata_metric(null);
                   }}
                 >
@@ -134,7 +134,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Avg Success rate");
+                    setSelectedMetric("avg Success rate");
                     setmetadata_metric(null);
                   }}
                 >
@@ -143,7 +143,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Avg session length");
+                    setSelectedMetric("avg session length");
                     setmetadata_metric(null);
                   }}
                 >
