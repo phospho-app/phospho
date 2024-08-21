@@ -11,7 +11,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { EvaluationModel, Project } from "@/models/models";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { AlertDialog } from "@radix-ui/react-alert-dialog";
@@ -20,8 +20,6 @@ import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import * as React from "react";
 import useSWR from "swr";
-
-import { EvalSettingsOnboarding } from "../eval-settings-onboarding";
 
 // This component is used to display the progress of the onboarding process.
 // It is composed of a progress bar and a text label.
@@ -44,17 +42,6 @@ export const OnboardingProgress = () => {
       keepPreviousData: true,
     },
   );
-
-  const { data: evaluation_model }: { data: EvaluationModel; mutate: any } =
-    useSWR(
-      project_id
-        ? [`/api/projects/${project_id}/evaluation`, accessToken]
-        : null,
-      ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-      {
-        keepPreviousData: true,
-      },
-    );
 
   const { data: totalNbTasksData } = useSWR(
     project_id
@@ -336,12 +323,6 @@ const OnboardingProgressPopover = ({
       <AlertDialog open={openCreateProject}>
         <AlertDialogContent className="md:max-w-1/4">
           <CreateProjectDialog setOpen={setOpenCreateProject} />
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={openEvalDialog}>
-        <AlertDialogContent className="md:max-w-1/4">
-          <EvalSettingsOnboarding setOpen={setOpenEvalDialog} />
         </AlertDialogContent>
       </AlertDialog>
     </div>

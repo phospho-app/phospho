@@ -2,7 +2,6 @@ import {
   AddEventDropdownForSessions,
   InteractiveEventBadgeForSessions,
 } from "@/components/label-events";
-import { EvalSettings } from "@/components/transcripts/settings/eval-settings";
 import { RunEventsSettings } from "@/components/transcripts/settings/events-settings";
 import { SentimentSettings } from "@/components/transcripts/settings/sentiment-settings";
 import { Badge } from "@/components/ui/badge";
@@ -264,39 +263,6 @@ export function getColumns({
       ),
       maxSize: 10,
     },
-    // Eval
-    // {
-    //   header: ({ column }) => {
-    //     return (
-    //       <div className="flex items-center space-x-2 justify-between">
-    //         <div className="flex items-center">
-    //           <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-    //           Eval
-    //         </div>
-    //         <EvalSettings />
-    //       </div>
-    //     );
-    //   },
-    //   accessorKey: "stats.most_common_flag",
-    //   cell: (row) => {
-    //     return (
-    //       <div>
-    //         <Badge
-    //           variant={
-    //             (row.getValue() as string) === "success"
-    //               ? "secondary"
-    //               : (row.getValue() as string) === "failure"
-    //                 ? "destructive"
-    //                 : "secondary"
-    //           }
-    //           className="hover:border-green-500"
-    //         >
-    //           {row.getValue() as string}
-    //         </Badge>
-    //       </div>
-    //     );
-    //   },
-    // },
     // Events
     {
       header: () => {

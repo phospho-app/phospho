@@ -170,7 +170,7 @@ export function TasksTable<TData, TValue>({
         <div className="flex flex-row justify-between gap-x-2 items-center mb-2">
           <div className="flex flex-row space-x-2 items-center">
             <DatePickerWithRange />
-            <FilterComponent variant="sessions" />
+            <FilterComponent variant="tasks" />
             <RunAnalysisInPast totalNbTasks={totalNbTasks} />
           </div>
           <TableNavigation table={table} />

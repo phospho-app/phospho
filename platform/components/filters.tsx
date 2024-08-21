@@ -227,21 +227,6 @@ const FilterComponent = ({
             <X className="h-4 w-4 ml-2" />
           </Button>
         )}
-        {dataFilters.last_eval_source && (
-          <Button
-            variant="outline"
-            onClick={() => {
-              setDataFilters({
-                ...dataFilters,
-                last_eval_source: null,
-              });
-              resetPagination();
-            }}
-          >
-            {dataFilters.last_eval_source}
-            <X className="h-4 w-4 ml-2" />
-          </Button>
-        )}
         {dataFilters.metadata &&
           Object.entries(dataFilters.metadata).map(([key, value]) => {
             return (
@@ -363,7 +348,7 @@ const FilterComponent = ({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Flag className="h-4 w-4 mr-2" />
-              <span>Eval</span>
+              <span>Human rating</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
@@ -413,53 +398,6 @@ const FilterComponent = ({
                     <PenSquare className="h-4 w-4 mr-2" />
                     <span>Has notes </span>
                   </DropdownMenuItem>
-                )}
-                {/* Last Eval Source */}
-                {variant === "tasks" && (
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <User className="h-4 w-4 mr-2" />
-                      <span>Source</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setDataFilters({
-                              ...dataFilters,
-                              last_eval_source: "phospho",
-                            });
-                            resetPagination();
-                          }}
-                          style={{
-                            color:
-                              dataFilters.last_eval_source === "phospho"
-                                ? "green"
-                                : "inherit",
-                          }}
-                        >
-                          phospho
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setDataFilters({
-                              ...dataFilters,
-                              last_eval_source: "user",
-                            });
-                            resetPagination();
-                          }}
-                          style={{
-                            color:
-                              dataFilters.last_eval_source === "user"
-                                ? "green"
-                                : "inherit",
-                          }}
-                        >
-                          user
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
                 )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
