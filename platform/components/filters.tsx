@@ -348,7 +348,7 @@ const FilterComponent = ({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Flag className="h-4 w-4 mr-2" />
-              <span>Eval</span>
+              <span>Human evaluation</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
