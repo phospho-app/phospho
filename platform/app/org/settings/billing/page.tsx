@@ -81,14 +81,16 @@ export default function Page() {
     <>
       <div className="space-y-2 mb-4">
         <h2 className="text-2xl font-bold tracking-tight">Usage</h2>
-        {plan === "usage_based" && (
-          <div>
-            <p>You have currently run {currentUsage ?? "..."} analysis.</p>
-          </div>
-        )}
-        {plan === "pro" && (
-          <div>
-            <p>You have currently run {currentUsage ?? "..."} analysis.</p>
+        {(plan === "usage_based" || plan === "pro") && (
+          <div className="flex space-x-1">
+            <p>Click</p>
+            <p
+              onClick={onBillingPortalClick}
+              className="underline cursor-pointer"
+            >
+              here
+            </p>
+            <p>to view your usage.</p>
           </div>
         )}
         {plan === "hobby" && (
@@ -98,7 +100,7 @@ export default function Page() {
               maxValue={maxUsage ?? 1}
             />
             <p>
-              You have currently run {currentUsage ?? "..."}/{maxUsage}{" "}
+              You have currently run {currentUsage ?? "..."}/{maxUsage} free
               analysis.
             </p>
             <p className="text-sm text-muted-foreground mt-2">
