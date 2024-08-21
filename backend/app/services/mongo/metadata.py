@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from loguru import logger
 from app.services.mongo.sessions import compute_task_position, compute_session_length
 
+from app.core import constants
 from app.db.mongo import get_mongo_db
 from phospho.models import ProjectDataFilters
 
@@ -527,14 +528,16 @@ async def breakdown_by_sum_of_metadata_field(
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
-    category_metadata_fields = []
-    number_metadata_fields = []
+    category_metadata_fields = constants.RESERVED_CATEGORY_METADATA_FIELDS
+    number_metadata_fields = constants.RESERVED_NUMBER_METADATA_FIELDS
 
     if metadata_field is not None:
-        category_metadata_fields = await collect_unique_metadata_fields(
+        # Beware, these lists contains duplicate values
+        # This is ok for now
+        category_metadata_fields += await collect_unique_metadata_fields(
             project_id=project_id, type="string"
         )
-        number_metadata_fields = await collect_unique_metadata_fields(
+        number_metadata_fields += await collect_unique_metadata_fields(
             project_id=project_id, type="number"
         )
 
