@@ -144,7 +144,7 @@ export function Sidebar() {
   }, []);
 
   return (
-    <div className="flex flex-col py-4 overflow-y-auto border-secondary h-full ">
+    <div className="flex flex-col py-4 overflow-y-auto border-secondary max-h-[100dvh] md:max-h-full md:h-full">
       <div>
         <SideBarElement
           href="/org/transcripts/"
@@ -292,9 +292,10 @@ export function Sidebar() {
         </div>
       )}
 
-      <div className="absolute bottom-5">
-        <OnboardingProgress />
-      </div>
+      <div className="md:flex-grow" />
+      <WhiteSpaceSeparator />
+      <OnboardingProgress />
+      <div className="md:h-10" />
     </div>
   );
 }
