@@ -87,10 +87,38 @@ async def get_task(task_id: str, org: dict = Depends(authenticate_org_key)) -> T
     return task
 
 
+# This endpoint is only setup for compatibility with the phosphoJS client that uses the /tasks/{task_id}/flag endpoint
+@router.post(
+    "/tasks/{task_id}/flag",
+    response_model=Task,
+    description="Update the human rating of a task",
+)
+async def post_flag_task(
+    task_id: str,
+    taskFlagRequest: TaskFlagRequest,
+    org: Optional[dict] = Depends(authenticate_org_key_no_exception),
+) -> Task:
+    """
+    Set the human evalutation of the task to be 'success' or 'failure'
+    Also adds a flag and signs the origin of the flag ("owner", "phospho", "user", etc.)
+    """
+
+    return await post_human_eval_task(
+        task_id=task_id,
+        taskHumanEvalRequest=TaskHumanEvalRequest(
+            human_eval=taskFlagRequest.flag,
+            source=taskFlagRequest.source,
+            project_id=taskFlagRequest.project_id,
+            notes=taskFlagRequest.notes,
+        ),
+        org=org,
+    )
+
+
 @router.post(
     "/tasks/{task_id}/human-eval",
     response_model=Task,
-    description="Update the status of a task",
+    description="Update the human rating of a task",
 )
 async def post_human_eval_task(
     task_id: str,
@@ -141,6 +169,7 @@ async def post_human_eval_task(
         task_model=task_model,
         human_eval=taskHumanEvalRequest.human_eval,
         source=taskHumanEvalRequest.source,
+        notes=taskHumanEvalRequest.notes,
     )
     return updated_task
 

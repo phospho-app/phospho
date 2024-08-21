@@ -184,6 +184,7 @@ class Client:
         self,
         task_id: str,
         flag: Literal["success", "failure"],
+        notes: Optional[str] = None,
         **kwargs,
     ) -> TaskEntity:
         """
@@ -196,6 +197,7 @@ class Client:
                 "human_eval": flag,
                 "project_id": self._project_id(),
                 "source": "user",
+                "notes": notes,
             },
         )
         return TaskEntity(client=self, task_id=task_id, _content=response.json())
