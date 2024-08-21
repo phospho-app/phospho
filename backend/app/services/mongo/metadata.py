@@ -527,14 +527,17 @@ async def breakdown_by_sum_of_metadata_field(
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
     ]
-
+    category_metadata_fields = []
     number_metadata_fields = []
-    category_metadata_fields = await collect_unique_metadata_fields(
-        project_id=project_id, type="string"
-    )
-    number_metadata_fields = await collect_unique_metadata_fields(
-        project_id=project_id, type="number"
-    )
+
+    if metadata_field is not None:
+        category_metadata_fields = await collect_unique_metadata_fields(
+            project_id=project_id, type="string"
+        )
+        number_metadata_fields = await collect_unique_metadata_fields(
+            project_id=project_id, type="number"
+        )
+
     logger.debug(f"Category metadata fields: {category_metadata_fields}")
     logger.debug(f"Number metadata fields: {number_metadata_fields}")
     if breakdown_by in category_metadata_fields:
