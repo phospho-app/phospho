@@ -376,8 +376,8 @@ const SessionsDataviz: React.FC = () => {
                     dataKey="size"
                     nameKey="name"
                     labelLine={false}
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={50}
+                    outerRadius={70}
                   >
                     <Label
                       content={({ viewBox }) => {
@@ -446,8 +446,8 @@ const SessionsDataviz: React.FC = () => {
                     dataKey="nb_events"
                     nameKey="event_name"
                     labelLine={false}
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={50}
+                    outerRadius={70}
                   >
                     <Label
                       content={({ viewBox }) => {
