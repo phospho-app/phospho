@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from phospho.models import ProjectDataFilters
 
+from app.api.platform.models.clusters import ClusteringRequest
+
 
 class AggregateMetricsRequest(BaseModel):
     index: Optional[List[str]] = Field(default_factory=lambda: ["days"])
@@ -19,6 +21,16 @@ class EventsMetricsFilter(BaseModel):
 class ABTestVersions(BaseModel):
     versionA: str
     versionB: str
+
+
+class CloudVersion(BaseModel):
+    clustering_id: str
+    type: Literal["PCA", "TSNE"] = "PCA"
+    model: Literal["intent-embed", "intent-embed-2", "intent-embed-3"] = (
+        "intent-embed-3"
+    )
+    scope: Literal["messages", "sessions"] = "messages"
+    instruction: Optional[str] = "user intent"
 
 
 class DashboardMetricsFilter(BaseModel):

@@ -13,7 +13,8 @@ from sklearn.metrics import (
     recall_score,
     r2_score,
 )
-
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 import pandas as pd
 import pydantic
 
@@ -37,6 +38,8 @@ from phospho.models import Cluster, Clustering, Event
 from app.api.platform.models import Pagination
 
 from app.core import config
+
+from app.api.platform.models.explore import CloudVersion
 
 
 async def project_has_tasks(project_id: str) -> bool:
@@ -2983,3 +2986,104 @@ async def get_ab_tests_versions(
     )
 
     return formatted_graph_values
+
+
+async def get_computed_data_cloud(
+    project_id: str,
+    version: CloudVersion,
+) -> List[Dict[str, Union[int, str]]]:
+    """
+    Get the embeddings for the clustering project.
+    Compute a PCA on the embeddings and return the first three components if the version is PCA.
+    Compute a TSNE on the embeddings and return the first three components if the version is TSNE.
+    """
+    mongo_db = await get_mongo_db()
+    collection_name = "private-clusters"
+    pipeline = [
+        {
+            "$match": {
+                "project_id": project_id,
+                "scope": version.scope,
+                "model": version.model,
+                "instruction": version.instruction,
+                "clustering_id": version.clustering_id,
+            }
+        },
+        {"$unwind": {"path": "$tasks_ids", "preserveNullAndEmptyArrays": True}},
+        {
+            "$lookup": {
+                "from": "private-embeddings",
+                "localField": "tasks_ids",
+                "foreignField": "task_id",
+                "as": "emb",
+            }
+        },
+        {"$unwind": {"path": "$emb", "preserveNullAndEmptyArrays": True}},
+        {
+            "$match": {
+                "emb.project_id": project_id,
+                "emb.scope": version.scope,
+                "emb.model": version.model,
+                "emb.instruction": version.instruction,
+            }
+        },
+        {"$unwind": {"path": "$sessions_ids", "preserveNullAndEmptyArrays": True}},
+        {
+            "$lookup": {
+                "from": "private-embeddings",
+                "localField": "sessions_ids",
+                "foreignField": "session_id",
+                "as": "emb",
+            }
+        },
+        {"$unwind": {"path": "$emb", "preserveNullAndEmptyArrays": True}},
+        {
+            "$match": {
+                "emb.project_id": project_id,
+                "emb.scope": version.scope,
+                "emb.model": version.model,
+                "emb.instruction": version.instruction,
+            }
+        },
+        {
+            "$project": {
+                "id": 1,
+                "emb": 1,
+            }
+        },
+    ]
+
+    results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
+
+    if version.type == "PCA":
+        pca = PCA(n_components=3)
+        embeddings = [result["emb"]["embeddings"] for result in results]
+        pca_result = pca.fit_transform(embeddings)
+
+        logger.debug(f"PCA result: {pca_result}")
+
+        return [
+            {
+                "x": [pca_result[i][0] for i in range(len(results))],
+                "y": [pca_result[i][1] for i in range(len(results))],
+                "z": [pca_result[i][2] for i in range(len(results))],
+                "mode": "markers",
+                "type": "scatter3d",
+            }
+        ]
+    elif version.type == "TSNE":
+        tsne = TSNE(n_components=3)
+        embeddings = [result["emb"]["embedding"] for result in results]
+        tsne_result = tsne.fit_transform(embeddings)
+
+        return [
+            {
+                "x": [tsne_result[i][0] for i in range(len(results))],
+                "y": [tsne_result[i][1] for i in range(len(results))],
+                "z": [tsne_result[i][2] for i in range(len(results))],
+                "mode": "markers",
+                "type": "scatter3d",
+            }
+        ]
+    else:
+        raise NotImplementedError(f"Type {version.type} is not implemented")

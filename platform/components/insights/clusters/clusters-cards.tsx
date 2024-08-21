@@ -21,10 +21,14 @@ import { Cluster, Clustering, EventDefinition } from "@/models/models";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { defaultMaxListeners } from "events";
+import { get } from "http";
 import { ChevronRight, Pickaxe, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { use, useEffect, useState } from "react";
+import Plotly from "plotly.js";
+import React, { use, useEffect, useRef, useState } from "react";
+import Plot from "react-plotly.js";
 import useSWR from "swr";
 
 import CreateEvent from "../events/create-event";
@@ -156,6 +160,33 @@ function ClusterCard({
   );
 }
 
+const Animated3DScatterPlot = () => {
+  const plotRef = useRef(null);
+
+  useEffect(() => {
+    let angle = 0;
+    const radius = 10;
+    const speed = 0.01;
+
+    const animate = () => {
+      if (plotRef.current) {
+        const eye = {
+          x: radius * Math.cos(angle),
+          y: radius * Math.sin(angle),
+          z: 2,
+        };
+
+        angle += speed;
+        if (angle > 2 * Math.PI) angle = 0;
+      }
+    };
+
+    const interval = setInterval(animate, 100);
+
+    return () => clearInterval(interval); // Clean up on unmount
+  }, []);
+};
+
 export function ClustersCards({
   setSheetClusterOpen: setSheetClusterOpen,
 }: {
@@ -217,6 +248,27 @@ export function ClustersCards({
       }).then((res) =>
         res?.clusters.sort((a: Cluster, b: Cluster) => b.size - a.size),
       ),
+    {
+      keepPreviousData: true,
+    },
+  );
+
+  const { data: selectedClusteringDots } = useSWR(
+    selectedClustering !== undefined
+      ? [
+          `/api/explore/${project_id}/data-cloud`,
+          accessToken,
+          JSON.stringify(selectedClustering),
+        ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        clustering_id: selectedClustering.id,
+        model: selectedClustering.model,
+        scope: selectedClustering.scope,
+        instruction: selectedClustering.instruction,
+        type: "PCA",
+      }),
     {
       keepPreviousData: true,
     },
@@ -286,6 +338,53 @@ export function ClustersCards({
             Clustering is in progress...
           </div>
         )}
+      <div>
+        <Plot
+          data={selectedClusteringDots}
+          layout={{
+            height: window.innerHeight * 0.6,
+            width: window.innerWidth * 0.8,
+            autosize: true,
+            scene: {
+              xaxis: {
+                showgrid: false,
+                zeroline: false,
+                showline: false,
+                ticks: "",
+                showticklabels: false,
+                backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
+                spikesides: false,
+                showspikes: false,
+              },
+              yaxis: {
+                showgrid: false,
+                zeroline: false,
+                showline: false,
+                ticks: "",
+                showticklabels: false,
+                backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
+                spikesides: false,
+                showspikes: false,
+              },
+              zaxis: {
+                showgrid: false,
+                zeroline: false,
+                showline: false,
+                ticks: "",
+                showticklabels: false,
+                backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
+                spikesides: false,
+                showspikes: false,
+              },
+              bgcolor: "rgba(0,0,0,0)", // Remove scene background
+            },
+            paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
+            plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
+            hovermode: false,
+          }}
+          onRelayout={(figure) => console.log(figure)}
+        />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {clustersData?.map((cluster) => {
           return (

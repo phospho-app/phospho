@@ -18,3 +18,6 @@ class ClusteringRequest(BaseModel):
     filters: ProjectDataFilters
     scope: Literal["messages", "sessions"] = "messages"
     instruction: Optional[str] = "user intent"
+    model: Literal["intent-embed", "intent-embed-2", "intent-embed-3"] = (
+        "intent-embed-3"
+    )

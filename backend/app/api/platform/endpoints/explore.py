@@ -1,10 +1,10 @@
 import datetime
-from typing import List, Optional, Dict, Union
+from typing import Any, List, Optional, Dict, Union
 
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 from propelauth_fastapi import User
-from app.api.platform.models.explore import ABTestVersions
+from app.api.platform.models.explore import ABTestVersions, CloudVersion
 from app.api.platform.models import (
     ABTests,
     AggregateMetricsRequest,
@@ -33,11 +33,11 @@ from app.services.mongo.explore import (
     fetch_all_clusterings,
     fetch_all_clusters,
     fetch_single_cluster,
+    get_computed_data_cloud,
     get_dashboard_aggregated_metrics,
     get_events_aggregated_metrics,
     get_sessions_aggregated_metrics,
     get_tasks_aggregated_metrics,
-    get_total_nb_of_sessions,
     nb_items_with_a_metadata_field,
     project_has_enough_labelled_tasks,
     project_has_sessions,
@@ -625,5 +625,25 @@ async def get_ab_tests_comparison(
         project_id=project_id,
         versionA=versions.versionA,
         versionB=versions.versionB,
+    )
+    return output
+
+
+@router.post(
+    "/explore/{project_id}/data-cloud",
+    response_model=List[Any],
+    description="Get the data for the clustering cloud.",
+)
+async def get_data_cloud(
+    project_id: str,
+    version: CloudVersion,
+    user: User = Depends(propelauth.require_user),
+) -> List[Dict[str, int]]:
+    logger.debug(f"{version.model_dump()}")
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    logger.debug(f"Cloud data request: {version}")
+    output = await get_computed_data_cloud(
+        project_id=project_id,
+        version=version,
     )
     return output
