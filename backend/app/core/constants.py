@@ -57,3 +57,20 @@ LANGUAGES_FOR_LABELLING = {
     "zh-latn": "Chinese (Simplified, latn)",
     "zh-tw": "Chinese (Traditional)",
 }
+
+RESERVED_NUMBER_METADATA_FIELDS = [
+    "client_created_at",
+    "prompt_tokens",
+    "completion_tokens",
+    "total_tokens",
+    "sentiment_magnitude",
+    "sentiment_score",
+]
+
+RESERVED_CATEGORY_METADATA_FIELDS = [
+    "version_id",
+    "user_id",
+    "job_ids",
+    "language",
+    "sentiment_label",
+]
