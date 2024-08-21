@@ -56,6 +56,7 @@ async def post_human_eval_task(
     updated_task = await human_eval_task(
         task_model=task,
         human_eval=taskHumanEvalRequest.human_eval,
+        notes=taskHumanEvalRequest.notes,
     )
     return updated_task
 

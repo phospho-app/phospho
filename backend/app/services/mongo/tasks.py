@@ -74,6 +74,7 @@ async def human_eval_task(
     task_model: Task,
     human_eval: str,
     source: Optional[str] = None,
+    notes: Optional[str] = None,
 ) -> Task:
     """
     Adds a human evaluation to a task and updates evaluation data for retrocompatibility
@@ -105,6 +106,7 @@ async def human_eval_task(
         update_payload["flag"] = flag
         update_payload["last_eval"] = eval_data.model_dump()
         update_payload["human_eval"] = HumanEval(flag=human_eval).model_dump()
+        update_payload["notes"] = notes
         await mongo_db["tasks"].update_one(
             {"id": task_model.id},
             {"$set": update_payload},
@@ -112,6 +114,7 @@ async def human_eval_task(
         task_model.flag = flag
         task_model.last_eval = eval_data
         task_model.human_eval = HumanEval(flag=human_eval)
+        task_model.notes = notes
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to update Task {task_model.id}: {e}"
