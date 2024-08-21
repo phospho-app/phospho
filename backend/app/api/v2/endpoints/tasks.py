@@ -102,7 +102,6 @@ async def post_flag_task(
     Set the human evalutation of the task to be 'success' or 'failure'
     Also adds a flag and signs the origin of the flag ("owner", "phospho", "user", etc.)
     """
-    logger.debug(f"Received notes: {taskFlagRequest.notes}")
 
     return await post_human_eval_task(
         task_id=task_id,
