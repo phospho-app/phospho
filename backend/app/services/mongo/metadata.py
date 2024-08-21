@@ -451,9 +451,11 @@ async def breakdown_by_sum_of_metadata_field(
     - "sum": Sum of the metadata field
     - "avg": Average of the metadata field
     - "nb tasks": Number of tasks
+    - "nb sessions": Number of sessions
+    - "event count": Number of events
+    - "event distribution": Distribution of events
     - "avg success rate": Average success rate
     - "avg session length": Average session length
-    - "event distribution": Distribution of events
 
     The breakdown_by field can be one of the following:
     - A metadata field
