@@ -104,7 +104,7 @@ async def human_eval_task(
         update_payload: Dict[str, object] = {}
         update_payload["flag"] = flag
         update_payload["last_eval"] = eval_data.model_dump()
-        update_payload["human_eval"] = {"flag": human_eval}
+        update_payload["human_eval"] = HumanEval(flag=human_eval).model_dump()
         await mongo_db["tasks"].update_one(
             {"id": task_model.id},
             {"$set": update_payload},

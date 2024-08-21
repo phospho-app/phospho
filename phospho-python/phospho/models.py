@@ -147,7 +147,7 @@ class SentimentObject(BaseModel):
     label: Optional[str] = None
 
 
-class HumanEval(BaseModel):
+class HumanEval(DatedBaseModel):
     flag: Optional[str] = None
 
 
