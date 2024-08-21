@@ -278,12 +278,12 @@ class ProjectSettings(BaseModel):
     dashboard_tiles: List[DashboardTile] = Field(
         default_factory=lambda: [
             DashboardTile(
-                tile_name="Success rate per message position",
+                tile_name="Human evaluation per message position",
                 metric="Avg Success rate",
                 breakdown_by="task_position",
             ),
             DashboardTile(
-                tile_name="Average success rate per event name",
+                tile_name="Average human evaluation per event name",
                 metric="Avg Success rate",
                 breakdown_by="event_name",
             ),
@@ -294,7 +294,7 @@ class ProjectSettings(BaseModel):
                 breakdown_by="task_position",
             ),
             DashboardTile(
-                tile_name="Success rate per language",
+                tile_name="Human evaluation per language",
                 metric="Avg Success rate",
                 breakdown_by="language",
             ),
