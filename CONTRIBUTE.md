@@ -91,6 +91,18 @@ You can then import the built package (even in a different project and environme
 pip install path/to/dist/phospho-0.1.0.tar.gz
 ```
 
+You can also test your dockerfiles locally by running
+
+```bash
+docker build -t <name ie frontend, backend, etc...> .
+```
+
+or
+
+```bash
+docker build --file <./filename> -t <name ie frontend, backend, etc...> .
+```
+
 ## Pull Requests
 
 In github, create a Pull Request targeting the `dev` branch.
