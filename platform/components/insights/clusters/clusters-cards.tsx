@@ -17,6 +17,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
+import { graphColors } from "@/lib/utils";
 import { Cluster, Clustering, EventDefinition } from "@/models/models";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
@@ -253,6 +254,7 @@ export function ClustersCards({
     },
   );
 
+  // Generate for each cluster a color
   const { data: selectedClusteringDots } = useSWR(
     selectedClustering !== undefined
       ? [
@@ -268,6 +270,39 @@ export function ClustersCards({
         scope: selectedClustering.scope,
         instruction: selectedClustering.instruction,
         type: "PCA",
+      }).then((res) => {
+        // let clusterIdToColor = {};
+        // if (clustersData) {
+        //   clustersData.forEach((cluster, index) => {
+        //     clusterIdToColor[cluster.id] =
+        //       graphColors[index % graphColors.length];
+        //   });
+        // }
+        // the code above doesn't work, instead do this :
+        const clusterIdToColor = {};
+        const clusters = res.clusters_ids;
+        const clusters_names = res.clusters_names;
+        clusters.forEach((cluster, index) => {
+          clusterIdToColor[cluster] = graphColors[index % graphColors.length];
+        });
+        const colors: string[] = res.clusters_ids.map((cluster_id: any) => {
+          return clusterIdToColor[cluster_id];
+        });
+
+        return {
+          x: res.x,
+          y: res.y,
+          z: res.z,
+          mode: "markers",
+          type: "scatter3d",
+          marker: {
+            size: 5,
+            color: colors,
+            opacity: 0.8,
+          },
+          hoverinfo: "text",
+          hovertext: clusters_names,
+        };
       }),
     {
       keepPreviousData: true,
@@ -338,15 +373,16 @@ export function ClustersCards({
             Clustering is in progress...
           </div>
         )}
-      <div>
+      <div className="mt-0">
         <Plot
-          data={selectedClusteringDots}
+          data={[selectedClusteringDots]}
           layout={{
             height: window.innerHeight * 0.6,
             width: window.innerWidth * 0.8,
             autosize: true,
             scene: {
               xaxis: {
+                visible: false,
                 showgrid: false,
                 zeroline: false,
                 showline: false,
@@ -357,6 +393,7 @@ export function ClustersCards({
                 showspikes: false,
               },
               yaxis: {
+                visible: false,
                 showgrid: false,
                 zeroline: false,
                 showline: false,
@@ -367,6 +404,7 @@ export function ClustersCards({
                 showspikes: false,
               },
               zaxis: {
+                visible: false,
                 showgrid: false,
                 zeroline: false,
                 showline: false,
@@ -380,7 +418,6 @@ export function ClustersCards({
             },
             paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
             plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
-            hovermode: false,
           }}
           onRelayout={(figure) => console.log(figure)}
         />

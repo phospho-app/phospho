@@ -3009,30 +3009,12 @@ async def get_computed_data_cloud(
                 "clustering_id": version.clustering_id,
             }
         },
-        {"$unwind": {"path": "$tasks_ids", "preserveNullAndEmptyArrays": True}},
+        {"$unwind": {"path": "$embeddings_ids", "preserveNullAndEmptyArrays": True}},
         {
             "$lookup": {
                 "from": "private-embeddings",
-                "localField": "tasks_ids",
-                "foreignField": "task_id",
-                "as": "emb",
-            }
-        },
-        {"$unwind": {"path": "$emb", "preserveNullAndEmptyArrays": True}},
-        {
-            "$match": {
-                "emb.project_id": project_id,
-                "emb.scope": version.scope,
-                "emb.model": version.model,
-                "emb.instruction": version.instruction,
-            }
-        },
-        {"$unwind": {"path": "$sessions_ids", "preserveNullAndEmptyArrays": True}},
-        {
-            "$lookup": {
-                "from": "private-embeddings",
-                "localField": "sessions_ids",
-                "foreignField": "session_id",
+                "localField": "embeddings_ids",
+                "foreignField": "id",
                 "as": "emb",
             }
         },
@@ -3049,41 +3031,67 @@ async def get_computed_data_cloud(
             "$project": {
                 "id": 1,
                 "emb": 1,
+                "name": 1,
             }
         },
+        # {"$unwind": {"path": "$tasks_ids", "preserveNullAndEmptyArrays": True}},
+        # {
+        #     "$lookup": {
+        #         "from": "private-embeddings",
+        #         "localField": "tasks_ids",
+        #         "foreignField": "task_id",
+        #         "as": "emb",
+        #     }
+        # },
+        # {"$unwind": {"path": "$sessions_ids", "preserveNullAndEmptyArrays": True}},
+        # {
+        #     "$lookup": {
+        #         "from": "private-embeddings",
+        #         "localField": "sessions_ids",
+        #         "foreignField": "session_id",
+        #         "as": "emb",
+        #     }
+        # },
+        # {"$unwind": {"path": "$emb", "preserveNullAndEmptyArrays": True}},
+        # {
+        #     "$match": {
+        #         "emb.project_id": project_id,
+        #         "emb.scope": version.scope,
+        #         "emb.model": version.model,
+        #         "emb.instruction": version.instruction,
+        #     }
+        # },
+        # {
+        #     "$project": {
+        #         "id": 1,
+        #         "emb": 1,
+        #     }
+        # },
     ]
 
-    results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
+    raw_results = (
+        await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
+    )
 
     if version.type == "PCA":
         pca = PCA(n_components=3)
-        embeddings = [result["emb"]["embeddings"] for result in results]
-        pca_result = pca.fit_transform(embeddings)
+        embeddings = [result["emb"]["embeddings"] for result in raw_results]
+        dim_reduction_results = pca.fit_transform(embeddings)
+        logger.debug(f"PCA result: {dim_reduction_results}")
 
-        logger.debug(f"PCA result: {pca_result}")
-
-        return [
-            {
-                "x": [pca_result[i][0] for i in range(len(results))],
-                "y": [pca_result[i][1] for i in range(len(results))],
-                "z": [pca_result[i][2] for i in range(len(results))],
-                "mode": "markers",
-                "type": "scatter3d",
-            }
-        ]
     elif version.type == "TSNE":
         tsne = TSNE(n_components=3)
-        embeddings = [result["emb"]["embedding"] for result in results]
-        tsne_result = tsne.fit_transform(embeddings)
-
-        return [
-            {
-                "x": [tsne_result[i][0] for i in range(len(results))],
-                "y": [tsne_result[i][1] for i in range(len(results))],
-                "z": [tsne_result[i][2] for i in range(len(results))],
-                "mode": "markers",
-                "type": "scatter3d",
-            }
-        ]
+        embeddings = [result["emb"]["embedding"] for result in raw_results]
+        dim_reduction_results = tsne.fit_transform(embeddings)
     else:
         raise NotImplementedError(f"Type {version.type} is not implemented")
+
+    logger.debug(f"{len(raw_results)}")
+    logger.debug(f"{len(dim_reduction_results)}")
+    return {
+        "x": [res[0] for i, res in enumerate(dim_reduction_results)],
+        "y": [res[1] for i, res in enumerate(dim_reduction_results)],
+        "z": [res[2] for i, res in enumerate(dim_reduction_results)],
+        "clusters_ids": [res["id"] for res in raw_results],
+        "clusters_names": [res["name"] for res in raw_results],
+    }

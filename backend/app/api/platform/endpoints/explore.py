@@ -631,7 +631,7 @@ async def get_ab_tests_comparison(
 
 @router.post(
     "/explore/{project_id}/data-cloud",
-    response_model=List[Any],
+    response_model=dict,
     description="Get the data for the clustering cloud.",
 )
 async def get_data_cloud(
