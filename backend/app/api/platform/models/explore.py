@@ -2,8 +2,6 @@ from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from phospho.models import ProjectDataFilters
 
-from app.api.platform.models.clusters import ClusteringRequest
-
 
 class AggregateMetricsRequest(BaseModel):
     index: Optional[List[str]] = Field(default_factory=lambda: ["days"])

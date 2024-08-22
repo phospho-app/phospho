@@ -1,14 +1,15 @@
 import datetime
-from typing import Any, List, Optional, Dict, Union
+from typing import Dict, List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 from propelauth_fastapi import User
-from app.api.platform.models.explore import ABTestVersions, ClusteringEmbeddingCloud
+
 from app.api.platform.models import (
     ABTests,
     AggregateMetricsRequest,
     Cluster,
+    ClusteringRequest,
     Clusterings,
     Clusters,
     DashboardMetricsFilter,
@@ -16,15 +17,16 @@ from app.api.platform.models import (
     Events,
     FetchClustersRequest,
     ProjectDataFilters,
-    ClusteringRequest,
 )
+from app.api.platform.models.explore import ABTestVersions, ClusteringEmbeddingCloud
 from app.core import config
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
 from app.security.authorization import get_quota
 from app.services.mongo.ai_hub import clustering
-from app.services.mongo.events import get_event_definition_from_event_id
+from app.services.mongo.events import get_all_events, get_event_definition_from_event_id
 from app.services.mongo.explore import (
+    compute_cloud_of_clusters,
     compute_nb_items_with_metadata_field,
     compute_session_length_per_metadata,
     compute_successrate_metadata_quantiles,
@@ -33,7 +35,7 @@ from app.services.mongo.explore import (
     fetch_all_clusterings,
     fetch_all_clusters,
     fetch_single_cluster,
-    compute_cloud_of_clusters,
+    get_ab_tests_versions,
     get_dashboard_aggregated_metrics,
     get_events_aggregated_metrics,
     get_sessions_aggregated_metrics,
@@ -42,10 +44,8 @@ from app.services.mongo.explore import (
     project_has_enough_labelled_tasks,
     project_has_sessions,
     project_has_tasks,
-    get_ab_tests_versions,
 )
 from app.services.mongo.extractor import bill_on_stripe
-from app.services.mongo.events import get_all_events
 from app.services.mongo.tasks import get_total_nb_of_tasks
 
 router = APIRouter(tags=["Explore"])
@@ -639,6 +639,11 @@ async def get_data_cloud(
     version: ClusteringEmbeddingCloud,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
+    """
+    This endpoint is used to get the data for the clustering cloud.
+
+    This data is compatible with the plotly frontend library.
+    """
     logger.debug(f"{version.model_dump()}")
     await verify_if_propelauth_user_can_access_project(user, project_id)
     logger.debug(f"Cloud data request: {version}")
