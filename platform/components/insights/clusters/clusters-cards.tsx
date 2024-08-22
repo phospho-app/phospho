@@ -207,7 +207,6 @@ function CustomPlot({ data }: { data: Data }) {
             showline: false,
             ticks: "",
             showticklabels: false,
-            backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
             spikesides: false,
             showspikes: false,
           },
@@ -218,7 +217,6 @@ function CustomPlot({ data }: { data: Data }) {
             showline: false,
             ticks: "",
             showticklabels: false,
-            backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
             spikesides: false,
             showspikes: false,
           },
@@ -229,11 +227,9 @@ function CustomPlot({ data }: { data: Data }) {
             showline: false,
             ticks: "",
             showticklabels: false,
-            backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
             spikesides: false,
             showspikes: false,
           },
-          bgcolor: "rgba(0,0,0,0)", // Remove scene background
         },
         paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
         plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
