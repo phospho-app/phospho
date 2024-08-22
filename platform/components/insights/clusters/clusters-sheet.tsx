@@ -45,7 +45,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import { ChevronRight, Sparkles, TriangleAlert } from "lucide-react";
+import {
+  ChevronRight,
+  Sparkles,
+  TestTubeDiagonal,
+  TriangleAlert,
+} from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -223,24 +228,14 @@ const RunClusters = ({
               </Select>
               <FilterComponent variant="tasks" />
             </div>
-            {!canRunClusterAnalysis && (
-              <div className="mt-4">
-                You need at least 5 {scope} to run a cluster analysis. There are
-                currently {nbElements} {scope}.
-              </div>
-            )}
-            {canRunClusterAnalysis && (
-              <div className="mt-4">
-                We will clusterize {nbElements} {scope}{" "}
-                {scope === "sessions" && (
-                  <>containing {totalNbTasks} messages</>
-                )}{" "}
-                for a total of {clusteringCost} credits.
-              </div>
-            )}
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger>Advanced settings</AccordionTrigger>
+                <AccordionTrigger>
+                  <div className="flex items-center">
+                    <TestTubeDiagonal className="w-4 h-4 mr-2 text-green-500" />
+                    More settings
+                  </div>
+                </AccordionTrigger>
                 <AccordionContent className="space-y-3 space-x-1">
                   <FormLabel>
                     <div className="flex space-x-2">
@@ -270,9 +265,82 @@ const RunClusters = ({
                       </FormItem>
                     )}
                   />
+                  <div>
+                    <h2 className="text-muted-foreground text-xs mb-1">
+                      Templates
+                    </h2>
+                    <div className="flex space-x-4">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          form.setValue("instruction", "user intent");
+                          // Prevent the form from submitting
+                          mouseEvent.preventDefault();
+                        }}
+                      >
+                        user intent
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          form.setValue(
+                            "instruction",
+                            "type of issue (refund, delivery, etc.)",
+                          );
+                          // Prevent the form from submitting
+                          mouseEvent.preventDefault();
+                        }}
+                      >
+                        support
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          form.setValue("instruction", "type of disease");
+                          // Prevent the form from submitting
+                          mouseEvent.preventDefault();
+                        }}
+                      >
+                        medical chatbot
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          form.setValue("instruction", "product mentioned");
+                          // Prevent the form from submitting
+                          mouseEvent.preventDefault();
+                        }}
+                      >
+                        sales assistant
+                      </Button>
+                    </div>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+            {!canRunClusterAnalysis && (
+              <div className="mt-4">
+                You need at least 5 {scope} to run a cluster analysis. There are
+                currently {nbElements} {scope}.
+              </div>
+            )}
+            {canRunClusterAnalysis && (
+              <div className="mt-4">
+                We will clusterize {nbElements} {scope}{" "}
+                {scope === "sessions" && (
+                  <>containing {totalNbTasks} messages</>
+                )}{" "}
+                for a total of {clusteringCost} credits.
+              </div>
+            )}
             {hobby && (
               <div className="flex justify-end mt-4">
                 <UpgradeButton tagline="Run cluster analysis" green={false} />
