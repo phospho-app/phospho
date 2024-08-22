@@ -320,6 +320,11 @@ export function ClustersCards({
         instruction: selectedClustering?.instruction,
         type: "PCA",
       }).then((res) => {
+        // if res is {}, return undefined
+        if (Object.keys(res).length === 0) {
+          return null;
+        }
+
         // Generate a color for each cluster
         const clusterIdToColor = new Map<string, string>();
         const clusters = res.clusters_ids as string[];
@@ -418,9 +423,10 @@ export function ClustersCards({
             Clustering is in progress...
           </div>
         )}
-      {selectedClusteringDots !== undefined && (
-        <CustomPlot data={selectedClusteringDots} />
-      )}
+      {selectedClusteringDots !== undefined &&
+        selectedClusteringDots !== null && (
+          <CustomPlot data={selectedClusteringDots} />
+        )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {clustersData?.map((cluster) => {
           return (
