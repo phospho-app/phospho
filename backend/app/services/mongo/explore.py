@@ -3034,39 +3034,6 @@ async def compute_cloud_of_clusters(
                 "name": 1,
             }
         },
-        # {"$unwind": {"path": "$tasks_ids", "preserveNullAndEmptyArrays": True}},
-        # {
-        #     "$lookup": {
-        #         "from": "private-embeddings",
-        #         "localField": "tasks_ids",
-        #         "foreignField": "task_id",
-        #         "as": "emb",
-        #     }
-        # },
-        # {"$unwind": {"path": "$sessions_ids", "preserveNullAndEmptyArrays": True}},
-        # {
-        #     "$lookup": {
-        #         "from": "private-embeddings",
-        #         "localField": "sessions_ids",
-        #         "foreignField": "session_id",
-        #         "as": "emb",
-        #     }
-        # },
-        # {"$unwind": {"path": "$emb", "preserveNullAndEmptyArrays": True}},
-        # {
-        #     "$match": {
-        #         "emb.project_id": project_id,
-        #         "emb.scope": version.scope,
-        #         "emb.model": version.model,
-        #         "emb.instruction": version.instruction,
-        #     }
-        # },
-        # {
-        #     "$project": {
-        #         "id": 1,
-        #         "emb": 1,
-        #     }
-        # },
     ]
 
     raw_results = (
