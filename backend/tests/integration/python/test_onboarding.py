@@ -61,7 +61,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
                     {"role": "user", "content": question},
                 ],
                 max_tokens=3,
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 stream=True,
             )
             for rep in response:
@@ -70,7 +70,10 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     # Task 2
     session_id = phospho.new_session()
     agent = OpenAIAgent()
-    agent.ask(question="Are you an AI?", session_id=session_id)
+    response = agent.ask(question="Are you an AI?", session_id=session_id)
+    "".join(
+        [r for r in response if r is not None]
+    )  # Consume the generator, this is important
 
     phospho.consumer.send_batch()
 
@@ -101,7 +104,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
             assert task["events"] is not None, tasks_content
             # assert task["flag"] is not None, tasks_content
 
-    time.sleep(10)
+    time.sleep(5)
 
     # Check that the session was created
     sessions = requests.get(

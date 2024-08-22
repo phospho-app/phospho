@@ -480,6 +480,8 @@ async def post_create_billing_portal_session(
         return {
             "error": "Organization has a self-hosted plan, no billing portal available"
         }
+    if org_id in config.EXEMPTED_ORG_IDS:
+        return {"error": "Organization is exempted from billing portal"}
     stripe.api_key = config.STRIPE_SECRET_KEY
     try:
         logger.debug(
