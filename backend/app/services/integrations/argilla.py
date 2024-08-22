@@ -22,6 +22,7 @@ from app.utils import health_check
 from typing import Dict, List, Union
 from app.db.models import Task
 from app.services.mongo.tasks import get_all_tasks
+from app.utils import generate_valid_name
 
 from phospho.models import Event
 
@@ -180,6 +181,12 @@ async def generate_dataset_from_project(
     taggers["no-tag"] = "No tag"
 
     for key, value in project.settings.events.items():
+        # Generate the metadata name following the regex pattern
+        metadata_name = generate_valid_name(key, display_warning=True)
+        if metadata_name != key:
+            logger.warning(
+                f"Changed metadata name to {metadata_name} (previously {key}) in project {project.id}"
+            )
         # We do not use session level events for now
         if value.detection_engine == "session":
             logger.debug(f"Skipping session event {key} as it is session level")
@@ -188,7 +195,7 @@ async def generate_dataset_from_project(
             taggers[key] = f"{key.replace(' ', '_').lower()}"
             metadata_properties.append(
                 rg.TermsMetadataProperty(
-                    name=f"{key.replace(' ', '_').lower()}",
+                    name=metadata_name,
                     title=key,
                     values=[value.id],
                     visible_for_annotators=False,
@@ -204,7 +211,7 @@ async def generate_dataset_from_project(
             ]
             metadata_properties.append(
                 rg.TermsMetadataProperty(
-                    name=f"{key.replace(' ', '_').lower()}",
+                    name=metadata_name,
                     title=key,
                     values=[value.id],
                     visible_for_annotators=False,
@@ -214,7 +221,7 @@ async def generate_dataset_from_project(
             classifiers[key] = value.score_range_settings.categories
             metadata_properties.append(
                 rg.TermsMetadataProperty(
-                    name=f"{key.replace(' ', '_').lower()}",
+                    name=metadata_name,
                     title=key,
                     values=[value.id],
                     visible_for_annotators=False,
@@ -244,9 +251,11 @@ async def generate_dataset_from_project(
     # FeedbackDataset
 
     for key in scorers.keys():
+        metadata_name = generate_valid_name(key, display_warning=True)
+
         questions.append(
             rg.RatingQuestion(
-                name=f"{key.replace(' ', '_').lower()}",
+                name=metadata_name,
                 title=key,
                 description="Select the score",
                 values=scorers[key],
@@ -259,9 +268,10 @@ async def generate_dataset_from_project(
         logger.debug(type(key))
 
     for key in classifiers.keys():
+        metadata_name = generate_valid_name(key, display_warning=True)
         questions.append(
             rg.LabelQuestion(
-                name=f"{key.replace(' ', '_').lower()}",
+                name=metadata_name,
                 title=key,
                 description="Select the category",
                 labels=classifiers[key],
@@ -452,7 +462,7 @@ async def pull_dataset_from_argilla(
     for key in argilla_dataset.questions[0].labels.keys():
         if key == "no-tag":
             continue
-        original_taggers_list.append(key.replace(" ", "_").lower())
+        original_taggers_list.append(generate_valid_name(key, display_warning=True))
 
     original_classifiers_and_scorers_list = []
     for i in range(1, len(argilla_dataset.questions) - 1):
