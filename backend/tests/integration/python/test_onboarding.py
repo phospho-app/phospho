@@ -37,6 +37,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         tick=0.1,
         auto_log=False,  # We automatically log tasks in the background, we disable it here because we don't want his behavior
     )
+    # Task 1
     task_1 = phospho.log(
         input="Thank you!",
         output="You're welcome.",
@@ -66,6 +67,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
             for rep in response:
                 yield rep.choices[0].delta.content
 
+    # Task 2
     session_id = phospho.new_session()
     agent = OpenAIAgent()
     response = agent.ask(question="Are you an AI?", session_id=session_id)
@@ -108,7 +110,8 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert sessions.status_code == 200, sessions.reason
-    assert len(sessions.json()["sessions"]) == 1, sessions.json()
+    # We have 2 tasks, so we should have 2 sessions (tasks without session_id are created)
+    assert len(sessions.json()["sessions"]) == 2, sessions.json()
     assert sessions.json()["sessions"][0]["id"] == session_id, sessions.json()
 
     # Call the dashboards
