@@ -195,10 +195,12 @@ function CustomPlot({ data }: { data: Data }) {
   return (
     <Plot
       data={[data]}
+      config={{ displayModeBar: false }}
       layout={{
         height: window.innerHeight * 0.6,
         width: window.innerWidth * 0.8,
         autosize: true,
+
         scene: {
           xaxis: {
             visible: false,
@@ -315,10 +317,7 @@ export function ClustersCards({
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         clustering_id: selectedClustering?.id,
-        model: selectedClustering?.model,
-        scope: selectedClustering?.scope,
-        instruction: selectedClustering?.instruction,
-        type: "PCA",
+        type: "pca",
       }).then((res) => {
         // if res is {}, return undefined
         if (Object.keys(res).length === 0) {
@@ -328,8 +327,16 @@ export function ClustersCards({
         // Generate a color for each cluster
         const clusterIdToColor = new Map<string, string>();
         const clusters = res.clusters_ids as string[];
+        const uniqueClusterIds: string[] = [];
+        clusters.forEach((cluster_id) => {
+          if (!uniqueClusterIds.includes(cluster_id)) {
+            uniqueClusterIds.push(cluster_id);
+          }
+        });
+
         const clusters_names = res.clusters_names as string[];
-        clusters.forEach((cluster_id, index) => {
+        uniqueClusterIds.forEach((cluster_id, index) => {
+          console.log("index", index);
           clusterIdToColor.set(
             cluster_id,
             graphColors[index % graphColors.length],
