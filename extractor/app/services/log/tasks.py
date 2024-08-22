@@ -160,12 +160,12 @@ async def process_log_without_session_id(
     tasks_to_create: List[Dict[str, object]] = []
     for log_event in list_of_log_event:
         log_event_metadata = collect_metadata(log_event)
+        # Generate a default session_id
         task = create_task_from_logevent(
             org_id=org_id,
             project_id=project_id,
             log_event=log_event,
-            # Generate a default session_id
-            session_id=generate_uuid(),
+            session_id=None,
             log_event_metadata=log_event_metadata,
         )
         tasks_id_to_process.append(task.id)
@@ -473,14 +473,10 @@ async def process_log_for_tasks(
             error_mesagge = f"Error saving logs to the database: {e}"
             logger.error(error_mesagge)
 
-    # Process logs without session_id
-    await process_log_without_session_id(
-        project_id=project_id,
-        org_id=org_id,
-        list_of_log_event=[
-            log_event for log_event in logs_to_process if log_event.session_id is None
-        ],
-    )
+    # For logs without session_id, we generate a new session_id
+    for log_event in logs_to_process:
+        if log_event.session_id is None:
+            log_event.session_id = "session_" + generate_uuid()
 
     # Process logs with session_id
     await process_log_with_session_id(
@@ -497,17 +493,9 @@ async def process_log_for_tasks(
         logger.info(
             f"Project {project_id}: saving {len(extra_logs_to_save)} extra log events"
         )
-        # Process logs without session_id
-        await process_log_without_session_id(
-            project_id=project_id,
-            org_id=org_id,
-            list_of_log_event=[
-                log_event
-                for log_event in extra_logs_to_save
-                if log_event.session_id is None
-            ],
-            trigger_pipeline=False,
-        )
+        for log_event in extra_logs_to_save:
+            if log_event.session_id is None:
+                log_event.session_id = "session_" + generate_uuid()
 
         # Process logs with session_id
         await process_log_with_session_id(

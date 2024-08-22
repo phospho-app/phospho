@@ -21,6 +21,20 @@ class ABTestVersions(BaseModel):
     versionB: str
 
 
+class ClusteringEmbeddingCloud(BaseModel):
+    """
+    Represents the request to generate a cloud of embeddings for a clustering
+    """
+
+    clustering_id: str
+    type: Literal["PCA", "TSNE"] = "PCA"
+    model: Literal[
+        "intent-embed", "intent-embed-2", "intent-embed-3"
+    ] = "intent-embed-3"
+    scope: Literal["messages", "sessions"] = "messages"
+    instruction: Optional[str] = "user intent"
+
+
 class DashboardMetricsFilter(BaseModel):
     graph_name: Optional[List[str]] = None
 

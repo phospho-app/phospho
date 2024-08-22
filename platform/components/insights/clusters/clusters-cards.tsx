@@ -17,17 +17,24 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
+import { graphColors } from "@/lib/utils";
 import { Cluster, Clustering, EventDefinition } from "@/models/models";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pickaxe, PlusIcon } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { Data } from "plotly.js";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import CreateEvent from "../events/create-event";
 import "./style.css";
+
+// Dynamically import the Plotly component
+// https://github.com/plotly/react-plotly.js/issues/272
+const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 function ClusterCard({
   project_id,
@@ -157,6 +164,80 @@ function ClusterCard({
   );
 }
 
+// const Animated3DScatterPlot = () => {
+//   const plotRef = useRef(null);
+
+//   useEffect(() => {
+//     let angle = 0;
+//     const radius = 10;
+//     const speed = 0.01;
+
+//     const animate = () => {
+//       if (plotRef.current) {
+//         const eye = {
+//           x: radius * Math.cos(angle),
+//           y: radius * Math.sin(angle),
+//           z: 2,
+//         };
+
+//         angle += speed;
+//         if (angle > 2 * Math.PI) angle = 0;
+//       }
+//     };
+
+//     const interval = setInterval(animate, 100);
+
+//     return () => clearInterval(interval); // Clean up on unmount
+//   }, []);
+// };
+
+function CustomPlot({ data }: { data: Data }) {
+  return (
+    <Plot
+      data={[data]}
+      layout={{
+        height: window.innerHeight * 0.6,
+        width: window.innerWidth * 0.8,
+        autosize: true,
+        scene: {
+          xaxis: {
+            visible: false,
+            showgrid: false,
+            zeroline: false,
+            showline: false,
+            ticks: "",
+            showticklabels: false,
+            spikesides: false,
+            showspikes: false,
+          },
+          yaxis: {
+            visible: false,
+            showgrid: false,
+            zeroline: false,
+            showline: false,
+            ticks: "",
+            showticklabels: false,
+            spikesides: false,
+            showspikes: false,
+          },
+          zaxis: {
+            visible: false,
+            showgrid: false,
+            zeroline: false,
+            showline: false,
+            ticks: "",
+            showticklabels: false,
+            spikesides: false,
+            showspikes: false,
+          },
+        },
+        paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
+        plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
+      }}
+    />
+  );
+}
+
 export function ClustersCards({
   setSheetClusterOpen: setSheetClusterOpen,
 }: {
@@ -218,6 +299,56 @@ export function ClustersCards({
       }).then((res) =>
         res?.clusters.sort((a: Cluster, b: Cluster) => b.size - a.size),
       ),
+    {
+      keepPreviousData: true,
+    },
+  );
+
+  const { data: selectedClusteringDots } = useSWR(
+    selectedClustering !== undefined
+      ? [
+          `/api/explore/${project_id}/data-cloud`,
+          accessToken,
+          JSON.stringify(selectedClustering),
+        ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        clustering_id: selectedClustering?.id,
+        model: selectedClustering?.model,
+        scope: selectedClustering?.scope,
+        instruction: selectedClustering?.instruction,
+        type: "PCA",
+      }).then((res) => {
+        // Generate a color for each cluster
+        const clusterIdToColor = new Map<string, string>();
+        const clusters = res.clusters_ids as string[];
+        const clusters_names = res.clusters_names as string[];
+        clusters.forEach((cluster_id, index) => {
+          clusterIdToColor.set(
+            cluster_id,
+            graphColors[index % graphColors.length],
+          );
+        });
+        const colors: string[] = res.clusters_ids.map((cluster_id: any) => {
+          return clusterIdToColor.get(cluster_id) as string;
+        });
+
+        return {
+          x: res.x,
+          y: res.y,
+          z: res.z,
+          mode: "markers",
+          type: "scatter3d",
+          marker: {
+            size: 5,
+            color: colors,
+            opacity: 0.8,
+          },
+          hoverinfo: "text",
+          hovertext: clusters_names,
+        } as Data;
+      }),
     {
       keepPreviousData: true,
     },
@@ -287,6 +418,9 @@ export function ClustersCards({
             Clustering is in progress...
           </div>
         )}
+      {selectedClusteringDots !== undefined && (
+        <CustomPlot data={selectedClusteringDots} />
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {clustersData?.map((cluster) => {
           return (
