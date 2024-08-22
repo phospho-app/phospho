@@ -278,6 +278,29 @@ async def generate_dataset_from_project(
         )
     )
 
+    # Check if at least one question is required
+    one_question_is_required = False
+    for question in questions:
+        if question.required:
+            one_question_is_required = True
+            break
+
+    if not one_question_is_required:
+        # We add an eval question that is required
+        questions.append(
+            rg.LabelQuestion(
+                name="evaluation",
+                title="evaluation",
+                description="If you consider this interaction as a success, select 'Success'. If you consider it as a failure, select 'Failure'.",
+                labels=["Success", "Failure"],
+                required=True,
+            )
+        )
+
+        logger.warning(
+            f"No required question found in the project settings {project.id}. Dataset creation will be created anyway."
+        )
+
     argilla_dataset = rg.FeedbackDataset(
         fields=[
             rg.TextField(
