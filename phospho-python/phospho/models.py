@@ -353,6 +353,7 @@ class Project(DatedBaseModel):
                         "avg session length": "avg_session_length",
                         # breakdown_by
                         "event name": "tagger_name",
+                        "event_name": "tagger_name",
                     }
                     for tile in project_data["settings"]["dashboard_tiles"]:
                         # Replace by a lowercase version of the field
