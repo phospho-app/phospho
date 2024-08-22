@@ -2998,34 +2998,18 @@ async def compute_cloud_of_clusters(
     Compute a TSNE on the embeddings and return the first three components if the version is TSNE.
     """
     mongo_db = await get_mongo_db()
-    collection_name = "private-clusters"
+    collection_name = "private-clusterings"
     pipeline = [
         {
             "$match": {
                 "project_id": project_id,
-                "clustering_id": version.clustering_id,
-            }
-        },
-        {"$unwind": {"path": "$embeddings_ids", "preserveNullAndEmptyArrays": True}},
-        {
-            "$lookup": {
-                "from": "private-embeddings",
-                "localField": "embeddings_ids",
-                "foreignField": "id",
-                "as": "emb",
-            }
-        },
-        {"$unwind": {"path": "$emb", "preserveNullAndEmptyArrays": True}},
-        {
-            "$match": {
-                "emb.project_id": project_id,
+                "id": version.clustering_id,
+                version.type: {"$exists": True},
             }
         },
         {
             "$project": {
-                "id": 1,
-                "emb": 1,
-                "name": 1,
+                version.type: 1,
             }
         },
     ]
@@ -3033,27 +3017,21 @@ async def compute_cloud_of_clusters(
     raw_results = (
         await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
     )
-    if not raw_results:
+    if raw_results is None or raw_results == []:
         return {}
 
-    if version.type == "PCA":
-        pca = PCA(n_components=3)
-        embeddings = [result["emb"]["embeddings"] for result in raw_results]
-        dim_reduction_results = pca.fit_transform(embeddings)
+    if version.type == "pca":
+        logger.debug(f"Raw results {raw_results}")
+        dim_reduction_results = raw_results[0]["pca"]
 
-    elif version.type == "TSNE":
-        tsne = TSNE(n_components=3)
-        embeddings = [result["emb"]["embedding"] for result in raw_results]
-        dim_reduction_results = tsne.fit_transform(embeddings)
+    # TODO: Precalculate TSNE
+    # elif version.type == "tsne":
+    #     tsne = TSNE(n_components=3)
+    #     embeddings = [result["emb"]["embedding"] for result in raw_results]
+    #     dim_reduction_results = tsne.fit_transform(embeddings)
     else:
         raise NotImplementedError(f"Type {version.type} is not implemented")
 
     logger.debug(f"{len(raw_results)}")
     logger.debug(f"{len(dim_reduction_results)}")
-    return {
-        "x": [res[0] for i, res in enumerate(dim_reduction_results)],
-        "y": [res[1] for i, res in enumerate(dim_reduction_results)],
-        "z": [res[2] for i, res in enumerate(dim_reduction_results)],
-        "clusters_ids": [res["id"] for res in raw_results],
-        "clusters_names": [res["name"] for res in raw_results],
-    }
+    return dim_reduction_results

@@ -27,7 +27,7 @@ class ClusteringEmbeddingCloud(BaseModel):
     """
 
     clustering_id: str
-    type: Literal["PCA", "TSNE"] = "PCA"
+    type: Literal["pca", "tsne"] = "pca"
 
 
 class DashboardMetricsFilter(BaseModel):
