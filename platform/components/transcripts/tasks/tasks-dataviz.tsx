@@ -276,8 +276,8 @@ const TasksDataviz: React.FC = () => {
               <CardContent>
                 {((dateLastClustering === null ||
                   dateLastClustering === undefined) && <p>...</p>) || (
-                    <p className="text-xl">{dateLastClustering}</p>
-                  )}
+                  <p className="text-xl">{dateLastClustering}</p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -431,7 +431,7 @@ const TasksDataviz: React.FC = () => {
                   <Pie
                     data={eventsRanking}
                     dataKey="nb_events"
-                    nameKey="event_name"
+                    nameKey="tagger_name"
                     labelLine={false}
                     innerRadius={50}
                     outerRadius={70}
