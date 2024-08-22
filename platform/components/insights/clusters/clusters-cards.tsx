@@ -315,9 +315,6 @@ export function ClustersCards({
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         clustering_id: selectedClustering?.id,
-        model: selectedClustering?.model,
-        scope: selectedClustering?.scope,
-        instruction: selectedClustering?.instruction,
         type: "PCA",
       }).then((res) => {
         // if res is {}, return undefined
