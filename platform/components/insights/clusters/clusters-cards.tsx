@@ -195,10 +195,12 @@ function CustomPlot({ data }: { data: Data }) {
   return (
     <Plot
       data={[data]}
+      config={{ displayModeBar: false }}
       layout={{
         height: window.innerHeight * 0.6,
         width: window.innerWidth * 0.8,
         autosize: true,
+
         scene: {
           xaxis: {
             visible: false,
