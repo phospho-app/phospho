@@ -22,13 +22,10 @@ import { Cluster, Clustering, EventDefinition } from "@/models/models";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { defaultMaxListeners } from "events";
-import { get } from "http";
 import { ChevronRight, Pickaxe, PlusIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Plotly from "plotly.js";
-import React, { use, useEffect, useRef, useState } from "react";
+import { Data } from "plotly.js";
+import React, { useEffect, useRef, useState } from "react";
 import Plot from "react-plotly.js";
 import useSWR from "swr";
 
@@ -44,8 +41,11 @@ function ClusterCard({
   cluster: Cluster;
   setSheetClusterOpen: (value: boolean) => void;
 }) {
-  const { accessToken } = useUser();
+  /* This is a single cluster card */
 
+  const [sheetEventOpen, setSheetEventOpen] = useState(false);
+
+  const { accessToken } = useUser();
   const router = useRouter();
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
@@ -77,7 +77,6 @@ function ClusterCard({
       score_type: "confidence",
     },
   } as EventDefinition;
-  const [sheetEventOpen, setSheetEventOpen] = useState(false);
 
   return (
     <Card
@@ -193,8 +192,12 @@ export function ClustersCards({
 }: {
   setSheetClusterOpen: (value: boolean) => void;
 }) {
-  const project_id = navigationStateStore((state) => state.project_id);
+  /* This is the group of all cluster cards */
+  const [selectedClustering, setSelectedClustering] = useState<
+    Clustering | undefined
+  >(undefined);
   const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
 
   const { data: clusteringsData } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
@@ -211,10 +214,6 @@ export function ClustersCards({
     console.log("clusterings", clusterings);
     latestClustering = clusterings[0];
   }
-
-  const [selectedClustering, setSelectedClustering] = React.useState<
-    Clustering | undefined
-  >(latestClustering);
 
   let selectedClusteringName = selectedClustering?.name;
   if (selectedClustering && !selectedClusteringName) {
@@ -265,10 +264,10 @@ export function ClustersCards({
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        clustering_id: selectedClustering.id,
-        model: selectedClustering.model,
-        scope: selectedClustering.scope,
-        instruction: selectedClustering.instruction,
+        clustering_id: selectedClustering?.id,
+        model: selectedClustering?.model,
+        scope: selectedClustering?.scope,
+        instruction: selectedClustering?.instruction,
         type: "PCA",
       }).then((res) => {
         // let clusterIdToColor = {};
@@ -279,14 +278,17 @@ export function ClustersCards({
         //   });
         // }
         // the code above doesn't work, instead do this :
-        const clusterIdToColor = {};
-        const clusters = res.clusters_ids;
-        const clusters_names = res.clusters_names;
-        clusters.forEach((cluster, index) => {
-          clusterIdToColor[cluster] = graphColors[index % graphColors.length];
+        const clusterIdToColor = new Map<string, string>();
+        const clusters = res.clusters_ids as string[];
+        const clusters_names = res.clusters_names as string[];
+        clusters.forEach((cluster_id, index) => {
+          clusterIdToColor.set(
+            cluster_id,
+            graphColors[index % graphColors.length],
+          );
         });
         const colors: string[] = res.clusters_ids.map((cluster_id: any) => {
-          return clusterIdToColor[cluster_id];
+          return clusterIdToColor.get(cluster_id) as string;
         });
 
         return {
@@ -302,7 +304,7 @@ export function ClustersCards({
           },
           hoverinfo: "text",
           hovertext: clusters_names,
-        };
+        } as Data;
       }),
     {
       keepPreviousData: true,
@@ -373,55 +375,57 @@ export function ClustersCards({
             Clustering is in progress...
           </div>
         )}
-      <div className="mt-0">
-        <Plot
-          data={[selectedClusteringDots]}
-          layout={{
-            height: window.innerHeight * 0.6,
-            width: window.innerWidth * 0.8,
-            autosize: true,
-            scene: {
-              xaxis: {
-                visible: false,
-                showgrid: false,
-                zeroline: false,
-                showline: false,
-                ticks: "",
-                showticklabels: false,
-                backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
-                spikesides: false,
-                showspikes: false,
+      {selectedClusteringDots && (
+        <div className="mt-0">
+          <Plot
+            data={[selectedClusteringDots]}
+            layout={{
+              height: window.innerHeight * 0.6,
+              width: window.innerWidth * 0.8,
+              autosize: true,
+              scene: {
+                xaxis: {
+                  visible: false,
+                  showgrid: false,
+                  zeroline: false,
+                  showline: false,
+                  ticks: "",
+                  showticklabels: false,
+                  backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
+                  spikesides: false,
+                  showspikes: false,
+                },
+                yaxis: {
+                  visible: false,
+                  showgrid: false,
+                  zeroline: false,
+                  showline: false,
+                  ticks: "",
+                  showticklabels: false,
+                  backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
+                  spikesides: false,
+                  showspikes: false,
+                },
+                zaxis: {
+                  visible: false,
+                  showgrid: false,
+                  zeroline: false,
+                  showline: false,
+                  ticks: "",
+                  showticklabels: false,
+                  backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
+                  spikesides: false,
+                  showspikes: false,
+                },
+                bgcolor: "rgba(0,0,0,0)", // Remove scene background
               },
-              yaxis: {
-                visible: false,
-                showgrid: false,
-                zeroline: false,
-                showline: false,
-                ticks: "",
-                showticklabels: false,
-                backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
-                spikesides: false,
-                showspikes: false,
-              },
-              zaxis: {
-                visible: false,
-                showgrid: false,
-                zeroline: false,
-                showline: false,
-                ticks: "",
-                showticklabels: false,
-                backgroundcolor: "rgba(0,0,0,0)", // Make background transparent
-                spikesides: false,
-                showspikes: false,
-              },
-              bgcolor: "rgba(0,0,0,0)", // Remove scene background
-            },
-            paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
-            plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
-          }}
-          onRelayout={(figure) => console.log(figure)}
-        />
-      </div>
+              paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
+              plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
+            }}
+            onRelayout={(figure) => console.log(figure)}
+          />
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {clustersData?.map((cluster) => {
           return (

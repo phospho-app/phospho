@@ -47,7 +47,7 @@ npm i
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with the **Chrome** browser to see the result. 
+Open [http://localhost:3000](http://localhost:3000) with the **Chrome** browser to see the result.
 WARNING !!! This will not work on Safari !
 
 ## Learn More

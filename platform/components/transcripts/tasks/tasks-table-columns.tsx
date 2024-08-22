@@ -2,17 +2,10 @@ import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
 } from "@/components/label-events";
-import { EvalSettings } from "@/components/transcripts/settings/eval-settings";
 import { RunEventsSettings } from "@/components/transcripts/settings/events-settings";
 import { SentimentSettings } from "@/components/transcripts/settings/sentiment-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   HoverCard,
   HoverCardContent,
@@ -38,9 +31,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowDown,
   ArrowUp,
-  Check,
   ChevronRight,
-  PenSquare,
   Sparkles,
   ThumbsDown,
   ThumbsUp,
@@ -296,106 +287,6 @@ export function getColumns({
       ),
       maxSize: 10,
     },
-    // Flag
-    // {
-    //   header: () => {
-    //     return (
-    //       <div className="flex items-center space-x-2 justify-between">
-    //         <div className="flex items-center">
-    //           <Sparkles className="h-4 mr-1 text-green-500" />
-    //           Automatic eval
-    //         </div>
-    //         <EvalSettings />
-    //       </div>
-    //     );
-    //   },
-    //   accessorKey: "flag",
-    //   cell: (row) => (
-    //     <DropdownMenu>
-    //       <HoverCard openDelay={0} closeDelay={0}>
-    //         <DropdownMenuTrigger>
-    //           <HoverCardTrigger asChild>
-    //             <div className="flex flex-row items-center">
-    //               <Badge
-    //                 variant={
-    //                   (row.getValue() as string) === "success"
-    //                     ? "secondary"
-    //                     : (row.getValue() as string) === "failure"
-    //                       ? "destructive"
-    //                       : "secondary"
-    //                 }
-    //                 className="hover:border-green-500"
-    //               >
-    //                 {row.getValue() as string}
-    //                 {row.getValue() === null && <div className="h-3 w-6"></div>}
-    //               </Badge>
-    //               {row.row.original.notes && (
-    //                 <PenSquare className="h-4 w-4 ml-1" />
-    //               )}
-    //             </div>
-    //           </HoverCardTrigger>
-    //         </DropdownMenuTrigger>
-    //         <DropdownMenuContent>
-    //           <DropdownMenuItem
-    //             onClick={(mouseEvent) => {
-    //               // This is used to avoid clicking on the row as well
-    //               mouseEvent.stopPropagation();
-    //               // Flag the task as success
-    //               flagTask({
-    //                 task_id: row.row.original.id,
-    //                 flag: "success",
-    //                 accessToken: accessToken,
-    //                 project_id: project_id,
-    //                 mutateTasks: mutateTasks,
-    //               });
-    //             }}
-    //           >
-    //             {(row.getValue() as string) === "success" && (
-    //               <Check className="h-4 w-4 mr-1" />
-    //             )}
-    //             Success
-    //           </DropdownMenuItem>
-    //           <DropdownMenuItem
-    //             onClick={(mouseEvent) => {
-    //               // This is used to avoid clicking on the row as well
-    //               mouseEvent.stopPropagation();
-    //               // Flag the task as failure
-    //               flagTask({
-    //                 task_id: row.row.original.id,
-    //                 flag: "failure",
-    //                 accessToken: accessToken,
-    //                 project_id: project_id,
-    //                 mutateTasks: mutateTasks,
-    //               });
-    //             }}
-    //           >
-    //             {(row.getValue() as string) === "failure" && (
-    //               <Check className="h-4 w-4 mr-1" />
-    //             )}
-    //             Failure
-    //           </DropdownMenuItem>
-    //         </DropdownMenuContent>
-    //         <HoverCardContent align="start">
-    //           <div className="flex flex-col space-y-1">
-    //             {!row.row.original.last_eval && <span>No eval</span>}
-    //             {row.row.original.last_eval && (
-    //               <div>
-    //                 <span className="font-bold">Last eval source: </span>
-    //                 <span>{row.row.original.last_eval?.source}</span>
-    //               </div>
-    //             )}
-    //             {row.row.original.notes && (
-    //               <div>
-    //                 <span className="font-bold">Notes: </span>
-    //                 <span>{row.row.original.notes}</span>
-    //               </div>
-    //             )}
-    //           </div>
-    //         </HoverCardContent>
-    //       </HoverCard>
-    //     </DropdownMenu>
-    //   ),
-    // },
     // Events
     {
       header: () => {

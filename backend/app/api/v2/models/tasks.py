@@ -35,6 +35,7 @@ class TaskHumanEvalRequest(BaseModel):
     human_eval: Optional[Literal["success", "failure"]] = None
     project_id: Optional[str] = None
     source: Optional[str] = "owner"
+    notes: Optional[str] = None
 
 
 class TaskUpdateRequest(BaseModel):

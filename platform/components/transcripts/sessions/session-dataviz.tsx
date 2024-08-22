@@ -1,3 +1,4 @@
+import { SendDataAlertDialog } from "@/components/callouts/import-data";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,6 +16,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { AlertDialog } from "@radix-ui/react-alert-dialog";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -50,6 +52,8 @@ const SessionsDataviz: React.FC = () => {
 
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+
+  const [open, setOpen] = React.useState(false);
 
   const { data: totalNbSessionsData } = useSWR(
     [
@@ -180,32 +184,6 @@ const SessionsDataviz: React.FC = () => {
   const mostDetectedEvent: string | null | undefined =
     mostDetectedEventData?.most_detected_event;
 
-  const {
-    data: sessionLengthHistogram,
-  }: {
-    data: SessionLengthHist[] | undefined;
-  } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/sessions`,
-      accessToken,
-      "session_length_histogram",
-      JSON.stringify(dataFilters),
-    ],
-    ([url, accessToken, filters]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["session_length_histogram"],
-        filters: dataFilters,
-      }).then((data) => {
-        if (!data.session_length_histogram) {
-          return [];
-        }
-        return data.session_length_histogram;
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-
   const { data: eventsRanking }: { data: EventsRanking[] | null | undefined } =
     useSWR(
       [
@@ -277,6 +255,9 @@ const SessionsDataviz: React.FC = () => {
 
   return (
     <div>
+      <AlertDialog open={open}>
+        <SendDataAlertDialog setOpen={setOpen} />
+      </AlertDialog>
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -322,31 +303,35 @@ const SessionsDataviz: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex-1">
             <h3 className="text-slate-500 mb-2">Number of sessions</h3>
-            {(!nbSessionsPerDay && (
-              <Skeleton className="w-[100%] h-[10rem]" />
-            )) ||
-              (nbSessionsPerDay && (
-                <ChartContainer
-                  config={chartConfig}
-                  className="w-[100%] h-[10rem]"
-                >
-                  <BarChart
-                    data={nbSessionsPerDay}
-                    barGap={0}
-                    barCategoryGap={0}
-                  >
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <ChartTooltip content={CustomTooltipNbrSessions} />
-                    <Bar
-                      dataKey="nb_sessions"
-                      fill="#22c55e"
-                      radius={[4, 4, 0, 0]}
-                      barSize={20}
-                    />
-                  </BarChart>
-                </ChartContainer>
-              ))}
+            {!totalNbSessions && (
+              <div className="flex flex-col text-center items-center h-full">
+                <p className="text-muted-foreground mb-2 text-sm pt-6">
+                  Start sending data to get more insights
+                </p>
+                <Button variant="outline" onClick={() => setOpen(true)}>
+                  Import data
+                  <ChevronRight className="ml-2" />
+                </Button>
+              </div>
+            )}
+            {totalNbSessions && (
+              <ChartContainer
+                config={chartConfig}
+                className="w-[100%] h-[10rem]"
+              >
+                <BarChart data={nbSessionsPerDay} barGap={0} barCategoryGap={0}>
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <ChartTooltip content={CustomTooltipNbrSessions} />
+                  <Bar
+                    dataKey="nb_sessions"
+                    fill="#22c55e"
+                    radius={[4, 4, 0, 0]}
+                    barSize={20}
+                  />
+                </BarChart>
+              </ChartContainer>
+            )}
           </div>
           <div className="flex-1">
             <h3 className="text-slate-500 mb-2">Composition of last cluster</h3>
@@ -376,8 +361,8 @@ const SessionsDataviz: React.FC = () => {
                     dataKey="size"
                     nameKey="name"
                     labelLine={false}
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={50}
+                    outerRadius={70}
                   >
                     <Label
                       content={({ viewBox }) => {
@@ -446,8 +431,8 @@ const SessionsDataviz: React.FC = () => {
                     dataKey="nb_events"
                     nameKey="event_name"
                     labelLine={false}
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={50}
+                    outerRadius={70}
                   >
                     <Label
                       content={({ viewBox }) => {

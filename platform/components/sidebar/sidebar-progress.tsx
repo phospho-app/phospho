@@ -11,7 +11,7 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { EvaluationModel, Project } from "@/models/models";
+import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { AlertDialog } from "@radix-ui/react-alert-dialog";
@@ -21,13 +21,11 @@ import { usePostHog } from "posthog-js/react";
 import * as React from "react";
 import useSWR from "swr";
 
-import { EvalSettingsOnboarding } from "../eval-settings-onboarding";
-
-// This component is used to display the progress of the onboarding process.
-// It is composed of a progress bar and a text label.
-// It can be clicked to open a popover with more information about the onboarding process.
-
 export const OnboardingProgress = () => {
+  // This component is used to display the progress of the onboarding process.
+  // It is composed of a progress bar and a text label.
+  // When clicked, it opens a popover with more information about the onboarding process.
+
   const [open, setOpen] = React.useState(false);
 
   const project_id = navigationStateStore((state) => state.project_id);
@@ -45,17 +43,6 @@ export const OnboardingProgress = () => {
     },
   );
 
-  const { data: evaluation_model }: { data: EvaluationModel; mutate: any } =
-    useSWR(
-      project_id
-        ? [`/api/projects/${project_id}/evaluation`, accessToken]
-        : null,
-      ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-      {
-        keepPreviousData: true,
-      },
-    );
-
   const { data: totalNbTasksData } = useSWR(
     project_id
       ? [
@@ -68,6 +55,14 @@ export const OnboardingProgress = () => {
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
       }),
+    {
+      keepPreviousData: true,
+    },
+  );
+
+  const { data: clusteringsData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {
       keepPreviousData: true,
     },
@@ -87,6 +82,9 @@ export const OnboardingProgress = () => {
   const isDataImported =
     totalNbTasks !== null && totalNbTasks !== undefined && totalNbTasks > 0;
 
+  const isClusteringDone =
+    clusteringsData?.clusterings && clusteringsData?.clusterings.length > 0;
+
   const progress =
     (isProjectPresent ? 25 : 0) +
     (isEventDefined ? 25 : 0) +
@@ -94,26 +92,32 @@ export const OnboardingProgress = () => {
     (isDataImported ? 25 : 0);
 
   if (progress === 100) {
-    return null;
+    // The onboarding process is complete. Do not display the progress bar.
+    return <></>;
   }
+
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <div className="ml-8 mt-4">
-        <AlertDialogTrigger className="text-primary-500 hover:text-green-500">
-          Finish onboarding
-          <Progress value={progress} className="w-32 ml-1" />
-        </AlertDialogTrigger>
-        <AlertDialogContent className="md:h-3/4 md:max-w-1/2">
-          <OnboardingProgressPopover
-            setOpen={setOpen}
-            progress={progress}
-            isProjectPresent={isProjectPresent}
-            isEventDefined={isEventDefined}
-            isBillingDefined={isBillingDefined}
-            isDataImported={isDataImported}
-          />
-        </AlertDialogContent>
-      </div>
+      <AlertDialogTrigger
+        className="text-primary-500 hover:text-green-500 text-sm flex flex-col items-start mx-2"
+        onClick={(mouseEvent) => {
+          mouseEvent.stopPropagation();
+        }}
+      >
+        Finish onboarding
+        <Progress value={progress} />
+      </AlertDialogTrigger>
+      <AlertDialogContent className="md:h-3/4 md:max-w-1/2">
+        <OnboardingProgressPopover
+          setOpen={setOpen}
+          progress={progress}
+          isProjectPresent={isProjectPresent}
+          isEventDefined={isEventDefined}
+          isBillingDefined={isBillingDefined}
+          isDataImported={isDataImported}
+          isClusteringDone={isClusteringDone}
+        />
+      </AlertDialogContent>
     </AlertDialog>
   );
 };
@@ -129,22 +133,17 @@ const OnboardingTask = ({
   onClick: () => void;
   completed: boolean;
 }) => {
-  const handleEventsClick = async () => {
-    onClick();
-  };
   if (!completed) {
     return (
       <Card>
-        <div className="flex justify-between">
+        <div className="flex justify-between p-3">
           <div>
-            <CardTitle className="text-xl p-2">{title}</CardTitle>
-            <CardDescription className="mb-2 ml-2">
-              {description}
-            </CardDescription>
+            <CardTitle className="text-xl pb-1">{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
           </div>
           <Button
             variant="outline"
-            onClick={handleEventsClick}
+            onClick={onClick}
             className="my-auto mr-4 bg-green-500 text-white hover:bg-green-600 hover:text-white"
           >
             Start
@@ -170,6 +169,7 @@ const OnboardingProgressPopover = ({
   isEventDefined,
   isBillingDefined,
   isDataImported,
+  isClusteringDone,
 }: {
   setOpen: (open: boolean) => void;
   progress: number;
@@ -177,10 +177,10 @@ const OnboardingProgressPopover = ({
   isEventDefined: boolean;
   isBillingDefined: boolean;
   isDataImported: boolean;
+  isClusteringDone: boolean;
 }) => {
   const [openDataDialog, setOpenDataDialog] = React.useState(false);
   const [openCreateProject, setOpenCreateProject] = React.useState(false);
-  const [openEvalDialog, setOpenEvalDialog] = React.useState(false);
 
   const router = useRouter();
   const posthog = usePostHog();
@@ -197,10 +197,6 @@ const OnboardingProgressPopover = ({
   async function handleEventsClick() {
     router.push("/org/insights/events");
     setOpen(false);
-  }
-
-  async function handleEvalClick() {
-    setOpenEvalDialog(true);
   }
 
   async function handleBillingClick() {
@@ -262,16 +258,21 @@ const OnboardingProgressPopover = ({
     setOpenDataDialog(true);
   }
 
-  const tasks = [
+  async function handleClusteringClick() {
+    router.push("/org/insights/clusters");
+    setOpen(false);
+  }
+
+  const onboardingTasks = [
     {
-      title: "Setup your first project",
+      title: "Create your first project",
       description: "",
       onClick: handleCreateProjectClick,
       completed: isProjectPresent,
     },
     {
-      title: "Setup your first event",
-      description: "Detect specific events in your app",
+      title: "Add automatic analytics",
+      description: "Detect tags, score text, and classify your data",
       onClick: handleEventsClick,
       completed: isEventDefined,
     },
@@ -283,9 +284,15 @@ const OnboardingProgressPopover = ({
     },
     {
       title: "Import your data",
-      description: "Get actionnable insights and real time analytics",
+      description: "Upload a file, connect to a data source, or use an API",
       onClick: handleImportClick,
       completed: isDataImported,
+    },
+    {
+      title: "Run a clustering analysis",
+      description: "Discover the hidden meaning in your data",
+      onClick: handleClusteringClick,
+      completed: isClusteringDone,
     },
   ];
 
@@ -298,7 +305,7 @@ const OnboardingProgressPopover = ({
       <div className="mt-2 text-sm space-y-2 space-x-2">
         <div className="mt-4 text-primary-500">Next steps:</div>
         {/* Display all the uncompleted tasks */}
-        {tasks.map(
+        {onboardingTasks.map(
           (task) =>
             !task.completed && (
               <OnboardingTask
@@ -313,7 +320,7 @@ const OnboardingProgressPopover = ({
       <div className="text-sm space-y-2 space-x-2">
         <div className="mt-4 text-primary-500 space-y-4">Completed: </div>
         {/* Display all the completed tasks */}
-        {tasks.map(
+        {onboardingTasks.map(
           (task) =>
             task.completed && (
               <OnboardingTask
@@ -336,12 +343,6 @@ const OnboardingProgressPopover = ({
       <AlertDialog open={openCreateProject}>
         <AlertDialogContent className="md:max-w-1/4">
           <CreateProjectDialog setOpen={setOpenCreateProject} />
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={openEvalDialog}>
-        <AlertDialogContent className="md:max-w-1/4">
-          <EvalSettingsOnboarding setOpen={setOpenEvalDialog} />
         </AlertDialogContent>
       </AlertDialog>
     </div>

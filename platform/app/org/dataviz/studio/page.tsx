@@ -98,7 +98,7 @@ const MetadataForm: React.FC = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Nb tasks");
+                    setSelectedMetric("nb tasks");
                     setmetadata_metric(null);
                   }}
                 >
@@ -107,7 +107,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Nb sessions");
+                    setSelectedMetric("nb sessions");
                     setmetadata_metric(null);
                   }}
                 >
@@ -116,7 +116,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Event count");
+                    setSelectedMetric("event count");
                     setmetadata_metric(null);
                   }}
                 >
@@ -125,7 +125,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Event distribution");
+                    setSelectedMetric("event distribution");
                     setmetadata_metric(null);
                   }}
                 >
@@ -134,7 +134,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Avg Success rate");
+                    setSelectedMetric("avg Success rate");
                     setmetadata_metric(null);
                   }}
                 >
@@ -143,7 +143,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("Avg session length");
+                    setSelectedMetric("avg session length");
                     setmetadata_metric(null);
                   }}
                 >
@@ -235,7 +235,7 @@ const MetadataForm: React.FC = () => {
                   }}
                 >
                   <Flag className="h-4 w-4 mr-2" />
-                  Eval
+                  Human rating
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -330,17 +330,14 @@ const MetadataForm: React.FC = () => {
 
               // Push updates
               try {
-                const creation_response = await fetch(
-                  `/api/projects/${selectedProject.id}`,
-                  {
-                    method: "POST",
-                    headers: {
-                      Authorization: "Bearer " + accessToken,
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(selectedProject),
+                await fetch(`/api/projects/${selectedProject.id}`, {
+                  method: "POST",
+                  headers: {
+                    Authorization: "Bearer " + accessToken,
+                    "Content-Type": "application/json",
                   },
-                ).then((response) => {
+                  body: JSON.stringify(selectedProject),
+                }).then((response) => {
                   mutate(
                     [`/api/projects/${selectedProject.id}`, accessToken],
                     async (data: any) => {

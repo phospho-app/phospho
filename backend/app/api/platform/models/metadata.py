@@ -26,9 +26,11 @@ class MetadataPivotQuery(BaseModel):
     - "sum": Sum of the metadata field
     - "avg": Average of the metadata field
     - "nb tasks": Number of tasks
+    - "nb sessions": Number of sessions
+    - "event count": Number of events
+    - "event distribution": Distribution of events
     - "avg success rate": Average success rate
     - "avg session length": Average session length
-    - "event distribution": Distribution of events
 
     The breakdown_by field can be one of the following:
     - A metadata field
@@ -43,6 +45,8 @@ class MetadataPivotQuery(BaseModel):
         "sum",
         "avg",
         "nb tasks",
+        "nb sessions",
+        "event count",
         "avg success rate",
         "avg session length",
         "event distribution",
@@ -50,11 +54,9 @@ class MetadataPivotQuery(BaseModel):
         "nb tasks",
         description="The metric to be analyzed.",
     )
-    metric_metadata: str | None = (
-        Field(
-            None,
-            description="The metadata field to be analyzed.",
-        ),
+    metric_metadata: str | None = Field(
+        None,
+        description="The metadata field to be analyzed.",
     )
     breakdown_by: (
         Literal["day", "week", "month", "event_name", "task_position", "session_length"]

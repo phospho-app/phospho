@@ -6,6 +6,9 @@ const dns = require("dns");
 dns.setDefaultResultOrder("ipv4first")
 
 module.exports = {
+  experimental: {
+    instrumentationHook: true,
+  },
   publicRuntimeConfig: {
     "version": version,
   },
@@ -26,9 +29,28 @@ module.exports = {
     ]
   },
   output: 'standalone', // Added for the docker mode in self hosting
+  webpack: (config, { isServer, buildId, dev, webpack }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        crypto: require.resolve("crypto-browserify"),
+      };
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser',
+        }),
+        new webpack.NormalModuleReplacementPlugin(
+          /node:crypto/,
+          (resource) => {
+            resource.request = resource.request.replace(/^node:/, '');
+          }
+        )
+      );
+    }
+    return config;
+  },
 }
 
-// Verify if NEXT_PUBLIC_API_URL is set
 // Verify if NEXT_PUBLIC_API_URL is set
 if (!process.env.NEXT_PUBLIC_API_URL) {
   console.warn("The NEXT_PUBLIC_API_URL environment variable is not defined.");

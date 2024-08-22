@@ -147,7 +147,7 @@ class SentimentObject(BaseModel):
     label: Optional[str] = None
 
 
-class HumanEval(BaseModel):
+class HumanEval(DatedBaseModel):
     flag: Optional[str] = None
 
 
@@ -174,7 +174,7 @@ class Task(ProjectElementBaseModel):
     # Testing
     test_id: Optional[str] = None
     # Deprecated (topics)
-    topics: Optional[List[str]] = Field(None, deprecated=True)
+    topics: Optional[List[str]] = Field(default=None, deprecated=True)
     # Position of the task in the session
     task_position: Optional[int] = None
     is_last_task: Optional[bool] = None
@@ -278,12 +278,12 @@ class ProjectSettings(BaseModel):
     dashboard_tiles: List[DashboardTile] = Field(
         default_factory=lambda: [
             DashboardTile(
-                tile_name="Success rate per message position",
+                tile_name="Human rating per message position",
                 metric="Avg Success rate",
                 breakdown_by="task_position",
             ),
             DashboardTile(
-                tile_name="Average success rate per event name",
+                tile_name="Average human rating per event name",
                 metric="Avg Success rate",
                 breakdown_by="event_name",
             ),
@@ -294,7 +294,7 @@ class ProjectSettings(BaseModel):
                 breakdown_by="task_position",
             ),
             DashboardTile(
-                tile_name="Success rate per language",
+                tile_name="Human rating per language",
                 metric="Avg Success rate",
                 breakdown_by="language",
             ),
@@ -796,8 +796,10 @@ class PipelineResults(BaseModel):
     events: Dict[str, List[Event]] = Field(
         default_factory=dict, description="Events detected in the messages"
     )
-    flag: Dict[str, Literal["success", "failure"]] = Field(
-        default_factory=dict, description="Flag of the task: success or failure."
+    flag: Optional[Dict[str, Literal["success", "failure"]]] = Field(
+        default_factory=dict,
+        description="Flag of the task: success or failure.",
+        deprecated=True,
     )
     language: Dict[str, Optional[str]] = Field(
         default_factory=dict, description="Language detected in the messages."

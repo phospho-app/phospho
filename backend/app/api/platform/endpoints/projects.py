@@ -41,9 +41,7 @@ from app.services.mongo.projects import (
     get_all_sessions,
     get_all_tests,
     get_all_users_metadata,
-    get_evaluation_model,
     get_project_by_id,
-    post_evaluation_model,
     update_project,
 )
 from app.services.mongo.search import (
@@ -51,7 +49,6 @@ from app.services.mongo.search import (
     search_tasks_in_project,
 )
 from app.services.mongo.tasks import get_all_tasks
-from phospho.models import EvaluationModel, EvaluationModelDefinition
 
 router = APIRouter(tags=["Projects"])
 
@@ -597,48 +594,3 @@ async def connect_langfuse(
         max_usage=usage_quota.max_usage,
     )
     return {"status": "ok", "message": "LangFuse connected successfully."}
-
-
-@router.get(
-    "/projects/{project_id}/evaluation",
-    response_model=EvaluationModel,
-)
-async def get_evaluation_prompt(
-    project_id: str,
-    user: User = Depends(propelauth.require_user),
-) -> EvaluationModel:
-    """
-    Get custom evaluation prompt for a given project id
-    """
-    project = await get_project_by_id(project_id)
-    propelauth.require_org_member(user, project.org_id)
-
-    evaluation_model = await get_evaluation_model(project_id=project_id)
-
-    return evaluation_model
-
-
-@router.post(
-    "/projects/{project_id}/evaluation",
-    response_model=dict,
-)
-async def set_evaluation_prompt(
-    project_id: str,
-    evaluation_model_definition: EvaluationModelDefinition,
-    user: User = Depends(propelauth.require_user),
-) -> dict:
-    """
-    Set custom evaluation prompt for a given project id
-    """
-    project = await get_project_by_id(project_id)
-    propelauth.require_org_member(user, project.org_id)
-
-    evaluation_model = EvaluationModel(
-        project_id=evaluation_model_definition.project_id,
-        system_prompt=evaluation_model_definition.system_prompt,
-    )
-
-    logger.debug(evaluation_model)
-    await post_evaluation_model(evaluation_model)
-
-    return {"status": "ok", "message": "Evaluation prompt set successfully."}
