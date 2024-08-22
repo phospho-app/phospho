@@ -70,8 +70,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     # Task 2
     session_id = phospho.new_session()
     agent = OpenAIAgent()
-    response = agent.ask(question="Are you an AI?", session_id=session_id)
-    "".join([r for r in response if r is not None])
+    agent.ask(question="Are you an AI?", session_id=session_id)
 
     phospho.consumer.send_batch()
 

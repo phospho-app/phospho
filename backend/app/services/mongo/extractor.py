@@ -102,12 +102,10 @@ class ExtractorClient:
 
         # We check that "org_id", "project_id" and "customer_id" are present in the data
         if endpoint not in ["store_open_telemetry_data_workflow"] and (
-            "org_id" not in data
-            or "project_id" not in data
-            or "customer_id" not in data
+            self.org_id is None or self.project_id is None
         ):
             logger.error(
-                f"Missing org_id, project_id or customer_id in data for endpoint {endpoint}"
+                f"Missing org_id, project_id or customer_id for endpoint {endpoint}"
             )
             return None
 
