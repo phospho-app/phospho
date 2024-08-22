@@ -167,9 +167,4 @@ async def post_fetch_dataset_names(
 
     logger.debug(f"Datasets name: {datasets_name}")
 
-    if not datasets_name:
-        raise HTTPException(
-            status_code=400, detail="No datasets found for this project."
-        )
-
     return datasets_name
