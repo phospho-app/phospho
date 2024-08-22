@@ -20,6 +20,7 @@ from phospho.models import PipelineResults, Recipe, Task
 from temporalio.client import Client, TLSConfig
 
 import os
+from hashlib import sha1
 
 
 async def bill_on_stripe(
@@ -128,8 +129,14 @@ class ExtractorClient:
                 data_converter=pydantic_data_converter,
             )
 
+            # Used to get a 15 digit hash of the data to generate a unique determinist id
+            unique_id = endpoint + str(
+                int(sha1(repr(sorted(data.items())).encode("utf-8")).hexdigest(), 16)
+                % (10**15)
+            )
+
             response = await client.execute_workflow(
-                endpoint, data, id=generate_uuid(), task_queue="default"
+                endpoint, data, id=unique_id, task_queue="default"
             )
 
             if on_success_callback:

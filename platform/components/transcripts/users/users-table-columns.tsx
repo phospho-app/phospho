@@ -121,7 +121,7 @@ export function getColumns() {
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Avg Success Rate
+            avg_success_rate
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -139,7 +139,7 @@ export function getColumns() {
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Avg Session Length
+            avg_session_length
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );

@@ -237,7 +237,7 @@ export const navigationStateStore = create(
         }));
       },
 
-      selectedMetric: "Nb tasks",
+      selectedMetric: "nb_messages",
       setSelectedMetric: (metric: string) =>
         set(() => ({ selectedMetric: metric })),
       metadata_metric: null,
@@ -247,8 +247,6 @@ export const navigationStateStore = create(
       setSelectedGroupBy: (groupBy: string) =>
         set(() => ({ selectedGroupBy: groupBy })),
     }),
-
-
 
     {
       name: "navigation-storage",

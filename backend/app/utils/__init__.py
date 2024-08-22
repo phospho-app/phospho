@@ -102,3 +102,20 @@ def slugify_string(string: str) -> str:
     slug = slug.lower()
     slug = slug[:30]
     return slug
+
+
+def generate_valid_name(key, display_warning=False):
+    # Remove any characters that are not alphanumeric, underscore, or hyphen
+    sanitized_key = re.sub(r"[^a-zA-Z0-9_-]", "", key)
+
+    # Ensure the sanitized key contains at least one alphanumeric character
+    if not re.search(r"[a-zA-Z0-9]", sanitized_key):
+        sanitized_key = "default"
+
+    # Replace spaces with underscores, convert to lowercase
+    valid_name = sanitized_key.replace(" ", "_").lower()
+
+    if display_warning and valid_name != key:
+        logger.warning(f"Invalid name '{key}' was sanitized to '{valid_name}'.")
+
+    return valid_name

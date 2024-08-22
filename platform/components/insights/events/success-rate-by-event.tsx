@@ -90,7 +90,7 @@ function SuccessRateByEvent() {
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={successRateByEvent}>
                 <XAxis
-                  dataKey="event_name"
+                  dataKey="tagger_name"
                   stroke="#888888"
                   fontSize={12}
                   tickLine={false}

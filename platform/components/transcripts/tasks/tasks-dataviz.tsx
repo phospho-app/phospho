@@ -298,7 +298,7 @@ const TasksDataviz: React.FC = () => {
       <div className="container mx-auto mt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Numner of user messages</h3>
+            <h3 className="text-slate-500 mb-2">Number of user messages</h3>
             {!nbDailyTasks && (
               <div className="flex flex-col text-center items-center h-full">
                 <p className="text-muted-foreground mb-2 text-sm pt-6">
@@ -431,7 +431,7 @@ const TasksDataviz: React.FC = () => {
                   <Pie
                     data={eventsRanking}
                     dataKey="nb_events"
-                    nameKey="event_name"
+                    nameKey="tagger_name"
                     labelLine={false}
                     innerRadius={50}
                     outerRadius={70}
