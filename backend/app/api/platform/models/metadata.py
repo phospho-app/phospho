@@ -12,7 +12,7 @@ class MetadataPivotResponse(BaseModel):
     List of dictionaries, each containing:
     - breakdown_by: str
     - metric: float
-    - stack: Dict[str, float] (only for "tag_distribution") containing the event_name and its count
+    - stack: Dict[str, float] (only for "tags_distribution") containing the event_name and its count
 
     The output stack can be used to create a stacked bar chart.
     """
@@ -27,15 +27,15 @@ class MetadataPivotQuery(BaseModel):
     - "avg": Average of the metadata field
     - "nb_messages": Number of tasks
     - "nb_sessions": Number of sessions
-    - "tag_count": Number of detected tags
-    - "tag_distribution": Distribution of detected tags
+    - "tags_count": Number of detected tags
+    - "tags_distribution": Distribution of detected tags
     - "avg_success_rate": Average success rate
     - "avg_session_length": Average session length
 
     The "breakdown_by" field can be one of the following:
     - A metadata field
     - A time field: "day", "week", "month"
-    - "event_name"
+    - "tagger_name"
     - "task_position"
     - None
     - "session_length"
@@ -46,10 +46,10 @@ class MetadataPivotQuery(BaseModel):
         "avg",
         "nb_messages",
         "nb_sessions",
-        "tag_count",
+        "tags_count",
         "avg_success_rate",
         "avg_session_length",
-        "tag_distribution",
+        "tags_distribution",
     ] = Field(
         "nb_messages",
         description="The metric to be analyzed.",
@@ -59,7 +59,9 @@ class MetadataPivotQuery(BaseModel):
         description="The metadata field to be analyzed.",
     )
     breakdown_by: (
-        Literal["day", "week", "month", "event_name", "task_position", "session_length"]
+        Literal[
+            "day", "week", "month", "tagger_name", "task_position", "session_length"
+        ]
         | str
         | None
     ) = Field(

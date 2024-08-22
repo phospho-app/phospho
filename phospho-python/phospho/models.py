@@ -6,6 +6,7 @@ import datetime
 from enum import Enum
 from typing import Dict, List, Literal, Optional, Any, Union
 
+from loguru import logger
 from pydantic import BaseModel, Field, field_serializer
 
 from phospho.utils import (
@@ -285,7 +286,7 @@ class ProjectSettings(BaseModel):
             DashboardTile(
                 tile_name="Average human rating per event name",
                 metric="avg_success_rate",
-                breakdown_by="event_name",
+                breakdown_by="tagger_name",
             ),
             DashboardTile(
                 tile_name="Average sentiment score per message position",
@@ -340,6 +341,30 @@ class Project(DatedBaseModel):
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:
                     del project_data["settings"]["dashboard_tiles"]
+                elif isinstance(project_data["settings"]["dashboard_tiles"], list):
+                    # Rename the dashboard_tiles breakdown_by and metric fields
+                    old_to_new_fields = {
+                        # metric
+                        "nb tasks": "nb_messages",
+                        "nb sessions": "nb_sessions",
+                        "event count": "tags_count",
+                        "event distribution": "tags_distribution",
+                        "avg success rate": "avg_success_rate",
+                        "avg session length": "avg_session_length",
+                        # breakdown_by
+                        "event name": "tagger_name",
+                    }
+                    for tile in project_data["settings"]["dashboard_tiles"]:
+                        # Replace by a lowercase version of the field
+                        tile["metric"] = tile["metric"].lower()
+                        tile["breakdown_by"] = tile["breakdown_by"].lower()
+                        # Replace the old fields by the new ones
+                        tile["metric"] = old_to_new_fields.get(
+                            tile["metric"], tile["metric"]
+                        )
+                        tile["breakdown_by"] = old_to_new_fields.get(
+                            tile["breakdown_by"], tile["breakdown_by"]
+                        )
 
         return cls(**project_data)
 

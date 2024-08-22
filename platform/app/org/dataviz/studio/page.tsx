@@ -116,7 +116,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("tag_count");
+                    setSelectedMetric("tags_count");
                     setmetadata_metric(null);
                   }}
                 >
@@ -125,7 +125,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("tag_distribution");
+                    setSelectedMetric("tags_distribution");
                     setmetadata_metric(null);
                   }}
                 >
@@ -223,11 +223,11 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedGroupBy("event_name");
+                    setSelectedGroupBy("tagger_name");
                   }}
                 >
                   <TextSearch className="h-4 w-4 mr-2" />
-                  Tag name
+                  Tagger name
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {

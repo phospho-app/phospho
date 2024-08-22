@@ -452,15 +452,15 @@ async def breakdown_by_sum_of_metadata_field(
     - "avg": Average of the metadata field
     - "nb_messages": Number of tasks
     - "nb_sessions": Number of sessions
-    - "tag_count": Number of detected tags
-    - "tag_distribution": Distribution of detected tags
+    - "tags_count": Number of detected tags
+    - "tags_distribution": Distribution of detected tags
     - "avg_success_rate": Average success rate
     - "avg_session_length": Average session length
 
     The breakdown_by field can be one of the following:
     - A metadata field
     - A time field: day, week, month
-    - "event_name"
+    - "tagger_name"
     - "task_position"
     - "None"
     - "session_length"
@@ -468,7 +468,7 @@ async def breakdown_by_sum_of_metadata_field(
     The output is a list of dictionaries, each containing:
     - breakdown_by: str
     - metric: float
-    - stack: Dict[str, float] (only for "tag_distribution") containing the event_name and its count
+    - stack: Dict[str, float] (only for "tags_distribution") containing the event_name and its count
 
     The output stack can be used to create a stacked bar chart.
     """
@@ -588,7 +588,7 @@ async def breakdown_by_sum_of_metadata_field(
     else:
         breakdown_by_col = breakdown_by
 
-    if breakdown_by == "event_name":
+    if breakdown_by == "tagger_name":
         pipeline += [
             {"$unwind": "$events"},
             # Filter to only keep the tagger events
@@ -676,7 +676,7 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
-    if metric == "tag_count" or metric == "tag_distribution":
+    if metric == "tags_count" or metric == "tags_distribution":
         # Count the number of events for each event_name
         pipeline += [
             {"$unwind": "$events"},
@@ -706,7 +706,7 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
-        if metric == "tag_count":
+        if metric == "tags_count":
             pipeline += [
                 {
                     "$project": {
@@ -728,8 +728,8 @@ async def breakdown_by_sum_of_metadata_field(
                 },
                 {"$unwind": "$stack"},
             ]
-        if metric == "tag_distribution":
-            # Same as tag_count, but normalize the count by the total number of events for each breakdown_by
+        if metric == "tags_distribution":
+            # Same as tags_count, but normalize the count by the total number of events for each breakdown_by
             pipeline += [
                 {
                     "$project": {
