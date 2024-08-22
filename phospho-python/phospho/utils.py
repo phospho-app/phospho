@@ -68,6 +68,8 @@ def generate_version_id() -> str:
         "burning",
         "cooked",
         "raw",
+        "testing",
+        "dark",
     ]
     animals = [
         "pandas",
@@ -103,6 +105,9 @@ def generate_version_id() -> str:
         "bees",
         "rats",
         "doggies",
+        "rabbits",
+        "kitties",
+        "quarks",
     ]
     return f"{datetime.datetime.now().strftime('%Y%m%d')}_{choice(adjectives)}-{choice(animals)}"
 
