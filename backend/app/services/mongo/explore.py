@@ -39,7 +39,7 @@ from app.api.platform.models import Pagination
 
 from app.core import config
 
-from app.api.platform.models.explore import CloudVersion
+from app.api.platform.models.explore import ClusteringEmbeddingCloud
 
 
 async def project_has_tasks(project_id: str) -> bool:
@@ -2872,13 +2872,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values[event_name]:
@@ -2897,13 +2897,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2934,13 +2934,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[event_result["version_id"]] = (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] = event_result["count"]
                 else:
-                    divide_for_correct_average[event_result["version_id"]] += (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] += event_result["count"]
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (
@@ -2988,10 +2988,10 @@ async def get_ab_tests_versions(
     return formatted_graph_values
 
 
-async def get_computed_data_cloud(
+async def compute_cloud_of_clusters(
     project_id: str,
-    version: CloudVersion,
-) -> List[Dict[str, Union[int, str]]]:
+    version: ClusteringEmbeddingCloud,
+) -> dict:
     """
     Get the embeddings for the clustering project.
     Compute a PCA on the embeddings and return the first three components if the version is PCA.
@@ -3077,7 +3077,6 @@ async def get_computed_data_cloud(
         pca = PCA(n_components=3)
         embeddings = [result["emb"]["embeddings"] for result in raw_results]
         dim_reduction_results = pca.fit_transform(embeddings)
-        logger.debug(f"PCA result: {dim_reduction_results}")
 
     elif version.type == "TSNE":
         tsne = TSNE(n_components=3)

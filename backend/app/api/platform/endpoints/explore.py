@@ -4,7 +4,7 @@ from typing import Any, List, Optional, Dict, Union
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 from propelauth_fastapi import User
-from app.api.platform.models.explore import ABTestVersions, CloudVersion
+from app.api.platform.models.explore import ABTestVersions, ClusteringEmbeddingCloud
 from app.api.platform.models import (
     ABTests,
     AggregateMetricsRequest,
@@ -33,7 +33,7 @@ from app.services.mongo.explore import (
     fetch_all_clusterings,
     fetch_all_clusters,
     fetch_single_cluster,
-    get_computed_data_cloud,
+    compute_cloud_of_clusters,
     get_dashboard_aggregated_metrics,
     get_events_aggregated_metrics,
     get_sessions_aggregated_metrics,
@@ -636,13 +636,13 @@ async def get_ab_tests_comparison(
 )
 async def get_data_cloud(
     project_id: str,
-    version: CloudVersion,
+    version: ClusteringEmbeddingCloud,
     user: User = Depends(propelauth.require_user),
-) -> List[Dict[str, int]]:
+) -> dict:
     logger.debug(f"{version.model_dump()}")
     await verify_if_propelauth_user_can_access_project(user, project_id)
     logger.debug(f"Cloud data request: {version}")
-    output = await get_computed_data_cloud(
+    output = await compute_cloud_of_clusters(
         project_id=project_id,
         version=version,
     )
