@@ -58,6 +58,20 @@ async def bill_on_stripe(
         logger.error(f"Organization {org_id} has no stripe customer id")
 
 
+async def fetch_stripe_customer_id(org_id: str) -> Optional[str]:
+    """
+    Fetch the Stripe customer id from the organization metadata
+    """
+
+    if config.ENVIRONMENT == "preview" or config.ENVIRONMENT == "test":
+        logger.debug("Preview environment, stripe billing disabled")
+        return None
+
+    org = propelauth.fetch_org(org_id)
+    org_metadata = org.get("metadata", {})
+    return org_metadata.get("customer_id", None)
+
+
 class ExtractorClient:
     """
     A client to interact with the extractor server
@@ -75,23 +89,6 @@ class ExtractorClient:
         """
         self.org_id = org_id
         self.project_id = project_id
-
-    async def _fetch_stripe_customer_id(self) -> Optional[str]:
-        """
-        Fetch the Stripe customer id from the organization metadata
-        """
-
-        if config.ENVIRONMENT == "preview" or config.ENVIRONMENT == "test":
-            logger.debug("Preview environment, stripe billing disabled")
-            return None
-
-        if self.org_id is None:
-            logger.error("Org_id is missing.")
-            return None
-
-        org = propelauth.fetch_org(self.org_id)
-        org_metadata = org.get("metadata", {})
-        return org_metadata.get("customer_id", None)
 
     async def _post(
         self,
@@ -113,6 +110,12 @@ class ExtractorClient:
                 f"Missing org_id, project_id or customer_id in data for endpoint {endpoint}"
             )
             return None
+
+        # We add this data for the extractor server
+        data["org_id"] = self.org_id
+        data["project_id"] = self.project_id
+        data["customer_id"] = await fetch_stripe_customer_id(self.org_id)
+
         try:
             client_cert = config.TEMPORAL_MTLS_TLS_CERT
             client_key = config.TEMPORAL_MTLS_TLS_KEY
@@ -198,9 +201,6 @@ class ExtractorClient:
                     log_event.model_dump(mode="json")
                     for log_event in extra_logs_to_save
                 ],
-                "project_id": self.project_id,
-                "org_id": self.org_id,
-                "customer_id": await self._fetch_stripe_customer_id(),
             },
         )
 
@@ -227,9 +227,6 @@ class ExtractorClient:
                     log_event.model_dump(mode="json")
                     for log_event in extra_logs_to_save
                 ],
-                "project_id": self.project_id,
-                "org_id": self.org_id,
-                "customer_id": await self._fetch_stripe_customer_id(),
             },
         )
 
@@ -246,9 +243,6 @@ class ExtractorClient:
             "run_main_pipeline_on_task_workflow",
             {
                 "task": task.model_dump(mode="json"),
-                "customer_id": await self._fetch_stripe_customer_id(),
-                "project_id": self.project_id,
-                "org_id": self.org_id,
             },
         )
         if result is None or result.status_code != 200:
@@ -275,9 +269,6 @@ class ExtractorClient:
             "run_main_pipeline_on_messages_workflow",
             {
                 "messages": [message.model_dump(mode="json") for message in messages],
-                "project_id": self.project_id,
-                "org_id": self.org_id,
-                "customer_id": await self._fetch_stripe_customer_id(),
             },
         )
         if result is None or result.status_code != 200:
@@ -302,9 +293,6 @@ class ExtractorClient:
                 {
                     "tasks_ids": tasks_ids,
                     "recipe": recipe.model_dump(mode="json"),
-                    "customer_id": await self._fetch_stripe_customer_id(),
-                    "project_id": self.project_id,
-                    "org_id": self.org_id,
                 },
             )
 
@@ -316,8 +304,6 @@ class ExtractorClient:
             "store_open_telemetry_data_workflow",
             {
                 "open_telemetry_data": open_telemetry_data,
-                "project_id": self.project_id,
-                "org_id": self.org_id,
                 # No customer_id because we don't bill for open telemetry data, we simply log
             },
         )
@@ -334,11 +320,8 @@ class ExtractorClient:
             {
                 "langsmith_api_key": langsmith_api_key,
                 "langsmith_project_name": langsmith_project_name,
-                "project_id": self.project_id,
-                "org_id": self.org_id,
                 "current_usage": current_usage,
                 "max_usage": max_usage,
-                "customer_id": await self._fetch_stripe_customer_id(),
             },
         )
 
@@ -354,10 +337,7 @@ class ExtractorClient:
             {
                 "langfuse_secret_key": langfuse_secret_key,
                 "langfuse_public_key": langfuse_public_key,
-                "project_id": self.project_id,
-                "org_id": self.org_id,
                 "current_usage": current_usage,
                 "max_usage": max_usage,
-                "customer_id": await self._fetch_stripe_customer_id(),
             },
         )

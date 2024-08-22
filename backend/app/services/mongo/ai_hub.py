@@ -59,40 +59,60 @@ async def fetch_model(model_id: str) -> Model | None:
         raise HTTPException(status_code=404, detail="Model not found")
 
 
-async def clustering(clustering_request: ClusteringRequest) -> None:
-    if config.PHOSPHO_AI_HUB_URL is None:
-        logger.error("AI Hub URL is not configured.")
-        return
-    async with httpx.AsyncClient() as client:
+class AIHubClient:
+    """
+    A client to interact with the AI Hub service
+    """
+
+    def __init__(
+        self,
+        org_id: str,
+        project_id: str,
+    ):
+        """
+        project_id: Used to gather data
+
+        org_id: Used to bill the organization
+        """
+        self.org_id = org_id
+        self.project_id = project_id
+
+    async def _post(
+        self,
+        endpoint: str,
+        data: dict,
+    ) -> Optional[httpx.Response]:
+        """
+        Post data to an endpoint
+        """
+        if config.PHOSPHO_AI_HUB_URL is None:
+            raise ValueError("AI Hub URL is not configured.")
+
+        if self.org_id is None or self.project_id is None:
+            raise ValueError(
+                f"org_id and project_id are required, got org_id: {self.org_id} and project_id: {self.project_id}"
+            )
+
+        # We add this data for the ai hub
+        data["org_id"] = self.org_id
+        data["project_id"] = self.project_id
+
         try:
-            if clustering_request.scope == "messages":
-                _ = await client.post(
-                    f"{config.PHOSPHO_AI_HUB_URL}/v1/clusterings-messages",
-                    json=clustering_request.model_dump(mode="json"),
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{config.PHOSPHO_AI_HUB_URL}{endpoint}",
+                    json=data,
                     headers={
                         "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
                         "Content-Type": "application/json",
                     },
                     timeout=60,
                 )
-            elif clustering_request.scope == "sessions":
-                _ = await client.post(
-                    f"{config.PHOSPHO_AI_HUB_URL}/v1/clusterings-sessions",
-                    json=clustering_request.model_dump(mode="json"),
-                    headers={
-                        "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
-                        "Content-Type": "application/json",
-                    },
-                    timeout=60,
-                )
-            else:
-                raise ValueError(
-                    f"Invalid value for messages_or_sessions: {clustering_request.scope}"
-                )
+                return response
 
         except Exception as e:
             errror_id = generate_uuid()
-            error_message = f"Caught error while calling clustering (error_id: {errror_id}): {e}\n{traceback.format_exception(e)}"
+            error_message = f"Caught error while calling ai hub {endpoint} (error_id: {errror_id}, project_id: {self.project_id}): {e}\n{traceback.format_exception(e)}"
             logger.error(error_message)
             traceback.print_exc()
             if config.ENVIRONMENT == "production":
@@ -102,28 +122,39 @@ async def clustering(clustering_request: ClusteringRequest) -> None:
                     slack_message = error_message
                 await slack_notification(slack_message)
 
+        return None
 
-async def generate_embeddings(embedding_request: EmbeddingRequest) -> Embedding | None:
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(
-                f"{config.PHOSPHO_AI_HUB_URL}/v1/embeddings",
-                json={
-                    "text": embedding_request.input,
-                    "model": embedding_request.model,
-                    "org_id": embedding_request.org_id,
-                    "project_id": embedding_request.project_id,
-                    "task_id": embedding_request.task_id,
-                },
-                headers={
-                    "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
-                    "Content-Type": "application/json",
-                },
-                timeout=60,
+    async def run_clustering(self, clustering_request: ClusteringRequest) -> None:
+        """
+        Call the clustering endpoint of the AI Hub
+        """
+        if clustering_request.scope == "messages":
+            response = await self._post(
+                "/v1/clusterings-messages",
+                clustering_request.model_dump(mode="json"),
             )
-            # Parse the response
-            return Embedding(**response.json())
+        elif clustering_request.scope == "sessions":
+            response = await self._post(
+                "/v1/clusterings-sessions",
+                clustering_request.model_dump(mode="json"),
+            )
+        else:
+            raise ValueError(
+                f"Invalid value for messages_or_sessions: {clustering_request.scope}"
+            )
 
-        except Exception as e:
-            logger.error(e)
-            return None
+        if response is None:
+            raise HTTPException(status_code=500, detail="Error while calling AI Hub")
+
+    async def generate_embeddings(
+        self, embedding_request: EmbeddingRequest
+    ) -> Embedding | None:
+        """
+        Call the embeddings endpoint of the AI Hub
+        """
+        response = await self._post(
+            "/v1/embeddings",
+            embedding_request.model_dump(mode="json"),
+        )
+
+        return Embedding(**response.json())

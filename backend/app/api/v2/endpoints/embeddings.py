@@ -11,6 +11,7 @@ from app.api.v2.models import (
 from app.services.mongo.ai_hub import generate_embeddings
 from app.services.mongo.predict import metered_prediction
 from app.core import config
+from app.services.mongo.ai_hub import AIHubClient
 
 from app.security import authenticate_org_key
 
@@ -84,8 +85,12 @@ async def post_embeddings(
         f"embedding request with input_token_count: {inputs_token_count} for org_id {org_id}"
     )
 
+    ai_hub_client = AIHubClient(org_id=org_id, project_id=request_body.project_id)
     # We assume the model is "phospho-intent-embed"
-    embedding = await generate_embeddings(request_body)
+
+    embedding = await ai_hub_client.generate_embeddings(
+        embedding_request=request_body,
+    )
 
     if embedding is None:
         raise HTTPException(

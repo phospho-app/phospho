@@ -1,7 +1,7 @@
 import datetime
 from typing import List, Optional, Dict, Union
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from loguru import logger
 from propelauth_fastapi import User
 from app.api.platform.models.explore import ABTestVersions
@@ -47,6 +47,7 @@ from app.services.mongo.explore import (
 from app.services.mongo.extractor import bill_on_stripe
 from app.services.mongo.events import get_all_events
 from app.services.mongo.tasks import get_total_nb_of_tasks
+from app.services.mongo.ai_hub import AIHubClient
 
 router = APIRouter(tags=["Explore"])
 
@@ -367,6 +368,7 @@ async def post_single_cluster(
 async def post_detect_clusters(
     project_id: str,
     query: DetectClustersRequest,
+    background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
@@ -422,7 +424,10 @@ async def post_detect_clusters(
     if query.filters is None:
         query.filters = ProjectDataFilters()
 
-    await clustering(
+    ai_hub_client = AIHubClient(org_id=org_id, project_id=project_id)
+
+    background_tasks.add_task(
+        ai_hub_client.run_clustering,
         clustering_request=ClusteringRequest(
             project_id=project_id,
             org_id=org_id,
@@ -430,7 +435,7 @@ async def post_detect_clusters(
             filters=query.filters,
             scope=query.scope,
             instruction=query.instruction,
-        )
+        ),
     )
     return {"status": "ok"}
 
