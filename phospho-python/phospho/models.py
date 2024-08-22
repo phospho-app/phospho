@@ -3,17 +3,16 @@ All the models stored in database.
 """
 
 import datetime
+import json
 from enum import Enum
-from typing import Dict, List, Literal, Optional, Any, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
-from loguru import logger
 from pydantic import BaseModel, Field, field_serializer
 
 from phospho.utils import (
     generate_timestamp,
     generate_uuid,
 )
-import json
 
 # Add other job types here
 RecipeType = Literal[
