@@ -321,8 +321,8 @@ class Project(DatedBaseModel):
         if "org_id" not in project_data.keys():
             raise ValueError("org_id is required in project_data")
 
-        # If event_name not in project_data.settings.events.values(), add it based on the key
         if "settings" in project_data.keys():
+            # If event_name not in project_data.settings.events.values(), add it based on the key
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
@@ -338,6 +338,7 @@ class Project(DatedBaseModel):
                             "project_id"
                         ] = project_data["id"]
 
+            # Transition dashboard_tiles to lowercase and new fields
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:
                     del project_data["settings"]["dashboard_tiles"]
