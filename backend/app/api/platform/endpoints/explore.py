@@ -1,7 +1,7 @@
 import datetime
 from typing import Dict, List, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from loguru import logger
 from propelauth_fastapi import User
 
@@ -23,7 +23,6 @@ from app.core import config
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
 from app.security.authorization import get_quota
-from app.services.mongo.ai_hub import clustering
 from app.services.mongo.events import get_all_events, get_event_definition_from_event_id
 from app.services.mongo.explore import (
     compute_cloud_of_clusters,
@@ -47,6 +46,7 @@ from app.services.mongo.explore import (
 )
 from app.services.mongo.extractor import bill_on_stripe
 from app.services.mongo.tasks import get_total_nb_of_tasks
+from app.services.mongo.ai_hub import AIHubClient
 
 router = APIRouter(tags=["Explore"])
 
@@ -367,6 +367,7 @@ async def post_single_cluster(
 async def post_detect_clusters(
     project_id: str,
     query: DetectClustersRequest,
+    background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
@@ -422,7 +423,10 @@ async def post_detect_clusters(
     if query.filters is None:
         query.filters = ProjectDataFilters()
 
-    await clustering(
+    ai_hub_client = AIHubClient(org_id=org_id, project_id=project_id)
+
+    background_tasks.add_task(
+        ai_hub_client.run_clustering,
         clustering_request=ClusteringRequest(
             project_id=project_id,
             org_id=org_id,
@@ -430,7 +434,7 @@ async def post_detect_clusters(
             filters=query.filters,
             scope=query.scope,
             instruction=query.instruction,
-        )
+        ),
     )
     return {"status": "ok"}
 

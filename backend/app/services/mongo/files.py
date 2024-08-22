@@ -75,40 +75,6 @@ async def process_csv_file_as_df(
     )
 
 
-async def process_and_save_examples(examples: List[dict], org_id: str) -> str:
-    """
-    Used for finetuning.
-
-    Process and save a list of examples
-    Returns a file_id
-    """
-    file_id = generate_uuid(prefix="examples_")
-
-    # Validate each record with DatasetRow model
-    valid_records: List[dict] = []
-    for record in examples:
-        try:
-            # Add the fields that are missing
-            record["org_id"] = org_id
-            record["file_id"] = file_id
-
-            valid_record = DatasetRow(**record).model_dump()
-            valid_records.append(valid_record)
-
-        except ValidationError as e:
-            logger.warning(f"Validation error for record {record}: {e}")
-            continue
-
-    mongo_db = await get_mongo_db()
-
-    # Insert the valid records in the database collection datasets
-    await mongo_db.datasets.insert_many(valid_records)
-
-    logger.info(f"Processed successfully, added {len(valid_records)} records.")
-
-    return file_id
-
-
 async def process_file_upload_into_log_events(
     tasks_df: pd.DataFrame, project_id: str, org_id: str
 ):
