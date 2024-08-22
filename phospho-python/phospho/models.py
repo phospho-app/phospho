@@ -763,6 +763,7 @@ class Cluster(ProjectElementBaseModel):
     # reference to the sessions in the cluster
     sessions_ids: Optional[List[str]] = None
     scope: Optional[Literal["messages", "sessions"]] = None
+    embeddings_ids: Optional[List[str]] = None
 
 
 class Clustering(ProjectElementBaseModel):

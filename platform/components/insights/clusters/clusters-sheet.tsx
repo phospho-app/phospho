@@ -16,6 +16,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -39,7 +44,13 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
-import { ChevronRight, Sparkles, TriangleAlert } from "lucide-react";
+import { QuestionMarkIcon } from "@radix-ui/react-icons";
+import {
+  ChevronRight,
+  Sparkles,
+  TestTubeDiagonal,
+  TriangleAlert,
+} from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -144,9 +155,7 @@ const RunClusters = ({
       const currentDataFilters = dataFilters;
       delete currentDataFilters.clustering_id;
       delete currentDataFilters.clusters_ids;
-      setDataFilters(
-        dataFilters
-      );
+      setDataFilters(dataFilters);
     }
     setSheetOpen(value);
   }
@@ -162,7 +171,7 @@ const RunClusters = ({
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      instruction: instruction || "",
+      instruction: "user intent",
     },
   });
 
@@ -192,7 +201,7 @@ const RunClusters = ({
           <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
       </SheetTrigger>
-      <SheetContent className="md:w-1/2 overflow-auto" >
+      <SheetContent className="md:w-1/2 overflow-auto">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -219,6 +228,104 @@ const RunClusters = ({
               </Select>
               <FilterComponent variant="tasks" />
             </div>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-1">
+                <AccordionTrigger>
+                  <div className="flex items-center">
+                    <TestTubeDiagonal className="w-4 h-4 mr-2 text-green-500" />
+                    More settings
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-3 space-x-1">
+                  <FormLabel>
+                    <div className="flex space-x-2">
+                      <span>Clustering instruction</span>
+                      <HoverCard openDelay={0} closeDelay={0}>
+                        <HoverCardTrigger>
+                          <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <div className="w-96">
+                            The clustering instruction refines how {scope} are
+                            grouped. Enter the topic to focus on.
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                  </FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="instruction"
+                    render={({ field }) => (
+                      <FormItem className="flex-grow">
+                        <FormControl>
+                          <Input placeholder="user intent" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div>
+                    <h2 className="text-muted-foreground text-xs mb-1">
+                      Templates
+                    </h2>
+                    <div className="flex space-x-4">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          form.setValue("instruction", "user intent");
+                          // Prevent the form from submitting
+                          mouseEvent.preventDefault();
+                        }}
+                      >
+                        user intent
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          form.setValue(
+                            "instruction",
+                            "type of issue (refund, delivery, etc.)",
+                          );
+                          // Prevent the form from submitting
+                          mouseEvent.preventDefault();
+                        }}
+                      >
+                        support
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          form.setValue("instruction", "type of disease");
+                          // Prevent the form from submitting
+                          mouseEvent.preventDefault();
+                        }}
+                      >
+                        medical chatbot
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(mouseEvent) => {
+                          mouseEvent.stopPropagation();
+                          form.setValue("instruction", "product mentioned");
+                          // Prevent the form from submitting
+                          mouseEvent.preventDefault();
+                        }}
+                      >
+                        sales assistant
+                      </Button>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
             {!canRunClusterAnalysis && (
               <div className="mt-4">
                 You need at least 5 {scope} to run a cluster analysis. There are
@@ -234,40 +341,6 @@ const RunClusters = ({
                 for a total of {clusteringCost} credits.
               </div>
             )}
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="item-1">
-                <AccordionTrigger>
-                  Advanced settings (optional)
-                </AccordionTrigger>
-                <AccordionContent className="space-y-3 space-x-1">
-                  <FormLabel>
-                    By default, we clusterize your {scope} based on:{" "}
-                    <i>user intent</i>, you can change it here:
-                  </FormLabel>
-                  <FormField
-                    control={form.control}
-                    name="instruction"
-                    render={({ field }) => (
-                      <FormItem className="flex-grow">
-                        <FormControl>
-                          <Input
-                            placeholder="user intent"
-                            maxLength={32}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex">
-                    <TriangleAlert className="w-5 h-5 mr-2" />
-                    Changing the instruction may deteriorate the quality of your
-                    clustering.
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
             {hobby && (
               <div className="flex justify-end mt-4">
                 <UpgradeButton tagline="Run cluster analysis" green={false} />
