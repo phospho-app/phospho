@@ -23,7 +23,6 @@ from app.core import config
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
 from app.security.authorization import get_quota
-from app.services.mongo.ai_hub import clustering
 from app.services.mongo.events import get_all_events, get_event_definition_from_event_id
 from app.services.mongo.explore import (
     compute_cloud_of_clusters,

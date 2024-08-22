@@ -40,7 +40,6 @@ from .tasks import (
     TaskHumanEvalRequest,
 )
 from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest
-from .train import TrainRequest
 from .embeddings import (
     Embedding,
     EmbeddingRequest,

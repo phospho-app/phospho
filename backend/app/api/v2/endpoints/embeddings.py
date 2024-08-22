@@ -8,7 +8,6 @@ from app.api.v2.models import (
     EmbeddingUsage,
     EmbeddingResponse,
 )
-from app.services.mongo.ai_hub import generate_embeddings
 from app.services.mongo.predict import metered_prediction
 from app.core import config
 from app.services.mongo.ai_hub import AIHubClient
