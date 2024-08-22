@@ -450,12 +450,12 @@ async def breakdown_by_sum_of_metadata_field(
     The metric can be one of the following:
     - "sum": Sum of the metadata field
     - "avg": Average of the metadata field
-    - "nb tasks": Number of tasks
-    - "nb sessions": Number of sessions
-    - "event count": Number of events
-    - "event distribution": Distribution of events
-    - "avg success rate": Average success rate
-    - "avg session length": Average session length
+    - "nb_messages": Number of tasks
+    - "nb_sessions": Number of sessions
+    - "tag_count": Number of detected tags
+    - "tag_distribution": Distribution of detected tags
+    - "avg_success_rate": Average success rate
+    - "avg_session_length": Average session length
 
     The breakdown_by field can be one of the following:
     - A metadata field
@@ -468,10 +468,14 @@ async def breakdown_by_sum_of_metadata_field(
     The output is a list of dictionaries, each containing:
     - breakdown_by: str
     - metric: float
-    - stack: Dict[str, float] (only for "event distribution") containing the event_name and its count
+    - stack: Dict[str, float] (only for "tag_distribution") containing the event_name and its count
 
     The output stack can be used to create a stacked bar chart.
     """
+
+    metric = metric.lower()
+    metadata_field = metadata_field.lower() if metadata_field is not None else None
+    breakdown_by = breakdown_by.lower() if breakdown_by is not None else None
 
     # Used for logging
     kwargs = {
@@ -587,6 +591,12 @@ async def breakdown_by_sum_of_metadata_field(
     if breakdown_by == "event_name":
         pipeline += [
             {"$unwind": "$events"},
+            # Filter to only keep the tagger events
+            {
+                "$match": {
+                    "events.event_definition.score_range_settings.score_type": "confidence"
+                }
+            },
         ]
         breakdown_by_col = "events.event_name"
 
@@ -594,7 +604,7 @@ async def breakdown_by_sum_of_metadata_field(
         await compute_task_position(project_id=project_id, filters=filters)
         breakdown_by_col = "task_position"
 
-    if metric.lower() == "nb tasks":
+    if metric == "nb_messages":
         pipeline += [
             {
                 "$group": {
@@ -610,7 +620,7 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
-    if metric.lower() == "nb sessions":
+    if metric == "nb_sessions":
         # Count the number of unique sessions and group by breakdown_by
         pipeline += [
             {
@@ -627,7 +637,7 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
-    if metric.lower() == "avg success rate":
+    if metric == "avg_success_rate":
         pipeline += [
             {
                 "$match": {
@@ -649,7 +659,7 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
-    if metric.lower() == "avg session length":
+    if metric == "avg_session_length":
         pipeline = _merge_sessions(pipeline)
         pipeline += [
             {
@@ -666,10 +676,16 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
-    if metric.lower() == "event count" or metric.lower() == "event distribution":
+    if metric == "tag_count" or metric == "tag_distribution":
         # Count the number of events for each event_name
         pipeline += [
             {"$unwind": "$events"},
+            # Filter to only keep the tagger events
+            {
+                "$match": {
+                    "events.event_definition.score_range_settings.score_type": "confidence"
+                }
+            },
             {
                 "$group": {
                     "_id": {
@@ -690,7 +706,7 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
-        if metric.lower() == "event count":
+        if metric == "tag_count":
             pipeline += [
                 {
                     "$project": {
@@ -712,8 +728,8 @@ async def breakdown_by_sum_of_metadata_field(
                 },
                 {"$unwind": "$stack"},
             ]
-        if metric.lower() == "event distribution":
-            # Same as event count, but normalize the count by the total number of events for each breakdown_by
+        if metric == "tag_distribution":
+            # Same as tag_count, but normalize the count by the total number of events for each breakdown_by
             pipeline += [
                 {
                     "$project": {
@@ -736,7 +752,7 @@ async def breakdown_by_sum_of_metadata_field(
                 {"$unwind": "$stack"},
             ]
 
-    if metric.lower() == "sum":
+    if metric == "sum":
         if metadata_field in number_metadata_fields:
             pipeline += [
                 {
@@ -767,7 +783,7 @@ async def breakdown_by_sum_of_metadata_field(
                 status_code=400,
                 detail="Metric 'sum' is only supported for number metadata fields",
             )
-    if metric.lower() == "avg":
+    if metric == "avg":
         if metadata_field in number_metadata_fields:
             pipeline += [
                 {
@@ -797,14 +813,9 @@ async def breakdown_by_sum_of_metadata_field(
                 detail="Metric 'avg' is only supported for number metadata fields",
             )
 
-    pipeline.extend(
-        [
-            # {"$match": {"breakdown_by": {"$ne": None}}},
-        ]
-    )
+    # Sort
     pipeline.append({"$sort": {"breakdown_by": 1, "metric": 1}})
-    # $project to select the fields to return
-
+    # Select only the relevant fields
     pipeline.append(
         {
             "$project": {

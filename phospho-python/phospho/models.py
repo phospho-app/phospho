@@ -279,12 +279,12 @@ class ProjectSettings(BaseModel):
         default_factory=lambda: [
             DashboardTile(
                 tile_name="Human rating per message position",
-                metric="Avg Success rate",
+                metric="avg_success_rate",
                 breakdown_by="task_position",
             ),
             DashboardTile(
                 tile_name="Average human rating per event name",
-                metric="Avg Success rate",
+                metric="avg_success_rate",
                 breakdown_by="event_name",
             ),
             DashboardTile(
@@ -295,7 +295,7 @@ class ProjectSettings(BaseModel):
             ),
             DashboardTile(
                 tile_name="Human rating per language",
-                metric="Avg Success rate",
+                metric="avg_success_rate",
                 breakdown_by="language",
             ),
         ]

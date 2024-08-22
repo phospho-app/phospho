@@ -37,7 +37,7 @@ import useSWR, { mutate } from "swr";
 
 const MetadataForm: React.FC = () => {
   // create a page with 2 dropdowns :
-  // 1. Metric: count of tasks, avg session length, sum of a metadata field,
+  // 1. Metric: count of tasks, avg_session_length, sum of a metadata field,
   // 2. Groupby field : None ; metadataField (user_id, version_id, etc. ) ; event_name ; flag
 
   // The data is fetched and then displayed as a bar chart or a table
@@ -98,7 +98,7 @@ const MetadataForm: React.FC = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("nb tasks");
+                    setSelectedMetric("nb_messages");
                     setmetadata_metric(null);
                   }}
                 >
@@ -107,7 +107,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("nb sessions");
+                    setSelectedMetric("nb_sessions");
                     setmetadata_metric(null);
                   }}
                 >
@@ -116,25 +116,25 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("event count");
+                    setSelectedMetric("tag_count");
                     setmetadata_metric(null);
                   }}
                 >
                   <TextSearch className="h-4 w-4 mr-2" />
-                  Event count
+                  Number of tags
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("event distribution");
+                    setSelectedMetric("tag_distribution");
                     setmetadata_metric(null);
                   }}
                 >
                   <TextSearch className="h-4 w-4 mr-2" />
-                  Event distribution
+                  Tags distribution
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("avg Success rate");
+                    setSelectedMetric("avg_success_rate");
                     setmetadata_metric(null);
                   }}
                 >
@@ -143,12 +143,12 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedMetric("avg session length");
+                    setSelectedMetric("avg_session_length");
                     setmetadata_metric(null);
                   }}
                 >
                   <List className="h-4 w-4 mr-2" />
-                  Avg session length
+                  Session length
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
@@ -227,7 +227,7 @@ const MetadataForm: React.FC = () => {
                   }}
                 >
                   <TextSearch className="h-4 w-4 mr-2" />
-                  Event name
+                  Tag name
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
