@@ -267,6 +267,7 @@ export interface Clustering {
   scope: "messages" | "sessions";
   name?: string;
   instruction?: string;
+  model?: string;
 }
 
 export interface CustomDateRange {

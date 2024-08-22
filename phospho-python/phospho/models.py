@@ -174,7 +174,7 @@ class Task(ProjectElementBaseModel):
     # Testing
     test_id: Optional[str] = None
     # Deprecated (topics)
-    topics: Optional[List[str]] = Field(None, deprecated=True)
+    topics: Optional[List[str]] = Field(default=None, deprecated=True)
     # Position of the task in the session
     task_position: Optional[int] = None
     is_last_task: Optional[bool] = None
@@ -325,17 +325,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name]["event_name"] = (
-                            event_name
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "event_name"
+                        ] = event_name
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["org_id"] = (
-                            project_data["org_id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "org_id"
+                        ] = project_data["org_id"]
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["project_id"] = (
-                            project_data["id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "project_id"
+                        ] = project_data["id"]
 
             if "dashboard_tiles" in project_data["settings"].keys():
                 if project_data["settings"]["dashboard_tiles"] is None:
@@ -752,7 +752,7 @@ class ProjectDataFilters(BaseModel):
     sessions_ids: Optional[List[str]] = None
 
 
-class Cluster(ProjectElementBaseModel):
+class Cluster(ProjectElementBaseModel, extra="allow"):
     model: Literal["intent-embed", "intent-embed-2", "intent-embed-3"] = "intent-embed"
     clustering_id: str  # all the clusters in the same cluster have the same
     name: str  # group name
@@ -763,6 +763,7 @@ class Cluster(ProjectElementBaseModel):
     # reference to the sessions in the cluster
     sessions_ids: Optional[List[str]] = None
     scope: Optional[Literal["messages", "sessions"]] = None
+    embeddings_ids: Optional[List[str]] = None
 
 
 class Clustering(ProjectElementBaseModel):
