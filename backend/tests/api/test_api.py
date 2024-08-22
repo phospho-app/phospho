@@ -3,14 +3,34 @@ from app.api.v2.models import Project
 from app.main import app as router
 from app.utils import generate_uuid
 from fastapi.testclient import TestClient
-from tests.utils import cleanup
+import pymongo
+from typing import Dict, List
 
 assert config.ENVIRONMENT != "production"
 
 
+# We redefine cleanup here to be able to run tests locally
+def cleanup(
+    mongo_db: pymongo.MongoClient,
+    collections_to_cleanup: Dict[str, List[str]],
+) -> None:
+    """
+    DELETE the documents in the collections specified in the collections_to_cleanup dict
+
+    collections_to_cleanup is a dict of {collection_name: [list of ids]}
+    those ids will be used to DELETE the documents in the collection
+    """
+    # Clean up database after the test
+    if mongo_db.name != "production":
+        for collection, values in collections_to_cleanup.items():
+            mongo_db[collection].delete_many({"id": {"$in": values}})
+    else:
+        raise RuntimeError(
+            "You are trying to clean the production database. Set MONGODB_NAME to something else than 'production'"
+        )
+
+
 # Platform tests
-
-
 def test_create_and_delete_project(mongo_db, org_id, access_token):
     with TestClient(router) as client:
         # Create a project

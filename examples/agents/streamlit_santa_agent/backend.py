@@ -72,7 +72,7 @@ class SantaClausAgent:
         """
 
         full_prompt = {
-            "model": "gpt-3.5-turbo",
+            "model": "gpt-4o-mini",
             # messages contains:
             #  1. The system promptthe whole chat history
             #  2. The chat history

@@ -37,6 +37,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         tick=0.1,
         auto_log=False,  # We automatically log tasks in the background, we disable it here because we don't want his behavior
     )
+    # Task 1
     task_1 = phospho.log(
         input="Thank you!",
         output="You're welcome.",
@@ -60,16 +61,19 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
                     {"role": "user", "content": question},
                 ],
                 max_tokens=3,
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 stream=True,
             )
             for rep in response:
                 yield rep.choices[0].delta.content
 
+    # Task 2
     session_id = phospho.new_session()
     agent = OpenAIAgent()
     response = agent.ask(question="Are you an AI?", session_id=session_id)
-    "".join([r for r in response if r is not None])
+    "".join(
+        [r for r in response if r is not None]
+    )  # Consume the generator, this is important
 
     phospho.consumer.send_batch()
 
@@ -100,7 +104,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
             assert task["events"] is not None, tasks_content
             # assert task["flag"] is not None, tasks_content
 
-    time.sleep(10)
+    time.sleep(5)
 
     # Check that the session was created
     sessions = requests.get(
@@ -108,7 +112,8 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert sessions.status_code == 200, sessions.reason
-    assert len(sessions.json()["sessions"]) == 1, sessions.json()
+    # We have 2 tasks, so we should have 2 sessions (tasks without session_id are created)
+    assert len(sessions.json()["sessions"]) == 2, sessions.json()
     assert sessions.json()["sessions"][0]["id"] == session_id, sessions.json()
 
     # Call the dashboards

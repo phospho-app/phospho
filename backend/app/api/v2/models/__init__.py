@@ -14,7 +14,6 @@ from .log import (
     MinimalLogEvent,
 )
 from .models import Model, ModelsResponse
-from .predict import PredictRequest, PredictResponse
 from .projects import (
     AnalyticsQueryRequest,
     ComputeJobsRequest,
@@ -41,7 +40,6 @@ from .tasks import (
     TaskHumanEvalRequest,
 )
 from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest
-from .train import TrainRequest
 from .embeddings import (
     Embedding,
     EmbeddingRequest,

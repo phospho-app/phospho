@@ -27,12 +27,7 @@ class ClusteringEmbeddingCloud(BaseModel):
     """
 
     clustering_id: str
-    type: Literal["PCA", "TSNE"] = "PCA"
-    model: Literal[
-        "intent-embed", "intent-embed-2", "intent-embed-3"
-    ] = "intent-embed-3"
-    scope: Literal["messages", "sessions"] = "messages"
-    instruction: Optional[str] = "user intent"
+    type: Literal["pca", "tsne"] = "pca"
 
 
 class DashboardMetricsFilter(BaseModel):

@@ -12,7 +12,7 @@ OPENAI_API_KEY="sk-..." # your actual key
 
 2. Launch the webapp
 ```
-cd examples/ 
+cd examples/
 streamlit run webapp.py
 ```
 
@@ -63,7 +63,7 @@ if prompt := st.chat_input("What is up?"):
         full_str_response = ""
         # We build a query to OpenAI
         full_prompt = {
-            "model": "gpt-3.5-turbo",
+            "model": "gpt-4o-mini",
             # messages contains the whole chat history
             "messages": [
                 {"role": m["role"], "content": m["content"]}
@@ -73,9 +73,9 @@ if prompt := st.chat_input("What is up?"):
             "stream": True,
         }
         # The OpenAI module gives us back a stream object
-        streaming_response: Stream[
-            ChatCompletionChunk
-        ] = client.chat.completions.create(**full_prompt)
+        streaming_response: Stream[ChatCompletionChunk] = (
+            client.chat.completions.create(**full_prompt)
+        )
 
         # ----> this is how you log to phospho
         logged_content = phospho.log(
