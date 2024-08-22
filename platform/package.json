@@ -33,6 +33,7 @@
     "@radix-ui/react-toggle": "^1.0.3",
     "@radix-ui/react-toggle-group": "^1.0.4",
     "@radix-ui/react-tooltip": "^1.0.7",
+    "@sentry/cli": "^2.33.1",
     "@sentry/nextjs": "^8.26.0",
     "@tanstack/react-table": "^8.9.7",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
@@ -54,6 +55,7 @@
     "next-themes": "^0.2.1",
     "node-fetch": "^3.3.2",
     "phospho": "^1.2.2",
+    "plotly.js": "^2.34.0",
     "postcss": ">=8.4.31",
     "posthog-js": "^1.111.0",
     "prettier-plugin-sort-imports": "^1.8.5",
@@ -63,7 +65,9 @@
     "react-dom": "18.2.0",
     "react-hook-form": "^7.46.1",
     "react-markdown": "^9.0.1",
+    "react-plotly.js": "^2.6.0",
     "recharts": "^2.12.7",
+    "scichart": "^3.4.652",
     "supports-color": "^8.1.1",
     "swr": "^2.2.4",
     "tailwind-merge": "^1.14.0",
@@ -75,8 +79,9 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@types/react-plotly.js": "^2.6.3",
     "encoding": "^0.1.13",
     "eslint": "8.57.0",
-    "eslint-config-next": "14.1.4"
+    "eslint-config-next": "^0.2.4"
   }
 }
