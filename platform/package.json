@@ -55,7 +55,6 @@
     "next-themes": "^0.2.1",
     "node-fetch": "^3.3.2",
     "phospho": "^1.2.2",
-    "plotly.js": "^2.34.0",
     "postcss": ">=8.4.31",
     "posthog-js": "^1.111.0",
     "prettier-plugin-sort-imports": "^1.8.5",
@@ -67,7 +66,6 @@
     "react-markdown": "^9.0.1",
     "react-plotly.js": "^2.6.0",
     "recharts": "^2.12.7",
-    "scichart": "^3.4.652",
     "supports-color": "^8.1.1",
     "swr": "^2.2.4",
     "tailwind-merge": "^1.14.0",
@@ -82,6 +80,6 @@
     "@types/react-plotly.js": "^2.6.3",
     "encoding": "^0.1.13",
     "eslint": "8.57.0",
-    "eslint-config-next": "^0.2.4"
+    "eslint-config-next": "^14.1.4"
   }
 }
