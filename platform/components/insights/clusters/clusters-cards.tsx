@@ -22,9 +22,8 @@ import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pickaxe, PlusIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import CreateEvent from "../events/create-event";
@@ -39,8 +38,11 @@ function ClusterCard({
   cluster: Cluster;
   setSheetClusterOpen: (value: boolean) => void;
 }) {
-  const { accessToken } = useUser();
+  /* This is a single cluster card */
 
+  const [sheetEventOpen, setSheetEventOpen] = useState(false);
+
+  const { accessToken } = useUser();
   const router = useRouter();
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
@@ -72,7 +74,6 @@ function ClusterCard({
       score_type: "confidence",
     },
   } as EventDefinition;
-  const [sheetEventOpen, setSheetEventOpen] = useState(false);
 
   return (
     <Card
@@ -161,8 +162,12 @@ export function ClustersCards({
 }: {
   setSheetClusterOpen: (value: boolean) => void;
 }) {
-  const project_id = navigationStateStore((state) => state.project_id);
+  /* This is the group of all cluster cards */
+  const [selectedClustering, setSelectedClustering] = useState<
+    Clustering | undefined
+  >(undefined);
   const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
 
   const { data: clusteringsData } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
@@ -179,10 +184,6 @@ export function ClustersCards({
     console.log("clusterings", clusterings);
     latestClustering = clusterings[0];
   }
-
-  const [selectedClustering, setSelectedClustering] = React.useState<
-    Clustering | undefined
-  >(latestClustering);
 
   let selectedClusteringName = selectedClustering?.name;
   if (selectedClustering && !selectedClusteringName) {

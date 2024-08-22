@@ -11,7 +11,6 @@ const Tasks: React.FC = () => {
   return (
     <>
       <SendDataCallout />
-      <RunClusteringCallout />
       <TasksDataviz />
       <TasksTable />
     </>
