@@ -2872,13 +2872,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values[event_name]:
@@ -2897,13 +2897,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2934,13 +2934,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] = event_result["count"]
+                    divide_for_correct_average[event_result["version_id"]] = (
+                        event_result["count"]
+                    )
                 else:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] += event_result["count"]
+                    divide_for_correct_average[event_result["version_id"]] += (
+                        event_result["count"]
+                    )
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (
@@ -3039,6 +3039,8 @@ async def compute_cloud_of_clusters(
     raw_results = (
         await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
     )
+    if not raw_results:
+        return {}
 
     if version.type == "PCA":
         pca = PCA(n_components=3)
