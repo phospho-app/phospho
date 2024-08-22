@@ -16,6 +16,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -39,6 +44,7 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
+import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { ChevronRight, Sparkles, TriangleAlert } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
@@ -144,9 +150,7 @@ const RunClusters = ({
       const currentDataFilters = dataFilters;
       delete currentDataFilters.clustering_id;
       delete currentDataFilters.clusters_ids;
-      setDataFilters(
-        dataFilters
-      );
+      setDataFilters(dataFilters);
     }
     setSheetOpen(value);
   }
@@ -162,7 +166,7 @@ const RunClusters = ({
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      instruction: instruction || "",
+      instruction: "user intent",
     },
   });
 
@@ -192,7 +196,7 @@ const RunClusters = ({
           <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
       </SheetTrigger>
-      <SheetContent className="md:w-1/2 overflow-auto" >
+      <SheetContent className="md:w-1/2 overflow-auto">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -236,13 +240,23 @@ const RunClusters = ({
             )}
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger>
-                  Advanced settings (optional)
-                </AccordionTrigger>
+                <AccordionTrigger>Advanced settings</AccordionTrigger>
                 <AccordionContent className="space-y-3 space-x-1">
                   <FormLabel>
-                    By default, we clusterize your {scope} based on:{" "}
-                    <i>user intent</i>, you can change it here:
+                    <div className="flex space-x-2">
+                      <span>Clustering instruction</span>
+                      <HoverCard openDelay={0} closeDelay={0}>
+                        <HoverCardTrigger>
+                          <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <div className="w-96">
+                            The clustering instruction refines how {scope} are
+                            grouped. Enter the topic to focus on.
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
                   </FormLabel>
                   <FormField
                     control={form.control}
@@ -250,21 +264,12 @@ const RunClusters = ({
                     render={({ field }) => (
                       <FormItem className="flex-grow">
                         <FormControl>
-                          <Input
-                            placeholder="user intent"
-                            maxLength={32}
-                            {...field}
-                          />
+                          <Input placeholder="user intent" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <div className="flex">
-                    <TriangleAlert className="w-5 h-5 mr-2" />
-                    Changing the instruction may deteriorate the quality of your
-                    clustering.
-                  </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
