@@ -493,17 +493,9 @@ async def process_log_for_tasks(
         logger.info(
             f"Project {project_id}: saving {len(extra_logs_to_save)} extra log events"
         )
-        # Process logs without session_id
-        await process_log_without_session_id(
-            project_id=project_id,
-            org_id=org_id,
-            list_of_log_event=[
-                log_event
-                for log_event in extra_logs_to_save
-                if log_event.session_id is None
-            ],
-            trigger_pipeline=False,
-        )
+        for log_event in extra_logs_to_save:
+            if log_event.session_id is None:
+                log_event.session_id = "session_" + generate_uuid()
 
         # Process logs with session_id
         await process_log_with_session_id(
