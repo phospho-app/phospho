@@ -14,6 +14,7 @@ from app.services.log.base import (
 )
 from app.services.pipelines import MainPipeline
 from app.services.tasks import compute_task_position
+from app.utils import generate_uuid
 from phospho.models import Session, Task
 
 
@@ -163,7 +164,8 @@ async def process_log_without_session_id(
             org_id=org_id,
             project_id=project_id,
             log_event=log_event,
-            session_id=None,
+            # Generate a default session_id
+            session_id=generate_uuid(),
             log_event_metadata=log_event_metadata,
         )
         tasks_id_to_process.append(task.id)
