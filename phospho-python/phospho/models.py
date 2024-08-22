@@ -752,7 +752,7 @@ class ProjectDataFilters(BaseModel):
     sessions_ids: Optional[List[str]] = None
 
 
-class Cluster(ProjectElementBaseModel, extra="allow"):
+class Cluster(ProjectElementBaseModel):
     model: Literal["intent-embed", "intent-embed-2", "intent-embed-3"] = "intent-embed"
     clustering_id: str  # all the clusters in the same cluster have the same
     name: str  # group name
