@@ -3003,9 +3003,6 @@ async def compute_cloud_of_clusters(
         {
             "$match": {
                 "project_id": project_id,
-                "scope": version.scope,
-                "model": version.model,
-                "instruction": version.instruction,
                 "clustering_id": version.clustering_id,
             }
         },
@@ -3022,9 +3019,6 @@ async def compute_cloud_of_clusters(
         {
             "$match": {
                 "emb.project_id": project_id,
-                "emb.scope": version.scope,
-                "emb.model": version.model,
-                "emb.instruction": version.instruction,
             }
         },
         {
