@@ -325,8 +325,16 @@ export function ClustersCards({
         // Generate a color for each cluster
         const clusterIdToColor = new Map<string, string>();
         const clusters = res.clusters_ids as string[];
+        const uniqueClusterIds: string[] = [];
+        clusters.forEach((cluster_id) => {
+          if (!uniqueClusterIds.includes(cluster_id)) {
+            uniqueClusterIds.push(cluster_id);
+          }
+        });
+
         const clusters_names = res.clusters_names as string[];
-        clusters.forEach((cluster_id, index) => {
+        uniqueClusterIds.forEach((cluster_id, index) => {
+          console.log("index", index);
           clusterIdToColor.set(
             cluster_id,
             graphColors[index % graphColors.length],
