@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 import phospho
 from app.core import config
 from app.db.mongo import close_mongo_db, connect_and_init_db
-from app.services.mongo.ai_hub import check_health_ai_hub
 from app.services.integrations import check_health_argilla
 
 logging.info(f"ENVIRONMENT : {config.ENVIRONMENT}")
@@ -107,7 +106,6 @@ app.add_event_handler("shutdown", close_mongo_db)
 
 
 # Other services
-app.add_event_handler("startup", check_health_ai_hub)
 app.add_event_handler("startup", check_health_argilla)
 
 # TODO: Add a healthcheck for the Argilla service, error logged if not available
@@ -129,12 +127,10 @@ from app.api.v2.endpoints import (
     log,
     me,
     models,
-    predict,
     projects,
     sessions,
     tasks,
     tests,
-    train,
     events,
     chat,
     cron,
@@ -161,12 +157,10 @@ api_v2.include_router(me.router)
 api_v2.include_router(models.router)
 api_v2.include_router(tasks.router)
 api_v2.include_router(tests.router)
-api_v2.include_router(predict.router)
 api_v2.include_router(projects.router)
 api_v2.include_router(sessions.router)
 api_v2.include_router(health.router)
 api_v2.include_router(events.router)
-api_v2.include_router(train.router)
 api_v2.include_router(chat.router)
 api_v2.include_router(cron.router)
 
@@ -197,7 +191,6 @@ api_v3.include_router(health.router, include_in_schema=False)
 api_v3.include_router(log.router)
 api_v3.include_router(run.router)
 api_v3.include_router(export.router)
-
 
 
 app.mount("/v3", api_v3)
