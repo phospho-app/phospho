@@ -476,7 +476,7 @@ async def process_log_for_tasks(
     # For logs without session_id, we generate a new session_id
     for log_event in logs_to_process:
         if log_event.session_id is None:
-            log_event.session_id = generate_uuid()
+            log_event.session_id = "session_" + generate_uuid()
 
     # Process logs with session_id
     await process_log_with_session_id(
