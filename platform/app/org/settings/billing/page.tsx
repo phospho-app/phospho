@@ -86,15 +86,14 @@ export default function Page() {
     <>
       <h2 className="text-2xl font-bold tracking-tight mb-4">Billing</h2>
       <div className="space-y-4 mb-8">
-        <div>
-          You plan is: <code className="bg-secondary p-1.5">{plan}</code>
-        </div>
         {plan === "pro" && (
           // TODO: Display usage for pro plan in number of logs
           <></>
         )}
         {plan === "usage_based" && (
-          <p>You billing total this month is: {nextInvoiceTotal}</p>
+          <p>
+            Your usage so far this month has a total cost of: {nextInvoiceTotal}
+          </p>
         )}
         {plan === "hobby" && (
           <>
@@ -112,18 +111,22 @@ export default function Page() {
             </p>
           </>
         )}
+        {usage && usage.balance_transaction < 0 && (
+          <div>
+            🎁 You received {-usage.balance_transaction / 100}$ of free credits.
+            They will be applied to your next invoice.
+          </div>
+        )}
+        <div>
+          You plan is: <code className="bg-secondary p-1.5">{plan}</code>
+        </div>
         {plan && plan !== "hobby" && plan !== "self-hosted" && (
           <div className="flex flex-col space-y-1 items-start">
             <Button variant="secondary" onClick={onBillingPortalClick}>
               <StripeIcon />
-              Billing portal
+              Manage billing
               <ExternalLink className="w-3 h-3 ml-2" />
             </Button>
-          </div>
-        )}
-        {usage && usage.balance_transaction < 0 && (
-          <div>
-            🎁 You received {-usage.balance_transaction / 100}$ of free credits.
           </div>
         )}
       </div>
