@@ -810,6 +810,7 @@ class UsageQuota(BaseModel):
     max_usage: Optional[int]
     max_usage_label: str
     balance_transaction: Optional[float] = None
+    next_invoice_total: Optional[float] = None
 
 
 class PipelineResults(BaseModel):
