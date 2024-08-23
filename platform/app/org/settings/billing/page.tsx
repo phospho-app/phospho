@@ -124,7 +124,6 @@ export default function Page() {
         {usage && usage.balance_transaction < 0 && (
           <div>
             🎁 You received {-usage.balance_transaction / 100}$ of free credits.
-            A discount will be applied to your next bill.
           </div>
         )}
       </div>
