@@ -51,6 +51,7 @@ export interface UsageQuota {
   max_usage: number;
   max_usage_label: string;
   balance_transaction: number;
+  next_invoice_total: number;
 }
 
 export interface OrgMetadata {

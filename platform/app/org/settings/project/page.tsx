@@ -9,11 +9,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
@@ -26,7 +21,6 @@ export default function Page() {
   const { accessToken } = useUser();
   const [open, setOpen] = useState(false);
 
-  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
