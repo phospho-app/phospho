@@ -72,9 +72,11 @@ export default function Page() {
   const currentUsage = usage?.current_usage;
   const maxUsage = usage?.max_usage;
   // format next_invoice_total to dollars
-  const nextInvoiceTotal = usage?.next_invoice_total
-    ? `$${usage.next_invoice_total / 100}`
-    : "...";
+  const nextInvoiceTotal =
+    usage?.next_invoice_total !== undefined &&
+    usage?.next_invoice_total !== null
+      ? `$${usage.next_invoice_total / 100}`
+      : "...";
 
   if (loading) {
     return <>Loading...</>;
