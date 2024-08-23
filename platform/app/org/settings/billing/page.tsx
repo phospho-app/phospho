@@ -78,6 +78,13 @@ export default function Page() {
       ? `$${usage.next_invoice_total / 100}`
       : "...";
 
+  // TODO : Add somewhere the next invoice amount due
+  const nextInvoiceAmountDue =
+    usage?.next_invoice_amount_due !== undefined &&
+    usage?.next_invoice_amount_due !== null
+      ? `$${usage.next_invoice_amount_due / 100}`
+      : "...";
+
   if (loading) {
     return <>Loading...</>;
   }
@@ -112,10 +119,9 @@ export default function Page() {
           </>
         )}
         {usage && usage.balance_transaction < 0 && (
-          <div>
+          <p>
             🎁 You received {-usage.balance_transaction / 100}$ of free credits.
-            They will be applied to your next invoice.
-          </div>
+          </p>
         )}
         <div>
           You plan is: <code className="bg-secondary p-1.5">{plan}</code>

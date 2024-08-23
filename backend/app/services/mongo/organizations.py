@@ -120,6 +120,7 @@ async def get_usage_quota(
     # Return the balance transaction if the org has a stripe customer id
     balance_transaction = None
     next_invoice_total = None
+    next_invoice_amount_due = None
     if customer_id is not None and config.ENVIRONMENT != "test":
         stripe.api_key = config.STRIPE_SECRET_KEY
         # Display free credits
@@ -135,6 +136,9 @@ async def get_usage_quota(
         invoice_preview = stripe.Invoice.create_preview(customer=customer_id)
         next_invoice_total = invoice_preview.get("total", 0)
 
+        # todo : use amount_due instead of total
+        next_invoice_amount_due = invoice_preview.get("amount_due", 0)
+
     return UsageQuota(
         org_id=org_id,
         plan=plan,
@@ -143,6 +147,7 @@ async def get_usage_quota(
         max_usage_label=max_usage_label,
         balance_transaction=balance_transaction,
         next_invoice_total=next_invoice_total,
+        next_invoice_amount_due=next_invoice_amount_due,
     )
 
 

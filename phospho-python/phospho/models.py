@@ -810,7 +810,8 @@ class UsageQuota(BaseModel):
     max_usage: Optional[int]
     max_usage_label: str
     balance_transaction: Optional[float] = None
-    next_invoice_total: Optional[float] = None
+    next_invoice_total: Optional[float] = None  # BEFORE discount (free credits)
+    next_invoice_amount_due: Optional[float] = None  # AFTER discount (free credits)
 
 
 class PipelineResults(BaseModel):
