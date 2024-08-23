@@ -9,7 +9,6 @@ import { UsageQuota } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ExternalLink } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
@@ -72,6 +71,12 @@ export default function Page() {
 
   const currentUsage = usage?.current_usage;
   const maxUsage = usage?.max_usage;
+  // format next_invoice_total to dollars
+  const nextInvoiceTotal =
+    usage?.next_invoice_total !== undefined &&
+    usage?.next_invoice_total !== null
+      ? `$${usage.next_invoice_total / 100}`
+      : "...";
 
   if (loading) {
     return <>Loading...</>;
@@ -79,22 +84,21 @@ export default function Page() {
 
   return (
     <>
-      <div className="space-y-2 mb-4">
-        <h2 className="text-2xl font-bold tracking-tight">Usage</h2>
-        {(plan === "usage_based" || plan === "pro") && (
-          <div className="flex space-x-1">
-            <p>Click</p>
-            <p
-              onClick={onBillingPortalClick}
-              className="underline cursor-pointer"
-            >
-              here
-            </p>
-            <p>to view your usage.</p>
-          </div>
+      <h2 className="text-2xl font-bold tracking-tight mb-4">Billing</h2>
+      <div className="space-y-4 mb-8">
+        <div>
+          You plan is: <code className="bg-secondary p-1.5">{plan}</code>
+        </div>
+        {plan === "pro" && (
+          // TODO: Display usage for pro plan in number of logs
+          <></>
+        )}
+        {plan === "usage_based" && (
+          <p>You billing total this month is: {nextInvoiceTotal}</p>
         )}
         {plan === "hobby" && (
           <>
+            <h2 className="text-2xl font-bold tracking-tight">Usage</h2>
             <TaskProgress
               currentValue={currentUsage ?? 0}
               maxValue={maxUsage ?? 1}
@@ -108,23 +112,8 @@ export default function Page() {
             </p>
           </>
         )}
-      </div>
-      <div className="space-y-2 mb-8">
-        <h2 className="text-2xl font-bold tracking-tight">Plan</h2>
-        <div>
-          You plan is: <code className="bg-secondary p-1.5">{plan}</code>
-        </div>
-        {usage && usage.balance_transaction < 0 && (
-          <div>
-            🎁 You received {-usage.balance_transaction / 100}$ of free credits.
-            A discount will be applied to your next bill.
-          </div>
-        )}
         {plan && plan !== "hobby" && plan !== "self-hosted" && (
-          <div className="flex flex-row space-x-2 items-center">
-            <div className="text-sm text-muted-foreground">
-              Payment, invoices, and next bill for your organization:
-            </div>
+          <div className="flex flex-col space-y-1 items-start">
             <Button variant="secondary" onClick={onBillingPortalClick}>
               <StripeIcon />
               Billing portal
@@ -132,8 +121,13 @@ export default function Page() {
             </Button>
           </div>
         )}
+        {usage && usage.balance_transaction < 0 && (
+          <div>
+            🎁 You received {-usage.balance_transaction / 100}$ of free credits.
+          </div>
+        )}
       </div>
-      <div className="space-y-2 mb-8">
+      <div className="space-y-2 mb-8 pt-8">
         {plan === "hobby" && (
           <Pricing
             currentPlan={null}
