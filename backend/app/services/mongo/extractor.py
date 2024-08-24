@@ -1,3 +1,4 @@
+import hashlib
 import time
 import traceback
 from typing import Callable, List, Optional
@@ -129,10 +130,13 @@ class ExtractorClient:
                 data_converter=pydantic_data_converter,
             )
 
-            # Used to get a 15 digit hash of the data to generate a unique determinist id
-            unique_id = endpoint + str(
-                int(sha1(repr(sorted(data.items())).encode("utf-8")).hexdigest(), 16)
-                % (10**15)
+            # Hash the data to generate a unique determinist id
+            unique_id = (
+                endpoint
+                + hashlib.md5(
+                    repr(sorted(data.items())).encode("utf-8"),
+                    usedforsecurity=False,
+                ).hexdigest()
             )
 
             response = await client.execute_workflow(
