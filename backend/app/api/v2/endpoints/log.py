@@ -61,6 +61,10 @@ async def store_batch_of_log_events(
     nbr_valid_logs = 0
     nbr_extra_logs = 0
 
+    logger.info(
+        f"Project {project_id} received {len(log_request.batched_log_events)} logs"
+    )
+
     for log_event_model in log_request.batched_log_events:
         # We now validate the logs
         try:
@@ -75,7 +79,6 @@ async def store_batch_of_log_events(
             valid_log_event = LogEvent.model_validate(
                 log_event_model.model_dump(), strict=True
             )
-            logged_events.append(valid_log_event)
 
             # Compute the object size in bytes
             object_size = sys.getsizeof(valid_log_event.model_dump())
@@ -91,6 +94,7 @@ async def store_batch_of_log_events(
             ):
                 current_usage += 1
                 nbr_valid_logs += 1
+                logged_events.append(valid_log_event)
                 await extractor_client.run_process_log_for_tasks(
                     logs_to_process=[valid_log_event],
                 )
