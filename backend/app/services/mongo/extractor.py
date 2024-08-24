@@ -150,7 +150,8 @@ class ExtractorClient:
             error_id = generate_uuid()
             error_message = (
                 f"Caught error while calling temporal workflow {endpoint} "
-                + f"(error_id: {error_id} project_id: {self.project_id} organisation_id: {self.org_id}): {e}\n{traceback.format_exception(e)}"
+                + f"(error_id: {error_id} project_id: {self.project_id} organisation_id: {self.org_id} workflow_id: {unique_id}):"
+                + f"{e}\n{traceback.format_exception(e)}"
             )
             logger.error(error_message)
 
