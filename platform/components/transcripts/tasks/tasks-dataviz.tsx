@@ -220,9 +220,10 @@ const TasksDataviz: React.FC = () => {
 
   const CustomTooltipEvent = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      console.log("payload", payload);
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
-          <p className="text-secondary font-semibold">{`${payload[0].name}`}</p>
+          <p className="text-secondary font-semibold">{`${payload[0].payload.event_name}`}</p>
           <p className="text-green-500">{`${payload[0].value == 1 ? payload[0].value + " tag detected" : payload[0].value + " tags detected"}`}</p>
         </div>
       );
@@ -363,7 +364,7 @@ const TasksDataviz: React.FC = () => {
                     dataKey="size"
                     nameKey="name"
                     labelLine={false}
-                    innerRadius={50}
+                    innerRadius={60}
                     outerRadius={70}
                   >
                     <Label
@@ -378,7 +379,7 @@ const TasksDataviz: React.FC = () => {
                             >
                               <tspan
                                 x={viewBox.cx}
-                                y={(viewBox.cy || 0) - 3}
+                                y={(viewBox.cy || 0) + 5}
                                 className="fill-foreground text-3xl font-bold"
                               >
                                 {React.useMemo(() => {
@@ -390,7 +391,7 @@ const TasksDataviz: React.FC = () => {
                               </tspan>
                               <tspan
                                 x={viewBox.cx}
-                                y={(viewBox.cy || 0) + 15}
+                                y={(viewBox.cy || 0) + 25}
                                 className="fill-muted-foreground"
                               >
                                 clusters
@@ -433,7 +434,7 @@ const TasksDataviz: React.FC = () => {
                     dataKey="nb_events"
                     nameKey="tagger_name"
                     labelLine={false}
-                    innerRadius={50}
+                    innerRadius={60}
                     outerRadius={70}
                   >
                     <Label
@@ -448,7 +449,7 @@ const TasksDataviz: React.FC = () => {
                             >
                               <tspan
                                 x={viewBox.cx}
-                                y={(viewBox.cy || 0) - 3}
+                                y={(viewBox.cy || 0) + 5}
                                 className="fill-foreground text-3xl font-bold"
                               >
                                 {React.useMemo(() => {
@@ -460,7 +461,7 @@ const TasksDataviz: React.FC = () => {
                               </tspan>
                               <tspan
                                 x={viewBox.cx}
-                                y={(viewBox.cy || 0) + 15}
+                                y={(viewBox.cy || 0) + 25}
                                 className="fill-muted-foreground"
                               >
                                 tags

@@ -217,7 +217,7 @@ const SessionsDataviz: React.FC = () => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
-          <p className="text-secondary font-semibold">{`${payload[0].name}`}</p>
+          <p className="text-secondary font-semibold">{`${payload[0].payload.event_name}`}</p>
           <p className="text-green-500">{`${payload[0].value == 1 ? payload[0].value + " tag detected" : payload[0].value + " tags detected"}`}</p>
         </div>
       );
@@ -361,7 +361,7 @@ const SessionsDataviz: React.FC = () => {
                     dataKey="size"
                     nameKey="name"
                     labelLine={false}
-                    innerRadius={50}
+                    innerRadius={60}
                     outerRadius={70}
                   >
                     <Label
@@ -376,7 +376,7 @@ const SessionsDataviz: React.FC = () => {
                             >
                               <tspan
                                 x={viewBox.cx}
-                                y={(viewBox.cy || 0) - 3}
+                                y={(viewBox.cy || 0) + 5}
                                 className="fill-foreground text-3xl font-bold"
                               >
                                 {React.useMemo(() => {
@@ -388,7 +388,7 @@ const SessionsDataviz: React.FC = () => {
                               </tspan>
                               <tspan
                                 x={viewBox.cx}
-                                y={(viewBox.cy || 0) + 15}
+                                y={(viewBox.cy || 0) + 25}
                                 className="fill-muted-foreground"
                               >
                                 clusters
@@ -431,7 +431,7 @@ const SessionsDataviz: React.FC = () => {
                     dataKey="nb_events"
                     nameKey="tagger_name"
                     labelLine={false}
-                    innerRadius={50}
+                    innerRadius={60}
                     outerRadius={70}
                   >
                     <Label
@@ -446,7 +446,7 @@ const SessionsDataviz: React.FC = () => {
                             >
                               <tspan
                                 x={viewBox.cx}
-                                y={(viewBox.cy || 0) - 3}
+                                y={viewBox.cy || 0 + 5}
                                 className="fill-foreground text-3xl font-bold"
                               >
                                 {React.useMemo(() => {
@@ -458,7 +458,7 @@ const SessionsDataviz: React.FC = () => {
                               </tspan>
                               <tspan
                                 x={viewBox.cx}
-                                y={(viewBox.cy || 0) + 15}
+                                y={(viewBox.cy || 0) + 25}
                                 className="fill-muted-foreground"
                               >
                                 tags
