@@ -155,7 +155,7 @@ class ExtractorClient:
 
         except WorkflowAlreadyStartedError:
             logger.warning(
-                f"Workflow {unique_id} has already started for project {self.project_id} in org {self.org_id}"
+                f"Workflow {endpoint} has already started for project {self.project_id} in org {self.org_id}"
             )
 
         except Exception as e:
