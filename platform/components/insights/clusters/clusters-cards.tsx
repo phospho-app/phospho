@@ -25,8 +25,8 @@ import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pickaxe, PlusIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Data } from "plotly.js";
-import React, { useEffect, useState } from "react";
+import Plotly, { Data } from "plotly.js";
+import React, { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
 import CreateEvent from "../events/create-event";
@@ -164,34 +164,118 @@ function ClusterCard({
   );
 }
 
-// const Animated3DScatterPlot = () => {
-//   const plotRef = useRef(null);
+let inactivityTimer: string | number | NodeJS.Timeout | undefined;
+const inactivityThreshold = 3000; // Time in milliseconds before starting the animation
 
-//   useEffect(() => {
-//     let angle = 0;
-//     const radius = 10;
-//     const speed = 0.01;
+function startInactivityTimer(callback: () => void) {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(callback, inactivityThreshold);
+}
 
-//     const animate = () => {
-//       if (plotRef.current) {
-//         const eye = {
-//           x: radius * Math.cos(angle),
-//           y: radius * Math.sin(angle),
-//           z: 2,
-//         };
+function stopInactivityTimer() {
+  clearTimeout(inactivityTimer);
+}
 
-//         angle += speed;
-//         if (angle > 2 * Math.PI) angle = 0;
-//       }
-//     };
+function setupInactivityTracking(
+  plotId: string,
+  callback: { (): void; (): void; (): void; (): void },
+) {
+  const plotElement = document.getElementById(plotId);
 
-//     const interval = setInterval(animate, 100);
+  if (plotElement) {
+    const events = [
+      "plotly_relayout",
+      "plotly_restyle",
+      "plotly_relayout",
+      "plotly_click",
+    ];
 
-//     return () => clearInterval(interval); // Clean up on unmount
-//   }, []);
-// };
+    events.forEach((event) => {
+      plotElement.addEventListener(event, () => stopInactivityTimer());
+    });
+
+    // Start inactivity timer
+    plotElement.addEventListener("plotly_relayout", () =>
+      startInactivityTimer(callback),
+    );
+    plotElement.addEventListener("plotly_restyle", () =>
+      startInactivityTimer(callback),
+    );
+    plotElement.addEventListener("plotly_click", () =>
+      startInactivityTimer(callback),
+    );
+  }
+}
+
+function compute_new_scene({ eye, center, up }: Plotly.PlotScene) {
+  const rotationSpeed = 0.01;
+  const zoomSpeed = 0.01;
+
+  const newEye = {
+    x: eye.x * Math.cos(rotationSpeed) - eye.y * Math.sin(rotationSpeed),
+    y: eye.x * Math.sin(rotationSpeed) + eye.y * Math.cos(rotationSpeed),
+    z: eye.z,
+  };
+
+  const zoomFactor = 1 + zoomSpeed;
+  const newEyePosition = {
+    x: (newEye.x - center.x) * zoomFactor + center.x,
+    y: (newEye.y - center.y) * zoomFactor + center.y,
+    z: (newEye.z - center.z) * zoomFactor + center.z,
+  };
+
+  return {
+    camera: {
+      eye: newEyePosition,
+      center: center,
+      up: up,
+    },
+  };
+}
+
+function AnimatedPlot({ eye, center, up }: Plotly.PlotScene) {
+  const newScene = compute_new_scene({ eye, center, up });
+
+  Plotly.animate(
+    "plot",
+    {
+      layout: {
+        scene: newScene,
+      },
+    },
+    {
+      transition: {
+        duration: 0,
+      },
+      frame: {
+        duration: 0,
+        redraw: false,
+      },
+    },
+  );
+
+  requestAnimationFrame(() => AnimatedPlot({ eye, center, up }));
+
+  return null;
+}
 
 function CustomPlot({ data }: { data: Data }) {
+  const plotId = "plot"; // Replace with your actual plot ID
+
+  React.useEffect(() => {
+    setupInactivityTracking(plotId, () => {
+      AnimatedPlot({
+        eye: { x: 1, y: 1, z: 1 },
+        center: { x: 0, y: 0, z: 0 },
+        up: { x: 0, y: 1, z: 0 },
+      });
+    });
+
+    return () => {
+      stopInactivityTimer();
+    };
+  }, [plotId]);
+
   return (
     <Plot
       data={[data]}
@@ -200,7 +284,6 @@ function CustomPlot({ data }: { data: Data }) {
         height: window.innerHeight * 0.6,
         width: window.innerWidth * 0.8,
         autosize: true,
-
         scene: {
           xaxis: {
             visible: false,
@@ -233,8 +316,8 @@ function CustomPlot({ data }: { data: Data }) {
             showspikes: false,
           },
         },
-        paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
-        plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
       }}
     />
   );
