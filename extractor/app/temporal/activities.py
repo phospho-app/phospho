@@ -53,8 +53,6 @@ async def bill_on_stripe(
             usage_per_log += 1
         if project.settings.run_language:
             usage_per_log += 1
-        if project.settings.run_evals:
-            usage_per_log += 1
 
         nb_credits_used = request.nb_job_results * usage_per_log
 
