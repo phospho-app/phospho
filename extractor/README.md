@@ -16,6 +16,8 @@ MONGODB_URL=""
 OPENAI_API_KEY=""
 TEST_PROPELAUTH_ORG_ID=""
 GCP_JSON_CREDENTIALS='{}'
+TEMPORAL_HOST_URL=localhost:7233
+TEMPORAL_NAMESPACE=default
 ```
 
 Install the dependencies if you are running loccaly in dev mode:
@@ -43,7 +45,25 @@ openssl base64 -in client.pem -out client-base64-pem
 openssl base64 -in client.key -out client-base64-key
 ```
 
-# Running the worker
+# Running the worker locally
+
+You first need to install temporal locally to create a local workflow queue
+
+```bash
+brew install temporal
+```
+
+Once installed just run the following command to run your local queue
+Don't forget to edit your .env configuration, these are the default parameters
+
+TEMPORAL_HOST_URL=localhost:7233
+TEMPORAL_NAMESPACE=default
+
+```bash
+temporal server start-dev --db-filename your_temporal.db --ui-port 8080
+```
+
+You can now run the worker in a second terminal with
 
 ```bash
 poetry run python main.py

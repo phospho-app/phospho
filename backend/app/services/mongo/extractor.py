@@ -21,7 +21,7 @@ from phospho.models import PipelineResults, Recipe, Task
 from temporalio.client import Client, TLSConfig
 
 import os
-from hashlib import sha1
+from temporalio.exceptions import WorkflowAlreadyStartedError
 
 
 async def bill_on_stripe(
@@ -117,18 +117,31 @@ class ExtractorClient:
         data["customer_id"] = await fetch_stripe_customer_id(self.org_id)
 
         try:
-            client_cert = config.TEMPORAL_MTLS_TLS_CERT
-            client_key = config.TEMPORAL_MTLS_TLS_KEY
+            if (
+                config.ENVIRONMENT == "production"
+                or config.ENVIRONMENT == "staging"
+                or config.ENVIRONMENT == "test"
+            ):
+                client_cert = config.TEMPORAL_MTLS_TLS_CERT
+                client_key = config.TEMPORAL_MTLS_TLS_KEY
 
-            client: Client = await Client.connect(
-                os.getenv("TEMPORAL_HOST_URL"),
-                namespace=os.getenv("TEMPORAL_NAMESPACE"),
-                tls=TLSConfig(
-                    client_cert=client_cert,
-                    client_private_key=client_key,
-                ),
-                data_converter=pydantic_data_converter,
-            )
+                client: Client = await Client.connect(
+                    os.getenv("TEMPORAL_HOST_URL"),
+                    namespace=os.getenv("TEMPORAL_NAMESPACE"),
+                    tls=TLSConfig(
+                        client_cert=client_cert,
+                        client_private_key=client_key,
+                    ),
+                    data_converter=pydantic_data_converter,
+                )
+            elif config.ENVIRONMENT == "preview":
+                client: Client = await Client.connect(
+                    os.getenv("TEMPORAL_HOST_URL"),
+                    namespace=os.getenv("TEMPORAL_NAMESPACE"),
+                    data_converter=pydantic_data_converter,
+                )
+            else:
+                raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
 
             # Hash the data to generate a unique determinist id
             unique_id = (
@@ -146,11 +159,16 @@ class ExtractorClient:
             if on_success_callback:
                 await on_success_callback(response)
 
+        except WorkflowAlreadyStartedError as e:
+            logger.warning(
+                f"Workflow {endpoint} has already started for project {self.project_id} in org {self.org_id}: {e}"
+            )
+
         except Exception as e:
             error_id = generate_uuid()
             error_message = (
                 f"Caught error while calling temporal workflow {endpoint} "
-                + f"(error_id: {error_id} project_id: {self.project_id} organisation_id: {self.org_id} workflow_id: {unique_id}):"
+                + f"(error_id: {error_id} project_id: {self.project_id} organisation_id: {self.org_id}):"
                 + f"{e}\n{traceback.format_exception(e)}"
             )
             logger.error(error_message)

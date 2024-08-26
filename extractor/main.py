@@ -75,18 +75,32 @@ async def main():
         sentry_sdk.set_level("warning")
 
     await connect_and_init_db()
-    client_cert = config.TEMPORAL_MTLS_TLS_CERT
-    client_key = config.TEMPORAL_MTLS_TLS_KEY
 
-    client: Client = await Client.connect(
-        os.getenv("TEMPORAL_HOST_URL"),
-        namespace=os.getenv("TEMPORAL_NAMESPACE"),
-        tls=TLSConfig(
-            client_cert=client_cert,
-            client_private_key=client_key,
-        ),
-        data_converter=pydantic_data_converter,
-    )
+    if (
+        config.ENVIRONMENT == "production"
+        or config.ENVIRONMENT == "staging"
+        or config.ENVIRONMENT == "test"
+    ):
+        client_cert = config.TEMPORAL_MTLS_TLS_CERT
+        client_key = config.TEMPORAL_MTLS_TLS_KEY
+
+        client: Client = await Client.connect(
+            os.getenv("TEMPORAL_HOST_URL"),
+            namespace=os.getenv("TEMPORAL_NAMESPACE"),
+            tls=TLSConfig(
+                client_cert=client_cert,
+                client_private_key=client_key,
+            ),
+            data_converter=pydantic_data_converter,
+        )
+    elif config.ENVIRONMENT == "preview" or config.ENVIRONMENT == "test":
+        client: Client = await Client.connect(
+            os.getenv("TEMPORAL_HOST_URL"),
+            namespace=os.getenv("TEMPORAL_NAMESPACE"),
+            data_converter=pydantic_data_converter,
+        )
+    else:
+        raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
 
     async with Worker(
         client,
