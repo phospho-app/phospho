@@ -1,3 +1,4 @@
+import { SidebarState } from "@/components/sidebar/sidebar";
 import {
   CustomDateRange,
   HasEnoughLabelledTasks,
@@ -45,6 +46,9 @@ interface navigationState {
   setmetadata_metric: (metadata: string | null) => void;
   selectedGroupBy: string;
   setSelectedGroupBy: (groupBy: string) => void;
+
+  sidebarState: SidebarState | null;
+  setSidebarState: (sidebarState: SidebarState) => void;
 }
 
 export const navigationStateStore = create(
@@ -246,6 +250,10 @@ export const navigationStateStore = create(
       selectedGroupBy: "flag",
       setSelectedGroupBy: (groupBy: string) =>
         set(() => ({ selectedGroupBy: groupBy })),
+
+      sidebarState: null,
+      setSidebarState: (sidebarState: SidebarState) =>
+        set(() => ({ sidebarState: sidebarState })),
     }),
 
     {

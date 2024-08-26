@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import UpgradeButton from "@/components/upgrade-button";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useRedirectFunctions } from "@propelauth/nextjs/client";
 import {
@@ -28,9 +30,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Card, CardContent, CardTitle } from "../ui/card";
-import UpgradeButton from "../upgrade-button";
 import { OnboardingProgress } from "./sidebar-progress";
+
+export interface SidebarState {
+  transcriptOpen: boolean;
+  datavizOpen: boolean;
+  settingsOpen: boolean;
+}
 
 interface SideBarElementProps {
   children: React.ReactNode;
@@ -120,13 +126,38 @@ export function Sidebar() {
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const { redirectToOrgApiKeysPage } = useRedirectFunctions();
 
-  const [transcriptOpen, setTranscriptOpen] = useState(
-    pathname.includes("transcripts"),
+  const sidebarState = navigationStateStore((state) => state.sidebarState);
+  const setSidebarState = navigationStateStore(
+    (state) => state.setSidebarState,
   );
-  const [datavizOpen, setDatavizOpen] = useState(pathname.includes("dataviz"));
-  const [settingsOpen, setSettingsOpen] = useState(
-    pathname.includes("settings"),
-  );
+
+  const [hasUpdated, setHasUpdated] = useState(false);
+
+  useEffect(() => {
+    // Based on the current pathname, force open the corresponding sidebar elements
+    console.log("sidebarState", sidebarState);
+    if (sidebarState === null) {
+      return;
+    }
+    // This force open can only happen once.
+    // After that, the user can manually close the sidebar elements
+    if (hasUpdated) {
+      return;
+    }
+
+    let updatedState = { ...sidebarState };
+    if (pathname.includes("transcripts")) {
+      updatedState = { ...updatedState, transcriptOpen: true };
+    }
+    if (pathname.includes("dataviz")) {
+      updatedState = { ...updatedState, datavizOpen: true };
+    }
+    if (pathname.includes("settings")) {
+      updatedState = { ...updatedState, settingsOpen: true };
+    }
+    setSidebarState(updatedState);
+    setHasUpdated(true);
+  }, [JSON.stringify(sidebarState)]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -143,6 +174,10 @@ export function Sidebar() {
     };
   }, []);
 
+  if (!sidebarState) {
+    return null;
+  }
+
   return (
     <div className="overflow-y-auto max-h-[100dvh] md:max-h-full md:h-full">
       <div className="flex flex-col py-4 border-secondary h-full">
@@ -151,12 +186,14 @@ export function Sidebar() {
             href="/org/transcripts/"
             icon={<BookOpenText size={16} className="mr-2" />}
             collapsible={true}
-            collapsibleState={transcriptOpen}
-            setCollapsibleState={setTranscriptOpen}
+            collapsibleState={sidebarState.transcriptOpen}
+            setCollapsibleState={(state) =>
+              setSidebarState({ ...sidebarState, transcriptOpen: state })
+            }
           >
             Transcripts
           </SideBarElement>
-          {(transcriptOpen || isMobile) && (
+          {(sidebarState.transcriptOpen || isMobile) && (
             <div className="ml-6 text-muted-foreground">
               <SideBarElement href="/org/transcripts/sessions">
                 <List className="h-4 w-4 mr-2" />
@@ -176,12 +213,14 @@ export function Sidebar() {
             href="/org/dataviz/"
             icon={<BarChartBig className="h-4 w-4 mr-2" />}
             collapsible={true}
-            collapsibleState={datavizOpen}
-            setCollapsibleState={setDatavizOpen}
+            collapsibleState={sidebarState.datavizOpen}
+            setCollapsibleState={(state) =>
+              setSidebarState({ ...sidebarState, datavizOpen: state })
+            }
           >
             Dataviz
           </SideBarElement>
-          {(datavizOpen || isMobile) && (
+          {(sidebarState.datavizOpen || isMobile) && (
             <div className="ml-6 text-muted-foreground">
               <SideBarElement href="/org/dataviz/dashboard">
                 <LayoutDashboard className="h-4 w-4 mr-2" />
@@ -232,12 +271,14 @@ export function Sidebar() {
             href="/org/settings"
             icon={<Settings size={16} className="mr-2" />}
             collapsible={true}
-            collapsibleState={settingsOpen}
-            setCollapsibleState={setSettingsOpen}
+            collapsibleState={sidebarState.settingsOpen}
+            setCollapsibleState={(state) =>
+              setSidebarState({ ...sidebarState, settingsOpen: state })
+            }
           >
             Settings
           </SideBarElement>
-          {(settingsOpen || isMobile) && (
+          {(sidebarState.settingsOpen || isMobile) && (
             <div className="ml-6 text-muted-foreground">
               <SideBarElement href="/org/settings/project">
                 <BriefcaseBusiness size={16} className="mr-2" />
