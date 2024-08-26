@@ -76,7 +76,11 @@ async def main():
 
     await connect_and_init_db()
 
-    if config.ENVIRONMENT == "production" or config.ENVIRONMENT == "staging":
+    if (
+        config.ENVIRONMENT == "production"
+        or config.ENVIRONMENT == "staging"
+        or config.ENVIRONMENT == "test"
+    ):
         client_cert = config.TEMPORAL_MTLS_TLS_CERT
         client_key = config.TEMPORAL_MTLS_TLS_KEY
 
@@ -89,12 +93,14 @@ async def main():
             ),
             data_converter=pydantic_data_converter,
         )
-    else:
+    elif config.ENVIRONMENT == "preview" or config.ENVIRONMENT == "test":
         client: Client = await Client.connect(
             os.getenv("TEMPORAL_HOST_URL"),
             namespace=os.getenv("TEMPORAL_NAMESPACE"),
             data_converter=pydantic_data_converter,
         )
+    else:
+        raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
 
     async with Worker(
         client,
