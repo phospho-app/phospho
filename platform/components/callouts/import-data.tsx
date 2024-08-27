@@ -220,14 +220,14 @@ export default function UploadDataset({
           }
           if (nbRowsProcessed === 0 && nbRowsDroped === 0) {
             toast({
-              title: "No data to process",
+              title: "No data to process 🤷‍♂️",
               description: <div>Please check your file and try again.</div>,
             });
             setLoading(false);
           }
           if (nbRowsProcessed === 0 && nbRowsDroped > 0) {
             toast({
-              title: "No data to process",
+              title: "No data to process 🤷‍♂️",
               description: (
                 <div>
                   {nbRowsDroped} rows were dropped because the column{" "}
