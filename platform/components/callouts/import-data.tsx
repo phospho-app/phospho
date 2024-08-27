@@ -963,7 +963,7 @@ phospho.log({input, output});`}
                     onClick={() => router.push("mailto:paul-louis@phospho.app")}
                   >
                     <Mail className="h-4 w-4 mr-2" />
-                    Contact us to create you an LLM app
+                    Contact us to create your LLM app
                   </Button>
                 </AlertDescription>
               </Alert>
