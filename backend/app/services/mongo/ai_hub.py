@@ -2,9 +2,11 @@
 Interact with the AI Hub service
 """
 
+import os
 from fastapi import HTTPException
 import traceback
 from typing import Optional
+import hashlib
 
 from app.services.slack import slack_notification
 import httpx
@@ -19,6 +21,10 @@ from app.core import config
 from app.utils import generate_uuid
 from loguru import logger
 from app.db.mongo import get_mongo_db
+from app.services.mongo.extractor import fetch_stripe_customer_id
+from temporalio.client import Client, TLSConfig
+from temporalio.exceptions import WorkflowAlreadyStartedError
+from app.temporal.pydantic_converter import pydantic_data_converter
 
 
 async def fetch_models(org_id: Optional[str] = None) -> Optional[ModelsResponse]:
@@ -83,41 +89,72 @@ class AIHubClient:
         data: dict,
     ) -> Optional[httpx.Response]:
         """
-        Post data to an endpoint
+        Post data to the ai hub temporal worker
         """
-        if config.PHOSPHO_AI_HUB_URL is None:
-            raise ValueError("AI Hub URL is not configured.")
 
+        # We check that "org_id", "project_id" are present in the data
         if self.org_id is None or self.project_id is None:
-            raise ValueError(
-                f"org_id and project_id are required, got org_id: {self.org_id} and project_id: {self.project_id}"
-            )
+            logger.error(f"Missing org_id or project_id for endpoint {endpoint}")
+            return None
 
-        # We add this data for the ai hub
         data["org_id"] = self.org_id
         data["project_id"] = self.project_id
+        data["customer_id"] = await fetch_stripe_customer_id(self.org_id)
 
         try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{config.PHOSPHO_AI_HUB_URL}{endpoint}",
-                    json=data,
-                    headers={
-                        "Authorization": f"Bearer {config.PHOSPHO_AI_HUB_API_KEY}",
-                        "Content-Type": "application/json",
-                    },
-                    timeout=60,
+            if config.ENVIRONMENT in ["production", "staging", "test"]:
+                client_cert = config.TEMPORAL_MTLS_TLS_CERT
+                client_key = config.TEMPORAL_MTLS_TLS_KEY
+
+                client: Client = await Client.connect(
+                    os.getenv("TEMPORAL_HOST_URL"),
+                    namespace=os.getenv("TEMPORAL_NAMESPACE"),
+                    tls=TLSConfig(
+                        client_cert=client_cert,
+                        client_private_key=client_key,
+                    ),
+                    data_converter=pydantic_data_converter,
                 )
-                return response
+            elif config.ENVIRONMENT == "preview":
+                client: Client = await Client.connect(
+                    os.getenv("TEMPORAL_HOST_URL"),
+                    namespace=os.getenv("TEMPORAL_NAMESPACE"),
+                    data_converter=pydantic_data_converter,
+                )
+            else:
+                raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
+
+            # Hash the data to generate a unique determinist id
+            unique_id = (
+                endpoint
+                + hashlib.md5(
+                    repr(sorted(data.items())).encode("utf-8"),
+                    usedforsecurity=False,
+                ).hexdigest()
+            )
+
+            await client.execute_workflow(
+                endpoint, data, id=unique_id, task_queue="default"
+            )
+
+        except WorkflowAlreadyStartedError as e:
+            logger.warning(
+                f"Workflow {endpoint} has already started for project {self.project_id} in org {self.org_id}: {e}"
+            )
 
         except Exception as e:
-            errror_id = generate_uuid()
-            error_message = f"Caught error while calling ai hub {endpoint} (error_id: {errror_id}, project_id: {self.project_id}): {e}\n{traceback.format_exception(e)}"
+            error_id = generate_uuid()
+            error_message = (
+                f"Caught error while calling temporal workflow {endpoint} "
+                + f"(error_id: {error_id} project_id: {self.project_id} organisation_id: {self.org_id}):"
+                + f"{e}\n{traceback.format_exception(e)}"
+            )
             logger.error(error_message)
+
             traceback.print_exc()
             if config.ENVIRONMENT == "production":
-                if len(error_message) > 200:
-                    slack_message = error_message[:200]
+                if len(error_message) > 800:
+                    slack_message = error_message[:800]
                 else:
                     slack_message = error_message
                 await slack_notification(slack_message)
