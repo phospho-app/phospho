@@ -63,6 +63,8 @@ async def fetch_model(model_id: str) -> Model | None:
 
     if model is None:
         raise HTTPException(status_code=404, detail="Model not found")
+    else:
+        return Model(**model)
 
 
 class AIHubClient:
@@ -119,6 +121,7 @@ class AIHubClient:
                 client: Client = await Client.connect(
                     os.getenv("TEMPORAL_HOST_URL"),
                     namespace=os.getenv("TEMPORAL_NAMESPACE"),
+                    tls=False,
                     data_converter=pydantic_data_converter,
                 )
             else:
@@ -167,12 +170,12 @@ class AIHubClient:
         """
         if clustering_request.scope == "messages":
             response = await self._post(
-                "/v1/clusterings-messages",
+                "generate_clustering_messages_workflow",
                 clustering_request.model_dump(mode="json"),
             )
         elif clustering_request.scope == "sessions":
             response = await self._post(
-                "/v1/clusterings-sessions",
+                "generate_clustering_sessions_workflow",
                 clustering_request.model_dump(mode="json"),
             )
         else:
@@ -190,7 +193,7 @@ class AIHubClient:
         Call the embeddings endpoint of the AI Hub
         """
         response = await self._post(
-            "/v1/embeddings",
+            "create_embeddings_workflow",
             embedding_request.model_dump(mode="json"),
         )
 

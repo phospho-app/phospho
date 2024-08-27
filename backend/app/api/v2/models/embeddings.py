@@ -24,6 +24,7 @@ class EmbeddingRequest(BaseModel, extra="allow"):
     task_id: Optional[str] = (
         None  # The task id (phospho) used to generate the embedding
     )
+    nb_credits_used: int  # The number of credits used to generate the embedding
 
 
 class EmbeddingResponseData(BaseModel):

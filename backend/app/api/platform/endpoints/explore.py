@@ -418,8 +418,6 @@ async def post_detect_clusters(
                     detail="Payment details required to run the cluster detection algorithm.",
                 )
 
-        await bill_on_stripe(org_id=org_id, nb_credits_used=clustering_billing)
-
     if query.filters is None:
         query.filters = ProjectDataFilters()
 
@@ -434,6 +432,7 @@ async def post_detect_clusters(
             filters=query.filters,
             scope=query.scope,
             instruction=query.instruction,
+            nb_credits_used=clustering_billing,
         ),
     )
     return {"status": "ok"}
