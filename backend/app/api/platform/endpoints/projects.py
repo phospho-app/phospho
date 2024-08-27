@@ -445,6 +445,7 @@ async def post_upload_tasks(
     # Read file content -> into memory
     file_params = {}
     logger.info(f"Reading file {file.filename} content.")
+    tasks_df: pd.DataFrame
     try:
         if file_extension == "csv":
             tasks_df = pd.read_csv(
@@ -484,6 +485,11 @@ async def post_upload_tasks(
             detail=f"Error: Missing columns: {missing_columns}",
         )
 
+    # Drop rows with missing column "input"
+    old_len = tasks_df.shape[0]
+    tasks_df.dropna(subset=["input"], inplace=True)
+    new_len = tasks_df.shape[0]
+
     # Process the csv file as a background task
     logger.info(f"File {file.filename} uploaded successfully. Processing tasks.")
     background_tasks.add_task(
@@ -492,7 +498,11 @@ async def post_upload_tasks(
         project_id=project_id,
         org_id=project.org_id,
     )
-    return {"status": "ok", "num_rows": tasks_df.shape[0]}
+    return {
+        "status": "ok",
+        "nb_rows_processed": tasks_df.shape[0],
+        "nb_rows_dropped": old_len - new_len,
+    }
 
 
 @router.post(

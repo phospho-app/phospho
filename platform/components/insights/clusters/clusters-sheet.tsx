@@ -97,9 +97,12 @@ const RunClusters = ({
         required_error: "Please enter an instruction",
       })
       .max(32, "Instruction must be at most 32 characters long"),
-    nb_clusters: z.number({
-      required_error: "Please enter the number of clusters",
-    }),
+    nb_clusters: z
+      .number({
+        required_error: "Please enter the number of clusters",
+      })
+      .min(5, "Number of clusters must be at least 5")
+      .max(100, "Number of clusters must be at most 100"),
   });
 
   console.log("totalNbTasks: ", totalNbTasks);

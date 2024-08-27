@@ -60,7 +60,7 @@ const Sessions: React.FC = () => {
                 </CardDescription>
               </div>
               <Link
-                href="https://docs.phospho.ai/guides/sessions-and-users#sessions"
+                href="https://docs.phospho.ai/analytics/sessions-and-users"
                 target="_blank"
               >
                 <Button variant="default">Setup session tracking</Button>
