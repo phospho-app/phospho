@@ -56,6 +56,7 @@ class DetectClustersRequest(BaseModel):
     filters: Optional[ProjectDataFilters] = Field(default_factory=ProjectDataFilters)
     scope: Literal["messages", "sessions"] = "messages"
     instruction: Optional[str] = "user intent"
+    nb_clusters: Optional[int] = None
 
 
 class FetchClustersRequest(BaseModel):

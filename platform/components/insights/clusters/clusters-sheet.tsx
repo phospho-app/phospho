@@ -106,7 +106,7 @@ const RunClusters = ({
         required_error: "Please enter an instruction",
       })
       .max(32, "Instruction must be at most 32 characters long"),
-    number_of_clusters: z.number({
+    nb_clusters: z.number({
       required_error: "Please enter the number of clusters",
     }),
   });
@@ -117,7 +117,7 @@ const RunClusters = ({
     defaultValues: {
       scope: "messages",
       instruction: "user intent",
-      // Note: don't set the number_of_clusters default value here, since it's updated dynamically using an API call
+      // Note: don't set the nb_clusters default value here, since it's updated dynamically using an API call
     },
   });
 
@@ -126,22 +126,37 @@ const RunClusters = ({
       setClusteringCost(totalNbTasks * 2);
     }
     // Update the default number of clusters when the total number of tasks changes
-    if (form.getValues("scope") === "messages" && totalNbTasks) {
+    if (form.getValues("scope") === "messages") {
+      if (!totalNbTasks) {
+        totalNbTasks = 0;
+      }
       setNbElements(totalNbTasks);
-      form.setValue("number_of_clusters", totalNbTasks);
-    }
-    if (form.getValues("scope") === "sessions" && totalNbSessions) {
-      setNbElements(totalNbSessions);
-      form.setValue("number_of_clusters", totalNbSessions);
-    }
-  }, [totalNbSessions, totalNbTasks, JSON.stringify(form.getValues())]);
 
-  let canRunClusterAnalysis =
+      if (Math.floor(totalNbTasks / 100) >= 5) {
+        form.setValue("nb_clusters", Math.floor(totalNbTasks / 100));
+      } else {
+        form.setValue("nb_clusters", 5);
+      }
+    }
+    if (form.getValues("scope") === "sessions") {
+      if (!totalNbSessions) {
+        totalNbSessions = 0;
+      }
+      setNbElements(totalNbSessions);
+      if (Math.floor(totalNbSessions / 100) >= 5) {
+        form.setValue("nb_clusters", Math.floor(totalNbSessions / 100));
+      } else {
+        form.setValue("nb_clusters", 5);
+      }
+    }
+  }, [totalNbSessions, totalNbTasks, JSON.stringify(form.getValues("scope"))]);
+
+  const canRunClusterAnalysis: boolean =
     (form.getValues("scope") === "messages" &&
-      totalNbTasks &&
+      !!totalNbTasks &&
       totalNbTasks >= 5) ||
     (form.getValues("scope") === "sessions" &&
-      totalNbSessions &&
+      !!totalNbSessions &&
       totalNbSessions >= 5);
 
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
@@ -175,6 +190,7 @@ const RunClusters = ({
           filters: dataFilters,
           scope: formData.scope,
           instruction: formData.instruction,
+          nb_clusters: formData.nb_clusters,
         }),
       }).then((response) => {
         if (response.status == 200) {
@@ -346,7 +362,7 @@ const RunClusters = ({
                     <FormLabel>Number of clusters:</FormLabel>
                     <FormField
                       control={form.control}
-                      name="number_of_clusters"
+                      name="nb_clusters"
                       render={({ field }) => (
                         <FormItem className="flex-grow">
                           <FormControl>
@@ -357,6 +373,9 @@ const RunClusters = ({
                               step={1}
                               type="number"
                               {...field}
+                              onChange={(e) => {
+                                field.onChange(e.target.valueAsNumber);
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -380,7 +399,7 @@ const RunClusters = ({
                 {form.getValues("scope") === "sessions" && (
                   <>containing {totalNbTasks} messages</>
                 )}{" "}
-                for a total of {clusteringCost} credits.
+                for a total of {clusteringCost} credits.{" "}
               </div>
             )}
             {hobby && (
