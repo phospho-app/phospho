@@ -196,9 +196,7 @@ export default function UploadDataset({
             toast({
               title: `Processing ${nbRowsProcessed} rows... ⏳`,
               description: (
-                <div>
-                  Data will appear in your dashboard <code>shortly.</code>
-                </div>
+                <div>Data will appear in your dashboard shortly.</div>
               ),
             });
             setOpen(false);
