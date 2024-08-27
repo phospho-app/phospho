@@ -215,7 +215,7 @@ function CustomPlot({ data }: { data: Data }) {
       data={[data]}
       config={{ displayModeBar: true, responsive: true }}
       layout={{
-        height: window.innerHeight * 0.6,
+        height: Math.max(window.innerHeight * 0.6, 300),
         // set it to be the size of the current div in pixel
         width: document.getElementsByClassName("custom-plot")[0].clientWidth,
         // autosize: true,
@@ -226,7 +226,7 @@ function CustomPlot({ data }: { data: Data }) {
             showgrid: false,
             zeroline: false,
             showline: false,
-            ticks: "",
+            //ticks: "",
             showticklabels: false,
             spikesides: false,
             showspikes: false,
@@ -236,7 +236,7 @@ function CustomPlot({ data }: { data: Data }) {
             showgrid: false,
             zeroline: false,
             showline: false,
-            ticks: "",
+            //ticks: "",
             showticklabels: false,
             spikesides: false,
             showspikes: false,
@@ -246,7 +246,7 @@ function CustomPlot({ data }: { data: Data }) {
             showgrid: false,
             zeroline: false,
             showline: false,
-            ticks: "",
+            //ticks: "",
             showticklabels: false,
             spikesides: false,
             showspikes: false,
