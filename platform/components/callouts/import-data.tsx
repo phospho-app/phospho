@@ -209,8 +209,7 @@ export default function UploadDataset({
               description: (
                 <div>
                   {nbRowsDroped} rows were dropped because the column{" "}
-                  <code>input</code>
-                  was empty.
+                  <code>input</code> was empty.
                 </div>
               ),
             });
