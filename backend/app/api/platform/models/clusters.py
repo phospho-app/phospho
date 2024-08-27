@@ -21,4 +21,5 @@ class ClusteringRequest(BaseModel):
     model: Literal["intent-embed", "intent-embed-2", "intent-embed-3"] = (
         "intent-embed-3"
     )
+    nb_credits_used: int
     nb_clusters: Optional[int] = None
