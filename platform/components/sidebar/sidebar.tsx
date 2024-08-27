@@ -177,9 +177,9 @@ export function Sidebar() {
   }, []);
 
   const displayedSidebarState = sidebarState ?? {
-    transcriptOpen: false,
-    datavizOpen: false,
-    settingsOpen: false,
+    transcriptOpen: pathname.includes("transcripts"),
+    datavizOpen: pathname.includes("dataviz"),
+    settingsOpen: pathname.includes("settings"),
   };
 
   return (
