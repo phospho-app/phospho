@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import openai
 from loguru import logger
 
-from app.api.v1.models import LogEventForTasks
+from app.models import LogEventForTasks
 from app.core import config
 from app.db.mongo import get_mongo_db
 from app.db.qdrant import get_qdrant, models
