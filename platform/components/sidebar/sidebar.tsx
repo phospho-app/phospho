@@ -137,18 +137,13 @@ export function Sidebar() {
     // Based on the current pathname, force open the corresponding sidebar elements
     console.log("sidebarState", sidebarState);
 
-    // This force open can only happen once.
-    // After that, the user can manually close the sidebar elements
-    if (hasUpdated) {
+    if (sidebarState === null) {
       return;
     }
 
-    if (sidebarState === null) {
-      setSidebarState({
-        transcriptOpen: false,
-        datavizOpen: false,
-        settingsOpen: false,
-      });
+    // This force open can only happen once.
+    // After that, the user can manually close the sidebar elements
+    if (hasUpdated) {
       return;
     }
 
@@ -181,9 +176,11 @@ export function Sidebar() {
     };
   }, []);
 
-  if (!sidebarState) {
-    return null;
-  }
+  const displayedSidebarState = sidebarState ?? {
+    transcriptOpen: false,
+    datavizOpen: false,
+    settingsOpen: false,
+  };
 
   return (
     <div className="overflow-y-auto max-h-[100dvh] md:max-h-full md:h-full">
@@ -193,14 +190,17 @@ export function Sidebar() {
             href="/org/transcripts/"
             icon={<BookOpenText size={16} className="mr-2" />}
             collapsible={true}
-            collapsibleState={sidebarState.transcriptOpen}
+            collapsibleState={displayedSidebarState.transcriptOpen}
             setCollapsibleState={(state) =>
-              setSidebarState({ ...sidebarState, transcriptOpen: state })
+              setSidebarState({
+                ...displayedSidebarState,
+                transcriptOpen: state,
+              })
             }
           >
             Transcripts
           </SideBarElement>
-          {(sidebarState.transcriptOpen || isMobile) && (
+          {(displayedSidebarState.transcriptOpen || isMobile) && (
             <div className="ml-6 text-muted-foreground">
               <SideBarElement href="/org/transcripts/sessions">
                 <List className="h-4 w-4 mr-2" />
@@ -220,14 +220,14 @@ export function Sidebar() {
             href="/org/dataviz/"
             icon={<BarChartBig className="h-4 w-4 mr-2" />}
             collapsible={true}
-            collapsibleState={sidebarState.datavizOpen}
+            collapsibleState={displayedSidebarState.datavizOpen}
             setCollapsibleState={(state) =>
-              setSidebarState({ ...sidebarState, datavizOpen: state })
+              setSidebarState({ ...displayedSidebarState, datavizOpen: state })
             }
           >
             Dataviz
           </SideBarElement>
-          {(sidebarState.datavizOpen || isMobile) && (
+          {(displayedSidebarState.datavizOpen || isMobile) && (
             <div className="ml-6 text-muted-foreground">
               <SideBarElement href="/org/dataviz/dashboard">
                 <LayoutDashboard className="h-4 w-4 mr-2" />
@@ -278,14 +278,14 @@ export function Sidebar() {
             href="/org/settings"
             icon={<Settings size={16} className="mr-2" />}
             collapsible={true}
-            collapsibleState={sidebarState.settingsOpen}
+            collapsibleState={displayedSidebarState.settingsOpen}
             setCollapsibleState={(state) =>
-              setSidebarState({ ...sidebarState, settingsOpen: state })
+              setSidebarState({ ...displayedSidebarState, settingsOpen: state })
             }
           >
             Settings
           </SideBarElement>
-          {(sidebarState.settingsOpen || isMobile) && (
+          {(displayedSidebarState.settingsOpen || isMobile) && (
             <div className="ml-6 text-muted-foreground">
               <SideBarElement href="/org/settings/project">
                 <BriefcaseBusiness size={16} className="mr-2" />
