@@ -45,12 +45,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import {
-  ChevronRight,
-  Sparkles,
-  TestTubeDiagonal,
-  TriangleAlert,
-} from "lucide-react";
+import { ChevronRight, Sparkles, TestTubeDiagonal } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -73,6 +68,8 @@ const RunClusters = ({
 }) => {
   const { accessToken } = useUser();
   const [clusteringCost, setClusteringCost] = useState(0);
+  const [nbElements, setNbElements] = useState(0);
+  let defaultNbClusters = 0;
   const project_id = navigationStateStore((state) => state.project_id);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
@@ -81,22 +78,85 @@ const RunClusters = ({
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);
-  const [scope, setScope] = React.useState("messages");
-  const [instruction, setInstruction] = React.useState("");
+
+  function setSheetOpenWrapper(value: boolean) {
+    // Reset the dataFilters when the sheet is closed
+    if (!value) {
+      const currentDataFilters = dataFilters;
+      delete currentDataFilters.clustering_id;
+      delete currentDataFilters.clusters_ids;
+      setDataFilters(dataFilters);
+    }
+    setSheetOpen(value);
+  }
+
+  const FormSchema = z.object({
+    scope: z.enum(["messages", "sessions"]),
+    instruction: z
+      .string({
+        required_error: "Please enter an instruction",
+      })
+      .max(32, "Instruction must be at most 32 characters long"),
+    nb_clusters: z.number({
+      required_error: "Please enter the number of clusters",
+    }),
+  });
+
+  console.log("totalNbTasks: ", totalNbTasks);
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      scope: "messages",
+      instruction: "user intent",
+      // Note: don't set the nb_clusters default value here, since it's updated dynamically using an API call
+    },
+  });
 
   useEffect(() => {
     if (totalNbTasks) {
       setClusteringCost(totalNbTasks * 2);
     }
-  }, [totalNbSessions, totalNbTasks, scope]);
+    // Update the default number of clusters when the total number of tasks changes
+    if (form.getValues("scope") === "messages") {
+      if (!totalNbTasks) {
+        totalNbTasks = 0;
+      }
+      setNbElements(totalNbTasks);
+      defaultNbClusters = Math.floor(totalNbTasks / 100);
 
-  if (!project_id) {
-    return <></>;
-  }
+      if (defaultNbClusters >= 5) {
+        form.setValue("nb_clusters", defaultNbClusters);
+      } else {
+        form.setValue("nb_clusters", 5);
+      }
+    }
+    if (form.getValues("scope") === "sessions") {
+      if (!totalNbSessions) {
+        totalNbSessions = 0;
+      }
+      setNbElements(totalNbSessions);
+      defaultNbClusters = Math.floor(totalNbSessions / 100);
+      console.log("defaultNbClusters: ", defaultNbClusters);
+      if (defaultNbClusters >= 5) {
+        form.setValue("nb_clusters", Math.floor(defaultNbClusters));
+      } else {
+        form.setValue("nb_clusters", 5);
+      }
+    }
+  }, [totalNbSessions, totalNbTasks, JSON.stringify(form.getValues("scope"))]);
 
-  async function runClusterAnalysis() {
+  const canRunClusterAnalysis: boolean =
+    (form.getValues("scope") === "messages" &&
+      !!totalNbTasks &&
+      totalNbTasks >= 5) ||
+    (form.getValues("scope") === "sessions" &&
+      !!totalNbSessions &&
+      totalNbSessions >= 5);
+
+  async function onSubmit(formData: z.infer<typeof FormSchema>) {
+    console.log("Instructions: ", formData.instruction);
     setLoading(true);
-    mutateClusterings((data: any) => {
+    mutateClusterings((clusteringData: any) => {
       const newClustering: Clustering = {
         id: "",
         clustering_id: "",
@@ -105,11 +165,11 @@ const RunClusters = ({
         created_at: Date.now() / 1000,
         status: "started",
         clusters_ids: [],
-        scope: scope as "messages" | "sessions",
-        instruction: instruction === "" ? "user intent" : instruction,
+        scope: formData.scope,
+        instruction: formData.instruction,
       };
       const newData = {
-        clusterings: [newClustering, ...data?.clusterings],
+        clusterings: [newClustering, ...clusteringData?.clusterings],
       };
       return newData;
     });
@@ -122,8 +182,9 @@ const RunClusters = ({
         },
         body: JSON.stringify({
           filters: dataFilters,
-          scope: scope,
-          instruction: instruction === "" ? "user intent" : instruction,
+          scope: formData.scope,
+          instruction: formData.instruction,
+          nb_clusters: formData.nb_clusters,
         }),
       }).then((response) => {
         if (response.status == 200) {
@@ -149,47 +210,8 @@ const RunClusters = ({
     }
   }
 
-  function setSheetOpenWrapper(value: boolean) {
-    // Reset the dataFilters when the sheet is closed
-    if (!value) {
-      const currentDataFilters = dataFilters;
-      delete currentDataFilters.clustering_id;
-      delete currentDataFilters.clusters_ids;
-      setDataFilters(dataFilters);
-    }
-    setSheetOpen(value);
-  }
-
-  const FormSchema = z.object({
-    instruction: z
-      .string({
-        required_error: "Please enter an instruction",
-      })
-      .max(32, "Instruction must be at most 32 characters long"),
-  });
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      instruction: "user intent",
-    },
-  });
-
-  let canRunClusterAnalysis =
-    (scope === "messages" && totalNbTasks && totalNbTasks >= 5) ||
-    (scope === "sessions" && totalNbSessions && totalNbSessions >= 5);
-
-  let nbElements =
-    scope === "messages" && totalNbTasks
-      ? totalNbTasks
-      : scope === "sessions" && totalNbSessions
-        ? totalNbSessions
-        : 0;
-
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log("Instructions: ", data.instruction);
-    setInstruction(data.instruction);
-    runClusterAnalysis();
+  if (!project_id) {
+    return <></>;
   }
 
   return (
@@ -215,17 +237,27 @@ const RunClusters = ({
             <Separator className="my-8" />
             <div className="flex flex-wrap space-x-2 space-y-2 items-end">
               <DatePickerWithRange />
-              <Select onValueChange={setScope} defaultValue={scope}>
-                <SelectTrigger className="max-w-[20rem]">
-                  {scope === "messages" ? "Messages" : "Sessions"}
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="messages">Messages</SelectItem>
-                    <SelectItem value="sessions">Sessions</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
+              <FormField
+                control={form.control}
+                name="scope"
+                render={({ field }) => (
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger className="max-w-[20rem]">
+                      {field.value === "messages" ? "Messages" : "Sessions"}
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="messages">Messages</SelectItem>
+                        <SelectItem value="sessions">Sessions</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+
               <FilterComponent variant="tasks" />
             </div>
             <Accordion type="single" collapsible className="w-full">
@@ -246,8 +278,9 @@ const RunClusters = ({
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <div className="w-96">
-                            The clustering instruction refines how {scope} are
-                            grouped. Enter the topic to focus on.
+                            The clustering instruction refines how{" "}
+                            {form.getValues("scope")} are grouped. Enter the
+                            topic to focus on.
                           </div>
                         </HoverCardContent>
                       </HoverCard>
@@ -323,22 +356,48 @@ const RunClusters = ({
                       </Button>
                     </div>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <FormLabel>Number of clusters:</FormLabel>
+                    <FormField
+                      control={form.control}
+                      name="nb_clusters"
+                      render={({ field }) => (
+                        <FormItem className="flex-grow">
+                          <FormControl>
+                            <Input
+                              className="w-32"
+                              max={nbElements}
+                              min={0}
+                              step={1}
+                              type="number"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e.target.valueAsNumber);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
             {!canRunClusterAnalysis && (
               <div className="mt-4">
-                You need at least 5 {scope} to run a cluster analysis. There are
-                currently {nbElements} {scope}.
+                You need at least 5 {form.getValues("scope")} to run a cluster
+                analysis. There are currently {nbElements}{" "}
+                {form.getValues("scope")}.
               </div>
             )}
             {canRunClusterAnalysis && (
               <div className="mt-4">
-                We will clusterize {nbElements} {scope}{" "}
-                {scope === "sessions" && (
+                We will clusterize {nbElements} {form.getValues("scope")}{" "}
+                {form.getValues("scope") === "sessions" && (
                   <>containing {totalNbTasks} messages</>
                 )}{" "}
-                for a total of {clusteringCost} credits.
+                for a total of {clusteringCost} credits.{" "}
               </div>
             )}
             {hobby && (
