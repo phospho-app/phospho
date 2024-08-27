@@ -136,12 +136,19 @@ export function Sidebar() {
   useEffect(() => {
     // Based on the current pathname, force open the corresponding sidebar elements
     console.log("sidebarState", sidebarState);
-    if (sidebarState === null) {
-      return;
-    }
+
     // This force open can only happen once.
     // After that, the user can manually close the sidebar elements
     if (hasUpdated) {
+      return;
+    }
+
+    if (sidebarState === null) {
+      setSidebarState({
+        transcriptOpen: false,
+        datavizOpen: false,
+        settingsOpen: false,
+      });
       return;
     }
 
