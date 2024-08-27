@@ -367,7 +367,6 @@ async def post_single_cluster(
 async def post_detect_clusters(
     project_id: str,
     query: DetectClustersRequest,
-    background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
@@ -383,6 +382,7 @@ async def post_detect_clusters(
     if query is None:
         query = DetectClustersRequest()
 
+    clustering_billing = 0
     if query.scope == "messages" or query.scope == "sessions":
         total_nb_tasks = await get_total_nb_of_tasks(
             project_id=project_id, filters=query.filters
@@ -423,8 +423,7 @@ async def post_detect_clusters(
 
     ai_hub_client = AIHubClient(org_id=org_id, project_id=project_id)
 
-    background_tasks.add_task(
-        ai_hub_client.run_clustering,
+    await ai_hub_client.run_clustering(
         clustering_request=ClusteringRequest(
             project_id=project_id,
             org_id=org_id,
