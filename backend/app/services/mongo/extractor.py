@@ -115,7 +115,7 @@ class ExtractorClient:
         data["customer_id"] = await fetch_stripe_customer_id(self.org_id)
 
         try:
-            if config.ENVIRONMENT in ["production", "staging", "test"]:
+            if config.ENVIRONMENT in ["production", "staging"]:
                 client_cert = config.TEMPORAL_MTLS_TLS_CERT
                 client_key = config.TEMPORAL_MTLS_TLS_KEY
 
@@ -128,10 +128,11 @@ class ExtractorClient:
                     ),
                     data_converter=pydantic_data_converter,
                 )
-            elif config.ENVIRONMENT == "preview":
+            elif config.ENVIRONMENT in ["test", "preview"]:
                 client: Client = await Client.connect(
                     os.getenv("TEMPORAL_HOST_URL"),
                     namespace=os.getenv("TEMPORAL_NAMESPACE"),
+                    tls=False,
                     data_converter=pydantic_data_converter,
                 )
             else:

@@ -76,7 +76,7 @@ async def main():
 
     await connect_and_init_db()
 
-    if config.ENVIRONMENT in ["production", "staging", "test"]:
+    if config.ENVIRONMENT in ["production", "staging"]:
         client_cert = config.TEMPORAL_MTLS_TLS_CERT
         client_key = config.TEMPORAL_MTLS_TLS_KEY
 
@@ -89,10 +89,11 @@ async def main():
             ),
             data_converter=pydantic_data_converter,
         )
-    elif config.ENVIRONMENT in ["preview", "local"]:
+    elif config.ENVIRONMENT in ["test", "preview"]:
         client: Client = await Client.connect(
             os.getenv("TEMPORAL_HOST_URL"),
             namespace=os.getenv("TEMPORAL_NAMESPACE"),
+            tls=False,
             data_converter=pydantic_data_converter,
         )
     else:
@@ -124,6 +125,7 @@ async def main():
         interceptors=[SentryInterceptor()]
         if config.ENVIRONMENT in ["production", "staging"]
         else [],
+        identity="extractor-worker",
     ):
         logger.info("Worker started")
         await interrupt_event.wait()
@@ -134,7 +136,7 @@ async def main():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     try:
-        loop.create_task(aiohealthcheck.tcp_health_endpoint(port=8080))
+        loop.create_task(aiohealthcheck.tcp_health_endpoint(port=8001))
         loop.run_until_complete(main())
     except KeyboardInterrupt:
         interrupt_event.set()

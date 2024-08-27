@@ -137,7 +137,7 @@ class AIHubClient:
             )
 
             await client.execute_workflow(
-                endpoint, data, id=unique_id, task_queue="default"
+                endpoint, data, id=unique_id, task_queue="ai-hub"
             )
 
         except WorkflowAlreadyStartedError as e:
