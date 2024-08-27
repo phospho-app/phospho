@@ -189,12 +189,56 @@ export default function UploadDataset({
         body: formData,
       }).then(async (response) => {
         if (response.ok) {
-          toast({
-            title: "Your file is being processed ✅",
-            description: "Data will appear in your dashboard in a few minutes.",
-          });
-          setOpen(false);
-          setLoading(false);
+          const responseBody = await response.json();
+          const nbRowsProcessed = responseBody.nb_rows_processed;
+          const nbRowsDroped = responseBody.nb_rows_dropped;
+          if (nbRowsDroped === 0 && nbRowsProcessed > 0) {
+            toast({
+              title: `Processing ${nbRowsProcessed} rows... ⏳`,
+              description: (
+                <div>
+                  Data will appear in your dashboard <code>shortly.</code>
+                </div>
+              ),
+            });
+            setOpen(false);
+            setLoading(false);
+            return;
+          }
+          if (nbRowsDroped > 0 && nbRowsProcessed > 0) {
+            toast({
+              title: `Processing ${nbRowsProcessed} rows... ⏳`,
+              description: (
+                <div>
+                  {nbRowsDroped} rows were dropped because the column{" "}
+                  <code>input</code>
+                  was empty.
+                </div>
+              ),
+            });
+            setOpen(false);
+            setLoading(false);
+            return;
+          }
+          if (nbRowsProcessed === 0 && nbRowsDroped === 0) {
+            toast({
+              title: "No data to process",
+              description: <div>Please check your file and try again.</div>,
+            });
+            setLoading(false);
+          }
+          if (nbRowsProcessed === 0 && nbRowsDroped > 0) {
+            toast({
+              title: "No data to process",
+              description: (
+                <div>
+                  {nbRowsDroped} rows were dropped because the column{" "}
+                  <code>input</code> was empty.
+                </div>
+              ),
+            });
+            setLoading(false);
+          }
         } else {
           // Read the error details
           const error = await response.text();
@@ -922,7 +966,7 @@ phospho.log({input, output});`}
                     onClick={() => router.push("mailto:paul-louis@phospho.app")}
                   >
                     <Mail className="h-4 w-4 mr-2" />
-                    Contact us to create your own LLM app
+                    Contact us to create you an LLM app
                   </Button>
                 </AlertDescription>
               </Alert>
