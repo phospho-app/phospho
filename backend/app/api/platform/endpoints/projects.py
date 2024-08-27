@@ -445,6 +445,7 @@ async def post_upload_tasks(
     # Read file content -> into memory
     file_params = {}
     logger.info(f"Reading file {file.filename} content.")
+    tasks_df: pd.DataFrame
     try:
         if file_extension == "csv":
             tasks_df = pd.read_csv(
