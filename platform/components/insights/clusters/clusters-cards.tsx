@@ -192,14 +192,33 @@ function ClusterCard({
 // };
 
 function CustomPlot({ data }: { data: Data }) {
+  const [refresh, setRefresh] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      // Force a refresh to resize the plot
+      setRefresh(!refresh);
+    };
+    // Set the initial state
+    handleResize();
+    // Add event listener for window resize
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+    // Clean up the event listener when the component is unmounted
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   return (
     <Plot
       data={[data]}
-      config={{ displayModeBar: false }}
+      config={{ displayModeBar: true, responsive: true }}
       layout={{
-        height: window.innerHeight * 0.6,
-        width: window.innerWidth * 0.8,
-        autosize: true,
+        height: Math.max(window.innerHeight * 0.6, 300),
+        // set it to be the size of the current div in pixel
+        width: document.getElementsByClassName("custom-plot")[0].clientWidth,
+        // autosize: true,
 
         scene: {
           xaxis: {
@@ -207,7 +226,7 @@ function CustomPlot({ data }: { data: Data }) {
             showgrid: false,
             zeroline: false,
             showline: false,
-            ticks: "",
+            //ticks: "",
             showticklabels: false,
             spikesides: false,
             showspikes: false,
@@ -217,7 +236,7 @@ function CustomPlot({ data }: { data: Data }) {
             showgrid: false,
             zeroline: false,
             showline: false,
-            ticks: "",
+            //ticks: "",
             showticklabels: false,
             spikesides: false,
             showspikes: false,
@@ -227,7 +246,7 @@ function CustomPlot({ data }: { data: Data }) {
             showgrid: false,
             zeroline: false,
             showline: false,
-            ticks: "",
+            //ticks: "",
             showticklabels: false,
             spikesides: false,
             showspikes: false,
@@ -353,7 +372,7 @@ export function ClustersCards({
           mode: "markers",
           type: "scatter3d",
           marker: {
-            size: 5,
+            size: 6,
             color: colors,
             opacity: 0.8,
           },
@@ -372,7 +391,7 @@ export function ClustersCards({
 
   return (
     <div>
-      <div className="flex flex-row gap-x-2 items-center mb-2 justify-between">
+      <div className="flex flex-row gap-x-2 items-center mb-2 justify-between custom-plot w-full">
         <div>
           <Select
             onValueChange={(value: string) => {

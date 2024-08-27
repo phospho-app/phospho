@@ -22,3 +22,4 @@ class ClusteringRequest(BaseModel):
         "intent-embed-3"
     )
     nb_credits_used: int
+    nb_clusters: Optional[int] = None
