@@ -56,7 +56,7 @@ const Clusters: React.FC = () => {
     },
   );
   const totalNbTasks: number | null | undefined =
-    totalNbTasksData?.total_nb_tasks ?? 0;
+    totalNbTasksData?.total_nb_tasks;
 
   const { data: totalNbSessionsData } = useSWR(
     [
@@ -75,7 +75,7 @@ const Clusters: React.FC = () => {
     },
   );
   const totalNbSessions: number | null | undefined =
-    totalNbSessionsData?.total_nb_sessions ?? 0;
+    totalNbSessionsData?.total_nb_sessions;
 
   useEffect(() => {
     if (latestClustering?.status === "completed") {

@@ -45,13 +45,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import { nb } from "date-fns/locale";
-import {
-  ChevronRight,
-  Sparkles,
-  TestTubeDiagonal,
-  TriangleAlert,
-} from "lucide-react";
+import { ChevronRight, Sparkles, TestTubeDiagonal } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -75,6 +69,7 @@ const RunClusters = ({
   const { accessToken } = useUser();
   const [clusteringCost, setClusteringCost] = useState(0);
   const [nbElements, setNbElements] = useState(0);
+  let defaultNbClusters = 0;
   const project_id = navigationStateStore((state) => state.project_id);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
@@ -83,10 +78,6 @@ const RunClusters = ({
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);
-
-  if (!project_id) {
-    return <></>;
-  }
 
   function setSheetOpenWrapper(value: boolean) {
     // Reset the dataFilters when the sheet is closed
@@ -131,9 +122,10 @@ const RunClusters = ({
         totalNbTasks = 0;
       }
       setNbElements(totalNbTasks);
+      defaultNbClusters = Math.floor(totalNbTasks / 100);
 
-      if (Math.floor(totalNbTasks / 100) >= 5) {
-        form.setValue("nb_clusters", Math.floor(totalNbTasks / 100));
+      if (defaultNbClusters >= 5) {
+        form.setValue("nb_clusters", defaultNbClusters);
       } else {
         form.setValue("nb_clusters", 5);
       }
@@ -143,8 +135,10 @@ const RunClusters = ({
         totalNbSessions = 0;
       }
       setNbElements(totalNbSessions);
-      if (Math.floor(totalNbSessions / 100) >= 5) {
-        form.setValue("nb_clusters", Math.floor(totalNbSessions / 100));
+      defaultNbClusters = Math.floor(totalNbSessions / 100);
+      console.log("defaultNbClusters: ", defaultNbClusters);
+      if (defaultNbClusters >= 5) {
+        form.setValue("nb_clusters", Math.floor(defaultNbClusters));
       } else {
         form.setValue("nb_clusters", 5);
       }
@@ -214,6 +208,10 @@ const RunClusters = ({
       });
       setLoading(false);
     }
+  }
+
+  if (!project_id) {
+    return <></>;
   }
 
   return (
