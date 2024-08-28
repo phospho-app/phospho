@@ -91,12 +91,17 @@ async def main() -> None:
             data_converter=pydantic_data_converter,
         )
     elif config.ENVIRONMENT in ["test", "preview"]:
-        client = await Client.connect(
-            config.TEMPORAL_HOST_URL,
-            namespace=config.TEMPORAL_NAMESPACE,
-            tls=False,
-            data_converter=pydantic_data_converter,
-        )
+        try:
+            client = await Client.connect(
+                config.TEMPORAL_HOST_URL,
+                namespace=config.TEMPORAL_NAMESPACE,
+                tls=False,
+                data_converter=pydantic_data_converter,
+            )
+        except Exception as e:
+            logger.error("Have you started a local Temporal server?")
+            logger.error(f"Error connecting to Temporal: {e}")
+            raise e
     else:
         raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
 
