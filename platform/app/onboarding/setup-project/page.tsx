@@ -299,7 +299,7 @@ export default function Page() {
   return (
     <>
       <FetchOrgProject />
-      <Card className="flex flex-col md:flex-row p-4 items-center space-y-4">
+      <Card className="flex flex-col md:flex-row p-4 items-center space-x-8 space-y-8">
         <div className="w-full">
           <CardHeader>
             <CardTitle>Setup your first phospho project</CardTitle>
@@ -322,7 +322,7 @@ export default function Page() {
                           <HoverCardTrigger>
                             <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5 ml-1" />
                           </HoverCardTrigger>
-                          <HoverCardContent className="max-w-[10rem]">
+                          <HoverCardContent>
                             <div className="p-1 flex flex-col space-y-1 text-xs">
                               <div>You can change this later.</div>
                               <div>project_id: {selectedProject.id}</div>
