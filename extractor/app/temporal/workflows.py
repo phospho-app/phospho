@@ -152,6 +152,8 @@ class RunRecipeOnTaskWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
+# This workflow does not check the usage quota
+# Make sure to implement it in the endpoint calling this workflow
 @workflow.defn(name="run_main_pipeline_on_messages_workflow")
 class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
     def __init__(self):
