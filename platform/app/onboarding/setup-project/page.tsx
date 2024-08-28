@@ -38,7 +38,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { generateSlug } from "@/lib/utils";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
