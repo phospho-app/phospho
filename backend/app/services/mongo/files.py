@@ -136,7 +136,7 @@ async def process_file_upload_into_log_events(
 
     extractor_client = ExtractorClient(org_id=org_id, project_id=project_id)
 
-    batch_size = 16
+    batch_size = 64
     for i in range(0, len(tasks_df), batch_size):
         rows = tasks_df.iloc[i : i + batch_size]
         try:
