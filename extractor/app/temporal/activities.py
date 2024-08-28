@@ -10,7 +10,7 @@ from app.services.connectors import (
     OpenTelemetryConnector,
 )
 from app.services.log import process_log_for_tasks, process_logs_for_messages
-from app.api.v1.models import (
+from app.models import (
     LogProcessRequestForMessages,
     LogProcessRequestForTasks,
     PipelineLangfuseRequest,

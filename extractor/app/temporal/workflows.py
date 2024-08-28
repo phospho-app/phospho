@@ -45,7 +45,7 @@ with workflow.unsafe.imports_passed_through():
         run_main_pipeline_on_messages,
         bill_on_stripe,
     )
-    from app.api.v1.models import (
+    from app.models import (
         LogProcessRequestForMessages,
         LogProcessRequestForTasks,
         PipelineLangfuseRequest,

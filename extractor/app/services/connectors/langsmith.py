@@ -10,7 +10,7 @@ from langsmith import Client
 from langsmith.schemas import Run
 from loguru import logger
 
-from app.api.v1.models import LogEventForTasks
+from app.models import LogEventForTasks
 from app.db.mongo import get_mongo_db
 from app.services.connectors.base import BaseConnector
 from app.services.log import process_log_for_tasks

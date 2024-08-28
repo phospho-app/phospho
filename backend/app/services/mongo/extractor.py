@@ -19,9 +19,9 @@ from phospho.lab import Message
 from phospho.models import PipelineResults, Recipe, Task
 
 from temporalio.client import Client, TLSConfig
+from temporalio.exceptions import WorkflowAlreadyStartedError
 
 import os
-from temporalio.exceptions import WorkflowAlreadyStartedError
 
 
 async def bill_on_stripe(
@@ -99,16 +99,14 @@ class ExtractorClient:
         on_success_callback: Optional[Callable] = None,
     ) -> Optional[httpx.Response]:
         """
-        Post data to the extractor server
+        Post data to the extractor temporal worker
         """
 
-        # We check that "org_id", "project_id" and "customer_id" are present in the data
+        # We check that "org_id" and"project_id" are present in the data
         if endpoint not in ["store_open_telemetry_data_workflow"] and (
             self.org_id is None or self.project_id is None
         ):
-            logger.error(
-                f"Missing org_id, project_id or customer_id for endpoint {endpoint}"
-            )
+            logger.error(f"Missing org_id or project_id for endpoint {endpoint}")
             return None
 
         # We add this data for the extractor server
@@ -117,11 +115,7 @@ class ExtractorClient:
         data["customer_id"] = await fetch_stripe_customer_id(self.org_id)
 
         try:
-            if (
-                config.ENVIRONMENT == "production"
-                or config.ENVIRONMENT == "staging"
-                or config.ENVIRONMENT == "test"
-            ):
+            if config.ENVIRONMENT in ["production", "staging"]:
                 client_cert = config.TEMPORAL_MTLS_TLS_CERT
                 client_key = config.TEMPORAL_MTLS_TLS_KEY
 
@@ -134,10 +128,11 @@ class ExtractorClient:
                     ),
                     data_converter=pydantic_data_converter,
                 )
-            elif config.ENVIRONMENT == "preview":
+            elif config.ENVIRONMENT in ["test", "preview"]:
                 client: Client = await Client.connect(
                     os.getenv("TEMPORAL_HOST_URL"),
                     namespace=os.getenv("TEMPORAL_NAMESPACE"),
+                    tls=False,
                     data_converter=pydantic_data_converter,
                 )
             else:

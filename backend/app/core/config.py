@@ -191,7 +191,7 @@ if CUSTOMERIO_WRITE_KEY is None:
 try:
     TEMPORAL_MTLS_TLS_CERT = b64decode(os.getenv("TEMPORAL_MTLS_TLS_CERT_BASE64"))
     TEMPORAL_MTLS_TLS_KEY = b64decode(os.getenv("TEMPORAL_MTLS_TLS_KEY_BASE64"))
-except:
+except Exception:
     logger.warning(
         "TEMPORAL_MTLS_TLS_CERT_BASE64 or TEMPORAL_MTLS_TLS_KEY_BASE64 is missing from the environment variables"
     )

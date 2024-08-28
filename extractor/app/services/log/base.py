@@ -3,7 +3,7 @@ from phospho.models import Task
 from phospho.utils import filter_nonjsonable_keys, is_jsonable
 from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
 
-from app.api.v1.models.log import LogEventForTasks
+from app.models.log import LogEventForTasks
 from loguru import logger
 from typing import Union, Optional, Any
 
