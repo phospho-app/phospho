@@ -162,11 +162,13 @@ async def process_file_upload_into_log_events(
                     logs_to_process=valid_log_events,
                 )
             else:
+                extra_logs_to_save = valid_log_events[max_usage - current_usage :]
+                valid_log_events = valid_log_events[: max_usage - current_usage]
                 logger.warning(f"Max usage quota reached for project: {project_id}")
                 await send_quota_exceeded_email(project_id)
                 await extractor_client.run_process_log_for_tasks(
-                    logs_to_process=[],
-                    extra_logs_to_save=valid_log_events,
+                    logs_to_process=valid_log_events,
+                    extra_logs_to_save=extra_logs_to_save,
                 )
         except ValidationError as e:
             logger.error(f"Error when uploading csv and LogEvent creation: {e}")
