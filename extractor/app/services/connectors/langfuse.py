@@ -9,7 +9,7 @@ from langfuse import Langfuse
 from langfuse.client import ObservationsViews
 from loguru import logger
 
-from app.api.v1.models import LogEventForTasks
+from app.models import LogEventForTasks
 from app.core import config
 from app.db.mongo import get_mongo_db
 from app.services.connectors.base import BaseConnector

@@ -11,3 +11,4 @@ secrets.toml
 .venv/
 local/
 temporal-certs/
+your_temporal.db
