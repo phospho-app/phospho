@@ -162,8 +162,10 @@ async def process_file_upload_into_log_events(
                     logs_to_process=valid_log_events,
                 )
             else:
-                extra_logs_to_save = valid_log_events[max_usage - current_usage :]
-                valid_log_events = valid_log_events[: max_usage - current_usage]
+                offset = max(0, min(batch_size, max_usage - current_usage))
+
+                extra_logs_to_save = valid_log_events[offset:]
+                valid_log_events = valid_log_events[:offset]
                 logger.warning(f"Max usage quota reached for project: {project_id}")
                 await send_quota_exceeded_email(project_id)
                 await extractor_client.run_process_log_for_tasks(
