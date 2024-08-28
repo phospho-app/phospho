@@ -62,7 +62,8 @@ export default function FetchOrgProject() {
         console.log("Init response: ", responseBody);
         // Set the project id if it is not set
         if (!project_id && responseBody?.selected_project?.id) {
-          setproject_id(responseBody.project_id);
+          console.log("Setting project id: ", responseBody.selected_project.id);
+          setproject_id(responseBody.selected_project.id);
         }
         // Redirect to the page
         if (pathname === "/") {

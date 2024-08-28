@@ -31,10 +31,9 @@ export function SelectOrgButton() {
 
   const orgsArray = Object.values(user.orgIdToOrgMemberInfo);
 
-  const handleValueChange = (selectedOrgId: string) => {
-    setSelectedOrgId(selectedOrgId);
-    setproject_id(null);
-    // Additional logic here if needed
+  const handleValueChange = (newOrgId: string) => {
+    console.log("Selected Org in selectbutton:", newOrgId);
+    setSelectedOrgId(newOrgId);
   };
 
   if (!selectedOrgId) {
