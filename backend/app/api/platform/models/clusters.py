@@ -22,3 +22,4 @@ class ClusteringRequest(BaseModel):
         "intent-embed-3"
     )
     nb_clusters: Optional[int] = None
+    merge_clusters: Optional[bool] = True
