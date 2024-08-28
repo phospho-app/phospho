@@ -354,11 +354,10 @@ export default function AddEvents({
             onClick={async () => {
               setSendEventsLoading(true);
               saveSelectedEvents().then((response) => {
-                setSendEventsLoading(false);
                 router.push(redirectTo);
                 toast({
                   title: "Your config has been saved! 🎉",
-                  description: `You can change this in Analytics`,
+                  description: `Change the config in Analytics`,
                 });
               });
             }}

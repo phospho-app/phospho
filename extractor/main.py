@@ -65,7 +65,7 @@ def new_sandbox_runner() -> SandboxedWorkflowRunner:
 interrupt_event = asyncio.Event()
 
 
-async def main():
+async def main() -> None:
     if config.ENVIRONMENT in ["production", "staging"]:
         sentry_sdk.init(
             dsn=os.getenv("EXTRACTOR_SENTRY_DSN"),

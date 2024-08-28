@@ -27,6 +27,7 @@ export default function FetchOrgProject() {
 
   useEffect(() => {
     // Initialize the org if it has no projects
+    // Creates a project if it has no projects
     // Otherwise, select the first project
     (async () => {
       console.log("Org id: ", selectedOrgId);

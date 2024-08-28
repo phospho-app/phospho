@@ -62,9 +62,6 @@ const formSchema = z.object({
   customContact: myString.optional(),
 });
 
-const CARD_STYLE =
-  "flex flex-col items-left justify-center p-6 text-xl font-semibold space-y-4";
-
 export default function AboutYou({
   setAboutYouValues,
 }: {
@@ -122,7 +119,7 @@ export default function AboutYou({
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setRedirect(true);
-    router.push("/onboarding/create-project");
+    router.push("/onboarding/setup-project");
     fetch(`/api/onboarding/log-onboarding-survey`, {
       method: "POST",
       headers: {
@@ -137,7 +134,6 @@ export default function AboutYou({
         custom_contact: values.customContact,
       }),
     });
-
     setAboutYouValues(values);
   }
 
@@ -150,7 +146,7 @@ export default function AboutYou({
             Help us setup your account by telling us a bit more about you.
           </CardDescription>
         </CardHeader>
-        <CardContent className={CARD_STYLE}>
+        <CardContent className="flex flex-col items-left justify-center p-6 text-xl font-semibold space-y-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
