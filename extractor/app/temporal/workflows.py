@@ -181,6 +181,20 @@ class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
 
 
 @workflow.defn(name="run_process_logs_for_tasks_workflow")
+class RunProcessLogsForTasksWorkflow(BaseWorkflow):
+    def __init__(self):
+        super().__init__(
+            activity_func=run_process_logs_for_tasks,
+            request_class=LogProcessRequestForTasks,
+            max_retries=2,
+        )
+
+    @workflow.run
+    async def run(self, request):
+        await super().run_activity(request)
+
+
+@workflow.defn(name="run_process_log_for_tasks_workflow")
 class RunProcessLogForTasksWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(

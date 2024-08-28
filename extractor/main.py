@@ -23,6 +23,7 @@ from app.temporal.workflows import (
     RunProcessLogForTasksWorkflow,
     RunMainPipelineOnMessagesWorkflow,
     RunProcessLogsForMessagesWorkflow,
+    RunProcessLogsForTasksWorkflow,
 )
 from app.temporal.activities import (
     extract_langsmith_data,
@@ -108,6 +109,7 @@ async def main():
             StoreOpenTelemetryDataWorkflow,
             RunRecipeOnTaskWorkflow,
             RunProcessLogForTasksWorkflow,
+            RunProcessLogsForTasksWorkflow,
             RunMainPipelineOnMessagesWorkflow,
             RunProcessLogsForMessagesWorkflow,
         ],
