@@ -27,7 +27,9 @@ def convert_additional_data_to_dict(
         return None
 
 
-def get_time_created_at(client_created_at: Optional[int], created_at: Optional[int]):
+def get_time_created_at(
+    client_created_at: Optional[int], created_at: Optional[int]
+) -> int:
     """
     By default, the created_at of the task is the one from the client
     The client can send us weird values. Take care of the most obvious ones:

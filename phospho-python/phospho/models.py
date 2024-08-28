@@ -179,7 +179,7 @@ class Task(ProjectElementBaseModel):
     task_position: Optional[int] = None
     is_last_task: Optional[bool] = None
 
-    def preview(self):
+    def preview(self) -> str:
         # Return a string representation of the input and output
         # This is used to display a preview of the task in the frontend
         if self.output is not None:
@@ -325,17 +325,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "event_name"
-                        ] = event_name
+                        project_data["settings"]["events"][event_name]["event_name"] = (
+                            event_name
+                        )
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "org_id"
-                        ] = project_data["org_id"]
+                        project_data["settings"]["events"][event_name]["org_id"] = (
+                            project_data["org_id"]
+                        )
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "project_id"
-                        ] = project_data["id"]
+                        project_data["settings"]["events"][event_name]["project_id"] = (
+                            project_data["id"]
+                        )
 
             # Transition dashboard_tiles to lowercase and new fields
             if "dashboard_tiles" in project_data["settings"].keys():

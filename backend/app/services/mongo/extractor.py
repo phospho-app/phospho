@@ -133,8 +133,8 @@ class ExtractorClient:
                 client_key = config.TEMPORAL_MTLS_TLS_KEY
 
                 client: Client = await Client.connect(
-                    os.getenv("TEMPORAL_HOST_URL"),
-                    namespace=os.getenv("TEMPORAL_NAMESPACE"),
+                    config.TEMPORAL_HOST_URL,
+                    namespace=config.TEMPORAL_NAMESPACE,
                     tls=TLSConfig(
                         client_cert=client_cert,
                         client_private_key=client_key,
@@ -143,8 +143,8 @@ class ExtractorClient:
                 )
             elif config.ENVIRONMENT in ["test", "preview"]:
                 client: Client = await Client.connect(
-                    os.getenv("TEMPORAL_HOST_URL"),
-                    namespace=os.getenv("TEMPORAL_NAMESPACE"),
+                    config.TEMPORAL_HOST_URL,
+                    namespace=config.TEMPORAL_NAMESPACE,
                     tls=False,
                     data_converter=pydantic_data_converter,
                 )
