@@ -33,7 +33,6 @@ with workflow.unsafe.imports_passed_through():
         LangfuseConnector,
         OpenTelemetryConnector,
     )
-    from app.services.log import process_log_for_tasks, process_logs_for_messages
     from app.services.projects import get_project_by_id
     from app.temporal.activities import (
         extract_langsmith_data,
@@ -41,7 +40,7 @@ with workflow.unsafe.imports_passed_through():
         store_open_telemetry_data,
         run_recipe_on_task,
         run_process_logs_for_messages,
-        run_process_log_for_tasks,
+        run_process_logs_for_tasks,
         run_main_pipeline_on_messages,
         bill_on_stripe,
     )
@@ -93,6 +92,8 @@ class BaseWorkflow:
                     project_id=request.project_id,
                     nb_job_results=response.get("nb_job_results", 0),
                     customer_id=request.customer_id,
+                    current_usage=request.current_usage,
+                    max_usage=request.max_usage,
                 ),
                 start_to_close_timeout=timedelta(minutes=1),
             )
@@ -151,6 +152,8 @@ class RunRecipeOnTaskWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
+# This workflow does not check the usage quota
+# Make sure to implement it in the endpoint calling this workflow
 @workflow.defn(name="run_main_pipeline_on_messages_workflow")
 class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
     def __init__(self):
@@ -177,11 +180,11 @@ class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_process_log_for_tasks_workflow")
+@workflow.defn(name="run_process_logs_for_tasks_workflow")
 class RunProcessLogForTasksWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
-            activity_func=run_process_log_for_tasks,
+            activity_func=run_process_logs_for_tasks,
             request_class=LogProcessRequestForTasks,
             max_retries=2,
         )

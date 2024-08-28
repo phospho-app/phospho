@@ -44,7 +44,6 @@ from app.services.mongo.explore import (
     project_has_sessions,
     project_has_tasks,
 )
-from app.services.mongo.extractor import bill_on_stripe
 from app.services.mongo.tasks import get_total_nb_of_tasks
 from app.services.mongo.ai_hub import AIHubClient
 

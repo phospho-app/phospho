@@ -13,7 +13,7 @@ from loguru import logger
 from app.models import LogEventForTasks
 from app.db.mongo import get_mongo_db
 from app.services.connectors.base import BaseConnector
-from app.services.log import process_log_for_tasks
+from app.services.log import process_logs_for_tasks
 
 from app.services.projects import get_project_by_id
 
@@ -243,7 +243,7 @@ class LangsmithConnector(BaseConnector):
                 )
 
         await self._update_last_langsmith_extract()
-        await process_log_for_tasks(
+        await process_logs_for_tasks(
             project_id=self.project_id,
             org_id=org_id,
             logs_to_process=logs_to_process,
