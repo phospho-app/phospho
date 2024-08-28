@@ -424,6 +424,7 @@ async def post_detect_clusters(
 
     ai_hub_client = AIHubClient(org_id=org_id, project_id=project_id)
 
+    # We need this background task to send a quick response 200 to the frontend
     background_tasks.add_task(
         ai_hub_client.run_clustering,
         clustering_request=ClusteringRequest(

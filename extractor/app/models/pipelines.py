@@ -50,8 +50,6 @@ class PipelineLangsmithRequest(BaseModel):
     org_id: str
     current_usage: int
     max_usage: Optional[int] = None
-    langsmith_api_key: Optional[str] = None
-    langsmith_project_name: Optional[str] = None
     customer_id: Optional[str] = None
 
 
@@ -60,6 +58,4 @@ class PipelineLangfuseRequest(BaseModel):
     org_id: str
     current_usage: int
     max_usage: Optional[int] = None
-    langfuse_public_key: Optional[str] = None
-    langfuse_secret_key: Optional[str] = None
     customer_id: Optional[str] = None

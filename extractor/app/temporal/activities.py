@@ -77,8 +77,6 @@ async def extract_langsmith_data(
     )
     langsmith_connector = LangsmithConnector(
         project_id=request.project_id,
-        langsmith_api_key=request.langsmith_api_key,
-        langsmith_project_name=request.langsmith_project_name,
     )
     return await langsmith_connector.sync(
         org_id=request.org_id,
@@ -96,8 +94,6 @@ async def extract_langfuse_data(
     )
     langfuse_connector = LangfuseConnector(
         project_id=request.project_id,
-        langfuse_secret_key=request.langfuse_secret_key,
-        langfuse_public_key=request.langfuse_public_key,
     )
     return await langfuse_connector.sync(
         org_id=request.org_id,

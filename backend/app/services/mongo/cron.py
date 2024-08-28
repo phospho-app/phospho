@@ -28,8 +28,6 @@ async def run_langsmith_sync_pipeline():
             project_id=project_id,
         )
         await extractor_client.collect_langsmith_data(
-            langsmith_api_key=None,
-            langsmith_project_name=None,
             current_usage=usage_quota.current_usage,
             max_usage=usage_quota.max_usage,
         )
@@ -46,8 +44,6 @@ async def run_langfuse_sync_pipeline():
             org_id=usage_quota.org_id, project_id=project_id
         )
         await extractor_client.collect_langfuse_data(
-            langfuse_secret_key=None,
-            langfuse_public_key=None,
             current_usage=usage_quota.current_usage,
             max_usage=usage_quota.max_usage,
         )

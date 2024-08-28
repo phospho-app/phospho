@@ -334,15 +334,11 @@ class ExtractorClient:
     async def collect_langsmith_data(
         self,
         current_usage: int,
-        langsmith_api_key: Optional[str] = None,
-        langsmith_project_name: Optional[str] = None,
         max_usage: Optional[int] = None,
     ):
         await self._post(
             "extract_langsmith_data_workflow",
             {
-                "langsmith_api_key": langsmith_api_key,
-                "langsmith_project_name": langsmith_project_name,
                 "current_usage": current_usage,
                 "max_usage": max_usage,
             },
@@ -351,15 +347,11 @@ class ExtractorClient:
     async def collect_langfuse_data(
         self,
         current_usage: int,
-        langfuse_secret_key: Optional[str] = None,
-        langfuse_public_key: Optional[str] = None,
         max_usage: Optional[int] = None,
     ):
         await self._post(
             "extract_langfuse_data_workflow",
             {
-                "langfuse_secret_key": langfuse_secret_key,
-                "langfuse_public_key": langfuse_public_key,
                 "current_usage": current_usage,
                 "max_usage": max_usage,
             },
