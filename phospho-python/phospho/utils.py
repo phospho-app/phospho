@@ -34,7 +34,7 @@ def generate_uuid(prefix: str = "") -> str:
     return f"{prefix}{value}"
 
 
-def generate_version_id() -> str:
+def generate_version_id(with_date: bool = True) -> str:
     """
     Generate a version id: 20240813_gentle-pandas
     """
@@ -109,7 +109,10 @@ def generate_version_id() -> str:
         "kitties",
         "quarks",
     ]
-    return f"{datetime.datetime.now().strftime('%Y%m%d')}_{choice(adjectives)}-{choice(animals)}"
+    if with_date:
+        return f"{datetime.datetime.now().strftime('%Y%m%d')}_{choice(adjectives)}-{choice(animals)}"
+    else:
+        return f"{choice(adjectives)}-{choice(animals)}"
 
 
 def is_jsonable(x: Any) -> bool:
