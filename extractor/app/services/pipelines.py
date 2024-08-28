@@ -55,7 +55,7 @@ class MainPipeline:
         tasks: Optional[List[Task]] = None,
         tasks_ids: Optional[List[str]] = None,
         messages: Optional[List[lab.Message]] = None,
-    ):
+    ) -> None:
         """
         Set the input for the pipeline.
         """
@@ -424,7 +424,7 @@ class MainPipeline:
 
         return events_per_task_to_return
 
-    async def update_version_id(self):
+    async def update_version_id(self) -> None:
         if self.project is None:
             self.project = await get_project_by_id(self.project_id)
 

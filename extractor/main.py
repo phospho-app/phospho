@@ -20,7 +20,6 @@ from app.temporal.workflows import (
     ExtractLangfuseDataWorkflow,
     StoreOpenTelemetryDataWorkflow,
     RunRecipeOnTaskWorkflow,
-    RunProcessLogForTasksWorkflow,
     RunMainPipelineOnMessagesWorkflow,
     RunProcessLogsForMessagesWorkflow,
     RunProcessLogsForTasksWorkflow,
@@ -83,8 +82,8 @@ async def main() -> None:
         client_key = config.TEMPORAL_MTLS_TLS_KEY
 
         client = await Client.connect(
-            os.getenv("TEMPORAL_HOST_URL"),
-            namespace=os.getenv("TEMPORAL_NAMESPACE"),
+            config.TEMPORAL_HOST_URL,
+            namespace=config.TEMPORAL_NAMESPACE,
             tls=TLSConfig(
                 client_cert=client_cert,
                 client_private_key=client_key,
@@ -92,12 +91,17 @@ async def main() -> None:
             data_converter=pydantic_data_converter,
         )
     elif config.ENVIRONMENT in ["test", "preview"]:
-        client = await Client.connect(
-            os.getenv("TEMPORAL_HOST_URL"),
-            namespace=os.getenv("TEMPORAL_NAMESPACE"),
-            tls=False,
-            data_converter=pydantic_data_converter,
-        )
+        try:
+            client = await Client.connect(
+                config.TEMPORAL_HOST_URL,
+                namespace=config.TEMPORAL_NAMESPACE,
+                tls=False,
+                data_converter=pydantic_data_converter,
+            )
+        except Exception as e:
+            logger.error("Have you started a local Temporal server?")
+            logger.error(f"Error connecting to Temporal: {e}")
+            raise e
     else:
         raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
 
@@ -109,7 +113,6 @@ async def main() -> None:
             ExtractLangfuseDataWorkflow,
             StoreOpenTelemetryDataWorkflow,
             RunRecipeOnTaskWorkflow,
-            RunProcessLogForTasksWorkflow,
             RunProcessLogsForTasksWorkflow,
             RunMainPipelineOnMessagesWorkflow,
             RunProcessLogsForMessagesWorkflow,
