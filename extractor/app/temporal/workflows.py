@@ -15,6 +15,8 @@ To consider:
 
 import traceback
 from datetime import timedelta
+from typing import Any, Callable, Type
+from app.models.pipelines import ExtractorBaseClass
 from temporalio import workflow
 from temporalio.common import RetryPolicy
 
@@ -61,23 +63,23 @@ with workflow.unsafe.imports_passed_through():
 class BaseWorkflow:
     def __init__(
         self,
-        activity_func,
-        request_class,
-        bill=True,
-        max_retries=1,
+        activity_func: Callable[[Any], dict],
+        request_class: Type[ExtractorBaseClass],
+        bill: bool = True,
+        max_retries: int = 1,
     ):
         self.activity_func = activity_func
         self.request_class = request_class
         self.bill = bill
         self.max_retries = max_retries
 
-    async def run_activity(self, request):
+    async def run_activity(self, request: dict) -> None:
         retry_policy = RetryPolicy(
             maximum_attempts=self.max_retries,
             maximum_interval=timedelta(minutes=5),
             non_retryable_error_types=["ValueError"],
         )
-        request = self.request_class(**request)
+        request_model = self.request_class(**request)
         response = await workflow.execute_activity(
             self.activity_func,
             request,
@@ -88,12 +90,12 @@ class BaseWorkflow:
             await workflow.execute_activity(
                 bill_on_stripe,
                 BillOnStripeRequest(
-                    org_id=request.org_id,
-                    project_id=request.project_id,
+                    org_id=request_model.org_id,
+                    project_id=request_model.project_id,
                     nb_job_results=response.get("nb_job_results", 0),
-                    customer_id=request.customer_id,
-                    current_usage=request.current_usage,
-                    max_usage=request.max_usage,
+                    customer_id=request_model.customer_id,
+                    current_usage=request_model.current_usage,
+                    max_usage=request_model.max_usage,
                 ),
                 start_to_close_timeout=timedelta(minutes=1),
             )
