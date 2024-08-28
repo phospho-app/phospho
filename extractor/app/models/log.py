@@ -58,6 +58,8 @@ class LogProcessRequestForTasks(BaseModel):
     project_id: str
     org_id: str
     customer_id: Optional[str] = None
+    current_usage: int = 0
+    max_usage: Optional[int] = None
 
 
 class MinimalLogEventForMessages(BaseModel, extra="allow"):
@@ -78,3 +80,5 @@ class LogProcessRequestForMessages(BaseModel):
     project_id: str
     org_id: str
     customer_id: Optional[str] = None
+    current_usage: int = 0
+    max_usage: Optional[int] = None
