@@ -1,8 +1,21 @@
 "use client";
 
 import Authenticate from "@/components/authenticate";
+import {
+  SendDataAlertDialog,
+  UploadDataset,
+  UploadDatasetButton,
+  UploadDatasetInstructions,
+} from "@/components/callouts/import-data";
 import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
 import { Spinner } from "@/components/small-spinner";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +38,7 @@ import { generateSlug } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
+import { CloudUpload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -42,22 +56,21 @@ const formSchema = z.object({
     }),
 });
 
-const CARD_STYLE =
-  "flex flex-col items-left justify-center p-6 text-xl font-semibold space-y-4";
-
 export default function Page() {
   const router = useRouter();
   const { mutate } = useSWRConfig();
+  const toast = useToast();
   const { user, loading, accessToken } = useUser();
+
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
   const [creatingProject, setCreatingProject] = useState(false);
-  const toast = useToast();
-
   const [redirecting, setRedirecting] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [importDataDialogOpen, setImportDataDialogOpen] = useState(false);
 
   const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -131,8 +144,6 @@ export default function Page() {
     setCreatingProject(true);
     setRedirecting(true);
 
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
     fetch(`/api/organizations/${selectedOrgId}/projects`, {
       method: "POST",
       headers: {
@@ -163,81 +174,107 @@ export default function Page() {
   return (
     <>
       <FetchOrgProject />
-      <Card className="lg:w-1/3 md:w-1/2">
-        <CardHeader className="pb-0">
-          <CardTitle>Create your first phospho project</CardTitle>
-          <CardDescription>
-            Give your project a name. You can always change this later.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className={CARD_STYLE}>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="project_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="My chatbot"
-                        {...field}
-                        className="font-normal"
-                        autoFocus
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  disabled={
-                    loading || creatingProject || !form.formState.isValid
-                  }
-                >
-                  {redirecting && <Spinner className="mr-1" />}
-                  Create project
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-        <div className="relative flex items-center">
-          <div className="flex-grow border-t text-muted-foreground"></div>
-          <span className="flex-shrink mx-4 text-muted-foreground">Or</span>
-          <div className="flex-grow border-t text-muted-foreground"></div>
-        </div>
-        <div>
-          <CardHeader className="pb-4">
-            <CardTitle>Explore sample project</CardTitle>
-            <CardDescription>
-              Get a feel for phospho by exploring a project with sample data.
-            </CardDescription>
+      <Card className="flex flex-col md:flex-row p-4 items-center space-y-4">
+        <div className="w-full">
+          <CardHeader>
+            <CardTitle>Setup your first phospho project</CardTitle>
+            <CardDescription>Let's get you started.</CardDescription>
           </CardHeader>
+          <CardContent className="flex flex-col items-left justify-center">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                <FormField
+                  control={form.control}
+                  name="project_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Project name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="My chatbot"
+                          {...field}
+                          className="font-normal"
+                          autoFocus
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormItem>
+                  <FormLabel>Upload a dataset</FormLabel>
+                  <UploadDatasetButton setFile={setFile} />
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="instructions">
+                      <AccordionTrigger>
+                        How to format the dataset?
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <UploadDatasetInstructions />
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                  <AlertDialog
+                    onOpenChange={setImportDataDialogOpen}
+                    open={importDataDialogOpen}
+                  >
+                    <AlertDialogTrigger className="flex justify-end w-full">
+                      <div className="underline text-xs">
+                        Other data import options
+                      </div>
+                    </AlertDialogTrigger>
+                    <SendDataAlertDialog setOpen={setImportDataDialogOpen} />
+                  </AlertDialog>
+                </FormItem>
+
+                <div className="flex justify-end">
+                  <Button
+                    type="submit"
+                    disabled={loading || creatingProject}
+                    className="w-full"
+                  >
+                    {redirecting && <Spinner className="mr-1" />}
+                    Continue
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
         </div>
-        <CardContent className="space-y-8">
-          <div className="flex justify-center flex-col">
-            <img
-              src="/image/onboarding.svg"
-              alt="Onboarding Image"
-              className="mx-4"
-            />
+        <div className="border-2 rounded-lg border-dashed border-muted-foreground">
+          <div>
+            <CardHeader className="pb-4">
+              <CardTitle>Just looking? Explore a sample project.</CardTitle>
+              <CardDescription>
+                Get a feel for phospho by loading a project with sample data.
+              </CardDescription>
+            </CardHeader>
           </div>
-          <div className="flex justify-end mr-4">
-            <Button
-              onClick={() => {
-                defaultProject();
-              }}
-              disabled={loading || creatingProject || redirecting}
-            >
-              {redirecting && <Spinner className="mr-1" />}
-              Explore project
-            </Button>
-          </div>
-        </CardContent>
+          <CardContent className="space-y-8">
+            <div className="flex justify-center flex-col">
+              <img
+                src="/image/onboarding.svg"
+                alt="Onboarding Image"
+                className="mx-4"
+              />
+            </div>
+            <div className="flex justify-end mr-4">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  defaultProject();
+                }}
+                disabled={loading || creatingProject || redirecting}
+              >
+                {redirecting && <Spinner className="mr-1" />}
+                Explore project
+              </Button>
+            </div>
+          </CardContent>
+        </div>
       </Card>
     </>
   );
