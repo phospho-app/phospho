@@ -76,11 +76,12 @@ async def main() -> None:
 
     await connect_and_init_db()
 
+    client: Client
     if config.ENVIRONMENT in ["production", "staging"]:
         client_cert = config.TEMPORAL_MTLS_TLS_CERT
         client_key = config.TEMPORAL_MTLS_TLS_KEY
 
-        client: Client = await Client.connect(
+        client = await Client.connect(
             os.getenv("TEMPORAL_HOST_URL"),
             namespace=os.getenv("TEMPORAL_NAMESPACE"),
             tls=TLSConfig(
@@ -90,7 +91,7 @@ async def main() -> None:
             data_converter=pydantic_data_converter,
         )
     elif config.ENVIRONMENT in ["test", "preview"]:
-        client: Client = await Client.connect(
+        client = await Client.connect(
             os.getenv("TEMPORAL_HOST_URL"),
             namespace=os.getenv("TEMPORAL_NAMESPACE"),
             tls=False,

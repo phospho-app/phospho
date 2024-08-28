@@ -165,6 +165,8 @@ export default function Page() {
 
     // Update the project name
     if (values.project_name !== selectedProject?.project_name) {
+      // Update the project name
+      selectedProject.project_name = values.project_name;
       await fetch(`/api/projects/${project_id}/`, {
         method: "POST",
         headers: {
@@ -203,12 +205,10 @@ export default function Page() {
       formData.set("file", file, file.name);
       try {
         // Call API to upload file
-        setRedirecting(true);
         fetch(`/api/projects/${project_id}/upload-tasks`, {
           method: "POST",
           headers: {
             Authorization: "Bearer " + accessToken,
-            // "Content-Type": "multipart/form-data",
           },
           body: formData,
         }).then(async (response) => {

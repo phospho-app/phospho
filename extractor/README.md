@@ -56,8 +56,10 @@ brew install temporal
 Once installed just run the following command to run your local queue
 Don't forget to edit your .env configuration, these are the default parameters
 
+```text .env
 TEMPORAL_HOST_URL=localhost:7233
 TEMPORAL_NAMESPACE=default
+```
 
 ```bash
 temporal server start-dev --db-filename your_temporal.db --ui-port 8080
@@ -68,6 +70,8 @@ You can now run the worker in a second terminal with
 ```bash
 poetry run python main.py
 ```
+
+Go to `localhost:8080` to access the UI and monitor the workflows.
 
 **Warning:** You have to put your EXTRACTOR_SECRET_KEY in your backend .env.
 
