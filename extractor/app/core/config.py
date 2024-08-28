@@ -95,5 +95,12 @@ EXEMPTED_ORG_IDS = [
     "7e8f6db2-3b6b-4bf6-84ee-3f226b81e43d",  # di
 ]
 
-TEMPORAL_MTLS_TLS_CERT = b64decode(os.getenv("TEMPORAL_MTLS_TLS_CERT_BASE64"))
-TEMPORAL_MTLS_TLS_KEY = b64decode(os.getenv("TEMPORAL_MTLS_TLS_KEY_BASE64"))
+try:
+    TEMPORAL_MTLS_TLS_CERT = b64decode(os.getenv("TEMPORAL_MTLS_TLS_CERT_BASE64"))
+    TEMPORAL_MTLS_TLS_KEY = b64decode(os.getenv("TEMPORAL_MTLS_TLS_KEY_BASE64"))
+except Exception:
+    logger.warning(
+        "TEMPORAL_MTLS_TLS_CERT_BASE64 or TEMPORAL_MTLS_TLS_KEY_BASE64 is missing from the environment variables"
+    )
+    TEMPORAL_MTLS_TLS_CERT = None
+    TEMPORAL_MTLS_TLS_KEY = None

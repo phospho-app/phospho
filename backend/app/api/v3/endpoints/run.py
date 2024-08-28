@@ -35,7 +35,7 @@ async def run_main_pipeline_on_messages(
     usage_quota = await get_quota_for_org(org["org"].get("org_id"))
     if usage_quota.plan == "hobby" or (
         usage_quota.max_usage is not None
-        and usage_quota.current_usage + len(request.messages) >= usage_quota.max_usage
+        and usage_quota.current_usage + len(request.messages) > usage_quota.max_usage
     ):
         raise HTTPException(
             status_code=403,
