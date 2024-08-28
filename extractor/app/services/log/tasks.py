@@ -421,7 +421,7 @@ async def process_log_with_session_id(
             await main_pipeline.run()
 
 
-async def process_log_for_tasks(
+async def process_logs_for_tasks(
     project_id: str,
     org_id: str,
     logs_to_process: List[LogEventForTasks],

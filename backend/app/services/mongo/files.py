@@ -136,33 +136,41 @@ async def process_file_upload_into_log_events(
 
     extractor_client = ExtractorClient(org_id=org_id, project_id=project_id)
 
-    for _, row in tasks_df.iterrows():
-        # Create a task for each row
+    batch_size = 64
+    for i in range(0, len(tasks_df), batch_size):
+        rows = tasks_df.iloc[i : i + batch_size]
         try:
-            row_as_dict = row.to_dict()
+            rows_as_dict = [row.to_dict() for _, row in rows.iterrows()]
             # Replace NaN values with None
-            row_as_dict = {
-                k: v if pd.notnull(v) else None for k, v in row_as_dict.items()
-            }
-            valid_log_event = LogEvent(
-                project_id=project_id,
-                **row_as_dict,
-            )
+            rows_as_dict = [
+                {k: v if pd.notnull(v) else None for k, v in row_as_dict.items()}
+                for row_as_dict in rows_as_dict
+            ]
+
+            valid_log_events = [
+                LogEvent(project_id=project_id, **row_as_dict)
+                for row_as_dict in rows_as_dict
+            ]
 
             if max_usage is None or (
-                max_usage is not None and current_usage < max_usage
+                max_usage is not None
+                and current_usage + len(valid_log_events) - 1 < max_usage
             ):
-                current_usage += 1
+                current_usage += len(valid_log_events)
                 # Send tasks to the extractor
                 await extractor_client.run_process_log_for_tasks(
-                    logs_to_process=[valid_log_event],
+                    logs_to_process=valid_log_events,
                 )
             else:
+                offset = max(0, min(batch_size, max_usage - current_usage))
+
+                extra_logs_to_save = valid_log_events[offset:]
+                valid_log_events = valid_log_events[:offset]
                 logger.warning(f"Max usage quota reached for project: {project_id}")
                 await send_quota_exceeded_email(project_id)
                 await extractor_client.run_process_log_for_tasks(
-                    logs_to_process=[],
-                    extra_logs_to_save=[valid_log_event],
+                    logs_to_process=valid_log_events,
+                    extra_logs_to_save=extra_logs_to_save,
                 )
         except ValidationError as e:
             logger.error(f"Error when uploading csv and LogEvent creation: {e}")

@@ -9,7 +9,7 @@ from app.services.connectors import (
     LangfuseConnector,
     OpenTelemetryConnector,
 )
-from app.services.log import process_log_for_tasks, process_logs_for_messages
+from app.services.log import process_logs_for_tasks, process_logs_for_messages
 from app.models import (
     LogProcessRequestForMessages,
     LogProcessRequestForTasks,
@@ -122,9 +122,23 @@ async def run_recipe_on_task(
         project_id=request.recipe.project_id,
         org_id=request.recipe.org_id,
     )
+
+    if request.max_usage:
+        if request.current_usage > request.max_usage:
+            logger.warning(
+                f"Org {request.org_id} has reached max usage {request.max_usage}"
+            )
+            return {"status": "error", "nb_job_results": 0}
+        elif request.current_usage + len(request.tasks) > request.max_usage:
+            logger.warning(
+                f"Org {request.org_id} will reach max usage {request.max_usage} with this job"
+            )
+            return {"status": "error", "nb_job_results": 0}
+
     await main_pipeline.recipe_pipeline(
         tasks=request.tasks, recipe=request.recipe, tasks_ids=request.tasks_ids
     )
+
     total_len = 0
     if request.tasks is not None:
         total_len += len(request.tasks)
@@ -171,14 +185,14 @@ async def run_process_logs_for_messages(
     }
 
 
-@activity.defn(name="run_process_log_for_tasks")
-async def run_process_log_for_tasks(
+@activity.defn(name="run_process_logs_for_tasks")
+async def run_process_logs_for_tasks(
     request_body: LogProcessRequestForTasks,
 ):
     logger.info(
         f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
     )
-    await process_log_for_tasks(
+    await process_logs_for_tasks(
         project_id=request_body.project_id,
         org_id=request_body.org_id,
         logs_to_process=request_body.logs_to_process,
@@ -190,16 +204,30 @@ async def run_process_log_for_tasks(
     }
 
 
+# The usage check for this activity is done before calling it
+# Before calling it make sure that the usage is below the max_usage
 @activity.defn(name="run_main_pipeline_on_messages")
 async def run_main_pipeline_on_messages(
-    request_body: RunMainPipelineOnMessagesRequest,
+    request: RunMainPipelineOnMessagesRequest,
 ) -> PipelineResults:
-    logger.info(f"Running main pipeline on {len(request_body.messages)} messages")
+    logger.info(f"Running main pipeline on {len(request.messages)} messages")
     main_pipeline = MainPipeline(
-        project_id=request_body.project_id,
-        org_id=request_body.org_id,
+        project_id=request.project_id,
+        org_id=request.org_id,
     )
-    await main_pipeline.set_input(messages=request_body.messages)
+    if request.max_usage:
+        if request.current_usage > request.max_usage:
+            logger.warning(
+                f"Org {request.org_id} has reached max usage {request.max_usage}"
+            )
+            return {"status": "error", "nb_job_results": 0}
+        elif request.current_usage + len(request.messages) > request.max_usage:
+            logger.warning(
+                f"Org {request.org_id} will reach max usage {request.max_usage} with this job"
+            )
+            return {"status": "error", "nb_job_results": 0}
+
+    await main_pipeline.set_input(messages=request.messages)
     pipeline_results = await main_pipeline.run()
     return pipeline_results
 

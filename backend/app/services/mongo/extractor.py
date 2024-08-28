@@ -20,6 +20,7 @@ from phospho.models import PipelineResults, Recipe, Task
 
 from temporalio.client import Client, TLSConfig
 from temporalio.exceptions import WorkflowAlreadyStartedError
+from app.services.mongo.organizations import get_usage_quota
 
 import os
 
@@ -31,6 +32,9 @@ async def bill_on_stripe(
 ) -> None:
     """
     Bill an organization on Stripe based on the consumption
+
+    WARNING: This function doesn't implement usage quotas as it is used to bill the chat enpoints
+    The one in the extractor implements it
     """
     if nb_credits_used == 0:
         logger.debug(f"No job results to bill for organization {org_id}")
@@ -109,10 +113,19 @@ class ExtractorClient:
             logger.error(f"Missing org_id or project_id for endpoint {endpoint}")
             return None
 
+        org = propelauth.fetch_org(self.org_id)
+        org_metadata = org.get("metadata", {})
+        org_plan = org_metadata.get("plan", "hobby")
+        usage_quota = await get_usage_quota(
+            self.org_id, plan=org_plan, fetch_invoice=False
+        )
+
         # We add this data for the extractor server
         data["org_id"] = self.org_id
         data["project_id"] = self.project_id
         data["customer_id"] = await fetch_stripe_customer_id(self.org_id)
+        data["current_usage"] = usage_quota.current_usage
+        data["max_usage"] = usage_quota.max_usage
 
         try:
             if config.ENVIRONMENT in ["production", "staging"]:
@@ -215,7 +228,7 @@ class ExtractorClient:
                     del log_event.raw_output["intermediate_outputs"]
 
         await self._post(
-            "run_process_log_for_tasks_workflow",
+            "run_process_logs_for_tasks_workflow",
             {
                 "logs_to_process": [
                     log_event.model_dump(mode="json") for log_event in logs_to_process

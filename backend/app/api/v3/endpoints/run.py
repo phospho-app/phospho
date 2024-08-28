@@ -6,7 +6,7 @@ from app.security import (
 )
 from app.services.backtest import run_backtests
 from app.services.mongo.extractor import ExtractorClient
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Header, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Header
 
 from phospho.models import PipelineResults, ProjectDataFilters
 from phospho import lab
@@ -27,7 +27,6 @@ This API key must have billing enabled with a valid payment method.""",
 )
 async def run_main_pipeline_on_messages(
     request: RunPipelineOnMessagesRequest,
-    background_tasks: BackgroundTasks,
     org: dict = Depends(authenticate_org_key),
 ) -> PipelineResults:
     """Store the log_content in the logs database"""
@@ -36,7 +35,7 @@ async def run_main_pipeline_on_messages(
     usage_quota = await get_quota_for_org(org["org"].get("org_id"))
     if usage_quota.plan == "hobby" or (
         usage_quota.max_usage is not None
-        and usage_quota.current_usage >= usage_quota.max_usage
+        and usage_quota.current_usage + len(request.messages) > usage_quota.max_usage
     ):
         raise HTTPException(
             status_code=403,
