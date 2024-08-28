@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -26,15 +26,28 @@ const AlertDialogDeleteProject = () => {
   const { accessToken } = useUser();
   const { mutate } = useSWRConfig();
 
-  const [clicked, setClicked] = useState(false);
-
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
-
   const setproject_id = navigationStateStore((state) => state.setproject_id);
-  const projects = dataStateStore((state) => state.projects);
-  const setProjects = dataStateStore((state) => state.setProjects);
 
+  const [clicked, setClicked] = useState(false);
+
+  const {
+    data: projectsData,
+    mutate: setProjects,
+  }: {
+    data: { projects: Project[] } | null | undefined;
+    mutate: (data: any) => void;
+  } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/projects`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const projects = projectsData?.projects;
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
@@ -101,7 +114,7 @@ const AlertDialogDeleteProject = () => {
                         return { projects: filteredProjects };
                       },
                     );
-                    setProjects(filteredProjects);
+                    setProjects({ projects: filteredProjects });
                     setproject_id(filteredProjects[0].id);
                     setClicked(false);
                     router.push("/org/transcripts/tasks");

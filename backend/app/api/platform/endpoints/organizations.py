@@ -1,5 +1,6 @@
-from phospho.models import UsageQuota
+from typing import Any, Dict
 import stripe
+from customerio import analytics
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from loguru import logger
 from propelauth_fastapi import User
@@ -22,8 +23,8 @@ from app.services.mongo.organizations import (
 )
 from app.services.mongo.projects import populate_default
 from app.services.slack import slack_notification
-from customerio import analytics
-
+from phospho.models import UsageQuota
+from phospho.utils import generate_version_id
 
 router = APIRouter(tags=["Organizations"])
 
@@ -106,12 +107,33 @@ async def post_create_default_project(
     "/organizations/{org_id}/init",
     description="Ininitialize an organization",
 )
-def post_init_org(
+async def post_init_org(
     org_id: str,
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
-    _ = propelauth.require_org_member(user, org_id)
+    # Auth
+    propelauth.require_org_member(user, org_id)
+
+    output: Dict[str, Any] = {}
+
+    # Next page to redirect to
+    output["redirect_url"] = "/org/transcripts/sessions"
+    # Check if org has at least 1 project
+    org_projects = await get_projects_from_org_id(org_id, limit=1)
+    if len(org_projects) == 0:
+        # Create a default project
+        logger.debug(f"Creating default project for org {org_id}")
+        selected_project = await create_project_by_org(
+            org_id=org_id,
+            user_id=user.user_id,
+            project_name=generate_version_id(with_date=False),
+        )
+        output["redirect_url"] = "/onboarding"
+    else:
+        # The org already has a project
+        selected_project = org_projects[0]
+    output["selected_project"] = selected_project
 
     # Get the org metatdata to check if it's already initialized
     org = propelauth.fetch_org(org_id)
@@ -122,7 +144,11 @@ def post_init_org(
     # Check if the metadata is initialized
     if org_metadata.get("initialized", False):
         logger.debug(f"Organization {org_id} already initialized")
-        return {"status": "ok", "detail": "Organization already initialized"}
+        return {
+            **output,
+            "status": "ok",
+            "detail": "Organization already initialized",
+        }
 
     # Alternative for historical users: check if the plan is already set
     if org_metadata.get("plan", None) is not None:
@@ -139,6 +165,7 @@ def post_init_org(
                 org_id, max_users=config.PLAN_HOBBY_MAX_USERS
             )
         return {
+            **output,
             "status": "ok",
             "detail": "Organization already has a plan set, no need to initialize it",
         }
@@ -154,7 +181,7 @@ def post_init_org(
             logger.info(
                 f"Organization {org_id} initialized with max_users={config.PLAN_SELFHOSTED_MAX_USERS} and plan=self-hosted"
             )
-            return {"status": "ok"}
+            return {**output, "status": "ok", "selected_project": selected_project}
 
         # Otherwise, we are in the cloud mode
         # Initialize the organization with the hobby plan
@@ -171,15 +198,23 @@ def post_init_org(
         user_email = user.email
         if user_email:
             # Trigger the email in the background
-            email_user_onboarding(user_email)
+            background_tasks.add_task(email_user_onboarding, email=user_email)
         else:
             logger.error(f"User {user.user_id} has no email")
-            return {"status": "error"}
+            return {
+                **output,
+                "status": "error",
+                "detail": "User has no email",
+            }
 
-        return {"status": "ok"}
+        return {**output, "status": "ok"}
     except Exception as e:
         logger.error(f"Error initializing organization {org_id} : {e}")
-        return {"status": "error"}
+        return {
+            **output,
+            "status": "error",
+            "detail": str(e),
+        }
 
 
 @router.get(

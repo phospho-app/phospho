@@ -1,23 +1,22 @@
+import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import useSWR from "swr";
-
-import { useToast } from "../ui/use-toast";
 
 export default function FetchOrgProject() {
   // This module fetch top-level settings for the org and the project
 
   const { user, loading, accessToken } = useUser();
   const { toast } = useToast();
+  const pathname = usePathname();
+  const router = useRouter();
 
   const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
 
-  const projects = dataStateStore((state) => state.projects);
-  const setProjects = dataStateStore((state) => state.setProjects);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
@@ -27,46 +26,53 @@ export default function FetchOrgProject() {
   );
 
   useEffect(() => {
-    // Initialize the org if it has no project
-    // This is called the first time the user logs in,
-    // before onboarding
+    // Initialize the org if it has no projects
+    // Otherwise, select the first project
     (async () => {
       console.log("Org id: ", selectedOrgId);
-      console.log("Projects length: ", projects?.length);
       if (!accessToken) return;
       if (!selectedOrgId) return;
-      if (!projects) return;
       if (loading) return;
 
+      if (!loading && !user) {
+        console.log("User not found, redirecting to authenticate");
+        router.push("/authenticate");
+      }
+
       try {
-        if (projects.length > 0) {
-          console.log("project_id:", project_id);
-          if (
-            (project_id === null || project_id === undefined) &&
-            projects?.length > 0
-          ) {
-            // Auto select the first project
-            const selected_project = projects[0];
-            setproject_id(selected_project.id);
-          }
-        } else {
-          console.log("This org has no project yet. Initializing...");
-          const init_response = await fetch(
-            `/api/organizations/${selectedOrgId}/init`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: "Bearer " + accessToken,
-                "Content-Type": "application/json",
-              },
+        console.log("Initializing organization");
+        const init_response = await fetch(
+          `/api/organizations/${selectedOrgId}/init`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + accessToken,
+              "Content-Type": "application/json",
             },
-          );
+          },
+        );
+        if (init_response.status !== 200) {
+          toast({
+            title: "Error initializing organization",
+            description: "Please try again later",
+          });
+          return;
+        }
+        const responseBody = await init_response.json();
+        console.log("Init response: ", responseBody);
+        // Set the project id if it is not set
+        if (!project_id && responseBody?.selected_project?.id) {
+          setproject_id(responseBody.project_id);
+        }
+        // Redirect to the page
+        if (pathname === "/") {
+          router.push(responseBody?.redirect_url);
         }
       } catch (error) {
-        console.error("Error fetching repositories:", error);
+        console.error("Error initializing organization:", error);
       }
     })();
-  }, [selectedOrgId, projects?.length]);
+  }, [selectedOrgId, loading]);
 
   if (user && !loading && user.orgIdToOrgMemberInfo !== undefined) {
     const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
@@ -95,52 +101,6 @@ export default function FetchOrgProject() {
   );
   if (fetchedOrgMetadata) {
     setSelectOrgMetadata(fetchedOrgMetadata);
-  }
-
-  // Fetch the projects
-  const {
-    data: fetchedProjectsData,
-    error: projectFetchingError,
-  }: {
-    data: { projects: Project[] } | null | undefined;
-    error: any;
-  } = useSWR(
-    selectedOrgId
-      ? [`/api/organizations/${selectedOrgId}/projects`, accessToken]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-  if (projectFetchingError) {
-    toast({
-      title: "Error fetching projects",
-      description: `Details: ${projectFetchingError}`,
-    });
-    return <></>;
-  }
-  if (fetchedProjectsData?.projects !== undefined) {
-    setProjects(fetchedProjectsData?.projects);
-  }
-
-  const fetchedProjectIds = fetchedProjectsData?.projects?.map(
-    (project) => project.id,
-  );
-  if (
-    // If selected project is not in the fetched projects, select the first project
-    (project_id &&
-      fetchedProjectsData?.projects !== undefined &&
-      fetchedProjectIds !== undefined &&
-      fetchedProjectIds?.length > 0 &&
-      !fetchedProjectIds.includes(project_id)) ||
-    // If no project is selected, select the first project
-    ((project_id === null || project_id === undefined) &&
-      fetchedProjectsData?.projects !== undefined &&
-      fetchedProjectsData?.projects.length > 0)
-  ) {
-    const selected_project = fetchedProjectsData?.projects[0];
-    setproject_id(selected_project.id);
   }
 
   return <></>;

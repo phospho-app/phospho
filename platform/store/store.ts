@@ -270,9 +270,6 @@ interface dataState {
   selectedOrgMetadata: OrgMetadata | null;
   setSelectOrgMetadata: (selectOrgMetadata: OrgMetadata) => void;
 
-  projects: Project[] | null;
-  setProjects: (projects: Project[]) => void;
-
   hasLabelledTasks: HasEnoughLabelledTasks | null;
   setHasLabelledTasks: (
     hasLabelledTasks: HasEnoughLabelledTasks | null,
@@ -286,10 +283,6 @@ export const dataStateStore = create<dataState>((set) => ({
   selectedOrgMetadata: null,
   setSelectOrgMetadata: (selectOrgMetadata: OrgMetadata) =>
     set((state) => ({ selectedOrgMetadata: selectOrgMetadata })),
-
-  projects: null,
-  setProjects: (projects: Project[]) =>
-    set((state) => ({ projects: projects })),
 
   hasLabelledTasks: null,
   setHasLabelledTasks: (hasLabelledTasks: HasEnoughLabelledTasks | null) =>

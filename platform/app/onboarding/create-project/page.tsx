@@ -122,11 +122,102 @@ export default function Page() {
           description: responseBody.error,
         });
       }
-      // setCreatingProject(false);
     });
   }
 
-  // 2. Define a submit handler.
+  // const onSubmit = () => {
+  //   if (showModal) {
+  //     setShowModal(false);
+  //     setButtonPressed(true);
+  //   }
+  //   if (!file) {
+  //     toast({
+  //       title: "Please select a file",
+  //     });
+  //     return;
+  //   }
+  //   console.log("onSubmit", file);
+  //   const formData = new FormData();
+  //   formData.set("file", file, file.name);
+  //   try {
+  //     // Call API to upload file
+  //     setLoading(true);
+  //     fetch(`/api/projects/${project_id}/upload-tasks`, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: "Bearer " + accessToken,
+  //         // "Content-Type": "multipart/form-data",
+  //       },
+  //       body: formData,
+  //     }).then(async (response) => {
+  //       if (response.ok) {
+  //         const responseBody = await response.json();
+  //         const nbRowsProcessed = responseBody.nb_rows_processed;
+  //         const nbRowsDroped = responseBody.nb_rows_dropped;
+  //         if (nbRowsDroped === 0 && nbRowsProcessed > 0) {
+  //           toast({
+  //             title: `Processing ${nbRowsProcessed} rows... ⏳`,
+  //             description: (
+  //               <div>Data will appear in your dashboard shortly.</div>
+  //             ),
+  //           });
+  //           setOpen(false);
+  //           setLoading(false);
+  //           return;
+  //         }
+  //         if (nbRowsDroped > 0 && nbRowsProcessed > 0) {
+  //           toast({
+  //             title: `Processing ${nbRowsProcessed} rows... ⏳`,
+  //             description: (
+  //               <div>
+  //                 {nbRowsDroped} rows were dropped because the column{" "}
+  //                 <code>input</code> was empty.
+  //               </div>
+  //             ),
+  //           });
+  //           setOpen(false);
+  //           setLoading(false);
+  //           return;
+  //         }
+  //         if (nbRowsProcessed === 0 && nbRowsDroped === 0) {
+  //           toast({
+  //             title: "No data to process 🤷‍♂️",
+  //             description: <div>Please check your file and try again.</div>,
+  //           });
+  //           setLoading(false);
+  //         }
+  //         if (nbRowsProcessed === 0 && nbRowsDroped > 0) {
+  //           toast({
+  //             title: "No data to process 🤷‍♂️",
+  //             description: (
+  //               <div>
+  //                 {nbRowsDroped} rows were dropped because the column{" "}
+  //                 <code>input</code> was empty.
+  //               </div>
+  //             ),
+  //           });
+  //           setLoading(false);
+  //         }
+  //       } else {
+  //         // Read the error details
+  //         const error = await response.text();
+  //         toast({
+  //           title: "An error occurred",
+  //           description: `${error}`,
+  //         });
+  //         setLoading(false);
+  //       }
+  //     });
+  //   } catch (error) {
+  //     setLoading(false);
+  //     console.error("An unexpected error happened:", error);
+  //     toast({
+  //       title: "An error occurred",
+  //       description: `${error}`,
+  //     });
+  //   }
+  // };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (creatingProject) {
       return;
@@ -163,12 +254,11 @@ export default function Page() {
           description: responseBody.error,
         });
       }
-      // setCreatingProject(false);
     });
   }
 
   if (!user) {
-    return <Authenticate />;
+    return <></>;
   }
 
   return (

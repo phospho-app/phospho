@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 
 interface OrgMemberInfo {
@@ -23,7 +23,7 @@ export function SelectOrgButton() {
   const setproject_id = navigationStateStore((state) => state.setproject_id);
 
   // PropelAuth
-  const { user, loading, accessToken } = useUser();
+  const { user } = useUser();
 
   if (user === undefined || user === null) return;
   if (user.orgIdToOrgMemberInfo === undefined) return;

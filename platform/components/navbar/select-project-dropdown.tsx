@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { BriefcaseBusiness } from "lucide-react";
 import useSWR from "swr";
@@ -20,7 +20,22 @@ export function SelectProjectButton() {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
-  const projects = dataStateStore((state) => state.projects);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+
+  const {
+    data: projectsData,
+  }: {
+    data: { projects: Project[] } | null | undefined;
+  } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/projects`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const projects = projectsData?.projects;
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -32,7 +47,7 @@ export function SelectProjectButton() {
 
   const selectedProjectName = selectedProject?.project_name ?? "loading...";
 
-  if (projects === null) {
+  if (projects === null || projects === undefined) {
     return <></>;
   }
 
