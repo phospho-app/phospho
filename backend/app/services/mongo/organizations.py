@@ -89,7 +89,10 @@ async def create_project_by_org(org_id: str, user_id: str, **kwargs) -> Project:
 
 
 async def get_usage_quota(
-    org_id: str, plan: str, customer_id: Optional[str] = None
+    org_id: str,
+    plan: str,
+    customer_id: Optional[str] = None,
+    fetch_invoice: bool = True,
 ) -> UsageQuota:
     """
     Calculate the usage quota of an organization.
@@ -120,26 +123,28 @@ async def get_usage_quota(
     balance_transaction = None
     next_invoice_total = None
     next_invoice_amount_due = None
-    try:
-        if customer_id is not None and config.ENVIRONMENT != "test":
-            stripe.api_key = config.STRIPE_SECRET_KEY
-            # Display free credits
-            response = stripe.Customer.list_balance_transactions(
-                customer_id,
-                limit=1,
-            )
-            data = response.get("data", [])
-            if data:
-                balance_transaction = data[0].get("amount", 0)
 
-            # Display next invoice
-            invoice_preview = stripe.Invoice.create_preview(customer=customer_id)
-            next_invoice_total = invoice_preview.get("total", 0)
+    if fetch_invoice:
+        try:
+            if customer_id is not None and config.ENVIRONMENT != "test":
+                stripe.api_key = config.STRIPE_SECRET_KEY
+                # Display free credits
+                response = stripe.Customer.list_balance_transactions(
+                    customer_id,
+                    limit=1,
+                )
+                data = response.get("data", [])
+                if data:
+                    balance_transaction = data[0].get("amount", 0)
 
-            # todo : use amount_due instead of total
-            next_invoice_amount_due = invoice_preview.get("amount_due", 0)
-    except Exception as e:
-        logger.warning(f"Error fetching stripe data for org {org_id}: {e}")
+                # Display next invoice
+                invoice_preview = stripe.Invoice.create_preview(customer=customer_id)
+                next_invoice_total = invoice_preview.get("total", 0)
+
+                # todo : use amount_due instead of total
+                next_invoice_amount_due = invoice_preview.get("amount_due", 0)
+        except Exception as e:
+            logger.warning(f"Error fetching stripe data for org {org_id}: {e}")
 
     return UsageQuota(
         org_id=org_id,

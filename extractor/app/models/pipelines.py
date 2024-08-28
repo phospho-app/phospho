@@ -6,60 +6,42 @@ from phospho.lab import Message
 from phospho.models import SentimentObject, PipelineResults  # noqa: F401
 
 
-class BillOnStripeRequest(BaseModel):
+class ExtractorBaseClass(BaseModel):
     org_id: str
     project_id: str
+    customer_id: Optional[str] = None
+    current_usage: int
+    max_usage: Optional[int] = None
+
+
+class BillOnStripeRequest(ExtractorBaseClass):
     nb_job_results: int
     meter_event_name: str = "phospho_usage_based_meter"
-    customer_id: Optional[str] = None
 
 
-class RunMainPipelineOnTaskRequest(BaseModel):
+class RunMainPipelineOnTaskRequest(ExtractorBaseClass):
     task: Task
-    project_id: str
-    org_id: str
-    customer_id: Optional[str] = None
 
 
-class RunMainPipelineOnMessagesRequest(BaseModel):
-    project_id: str
-    org_id: str
+class RunMainPipelineOnMessagesRequest(ExtractorBaseClass):
     messages: List[Message]
-    customer_id: Optional[str] = None
 
 
-class RunRecipeOnTaskRequest(BaseModel):
+class RunRecipeOnTaskRequest(ExtractorBaseClass):
     tasks: Optional[List[Task]] = None
     recipe: Recipe
-    customer_id: Optional[str] = None
-    org_id: str
-    project_id: str
     tasks_ids: Optional[List[str]] = None
 
 
-class PipelineOpentelemetryRequest(BaseModel):
-    project_id: str
-    org_id: str
-    current_usage: int
-    max_usage: Optional[int] = None
+class PipelineOpentelemetryRequest(ExtractorBaseClass):
     open_telemetry_data: dict
 
 
-class PipelineLangsmithRequest(BaseModel):
-    project_id: str
-    org_id: str
-    current_usage: int
-    max_usage: Optional[int] = None
+class PipelineLangsmithRequest(ExtractorBaseClass):
     langsmith_api_key: Optional[str] = None
     langsmith_project_name: Optional[str] = None
-    customer_id: Optional[str] = None
 
 
-class PipelineLangfuseRequest(BaseModel):
-    project_id: str
-    org_id: str
-    current_usage: int
-    max_usage: Optional[int] = None
+class PipelineLangfuseRequest(ExtractorBaseClass):
     langfuse_public_key: Optional[str] = None
     langfuse_secret_key: Optional[str] = None
-    customer_id: Optional[str] = None
