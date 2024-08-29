@@ -140,7 +140,7 @@ export default function AddEvents({
     };
     const successFullSession = {
       ...eventBase,
-      event_name: "Solved the problem",
+      event_name: "Issue resolved",
       description:
         "The conversaiton was successful for the end user. The user acknowledged that the problem was solved.",
       detection_scope: DetectionScope.Session,
