@@ -123,13 +123,21 @@ async def run_recipe_on_task(
         org_id=request.recipe.org_id,
     )
 
+    nbr_tasks_to_process = (
+        len(request.tasks)
+        if request.tasks is not None
+        else 0 + len(request.tasks_ids)
+        if request.tasks_ids is not None
+        else 0
+    )
+
     if request.max_usage:
         if request.current_usage > request.max_usage:
             logger.warning(
                 f"Org {request.org_id} has reached max usage {request.max_usage}"
             )
             return {"status": "error", "nb_job_results": 0}
-        elif request.current_usage + len(request.tasks) > request.max_usage:
+        elif request.current_usage + nbr_tasks_to_process > request.max_usage:
             logger.warning(
                 f"Org {request.org_id} will reach max usage {request.max_usage} with this job"
             )
@@ -237,6 +245,9 @@ async def post_main_pipeline_on_task(
     request_body: RunMainPipelineOnTaskRequest,
 ) -> PipelineResults:
     logger.debug(f"task: {request_body.task}")
+    if request_body.task.org_id is None:
+        logger.error("Task.org_id is missing.")
+        return {"status": "error", "nb_job_results": 0}
     main_pipeline = MainPipeline(
         project_id=request_body.task.project_id,
         org_id=request_body.task.org_id,

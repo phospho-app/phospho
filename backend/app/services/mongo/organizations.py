@@ -83,8 +83,7 @@ async def create_project_by_org(org_id: str, user_id: str, **kwargs) -> Project:
             # Update the settings with the job_id
             project.settings.events[event_name].recipe_id = recipe.id
 
-    # Create the corresponding jobs based on the project settings
-    _ = await mongo_db["projects"].insert_one(project.model_dump())
+    await mongo_db["projects"].insert_one(project.model_dump())
 
     return project
 

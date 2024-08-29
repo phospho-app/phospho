@@ -95,9 +95,21 @@ EXEMPTED_ORG_IDS = [
     "7e8f6db2-3b6b-4bf6-84ee-3f226b81e43d",  # di
 ]
 
+TEMPORAL_HOST_URL = os.getenv("TEMPORAL_HOST_URL")
+if TEMPORAL_HOST_URL is None:
+    raise Exception("TEMPORAL_HOST_URL is missing from the environment variables")
+TEMPORAL_NAMESPACE = os.getenv("TEMPORAL_NAMESPACE")
+if TEMPORAL_NAMESPACE is None:
+    raise Exception("TEMPORAL_NAMESPACE is missing from the environment variables")
+TEMPORAL_MTLS_TLS_CERT = None
+TEMPORAL_MTLS_TLS_KEY = None
 try:
-    TEMPORAL_MTLS_TLS_CERT = b64decode(os.getenv("TEMPORAL_MTLS_TLS_CERT_BASE64"))
-    TEMPORAL_MTLS_TLS_KEY = b64decode(os.getenv("TEMPORAL_MTLS_TLS_KEY_BASE64"))
+    TEMPORAL_MTLS_TLS_CERT_BASE64 = os.getenv("TEMPORAL_MTLS_TLS_CERT_BASE64")
+    TEMPORAL_MTLS_TLS_KEY_BASE64 = os.getenv("TEMPORAL_MTLS_TLS_KEY_BASE64")
+    if TEMPORAL_MTLS_TLS_CERT_BASE64 is not None:
+        TEMPORAL_MTLS_TLS_CERT = b64decode(TEMPORAL_MTLS_TLS_CERT_BASE64)
+    if TEMPORAL_MTLS_TLS_KEY_BASE64 is not None:
+        TEMPORAL_MTLS_TLS_KEY = b64decode(TEMPORAL_MTLS_TLS_KEY_BASE64)
 except Exception:
     logger.warning(
         "TEMPORAL_MTLS_TLS_CERT_BASE64 or TEMPORAL_MTLS_TLS_KEY_BASE64 is missing from the environment variables"

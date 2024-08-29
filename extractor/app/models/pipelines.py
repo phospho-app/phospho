@@ -6,7 +6,7 @@ from phospho.lab import Message
 from phospho.models import SentimentObject, PipelineResults  # noqa: F401
 
 
-class ExtractorBaseClass(BaseModel):
+class ExtractorBaseClass(BaseModel, extra="allow"):
     org_id: str
     project_id: str
     customer_id: Optional[str] = None

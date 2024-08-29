@@ -20,7 +20,6 @@ from app.temporal.workflows import (
     ExtractLangfuseDataWorkflow,
     StoreOpenTelemetryDataWorkflow,
     RunRecipeOnTaskWorkflow,
-    RunProcessLogForTasksWorkflow,
     RunMainPipelineOnMessagesWorkflow,
     RunProcessLogsForMessagesWorkflow,
     RunProcessLogsForTasksWorkflow,
@@ -66,7 +65,7 @@ def new_sandbox_runner() -> SandboxedWorkflowRunner:
 interrupt_event = asyncio.Event()
 
 
-async def main():
+async def main() -> None:
     if config.ENVIRONMENT in ["production", "staging"]:
         sentry_sdk.init(
             dsn=os.getenv("EXTRACTOR_SENTRY_DSN"),
@@ -77,13 +76,14 @@ async def main():
 
     await connect_and_init_db()
 
+    client: Client
     if config.ENVIRONMENT in ["production", "staging"]:
         client_cert = config.TEMPORAL_MTLS_TLS_CERT
         client_key = config.TEMPORAL_MTLS_TLS_KEY
 
-        client: Client = await Client.connect(
-            os.getenv("TEMPORAL_HOST_URL"),
-            namespace=os.getenv("TEMPORAL_NAMESPACE"),
+        client = await Client.connect(
+            config.TEMPORAL_HOST_URL,
+            namespace=config.TEMPORAL_NAMESPACE,
             tls=TLSConfig(
                 client_cert=client_cert,
                 client_private_key=client_key,
@@ -91,12 +91,17 @@ async def main():
             data_converter=pydantic_data_converter,
         )
     elif config.ENVIRONMENT in ["test", "preview"]:
-        client: Client = await Client.connect(
-            os.getenv("TEMPORAL_HOST_URL"),
-            namespace=os.getenv("TEMPORAL_NAMESPACE"),
-            tls=False,
-            data_converter=pydantic_data_converter,
-        )
+        try:
+            client = await Client.connect(
+                config.TEMPORAL_HOST_URL,
+                namespace=config.TEMPORAL_NAMESPACE,
+                tls=False,
+                data_converter=pydantic_data_converter,
+            )
+        except Exception as e:
+            logger.error("Have you started a local Temporal server?")
+            logger.error(f"Error connecting to Temporal: {e}")
+            raise e
     else:
         raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
 
@@ -108,7 +113,6 @@ async def main():
             ExtractLangfuseDataWorkflow,
             StoreOpenTelemetryDataWorkflow,
             RunRecipeOnTaskWorkflow,
-            RunProcessLogForTasksWorkflow,
             RunProcessLogsForTasksWorkflow,
             RunMainPipelineOnMessagesWorkflow,
             RunProcessLogsForMessagesWorkflow,

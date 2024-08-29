@@ -50,8 +50,14 @@ async def call_sentiment_and_language_api(
             magnitude=response.document_sentiment.magnitude,
         )
 
+        if response.language is None:
+            language = None
+        else:
+            language = response.language
         # We interpret the sentiment score as follows:
-        if sentiment_response.score > score_threshold:
+        if sentiment_response.score is None:
+            sentiment_response = SentimentObject()
+        elif sentiment_response.score > score_threshold:
             sentiment_response.label = "positive"
         elif sentiment_response.score < -score_threshold:
             sentiment_response.label = "negative"
@@ -60,8 +66,6 @@ async def call_sentiment_and_language_api(
                 sentiment_response.label = "neutral"
             else:
                 sentiment_response.label = "mixed"
-
-        language = response.language_code
 
     except Exception as e:
         if "Cannot determine the language of the document." in str(e):

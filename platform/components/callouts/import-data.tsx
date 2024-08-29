@@ -40,12 +40,10 @@ import {
   BarChartBig,
   CloudUpload,
   CopyIcon,
-  LoaderCircle,
   Lock,
   Mail,
   MonitorPlay,
   NotebookText,
-  Plus,
   Telescope,
   TriangleAlert,
   Unplug,
@@ -54,7 +52,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
@@ -144,7 +142,72 @@ const APIKeyAndProjectId = () => {
   );
 };
 
-export default function UploadDataset({
+export function UploadDatasetButton({
+  setFile,
+}: {
+  setFile: (file: File) => void;
+}) {
+  const [fileName, setFileName] = React.useState<string | null>(null);
+
+  return (
+    <div className="relative cursor-pointer w-full h-40 mt-2 border-2 border-dashed rounded-3xl text-center">
+      <div className="absolute inset-x-1/4 inset-y-1/4 w-1/2 flex flex-col items-center">
+        <div>
+          <CloudUpload className="w-10 h-10" />
+        </div>
+        <div className="text-xl font-bold">
+          {fileName ?? "Click box to upload"}
+        </div>
+        <div className="text-sm text-muted-foreground">
+          Supported formats: .csv, .xlsx
+        </div>
+      </div>
+      <Input
+        className="w-full h-full opacity-0 cursor-pointer"
+        type="file"
+        accept=".csv,.xlsx"
+        placeholder="Pick file to upload"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            setFile(e.target.files[0]);
+            setFileName(e.target.files[0].name);
+          }
+        }}
+      />
+    </div>
+  );
+}
+
+export function UploadDatasetInstructions() {
+  return (
+    <div className="text-wrap">
+      <div className="text-sm mb-1">
+        The file should contain text data with the following columns:{" "}
+        <code>input</code>, <code>output</code>.
+      </div>
+      <div className="text-sm mb-1">
+        <span>Other columns are optional (look at the example below). </span>
+        <a
+          href="/files/example_csv_phospho.csv"
+          download="example_csv_phospho"
+          className="underline"
+        >
+          Download example CSV
+        </a>
+      </div>
+      <CopyBlock
+        text={`input;output;task_id;session_id;user_id;created_at
+"What's the capital of France?";"The capital of France is Paris";task_1;session_1;user_bob;"2021-09-01 12:00:00"`}
+        language={"text"}
+        showLineNumbers={true}
+        theme={dracula}
+        wrapLongLines={true}
+      />
+    </div>
+  );
+}
+
+export function UploadDataset({
   setOpen,
   showModal,
   setShowModal,
@@ -159,9 +222,8 @@ export default function UploadDataset({
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const [loading, setLoading] = React.useState(false);
-  const [file, setFile] = React.useState<File | null>(null);
-  const [fileName, setFileName] = React.useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
 
   const onSubmit = () => {
     if (showModal) {
@@ -258,55 +320,8 @@ export default function UploadDataset({
 
   return (
     <div className="flex flex-col space-y-2">
-      <div className="text-sm mb-1">
-        The file should contain your historical data with the following columns:{" "}
-        <code>input</code>, <code>output</code>.
-      </div>
-      <div className="text-sm mb-1">
-        <span>Other columns are optional (look at the example below). </span>
-        <a
-          href="/files/example_csv_phospho.csv"
-          download="example_csv_phospho"
-          className="underline"
-        >
-          Download example CSV
-        </a>
-      </div>
-      <CopyBlock
-        text={`input;output;task_id;session_id;user_id;created_at
-"What's the capital of France?";"The capital of France is Paris";task_1;session_1;user_bob;"2021-09-01 12:00:00"`}
-        language={"text"}
-        showLineNumbers={true}
-        theme={dracula}
-        wrapLongLines={true}
-      />
-
-      {/* <form className="w-full flex flex-col space-y-2"> */}
-      <div className="relative cursor-pointer w-full h-40 mt-2 border-2 border-dashed rounded-3xl">
-        <div className="absolute inset-x-1/4 inset-y-1/4 w-1/2 flex flex-col items-center">
-          <div>
-            <CloudUpload className="w-10 h-10" />
-          </div>
-          <div className="text-xl font-bold">
-            {fileName ?? "Click box to upload"}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Supported formats: .csv, .xlsx
-          </div>
-        </div>
-        <Input
-          className="w-full h-full opacity-0 cursor-pointer"
-          type="file"
-          accept=".csv,.xlsx"
-          placeholder="Pick file to upload"
-          onChange={(e) => {
-            if (e.target.files && e.target.files.length > 0) {
-              setFile(e.target.files[0]);
-              setFileName(e.target.files[0].name);
-            }
-          }}
-        />
-      </div>
+      <UploadDatasetInstructions />
+      <UploadDatasetButton setFile={setFile} />
       {file !== null && !loading && (
         <Button onClick={onSubmit}>
           Send file
@@ -319,7 +334,6 @@ export default function UploadDataset({
           <Spinner className="ml-1" />
         </Button>
       )}
-      {/* </form> */}
     </div>
   );
 }
@@ -333,8 +347,11 @@ export const SendDataAlertDialog = ({
 }: {
   setOpen: (open: boolean) => void;
 }) => {
+  const { user, accessToken } = useUser();
+  const toast = useToast();
   const router = useRouter();
   const { mutate } = useSWRConfig();
+
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
@@ -345,25 +362,16 @@ export const SendDataAlertDialog = ({
     (state) => state.selectedOrgMetadata,
   );
 
-  const [showModal, setShowModal] = React.useState(true);
-  const [disableLF, setDisableLF] = React.useState(false);
-  const [disableLS, setDisableLS] = React.useState(false);
+  const [showModal, setShowModal] = useState(true);
+  const [disableLF, setDisableLF] = useState(false);
+  const [disableLS, setDisableLS] = useState(false);
+  const [buttonPressed, setButtonPressed] = useState(false);
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+  const [selectedTab, setSelectedTab] = useState<string | undefined>(undefined);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setShowModal(selectedOrgMetadata?.plan === "hobby");
   }, [selectedOrgMetadata?.plan]);
-
-  //const [buttonPressed, setButtonPressed] = React.useState(false);
-  const [buttonPressed, setButtonPressed] = React.useState(false);
-  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-  // NULL OR STR VALUE
-  const [selectedTab, setSelectedTab] = React.useState<string | undefined>(
-    undefined,
-  );
-
-  const { user, accessToken } = useUser();
-  const toast = useToast();
 
   const formSchemaLS = z.object({
     langsmith_api_key: z
@@ -963,7 +971,7 @@ phospho.log({input, output});`}
                     onClick={() => router.push("mailto:paul-louis@phospho.app")}
                   >
                     <Mail className="h-4 w-4 mr-2" />
-                    Contact us to create you an LLM app
+                    Contact us to create your LLM app
                   </Button>
                 </AlertDescription>
               </Alert>

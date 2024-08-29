@@ -6,7 +6,7 @@ from loguru import logger
 
 async def trigger_webhook(
     url: str, json: dict, timeout: int = 3, headers: Optional[dict] = None
-):
+) -> None:
     """
     Async function to trigger a webhook. Sends a POST request to the given URL
     with the given data.
@@ -21,7 +21,7 @@ async def trigger_webhook(
     # If the url is not set, return early
     if url == "":
         logger.warning("No webhook URL set, skipping webhook trigger")
-        return
+        return None
 
     try:
         logger.info(f"Triggering webhook: {url}")

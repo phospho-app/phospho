@@ -13,4 +13,5 @@ from .pipelines import (
     PipelineLangsmithRequest,
     PipelineLangfuseRequest,
     BillOnStripeRequest,
+    ExtractorBaseClass,
 )
