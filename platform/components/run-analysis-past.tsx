@@ -46,11 +46,7 @@ const FormSchema = z.object({
   recipe_type_list: z.array(z.string()),
 });
 
-const RunAnalysisInPast = ({
-  totalNbTasks,
-}: {
-  totalNbTasks: number | null | undefined;
-}) => {
+const RunAnalysisInPast = () => {
   const router = useRouter();
   const { accessToken } = useUser();
   const [checkedEvent, setCheckedEvent] = useState(true);
@@ -76,6 +72,25 @@ const RunAnalysisInPast = ({
   const formatedEventList = eventList.join(", ");
   const nbrEvents = eventList.length;
 
+  const { data: totalNbTasksData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/tasks`,
+      accessToken,
+      JSON.stringify(dataFilters),
+      "total_nb_tasks",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_tasks"],
+        filters: dataFilters,
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const totalNbTasks: number | null | undefined =
+    totalNbTasksData?.total_nb_tasks;
+
   React.useEffect(() => {
     if (totalNbTasks) {
       setTotalAnalytics(
@@ -90,13 +105,13 @@ const RunAnalysisInPast = ({
   const form_choices = [
     {
       id: "event_detection",
-      label: "Event detection",
+      label: "Analytics",
       description:
-        "Detect if the setup events are present: " +
+        "Detect if the setup analytics are present: " +
         formatedEventList +
         ". " +
         nbrEvents +
-        " credits per user message, one per event.",
+        " credits per user message, one per analytic.",
     },
     {
       id: "sentiment_language",
@@ -159,7 +174,7 @@ const RunAnalysisInPast = ({
       <SheetContent className="md:w-1/2 overflow-auto">
         <SheetTitle>Run analysis on past data</SheetTitle>
         <SheetDescription>
-          Get events, flags, language, and sentiment labels.
+          Run analytics, language, and sentiment labels.
         </SheetDescription>
         <Separator className="my-8" />
         <Form {...form}>
@@ -228,11 +243,13 @@ const RunAnalysisInPast = ({
                                   </HoverCardTrigger>
                                 </div>
                                 <HoverCardContent side="right" className="w-96">
-                                  <div className="p-1 flex flex-col space-y-0">
+                                  <div className="p-1 flex flex-col space-y-1 ">
                                     <div className="font-bold">
                                       {item.label}
                                     </div>
-                                    <div>{item.description}</div>
+                                    <div className="text-muted-foreground text-xs">
+                                      {item.description}
+                                    </div>
                                   </div>
                                 </HoverCardContent>
                               </HoverCard>
