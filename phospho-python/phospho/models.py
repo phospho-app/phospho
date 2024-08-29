@@ -801,6 +801,7 @@ class Clustering(ProjectElementBaseModel):
     clusters: Optional[List[Cluster]] = None
     scope: Optional[Literal["messages", "sessions"]] = None
     name: Optional[str] = None
+    instructions: Optional[str] = None
 
 
 class UsageQuota(BaseModel):
