@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -388,7 +389,7 @@ export function ClustersCards({
 
   return (
     <div>
-      <div className="flex flex-row gap-x-2 items-center mb-2 justify-between custom-plot w-full">
+      <div className="flex flex-row gap-x-2 items-center mb-2 custom-plot w-full">
         <div>
           <Select
             onValueChange={(value: string) => {
@@ -432,6 +433,12 @@ export function ClustersCards({
               </SelectGroup>
             </SelectContent>
           </Select>
+        </div>
+        <div>
+          <Badge>{selectedClustering?.instruction ?? "No instruction"}</Badge>
+        </div>
+        <div>
+          <Badge>{selectedClustering?.nb_clusters ?? "No"} clusters</Badge>
         </div>
       </div>
       {!selectedClustering && (
