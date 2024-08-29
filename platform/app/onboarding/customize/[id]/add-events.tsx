@@ -369,7 +369,7 @@ export default function AddEvents({
                 });
               });
             }}
-            disabled={loading}
+            disabled={loading || customEvents === null}
           >
             {sendEventsLoading && <Spinner className="mr-1" />}
             Save and continue
