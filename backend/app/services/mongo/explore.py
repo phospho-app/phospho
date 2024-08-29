@@ -3106,8 +3106,4 @@ async def compute_cloud_of_clusters(
         #     dim_reduction_results = tsne.fit_transform(embeddings)
         else:
             raise NotImplementedError(f"Type {version.type} is not implemented")
-
-    logger.debug(f"{len(raw_results)}")
-    logger.debug(f"{len(dim_reduction_results)}")
-    logger.debug(f"{dim_reduction_results}")
     return dim_reduction_results
