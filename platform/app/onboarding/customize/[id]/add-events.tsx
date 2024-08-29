@@ -169,7 +169,7 @@ export default function AddEvents({
       ...eventBase,
       event_name: "User industry",
       description:
-        "The user has mentioned an industry or is asking a question only relevant for a specific industry.",
+        "Guess the most likely industry of the user based on the information provided. For example, if a question is relevant only for a specific industry.",
       detection_scope: DetectionScope.TaskInputOnly,
       score_range_settings: {
         score_type: ScoreRangeType.category,
@@ -189,7 +189,7 @@ export default function AddEvents({
       ...eventBase,
       event_name: "User job title",
       description:
-        "The user has mentioned his or her job title. The user is asking a question which is especially relevant for a specific job title.",
+        "Based on the information provided by the user, return the user's job title. For example, if the user mentions their job title, or asks a question only relevant for a specific job title",
       detection_scope: DetectionScope.TaskInputOnly,
       score_range_settings: {
         score_type: ScoreRangeType.category,
@@ -210,7 +210,7 @@ export default function AddEvents({
       ...eventBase,
       event_name: "Product category",
       description:
-        "The user has mentioned a product from a specific cateogory, or which is only relevant for this product category.",
+        "If the user has mentioned a product or asked a question only relevant for a specific product category, return the product category.",
       detection_scope: DetectionScope.TaskInputOnly,
       score_range_settings: {
         score_type: ScoreRangeType.category,
