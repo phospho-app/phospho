@@ -117,6 +117,9 @@ const RunClusters = ({
 
   useEffect(() => {
     // Update the default number of clusters when the total number of tasks changes
+    if (totalNbTasks) {
+      setClusteringCost(totalNbTasks * 2);
+    }
     if (form.getValues("scope") === "messages") {
       if (totalNbTasks === null || totalNbTasks === undefined) {
         totalNbTasks = 0;
@@ -129,7 +132,6 @@ const RunClusters = ({
       } else {
         form.setValue("nb_clusters", 5);
       }
-      setClusteringCost(totalNbTasks * 2);
     }
     if (form.getValues("scope") === "sessions") {
       if (totalNbSessions === null || totalNbSessions === undefined) {
@@ -143,7 +145,6 @@ const RunClusters = ({
       } else {
         form.setValue("nb_clusters", 5);
       }
-      setClusteringCost(totalNbSessions * 2);
     }
   }, [totalNbSessions, totalNbTasks, update]);
 
