@@ -3010,6 +3010,7 @@ async def compute_cloud_of_clusters(
         {
             "$project": {
                 version.type: 1,
+                "scope": 1,
             }
         },
     ]
@@ -3019,10 +3020,67 @@ async def compute_cloud_of_clusters(
     )
     if raw_results is None or raw_results == []:
         return {}
+    # Get the task_id or the session_id from the embeddings_ids in raw_results[0]["pca"]
+    collection_name = "private-embeddings"
+    scope = raw_results[0]["scope"]
+    pipeline = [
+        {
+            "$match": {
+                "project_id": project_id,
+                "id": {"$in": raw_results[0][version.type]["embeddings_ids"]},
+            }
+        },
+        {
+            "$project": {
+                "task_id": 1,
+                "session_id": 1,
+            }
+        },
+    ]
+
+    scope_ids = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
+    if scope == "messages":
+        scope_ids = [scope_id["task_id"] for scope_id in scope_ids]
+    elif scope == "sessions":
+        scope_ids = [scope_id["session_id"] for scope_id in scope_ids]
+
+    # Get the clusters names from the clusters_ids in raw_results[0]["pca"]
+    # I want a cluster name for each cluster_id
+    collection_name = "private-clusters"
+    pipeline = [
+        {
+            "$match": {
+                "project_id": project_id,
+                "id": {"$in": raw_results[0][version.type]["clusters_ids"]},
+            }
+        },
+        {
+            "$project": {
+                "name": 1,
+                "id": 1,
+            }
+        },
+    ]
+
+    clusters_ids_to_clusters_names = (
+        await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
+    )
+    clusters_ids_to_clusters_names = {
+        cluster_id_to_cluster_name["id"]: cluster_id_to_cluster_name["name"]
+        for cluster_id_to_cluster_name in clusters_ids_to_clusters_names
+    }
+
+    clusters_names = [
+        clusters_ids_to_clusters_names[cluster_id]
+        for cluster_id in raw_results[0][version.type]["clusters_ids"]
+    ]
 
     if version.type == "pca":
         logger.debug(f"Raw results {raw_results}")
         dim_reduction_results = raw_results[0]["pca"]
+        del dim_reduction_results["embeddings_ids"]
+        dim_reduction_results["ids"] = scope_ids
+        dim_reduction_results["clusters_names"] = clusters_names
 
     # TODO: Precalculate TSNE
     # elif version.type == "tsne":
@@ -3034,4 +3092,5 @@ async def compute_cloud_of_clusters(
 
     logger.debug(f"{len(raw_results)}")
     logger.debug(f"{len(dim_reduction_results)}")
+    logger.debug(f"{dim_reduction_results}")
     return dim_reduction_results

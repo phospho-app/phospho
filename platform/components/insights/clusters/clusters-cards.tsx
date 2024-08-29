@@ -193,6 +193,7 @@ function ClusterCard({
 
 function CustomPlot({ data }: { data: Data }) {
   const [refresh, setRefresh] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const handleResize = () => {
@@ -251,6 +252,11 @@ function CustomPlot({ data }: { data: Data }) {
         },
         paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
         plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
+      }}
+      onClick={(data) => {
+        router.push(
+          `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
+        );
       }}
     />
   );
@@ -366,6 +372,7 @@ export function ClustersCards({
           x: res.x,
           y: res.y,
           z: res.z,
+          text: res.ids,
           mode: "markers",
           type: "scatter3d",
           marker: {
