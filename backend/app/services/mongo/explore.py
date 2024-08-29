@@ -3010,12 +3010,6 @@ async def compute_cloud_of_clusters(
                 version.type: {"$exists": True},
             }
         },
-        {
-            "$project": {
-                version.type: 1,
-                "scope": 1,
-            }
-        },
     ]
 
     raw_results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
