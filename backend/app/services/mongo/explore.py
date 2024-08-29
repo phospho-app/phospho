@@ -2872,13 +2872,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values[event_name]:
@@ -2897,13 +2897,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2934,13 +2934,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[event_result["version_id"]] = (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] = event_result["count"]
                 else:
-                    divide_for_correct_average[event_result["version_id"]] += (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] += event_result["count"]
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (
@@ -2997,6 +2997,9 @@ async def compute_cloud_of_clusters(
     Compute a PCA on the embeddings and return the first three components if the version is PCA.
     Compute a TSNE on the embeddings and return the first three components if the version is TSNE.
     """
+    if version.type != "pca":
+        raise NotImplementedError(f"Type {version.type} is not implemented")
+
     mongo_db = await get_mongo_db()
     collection_name = "private-clusterings"
     pipeline = [
@@ -3015,34 +3018,37 @@ async def compute_cloud_of_clusters(
         },
     ]
 
-    raw_results = (
-        await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
-    )
+    raw_results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
     if raw_results is None or raw_results == []:
         return {}
 
-    # In order to get the graph for the ancient version of the clustering
-    if "clusters_names" in raw_results[0][version.type]:
-        if version.type == "pca":
-            logger.debug(f"Raw results {raw_results}")
-            dim_reduction_results = raw_results[0]["pca"]
-        # TODO: Precalculate TSNE
-        # elif version.type == "tsne":
-        #     tsne = TSNE(n_components=3)
-        #     embeddings = [result["emb"]["embedding"] for result in raw_results]
-        #     dim_reduction_results = tsne.fit_transform(embeddings)
-        else:
-            raise NotImplementedError(f"Type {version.type} is not implemented")
-    # In order to get the graph for the new version of the clustering
+    clustering_model = Clustering.model_validate(raw_results[0])
+
+    # Check if the clustering model has the required field
+    if version.type == "pca":
+        cloud_of_points = clustering_model.pca
+    if version.type == "tsne":
+        cloud_of_points = clustering_model.tsne
+    # TODO: If new type of embedding is added, add the corresponding code here
+
+    # If the clustering isn't finished, cloud_of_points is None. Return early
+    if cloud_of_points is None:
+        return {}
+
+    if "clusters_names" in cloud_of_points.keys():
+        # Old data model
+        dim_reduction_results = cloud_of_points
     else:
+        # New model.
+        # TODO : Version the models in cloud_of_point
         # Get the task_id or the session_id from the embeddings_ids in raw_results[0]["pca"]
         collection_name = "private-embeddings"
-        scope = raw_results[0]["scope"]
+        embeddings_ids = cloud_of_points["embeddings_ids"]
         pipeline = [
             {
                 "$match": {
                     "project_id": project_id,
-                    "id": {"$in": raw_results[0][version.type]["embeddings_ids"]},
+                    "id": {"$in": embeddings_ids},
                 }
             },
             {
@@ -3056,9 +3062,9 @@ async def compute_cloud_of_clusters(
         scope_ids = (
             await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
         )
-        if scope == "messages":
+        if clustering_model.scope == "messages":
             scope_ids = [scope_id["task_id"] for scope_id in scope_ids]
-        elif scope == "sessions":
+        elif clustering_model.scope == "sessions":
             scope_ids = [scope_id["session_id"] for scope_id in scope_ids]
 
         # Get the clusters names from the clusters_ids in raw_results[0]["pca"]
@@ -3068,7 +3074,7 @@ async def compute_cloud_of_clusters(
             {
                 "$match": {
                     "project_id": project_id,
-                    "id": {"$in": raw_results[0][version.type]["clusters_ids"]},
+                    "id": {"$in": cloud_of_points["clusters_ids"]},
                 }
             },
             {
@@ -3089,21 +3095,13 @@ async def compute_cloud_of_clusters(
 
         clusters_names = [
             clusters_ids_to_clusters_names[cluster_id]
-            for cluster_id in raw_results[0][version.type]["clusters_ids"]
+            for cluster_id in cloud_of_points["clusters_ids"]
         ]
 
-        if version.type == "pca":
-            logger.debug(f"Raw results {raw_results}")
-            dim_reduction_results = raw_results[0]["pca"]
-            del dim_reduction_results["embeddings_ids"]
-            dim_reduction_results["ids"] = scope_ids
-            dim_reduction_results["clusters_names"] = clusters_names
+        logger.debug(f"Raw results {raw_results}")
+        dim_reduction_results = cloud_of_points
+        del dim_reduction_results["embeddings_ids"]
+        dim_reduction_results["ids"] = scope_ids
+        dim_reduction_results["clusters_names"] = clusters_names
 
-        # TODO: Precalculate TSNE
-        # elif version.type == "tsne":
-        #     tsne = TSNE(n_components=3)
-        #     embeddings = [result["emb"]["embedding"] for result in raw_results]
-        #     dim_reduction_results = tsne.fit_transform(embeddings)
-        else:
-            raise NotImplementedError(f"Type {version.type} is not implemented")
     return dim_reduction_results
