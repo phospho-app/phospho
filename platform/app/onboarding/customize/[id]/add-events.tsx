@@ -17,10 +17,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/components/ui/use-toast";
+import { authFetcher } from "@/lib/fetcher";
 import {
   DetectionScope,
   EventDefinition,
+  Project,
   ScoreRangeType,
 } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
@@ -29,6 +32,7 @@ import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { sendUserFeedback } from "phospho";
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 function EventDisplay({
   eventDefintion,
@@ -42,7 +46,7 @@ function EventDisplay({
   // This is a single component that displays an event definition
   // It also has a tickbox to enable or disable the event for the project
   return (
-    <Card>
+    <Card className="text-wrap">
       <CardHeader className="pb-2">
         <div className="flex flex-row items-center space-x-4">
           <Checkbox
@@ -72,97 +76,21 @@ export default function AddEvents({
   redirectTo?: string;
 }) {
   const router = useRouter();
-  const [customEvents, setCustomEvents] = useState<EventDefinition[] | null>(
-    null,
-  );
-
-  const template = "Select a template";
-  const [selectedTemplate, setSelectedTemplate] = useState(template);
-  let selectedOrgId =
-    navigationStateStore((state) => state.selectedOrgId) ?? "";
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const { loading, accessToken } = useUser();
   const { toast } = useToast();
 
-  const [isSelected, setIsSelected] = useState<{ [key: string]: boolean }>(
-    dummyEventDefinitions?.reduce(
-      (acc, eventDefintion) => ({
-        ...acc,
-        [eventDefintion.event_name]: false,
-      }),
-      {},
-    ),
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
 
-  const [sendEventsLoading, setSendEventsLoading] = useState(false);
-
-  useEffect(() => {
-    if (customEvents) {
-      setIsSelected(
-        customEvents.reduce(
-          (acc, eventDefintion) => ({
-            ...acc,
-            [eventDefintion.event_name]: true,
-          }),
-          {},
-        ),
-      );
-    }
-  }, [customEvents]);
-
-  const handleToggle = (eventName: string) => {
-    setIsSelected((prevIsSelected) => ({
-      ...prevIsSelected,
-      [eventName]: !prevIsSelected[eventName],
-    }));
-  };
-
-  const saveSelectedEvents = async () => {
-    const selectedEvents = Object.entries(isSelected)
-      ?.filter(([_key, value]) => value)
-      ?.map(([key, _value]) => key);
-    // Now get the full events from custom events
-    // and save the selected events to the project
-    const selectedEventDefinitions = customEvents?.filter((eventDefintion) =>
-      selectedEvents.includes(eventDefintion.event_name),
-    );
-    console.log("Selected Event Definitions:", selectedEventDefinitions);
-
-    const response = await fetch(`/api/projects/${project_id}/add-events`, {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // provide a list of the selected events in customEvents
-        events: selectedEventDefinitions,
-      }),
-    });
-    if (phosphoTaskId !== null) {
-      try {
-        sendUserFeedback({
-          taskId: phosphoTaskId,
-          projectId: "b20659d0932d4edbb2b9682d3e6a0ccb",
-          flag:
-            (selectedEventDefinitions?.length ?? 0) > 0 ? "success" : "failure",
-          source: "user",
-          notes: `Selected ${
-            selectedEventDefinitions?.length ?? 0
-          } events: ${selectedEventDefinitions
-            ?.map((event) => event.event_name)
-            .join(", ")}`,
-        });
-      } catch (e) {
-        console.error("Error sending feedback to Phospho", e);
-      }
-    } else {
-      console.error("Phospho task_id is null");
-    }
-  };
-
-  const generateEvents = (eventType: string) => {
-    let events: EventDefinition[];
-    if (eventType === "Text generation") {
+  const getEventsFromTemplateName = (templateName: string) => {
+    let events;
+    if (templateName === "Text generation") {
       events = [
         {
           project_id: project_id,
@@ -201,7 +129,7 @@ export default function AddEvents({
           detection_scope: DetectionScope.TaskOutputOnly,
         },
       ];
-    } else if (eventType === "Customer support") {
+    } else if (templateName === "Customer support") {
       events = [
         {
           project_id: project_id,
@@ -280,50 +208,137 @@ export default function AddEvents({
         },
       ];
     }
-    setCustomEvents(events);
-    setSelectedTemplate(eventType);
+    return events as EventDefinition[];
+  };
+
+  const [sendEventsLoading, setSendEventsLoading] = useState(false);
+  const [customEvents, setCustomEvents] = useState<EventDefinition[] | null>(
+    null,
+  );
+  const [isSelected, setIsSelected] = useState<{ [key: string]: boolean }>(
+    dummyEventDefinitions?.reduce(
+      (acc, eventDefintion) => ({
+        ...acc,
+        [eventDefintion.event_name]: false,
+      }),
+      {},
+    ),
+  );
+
+  useEffect(() => {
+    if (customEvents) {
+      setIsSelected(
+        customEvents.reduce(
+          (acc, eventDefintion) => ({
+            ...acc,
+            [eventDefintion.event_name]: true,
+          }),
+          {},
+        ),
+      );
+    }
+  }, [customEvents]);
+
+  useEffect(() => {
+    if (selectedOrgId && customEvents === null) {
+      setCustomEvents(getEventsFromTemplateName("Text generation"));
+    }
+  }, [selectedOrgId]);
+
+  const handleToggle = (eventName: string) => {
+    setIsSelected((prevIsSelected) => ({
+      ...prevIsSelected,
+      [eventName]: !prevIsSelected[eventName],
+    }));
+  };
+
+  const saveSelectedEvents = async () => {
+    const selectedEvents = Object.entries(isSelected)
+      ?.filter(([_key, value]) => value)
+      ?.map(([key, _value]) => key);
+    // Now get the full events from custom events
+    // and save the selected events to the project
+    const selectedEventDefinitions = customEvents?.filter((eventDefintion) =>
+      selectedEvents.includes(eventDefintion.event_name),
+    );
+    console.log("Selected Event Definitions:", selectedEventDefinitions);
+
+    const response = await fetch(`/api/projects/${project_id}/add-events`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        // provide a list of the selected events in customEvents
+        events: selectedEventDefinitions,
+      }),
+    });
+    if (phosphoTaskId !== null) {
+      try {
+        sendUserFeedback({
+          taskId: phosphoTaskId,
+          projectId: "b20659d0932d4edbb2b9682d3e6a0ccb",
+          flag:
+            (selectedEventDefinitions?.length ?? 0) > 0 ? "success" : "failure",
+          source: "user",
+          notes: `Selected ${
+            selectedEventDefinitions?.length ?? 0
+          } events: ${selectedEventDefinitions
+            ?.map((event) => event.event_name)
+            .join(", ")}`,
+        });
+      } catch (e) {
+        console.error("Error sending feedback to Phospho", e);
+      }
+    } else {
+      console.error("Phospho task_id is null");
+    }
   };
 
   return (
     <>
-      <Card className="max-w-1/2">
+      <Card className="w-1/2">
         <CardHeader>
-          <CardTitle>Setup analytics for this project</CardTitle>
+          <CardTitle>
+            Select an analytics starter for the project{" "}
+            {selectedProject?.project_name ?? ""}
+          </CardTitle>
           <CardDescription>
             phospho runs automated analytics to augment your data with tags,
             scores, and labels.
           </CardDescription>
-          <CardDescription className="pt-2">
-            Select a template to get started.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col space-y-2 border-gray-500">
+        <CardContent className="flex flex-col space-y-2 border-muted-foreground">
           <div className="flex justify-center align-items">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex justify-center">
-                <Button variant="outline" className="mb-2">
-                  {selectedTemplate}
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onClick={() => generateEvents("Text generation")}
-                >
-                  Text generation
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => generateEvents("Customer support")}
-                >
-                  Customer support
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => generateEvents("Writing assistant")}
-                >
-                  Writing assistant
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ToggleGroup type="single" defaultValue="Text generation">
+              <ToggleGroupItem
+                value="Text generation"
+                onClick={() =>
+                  setCustomEvents(getEventsFromTemplateName("Text generation"))
+                }
+              >
+                Text generation
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="Customer support"
+                onClick={() =>
+                  setCustomEvents(getEventsFromTemplateName("Customer support"))
+                }
+              >
+                Customer support
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="Writing assistant"
+                onClick={() =>
+                  setCustomEvents(
+                    getEventsFromTemplateName("Writing assistant"),
+                  )
+                }
+              >
+                Writing assistant
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
           <div className="flex flex-col space-y-2 overflow-y-auto h-96">
             {customEvents &&
@@ -338,19 +353,12 @@ export default function AddEvents({
               ))}
           </div>
           <div className="text-muted-foreground text-sm">
-            You can customize these later in the Analytics section.
+            You can change this later in the Analytics section.
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter>
           <Button
-            variant="link"
-            onClick={() => {
-              router.push(redirectTo);
-            }}
-          >
-            Skip
-          </Button>
-          <Button
+            className="w-full"
             onClick={async () => {
               setSendEventsLoading(true);
               saveSelectedEvents().then((response) => {
@@ -361,7 +369,7 @@ export default function AddEvents({
                 });
               });
             }}
-            disabled={loading || customEvents === null}
+            disabled={loading}
           >
             {sendEventsLoading && <Spinner className="mr-1" />}
             Save and continue
