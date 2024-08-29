@@ -42,10 +42,6 @@ async def store_batch_of_log_events(
         raise HTTPException(
             status_code=503, detail="Planned maintenance. Please try again later."
         )
-    if project_id == "f9947b5baa704fd4818013718033f991":
-        raise HTTPException(
-            status_code=400, detail="This project is disabled for maintenance."
-        )
 
     await verify_propelauth_org_owns_project_id(org, project_id)
     # raise_error_if_not_in_pro_tier(org)
