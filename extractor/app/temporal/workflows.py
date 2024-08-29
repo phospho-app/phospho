@@ -16,7 +16,6 @@ To consider:
 import traceback
 from datetime import timedelta
 from typing import Any, Callable, Type
-from app.models.pipelines import ExtractorBaseClass
 from temporalio import workflow
 from temporalio.common import RetryPolicy
 
@@ -57,6 +56,7 @@ with workflow.unsafe.imports_passed_through():
         RunMainPipelineOnTaskRequest,
         RunRecipeOnTaskRequest,
         BillOnStripeRequest,
+        ExtractorBaseClass,
     )
 
 
