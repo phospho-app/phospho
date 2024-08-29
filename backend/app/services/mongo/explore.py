@@ -3021,11 +3021,11 @@ async def compute_cloud_of_clusters(
     if raw_results is None or raw_results == []:
         return {}
 
+    # In order to get the graph for the ancient version of the clustering
     if "clusters_names" in raw_results[0][version.type]:
         if version.type == "pca":
             logger.debug(f"Raw results {raw_results}")
             dim_reduction_results = raw_results[0]["pca"]
-
         # TODO: Precalculate TSNE
         # elif version.type == "tsne":
         #     tsne = TSNE(n_components=3)
@@ -3033,7 +3033,7 @@ async def compute_cloud_of_clusters(
         #     dim_reduction_results = tsne.fit_transform(embeddings)
         else:
             raise NotImplementedError(f"Type {version.type} is not implemented")
-
+    # In order to get the graph for the new version of the clustering
     else:
         # Get the task_id or the session_id from the embeddings_ids in raw_results[0]["pca"]
         collection_name = "private-embeddings"
