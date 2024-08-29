@@ -103,6 +103,7 @@ const RunClusters = ({
       })
       .min(1, "Number of clusters must be at least 1")
       .max(128, "Number of clusters must be at most 128"),
+    sample_rate: z.number().min(0).max(1),
   });
 
   console.log("totalNbTasks: ", totalNbTasks);
@@ -111,6 +112,7 @@ const RunClusters = ({
     defaultValues: {
       scope: "messages",
       instruction: "user intent",
+      sample_rate: 1,
       // Note: don't set the nb_clusters default value here, since it's updated dynamically using an API call
     },
   });
@@ -121,29 +123,40 @@ const RunClusters = ({
       if (totalNbTasks === null || totalNbTasks === undefined) {
         totalNbTasks = 0;
       }
-      setNbElements(totalNbTasks);
-      defaultNbClusters = Math.floor(totalNbTasks / 100);
+      setNbElements(Math.floor(totalNbTasks * form.getValues("sample_rate")));
+      defaultNbClusters = Math.floor(
+        (totalNbTasks * form.getValues("sample_rate")) / 100,
+      );
 
       if (defaultNbClusters >= 5) {
         form.setValue("nb_clusters", defaultNbClusters);
       } else {
         form.setValue("nb_clusters", 5);
       }
-      setClusteringCost(totalNbTasks * 2);
+      setClusteringCost(
+        Math.floor(totalNbTasks * form.getValues("sample_rate")) * 2,
+      );
     }
     if (form.getValues("scope") === "sessions") {
       if (totalNbSessions === null || totalNbSessions === undefined) {
         totalNbSessions = 0;
       }
-      setNbElements(totalNbSessions);
-      defaultNbClusters = Math.floor(totalNbSessions / 100);
+      if (totalNbTasks === null || totalNbTasks === undefined) {
+        totalNbTasks = 0;
+      }
+      setNbElements(
+        Math.floor(totalNbSessions * form.getValues("sample_rate")),
+      );
+      defaultNbClusters = Math.floor(
+        (totalNbSessions * form.getValues("sample_rate")) / 100,
+      );
       console.log("defaultNbClusters: ", defaultNbClusters);
       if (defaultNbClusters >= 5) {
         form.setValue("nb_clusters", Math.floor(defaultNbClusters));
       } else {
         form.setValue("nb_clusters", 5);
       }
-      setClusteringCost(totalNbSessions * 2);
+      setClusteringCost(totalNbTasks * form.getValues("sample_rate") * 2);
     }
   }, [totalNbSessions, totalNbTasks, update]);
 
@@ -262,8 +275,31 @@ const RunClusters = ({
                   </Select>
                 )}
               />
-
               <FilterComponent variant="tasks" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <FormLabel>Sample rate: </FormLabel>
+              <FormField
+                control={form.control}
+                name="sample_rate"
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormControl>
+                      <Input
+                        className="w-32"
+                        placeholder="0.0 - 1.0"
+                        defaultValue={1}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        type="number"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
@@ -400,7 +436,12 @@ const RunClusters = ({
               <div className="mt-4">
                 We will clusterize {nbElements} {form.getValues("scope")}{" "}
                 {form.getValues("scope") === "sessions" && (
-                  <>containing {totalNbTasks} messages</>
+                  <>
+                    {Math.floor(
+                      (totalNbTasks ?? 0) * form.getValues("sample_rate"),
+                    )}{" "}
+                    user messages
+                  </>
                 )}{" "}
                 for a total of {clusteringCost} credits.{" "}
               </div>
