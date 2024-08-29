@@ -11,9 +11,9 @@ const Page: React.FC = () => {
     console.log = function () {};
   }
 
-  const { user, loading } = useUser();
+  const { loading, isLoggedIn } = useUser();
   const router = useRouter();
-  if (!loading && !user) {
+  if (!loading && !isLoggedIn) {
     router.push("/authenticate");
   }
 
