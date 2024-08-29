@@ -254,9 +254,11 @@ function CustomPlot({ data }: { data: Data }) {
         plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
       }}
       onClick={(data) => {
-        router.push(
-          `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
-        );
+        if (data.points[0].text) {
+          router.push(
+            `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
+          );
+        }
       }}
     />
   );
