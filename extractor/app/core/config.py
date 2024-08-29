@@ -70,6 +70,10 @@ TASK_EVALUATION_JOB_ID = "task_evaluation"
 credentials_natural_language = os.getenv(
     "GCP_JSON_CREDENTIALS_NATURAL_LANGUAGE_PROCESSING"
 )
+
+# Used to route the Google API requests in an NGINX queue
+NGINX_TUNNEL_URL = os.getenv("NGINX_TUNNEL_URL")
+
 GCP_SENTIMENT_CLIENT = None
 if credentials_natural_language is not None:
     credentials_dict = json.loads(
@@ -78,7 +82,14 @@ if credentials_natural_language is not None:
     credentials = service_account.Credentials.from_service_account_info(
         credentials_dict
     )
-    GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(credentials=credentials)
+    if NGINX_TUNNEL_URL is not None:
+        GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(
+            credentials=credentials, client_options={"api_endpoint": NGINX_TUNNEL_URL}
+        )
+    else:
+        GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(
+            credentials=credentials
+        )
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 SLACK_URL = os.getenv("SLACK_URL")
