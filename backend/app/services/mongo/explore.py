@@ -3026,7 +3026,7 @@ async def compute_cloud_of_clusters(
     # TODO: If new type of embedding is added, add the corresponding code here
 
     # If the clustering isn't finished, cloud_of_points is None. Return early
-    if cloud_of_points is None:
+    if cloud_of_points is None or cloud_of_points == {}:
         return {}
 
     if "clusters_names" in cloud_of_points.keys():
@@ -3071,12 +3071,7 @@ async def compute_cloud_of_clusters(
                     "id": {"$in": cloud_of_points["clusters_ids"]},
                 }
             },
-            {
-                "$project": {
-                    "name": 1,
-                    "id": 1,
-                }
-            },
+            {"$project": {"name": 1, "id": 1}},
         ]
 
         clusters_ids_to_clusters_names = (

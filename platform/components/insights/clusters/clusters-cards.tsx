@@ -221,7 +221,6 @@ function CustomPlot({ data }: { data: Data }) {
         // set it to be the size of the current div in pixel
         width: document.getElementsByClassName("custom-plot")[0].clientWidth,
         // autosize: true,
-
         scene: {
           xaxis: {
             visible: false,
@@ -255,6 +254,10 @@ function CustomPlot({ data }: { data: Data }) {
         plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
       }}
       onClick={(data) => {
+        // if double click, redirect to the task page
+        if (data.points.length !== 1) {
+          return;
+        }
         if (data.points[0].text) {
           router.push(
             `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
@@ -282,7 +285,7 @@ export function ClustersCards({
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {
       keepPreviousData: true,
-      revalidateIfStale: false,
+      // revalidateIfStale: false,
     },
   );
   const clusterings = (clusteringsData?.clusterings as Clustering[]) ?? [];
@@ -389,6 +392,7 @@ export function ClustersCards({
       }),
     {
       keepPreviousData: true,
+      revalidateIfStale: false,
     },
   );
 
