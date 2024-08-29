@@ -74,10 +74,10 @@ const RunClusters = ({
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
+  const [loading, setLoading] = React.useState(false);
+  const [update, setUpdate] = React.useState(false);
 
   const hobby = orgMetadata?.plan === "hobby";
-
-  const [loading, setLoading] = React.useState(false);
 
   function setSheetOpenWrapper(value: boolean) {
     // Reset the dataFilters when the sheet is closed
@@ -116,12 +116,9 @@ const RunClusters = ({
   });
 
   useEffect(() => {
-    if (totalNbTasks) {
-      setClusteringCost(totalNbTasks * 2);
-    }
     // Update the default number of clusters when the total number of tasks changes
     if (form.getValues("scope") === "messages") {
-      if (!totalNbTasks) {
+      if (totalNbTasks === null || totalNbTasks === undefined) {
         totalNbTasks = 0;
       }
       setNbElements(totalNbTasks);
@@ -132,9 +129,10 @@ const RunClusters = ({
       } else {
         form.setValue("nb_clusters", 5);
       }
+      setClusteringCost(totalNbTasks * 2);
     }
     if (form.getValues("scope") === "sessions") {
-      if (!totalNbSessions) {
+      if (totalNbSessions === null || totalNbSessions === undefined) {
         totalNbSessions = 0;
       }
       setNbElements(totalNbSessions);
@@ -145,8 +143,9 @@ const RunClusters = ({
       } else {
         form.setValue("nb_clusters", 5);
       }
+      setClusteringCost(totalNbSessions * 2);
     }
-  }, [totalNbSessions, totalNbTasks, JSON.stringify(form.getValues("scope"))]);
+  }, [totalNbSessions, totalNbTasks, update]);
 
   const canRunClusterAnalysis: boolean =
     (form.getValues("scope") === "messages" &&
@@ -245,7 +244,10 @@ const RunClusters = ({
                 name="scope"
                 render={({ field }) => (
                   <Select
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      setUpdate(!update);
+                    }}
                     defaultValue={field.value}
                   >
                     <SelectTrigger className="max-w-[20rem]">
