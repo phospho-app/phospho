@@ -258,6 +258,11 @@ function CustomPlot({ data }: { data: Data }) {
         if (data.points.length !== 1) {
           return;
         }
+        if (data.points[0].text) {
+          router.push(
+            `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
+          );
+        }
       }}
     />
   );
