@@ -9,7 +9,7 @@ import useSWR from "swr";
 export default function FetchOrgProject() {
   // This module fetch top-level settings for the org and the project
 
-  const { user, loading, accessToken } = useUser();
+  const { user, loading, accessToken, isLoggedIn } = useUser();
   const { toast } = useToast();
   const pathname = usePathname();
   const router = useRouter();
@@ -31,14 +31,14 @@ export default function FetchOrgProject() {
     // Otherwise, select the first project
     (async () => {
       console.log("Org id: ", selectedOrgId);
-      if (!accessToken) return;
-      if (!selectedOrgId) return;
       if (loading) return;
 
-      if (!loading && !user) {
+      if (!loading && !isLoggedIn) {
         console.log("User not found, redirecting to authenticate");
         router.push("/authenticate");
       }
+
+      if (!selectedOrgId) return;
 
       try {
         console.log("Initializing organization");

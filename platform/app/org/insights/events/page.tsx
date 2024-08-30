@@ -165,12 +165,12 @@ export default function Page() {
               <AlertCircle className="h-16 w-16" />
               <div>
                 <AlertTitle className="font-bold">
-                  Max event detector quota reached
+                  Max custom analytics quota reached
                 </AlertTitle>
                 <AlertDescription>
                   <div className="flex-col space-y-4">
                     <div className="pb-2">
-                      {max_nb_events}/{max_nb_events} event detector created.
+                      {max_nb_events}/{max_nb_events} custom analytics created.
                       Add a payment method to create more.
                     </div>
                     <Link href="/org/settings/billing">
@@ -218,7 +218,7 @@ export default function Page() {
           // current number of events
           events && max_nb_events && current_nb_events < max_nb_events && (
             <p>
-              {current_nb_events}/{max_nb_events} event detectors created
+              {current_nb_events}/{max_nb_events} custom analytics created
             </p>
           )
         }

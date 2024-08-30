@@ -342,7 +342,21 @@ export default function Page() {
                   )}
                 />
                 <FormItem>
-                  <FormLabel>Upload a dataset</FormLabel>
+                  <FormLabel className="flex flex-row space-x-2">
+                    Upload a dataset
+                    <HoverCard openDelay={0} closeDelay={0}>
+                      <HoverCardTrigger>
+                        <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5 ml-1" />
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <div className="p-1 flex flex-col space-y-1 text-xs">
+                          <div>
+                            No data yet? Click on Continue to skip this step.
+                          </div>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </FormLabel>
                   <UploadDatasetButton setFile={setFile} />
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="instructions">
