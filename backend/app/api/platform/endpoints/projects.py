@@ -29,6 +29,7 @@ from app.security.authentification import (
     verify_if_propelauth_user_can_access_project,
 )
 from app.security.authorization import get_quota
+from app.services.slack import slack_notification
 from app.services.mongo.events import get_all_events
 from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.files import process_file_upload_into_log_events
@@ -425,6 +426,10 @@ async def post_upload_tasks(
     SUPPORTED_EXTENSIONS = ["csv", "xlsx"]  # Add the supported extensions here
     file_extension = file.filename.split(".")[-1]
     if file_extension not in SUPPORTED_EXTENSIONS:
+        # We send a slack notification to the phospho team
+        await slack_notification(
+            f"Project {project_id} uploaded a file with unsupported extension {file_extension}"
+        )
         raise HTTPException(
             status_code=400,
             detail=f"Error: The extension {file_extension} is not supported (supported: {SUPPORTED_EXTENSIONS}).",
