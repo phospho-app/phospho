@@ -490,7 +490,7 @@ async def post_upload_tasks(
         if config.GCP_BUCKET_CLIENT:
             # Otherwise filepath is undefined, see above
             await slack_notification(
-                f"Project {project_id} uploaded a file with missing columns. File path: {filepath}"
+                f"[ACTION REQUIRED] Project {project_id} uploaded a file with missing columns. File path: {filepath}"
             )
 
         raise HTTPException(
