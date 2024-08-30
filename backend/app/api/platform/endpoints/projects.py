@@ -485,9 +485,19 @@ async def post_upload_tasks(
     required_columns = ["input", "output"]
     missing_columns = set(required_columns) - set(tasks_df.columns)
     if missing_columns:
+        # The file has been uploaded but the columns are missing (wrong format)
+        # We send a slack notification to the phospho team for manual verification
+        if config.GCP_BUCKET_CLIENT:
+            # Otherwise filepath is undefined, see above
+            await slack_notification(
+                f"Project {project_id} uploaded a file with missing columns. File path: {filepath}"
+            )
+
         raise HTTPException(
             status_code=400,
-            detail=f"Error: Missing columns: {missing_columns}",
+            # Display to the user the delayed processing
+            # It is displayed in a toast message in the frontend
+            detail=f"Missing columns: {missing_columns}. The processing of your file will take up to 24 hours for manual verification.",
         )
 
     # Drop rows with missing column "input"
