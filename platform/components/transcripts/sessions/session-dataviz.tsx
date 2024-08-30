@@ -89,6 +89,9 @@ const SessionsDataviz: React.FC = () => {
         metrics: ["nb_sessions_per_day"],
         filters: dataFilters,
       }).then((data) => {
+        if (data === undefined) {
+          return undefined;
+        }
         if (!data.nb_sessions_per_day) {
           return [];
         }
@@ -119,6 +122,9 @@ const SessionsDataviz: React.FC = () => {
         metrics: ["last_clustering_composition"],
         filters: dataFilters,
       }).then((data) => {
+        if (data === undefined) {
+          return undefined;
+        }
         if (!data?.last_clustering_composition) {
           return null;
         }
@@ -150,6 +156,9 @@ const SessionsDataviz: React.FC = () => {
         metrics: ["date_last_clustering_timestamp"],
         filters: dataFilters,
       }).then((data) => {
+        if (data === undefined) {
+          return undefined;
+        }
         if (!data?.date_last_clustering_timestamp) {
           return null;
         }
@@ -197,6 +206,9 @@ const SessionsDataviz: React.FC = () => {
           metrics: ["events_ranking"],
           filters: dataFilters,
         }).then((data) => {
+          if (data === undefined) {
+            return undefined;
+          }
           if (!data?.events_ranking) {
             return null;
           }
@@ -260,50 +272,40 @@ const SessionsDataviz: React.FC = () => {
       </AlertDialog>
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <Card>
-              <CardHeader>
-                <CardDescription>Total number of Sessions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(!totalNbSessions && <p>...</p>) || (
-                  <p className="text-xl">{totalNbSessions}</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          <div className="ml-4 mr-4">
-            <Card>
-              <CardHeader>
-                <CardDescription>Date of last clustering</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {((dateLastClustering === null ||
-                  dateLastClustering === undefined) && <p>...</p>) || (
-                  <p className="text-xl">{dateLastClustering}</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          <div>
-            <Card>
-              <CardHeader>
-                <CardDescription>Most detected tagger</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(!mostDetectedEvent && <p>...</p>) || (
-                  <p className="text-xl">{mostDetectedEvent}</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-      <div className="container mx-auto mt-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader>
+              <CardDescription>Total number of Sessions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(!totalNbSessions && <p>...</p>) || (
+                <p className="text-xl">{totalNbSessions}</p>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardDescription>Date of last clustering</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {((dateLastClustering === null ||
+                dateLastClustering === undefined) && <p>...</p>) || (
+                <p className="text-xl">{dateLastClustering}</p>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardDescription>Most detected tagger</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(!mostDetectedEvent && <p>...</p>) || (
+                <p className="text-xl">{mostDetectedEvent}</p>
+              )}
+            </CardContent>
+          </Card>
           <div className="flex-1">
             <h3 className="text-muted-foreground mb-2">Number of sessions</h3>
-            {!totalNbSessions && (
+            {totalNbSessions === null && (
               <div className="flex flex-col text-center items-center h-full">
                 <p className="text-muted-foreground mb-2 text-sm pt-6">
                   Start sending data to get more insights
@@ -313,6 +315,14 @@ const SessionsDataviz: React.FC = () => {
                   <ChevronRight className="ml-2" />
                 </Button>
               </div>
+            )}
+            {totalNbSessions === undefined && (
+              <ChartContainer
+                config={chartConfig}
+                className="w-[100%] h-[10rem]"
+              >
+                <Skeleton className="w-[100%] h-[10rem]" />
+              </ChartContainer>
             )}
             {totalNbSessions && (
               <ChartContainer
@@ -337,7 +347,7 @@ const SessionsDataviz: React.FC = () => {
             <h3 className="text-muted-foreground mb-2">
               Composition of last cluster
             </h3>
-            {!lastClusteringComposition && (
+            {lastClusteringComposition === null && (
               // Add a button in the center with a CTA "setup session tracking"
               <div className="flex flex-col text-center items-center h-full">
                 <p className="text-muted-foreground mb-2 text-sm pt-6">
@@ -350,6 +360,14 @@ const SessionsDataviz: React.FC = () => {
                   </Button>
                 </Link>
               </div>
+            )}
+            {lastClusteringComposition === undefined && (
+              <ChartContainer
+                config={chartConfig}
+                className="w-[100%] h-[10rem]"
+              >
+                <Skeleton className="w-[100%] h-[10rem]" />
+              </ChartContainer>
             )}
             {lastClusteringComposition && (
               <ChartContainer
@@ -407,7 +425,7 @@ const SessionsDataviz: React.FC = () => {
           </div>
           <div className="flex-1">
             <h3 className="text-muted-foreground mb-2">Top taggers</h3>
-            {!eventsRanking && (
+            {eventsRanking === null && (
               // Add a button in the center with a CTA "setup analytics"
               <div className="flex flex-col text-center items-center h-full">
                 <p className="text-muted-foreground mb-2 text-sm pt-6">
@@ -420,6 +438,14 @@ const SessionsDataviz: React.FC = () => {
                   </Button>
                 </Link>
               </div>
+            )}
+            {eventsRanking === undefined && (
+              <ChartContainer
+                config={chartConfig}
+                className="w-[100%] h-[10rem]"
+              >
+                <Skeleton className="w-[100%] h-[10rem]" />
+              </ChartContainer>
             )}
             {eventsRanking && (
               <ChartContainer

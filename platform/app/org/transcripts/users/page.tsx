@@ -1,6 +1,5 @@
 "use client";
 
-import TopRowKpis from "@/components/insights/top-row";
 import { UsersTable } from "@/components/transcripts/users/users-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +14,7 @@ import {
   ChartContainer,
   ChartTooltip,
 } from "@/components/ui/chart";
+import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
@@ -89,6 +89,9 @@ const UsersDataviz = () => {
             event_name: ["User job title"],
           },
         }).then((data) => {
+          if (data === undefined) {
+            return undefined;
+          }
           const jobTitles = data?.category_distribution["User job title"];
           if (!jobTitles) {
             return null;
@@ -120,6 +123,9 @@ const UsersDataviz = () => {
             event_name: ["User industry"],
           },
         }).then((data) => {
+          if (data === undefined) {
+            return undefined;
+          }
           const userIndustry = data?.category_distribution["User industry"];
           if (!userIndustry) {
             return null;
@@ -141,10 +147,10 @@ const UsersDataviz = () => {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
           <p className="text-secondary font-semibold">{payload[0].name}</p>
+          <p className="text-secondary">{payload[0].value} messages</p>
         </div>
       );
     }
-
     return null;
   };
 
@@ -184,8 +190,8 @@ const UsersDataviz = () => {
             <CardHeader>
               <CardDescription>User job title distribution</CardDescription>
             </CardHeader>
-            {userJobTitles && (
-              <CardContent>
+            <CardContent>
+              {userJobTitles && (
                 <ChartContainer
                   config={chartConfig}
                   className="w-[100%] h-[10rem]"
@@ -237,15 +243,19 @@ const UsersDataviz = () => {
                     </Pie>
                   </PieChart>
                 </ChartContainer>
-              </CardContent>
-            )}
+              )}
+              {userJobTitles === undefined && (
+                <Skeleton className="w-[100%] h-[10rem]" />
+              )}
+              {userJobTitles === null && <></>}
+            </CardContent>
           </Card>
           <Card>
             <CardHeader>
               <CardDescription>User industry distribution</CardDescription>
             </CardHeader>
-            {userIndustry && (
-              <CardContent>
+            <CardContent>
+              {userIndustry && (
                 <ChartContainer
                   config={chartConfig}
                   className="w-[100%] h-[10rem]"
@@ -297,8 +307,12 @@ const UsersDataviz = () => {
                     </Pie>
                   </PieChart>
                 </ChartContainer>
-              </CardContent>
-            )}
+              )}
+              {userIndustry === undefined && (
+                <Skeleton className="w-[100%] h-[10rem]" />
+              )}
+              {userIndustry === null && <></>}
+            </CardContent>
           </Card>
         </div>
       </div>
@@ -318,16 +332,6 @@ const Users = () => {
     },
   );
   const userCount = userCountData?.value;
-
-  // Fetch all users
-  const { data: usersData } = useSWR(
-    project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const usersMetadata = usersData?.users;
 
   return (
     <>
@@ -358,7 +362,7 @@ const Users = () => {
         </Card>
       )}
       <UsersDataviz />
-      <UsersTable usersMetadata={usersMetadata} />
+      <UsersTable />
     </>
   );
 };
