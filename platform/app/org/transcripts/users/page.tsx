@@ -19,7 +19,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { HeartHandshake } from "lucide-react";
+import { ChevronRight, HeartHandshake } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { Bar, BarChart, Label, Pie, PieChart, XAxis, YAxis } from "recharts";
@@ -247,7 +247,20 @@ const UsersDataviz = () => {
               {userJobTitles === undefined && (
                 <Skeleton className="w-[100%] h-[10rem]" />
               )}
-              {userJobTitles === null && <></>}
+              {userJobTitles === null && (
+                <div className="flex flex-col text-center items-center h-full">
+                  <p className="text-muted-foreground mb-2 text-sm pt-6">
+                    Add a classifier named <code>User job title</code> to get
+                    started
+                  </p>
+                  <Link href="/org/insights/events">
+                    <Button variant="outline">
+                      Setup analytics
+                      <ChevronRight className="ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -311,7 +324,20 @@ const UsersDataviz = () => {
               {userIndustry === undefined && (
                 <Skeleton className="w-[100%] h-[10rem]" />
               )}
-              {userIndustry === null && <></>}
+              {userIndustry === null && (
+                <div className="flex flex-col text-center items-center h-full">
+                  <p className="text-muted-foreground mb-2 text-sm pt-6">
+                    Add a classifier named <code>User industry</code> to get
+                    started
+                  </p>
+                  <Link href="/org/insights/events">
+                    <Button variant="outline">
+                      Setup analytics
+                      <ChevronRight className="ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
