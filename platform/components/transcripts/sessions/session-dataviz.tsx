@@ -302,7 +302,7 @@ const SessionsDataviz: React.FC = () => {
       <div className="container mx-auto mt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Number of sessions</h3>
+            <h3 className="text-muted-foreground mb-2">Number of sessions</h3>
             {!totalNbSessions && (
               <div className="flex flex-col text-center items-center h-full">
                 <p className="text-muted-foreground mb-2 text-sm pt-6">
@@ -334,7 +334,9 @@ const SessionsDataviz: React.FC = () => {
             )}
           </div>
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Composition of last cluster</h3>
+            <h3 className="text-muted-foreground mb-2">
+              Composition of last cluster
+            </h3>
             {!lastClusteringComposition && (
               // Add a button in the center with a CTA "setup session tracking"
               <div className="flex flex-col text-center items-center h-full">
@@ -404,7 +406,7 @@ const SessionsDataviz: React.FC = () => {
             )}
           </div>
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Top taggers</h3>
+            <h3 className="text-muted-foreground mb-2">Top taggers</h3>
             {!eventsRanking && (
               // Add a button in the center with a CTA "setup analytics"
               <div className="flex flex-col text-center items-center h-full">

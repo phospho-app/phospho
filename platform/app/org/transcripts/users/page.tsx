@@ -5,41 +5,38 @@ import { UsersTable } from "@/components/transcripts/users/users-table";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+} from "@/components/ui/chart";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { HeartHandshake } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect } from "react";
+import React from "react";
+import { Bar, BarChart, Label, Pie, PieChart, XAxis, YAxis } from "recharts";
 import useSWR from "swr";
 
-// const Handshake = ({ ...props }) => (
-//   <svg
-//     xmlns="http://www.w3.org/2000/svg"
-//     width="24"
-//     height="24"
-//     viewBox="0 0 24 24"
-//     fill="none"
-//     stroke="currentColor"
-//     stroke-width="2"
-//     stroke-linecap="round"
-//     stroke-linejoin="round"
-//     // class="lucide lucide-handshake"
-//     {...props}
-//   >
-//     <path d="m11 17 2 2a1 1 0 1 0 3-3" />
-//     <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4" />
-//     <path d="m21 3 1 11h-2" />
-//     <path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3" />
-//     <path d="M3 4h8" />
-//   </svg>
-// );
+const chartConfig: ChartConfig = {};
 
-const Users = () => {
+interface JobTitles {
+  name: string;
+  size: number;
+}
+
+interface Industry {
+  name: string;
+  size: number;
+}
+
+const UsersDataviz = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
@@ -72,27 +69,238 @@ const Users = () => {
   );
   const userAverage = Math.round(userAverageData?.value * 100) / 100;
 
-  const { data: userTop10Data, error: fetchUserTop10Error } = useSWR(
-    [`/api/metadata/${project_id}/top10/tasks/user_id`, accessToken],
+  const { data: userJobTitlesData } = useSWR(
+    project_id
+      ? [`/api/explore/${project_id}/aggregated/events`, accessToken]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["category_distribution"],
+        filters: {
+          event_name: ["User job title"],
+        },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const userJobTitles = userJobTitlesData?.category_distribution as
+    | JobTitles[]
+    | null
+    | undefined;
+  console.log("userJobTitles", userJobTitles);
+
+  const { data: userIndustryData } = useSWR(
+    project_id
+      ? [`/api/explore/${project_id}/aggregated/events`, accessToken]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["category_distribution"],
+        filters: {
+          event_name: ["User industry"],
+        },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const userIndustry = userJobTitlesData?.category_distribution as
+    | Industry[]
+    | null
+    | undefined;
+  console.log("userJobTitles", userJobTitles);
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-primary shadow-md p-2 rounded-md">
+          <p className="text-secondary font-semibold">{`Cluster ${payload[0].name}`}</p>
+          <p className="text-secondary">{`Description: ${payload[0].payload.description}`}</p>
+          <p className="text-green-500">{`${payload[0].value.toFixed(0)} messages in cluster`}</p>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <div>
+      <div className="container mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex flex-col justify-between">
+            <Card>
+              <CardHeader>
+                <CardDescription>Total Nb of users</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {((userCount === null || userCount === undefined) && (
+                  <p>...</p>
+                )) || <p className="text-xl">{userCount}</p>}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardDescription>
+                  Avg Nb user messages per users
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {((userAverage === null || userAverage === undefined) && (
+                  <p>...</p>
+                )) || <p className="text-xl">{userAverage.toString()}</p>}
+              </CardContent>
+            </Card>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardDescription>User job title distribution</CardDescription>
+            </CardHeader>
+            {userJobTitles && (
+              <CardContent>
+                <ChartContainer
+                  config={chartConfig}
+                  className="w-[100%] h-[10rem]"
+                >
+                  <PieChart className="w-[100%] h-[10rem]">
+                    <ChartTooltip content={CustomTooltip} />
+                    <Pie
+                      data={userJobTitles}
+                      dataKey="size"
+                      nameKey="name"
+                      labelLine={false}
+                      innerRadius={60}
+                      outerRadius={70}
+                    >
+                      <Label
+                        content={({ viewBox }) => {
+                          if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                            return (
+                              <text
+                                x={viewBox.cx}
+                                y={viewBox.cy}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                              >
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) + 5}
+                                  className="fill-foreground text-3xl font-bold"
+                                >
+                                  {React.useMemo(() => {
+                                    return userJobTitles?.reduce(
+                                      (acc, _) => acc + 1,
+                                      0,
+                                    );
+                                  }, [])?.toLocaleString()}
+                                </tspan>
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) + 25}
+                                  className="fill-muted-foreground"
+                                >
+                                  clusters
+                                </tspan>
+                              </text>
+                            );
+                          }
+                        }}
+                      />
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              </CardContent>
+            )}
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardDescription>User industry distribution</CardDescription>
+            </CardHeader>
+            {userIndustry && (
+              <CardContent>
+                <ChartContainer
+                  config={chartConfig}
+                  className="w-[100%] h-[10rem]"
+                >
+                  <PieChart className="w-[100%] h-[10rem]">
+                    <ChartTooltip content={CustomTooltip} />
+                    <Pie
+                      data={userIndustry}
+                      dataKey="size"
+                      nameKey="name"
+                      labelLine={false}
+                      innerRadius={60}
+                      outerRadius={70}
+                    >
+                      <Label
+                        content={({ viewBox }) => {
+                          if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                            return (
+                              <text
+                                x={viewBox.cx}
+                                y={viewBox.cy}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                              >
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) + 5}
+                                  className="fill-foreground text-3xl font-bold"
+                                >
+                                  {React.useMemo(() => {
+                                    return userIndustry?.reduce(
+                                      (acc, _) => acc + 1,
+                                      0,
+                                    );
+                                  }, [])?.toLocaleString()}
+                                </tspan>
+                                <tspan
+                                  x={viewBox.cx}
+                                  y={(viewBox.cy || 0) + 25}
+                                  className="fill-muted-foreground"
+                                >
+                                  clusters
+                                </tspan>
+                              </text>
+                            );
+                          }
+                        }}
+                      />
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+              </CardContent>
+            )}
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Users = () => {
+  const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
+
+  const { data: userCountData, error: fetchUserCountError } = useSWR(
+    [`/api/metadata/${project_id}/count/tasks/user_id`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
     },
   );
-  const userTop10 = userTop10Data?.value;
+  const userCount = userCountData?.value;
 
-  const { data: userBottom10Data, error: fetchUserBottom10Error } = useSWR(
-    [`/api/metadata/${project_id}/bottom10/tasks/user_id`, accessToken],
+  // Fetch all users
+  const { data: usersData } = useSWR(
+    project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
     },
   );
-  const userBottom10 = userBottom10Data?.value;
-
-  if (!project_id) {
-    return <p>No project selected</p>;
-  }
+  const usersMetadata = usersData?.users;
 
   return (
     <>
@@ -122,13 +330,7 @@ const Users = () => {
           </CardHeader>
         </Card>
       )}
-      <TopRowKpis
-        name="Users"
-        count={userCount}
-        bottom10={userBottom10}
-        average={userAverage}
-        top10={userTop10}
-      />
+      <UsersDataviz />
       <UsersTable usersMetadata={usersMetadata} />
     </>
   );

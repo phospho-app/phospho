@@ -11,7 +11,6 @@ import {
   ChartContainer,
   ChartTooltip,
 } from "@/components/ui/chart";
-import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
@@ -236,9 +235,11 @@ const TasksDataviz: React.FC = () => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
-          <p className="text-secondary font-semibold">{`Cluster ${payload[0].name}`}</p>
-          <p className="text-secondary">{`Description: ${payload[0].payload.description}`}</p>
-          <p className="text-green-500">{`${payload[0].value.toFixed(0)} messages in cluster`}</p>
+          <p className="text-secondary font-semibold mb-1">{payload[0].name}</p>
+          <p className="text-secondary text-xs">
+            {payload[0].payload.description}
+          </p>
+          <p className="text-green-500">{`${payload[0].value.toFixed(0)} messages`}</p>
         </div>
       );
     }
@@ -299,7 +300,9 @@ const TasksDataviz: React.FC = () => {
       <div className="container mx-auto mt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Number of user messages</h3>
+            <h3 className="text-muted-foreground mb-2">
+              Number of user messages
+            </h3>
             {!nbDailyTasks && (
               <div className="flex flex-col text-center items-center h-full">
                 <p className="text-muted-foreground mb-2 text-sm pt-6">
@@ -337,7 +340,9 @@ const TasksDataviz: React.FC = () => {
             )}
           </div>
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Composition of last cluster</h3>
+            <h3 className="text-muted-foreground mb-2">
+              Composition of last cluster
+            </h3>
             {!lastClusteringComposition && (
               // Add a button in the center with a CTA "Cluster data"
               <div className="flex flex-col text-center items-center h-full">
@@ -407,7 +412,7 @@ const TasksDataviz: React.FC = () => {
             )}
           </div>
           <div className="flex-1">
-            <h3 className="text-slate-500 mb-2">Top taggers</h3>
+            <h3 className="text-muted-foreground mb-2">Top taggers</h3>
             {!eventsRanking && (
               // Add a button in the center with a CTA "setup analytics"
               <div className="flex flex-col text-center items-center h-full">
