@@ -238,7 +238,6 @@ export default function AddEvents({
         userIndustry,
         userSentiment,
         penetrationTesting,
-        verbose,
         toxicContent,
         soundsRobotic,
       ];
@@ -252,7 +251,6 @@ export default function AddEvents({
         userSentiment,
         penetrationTesting,
         toxicContent,
-        verbose,
       ];
     }
     if (templateName === "Knowledge assistant") {
@@ -262,8 +260,8 @@ export default function AddEvents({
         userJobTitle,
         userIndustry,
         userSentiment,
-        soundsRobotic,
         verbose,
+        soundsRobotic,
       ];
     }
 
