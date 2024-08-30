@@ -19,7 +19,7 @@ Welcome to phospho!
    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
    <a href="https://github.com/phospho-app/phospho" aria-label="Github"><span class="iconify" data-icon="mdi:github"></span> Github</a>
    <a href="https://pypi.org/project/phospho/" aria-label="Pypi"><span class="iconify" data-icon="mdi:language-python"></span> Pypi</a>
-   <a href="mailto:contact@phospho.app" aria-label="Contact us"><span class="iconify" data-icon="material-symbols:mail"></span> Contact us</a>
+   <a href="mailto:contact@phospho.ai" aria-label="Contact us"><span class="iconify" data-icon="material-symbols:mail"></span> Contact us</a>
    <a href="https://discord.gg/Pu4Hf9UAJC" aria-label="Discord"><span class="iconify" data-icon="ic:baseline-discord"></span> Discord</a>
    
    </p>
@@ -39,7 +39,7 @@ Read the `getting started guide <https://docs.phospho.ai/getting-started>`_ to l
 Get in touch
 ------------
 
-Feel free to reach out to *contact@phospho.app* or on `Discord <https://discord.gg/wk4uBSnKyW>`_. Come and chat with the community!
+Feel free to reach out to *contact@phospho.ai* or on `Discord <https://discord.gg/wk4uBSnKyW>`_. Come and chat with the community!
 
 
 Documentation

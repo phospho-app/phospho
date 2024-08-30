@@ -26,7 +26,7 @@ def send_email(
         "to": [to_email],
         "subject": subject,
         "html": message,
-        "reply_to": "paul-louis@phospho.app",
+        "reply_to": "paul-louis@phospho.ai",
     }
 
     if config.ENVIRONMENT != "preview":
@@ -43,7 +43,7 @@ def send_welcome_email(to_email: str):
             <p>Welcome to Phospho! We are thrilled to have you onboard.</p>
             <p>Need help getting started? Want to learn more about what you can do with phospho? 
             <br> Check out <a href="https://docs.phospho.ai/guides/welcome-guide">the guides!</a></p>
-            <p>If anything, feel free to reach out at paul-louis@phospho.app or chat with our devs on <a href="https://discord.gg/BFNzpUtE">Discord.</p>
+            <p>If anything, feel free to reach out at paul-louis@phospho.ai or chat with our devs on <a href="https://discord.gg/BFNzpUtE">Discord.</p>
             <p>Best,
             <br>
             Paul, CEO of phospho</p>
@@ -56,7 +56,7 @@ def send_welcome_email(to_email: str):
         "to": [to_email],
         "subject": subject,
         "html": message,
-        "reply_to": "paul-louis@phospho.app",
+        "reply_to": "paul-louis@phospho.ai",
     }
     if config.ENVIRONMENT != "preview":
         resend.Emails.send(params)
@@ -98,7 +98,7 @@ async def send_quota_exceeded_email(org_id: str):
                         <li>Click on the "Add payment method" button</li>
                         <li>Automatic analytics will be enabled. Enjoy <a href="https://platform.phospho.ai/org/settings/billing">advanced features!</a></li>
                     </ul>
-                    <p>Feel free to reach out at <a href="mailto:paul-louis@phospho.app">paul-louis@phospho.app</a> if anything.</p>
+                    <p>Feel free to reach out at <a href="mailto:paul-louis@phospho.ai">paul-louis@phospho.ai</a> if anything.</p>
                     <p>Best,</p>
                     <p>Paul, CEO of phospho</p>
                 </body>
@@ -172,7 +172,7 @@ def send_payment_issue_email(to_email: str):
             "to": [to_email],
             "subject": subject,
             "html": message,
-            "reply_to": "paul-louis@phospho.app",
+            "reply_to": "paul-louis@phospho.ai",
         }
 
         _ = resend.Emails.send(params)

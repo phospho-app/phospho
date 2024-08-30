@@ -81,7 +81,7 @@ app = FastAPI(
     contact={
         "name": "phospho",
         "url": "https://phospho.app",
-        "email": "contact@phospho.app",
+        "email": "contact@phospho.ai",
     },
 )
 
@@ -143,7 +143,7 @@ api_v2 = FastAPI(
     contact={
         "name": "phospho",
         "url": "https://phospho.ai",
-        "email": "contact@phospho.app",
+        "email": "contact@phospho.ai",
     },
 )
 
@@ -181,7 +181,7 @@ api_v3 = FastAPI(
     contact={
         "name": "phospho",
         "url": "https://phospho.ai",
-        "email": "contact@phospho.app",
+        "email": "contact@phospho.ai",
     },
 )
 

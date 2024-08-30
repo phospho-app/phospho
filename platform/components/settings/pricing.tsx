@@ -70,7 +70,7 @@ function CtaButton({
 
   if (tierName === "enterprise") {
     return (
-      <Link href="mailto:contact@phospho.app">
+      <Link href="mailto:contact@phospho.ai">
         <Button>Contact Sales</Button>
       </Link>
     );
