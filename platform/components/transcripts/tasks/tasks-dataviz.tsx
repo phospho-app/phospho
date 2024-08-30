@@ -201,7 +201,7 @@ const TasksDataviz: React.FC = () => {
           if (data === undefined) {
             return undefined;
           }
-          if (!data?.events_ranking) {
+          if (!data?.events_rankin || data?.events_ranking.length === 0) {
             return null;
           }
           data?.events_ranking?.sort(

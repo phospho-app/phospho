@@ -248,8 +248,8 @@ const UsersDataviz = () => {
               {userJobTitles === null && (
                 <div className="flex flex-col text-center items-center h-full">
                   <p className="text-muted-foreground mb-2 text-sm pt-6">
-                    Add a classifier named <code>User job title</code> to get
-                    started
+                    Add a classifier named <code>User job title</code>
+                    <br /> to get started
                   </p>
                   <Link href="/org/insights/events">
                     <Button variant="outline">
@@ -325,8 +325,8 @@ const UsersDataviz = () => {
               {userIndustry === null && (
                 <div className="flex flex-col text-center items-center h-full">
                   <p className="text-muted-foreground mb-2 text-sm pt-6">
-                    Add a classifier named <code>User industry</code> to get
-                    started
+                    Add a classifier named <code>User industry</code>
+                    <br /> to get started
                   </p>
                   <Link href="/org/insights/events">
                     <Button variant="outline">
