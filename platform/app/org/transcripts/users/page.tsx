@@ -166,7 +166,7 @@ const UsersDataviz = () => {
               <CardContent>
                 {((userCount === null || userCount === undefined) && (
                   <p>...</p>
-                )) || <p className="text-2xl font-extrabold">{userCount}</p>}
+                )) || <p className="text-2xl font-bold">{userCount}</p>}
               </CardContent>
             </Card>
             <Card className="flex-grow">
@@ -179,9 +179,7 @@ const UsersDataviz = () => {
                 {((userAverage === null || userAverage === undefined) && (
                   <p>...</p>
                 )) || (
-                  <p className="text-2xl font-extrabold">
-                    {userAverage.toString()}
-                  </p>
+                  <p className="text-2xl font-bold">{userAverage.toString()}</p>
                 )}
               </CardContent>
             </Card>
