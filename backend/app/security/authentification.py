@@ -73,7 +73,7 @@ def authenticate_org_key_in_alpha(
         if not is_org_in_alpha(org):
             raise HTTPException(
                 status_code=403,
-                detail="Organization not in the Alpha program. Request access at contact@phospho.app",
+                detail="Organization not in the Alpha program. Request access at contact@phospho.ai",
             )
 
     except Exception as e:

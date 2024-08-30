@@ -799,7 +799,7 @@ export const SendDataAlertDialog = ({
                             Discover all integrations
                           </Button>
                         </Link>
-                        <Link href="mailto:contact@phospho.app" target="_blank">
+                        <Link href="mailto:contact@phospho.ai" target="_blank">
                           <Button variant="secondary">Contact us</Button>
                         </Link>
                       </div>
@@ -929,7 +929,7 @@ phospho.log({input, output});`}
                             Discover all integrations
                           </Button>
                         </Link>
-                        <Link href="mailto:contact@phospho.app" target="_blank">
+                        <Link href="mailto:contact@phospho.ai" target="_blank">
                           <Button variant="secondary">Contact us</Button>
                         </Link>
                       </div>
@@ -968,7 +968,7 @@ phospho.log({input, output});`}
                   <Button
                     variant="ghost"
                     className="text-xs"
-                    onClick={() => router.push("mailto:paul-louis@phospho.app")}
+                    onClick={() => router.push("mailto:paul-louis@phospho.ai")}
                   >
                     <Mail className="h-4 w-4 mr-2" />
                     Contact us to create your LLM app

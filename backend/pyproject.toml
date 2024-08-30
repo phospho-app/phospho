@@ -2,7 +2,7 @@
 name = "app"
 version = "0.1.0"
 description = "Backend of Phospho"
-authors = ["Nicolas Oulianov <nicolas.oulianov@phospho.app>"]
+authors = ["Nicolas Oulianov <nicolas@phospho.ai>"]
 license = "Copyright Phospho 2024"
 readme = "README.md"
 

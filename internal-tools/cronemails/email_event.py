@@ -57,7 +57,7 @@ class EmailEvent:
                 "to": [user.get("email")],
                 "subject": self.email_subject,
                 "html": self.email_content,
-                "reply_to": "contact@phospho.app",
+                "reply_to": "contact@phospho.ai",
             }
 
             resend.Emails.send(params)
