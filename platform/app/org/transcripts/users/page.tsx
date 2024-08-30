@@ -16,6 +16,7 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart";
 import { authFetcher } from "@/lib/fetcher";
+import { graphColors } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { HeartHandshake } from "lucide-react";
@@ -24,16 +25,18 @@ import React from "react";
 import { Bar, BarChart, Label, Pie, PieChart, XAxis, YAxis } from "recharts";
 import useSWR from "swr";
 
+// TODO : Add graph colors like in tasks-dataviz.tsx
+
 const chartConfig: ChartConfig = {};
 
 interface JobTitles {
-  name: string;
-  size: number;
+  category: string;
+  count: number;
 }
 
 interface Industry {
-  name: string;
-  size: number;
+  category: string;
+  count: number;
 }
 
 const UsersDataviz = () => {
@@ -71,7 +74,12 @@ const UsersDataviz = () => {
 
   const { data: userJobTitlesData } = useSWR(
     project_id
-      ? [`/api/explore/${project_id}/aggregated/events`, accessToken]
+      ? [
+          `/api/explore/${project_id}/aggregated/events`,
+          accessToken,
+          "category_distribution",
+          "User job title",
+        ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
@@ -84,15 +92,19 @@ const UsersDataviz = () => {
       keepPreviousData: true,
     },
   );
-  const userJobTitles = userJobTitlesData?.category_distribution as
-    | JobTitles[]
-    | null
-    | undefined;
-  console.log("userJobTitles", userJobTitles);
+  const userJobTitles = userJobTitlesData?.category_distribution[
+    "User job title"
+  ] as JobTitles[] | null | undefined;
+  console.log("userJobTitlesData", userJobTitlesData);
 
   const { data: userIndustryData } = useSWR(
     project_id
-      ? [`/api/explore/${project_id}/aggregated/events`, accessToken]
+      ? [
+          `/api/explore/${project_id}/aggregated/events`,
+          accessToken,
+          "category_distribution",
+          "User industry",
+        ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
@@ -105,19 +117,16 @@ const UsersDataviz = () => {
       keepPreviousData: true,
     },
   );
-  const userIndustry = userJobTitlesData?.category_distribution as
-    | Industry[]
-    | null
-    | undefined;
-  console.log("userJobTitles", userJobTitles);
+  const userIndustry = userIndustryData?.category_distribution[
+    "User industry"
+  ] as Industry[] | null | undefined;
+  console.log("userIndustry", userIndustry);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
-          <p className="text-secondary font-semibold">{`Cluster ${payload[0].name}`}</p>
-          <p className="text-secondary">{`Description: ${payload[0].payload.description}`}</p>
-          <p className="text-green-500">{`${payload[0].value.toFixed(0)} messages in cluster`}</p>
+          <p className="text-secondary font-semibold">{`${payload[0].name}`}</p>
         </div>
       );
     }
@@ -167,8 +176,8 @@ const UsersDataviz = () => {
                     <ChartTooltip content={CustomTooltip} />
                     <Pie
                       data={userJobTitles}
-                      dataKey="size"
-                      nameKey="name"
+                      dataKey="count"
+                      nameKey="category"
                       labelLine={false}
                       innerRadius={60}
                       outerRadius={70}
@@ -200,7 +209,7 @@ const UsersDataviz = () => {
                                   y={(viewBox.cy || 0) + 25}
                                   className="fill-muted-foreground"
                                 >
-                                  clusters
+                                  job titles
                                 </tspan>
                               </text>
                             );
@@ -227,8 +236,8 @@ const UsersDataviz = () => {
                     <ChartTooltip content={CustomTooltip} />
                     <Pie
                       data={userIndustry}
-                      dataKey="size"
-                      nameKey="name"
+                      dataKey="count"
+                      nameKey="category"
                       labelLine={false}
                       innerRadius={60}
                       outerRadius={70}
@@ -260,7 +269,7 @@ const UsersDataviz = () => {
                                   y={(viewBox.cy || 0) + 25}
                                   className="fill-muted-foreground"
                                 >
-                                  clusters
+                                  industries
                                 </tspan>
                               </text>
                             );

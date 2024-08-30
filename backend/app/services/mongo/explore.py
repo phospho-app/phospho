@@ -5,7 +5,7 @@ Explore metrics service
 import datetime
 import math
 from collections import defaultdict
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 from sklearn.metrics import (
     f1_score,
     mean_squared_error,
@@ -2107,7 +2107,7 @@ async def get_y_pred_y_true(
 async def get_category_distribution(
     project_id: str,
     filters: ProjectDataFilters,
-) -> Dict[str, Dict[str, int]]:
+) -> Dict[str, List[Dict[str, Any]]]:
     """
     Filter the events to keep only the ones that are category events.
 
@@ -2162,13 +2162,13 @@ async def get_category_distribution(
         logger.debug("Event category distribution is empty")
         return {}
 
-    # Format the results : {event_name: {category: count}}
-    output: Dict[str, Dict[str, int]] = defaultdict(dict)
+    # Format the results : {event_name: [{category, count}]}
+    output: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for item in result:
         event_name = item["event_name"]
         category = item["category"]
         count = item["count"]
-        output[event_name][category] = count
+        output[event_name].append({"category": category, "count": count})
 
     return output
 
