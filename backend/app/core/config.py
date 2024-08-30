@@ -47,7 +47,7 @@ QUERY_MAX_LEN_LIMIT = 2000  # Limit the number of returned rows for a query to r
 
 ### DOCUMENTATION ##
 
-ADMIN_EMAIL = "notifications@phospho.app"  # Used when new users sign up
+ADMIN_EMAIL = "notifications@phospho.ai"  # Used when new users sign up
 
 ### OPENAI ###
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

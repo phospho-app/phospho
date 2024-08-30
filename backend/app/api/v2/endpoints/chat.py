@@ -94,7 +94,7 @@ async def create(
         )
         raise HTTPException(
             status_code=402,
-            detail="You need to request access to this feature to the phospho team. Please contact us at contact@phospho.app",
+            detail="You need to request access to this feature to the phospho team. Please contact us at contact@phospho.ai",
         )
 
     SUPPORTED_MODELS = ["openai:gpt-4o"]

@@ -78,6 +78,6 @@ Once people have talked to your agent, go to your [phospho dashboard](https://pl
 
 We are a team of AI builders enabling observability for LLM-apps at any scale.
 
-Feel free to reach out to *contact@phospho.app* for technical questions, job opportunities, and anything else.
+Feel free to reach out to *contact@phospho.ai* for technical questions, job opportunities, and anything else.
 
 We are also on [Discord](https://discord.gg/wk4uBSnKyW). Come and chat with the community!
