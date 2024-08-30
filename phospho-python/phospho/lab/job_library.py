@@ -280,6 +280,12 @@ User: {truncated_context}
         message_list = message.as_list()
         # Filter to keep only the assistant messages
         message_list = [m for m in message_list if m.role.lower() == "assistant"]
+        if len(message_list) == 0:
+            return JobResult(
+                result_type=ResultType.bool,
+                value=False,
+                logs=["No assistant message in the interaction"],
+            )
         truncated_context = shorten_text(
             message_list[-1].content,
             MAX_TOKENS,
