@@ -72,61 +72,75 @@ const UsersDataviz = () => {
   );
   const userAverage = Math.round(userAverageData?.value * 100) / 100;
 
-  const { data: userJobTitlesData } = useSWR(
-    project_id
-      ? [
-          `/api/explore/${project_id}/aggregated/events`,
-          accessToken,
-          "category_distribution",
-          "User job title",
-        ]
-      : null,
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["category_distribution"],
-        filters: {
-          event_name: ["User job title"],
-        },
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const userJobTitles = userJobTitlesData?.category_distribution[
-    "User job title"
-  ] as JobTitles[] | null | undefined;
-  console.log("userJobTitlesData", userJobTitlesData);
+  const { data: userJobTitles }: { data: JobTitles[] | null | undefined } =
+    useSWR(
+      project_id
+        ? [
+            `/api/explore/${project_id}/aggregated/events`,
+            accessToken,
+            "category_distribution",
+            "User job title",
+          ]
+        : null,
+      ([url, accessToken]) =>
+        authFetcher(url, accessToken, "POST", {
+          metrics: ["category_distribution"],
+          filters: {
+            event_name: ["User job title"],
+          },
+        }).then((data) => {
+          const jobTitles = data?.category_distribution["User job title"];
+          if (!jobTitles) {
+            return null;
+          }
+          jobTitles.forEach((dataPoint: any, index: number) => {
+            dataPoint.fill = graphColors[index % graphColors.length];
+          });
+          return jobTitles;
+        }),
+      {
+        keepPreviousData: true,
+      },
+    );
 
-  const { data: userIndustryData } = useSWR(
-    project_id
-      ? [
-          `/api/explore/${project_id}/aggregated/events`,
-          accessToken,
-          "category_distribution",
-          "User industry",
-        ]
-      : null,
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["category_distribution"],
-        filters: {
-          event_name: ["User industry"],
-        },
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const userIndustry = userIndustryData?.category_distribution[
-    "User industry"
-  ] as Industry[] | null | undefined;
+  const { data: userIndustry }: { data: Industry[] | null | undefined } =
+    useSWR(
+      project_id
+        ? [
+            `/api/explore/${project_id}/aggregated/events`,
+            accessToken,
+            "category_distribution",
+            "User industry",
+          ]
+        : null,
+      ([url, accessToken]) =>
+        authFetcher(url, accessToken, "POST", {
+          metrics: ["category_distribution"],
+          filters: {
+            event_name: ["User industry"],
+          },
+        }).then((data) => {
+          const userIndustry = data?.category_distribution["User industry"];
+          if (!userIndustry) {
+            return null;
+          }
+          userIndustry.forEach((dataPoint: any, index: number) => {
+            dataPoint.fill = graphColors[index % graphColors.length];
+          });
+          return userIndustry;
+        }),
+      {
+        keepPreviousData: true,
+      },
+    );
+
   console.log("userIndustry", userIndustry);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
-          <p className="text-secondary font-semibold">{`${payload[0].name}`}</p>
+          <p className="text-secondary font-semibold">{payload[0].name}</p>
         </div>
       );
     }
@@ -138,27 +152,31 @@ const UsersDataviz = () => {
     <div>
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex flex-col justify-between">
-            <Card>
+          <div className="flex flex-col justify-between space-y-4">
+            <Card className="flex-grow">
               <CardHeader>
-                <CardDescription>Total Nb of users</CardDescription>
+                <CardDescription>Number of unique user_id</CardDescription>
               </CardHeader>
               <CardContent>
                 {((userCount === null || userCount === undefined) && (
                   <p>...</p>
-                )) || <p className="text-xl">{userCount}</p>}
+                )) || <p className="text-2xl font-extrabold">{userCount}</p>}
               </CardContent>
             </Card>
-            <Card>
+            <Card className="flex-grow">
               <CardHeader>
                 <CardDescription>
-                  Avg Nb user messages per users
+                  Average number of messages sent per user
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {((userAverage === null || userAverage === undefined) && (
                   <p>...</p>
-                )) || <p className="text-xl">{userAverage.toString()}</p>}
+                )) || (
+                  <p className="text-2xl font-extrabold">
+                    {userAverage.toString()}
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
