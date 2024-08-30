@@ -33,6 +33,7 @@ export function SelectOrgButton() {
 
   const handleValueChange = (newOrgId: string) => {
     console.log("Selected Org in selectbutton:", newOrgId);
+    setproject_id(null);
     setSelectedOrgId(newOrgId);
   };
 

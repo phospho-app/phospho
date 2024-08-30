@@ -4,6 +4,7 @@ import { DatePickerWithRange } from "@/components/date-range";
 import FilterComponent from "@/components/filters";
 import CreateEvent from "@/components/insights/events/create-event";
 import RunEvent from "@/components/insights/events/run-event";
+import RunAnalysisInPast from "@/components/run-analysis-past";
 import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -166,6 +167,7 @@ export function SessionsTable<TData, TValue>({
           <div className="flex flex-row space-x-2 items-center">
             <DatePickerWithRange />
             <FilterComponent variant="sessions" />
+            <RunAnalysisInPast />
           </div>
           <TableNavigation table={table} />
         </div>
