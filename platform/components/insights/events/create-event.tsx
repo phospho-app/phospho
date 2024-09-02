@@ -119,38 +119,69 @@ export default function CreateEvent({
           ScoreRangeType.confidence,
           ScoreRangeType.range,
         ]),
-        categories: z
-          .any()
-          .optional()
-          .transform((value, ctx) => {
-            // If array of string, return it
-            if (Array.isArray(value)) {
-              return value;
-            }
-            // If not a string, raise an error
-            if (typeof value !== "string") {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Categories must be a string.",
-              });
-              return z.NEVER;
-            }
-            // Split the string into an array of categories
-            let categories = value
-              .split(",")
-              .map((category) => category.trim());
-            // Remove empty strings
-            categories = categories.filter((category) => category !== "");
-            // Raise an error if there are less than 1 category or more than 9
-            if (categories.length < 1 || categories.length > 9) {
+        categories: z.any().transform((value, ctx) => {
+          console.log("Categories", value);
+          // If array of string, return it
+          if (Array.isArray(value)) {
+            value = value.filter((category) => category !== "");
+            if (value.length < 1 || value.length > 9) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: "Categories must be between 1 and 9.",
               });
               return z.NEVER;
             }
-            return categories;
-          }),
+            return value;
+          }
+          // If not a string, raise an error
+          if (typeof value !== "string") {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Categories must be a string.",
+            });
+            return z.NEVER;
+          }
+          // Split the string into an array of categories
+          let categories = value.split(",").map((category) => category.trim());
+          // Remove empty strings
+          categories = categories.filter((category) => category !== "");
+          return categories;
+        }),
+      })
+      .transform((value, ctx) => {
+        console.log("Score range settings value transform", value);
+        // Raise an error if there are less than 1 category or more than 9
+        if (value.score_type === ScoreRangeType.confidence) {
+          return {
+            score_type: ScoreRangeType.confidence,
+            min: 0,
+            max: 1,
+            categories: [],
+          };
+        }
+        if (value.score_type === ScoreRangeType.range) {
+          return {
+            score_type: ScoreRangeType.range,
+            min: 1,
+            max: 5,
+            categories: [],
+          };
+        }
+        if (value.score_type === ScoreRangeType.category) {
+          if (value.categories.length < 1 || value.categories.length > 9) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Categories must be between 1 and 9.",
+            });
+            return z.NEVER;
+          }
+          return {
+            score_type: ScoreRangeType.category,
+            min: 1,
+            max: value.categories.length,
+            categories: value.categories,
+          };
+        }
       })
       .optional(),
     is_last_task: z.boolean(),
@@ -227,27 +258,6 @@ export default function CreateEvent({
       delete selectedProject.settings.events[eventToEdit.event_name];
     }
 
-    // Set the score_range_settings.min and score_range_settings.max based on the score_type
-    let newScoreRangeSettings = {
-      ...values.score_range_settings,
-      min: null as number | null,
-      max: null as number | null,
-    };
-    if (newScoreRangeSettings) {
-      if (newScoreRangeSettings.score_type === ScoreRangeType.confidence) {
-        newScoreRangeSettings.min = 0;
-        newScoreRangeSettings.max = 1;
-      } else if (newScoreRangeSettings.score_type === ScoreRangeType.range) {
-        newScoreRangeSettings.min = 1;
-        newScoreRangeSettings.max = 5;
-      } else if (newScoreRangeSettings.score_type === ScoreRangeType.category) {
-        newScoreRangeSettings.min = 1;
-        // Use the length of the categories array as the max value
-        newScoreRangeSettings.max =
-          newScoreRangeSettings.categories?.length ?? 1;
-      }
-    }
-
     // On purpose, we do not pass the job_id, so a new job object will be created for this event
     selectedProject.settings.events[values.event_name] = {
       project_id: selectedProject.id,
@@ -262,7 +272,7 @@ export default function CreateEvent({
       detection_scope: values.detection_scope as DetectionScope,
       keywords: values.keywords,
       regex_pattern: values.regex_pattern,
-      score_range_settings: newScoreRangeSettings as ScoreRangeSettings,
+      score_range_settings: values.score_range_settings,
       is_last_task: values.is_last_task,
     };
     console.log("Updated selected project:", selectedProject);
@@ -291,8 +301,6 @@ export default function CreateEvent({
       });
     }
   }
-
-  console.log("formValues", form.getValues());
 
   return (
     <div className="space-y-2">
@@ -331,33 +339,42 @@ export default function CreateEvent({
                           "detection_scope",
                           eventDefinition.detection_scope,
                         );
-
                         form.setValue("keywords", eventDefinition.keywords);
                         form.setValue(
                           "regex_pattern",
                           eventDefinition.regex_pattern,
                         );
                         form.setValue("detection_engine", "llm_detection");
-
-                        if (eventDefinition.score_range_settings) {
-                          form.setValue("score_range_settings", {
-                            score_type:
-                              eventDefinition.score_range_settings.score_type,
-                            categories:
-                              eventDefinition.score_range_settings.categories ??
-                              [],
-                          });
-                        } else {
-                          form.setValue("score_range_settings", {
-                            score_type: ScoreRangeType.confidence,
-                            categories: [],
-                          });
-                        }
-
                         form.setValue(
                           "is_last_task",
                           eventDefinition.is_last_task ?? false,
                         );
+
+                        if (eventDefinition.score_range_settings) {
+                          const scoreRangeSettings = {
+                            score_type:
+                              eventDefinition.score_range_settings.score_type ??
+                              (ScoreRangeType.confidence as ScoreRangeType),
+                            min: eventDefinition.score_range_settings.min ?? 0,
+                            max: eventDefinition.score_range_settings.max ?? 1,
+                            categories:
+                              eventDefinition.score_range_settings.categories ??
+                              [],
+                          };
+
+                          form.setValue(
+                            "score_range_settings",
+                            scoreRangeSettings,
+                          );
+                        } else {
+                          form.setValue("score_range_settings", {
+                            score_type: ScoreRangeType.confidence,
+                            categories: [],
+                            min: 0,
+                            max: 1,
+                          });
+                        }
+
                         // Prevent the form from submitting
                         mouseEvent.preventDefault();
                       }}
