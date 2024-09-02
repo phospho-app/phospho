@@ -72,7 +72,7 @@ credentials_natural_language = os.getenv(
 )
 
 # Used to route the Google API requests in an NGINX queue
-NGINX_TUNNEL_URL = os.getenv("NGINX_TUNNEL_URL")
+GCP_SENTIMENT_CLIENT_URL = os.getenv("GCP_SENTIMENT_CLIENT_URL")
 
 GCP_SENTIMENT_CLIENT = None
 if credentials_natural_language is not None:
@@ -82,9 +82,10 @@ if credentials_natural_language is not None:
     credentials = service_account.Credentials.from_service_account_info(
         credentials_dict
     )
-    if NGINX_TUNNEL_URL is not None:
+    if GCP_SENTIMENT_CLIENT_URL is not None:
         GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(
-            credentials=credentials, client_options={"api_endpoint": NGINX_TUNNEL_URL}
+            credentials=credentials,
+            client_options={"api_endpoint": GCP_SENTIMENT_CLIENT_URL},
         )
     else:
         GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(
