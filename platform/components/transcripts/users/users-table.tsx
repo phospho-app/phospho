@@ -11,8 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { authFetcher } from "@/lib/fetcher";
 import { UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import {
   ColumnFiltersState,
   SortingState,
@@ -26,17 +28,25 @@ import {
 import { FilterX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
+import useSWR from "swr";
 
 import { getColumns } from "./users-table-columns";
 
-interface DataTableProps<TData, TValue> {
-  usersMetadata: UserMetadata[];
-}
+interface DataTableProps<TData, TValue> {}
 
-export function UsersTable<TData, TValue>({
-  usersMetadata,
-}: DataTableProps<TData, TValue>) {
+export function UsersTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
   const project_id = navigationStateStore((state) => state.project_id);
+  const { accessToken } = useUser();
+
+  // Fetch all users
+  const { data: usersData } = useSWR(
+    project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const usersMetadata = usersData?.users;
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [filters, setFilters] = React.useState<ColumnFiltersState>([]);

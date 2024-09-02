@@ -5,7 +5,7 @@ Explore metrics service
 import datetime
 import math
 from collections import defaultdict
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 from sklearn.metrics import (
     f1_score,
     mean_squared_error,
@@ -1957,6 +1957,12 @@ async def get_y_pred_y_true(
 
     first_event = Event.model_validate(query_result[0])
     logger.debug(f"First event: {first_event.event_name}")
+    if (
+        first_event.event_definition is None
+        or first_event.event_definition.score_range_settings is None
+    ):
+        logger.info("No score range settings found")
+        return None, None
     event_type = first_event.event_definition.score_range_settings.score_type
     logger.debug(f"Event type: {event_type}")
 
@@ -2098,6 +2104,75 @@ async def get_y_pred_y_true(
     return y_pred, y_true
 
 
+async def get_category_distribution(
+    project_id: str,
+    filters: ProjectDataFilters,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Filter the events to keep only the ones that are category events.
+
+    Find the distribution of the categories.
+    """
+    db = await get_mongo_db()
+    logger.debug(f"Filters: {filters}")
+    main_filter: Dict[str, object] = {
+        "project_id": project_id,
+        "removed": {"$ne": True},
+        # "event_definition.event_name": {"$in": filters.event_name},
+        # "event_definition.id": {"$in": filters.event_id},
+    }
+    if filters.event_id is not None:
+        main_filter["event_definition.id"] = {"$in": filters.event_id}
+    if filters.event_name is not None:
+        main_filter["event_definition.event_name"] = {"$in": filters.event_name}
+    # Time range filter
+    if filters.created_at_start is not None:
+        main_filter["created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
+        main_filter["created_at"] = {"$lte": filters.created_at_end}
+
+    # Filter by event type
+    main_filter["event_definition.score_range_settings.score_type"] = "category"
+
+    pipeline = [
+        {"$match": main_filter},
+        {
+            "$group": {
+                "_id": {
+                    # Group by event name and category
+                    "event_name": "$event_definition.event_name",
+                    "category": "$score_range.label",
+                },
+                "count": {"$sum": 1},
+            }
+        },
+        {
+            "$project": {
+                "category": "$_id.category",
+                "count": 1,
+                "event_name": "$_id.event_name",
+            }
+        },
+    ]
+
+    logger.info(f"Pipeline: {pipeline}")
+
+    result = await db["events"].aggregate(pipeline).to_list(length=None)
+    if result is None or len(result) == 0:
+        logger.debug("Event category distribution is empty")
+        return {}
+
+    # Format the results : {event_name: [{category, count}]}
+    output: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for item in result:
+        event_name = item["event_name"]
+        category = item["category"]
+        count = item["count"]
+        output[event_name].append({"category": category, "count": count})
+
+    return output
+
+
 async def get_events_aggregated_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
@@ -2118,6 +2193,11 @@ async def get_events_aggregated_metrics(
         output["total_nb_events"] = await get_total_nb_of_detections(
             project_id=project_id, filters=filters
         )
+    if "category_distribution" in metrics:
+        logger.info("Getting category distribution")
+        output["category_distribution"] = await get_category_distribution(
+            project_id=project_id, filters=filters
+        )
 
     # Some metrics require y_pred and y_true
     performance_metrics = [
@@ -2130,39 +2210,41 @@ async def get_events_aggregated_metrics(
         "precision_multiclass",
         "recall_multiclass",
     ]
-    if filters.event_id is not None:
-        if len(set(metrics).intersection(set(performance_metrics))) > 0:
-            y_pred, y_true = await get_y_pred_y_true(
-                project_id=project_id,
-                filters=filters,
-            )
-            if y_pred is not None and y_true is not None:
-                if "mean_squared_error" in metrics:
-                    output["mean_squared_error"] = mean_squared_error(y_true, y_pred)
-                if "r_squared" in metrics:
-                    output["r_squared"] = r2_score(y_true, y_pred)
-                if "f1_score_binary" in metrics:
-                    output["f1_score_binary"] = f1_score(y_true, y_pred)
-                if "precision_binary" in metrics:
-                    output["precision_binary"] = precision_score(y_true, y_pred)
-                if "recall_binary" in metrics:
-                    output["recall_binary"] = recall_score(y_true, y_pred)
-                if "f1_score_multiclass" in metrics:
-                    output["f1_score_multiclass"] = f1_score(
-                        y_true, y_pred, average="weighted"
-                    )
-                if "precision_multiclass" in metrics:
-                    output["precision_multiclass"] = precision_score(
-                        y_true, y_pred, average="weighted"
-                    )
-                if "recall_multiclass" in metrics:
-                    output["recall_multiclass"] = recall_score(
-                        y_true, y_pred, average="weighted"
-                    )
-            else:
-                logger.info(f"No y_pred and y_true found for event {filters.event_id}")
-    else:
-        logger.error(f"Event ID is required to compute performance metrics: {metrics}")
+    intersection_metrics = list(set(metrics).intersection(set(performance_metrics)))
+    if filters.event_id is not None and len(intersection_metrics) > 0:
+        y_pred, y_true = await get_y_pred_y_true(
+            project_id=project_id,
+            filters=filters,
+        )
+        if y_pred is not None and y_true is not None:
+            if "mean_squared_error" in metrics:
+                output["mean_squared_error"] = mean_squared_error(y_true, y_pred)
+            if "r_squared" in metrics:
+                output["r_squared"] = r2_score(y_true, y_pred)
+            if "f1_score_binary" in metrics:
+                output["f1_score_binary"] = f1_score(y_true, y_pred)
+            if "precision_binary" in metrics:
+                output["precision_binary"] = precision_score(y_true, y_pred)
+            if "recall_binary" in metrics:
+                output["recall_binary"] = recall_score(y_true, y_pred)
+            if "f1_score_multiclass" in metrics:
+                output["f1_score_multiclass"] = f1_score(
+                    y_true, y_pred, average="weighted"
+                )
+            if "precision_multiclass" in metrics:
+                output["precision_multiclass"] = precision_score(
+                    y_true, y_pred, average="weighted"
+                )
+            if "recall_multiclass" in metrics:
+                output["recall_multiclass"] = recall_score(
+                    y_true, y_pred, average="weighted"
+                )
+        else:
+            logger.info(f"No y_pred and y_true found for event {filters.event_id}")
+    elif filters.event_id is None and len(intersection_metrics) > 0:
+        logger.error(
+            f"Event ID is required to compute performance metrics: {intersection_metrics}"
+        )
 
     logger.debug(output)
     return output

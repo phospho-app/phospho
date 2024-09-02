@@ -1,9 +1,12 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
 import React from "react";
-
-import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
 
 const TopRowKpis = ({
   name,
