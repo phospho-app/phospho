@@ -42,7 +42,8 @@ async def call_sentiment_and_language_api(
         encoding_type = language_v2.EncodingType.UTF8
 
         response = GCP_SENTIMENT_CLIENT.analyze_sentiment(
-            request={"document": document, "encoding_type": encoding_type}
+            request={"document": document, "encoding_type": encoding_type},
+            timeout=10,
         )
 
         logger.debug(f"Sentiment response: {response}")
