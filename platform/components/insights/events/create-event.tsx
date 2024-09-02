@@ -335,6 +335,7 @@ export default function CreateEvent({
                         form.setValue("detection_engine", "llm_detection");
 
                         if (eventDefinition.score_range_settings) {
+                          console.log("Setting score range settings");
                           form.setValue("score_range_settings", {
                             min: eventDefinition.score_range_settings.min,
                             max: eventDefinition.score_range_settings.max,
@@ -486,6 +487,7 @@ export default function CreateEvent({
                       <FormLabel>Output type</FormLabel>
                       <FormControl>
                         <Select
+                          value={field.value?.score_type ?? "confidence"}
                           onValueChange={(value) => {
                             if (value === "confidence") {
                               field.onChange({
