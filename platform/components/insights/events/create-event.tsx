@@ -114,9 +114,11 @@ export default function CreateEvent({
     regex_pattern: z.string().optional(),
     score_range_settings: z
       .object({
-        min: z.number().min(0).max(1),
-        max: z.number().min(1).max(5),
-        score_type: z.enum(["confidence", "range", "category"]),
+        score_type: z.enum([
+          ScoreRangeType.category,
+          ScoreRangeType.confidence,
+          ScoreRangeType.range,
+        ]),
         categories: z
           .any()
           .optional()
@@ -155,7 +157,7 @@ export default function CreateEvent({
   });
 
   let defaultScoreRangeSettings = {
-    score_type: "confidence",
+    score_type: ScoreRangeType.confidence,
     min: 0,
     max: 1,
     categories: [],
@@ -164,7 +166,7 @@ export default function CreateEvent({
   if (eventToEdit?.score_range_settings) {
     defaultScoreRangeSettings = eventToEdit.score_range_settings;
   } else {
-    if (defaultEventCategory === "confidence") {
+    if (defaultEventCategory === ScoreRangeType.confidence) {
       defaultScoreRangeSettings = {
         score_type: ScoreRangeType.confidence,
         min: 0,
@@ -172,7 +174,7 @@ export default function CreateEvent({
         categories: [],
       };
     }
-    if (defaultEventCategory === "range") {
+    if (defaultEventCategory === ScoreRangeType.range) {
       defaultScoreRangeSettings = {
         score_type: ScoreRangeType.range,
         min: 1,
@@ -180,7 +182,7 @@ export default function CreateEvent({
         categories: [],
       };
     }
-    if (defaultEventCategory === "category") {
+    if (defaultEventCategory === ScoreRangeType.category) {
       defaultScoreRangeSettings = {
         score_type: ScoreRangeType.category,
         min: 1,
@@ -225,6 +227,27 @@ export default function CreateEvent({
       delete selectedProject.settings.events[eventToEdit.event_name];
     }
 
+    // Set the score_range_settings.min and score_range_settings.max based on the score_type
+    let newScoreRangeSettings = {
+      ...values.score_range_settings,
+      min: null as number | null,
+      max: null as number | null,
+    };
+    if (newScoreRangeSettings) {
+      if (newScoreRangeSettings.score_type === ScoreRangeType.confidence) {
+        newScoreRangeSettings.min = 0;
+        newScoreRangeSettings.max = 1;
+      } else if (newScoreRangeSettings.score_type === ScoreRangeType.range) {
+        newScoreRangeSettings.min = 1;
+        newScoreRangeSettings.max = 5;
+      } else if (newScoreRangeSettings.score_type === ScoreRangeType.category) {
+        newScoreRangeSettings.min = 1;
+        // Use the length of the categories array as the max value
+        newScoreRangeSettings.max =
+          newScoreRangeSettings.categories?.length ?? 1;
+      }
+    }
+
     // On purpose, we do not pass the job_id, so a new job object will be created for this event
     selectedProject.settings.events[values.event_name] = {
       project_id: selectedProject.id,
@@ -239,7 +262,7 @@ export default function CreateEvent({
       detection_scope: values.detection_scope as DetectionScope,
       keywords: values.keywords,
       regex_pattern: values.regex_pattern,
-      score_range_settings: values.score_range_settings as ScoreRangeSettings,
+      score_range_settings: newScoreRangeSettings as ScoreRangeSettings,
       is_last_task: values.is_last_task,
     };
     console.log("Updated selected project:", selectedProject);
@@ -269,6 +292,8 @@ export default function CreateEvent({
     }
   }
 
+  console.log("formValues", form.getValues());
+
   return (
     <div className="space-y-2">
       <Form {...form}>
@@ -288,22 +313,6 @@ export default function CreateEvent({
           <div>
             <h2 className="text-muted-foreground text-xs mb-1">Templates</h2>
             <div className="flex flex-wrap">
-              {/* <Button
-                onClick={(mouseEvent) => {
-                  mouseEvent.stopPropagation();
-                  form.setValue("event_name", "Penetration testing");
-                  form.setValue(
-                    "description",
-                    "The user is trying to jailbreak the assistant. Example: asking to ignore any previous instruction, asking malicious questions, etc.",
-                  );
-                  form.setValue("detection_scope", "task");
-                  form.setValue("detection_engine", "llm_detection");
-                  // Prevent the form from submitting
-                  mouseEvent.preventDefault();
-                }}
-              >
-                Penetration testing
-              </Button> */}
               {eventsTemplate.map((eventDefinition) => {
                 return (
                   <>
@@ -313,10 +322,6 @@ export default function CreateEvent({
                       className="text-xs m-0.5"
                       onClick={(mouseEvent) => {
                         mouseEvent.stopPropagation();
-                        console.log(
-                          "Setting event definition:",
-                          eventDefinition,
-                        );
                         form.setValue("event_name", eventDefinition.event_name);
                         form.setValue(
                           "description",
@@ -335,10 +340,7 @@ export default function CreateEvent({
                         form.setValue("detection_engine", "llm_detection");
 
                         if (eventDefinition.score_range_settings) {
-                          console.log("Setting score range settings");
                           form.setValue("score_range_settings", {
-                            min: eventDefinition.score_range_settings.min,
-                            max: eventDefinition.score_range_settings.max,
                             score_type:
                               eventDefinition.score_range_settings.score_type,
                             categories:
@@ -347,9 +349,7 @@ export default function CreateEvent({
                           });
                         } else {
                           form.setValue("score_range_settings", {
-                            min: 0,
-                            max: 1,
-                            score_type: "confidence",
+                            score_type: ScoreRangeType.confidence,
                             categories: [],
                           });
                         }
@@ -447,6 +447,7 @@ export default function CreateEvent({
                 <FormItem>
                   <FormLabel>Engine</FormLabel>
                   <Select
+                    value={field.value ?? "llm_detection"}
                     onValueChange={field.onChange}
                     defaultValue={field.value ?? "llm_detection"}
                   >
@@ -487,53 +488,61 @@ export default function CreateEvent({
                       <FormLabel>Output type</FormLabel>
                       <FormControl>
                         <Select
-                          value={field.value?.score_type ?? "confidence"}
+                          value={
+                            field.value?.score_type ?? ScoreRangeType.confidence
+                          }
                           onValueChange={(value) => {
-                            if (value === "confidence") {
+                            if (value === ScoreRangeType.confidence) {
                               field.onChange({
-                                score_type: "confidence",
+                                score_type: ScoreRangeType.confidence,
                                 min: 0,
                                 max: 1,
-                                categories: [],
+                                categories: "",
                               });
-                            } else if (value === "range") {
+                            } else if (value === ScoreRangeType.range) {
                               field.onChange({
                                 score_type: "range",
                                 min: 1,
                                 max: 5,
-                                categories: [],
+                                categories: "",
                               });
-                            } else if (value === "category") {
+                            } else if (value === ScoreRangeType.category) {
                               field.onChange({
                                 score_type: "category",
                                 min: 1,
                                 max: 1,
-                                categories: "",
+                                categories:
+                                  form.getValues().score_range_settings
+                                    ?.categories ?? [],
                               });
                             }
                           }}
-                          defaultValue={field.value?.score_type ?? "confidence"}
+                          defaultValue={
+                            field.value?.score_type ?? ScoreRangeType.confidence
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue
                               defaultValue={
-                                field.value?.score_type ?? "confidence"
+                                field.value?.score_type ??
+                                ScoreRangeType.confidence
                               }
                             />
                           </SelectTrigger>
                           <SelectContent position="popper">
-                            <SelectItem value="confidence">
+                            <SelectItem value={ScoreRangeType.confidence}>
                               Yes/No (boolean)
                             </SelectItem>
-                            <SelectItem value="range">
+                            <SelectItem value={ScoreRangeType.range}>
                               1-5 score (number)
                             </SelectItem>
-                            <SelectItem value="category">
+                            <SelectItem value={ScoreRangeType.category}>
                               Category (enum)
                             </SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -548,7 +557,22 @@ export default function CreateEvent({
                     <FormItem>
                       <FormLabel>Categories</FormLabel>
                       <FormControl>
-                        <Input placeholder="happy,sad,neutral" {...field} />
+                        <Input
+                          placeholder="happy,sad,neutral"
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange({
+                              target: { value: value.split(",") },
+                            });
+                            // update the score_range_settings object
+                            console.log(
+                              "Setting categories to",
+                              value.split(","),
+                            );
+                            form.resetField("score_range_settings.score_type");
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -663,18 +687,7 @@ export default function CreateEvent({
             </Accordion>
           </div>
           <SheetFooter>
-            <Button
-              type="submit"
-              disabled={
-                loading ||
-                // !form.formState.isValid ||
-                // too many events
-                (!eventToEdit &&
-                  currentEvents &&
-                  max_nb_events &&
-                  current_nb_events + 1 >= max_nb_events)
-              }
-            >
+            <Button type="submit" disabled={loading}>
               {!eventToEdit && <div>Add event</div>}
               {eventToEdit && <div>Save edits</div>}
             </Button>
