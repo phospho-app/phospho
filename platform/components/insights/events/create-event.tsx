@@ -119,36 +119,35 @@ export default function CreateEvent({
           ScoreRangeType.confidence,
           ScoreRangeType.range,
         ]),
-        categories: z.any().transform((value, ctx) => {
-          console.log("Categories", value);
-          // If array of string, return it
-          if (Array.isArray(value)) {
-            value = value.filter((category) => category !== "");
-            if (value.length < 1 || value.length > 9) {
+        categories: z
+          .any()
+          .transform((value, ctx) => {
+            console.log("Categories", value);
+            // If array of string, return it
+            if (Array.isArray(value)) {
+              value = value.filter((category) => category !== "");
+              return value;
+            }
+            // If not a string, raise an error
+            if (typeof value !== "string") {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: "Categories must be between 1 and 9.",
+                message: "Categories must be a string.",
               });
               return z.NEVER;
             }
-            return value;
-          }
-          // If not a string, raise an error
-          if (typeof value !== "string") {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Categories must be a string.",
-            });
-            return z.NEVER;
-          }
-          // Split the string into an array of categories
-          let categories = value.split(",").map((category) => category.trim());
-          // Remove empty strings
-          categories = categories.filter((category) => category !== "");
-          return categories;
-        }),
+            // Split the string into an array of categories
+            let categories = value
+              .split(",")
+              .map((category) => category.trim());
+            // Remove empty strings
+            categories = categories.filter((category) => category !== "");
+            return categories;
+          })
+          .optional(),
       })
       .transform((value, ctx) => {
+        console.log("context", ctx);
         console.log("Score range settings value transform", value);
         // Raise an error if there are less than 1 category or more than 9
         if (value.score_type === ScoreRangeType.confidence) {
@@ -302,6 +301,9 @@ export default function CreateEvent({
     }
   }
 
+  console.log("Form errors", form.formState.errors);
+  console.log("Form values", form.getValues());
+
   return (
     <div className="space-y-2">
       <Form {...form}>
@@ -361,7 +363,6 @@ export default function CreateEvent({
                               eventDefinition.score_range_settings.categories ??
                               [],
                           };
-
                           form.setValue(
                             "score_range_settings",
                             scoreRangeSettings,
@@ -559,7 +560,6 @@ export default function CreateEvent({
                           </SelectContent>
                         </Select>
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -596,6 +596,15 @@ export default function CreateEvent({
                   )}
                 />
               )}
+            {form.watch("detection_engine") === "llm_detection" && (
+              // This is used to display the right error message when the user selects a category score type
+              <FormField
+                control={form.control}
+                // @ts-ignore Renders the error message for the score_range_settings object
+                name="score_range_settings.root"
+                render={({ field }) => <FormMessage />}
+              />
+            )}
             {form.watch("detection_engine") === "keyword_detection" && (
               <FormField
                 control={form.control}
