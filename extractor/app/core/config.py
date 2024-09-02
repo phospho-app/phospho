@@ -8,6 +8,7 @@ from base64 import b64decode
 
 from dotenv import load_dotenv
 from google.cloud import language_v2
+from google.api_core.client_options import ClientOptions
 from google.oauth2 import service_account
 from loguru import logger
 
@@ -85,7 +86,7 @@ if credentials_natural_language is not None:
     if GCP_SENTIMENT_CLIENT_URL is not None:
         GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(
             credentials=credentials,
-            client_options={"api_endpoint": GCP_SENTIMENT_CLIENT_URL},
+            client_options=ClientOptions(api_endpoint=GCP_SENTIMENT_CLIENT_URL),
         )
     else:
         GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(
