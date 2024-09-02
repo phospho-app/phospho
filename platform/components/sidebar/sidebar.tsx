@@ -243,16 +243,16 @@ export function Sidebar() {
           )}
           <WhiteSpaceSeparator />
           <SideBarElement
+            href="/org/insights/clusters"
+            icon={<Boxes size={16} className="mr-2" />}
+          >
+            Clustering
+          </SideBarElement>
+          <SideBarElement
             href="/org/insights/events"
             icon={<TextSearch size={16} className="mr-2" />}
           >
             Analytics
-          </SideBarElement>
-          <SideBarElement
-            href="/org/insights/clusters"
-            icon={<Boxes size={16} className="mr-2" />}
-          >
-            Clusters
           </SideBarElement>
           <SideBarElement
             href="/org/ab-testing"
