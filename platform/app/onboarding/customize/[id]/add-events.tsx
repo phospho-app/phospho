@@ -263,7 +263,7 @@ export default function AddEvents({
                 router.push(redirectTo);
                 toast({
                   title: "Your config has been saved! 🎉",
-                  description: `Change the config in Analytics`,
+                  description: `Change it later in Analytics`,
                 });
               });
             }}
