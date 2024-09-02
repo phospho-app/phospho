@@ -84,11 +84,13 @@ if credentials_natural_language is not None:
         credentials_dict
     )
     if GCP_SENTIMENT_CLIENT_URL is not None:
+        logger.info(f"Using GCP_SENTIMENT_CLIENT_URL: {GCP_SENTIMENT_CLIENT_URL}")
         GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(
             credentials=credentials,
             client_options=ClientOptions(api_endpoint=GCP_SENTIMENT_CLIENT_URL),
         )
     else:
+        logger.info("Using default GCP_SENTIMENT_CLIENT_URL")
         GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(
             credentials=credentials
         )
