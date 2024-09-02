@@ -45,6 +45,8 @@ async def call_sentiment_and_language_api(
             request={"document": document, "encoding_type": encoding_type}
         )
 
+        logger.debug(f"Sentiment response: {response}")
+
         sentiment_response = SentimentObject(
             score=response.document_sentiment.score,
             magnitude=response.document_sentiment.magnitude,
