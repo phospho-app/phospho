@@ -31,6 +31,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { set } from "date-fns";
 import { ChevronRight, Pencil, Sparkles, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -68,7 +69,8 @@ function EventRow({
   handleDeleteEvent: (eventNameToDelete: string) => void;
   handleOnClick: (eventName: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
   const [tableIsClickable, setTableIsClickable] = useState(true);
   const [sheetToOpen, setSheetToOpen] = useState<string | null>(null);
 
@@ -94,11 +96,15 @@ function EventRow({
       <TableCell className="text-right">
         <div className="flex flex-row items-center justify-end">
           <Sheet
-            open={open}
-            onOpenChange={setOpen}
+            open={sheetOpen}
+            onOpenChange={setSheetOpen}
             key={`${eventDefinition.event_name}_edit`}
           >
-            <AlertDialog>
+            <AlertDialog
+              open={alertOpen}
+              onOpenChange={setAlertOpen}
+              key={`${eventDefinition.event_name}_delete`}
+            >
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
@@ -123,17 +129,6 @@ function EventRow({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {/* <SheetTrigger asChild>
-                    <DropdownMenuItem
-                      onClick={(mouseEvent) => {
-                        mouseEvent.stopPropagation();
-                        setSheetToOpen("run");
-                      }}
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Detect
-                    </DropdownMenuItem>
-                  </SheetTrigger> */}
                   <SheetTrigger asChild>
                     <DropdownMenuItem
                       onClick={(mouseEvent) => {
@@ -145,30 +140,31 @@ function EventRow({
                       Edit
                     </DropdownMenuItem>
                   </SheetTrigger>
-                  <DropdownMenuItem
-                    className=" text-red-500"
-                    onClick={(mouseEvent) => {
-                      mouseEvent.stopPropagation();
-                    }}
-                  >
-                    <AlertDialogTrigger>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      className=" text-red-500"
+                      onClick={(mouseEvent) => {
+                        mouseEvent.stopPropagation();
+                        setAlertOpen(true);
+                      }}
+                    >
                       <div className="flex flex-row items-center">
                         <Trash className="w-4 h-4 mr-2" />
                         Delete
                       </div>
-                    </AlertDialogTrigger>
-                  </DropdownMenuItem>
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
                 </DropdownMenuContent>
               </DropdownMenu>
               <AlertDialogContent className="md:w-1/3">
                 <AlertDialogTitle>
-                  Are you sure you want to delete the event "
-                  {eventDefinition.event_name}"?
+                  Are you sure you want to delete "{eventDefinition.event_name}
+                  "?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   <div>
-                    This will delete <span className="font-bold">all</span>{" "}
-                    previous detections of this event.
+                    This will delete{" "}
+                    <span className="font-bold">all previous detections.</span>
                   </div>
                   <div>This action cannot be undone.</div>
                 </AlertDialogDescription>
@@ -176,45 +172,47 @@ function EventRow({
                   onClick={(mouseEvent) => {
                     mouseEvent.stopPropagation();
                     handleDeleteEvent(eventDefinition.event_name);
+                    setAlertOpen(false);
                   }}
                 >
-                  Delete event and all previous detections
+                  Delete event definition and all previous detections
                 </AlertDialogAction>
                 <AlertDialogCancel
                   onClick={(mouseEvent) => {
                     mouseEvent.stopPropagation();
+                    setAlertOpen(false);
                   }}
                 >
                   Cancel
                 </AlertDialogCancel>
               </AlertDialogContent>
+              <SheetContent
+                className="md:w-1/2 overflow-auto"
+                onOpenAutoFocus={(mouseEvent) => {
+                  mouseEvent.stopPropagation();
+                  setTableIsClickable(false);
+                }}
+                onCloseAutoFocus={(mouseEvent) => {
+                  mouseEvent.stopPropagation();
+                  setTableIsClickable(true);
+                }}
+              >
+                {sheetToOpen === "run" && (
+                  <RunEvent
+                    setOpen={setSheetOpen}
+                    eventToRun={eventDefinition}
+                    key={eventDefinition.id}
+                  />
+                )}
+                {sheetToOpen === "edit" && (
+                  <CreateEvent
+                    setOpen={setSheetOpen}
+                    eventToEdit={eventDefinition}
+                    key={eventDefinition.id}
+                  />
+                )}
+              </SheetContent>
             </AlertDialog>
-            <SheetContent
-              className="md:w-1/2 overflow-auto"
-              onOpenAutoFocus={(mouseEvent) => {
-                mouseEvent.stopPropagation();
-                setTableIsClickable(false);
-              }}
-              onCloseAutoFocus={(mouseEvent) => {
-                mouseEvent.stopPropagation();
-                setTableIsClickable(true);
-              }}
-            >
-              {sheetToOpen === "run" && (
-                <RunEvent
-                  setOpen={setOpen}
-                  eventToRun={eventDefinition}
-                  key={eventDefinition.id}
-                />
-              )}
-              {sheetToOpen === "edit" && (
-                <CreateEvent
-                  setOpen={setOpen}
-                  eventToEdit={eventDefinition}
-                  key={eventDefinition.id}
-                />
-              )}
-            </SheetContent>
           </Sheet>
         </div>
       </TableCell>
