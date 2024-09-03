@@ -54,6 +54,7 @@
     "next-themes": "^0.2.1",
     "node-fetch": "^3.3.2",
     "phospho": "^1.2.2",
+    "plotly.js": "^2.35.0",
     "postcss": ">=8.4.31",
     "posthog-js": "^1.111.0",
     "prettier-plugin-sort-imports": "^1.8.5",
