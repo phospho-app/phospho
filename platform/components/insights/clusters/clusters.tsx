@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
@@ -16,11 +17,73 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { ClustersCards } from "./clusters-cards";
+import { ClusteringDropDown } from "./clusters-drop-down";
+import { CustomPlot } from "./clusters-plot";
 
 const Clusters: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
-
+  const { accessToken } = useUser();
   const [sheetClusterOpen, setSheetClusterOpen] = useState(false);
+  const [selectedClustering, setSelectedClustering] = useState<
+    Clustering | undefined
+  >(undefined);
+
+  const { data: clusterings } = useSWR(
+    project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST").then((res) => {
+        const clusterings = (res?.clusterings as Clustering[]) ?? [];
+        console.log("clusterings1", clusterings);
+        return clusterings.sort(
+          (a: Clustering, b: Clustering) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+
+  let selectedClusteringName = selectedClustering?.name;
+  if (selectedClustering && !selectedClusteringName) {
+    selectedClusteringName = formatUnixTimestampToLiteralDatetime(
+      selectedClustering.created_at,
+    );
+  }
+
+  useEffect(() => {
+    setSelectedClustering(undefined);
+  }, [project_id]);
+
+  useEffect(() => {
+    if (clusterings === undefined) {
+      setSelectedClustering(undefined);
+      return;
+    }
+    const latestClustering = clusterings[0];
+    setSelectedClustering(latestClustering);
+  }, [JSON.stringify(clusterings), project_id]);
+
+  // Add a useEffect triggered every few seconds to update the clustering status
+  useEffect(() => {
+    if (selectedClustering && selectedClustering?.status !== "completed") {
+      const interval = setInterval(async () => {
+        console.log("refreshing clustering status");
+        // Use the fetch function to update the clustering status
+        const response = await authFetcher(
+          `/api/explore/${project_id}/clusterings/${selectedClustering?.id}`,
+          accessToken,
+          "POST",
+        );
+        // Update the selectedClustering with the new status
+        setSelectedClustering({
+          ...selectedClustering,
+          ...response,
+        });
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedClustering]);
 
   if (!project_id) {
     return <></>;
@@ -49,8 +112,51 @@ const Clusters: React.FC = () => {
           </div>
         </CardHeader>
       </Card>
-      <div className="flex-col space-y-2 md:flex pb-10">
-        <ClustersCards setSheetClusterOpen={setSheetClusterOpen} />
+      <div>
+        <ClusteringDropDown
+          selectedClustering={selectedClustering}
+          setSelectedClustering={setSelectedClustering}
+          clusterings={clusterings}
+          selectedClusteringName={selectedClusteringName}
+        />
+
+        <div className="flex-col space-y-2 md:flex pb-10">
+          {!selectedClustering && (
+            <div className="w-full text-muted-foreground flex justify-center text-sm h-20">
+              Run a clustering to see clusters here.
+            </div>
+          )}
+          {selectedClustering?.status !== "completed" && selectedClustering && (
+            <div className="w-full flex flex-col items-center">
+              {selectedClustering?.percent_of_completion && (
+                <Progress
+                  value={selectedClustering.percent_of_completion}
+                  className="w-[30%] transition-all duration-500 ease-in-out mb-4 h-4"
+                />
+              )}
+              {selectedClustering?.status === "started" && (
+                <div className="text-muted-foreground text-sm h-20">
+                  Computing embeddings...
+                </div>
+              )}
+              {selectedClustering?.status === "summaries" && (
+                <div className="text-muted-foreground text-sm h-20">
+                  Generating summaries...
+                </div>
+              )}
+            </div>
+          )}
+          {selectedClustering !== undefined && selectedClustering !== null && (
+            <CustomPlot
+              selected_clustering_id={selectedClustering.id}
+              selectedClustering={selectedClustering}
+            />
+          )}
+          <ClustersCards
+            setSheetClusterOpen={setSheetClusterOpen}
+            selectedClustering={selectedClustering}
+          />
+        </div>
       </div>
     </>
   );

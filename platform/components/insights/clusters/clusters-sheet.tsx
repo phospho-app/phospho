@@ -39,6 +39,7 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import UpgradeButton from "@/components/upgrade-button";
 import { authFetcher } from "@/lib/fetcher";
+import { Clustering } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,7 +50,7 @@ import { ChevronRight, Sparkles, TestTubeDiagonal } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import * as z from "zod";
 
 const RunClusters = ({
@@ -65,11 +66,12 @@ const RunClusters = ({
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
 
   const { accessToken } = useUser();
+  const { mutate } = useSWRConfig();
 
   const [clusteringCost, setClusteringCost] = useState(0);
   const [nbElements, setNbElements] = useState(0);
-  const [loading, setLoading] = React.useState(false);
-  const [update, setUpdate] = React.useState(false);
+  const [loading, setLoading] = useState(false);
+  const [update, setUpdate] = useState(false);
 
   let defaultNbClusters = 0;
 
@@ -191,27 +193,33 @@ const RunClusters = ({
       totalNbSessions >= 5);
 
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
-    console.log("Instructions: ", formData.instruction);
     setLoading(true);
     // TODO: Update the list of clusterings to include the new one
+    const newClustering = {
+      id: "",
+      clustering_id: "",
+      project_id: project_id || "", // Should not be ""
+      org_id: "",
+      created_at: Date.now() / 1000,
+      status: "started",
+      clusters_ids: [],
+      scope: formData.scope,
+      instruction: formData.instruction,
+    };
+    console.log("newClustering: ", newClustering);
+    mutate(
+      project_id
+        ? [
+            `/api/explore/${project_id}/clusterings`,
+            accessToken,
+            "cluster-cards",
+          ]
+        : null,
+      (data: any) => {
+        return [newClustering, ...(data ?? [])] as Clustering[];
+      },
+    );
 
-    /*mutateClusterings((clusteringData: any) => {
-      const newClustering: Clustering = {
-        id: "",
-        clustering_id: "",
-        project_id: project_id || "", // Should not be ""
-        org_id: "",
-        created_at: Date.now() / 1000,
-        status: "started",
-        clusters_ids: [],
-        scope: formData.scope,
-        instruction: formData.instruction,
-      };
-      const newData = {
-        clusterings: [newClustering, ...clusteringData?.clusterings],
-      };
-      return newData;
-    });*/
     try {
       await fetch(`/api/explore/${project_id}/detect-clusters`, {
         method: "POST",
