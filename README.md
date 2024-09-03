@@ -1,4 +1,4 @@
-# phospho: your one click backoffice for LLM apps
+# phospho: the LLM app backoffice for busy builders
 
 <div align="center">
 <img src="./platform/public/image/phospho-banner.png" alt="phospho logo">
@@ -9,7 +9,7 @@
 <a href="https://discord.gg/m8wzBGQA55" target="_blank"><img src="https://img.shields.io/badge/Join%20our%20community-Discord-blue"></a>
 </div>
 
-Phospho is the one click backoffice for LLM apps. Detect issues and extract insights from your app's text messages. Gather user feedback and measure success. Create the best conversational experience for your users.
+Phospho is the backoffice for your LLM apps. Detect issues and extract insights from your app's text messages. Gather user feedback and measure success. Create the best conversational experience for your users.
 
 Ship your LLM app in production with confidence, and focus on user insights to iterate.
 
@@ -70,7 +70,7 @@ Quickly import, analyze and label data on the [phospho platform](https://phospho
 
 Want to get the hosted version of phospho as a white label platform?
 
-Contact us [here](mailto:contact@phospho.ai?subject=[GitHub]%20phospho%20white%label) to get your own backoffice for your llm apps.
+Contact us [here](mailto:contact@phospho.ai?subject=[GitHub]%20phospho%20white%label) to get your own white label backoffice for your llm apps.
 
 ## License
 
