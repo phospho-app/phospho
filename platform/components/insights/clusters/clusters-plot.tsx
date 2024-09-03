@@ -183,7 +183,6 @@ export function CustomPlot({
         plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
       }}
       onClick={(data) => {
-        // if double click, redirect to the task page
         if (data.points.length !== 1) {
           return;
         }

@@ -194,35 +194,6 @@ const RunClusters = ({
 
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
     setLoading(true);
-    // TODO: Update the list of clusterings to include the new one
-    const newClustering = {
-      id: "",
-      clustering_id: "",
-      project_id: project_id || "", // Should not be ""
-      org_id: "",
-      created_at: Date.now() / 1000,
-      status: "started",
-      clusters_ids: [],
-      scope: formData.scope,
-      instruction: formData.instruction,
-    } as Clustering;
-    mutate(
-      project_id
-        ? [
-            `/api/explore/${project_id}/clusterings`,
-            accessToken,
-            "cluster-cards",
-          ]
-        : null,
-      (data: any) => {
-        const clusterings = data?.clusterings || [];
-        return {
-          clusterings: [newClustering, ...clusterings],
-        };
-      },
-    );
-    setSelectedClustering(newClustering);
-
     try {
       await fetch(`/api/explore/${project_id}/detect-clusters`, {
         method: "POST",
@@ -236,8 +207,28 @@ const RunClusters = ({
           instruction: formData.instruction,
           nb_clusters: formData.nb_clusters,
         }),
-      }).then((response) => {
-        if (response.status == 200) {
+      }).then(async (response) => {
+        if (response.ok) {
+          // The endpoint returns the new clustering
+          const newClustering = (await response.json()) as Clustering;
+          // Update the clusterings list
+          mutate(
+            project_id
+              ? [
+                  `/api/explore/${project_id}/clusterings`,
+                  accessToken,
+                  "cluster-cards",
+                ]
+              : null,
+            (data: any) => {
+              const clusterings = data?.clusterings || [];
+              return {
+                clusterings: [newClustering, ...clusterings],
+              };
+            },
+          );
+          // Update the selected clustering
+          setSelectedClustering(newClustering);
           toast({
             title: "Cluster detection started ⏳",
             description: "This may take a few minutes.",

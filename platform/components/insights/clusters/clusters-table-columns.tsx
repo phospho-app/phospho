@@ -9,15 +9,12 @@ import { navigationStateStore } from "@/store/store";
 import { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight, Pickaxe } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export function getColumns({
   setSheetOpen,
 }: {
   setSheetOpen: (value: boolean) => void;
 }) {
-  const router = useRouter();
-
   // Create the columns for the data table
   const columns: ColumnDef<Cluster>[] = [
     // id

@@ -815,6 +815,7 @@ class UsageQuota(BaseModel):
     balance_transaction: Optional[float] = None
     next_invoice_total: Optional[float] = None  # BEFORE discount (free credits)
     next_invoice_amount_due: Optional[float] = None  # AFTER discount (free credits)
+    customer_id: Optional[str] = None  # Stripe customer_id
 
 
 class PipelineResults(BaseModel):

@@ -5,7 +5,7 @@ Interact with the AI Hub service
 import os
 from fastapi import HTTPException
 import traceback
-from typing import Optional
+from typing import Literal, Optional
 import hashlib
 
 from app.services.slack import slack_notification
@@ -174,26 +174,28 @@ class AIHubClient:
 
         return None
 
-    async def run_clustering(self, clustering_request: ClusteringRequest) -> None:
+    async def run_clustering(
+        self,
+        clustering_request: ClusteringRequest,
+        scope: Literal["messages", "sessions"] = "messages",
+    ) -> None:
         """
         Call the clustering endpoint of the AI Hub
         """
-        if clustering_request.scope == "messages":
+        if scope == "messages":
             response = await self._post(
                 endpoint="generate_clustering_messages_workflow",
                 data=clustering_request.model_dump(mode="json"),
                 hash_data_for_id=False,
             )
-        elif clustering_request.scope == "sessions":
+        elif scope == "sessions":
             response = await self._post(
                 endpoint="generate_clustering_sessions_workflow",
                 data=clustering_request.model_dump(mode="json"),
                 hash_data_for_id=False,
             )
         else:
-            raise ValueError(
-                f"Invalid value for messages_or_sessions: {clustering_request.scope}"
-            )
+            raise ValueError(f"Invalid value for messages_or_sessions: {scope}")
 
         if response is None:
             raise HTTPException(

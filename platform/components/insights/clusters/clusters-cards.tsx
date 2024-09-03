@@ -40,6 +40,7 @@ function ClusterCard({
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
 
   const [sheetEventOpen, setSheetEventOpen] = useState(false);
 
@@ -60,7 +61,7 @@ function ClusterCard({
 
   const eventToEdit = {
     project_id: project_id,
-    org_id: selectedProject.org_id,
+    org_id: selectedOrgId,
     event_name: cluster.name,
     description: cluster.description,
     score_range_settings: {

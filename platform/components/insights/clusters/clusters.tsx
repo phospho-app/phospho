@@ -86,29 +86,6 @@ const Clusters: React.FC = () => {
     }
   }, [selectedClustering]);
 
-  // Used to fetch rapidly changing data in the clustering (eg: progress)
-  // const { data } = useSWR(
-  //   project_id && selectedClustering?.id
-  //     ? [
-  //         `/api/explore/${project_id}/clusterings/${selectedClustering?.id}`,
-  //         accessToken,
-  //         selectedClustering?.id,
-  //       ]
-  //     : null,
-  //   ([url, accessToken]) =>
-  //     authFetcher(url, accessToken, "POST").then((res) => {
-  //       if (res === undefined) return undefined;
-  //       setSelectedClustering({
-  //         ...selectedClustering,
-  //         ...res,
-  //       });
-  //     }),
-  //   {
-  //     refreshInterval:
-  //       selectedClustering?.status === "completed" ? 30000 : 5000,
-  //   },
-  // );
-
   if (!project_id) {
     return <></>;
   }
