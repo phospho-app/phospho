@@ -28,21 +28,23 @@ const Clusters: React.FC = () => {
     Clustering | undefined
   >(undefined);
 
-  const { data: clusterings } = useSWR(
+  const { data: clusteringsData } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST").then((res) => {
-        const clusterings = (res?.clusterings as Clustering[]) ?? [];
-        console.log("clusterings1", clusterings);
-        return clusterings.sort(
-          (a: Clustering, b: Clustering) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        );
+        if (!res?.clusterings) return undefined;
+        return res;
       }),
     {
       keepPreviousData: true,
     },
   );
+  const clusterings = clusteringsData
+    ? (clusteringsData.clusterings.sort(
+        (a: Clustering, b: Clustering) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      ) as Clustering[])
+    : undefined;
 
   let selectedClusteringName = selectedClustering?.name;
   if (selectedClustering && !selectedClusteringName) {
@@ -52,11 +54,11 @@ const Clusters: React.FC = () => {
   }
 
   useEffect(() => {
-    setSelectedClustering(undefined);
-  }, [project_id]);
-
-  useEffect(() => {
     if (clusterings === undefined) {
+      setSelectedClustering(undefined);
+      return;
+    }
+    if (clusterings.length === 0) {
       setSelectedClustering(undefined);
       return;
     }
@@ -85,6 +87,29 @@ const Clusters: React.FC = () => {
     }
   }, [selectedClustering]);
 
+  // Used to fetch rapidly changing data in the clustering (eg: progress)
+  // const { data } = useSWR(
+  //   project_id && selectedClustering?.id
+  //     ? [
+  //         `/api/explore/${project_id}/clusterings/${selectedClustering?.id}`,
+  //         accessToken,
+  //         selectedClustering?.id,
+  //       ]
+  //     : null,
+  //   ([url, accessToken]) =>
+  //     authFetcher(url, accessToken, "POST").then((res) => {
+  //       if (res === undefined) return undefined;
+  //       setSelectedClustering({
+  //         ...selectedClustering,
+  //         ...res,
+  //       });
+  //     }),
+  //   {
+  //     refreshInterval:
+  //       selectedClustering?.status === "completed" ? 30000 : 5000,
+  //   },
+  // );
+
   if (!project_id) {
     return <></>;
   }
@@ -107,6 +132,7 @@ const Clusters: React.FC = () => {
               <RunClusters
                 sheetOpen={sheetClusterOpen}
                 setSheetOpen={setSheetClusterOpen}
+                setSelectedClustering={setSelectedClustering}
               />
             </div>
           </div>
@@ -119,27 +145,26 @@ const Clusters: React.FC = () => {
           clusterings={clusterings}
           selectedClusteringName={selectedClusteringName}
         />
-
         <div className="flex-col space-y-2 md:flex pb-10">
           {!selectedClustering && (
             <div className="w-full text-muted-foreground flex justify-center text-sm h-20">
               Run a clustering to see clusters here.
             </div>
           )}
-          {selectedClustering?.status !== "completed" && selectedClustering && (
+          {selectedClustering && selectedClustering.status !== "completed" && (
             <div className="w-full flex flex-col items-center">
-              {selectedClustering?.percent_of_completion && (
+              {selectedClustering.percent_of_completion && (
                 <Progress
                   value={selectedClustering.percent_of_completion}
                   className="w-[30%] transition-all duration-500 ease-in-out mb-4 h-4"
                 />
               )}
-              {selectedClustering?.status === "started" && (
+              {selectedClustering.status === "started" && (
                 <div className="text-muted-foreground text-sm h-20">
                   Computing embeddings...
                 </div>
               )}
-              {selectedClustering?.status === "summaries" && (
+              {selectedClustering.status === "summaries" && (
                 <div className="text-muted-foreground text-sm h-20">
                   Generating summaries...
                 </div>
@@ -154,6 +179,7 @@ const Clusters: React.FC = () => {
           )}
           <ClustersCards
             setSheetClusterOpen={setSheetClusterOpen}
+            selected_clustering_id={selectedClustering?.id}
             selectedClustering={selectedClustering}
           />
         </div>

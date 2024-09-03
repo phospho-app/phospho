@@ -154,38 +154,17 @@ function ClusterCard({
 
 export function ClustersCards({
   setSheetClusterOpen: setSheetClusterOpen,
+  selected_clustering_id: selected_clustering_id,
   selectedClustering: selectedClustering,
 }: {
   setSheetClusterOpen: (value: boolean) => void;
+  selected_clustering_id: string | undefined;
   selectedClustering: Clustering | undefined;
 }) {
   /* This is the group of all cluster cards */
 
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-
-  // Used to fetch rapidly changing data in the clustering (eg: progress)
-  // const { data } = useSWR(
-  //   project_id && selectedClustering?.id
-  //     ? [
-  //         `/api/explore/${project_id}/clusterings/${selectedClustering?.id}`,
-  //         accessToken,
-  //         selectedClustering?.id,
-  //       ]
-  //     : null,
-  //   ([url, accessToken]) =>
-  //     authFetcher(url, accessToken, "POST").then((res) => {
-  //       if (res === undefined) return undefined;
-  //       setSelectedClustering({
-  //         ...selectedClustering,
-  //         ...res,
-  //       });
-  //     }),
-  //   {
-  //     refreshInterval:
-  //       selectedClustering?.status === "completed" ? 30000 : 5000,
-  //   },
-  // );
 
   const {
     data: clustersData,

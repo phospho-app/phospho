@@ -56,9 +56,11 @@ import * as z from "zod";
 const RunClusters = ({
   sheetOpen,
   setSheetOpen,
+  setSelectedClustering,
 }: {
   sheetOpen: boolean;
   setSheetOpen: (value: boolean) => void;
+  setSelectedClustering: (value: Clustering) => void;
 }) => {
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const project_id = navigationStateStore((state) => state.project_id);
@@ -205,7 +207,7 @@ const RunClusters = ({
       clusters_ids: [],
       scope: formData.scope,
       instruction: formData.instruction,
-    };
+    } as Clustering;
     console.log("newClustering: ", newClustering);
     mutate(
       project_id
@@ -216,9 +218,13 @@ const RunClusters = ({
           ]
         : null,
       (data: any) => {
-        return [newClustering, ...(data ?? [])] as Clustering[];
+        const clusterings = data?.clusterings || [];
+        return {
+          clusterings: [newClustering, ...clusterings],
+        };
       },
     );
+    setSelectedClustering(newClustering);
 
     try {
       await fetch(`/api/explore/${project_id}/detect-clusters`, {
