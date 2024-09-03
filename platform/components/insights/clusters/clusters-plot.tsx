@@ -3,11 +3,13 @@ import { graphColors } from "@/lib/utils";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Data } from "plotly.js";
 import { useEffect, useState } from "react";
-import Plot from "react-plotly.js";
 import useSWR from "swr";
+
+const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 // const Animated3DScatterPlot = () => {
 //   const plotRef = useRef(null);
