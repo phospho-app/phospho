@@ -67,7 +67,7 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE file](.
 
 - [phospho Javascript client](https://github.com/phospho-app/phosphojs)
 - [phospho UI React components](https://github.com/phospho-app/phospho-ui-react)
-- [phospho fastassert constrained inference](https://github.com/phospho-app/fastassert)
+- [phospho chatbot streamlit OpenAI](https://github.com/phospho-app/template-chatbot-streamlit-openai)
 
 ## Contributing
 
