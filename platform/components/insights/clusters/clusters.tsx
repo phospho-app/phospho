@@ -19,72 +19,8 @@ import { ClustersCards } from "./clusters-cards";
 
 const Clusters: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
-  const dataFilters = navigationStateStore((state) => state.dataFilters);
-  const { accessToken } = useUser();
 
-  const [clusteringUnavailable, setClusteringUnavailable] = useState(true);
   const [sheetClusterOpen, setSheetClusterOpen] = useState(false);
-
-  const { data: clusteringsData, mutate: mutateClusterings } = useSWR(
-    project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
-    {
-      keepPreviousData: true,
-      revalidateIfStale: false,
-    },
-  );
-  let latestClustering: Clustering | undefined = undefined;
-  if (clusteringsData) {
-    latestClustering = clusteringsData?.clusterings[0];
-  }
-
-  const maxCreatedAt = latestClustering?.created_at;
-  const { data: totalNbTasksData } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/tasks`,
-      accessToken,
-      JSON.stringify(dataFilters),
-      "total_nb_tasks",
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["total_nb_tasks"],
-        filters: { ...dataFilters },
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const totalNbTasks: number | null | undefined =
-    totalNbTasksData?.total_nb_tasks;
-
-  const { data: totalNbSessionsData } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/sessions`,
-      accessToken,
-      JSON.stringify(dataFilters),
-      "total_nb_sessions",
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["total_nb_sessions"],
-        filters: { ...dataFilters },
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const totalNbSessions: number | null | undefined =
-    totalNbSessionsData?.total_nb_sessions;
-
-  useEffect(() => {
-    if (latestClustering?.status === "completed") {
-      setClusteringUnavailable(false);
-    }
-    if (latestClustering?.status === undefined) {
-      setClusteringUnavailable(false);
-    }
-  }, [latestClustering?.status]);
 
   if (!project_id) {
     return <></>;
@@ -106,19 +42,9 @@ const Clusters: React.FC = () => {
             </div>
             <div className="flex flex-col space-y-1 justify-center items-center">
               <RunClusters
-                totalNbTasks={totalNbTasks}
-                totalNbSessions={totalNbSessions}
-                mutateClusterings={mutateClusterings}
-                clusteringUnavailable={clusteringUnavailable}
                 sheetOpen={sheetClusterOpen}
                 setSheetOpen={setSheetClusterOpen}
               />
-              <div className="text-muted-foreground text-xs">
-                Last update:{" "}
-                {maxCreatedAt
-                  ? formatUnixTimestampToLiteralDatetime(maxCreatedAt)
-                  : "Never"}
-              </div>
             </div>
           </div>
         </CardHeader>

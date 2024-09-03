@@ -9,6 +9,7 @@ from app.api.platform.models import (
     ABTests,
     AggregateMetricsRequest,
     Cluster,
+    Clustering,
     ClusteringRequest,
     Clusterings,
     Clusters,
@@ -35,6 +36,7 @@ from app.services.mongo.explore import (
     fetch_all_clusters,
     fetch_single_cluster,
     get_ab_tests_versions,
+    get_clustering_by_id,
     get_dashboard_aggregated_metrics,
     get_events_aggregated_metrics,
     get_sessions_aggregated_metrics,
@@ -307,6 +309,26 @@ async def post_all_clusterings(
     await verify_if_propelauth_user_can_access_project(user, project_id)
     clusterings = await fetch_all_clusterings(project_id=project_id)
     return Clusterings(clusterings=clusterings)
+
+
+@router.post(
+    "/explore/{project_id}/clusterings/{clustering_id}",
+    response_model=Clustering,
+    description="Get the all the clusterings of a project",
+)
+async def post_selected_clustering(
+    project_id: str,
+    clustering_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> Clustering:
+    """
+    Update the status of the selected clustering.
+    """
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    clustering = await get_clustering_by_id(
+        project_id=project_id, clustering_id=clustering_id
+    )
+    return clustering
 
 
 @router.post(

@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
 import UpgradeButton from "@/components/upgrade-button";
-import { Clustering } from "@/models/models";
+import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,33 +49,67 @@ import { ChevronRight, Sparkles, TestTubeDiagonal } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import useSWR from "swr";
 import * as z from "zod";
 
 const RunClusters = ({
-  totalNbTasks,
-  totalNbSessions,
-  mutateClusterings,
-  clusteringUnavailable,
   sheetOpen,
   setSheetOpen,
 }: {
-  totalNbTasks: number | null | undefined;
-  totalNbSessions: number | null | undefined;
-  mutateClusterings: any;
-  clusteringUnavailable: boolean;
   sheetOpen: boolean;
   setSheetOpen: (value: boolean) => void;
 }) => {
-  const { accessToken } = useUser();
-  const [clusteringCost, setClusteringCost] = useState(0);
-  const [nbElements, setNbElements] = useState(0);
-  let defaultNbClusters = 0;
-  const project_id = navigationStateStore((state) => state.project_id);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
+
+  const { accessToken } = useUser();
+
+  const [clusteringCost, setClusteringCost] = useState(0);
+  const [nbElements, setNbElements] = useState(0);
   const [loading, setLoading] = React.useState(false);
   const [update, setUpdate] = React.useState(false);
+
+  let defaultNbClusters = 0;
+
+  const { data: totalNbTasksData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/tasks`,
+      accessToken,
+      JSON.stringify(dataFilters),
+      "total_nb_tasks",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_tasks"],
+        filters: { ...dataFilters },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  let totalNbTasks: number | null | undefined =
+    totalNbTasksData?.total_nb_tasks;
+
+  const { data: totalNbSessionsData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/sessions`,
+      accessToken,
+      JSON.stringify(dataFilters),
+      "total_nb_sessions",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_sessions"],
+        filters: { ...dataFilters },
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  let totalNbSessions: number | null | undefined =
+    totalNbSessionsData?.total_nb_sessions;
 
   const hobby = orgMetadata?.plan === "hobby";
 
@@ -159,7 +193,9 @@ const RunClusters = ({
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
     console.log("Instructions: ", formData.instruction);
     setLoading(true);
-    mutateClusterings((clusteringData: any) => {
+    // TODO: Update the list of clusterings to include the new one
+
+    /*mutateClusterings((clusteringData: any) => {
       const newClustering: Clustering = {
         id: "",
         clustering_id: "",
@@ -175,7 +211,7 @@ const RunClusters = ({
         clusterings: [newClustering, ...clusteringData?.clusterings],
       };
       return newData;
-    });
+    });*/
     try {
       await fetch(`/api/explore/${project_id}/detect-clusters`, {
         method: "POST",
@@ -413,13 +449,8 @@ const RunClusters = ({
             )}
             {!hobby && canRunClusterAnalysis && (
               <div className="flex justify-end mt-4">
-                <Button
-                  type="submit"
-                  disabled={clusteringUnavailable || loading}
-                >
-                  {(loading || clusteringUnavailable) && (
-                    <Spinner className="mr-2" />
-                  )}
+                <Button type="submit" disabled={loading}>
+                  {loading && <Spinner className="mr-2" />}
                   Run cluster analysis
                 </Button>
               </div>

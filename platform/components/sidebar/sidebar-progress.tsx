@@ -61,7 +61,9 @@ export const OnboardingProgress = () => {
   );
 
   const { data: clusteringsData } = useSWR(
-    project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
+    project_id
+      ? [`/api/explore/${project_id}/clusterings`, accessToken, "sidebar"]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {
       keepPreviousData: true,
