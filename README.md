@@ -1,4 +1,4 @@
-# phospho: the LLM app backoffice for busy builders
+# The LLM app backoffice for busy builders
 
 <div align="center">
 <img src="./platform/public/image/phospho-banner.png" alt="phospho logo">
@@ -8,15 +8,22 @@
 <a href="https://pypi.org/project/phospho/" target="_blank"><img src="https://img.shields.io/pypi/dm/phospho"></a>
 </div>
 
-Phospho is the backoffice for your LLM apps. Detect issues and extract insights from your app's text messages. Gather user feedback and measure success. Create the best conversational experience for your users.
+🧪 **phospho** is the backoffice for your LLM apps.
 
-Ship your LLM app in production with confidence, and focus on user insights to iterate.
+Detect issues and extract insights from your users' text messages.
 
-Learn more in the full [documentation](https://docs.phospho.ai/welcome).
+Gather feedback and measure success. Create the best conversational experience for your users.
+Analyze logs effortlessly and finally make sense of all your data.
+
+Learn more in the [documentation](https://docs.phospho.ai/welcome).
 
 <div align="center">
 <img src="./clustering-demo.gif" alt="phospho platform">
 </div>
+
+## Demo 🧪
+
+https://github.com/phospho-app/phospho/assets/66426745/5422d3b5-4f78-4445-be72-ff51eba26efb
 
 ## Key Features 🚀
 
@@ -27,10 +34,6 @@ Learn more in the full [documentation](https://docs.phospho.ai/welcome).
 - **Integration**: Sync data with LangSmith/Langfuse, Argilla, PowerBI
 - **Data Visualization**: Powerful tools to understand your data
 - **Multi-user Experience**: Collaborate with your team seamlessly
-
-## Demo
-
-https://github.com/phospho-app/phospho/assets/66426745/5422d3b5-4f78-4445-be72-ff51eba26efb
 
 ## Access the hosted version
 
@@ -57,7 +60,7 @@ Quickly import, analyze and label data on the [phospho platform](https://phospho
 - You can also import data directly through a CSV or Excel directly on the platform
 - If you use the python version, you might want to disable auto-logging with `phospho.init(auto_log=False)`
 
-## Use phospho as a white label
+## Use phospho as a white label solution
 
 Want to get the hosted version of phospho as a white label platform?
 
@@ -69,10 +72,16 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE file](.
 
 ## Related projects
 
+- [chatbot template streamlit OpenAI](https://github.com/phospho-app/template-chatbot-streamlit-openai)
 - [phospho Javascript client](https://github.com/phospho-app/phosphojs)
-- [phospho UI React components](https://github.com/phospho-app/phospho-ui-react)
-- [phospho chatbot streamlit OpenAI](https://github.com/phospho-app/template-chatbot-streamlit-openai)
+- [phospho UI React components for user feedback](https://github.com/phospho-app/phospho-ui-react)
 
 ## Contributing
 
 We welcome contributions from the community. Please refer to our [contributing guidelines](./CONTRIBUTE.md) for more information.
+
+## About us
+
+We are a team of passionate AI builders, feel free to reach out [here](mailto:contact@phospho.ai?subject=Hey%20baguettes)
+
+_With love and baguettes from Paris, the phospho team 🥖💚_
