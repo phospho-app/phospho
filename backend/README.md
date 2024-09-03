@@ -103,7 +103,7 @@ mongosh
 disableTelemetry()
 ```
 
-When running `mongosh`, you'll see an URL. Note it down.
+When running `mongosh`, you'll see a URL. Note it down.
 
 ```text
 Connecting to:		mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.1.1
@@ -115,15 +115,11 @@ In the Python backend, we use the async client [Motor](https://motor.readthedocs
 
 In tests and other scripts, you can use [Pymongo](https://pymongo.readthedocs.io/en/stable/tutorial.html). It is synchronous and installed when you install Motor. It's useful when you need to wait for the response anyways.
 
-### Run the
-
 ### Run backend server
 
 ```
 uvicorn app.main:app --reload
 ```
-
-## Running tests locally
 
 ## Deployment
 
