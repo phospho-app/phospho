@@ -434,6 +434,7 @@ async def post_detect_clusters(
             instruction=query.instruction,
             nb_clusters=query.nb_clusters,
             nb_credits_used=clustering_billing,
+            clustering_mode=query.clustering_mode,
         ),
     )
 

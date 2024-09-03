@@ -23,3 +23,4 @@ class ClusteringRequest(BaseModel):
     )
     nb_credits_used: int
     nb_clusters: Optional[int] = None
+    clustering_mode: Literal["Agglomerative", "DBSCAN"] = "Agglomerative"

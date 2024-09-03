@@ -8,6 +8,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -45,6 +46,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
+import cluster from "cluster";
+import { nb } from "date-fns/locale";
 import { ChevronRight, Sparkles, TestTubeDiagonal } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
@@ -103,6 +106,7 @@ const RunClusters = ({
       })
       .min(1, "Number of clusters must be at least 1")
       .max(128, "Number of clusters must be at most 128"),
+    detect_outliers: z.boolean(),
   });
 
   console.log("totalNbTasks: ", totalNbTasks);
@@ -111,15 +115,13 @@ const RunClusters = ({
     defaultValues: {
       scope: "messages",
       instruction: "user intent",
+      detect_outliers: false,
       // Note: don't set the nb_clusters default value here, since it's updated dynamically using an API call
     },
   });
 
   useEffect(() => {
     // Update the default number of clusters when the total number of tasks changes
-    if (totalNbTasks) {
-      setClusteringCost(totalNbTasks * 2);
-    }
     if (form.getValues("scope") === "messages") {
       if (totalNbTasks === null || totalNbTasks === undefined) {
         totalNbTasks = 0;
@@ -132,10 +134,14 @@ const RunClusters = ({
       } else {
         form.setValue("nb_clusters", 5);
       }
+      setClusteringCost(totalNbTasks * 2);
     }
     if (form.getValues("scope") === "sessions") {
       if (totalNbSessions === null || totalNbSessions === undefined) {
         totalNbSessions = 0;
+      }
+      if (totalNbTasks === null || totalNbTasks === undefined) {
+        totalNbTasks = 0;
       }
       setNbElements(totalNbSessions);
       defaultNbClusters = Math.floor(totalNbSessions / 100);
@@ -145,6 +151,7 @@ const RunClusters = ({
       } else {
         form.setValue("nb_clusters", 5);
       }
+      setClusteringCost(totalNbTasks * 2);
     }
   }, [totalNbSessions, totalNbTasks, update]);
 
@@ -158,6 +165,7 @@ const RunClusters = ({
 
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
     console.log("Instructions: ", formData.instruction);
+    console.log("Detect_outliers: ", formData.detect_outliers);
     setLoading(true);
     mutateClusterings((clusteringData: any) => {
       const newClustering: Clustering = {
@@ -170,6 +178,7 @@ const RunClusters = ({
         clusters_ids: [],
         scope: formData.scope,
         instruction: formData.instruction,
+        clustering_mode: formData.detect_outliers ? "DBSCAN" : "Agglomerative",
       };
       const newData = {
         clusterings: [newClustering, ...clusteringData?.clusterings],
@@ -188,6 +197,9 @@ const RunClusters = ({
           scope: formData.scope,
           instruction: formData.instruction,
           nb_clusters: formData.nb_clusters,
+          clustering_mode: formData.detect_outliers
+            ? "DBSCAN"
+            : "Agglomerative",
         }),
       }).then((response) => {
         if (response.status == 200) {
@@ -263,7 +275,6 @@ const RunClusters = ({
                   </Select>
                 )}
               />
-
               <FilterComponent variant="tasks" />
             </div>
             <Accordion type="single" collapsible className="w-full">
@@ -363,6 +374,22 @@ const RunClusters = ({
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
+                    <FormField
+                      control={form.control}
+                      name="detect_outliers"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                          <FormLabel className="space-y-1 leading-none">
+                            Detect outliers (coming soon)
+                          </FormLabel>
+                          <FormControl>
+                            <Checkbox checked={field.value} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    ></FormField>
+                  </div>
+                  <div className="flex items-center space-x-2">
                     <FormLabel>Number of clusters:</FormLabel>
                     <FormField
                       control={form.control}
@@ -401,7 +428,7 @@ const RunClusters = ({
               <div className="mt-4">
                 We will clusterize {nbElements} {form.getValues("scope")}{" "}
                 {form.getValues("scope") === "sessions" && (
-                  <>containing {totalNbTasks} messages</>
+                  <>{totalNbTasks ?? 0} user messages</>
                 )}{" "}
                 for a total of {clusteringCost} credits.{" "}
               </div>

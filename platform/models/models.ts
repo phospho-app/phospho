@@ -270,6 +270,7 @@ export interface Clustering {
   name?: string;
   instruction?: string;
   model?: string;
+  clustering_mode?: "Agglomerative" | "DBSCAN";
 }
 
 export interface CustomDateRange {
