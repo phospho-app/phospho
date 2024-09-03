@@ -1,6 +1,7 @@
 "use client";
 
 import RunClusters from "@/components/insights/clusters/clusters-sheet";
+import { Spinner } from "@/components/small-spinner";
 import {
   Card,
   CardDescription,
@@ -140,12 +141,14 @@ const Clusters: React.FC = () => {
                 />
               )}
               {selectedClustering.status === "started" && (
-                <div className="text-muted-foreground text-sm h-20">
+                <div className="flex flex-row items-center text-muted-foreground text-sm">
+                  <Spinner className="mr-1" />
                   Computing embeddings...
                 </div>
               )}
               {selectedClustering.status === "summaries" && (
-                <div className="text-muted-foreground text-sm h-20">
+                <div className="flex flex-row items-center text-muted-foreground text-sm">
+                  <Spinner className="mr-1" />
                   Generating summaries...
                 </div>
               )}
