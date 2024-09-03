@@ -222,9 +222,10 @@ const RunClusters = ({
                 clusterings: [newClustering, ...clusterings],
               };
             },
-          );
-          // Update the selected clustering
-          setSelectedClustering(newClustering);
+          ).then(() => {
+            // Update the selected clustering
+            setSelectedClustering(newClustering);
+          });
           toast({
             title: `Cluster detection ${newClustering.name} started ⏳`,
             description: "This may take a few minutes.",

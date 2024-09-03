@@ -51,7 +51,10 @@ export function SelectOrgButton() {
             </div>
           </SelectValue>
         </SelectTrigger>
-        <SelectContent position="popper">
+        <SelectContent
+          position="popper"
+          className="overflow-y-auto max-h-[20rem]"
+        >
           {orgsArray.map((org) => (
             <SelectItem key={org.orgId} value={org.orgId}>
               {org.orgName}

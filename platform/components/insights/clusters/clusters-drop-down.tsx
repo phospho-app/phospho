@@ -24,8 +24,9 @@ export function ClusteringDropDown({
   const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
+    console.log("refresh dropdwon clustering", clusterings);
     setRefresh(!refresh);
-  }, [JSON.stringify(clusterings), JSON.stringify(selectedClustering)]);
+  }, [JSON.stringify(clusterings)]);
 
   return (
     <div className="flex flex-row gap-x-2 items-center mb-2 custom-plot w-full">
@@ -64,6 +65,7 @@ export function ClusteringDropDown({
           <SelectContent className="overflow-y-auto max-h-[20rem]">
             <SelectGroup>
               {clusterings &&
+                (refresh || !refresh) &&
                 clusterings.length > 0 &&
                 clusterings.map((clustering) => (
                   <SelectItem key={clustering.id} value={clustering.id}>
