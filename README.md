@@ -17,13 +17,13 @@ Learn more in the full [documentation](https://docs.phospho.ai/welcome).
 
 ## Key Features
 
-- Clustering
-- A/B Testing
-- Data Labeling
-- User Analytics
-- Sync data with LangSmith/Langfuse
-- Data visualization
-- Multi user experience
+- **Clustering**: Group similar conversations and identify patterns
+- **A/B Testing**: Compare different versions of your LLM app
+- **Data Labeling**: Efficiently categorize and annotate your data
+- **User Analytics**: Gain insights into user behavior and preferences
+- **Integration**: Sync data with LangSmith/Langfuse, Argilla, PowerBI
+- **Data Visualization**: Powerful tools to understand your data
+- **Multi-user Experience**: Collaborate with your team seamlessly
 
 ## Demo
 
@@ -46,14 +46,22 @@ Follow the quickstart [here](https://docs.phospho.ai/local/quickstart).
 Quickly import, analyze and label data on the [phospho platform](https://phospho.ai).
 
 1. Create an [account](https://phospho.ai)
-2. Install our Python or JS SDKs: `pip install phospho` or `npm i phospho`
-3. Create environment variables for `PHOSPHO_API_KEY` and `PHOSPHO_PROJECT_ID` ( you can find these on your phospho account )
+2. Install our SDK:
+
+- Python: `pip install phospho`
+- JavaScript: `npm i phospho`
+
+3. Set environment variables ( you can find these on your phospho account )
+
+- `PHOSPHO_API_KEY`
+- `PHOSPHO_PROJECT_ID`
+
 4. Initialize phospho: `phospho.init()`
 5. Start logging to phospho with `phospho.log(input="question", output="answer")`
 
 [Follow this guide to get started.](https://docs.phospho.ai/getting-started)
 
-Note:
+**Note:**
 
 - You can also import data directly through a CSV or Excel directly on the platform
 - If you use the python version, you might want to disable auto-logging with `phospho.init(auto_log=False)`
@@ -64,7 +72,7 @@ Want to get the hosted version of phospho as a white label platform?
 
 Contact us [here](mailto:contact@phospho.ai?subject=[GitHub]%20phospho%20white%label) to get your own backoffice for your llm apps.
 
-## Licence
+## License
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE file](./LICENCE) for details
 
