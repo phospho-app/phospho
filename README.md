@@ -85,3 +85,7 @@ We welcome contributions from the community. Please refer to our [contributing g
 We are a team of passionate AI builders, feel free to reach out [here](mailto:contact@phospho.ai?subject=Hey%20baguettes)
 
 _With love and baguettes from Paris, the phospho team 🥖💚_
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=phospho-app/phospho&type=Date)](https://star-history.com/#phospho-app/phospho&Date)
