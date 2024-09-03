@@ -14,7 +14,11 @@ Ship your LLM app in production with confidence, and focus on user insights to i
 
 Learn more in the full [documentation](https://docs.phospho.ai/welcome).
 
-## Key Features
+<div align="center">
+<img src="./clustering-demo.gif" alt="phospho platform">
+</div>
+
+## Key Features 🚀
 
 - **Clustering**: Group similar conversations and identify patterns
 - **A/B Testing**: Compare different versions of your LLM app
