@@ -29,18 +29,6 @@ Learn more in the full [documentation](https://docs.phospho.ai/welcome).
 
 https://github.com/phospho-app/phospho/assets/66426745/5422d3b5-4f78-4445-be72-ff51eba26efb
 
-## Quickstart: Discover the phospho lab in pure python
-
-phospho lab is the core analytics component of phospho, it let's you detect events defined in natural language in your data.
-
-Leverage your data by batching the event dectection process with phospho lab.
-
-```bash
-pip install "phospho[lab]"
-```
-
-Follow the quickstart [here](https://docs.phospho.ai/local/quickstart).
-
 ## Access the hosted version
 
 Quickly import, analyze and label data on the [phospho platform](https://phospho.ai).
