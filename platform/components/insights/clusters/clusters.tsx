@@ -82,7 +82,7 @@ const Clusters: React.FC = () => {
           ...selectedClustering,
           ...response,
         });
-      }, 1000);
+      }, 3000);
       return () => clearInterval(interval);
     }
   }, [JSON.stringify(selectedClustering), project_id]);
