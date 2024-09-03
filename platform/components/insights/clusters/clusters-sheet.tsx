@@ -230,7 +230,7 @@ const RunClusters = ({
           // Update the selected clustering
           setSelectedClustering(newClustering);
           toast({
-            title: "Cluster detection started ⏳",
+            title: `Cluster detection ${newClustering.name} started ⏳`,
             description: "This may take a few minutes.",
           });
           setSheetOpen(false);

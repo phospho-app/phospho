@@ -49,13 +49,11 @@ export function CustomPlot({
   const { accessToken } = useUser();
 
   const { data } = useSWR(
-    project_id &&
-      selected_clustering_id &&
-      selectedClustering.status === "completed"
+    project_id
       ? [
           `/api/explore/${project_id}/data-cloud`,
           accessToken,
-          JSON.stringify(selected_clustering_id),
+          JSON.stringify(selectedClustering),
         ]
       : null,
     ([url, accessToken]) =>

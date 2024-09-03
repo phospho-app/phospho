@@ -16,7 +16,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pickaxe, PlusIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import CreateEvent from "../events/create-event";
@@ -176,8 +176,10 @@ export function ClustersCards({
       ? [
           `/api/explore/${project_id}/clusters`,
           accessToken,
-          selectedClustering?.id,
           project_id,
+          // Refetch the data when the selected clustering changes
+          // Ex: different selection, status update
+          JSON.stringify(selectedClustering),
         ]
       : null,
     ([url, accessToken]) =>

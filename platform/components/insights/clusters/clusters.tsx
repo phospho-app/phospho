@@ -76,15 +76,16 @@ const Clusters: React.FC = () => {
           accessToken,
           "POST",
         );
+        console.log("Updating clustering status", response);
         // Update the selectedClustering with the new status
         setSelectedClustering({
           ...selectedClustering,
           ...response,
         });
-      }, 5000);
+      }, 1000);
       return () => clearInterval(interval);
     }
-  }, [selectedClustering]);
+  }, [JSON.stringify(selectedClustering), project_id]);
 
   if (!project_id) {
     return <></>;

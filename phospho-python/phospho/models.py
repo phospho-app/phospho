@@ -798,6 +798,7 @@ class Clustering(ProjectElementBaseModel):
     nb_clusters: Optional[int] = None
     clusters_ids: List[str]
     status: Optional[Literal["started", "summaries", "completed"]] = None
+    percent_of_completion: Optional[float] = None
     clusters: Optional[List[Cluster]] = None
     scope: Optional[Literal["messages", "sessions"]] = None
     name: Optional[str] = None
