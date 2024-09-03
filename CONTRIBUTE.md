@@ -4,8 +4,9 @@ We welcome contributions from every respectful contributor!
 
 There are multiple ways you can contribute to phospho:
 
-- Engage in the community on [Discord](https://discord.gg/MXqBJ9pBsx)
 - Help us address bugs and new features by opening an [Issue on Github](https://github.com/phospho-app/phospho/issues)
+- Reach out by [mail](mailto:contact@phospho.ai?subject=[GitHub]%20Contribution)
+- Engage in the community on [Discord](https://discord.gg/MXqBJ9pBsx)
 - Enhance the phospho package by adding new evaluation jobs to the `job_library`
 
 This guide will focus on how to add jobs to the phospho library.
