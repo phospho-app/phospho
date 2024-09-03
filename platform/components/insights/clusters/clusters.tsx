@@ -133,7 +133,7 @@ const Clusters: React.FC = () => {
               {selectedClustering.percent_of_completion && (
                 <Progress
                   value={selectedClustering.percent_of_completion}
-                  className="w-[30%] transition-all duration-500 ease-in-out mb-4 h-4"
+                  className="w-[100%] transition-all duration-500 ease-in-out mb-4 h-4"
                 />
               )}
               {selectedClustering.status === "started" && (

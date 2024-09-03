@@ -214,11 +214,7 @@ const RunClusters = ({
           // Update the clusterings list
           mutate(
             project_id
-              ? [
-                  `/api/explore/${project_id}/clusterings`,
-                  accessToken,
-                  "cluster-cards",
-                ]
+              ? [`/api/explore/${project_id}/clusterings`, accessToken]
               : null,
             (data: any) => {
               const clusterings = data?.clusterings || [];
