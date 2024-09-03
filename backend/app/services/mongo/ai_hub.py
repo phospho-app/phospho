@@ -89,6 +89,7 @@ class AIHubClient:
         self,
         endpoint: str,
         data: dict,
+        hash_data_for_id: bool = True,
     ) -> Optional[httpx.Response]:
         """
         Post data to the ai hub temporal worker
@@ -132,14 +133,18 @@ class AIHubClient:
             else:
                 raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
 
-            # Hash the data to generate a unique determinist id
-            unique_id = (
-                endpoint
-                + hashlib.md5(
-                    repr(sorted(data.items())).encode("utf-8"),
-                    usedforsecurity=False,
-                ).hexdigest()
-            )
+            if hash_data_for_id:
+                # Hash the data to generate a unique determinist id
+                unique_id = (
+                    endpoint
+                    + hashlib.md5(
+                        repr(sorted(data.items())).encode("utf-8"),
+                        usedforsecurity=False,
+                    ).hexdigest()
+                )
+            else:
+                # Generate a random id
+                unique_id = generate_uuid()
 
             await client.execute_workflow(
                 endpoint, data, id=unique_id, task_queue="ai-hub"
@@ -175,13 +180,15 @@ class AIHubClient:
         """
         if clustering_request.scope == "messages":
             response = await self._post(
-                "generate_clustering_messages_workflow",
-                clustering_request.model_dump(mode="json"),
+                endpoint="generate_clustering_messages_workflow",
+                data=clustering_request.model_dump(mode="json"),
+                hash_data_for_id=False,
             )
         elif clustering_request.scope == "sessions":
             response = await self._post(
-                "generate_clustering_sessions_workflow",
-                clustering_request.model_dump(mode="json"),
+                endpoint="generate_clustering_sessions_workflow",
+                data=clustering_request.model_dump(mode="json"),
+                hash_data_for_id=False,
             )
         else:
             raise ValueError(
@@ -200,8 +207,9 @@ class AIHubClient:
         Call the embeddings endpoint of the AI Hub
         """
         response = await self._post(
-            "create_embeddings_workflow",
-            embedding_request.model_dump(mode="json"),
+            endpoint="create_embeddings_workflow",
+            data=embedding_request.model_dump(mode="json"),
+            hash_data_for_id=False,
         )
         if response is None:
             raise HTTPException(

@@ -206,7 +206,6 @@ const RunClusters = ({
       scope: formData.scope,
       instruction: formData.instruction,
     } as Clustering;
-    console.log("newClustering: ", newClustering);
     mutate(
       project_id
         ? [
