@@ -143,7 +143,6 @@ const RunClusters = ({
       .max(128, "Number of clusters must be at most 128"),
   });
 
-  console.log("totalNbTasks: ", totalNbTasks);
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -177,7 +176,6 @@ const RunClusters = ({
       }
       setNbElements(totalNbSessions);
       defaultNbClusters = Math.floor(totalNbSessions / 100);
-      console.log("defaultNbClusters: ", defaultNbClusters);
       if (defaultNbClusters >= 5) {
         form.setValue("nb_clusters", Math.floor(defaultNbClusters));
       } else {

@@ -70,7 +70,6 @@ const Clusters: React.FC = () => {
   useEffect(() => {
     if (selectedClustering && selectedClustering?.status !== "completed") {
       const interval = setInterval(async () => {
-        console.log("refreshing clustering status");
         // Use the fetch function to update the clustering status
         const response = await authFetcher(
           `/api/explore/${project_id}/clusterings/${selectedClustering?.id}`,

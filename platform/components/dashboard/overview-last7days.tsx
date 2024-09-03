@@ -74,8 +74,6 @@ const OverviewLast7Days = () => {
     return null;
   };
 
-  console.log("sevenDaysData :", sevenDaysData);
-
   // Display the data or "Loading..."
   return (
     <div>

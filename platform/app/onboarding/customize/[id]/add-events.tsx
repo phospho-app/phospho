@@ -134,7 +134,6 @@ export default function AddEvents({
     const selectedEventDefinitions = customEvents?.filter((eventDefintion) =>
       selectedEvents.includes(eventDefintion.event_name),
     );
-    console.log("Selected Event Definitions:", selectedEventDefinitions);
 
     const response = await fetch(`/api/projects/${project_id}/add-events`, {
       method: "POST",

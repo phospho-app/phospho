@@ -196,8 +196,6 @@ export function ClustersCards({
     return <></>;
   }
 
-  console.log("clustering progress", selectedClustering?.percent_of_completion);
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {clustersData?.map((cluster) => {

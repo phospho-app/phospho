@@ -236,7 +236,6 @@ export function UploadDataset({
       });
       return;
     }
-    console.log("onSubmit", file);
     const formData = new FormData();
     formData.set("file", file, file.name);
     try {

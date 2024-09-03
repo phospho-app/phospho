@@ -30,18 +30,15 @@ export default function FetchOrgProject() {
     // Creates a project if it has no projects
     // Otherwise, select the first project
     (async () => {
-      console.log("Org id: ", selectedOrgId);
       if (loading) return;
 
       if (!loading && !isLoggedIn) {
-        console.log("User not found, redirecting to authenticate");
         router.push("/authenticate");
       }
 
       if (!selectedOrgId) return;
 
       try {
-        console.log("Initializing organization");
         const init_response = await fetch(
           `/api/organizations/${selectedOrgId}/init`,
           {
@@ -60,10 +57,8 @@ export default function FetchOrgProject() {
           return;
         }
         const responseBody = await init_response.json();
-        console.log("Init response: ", responseBody);
         // Set the project id if it is not set
         if (!project_id && responseBody?.selected_project?.id) {
-          console.log("Setting project id: ", responseBody.selected_project.id);
           setproject_id(responseBody.selected_project.id);
         }
         // Redirect to the page

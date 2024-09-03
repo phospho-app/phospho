@@ -63,12 +63,10 @@ export function CustomPlot({
         clustering_id: selected_clustering_id,
         type: "pca",
       }).then((res) => {
-        console.log("res is ", res);
         if (res === undefined) return undefined;
         // if res is {}, return undefined
         if (Object.keys(res).length === 0) {
           // TODO : return something else than null
-          console.log("res is empty");
           return null;
         }
 
@@ -84,7 +82,6 @@ export function CustomPlot({
 
         const clusters_names = res.clusters_names as string[];
         uniqueClusterIds.forEach((cluster_id, index) => {
-          console.log("index", index);
           clusterIdToColor.set(
             cluster_id,
             graphColors[index % graphColors.length],

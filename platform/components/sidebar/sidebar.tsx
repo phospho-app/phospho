@@ -135,7 +135,6 @@ export function Sidebar() {
 
   useEffect(() => {
     // Based on the current pathname, force open the corresponding sidebar elements
-    console.log("sidebarState", sidebarState);
 
     if (sidebarState === null) {
       return;

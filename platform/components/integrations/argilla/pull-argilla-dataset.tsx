@@ -100,7 +100,6 @@ const PullDataset = () => {
   );
 
   const handleValueChange = (dataset_name: string) => {
-    console.log("Selected Dataset Name in selectbutton:", dataset_name);
     // Match the selected project name with the project in the projects array
     setDatasetName(dataset_name);
   };

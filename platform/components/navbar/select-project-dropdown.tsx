@@ -52,7 +52,6 @@ export function SelectProjectButton() {
   }
 
   const handleValueChange = (project_name: string) => {
-    console.log("Selected Project in selectbutton:", project_name);
     // Match the selected project name with the project in the projects array
     const selectedProjectInForm = projects.find(
       (project) => project.project_name === project_name,

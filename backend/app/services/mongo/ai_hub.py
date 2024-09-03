@@ -189,7 +189,9 @@ class AIHubClient:
             )
 
         if response is None:
-            raise HTTPException(status_code=500, detail="Error while calling AI Hub")
+            raise HTTPException(
+                status_code=500, detail=f"Error while calling AI Hub: {response}"
+            )
 
     async def generate_embeddings(
         self, embedding_request: EmbeddingRequest
@@ -201,5 +203,9 @@ class AIHubClient:
             "create_embeddings_workflow",
             embedding_request.model_dump(mode="json"),
         )
+        if response is None:
+            raise HTTPException(
+                status_code=500, detail=f"Error while calling AI Hub: {response}"
+            )
 
         return Embedding(**response.json())
