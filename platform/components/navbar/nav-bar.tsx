@@ -20,10 +20,7 @@ let version: string;
 try {
   const { publicRuntimeConfig } = getConfig();
   version = publicRuntimeConfig.version;
-} catch {
-  console.log("version not found");
-  console.log(getConfig());
-}
+} catch {}
 
 export function Navbar({
   className,

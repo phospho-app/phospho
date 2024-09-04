@@ -265,6 +265,7 @@ export interface Clustering {
   nb_clusters?: number;
   clusters_ids: string[];
   status?: "started" | "summaries" | "completed";
+  percent_of_completion?: number;
   clusters?: Cluster[] | null;
   scope: "messages" | "sessions";
   name?: string;

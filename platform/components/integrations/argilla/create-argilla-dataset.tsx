@@ -41,7 +41,6 @@ const CreateDataset = () => {
   async function createNewDataset() {
     // Disable the button while we are creating the dataset
     setIsCreatingDataset(true);
-    console.log(useSmartSampling);
     try {
       await fetch(`/api/argilla/datasets/create`, {
         method: "POST",

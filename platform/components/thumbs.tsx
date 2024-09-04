@@ -70,7 +70,6 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
 
     // If no task, don't update
     if (responseBody === null || responseBody === undefined) {
-      console.log("Error: no task returned");
       return;
     }
 
@@ -80,7 +79,6 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
     updatedTask.last_eval = responseBody.last_eval;
     setTask(updatedTask);
     setFlag(responseBody.flag);
-    console.log("Task flagged");
   }
 
   // Function to update the note
@@ -90,7 +88,6 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
 
   const handleSaveButton = async () => {
     setPopoverOpen(false);
-    console.log("Saving notes");
     if (user === null || user === undefined) return;
     if (task === null || task === undefined) return;
     setSaveNoteButtonClicked(true);
@@ -108,11 +105,8 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
     });
     const responseBody = await creation_response.json();
 
-    console.log("responseBody :", responseBody);
-
     // If no task, don't update
     if (responseBody === null || responseBody === undefined) {
-      console.log("Error: no task returned");
       setSaveNoteButtonClicked(false);
       toast({
         title: "Error",

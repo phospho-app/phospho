@@ -32,7 +32,6 @@ const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
       if (data.error) {
         console.error("Error in fetching tasks:", data.error);
       } else {
-        console.log("Sent email successfully:", data);
         toast({
           // Add a mail emoji
           title: "✉️ Your data is on the way!",

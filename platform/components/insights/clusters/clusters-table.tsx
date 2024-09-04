@@ -55,7 +55,6 @@ export function ClustersTable<TData, TValue>({
 
   let latestClustering = undefined;
   if (clusterings.length > 0) {
-    console.log("clusterings", clusterings);
     latestClustering = clusterings[0];
   }
 
@@ -70,10 +69,10 @@ export function ClustersTable<TData, TValue>({
   } = useSWR(
     project_id
       ? [
-        `/api/explore/${project_id}/clusters`,
-        accessToken,
-        selectedClustering?.id,
-      ]
+          `/api/explore/${project_id}/clusters`,
+          accessToken,
+          selectedClustering?.id,
+        ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
@@ -130,11 +129,11 @@ export function ClustersTable<TData, TValue>({
                   <span>
                     {selectedClustering?.name ??
                       formatUnixTimestampToLiteralDatetime(
-                        selectedClustering?.created_at ?? 0) ??
+                        selectedClustering?.created_at ?? 0,
+                      ) ??
                       latestClustering?.name ??
                       formatUnixTimestampToLiteralDatetime(
-                        latestClustering?.created_at ??
-                        0,
+                        latestClustering?.created_at ?? 0,
                       )}
                   </span>
                 )}
@@ -149,9 +148,10 @@ export function ClustersTable<TData, TValue>({
               <SelectGroup>
                 {clusterings.map((clustering) => (
                   <SelectItem key={clustering.id} value={clustering.id}>
-                    {clustering?.name ?? formatUnixTimestampToLiteralDatetime(
-                      clustering.created_at,
-                    )}
+                    {clustering?.name ??
+                      formatUnixTimestampToLiteralDatetime(
+                        clustering.created_at,
+                      )}
                   </SelectItem>
                 ))}
                 {clusterings.length === 0 && (
@@ -184,9 +184,9 @@ export function ClustersTable<TData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
                       </TableHead>
                     );
                   })}

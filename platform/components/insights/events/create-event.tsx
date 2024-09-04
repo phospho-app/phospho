@@ -122,7 +122,6 @@ export default function CreateEvent({
         categories: z
           .any()
           .transform((value, ctx) => {
-            console.log("Categories", value);
             // If array of string, return it
             if (Array.isArray(value)) {
               value = value.filter((category) => category !== "");
@@ -147,8 +146,6 @@ export default function CreateEvent({
           .optional(),
       })
       .transform((value, ctx) => {
-        console.log("context", ctx);
-        console.log("Score range settings value transform", value);
         // Raise an error if there are less than 1 category or more than 9
         if (value.score_type === ScoreRangeType.confidence) {
           return {
@@ -192,7 +189,6 @@ export default function CreateEvent({
     max: 1,
     categories: [],
   } as ScoreRangeSettings;
-  console.log("defaultEventCategory", defaultEventCategory);
   if (eventToEdit?.score_range_settings) {
     defaultScoreRangeSettings = eventToEdit.score_range_settings;
   } else {
@@ -239,13 +235,10 @@ export default function CreateEvent({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Submitting event:", values);
     if (!selectedProject) {
-      console.log("Submit: No selected project");
       return;
     }
     if (!selectedProject.settings) {
-      console.log("Submit: No selected project settings");
       return;
     }
     if (
@@ -274,7 +267,6 @@ export default function CreateEvent({
       score_range_settings: values.score_range_settings,
       is_last_task: values.is_last_task,
     };
-    console.log("Updated selected project:", selectedProject);
 
     try {
       const creation_response = await fetch(`/api/projects/${project_id}`, {
@@ -300,9 +292,6 @@ export default function CreateEvent({
       });
     }
   }
-
-  console.log("Form errors", form.formState.errors);
-  console.log("Form values", form.getValues());
 
   return (
     <div className="space-y-2">
@@ -583,10 +572,6 @@ export default function CreateEvent({
                               target: { value: value.split(",") },
                             });
                             // update the score_range_settings object
-                            console.log(
-                              "Setting categories to",
-                              value.split(","),
-                            );
                             form.resetField("score_range_settings.score_type");
                           }}
                         />

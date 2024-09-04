@@ -88,7 +88,6 @@ export default function Page() {
   );
 
   useEffect(() => {
-    console.log("form_values", form.getValues("project_name"));
     if (form.getValues("project_name") === undefined) {
       form.setValue("project_name", selectedProject?.project_name);
     }
@@ -199,7 +198,6 @@ export default function Page() {
 
     // Push the file to the server
     if (file !== null) {
-      console.log("onSubmit", file);
       const formData = new FormData();
       formData.set("file", file, file.name);
       try {

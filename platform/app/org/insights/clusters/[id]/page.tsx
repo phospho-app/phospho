@@ -27,7 +27,6 @@ export default function Page({ params }: { params: { id: string } }) {
   );
   const tasks_ids = cluster?.tasks_ids;
   const sessions_ids = cluster?.sessions_ids;
-  console.log("sessions_ids", sessions_ids);
 
   return (
     <>
@@ -44,16 +43,16 @@ export default function Page({ params }: { params: { id: string } }) {
           <div className="text-muted-foreground">{cluster.description}</div>
         )}
       </div>
-      {((Array.isArray(tasks_ids) && tasks_ids.length > 0) && (
+      {Array.isArray(tasks_ids) && tasks_ids.length > 0 && (
         <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
           <TasksTable tasks_ids={tasks_ids} />
         </div>
-      ))}
-      {((Array.isArray(sessions_ids) && sessions_ids.length > 0) && (
+      )}
+      {Array.isArray(sessions_ids) && sessions_ids.length > 0 && (
         <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
           <SessionsTable sessions_ids={sessions_ids} />
         </div>
-      ))}
+      )}
     </>
   );
 }

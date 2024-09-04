@@ -32,7 +32,6 @@ const KPIs: React.FC<{}> = ({}) => {
         },
       );
       const response_json = await response.json();
-      console.log("user count", response_json);
       setUserCount(response_json.value);
       setUserCountIsLoading(false);
     })();
@@ -63,8 +62,6 @@ const KPIs: React.FC<{}> = ({}) => {
         },
       );
       const response_json = await response.json();
-      console.log("user count", response_json);
-      setKpiMessagesCount(response_json.value);
       setKpiMessagesIsLoading(false);
     })();
   }, [project_id]);
@@ -89,7 +86,6 @@ const KPIs: React.FC<{}> = ({}) => {
       setKpiMessagesBottom10(response_json.bottom_quantile);
       setKpiMessagesAverage(response_json.average);
       setKpiMessagesTop10(response_json.top_quantile);
-      console.log("quantile value is ", response_json.quantile_value);
       setKpiMessagesIsLoading(false);
     })();
   }, [project_id]);
@@ -121,7 +117,6 @@ const KPIs: React.FC<{}> = ({}) => {
         },
       );
       const response_json = await response.json();
-      console.log("user count", response_json);
       setKpiSessionsCount(response_json.value);
       setKpiSessionsIsLoading(false);
     })();
@@ -147,7 +142,6 @@ const KPIs: React.FC<{}> = ({}) => {
       setKpiSessionsBottom10(response_json.bottom_quantile);
       setKpiSessionsAverage(response_json.average);
       setKpiSessionsTop10(response_json.top_quantile);
-      console.log("quantile value is ", response_json.quantile_value);
       setKpiSessionsIsLoading(false);
     })();
   }, [project_id]);

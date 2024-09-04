@@ -1,7 +1,7 @@
 import datetime
 from typing import Dict, List, Optional, Union
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 from propelauth_fastapi import User
 
@@ -9,6 +9,7 @@ from app.api.platform.models import (
     ABTests,
     AggregateMetricsRequest,
     Cluster,
+    Clustering,
     ClusteringRequest,
     Clusterings,
     Clusters,
@@ -22,7 +23,8 @@ from app.api.platform.models.explore import ABTestVersions, ClusteringEmbeddingC
 from app.core import config
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
-from app.security.authorization import get_quota
+from app.security.authorization import get_quota, get_quota_for_org
+from app.services.mongo.ai_hub import AIHubClient
 from app.services.mongo.events import get_all_events, get_event_definition_from_event_id
 from app.services.mongo.explore import (
     compute_cloud_of_clusters,
@@ -35,6 +37,7 @@ from app.services.mongo.explore import (
     fetch_all_clusters,
     fetch_single_cluster,
     get_ab_tests_versions,
+    get_clustering_by_id,
     get_dashboard_aggregated_metrics,
     get_events_aggregated_metrics,
     get_sessions_aggregated_metrics,
@@ -45,7 +48,8 @@ from app.services.mongo.explore import (
     project_has_tasks,
 )
 from app.services.mongo.tasks import get_total_nb_of_tasks
-from app.services.mongo.ai_hub import AIHubClient
+from app.utils import generate_uuid
+from phospho.utils import generate_version_id
 
 router = APIRouter(tags=["Explore"])
 
@@ -310,6 +314,26 @@ async def post_all_clusterings(
 
 
 @router.post(
+    "/explore/{project_id}/clusterings/{clustering_id}",
+    response_model=Clustering,
+    description="Get the all the clusterings of a project",
+)
+async def post_selected_clustering(
+    project_id: str,
+    clustering_id: str,
+    user: User = Depends(propelauth.require_user),
+) -> Clustering:
+    """
+    Update the status of the selected clustering.
+    """
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    clustering = await get_clustering_by_id(
+        project_id=project_id, clustering_id=clustering_id
+    )
+    return clustering
+
+
+@router.post(
     "/explore/{project_id}/clusters",
     response_model=Clusters,
     description="Get the different clusters of a project",
@@ -360,7 +384,7 @@ async def post_single_cluster(
 
 @router.post(
     "/explore/{project_id}/detect-clusters",
-    response_model=None,
+    response_model=Clustering,
     description="Run the clusters detection algorithm on a project",
 )
 async def post_detect_clusters(
@@ -368,19 +392,17 @@ async def post_detect_clusters(
     query: DetectClustersRequest,
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
-) -> dict:
+) -> Clustering:
     """
-    Run the clusters detection algorithm on a project
+    Run the clusters detection algorithm on a project.
+
+    Returns a dummy clustering object, used for the frontend.
     """
     org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
-    usage_quota = await get_quota(project_id)
+
+    usage_quota = await get_quota_for_org(org_id)
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
-
-    logger.debug(query.instruction)
-
-    if query is None:
-        query = DetectClustersRequest()
 
     clustering_billing = 0
     if query.scope == "messages" or query.scope == "sessions":
@@ -397,14 +419,13 @@ async def post_detect_clusters(
                 status_code=404,
                 detail="No tasks found in the project.",
             )
-
     else:
         raise HTTPException(
             status_code=400,
             detail="messages_or_sessions must be either 'messages' or 'sessions'.",
         )
 
-    logger.info(f"Clustering billing: {clustering_billing}")
+    logger.info(f"Clustering billing for project_id {project_id}: {clustering_billing}")
 
     # Ignore limits and metering in preview mode
     if config.ENVIRONMENT != "preview":
@@ -421,23 +442,46 @@ async def post_detect_clusters(
     if query.filters is None:
         query.filters = ProjectDataFilters()
 
-    ai_hub_client = AIHubClient(org_id=org_id, project_id=project_id)
-
-    background_tasks.add_task(
-        ai_hub_client.run_clustering,
-        clustering_request=ClusteringRequest(
-            project_id=project_id,
-            org_id=org_id,
-            limit=query.limit,
-            filters=query.filters,
-            scope=query.scope,
-            instruction=query.instruction,
-            nb_clusters=query.nb_clusters,
-            nb_credits_used=clustering_billing,
-        ),
+    # Generate a unique id for the clustering and a valid name
+    clustering_id = generate_uuid()
+    clustering_name = generate_version_id()
+    clustering_request = ClusteringRequest(
+        org_id=org_id,
+        project_id=project_id,
+        # model=query.model, # Not implemented yet, always usel latest model
+        limit=query.limit,
+        filters=query.filters,
+        instruction=query.instruction,
+        nb_clusters=query.nb_clusters,
+        # merge_clusters=query.merge_clusters, # Not implemented yet
+        customer_id=usage_quota.customer_id,
+        nb_credits_used=clustering_billing,
+        clustering_id=clustering_id,
+        clustering_name=clustering_name,
+    )
+    logger.info(
+        f"Clustering id {clustering_id} cluster name {clustering_name} for project {project_id} requested."
     )
 
-    return {"status": "ok"}
+    ai_hub_client = AIHubClient(org_id=org_id, project_id=project_id)
+    background_tasks.add_task(
+        ai_hub_client.run_clustering,
+        clustering_request=clustering_request,
+    )
+
+    # Return a dummy clustering object, used for the frontend
+    return Clustering(
+        org_id=org_id,
+        project_id=project_id,
+        id=clustering_id,
+        name=clustering_name,
+        model=clustering_request.model,
+        scope=query.scope,
+        instruction=clustering_request.instruction,
+        nb_clusters=None,
+        clusters_ids=[],
+        status="started",
+    )
 
 
 @router.get(

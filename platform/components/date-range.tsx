@@ -48,7 +48,6 @@ export function DatePickerWithRange({
   if (dateRangePreset === null) {
     try {
       if (dateRange?.from && dateRange.to) {
-        console.log(dateRange.from, dateRange.to);
         dateRangeLabel = `${format(dateRange.from, "y-LLL-dd")} - ${format(
           dateRange.to,
           "y-LLL-dd",
@@ -59,7 +58,6 @@ export function DatePickerWithRange({
         dateRangeLabel = "Pick a date";
       }
     } catch (e) {
-      console.log(e);
       dateRangeLabel = "Pick a date";
     }
   }
