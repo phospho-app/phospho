@@ -68,6 +68,14 @@ const Clusters: React.FC = () => {
       setSelectedClustering(clusterings[0]);
       return;
     }
+    // if the selectedClustering is not in the list of clusterings, select the latest clustering
+    if (
+      selectedClustering !== undefined &&
+      !clusterings.some((clustering) => clustering.id === selectedClustering.id)
+    ) {
+      setSelectedClustering(clusterings[0]);
+      return;
+    }
   }, [JSON.stringify(clusterings), project_id]);
 
   // Add a useEffect triggered every few seconds to update the clustering status
