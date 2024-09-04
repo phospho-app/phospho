@@ -24,7 +24,6 @@ export function ClusteringDropDown({
   const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
-    console.log("refresh dropdwon clustering", clusterings);
     setRefresh(!refresh);
   }, [JSON.stringify(clusterings)]);
 

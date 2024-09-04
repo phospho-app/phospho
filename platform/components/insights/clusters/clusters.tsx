@@ -80,7 +80,6 @@ const Clusters: React.FC = () => {
           accessToken,
           "POST",
         );
-        console.log("Updating clustering status", response);
         // Update the selectedClustering with the new status
         setSelectedClustering({
           ...selectedClustering,
