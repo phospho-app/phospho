@@ -32,7 +32,6 @@ export function SelectOrgButton() {
   const orgsArray = Object.values(user.orgIdToOrgMemberInfo);
 
   const handleValueChange = (newOrgId: string) => {
-    console.log("Selected Org in selectbutton:", newOrgId);
     setproject_id(null);
     setSelectedOrgId(newOrgId);
   };
@@ -52,7 +51,10 @@ export function SelectOrgButton() {
             </div>
           </SelectValue>
         </SelectTrigger>
-        <SelectContent position="popper">
+        <SelectContent
+          position="popper"
+          className="overflow-y-auto max-h-[20rem]"
+        >
           {orgsArray.map((org) => (
             <SelectItem key={org.orgId} value={org.orgId}>
               {org.orgName}

@@ -125,8 +125,6 @@ export const navigationStateStore = create(
       ],
       setSessionsSorting: (updaterOrValue: Updater<SortingState>) =>
         set((state) => {
-          console.log("sorting updaterOrValue");
-          console.log(updaterOrValue);
           if (typeof updaterOrValue === "function") {
             const update = updaterOrValue(state.sessionsSorting);
             return {

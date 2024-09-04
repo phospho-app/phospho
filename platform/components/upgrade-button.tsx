@@ -74,7 +74,6 @@ const UpgradeButton = ({
         },
       );
       if (!response.ok) {
-        console.log("Error: ", response);
         toast.toast({
           title: "Checkout Error - Please try again later",
           description: `Details: ${response.status} - ${response.statusText}`,
@@ -100,7 +99,6 @@ const UpgradeButton = ({
         });
       }
     } catch (error) {
-      console.log("Error: ", error);
       toast.toast({
         title: "Checkout Error - Please try again later",
         description: "Error creating checkout session: " + error,

@@ -206,10 +206,6 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
                     const closestParentGridStackItem = document.getElementById(
                       `gridstackitem-${tile.id}`,
                     );
-                    console.log(
-                      "closestParentGridStackItem",
-                      closestParentGridStackItem,
-                    );
                     if (grid && closestParentGridStackItem) {
                       grid.removeWidget(
                         closestParentGridStackItem as HTMLElement,
@@ -297,23 +293,10 @@ const Dashboard: React.FC = () => {
   const customDashboardTiles = selectedProject?.settings?.dashboard_tiles;
 
   useEffect(() => {
-    console.log("grid: Callback called");
-    // if (!selectedProject) {
-    //   console.log("grid: No selected project");
-
-    // }
     if (grid && currentGridProjectId !== selectedProject?.id) {
-      console.log("grid: Destroying grid");
-      console.log(
-        "grid: selectedProject.id",
-        selectedProject?.id,
-        "grid: currentGridProjectId",
-        currentGridProjectId,
-      );
       grid.destroy(false);
     }
 
-    console.log("grid: Init grid");
     const allYValues = customDashboardTiles?.map((t) => t.y ?? 0) ?? [];
     const initializedGrid = GridStack.init({
       column: 8,
@@ -330,7 +313,6 @@ const Dashboard: React.FC = () => {
       // Find the tile that was moved
       selectedProject.settings.dashboard_tiles.forEach((tile, tile_index) => {
         items.forEach((item) => {
-          console.log("Change event item", item);
           if (item.id === tile.id) {
             if (!selectedProject.settings) return;
 
@@ -342,8 +324,6 @@ const Dashboard: React.FC = () => {
           }
         });
       });
-
-      console.log("Change event items", items);
 
       // Push updates
       (async () => {
@@ -374,7 +354,6 @@ const Dashboard: React.FC = () => {
     };
 
     if (initializedGrid) {
-      console.log("grid: initializeGrid Setting change event");
       initializedGrid.on("change", onChangeFunction);
       setGrid(initializedGrid);
       setCurrentGridProjectId(selectedProject?.id);

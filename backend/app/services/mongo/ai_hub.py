@@ -5,7 +5,7 @@ Interact with the AI Hub service
 import os
 from fastapi import HTTPException
 import traceback
-from typing import Optional
+from typing import Literal, Optional
 import hashlib
 
 from app.services.slack import slack_notification
@@ -89,6 +89,7 @@ class AIHubClient:
         self,
         endpoint: str,
         data: dict,
+        hash_data_for_id: bool = True,
     ) -> Optional[httpx.Response]:
         """
         Post data to the ai hub temporal worker
@@ -132,14 +133,18 @@ class AIHubClient:
             else:
                 raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
 
-            # Hash the data to generate a unique determinist id
-            unique_id = (
-                endpoint
-                + hashlib.md5(
-                    repr(sorted(data.items())).encode("utf-8"),
-                    usedforsecurity=False,
-                ).hexdigest()
-            )
+            if hash_data_for_id:
+                # Hash the data to generate a unique determinist id
+                unique_id = (
+                    endpoint
+                    + hashlib.md5(
+                        repr(sorted(data.items())).encode("utf-8"),
+                        usedforsecurity=False,
+                    ).hexdigest()
+                )
+            else:
+                # Generate a random id
+                unique_id = generate_uuid()
 
             await client.execute_workflow(
                 endpoint, data, id=unique_id, task_queue="ai-hub"
@@ -169,27 +174,33 @@ class AIHubClient:
 
         return None
 
-    async def run_clustering(self, clustering_request: ClusteringRequest) -> None:
+    async def run_clustering(
+        self,
+        clustering_request: ClusteringRequest,
+        scope: Literal["messages", "sessions"] = "messages",
+    ) -> None:
         """
         Call the clustering endpoint of the AI Hub
         """
-        if clustering_request.scope == "messages":
+        if scope == "messages":
             response = await self._post(
-                "generate_clustering_messages_workflow",
-                clustering_request.model_dump(mode="json"),
+                endpoint="generate_clustering_messages_workflow",
+                data=clustering_request.model_dump(mode="json"),
+                hash_data_for_id=False,
             )
-        elif clustering_request.scope == "sessions":
+        elif scope == "sessions":
             response = await self._post(
-                "generate_clustering_sessions_workflow",
-                clustering_request.model_dump(mode="json"),
+                endpoint="generate_clustering_sessions_workflow",
+                data=clustering_request.model_dump(mode="json"),
+                hash_data_for_id=False,
             )
         else:
-            raise ValueError(
-                f"Invalid value for messages_or_sessions: {clustering_request.scope}"
-            )
+            raise ValueError(f"Invalid value for messages_or_sessions: {scope}")
 
         if response is None:
-            raise HTTPException(status_code=500, detail="Error while calling AI Hub")
+            raise HTTPException(
+                status_code=500, detail=f"Error while calling AI Hub: {response}"
+            )
 
     async def generate_embeddings(
         self, embedding_request: EmbeddingRequest
@@ -198,8 +209,13 @@ class AIHubClient:
         Call the embeddings endpoint of the AI Hub
         """
         response = await self._post(
-            "create_embeddings_workflow",
-            embedding_request.model_dump(mode="json"),
+            endpoint="create_embeddings_workflow",
+            data=embedding_request.model_dump(mode="json"),
+            hash_data_for_id=False,
         )
+        if response is None:
+            raise HTTPException(
+                status_code=500, detail=f"Error while calling AI Hub: {response}"
+            )
 
         return Embedding(**response.json())

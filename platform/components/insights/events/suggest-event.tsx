@@ -130,13 +130,10 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setPopoverOpen(false);
-    console.log("Submitting event:", values);
     if (!selectedProject) {
-      console.log("Submit: No selected project");
       return;
     }
     if (!selectedProject.settings) {
-      console.log("Submit: No selected project settings");
       return;
     }
     if (event.event_name !== values.event_name) {
@@ -161,7 +158,6 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
       keywords: values.keywords,
       regex_pattern: values.regex_pattern,
     };
-    console.log("Updated selected project:", selectedProject);
 
     try {
       const creation_response = await fetch(`/api/projects/${project_id}`, {

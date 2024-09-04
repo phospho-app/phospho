@@ -98,10 +98,8 @@ export default function RunEvent({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Submitting event:", values);
     let sampleSize = Math.floor(totalNbTasks ?? 0 * values.sample_rate);
     if (!selectedProject) {
-      console.log("Submit: No selected project");
       return;
     }
     try {

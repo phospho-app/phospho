@@ -121,7 +121,6 @@ function RunAnalyticsForm({
     router.push("/");
 
     if (!response.ok) {
-      console.log("Error: ", response);
       toast({
         title: "Checkout Error - Please try again later",
         description: `Details: ${response.status} - ${response.statusText}`,
@@ -315,10 +314,6 @@ export default function Page() {
     });
     router.push("/");
   }
-
-  console.log("hasTasks", hasTasks);
-  console.log("project_id", project_id);
-  console.log("selectedProject", selectedProject);
 
   return (
     <>
