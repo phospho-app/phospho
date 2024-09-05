@@ -42,6 +42,9 @@ async def bill_on_stripe(
         logger.debug("Preview environment, stripe billing disabled")
         return
 
+    if request.current_usage < request.max_usage:
+        return
+
     stripe.api_key = config.STRIPE_SECRET_KEY
 
     if request.customer_id:
