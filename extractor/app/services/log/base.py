@@ -50,7 +50,7 @@ def get_time_created_at(
 
 def get_nb_tokens_prompt_tokens(
     log_event: LogEventForTasks, model: Optional[str]
-) -> int:
+) -> int | None:
     """
     Returns the number of tokens in the prompt tokens, using
     different heuristics depending on the input type.
@@ -62,7 +62,7 @@ def get_nb_tokens_prompt_tokens(
             if isinstance(log_event.raw_output, dict):
                 usage = log_event.raw_output.get("usage", {})
                 if usage:
-                    return usage.get("prompt_tokens", 0)
+                    return usage.get("prompt_tokens", None)
             else:
                 messages = log_event.raw_input.get("messages", [])
                 if isinstance(messages, list) and all(
@@ -92,7 +92,7 @@ def get_nb_tokens_prompt_tokens(
 
 def get_nb_tokens_completion_tokens(
     log_event: LogEventForTasks, model: Optional[str]
-) -> int:
+) -> int | None:
     """
     Returns the number of tokens in the completion tokens, using
     different heuristics depending on the output type.
@@ -137,7 +137,7 @@ def get_nb_tokens_completion_tokens(
             f"Error in get_nb_tokens_completion_tokens with model: {model}, {e}"
         )
 
-    return 0
+    return None
 
 
 def collect_metadata(log_event: LogEventForTasks) -> dict:
