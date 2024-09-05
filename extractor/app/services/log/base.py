@@ -49,14 +49,13 @@ def get_time_created_at(
 
 
 def get_nb_tokens_prompt_tokens(
-    log_event: LogEventForTasks, model: Optional[str], tokenizer: Any
-):
+    log_event: LogEventForTasks, model: Optional[str]
+) -> int:
     """
     Returns the number of tokens in the prompt tokens, using
     different heuristics depending on the input type.
     """
-    if tokenizer is None:
-        tokenizer = get_tokenizer(model)
+    tokenizer = get_tokenizer(model)
     if isinstance(log_event.raw_input, dict):
         # Assume there is a key 'messages' (OpenAI-like input)
         messages = log_event.raw_input.get("messages", [])
@@ -80,15 +79,14 @@ def get_nb_tokens_prompt_tokens(
 
 
 def get_nb_tokens_completion_tokens(
-    log_event: LogEventForTasks, model: Optional[str], tokenizer: Any
-):
+    log_event: LogEventForTasks, model: Optional[str]
+) -> int:
     """
     Returns the number of tokens in the completion tokens, using
     different heuristics depending on the output type.
     """
     try:
-        if tokenizer is None:
-            tokenizer = get_tokenizer(model)
+        tokenizer = get_tokenizer(model)
         if isinstance(log_event.raw_output, dict):
             # Assume there is a key 'choices' (OpenAI-like output)
             generated_choices = log_event.raw_output.get("choices", [])
@@ -112,7 +110,9 @@ def get_nb_tokens_completion_tokens(
         if log_event.output is not None:
             return len(tokenizer.encode(log_event.output))
     except Exception as e:
-        logger.error(f"Error in get_nb_tokens_completion_tokens: {e}")
+        logger.error(
+            f"Error in get_nb_tokens_completion_tokens with model: {model}, {e}"
+        )
 
     return 0
 
@@ -145,16 +145,13 @@ def collect_metadata(log_event: LogEventForTasks) -> dict:
     model = metadata.get("model", None)
     if not isinstance(model, str):
         model = None
-    tokenizer = None
 
     if "prompt_tokens" not in metadata.keys():
-        metadata["prompt_tokens"] = get_nb_tokens_prompt_tokens(
-            log_event, model, tokenizer
-        )
+        metadata["prompt_tokens"] = get_nb_tokens_prompt_tokens(log_event, model)
 
     if "completion_tokens" not in metadata.keys():
         metadata["completion_tokens"] = get_nb_tokens_completion_tokens(
-            log_event, model, tokenizer
+            log_event, model
         )
 
     if "total_tokens" not in metadata.keys():
