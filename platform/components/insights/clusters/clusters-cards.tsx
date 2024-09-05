@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -8,17 +7,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
-import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
-import { graphColors } from "@/lib/utils";
 import { Cluster, Clustering, EventDefinition } from "@/models/models";
 import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
@@ -26,7 +16,6 @@ import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pickaxe, PlusIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Data } from "plotly.js";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
@@ -38,23 +27,22 @@ import "./style.css";
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 function ClusterCard({
-  project_id,
   cluster,
   setSheetClusterOpen,
 }: {
-  project_id: string;
   cluster: Cluster;
   setSheetClusterOpen: (value: boolean) => void;
 }) {
   /* This is a single cluster card */
-
-  const [sheetEventOpen, setSheetEventOpen] = useState(false);
-
+  const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
   const router = useRouter();
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+
+  const [sheetEventOpen, setSheetEventOpen] = useState(false);
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -73,7 +61,7 @@ function ClusterCard({
 
   const eventToEdit = {
     project_id: project_id,
-    org_id: selectedProject.org_id,
+    org_id: selectedOrgId,
     event_name: cluster.name,
     description: cluster.description,
     score_range_settings: {
@@ -165,150 +153,19 @@ function ClusterCard({
   );
 }
 
-// const Animated3DScatterPlot = () => {
-//   const plotRef = useRef(null);
-
-//   useEffect(() => {
-//     let angle = 0;
-//     const radius = 10;
-//     const speed = 0.01;
-
-//     const animate = () => {
-//       if (plotRef.current) {
-//         const eye = {
-//           x: radius * Math.cos(angle),
-//           y: radius * Math.sin(angle),
-//           z: 2,
-//         };
-
-//         angle += speed;
-//         if (angle > 2 * Math.PI) angle = 0;
-//       }
-//     };
-
-//     const interval = setInterval(animate, 100);
-
-//     return () => clearInterval(interval); // Clean up on unmount
-//   }, []);
-// };
-
-function CustomPlot({ data }: { data: Data }) {
-  const [refresh, setRefresh] = useState(false);
-  const router = useRouter();
-
-  useEffect(() => {
-    const handleResize = () => {
-      // Force a refresh to resize the plot
-      setRefresh(!refresh);
-    };
-    // Set the initial state
-    handleResize();
-    // Add event listener for window resize
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("orientationchange", handleResize);
-    // Clean up the event listener when the component is unmounted
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-  return (
-    <Plot
-      data={[data]}
-      config={{ displayModeBar: true, responsive: true }}
-      layout={{
-        height: Math.max(window.innerHeight * 0.6, 300),
-        // set it to be the size of the current div in pixel
-        width: document.getElementsByClassName("custom-plot")[0].clientWidth,
-        // autosize: true,
-        scene: {
-          xaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-          yaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-          zaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-        },
-        paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
-        plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
-      }}
-      onClick={(data) => {
-        // if double click, redirect to the task page
-        if (data.points.length !== 1) {
-          return;
-        }
-        if (data.points[0].text) {
-          router.push(
-            `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
-          );
-        }
-      }}
-    />
-  );
-}
-
 export function ClustersCards({
   setSheetClusterOpen: setSheetClusterOpen,
+  selected_clustering_id: selected_clustering_id,
+  selectedClustering: selectedClustering,
 }: {
   setSheetClusterOpen: (value: boolean) => void;
+  selected_clustering_id: string | undefined;
+  selectedClustering: Clustering | undefined;
 }) {
   /* This is the group of all cluster cards */
-  const [selectedClustering, setSelectedClustering] = useState<
-    Clustering | undefined
-  >(undefined);
+
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-
-  const { data: clusteringsData } = useSWR(
-    project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
-    {
-      keepPreviousData: true,
-      // revalidateIfStale: false,
-    },
-  );
-  const clusterings = (clusteringsData?.clusterings as Clustering[]) ?? [];
-
-  let latestClustering: Clustering | undefined = undefined;
-  if (clusterings.length > 0) {
-    console.log("clusterings", clusterings);
-    latestClustering = clusterings[0];
-  }
-
-  let selectedClusteringName = selectedClustering?.name;
-  if (selectedClustering && !selectedClusteringName) {
-    selectedClusteringName = formatUnixTimestampToLiteralDatetime(
-      selectedClustering.created_at,
-    );
-  }
-
-  useEffect(() => {
-    setSelectedClustering(latestClustering);
-  }, [JSON.stringify(clusterings)]);
-
-  console.log("selectedClustering", selectedClustering);
-  console.log("selectedClusteringName", selectedClusteringName);
 
   const {
     data: clustersData,
@@ -319,80 +176,22 @@ export function ClustersCards({
       ? [
           `/api/explore/${project_id}/clusters`,
           accessToken,
-          selectedClustering?.id,
-        ]
-      : null,
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        clustering_id: selectedClustering?.id,
-        limit: 100,
-      }).then((res) =>
-        res?.clusters.sort((a: Cluster, b: Cluster) => b.size - a.size),
-      ),
-    {
-      keepPreviousData: true,
-    },
-  );
-
-  const { data: selectedClusteringDots } = useSWR(
-    selectedClustering !== undefined
-      ? [
-          `/api/explore/${project_id}/data-cloud`,
-          accessToken,
+          project_id,
+          // Refetch the data when the selected clustering changes
+          // Ex: different selection, status update
           JSON.stringify(selectedClustering),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         clustering_id: selectedClustering?.id,
-        type: "pca",
+        limit: 100,
       }).then((res) => {
-        // if res is {}, return undefined
-        if (Object.keys(res).length === 0) {
-          return null;
-        }
-
-        // Generate a color for each cluster
-        const clusterIdToColor = new Map<string, string>();
-        const clusters = res.clusters_ids as string[];
-        const uniqueClusterIds: string[] = [];
-        clusters.forEach((cluster_id) => {
-          if (!uniqueClusterIds.includes(cluster_id)) {
-            uniqueClusterIds.push(cluster_id);
-          }
-        });
-
-        const clusters_names = res.clusters_names as string[];
-        uniqueClusterIds.forEach((cluster_id, index) => {
-          console.log("index", index);
-          clusterIdToColor.set(
-            cluster_id,
-            graphColors[index % graphColors.length],
-          );
-        });
-        const colors: string[] = res.clusters_ids.map((cluster_id: any) => {
-          return clusterIdToColor.get(cluster_id) as string;
-        });
-
-        return {
-          x: res.x,
-          y: res.y,
-          z: res.z,
-          text: res.ids,
-          mode: "markers",
-          type: "scatter3d",
-          marker: {
-            size: 6,
-            color: colors,
-            opacity: 0.8,
-          },
-          hoverinfo: "text",
-          hovertext: clusters_names,
-        } as Data;
+        if (res === undefined) return undefined;
+        return res?.clusters.sort((a: Cluster, b: Cluster) => b.size - a.size);
       }),
     {
       keepPreviousData: true,
-      revalidateIfStale: false,
     },
   );
 
@@ -401,87 +200,16 @@ export function ClustersCards({
   }
 
   return (
-    <div>
-      <div className="flex flex-row gap-x-2 items-center mb-2 custom-plot w-full">
-        <div>
-          <Select
-            onValueChange={(value: string) => {
-              if (value === "no-clustering") {
-                setSelectedClustering(undefined);
-                return;
-              }
-              setSelectedClustering(
-                clusterings.find((clustering) => clustering.id === value),
-              );
-            }}
-            defaultValue={selectedClustering?.id ?? "no-clustering"}
-          >
-            <SelectTrigger>
-              <div>
-                {clusterings?.length > 0 && (
-                  <span>{selectedClusteringName}</span>
-                )}
-                {clusterings?.length === 0 && (
-                  <span className="text-muted-foreground">
-                    No clustering available
-                  </span>
-                )}
-              </div>
-            </SelectTrigger>
-            <SelectContent className="overflow-y-auto max-h-[20rem]">
-              <SelectGroup>
-                {clusterings.map((clustering) => (
-                  <SelectItem key={clustering.id} value={clustering.id}>
-                    {clustering?.name ??
-                      formatUnixTimestampToLiteralDatetime(
-                        clustering.created_at,
-                      )}
-                  </SelectItem>
-                ))}
-                {clusterings.length === 0 && (
-                  <SelectItem value="no-clustering">
-                    No clustering available
-                  </SelectItem>
-                )}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Badge>{selectedClustering?.instruction ?? "No instruction"}</Badge>
-        </div>
-        <div>
-          <Badge>{selectedClustering?.nb_clusters ?? "No"} clusters</Badge>
-        </div>
-      </div>
-      {!selectedClustering && (
-        <div className="w-full text-muted-foreground flex justify-center text-sm h-20">
-          Run a clustering to see clusters here.
-        </div>
-      )}
-      {selectedClustering &&
-        clustersData?.length === 0 &&
-        selectedClustering?.status !== "completed" && (
-          <div className="w-full text-muted-foreground flex justify-center text-sm h-20">
-            Clustering is in progress...
-          </div>
-        )}
-      {selectedClusteringDots !== undefined &&
-        selectedClusteringDots !== null && (
-          <CustomPlot data={selectedClusteringDots} />
-        )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {clustersData?.map((cluster) => {
-          return (
-            <ClusterCard
-              key={cluster.id}
-              project_id={project_id}
-              cluster={cluster}
-              setSheetClusterOpen={setSheetClusterOpen}
-            />
-          );
-        })}
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {clustersData?.map((cluster) => {
+        return (
+          <ClusterCard
+            key={cluster.id}
+            cluster={cluster}
+            setSheetClusterOpen={setSheetClusterOpen}
+          />
+        );
+      })}
     </div>
   );
 }

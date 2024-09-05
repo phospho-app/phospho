@@ -1,7 +1,7 @@
 "use client";
 
 import { SendDataAlertDialog } from "@/components/callouts/import-data";
-import DownloadButton from "@/components/navbar/download-csv";
+import { ExportDataButton } from "@/components/navbar/download-csv";
 import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -139,9 +139,7 @@ export function NavBarSettings() {
                 </div>
               </AlertDialogTrigger>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <DownloadButton />
-            </DropdownMenuItem>
+            <ExportDataButton />
             <DropdownMenuSeparator />
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>

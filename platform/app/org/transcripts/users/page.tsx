@@ -140,8 +140,6 @@ const UsersDataviz = () => {
       },
     );
 
-  console.log("userIndustry", userIndustry);
-
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (

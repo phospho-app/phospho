@@ -1055,7 +1055,7 @@ async def get_last_clustering_composition(
 
     clustering = (
         await mongo_db["private-clusterings"]
-        .find({"project_id": project_id})
+        .find({"project_id": project_id, "status": "completed"})
         .sort([("created_at", -1)])
         .limit(1)
         .to_list(length=1)
@@ -1536,6 +1536,12 @@ async def fetch_all_clusterings(
                         "localField": "id",
                         "foreignField": "clustering_id",
                         "as": "clusters",
+                    }
+                },
+                {
+                    "$project": {
+                        "pca": 0,
+                        "tsne": 0,
                     }
                 },
             ]
@@ -2954,13 +2960,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values[event_name]:
@@ -2979,13 +2985,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -3016,13 +3022,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] = event_result["count"]
+                    divide_for_correct_average[event_result["version_id"]] = (
+                        event_result["count"]
+                    )
                 else:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] += event_result["count"]
+                    divide_for_correct_average[event_result["version_id"]] += (
+                        event_result["count"]
+                    )
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (
@@ -3168,11 +3174,51 @@ async def compute_cloud_of_clusters(
             clusters_ids_to_clusters_names[cluster_id]
             for cluster_id in cloud_of_points["clusters_ids"]
         ]
-
-        logger.debug(f"Raw results {raw_results}")
         dim_reduction_results = cloud_of_points
         del dim_reduction_results["embeddings_ids"]
         dim_reduction_results["ids"] = scope_ids
         dim_reduction_results["clusters_names"] = clusters_names
 
     return dim_reduction_results
+
+
+async def get_clustering_by_id(
+    project_id: str,
+    clustering_id: str,
+    fetch_clouds: bool = False,
+) -> Clustering:
+    """
+    Get a clustering based on its id.
+
+    If fetch_clouds is False, the pca and tsne fields are not returned. This is useful when the embeddings are not needed.
+    """
+    mongo_db = await get_mongo_db()
+    collection_name = "private-clusterings"
+    pipeline = [
+        {
+            "$match": {
+                "project_id": project_id,
+                "id": clustering_id,
+            }
+        },
+    ]
+    if not fetch_clouds:
+        pipeline.append(
+            {
+                "$project": {
+                    "_id": 0,
+                    "pca": 0,
+                    "tsne": 0,
+                }
+            }
+        )
+
+    raw_results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
+    if raw_results is None or raw_results == []:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Clustering {clustering_id} not found in project {project_id}",
+        )
+
+    clustering_model = Clustering.model_validate(raw_results[0])
+    return clustering_model

@@ -88,7 +88,6 @@ export default function Page() {
   );
 
   useEffect(() => {
-    console.log("form_values", form.getValues("project_name"));
     if (form.getValues("project_name") === undefined) {
       form.setValue("project_name", selectedProject?.project_name);
     }
@@ -199,7 +198,6 @@ export default function Page() {
 
     // Push the file to the server
     if (file !== null) {
-      console.log("onSubmit", file);
       const formData = new FormData();
       formData.set("file", file, file.name);
       try {
@@ -343,7 +341,7 @@ export default function Page() {
                 />
                 <FormItem>
                   <FormLabel className="flex flex-row space-x-2">
-                    Upload a dataset
+                    Upload a dataset (You can do that later)
                     <HoverCard openDelay={0} closeDelay={0}>
                       <HoverCardTrigger>
                         <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5 ml-1" />
@@ -388,7 +386,8 @@ export default function Page() {
                     className="w-full"
                   >
                     {redirecting && <Spinner className="mr-1" />}
-                    Continue
+                    {file && "Upload and continue"}
+                    {!file && "Skip (import data later)"}
                   </Button>
                 </div>
               </form>
@@ -400,7 +399,8 @@ export default function Page() {
             <CardHeader className="pb-4">
               <CardTitle>Just looking? Explore a sample project.</CardTitle>
               <CardDescription>
-                Get a feel for phospho by loading a project with sample data.
+                Get a feel for phospho by discovering a project with sample
+                data.
               </CardDescription>
             </CardHeader>
           </div>

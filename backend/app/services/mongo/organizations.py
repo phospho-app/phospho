@@ -155,6 +155,7 @@ async def get_usage_quota(
         balance_transaction=balance_transaction,
         next_invoice_total=next_invoice_total,
         next_invoice_amount_due=next_invoice_amount_due,
+        customer_id=customer_id,
     )
 
 

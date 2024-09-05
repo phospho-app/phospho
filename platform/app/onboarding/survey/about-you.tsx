@@ -90,8 +90,6 @@ export default function AboutYou({
         },
       );
       const response_json = await response.json();
-      console.log("plan", response_json);
-      console.log("events", project.settings?.events);
       if (response_json.plan === "hobby") {
         // Without events, skip
         if (!project.settings?.events) {
@@ -100,11 +98,9 @@ export default function AboutYou({
         if (Object.keys(project.settings?.events).length >= 10) {
           // Reached the events limit
           // Redirect to the home page
-          console.log("Reached the events limit", project);
           router.push("/");
         }
       }
-      console.log("plan", response_json.plan);
     })();
   }, [loading, selectedOrgId, accessToken, project]);
 

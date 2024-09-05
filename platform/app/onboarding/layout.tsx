@@ -24,27 +24,6 @@ export default function OnboardingLayout({
   return (
     <>
       <FetchOrgProject />
-      <div>
-        {/* <Image
-          src="/image/green-galaxy.jpg"
-          //   fill={true}
-          // layout="fill"
-          quality={100}
-          width={1920}
-          height={1080}
-          alt="background image of a green galaxy"
-          style={{
-            objectFit: "fill",
-            zIndex: -10,
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            overflow: "hidden",
-          }}
-        /> */}
-      </div>
       <section>
         <div className="flex flex-row justify-between items-bottom p-8">
           <div>

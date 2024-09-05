@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Menu } from "lucide-react";
+import { navigationStateStore } from "@/store/store";
+import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
+import { Menu, Share2 } from "lucide-react";
 import getConfig from "next/config";
 import Link from "next/link";
 import React from "react";
@@ -18,16 +20,24 @@ let version: string;
 try {
   const { publicRuntimeConfig } = getConfig();
   version = publicRuntimeConfig.version;
-} catch {
-  console.log("version not found");
-  console.log(getConfig());
-}
+} catch {}
 
 export function Navbar({
   className,
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
   const [open, setOpen] = React.useState(false);
+  const { redirectToOrgPage } = useRedirectFunctions();
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const { user } = useUser();
+  // The share button is only visible if the user has the permission to invite others
+  // This button redirects to propelauth user management page
+  const userCanInviteOthers =
+    selectedOrgId && user?.orgIdToOrgMemberInfo
+      ? user.orgIdToOrgMemberInfo[selectedOrgId].hasPermission(
+          "propelauth::can_invite",
+        )
+      : false;
 
   return (
     <div>
@@ -68,6 +78,17 @@ export function Navbar({
             <NavBarHelp />
             <NavBarSettings />
             <NavBarProject />
+
+            {userCanInviteOthers && selectedOrgId && (
+              <Button
+                className="h-8"
+                onClick={() => redirectToOrgPage(selectedOrgId)}
+                variant="outline"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </Button>
+            )}
           </div>
         </div>
       </nav>

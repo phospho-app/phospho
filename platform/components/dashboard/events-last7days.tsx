@@ -120,8 +120,6 @@ const EventsLast7Days = () => {
     return null;
   };
 
-  console.log("eventLastSevenDays :", eventLastSevenDays);
-
   return (
     <div>
       {!eventLastSevenDays ? (

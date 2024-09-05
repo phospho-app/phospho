@@ -5,34 +5,36 @@ import { useUser } from "@propelauth/nextjs/client";
 import { Download } from "lucide-react";
 import React from "react";
 
+import { DropdownMenuItem } from "../ui/dropdown-menu";
+
 interface DownloadButtonProps {}
-const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
+const ExportDataButton: React.FC<DownloadButtonProps> = () => {
   // PropelAuth
+  const project_id = navigationStateStore((state) => state.project_id);
+
   const { user, loading, accessToken } = useUser();
   const { toast } = useToast();
 
-  const project_id = navigationStateStore((state) => state.project_id);
-
-  // if no user
   if (!user) {
-    return;
+    return <></>;
   }
 
   const handleButtonClick = async () => {
-    const authorization_header = "Bearer " + accessToken;
     try {
       const response = await fetch(`/api/projects/${project_id}/tasks/email`, {
         method: "GET",
         headers: {
-          Authorization: authorization_header,
+          Authorization: "Bearer " + accessToken,
         },
       });
 
       const data = await response.json();
       if (data.error) {
-        console.error("Error in fetching tasks:", data.error);
+        toast({
+          title: "Error exporting data",
+          description: data.error,
+        });
       } else {
-        console.log("Sent email successfully:", data);
         toast({
           // Add a mail emoji
           title: "✉️ Your data is on the way!",
@@ -40,16 +42,19 @@ const EmailTasksButton: React.FC<DownloadButtonProps> = () => {
         });
       }
     } catch (error) {
-      console.error("Error in making the request:", error);
+      toast({
+        title: "Error exporting data",
+        description: `${error}`,
+      });
     }
   };
 
   return (
-    <div onClick={handleButtonClick} className="flex flex-row items-center">
+    <DropdownMenuItem onClick={handleButtonClick}>
       <Download className="mr-1 h-4 w-4" />
       Export data
-    </div>
+    </DropdownMenuItem>
   );
 };
 
-export default EmailTasksButton;
+export { ExportDataButton };

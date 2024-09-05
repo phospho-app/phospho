@@ -127,7 +127,6 @@ const TaskBox = ({
               },
             )
             .map(([key, value]) => {
-              // console.log("key :", key);
               if (typeof value === "string" || typeof value === "number") {
                 // If it's a string larger than 50 characters, display only the
                 // first 50 characters

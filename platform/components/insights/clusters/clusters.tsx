@@ -1,12 +1,14 @@
 "use client";
 
 import RunClusters from "@/components/insights/clusters/clusters-sheet";
+import { Spinner } from "@/components/small-spinner";
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
@@ -16,75 +18,85 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 import { ClustersCards } from "./clusters-cards";
+import { ClusteringDropDown } from "./clusters-drop-down";
+import { CustomPlot } from "./clusters-plot";
 
 const Clusters: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
-  const dataFilters = navigationStateStore((state) => state.dataFilters);
   const { accessToken } = useUser();
-
-  const [clusteringUnavailable, setClusteringUnavailable] = useState(true);
   const [sheetClusterOpen, setSheetClusterOpen] = useState(false);
+  const [selectedClustering, setSelectedClustering] = useState<
+    Clustering | undefined
+  >(undefined);
 
-  const { data: clusteringsData, mutate: mutateClusterings } = useSWR(
+  const { data: clusteringsData } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST").then((res) => {
+        if (!res?.clusterings) return undefined;
+        return res;
+      }),
     {
       keepPreviousData: true,
-      revalidateIfStale: false,
     },
   );
-  let latestClustering: Clustering | undefined = undefined;
-  if (clusteringsData) {
-    latestClustering = clusteringsData?.clusterings[0];
+  const clusterings = clusteringsData
+    ? (clusteringsData.clusterings.sort(
+        (a: Clustering, b: Clustering) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      ) as Clustering[])
+    : undefined;
+
+  let selectedClusteringName = selectedClustering?.name;
+  if (selectedClustering && !selectedClusteringName) {
+    selectedClusteringName = formatUnixTimestampToLiteralDatetime(
+      selectedClustering.created_at,
+    );
   }
 
-  const maxCreatedAt = latestClustering?.created_at;
-  const { data: totalNbTasksData } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/tasks`,
-      accessToken,
-      JSON.stringify(dataFilters),
-      "total_nb_tasks",
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["total_nb_tasks"],
-        filters: { ...dataFilters },
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const totalNbTasks: number | null | undefined =
-    totalNbTasksData?.total_nb_tasks;
-
-  const { data: totalNbSessionsData } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/sessions`,
-      accessToken,
-      JSON.stringify(dataFilters),
-      "total_nb_sessions",
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["total_nb_sessions"],
-        filters: { ...dataFilters },
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const totalNbSessions: number | null | undefined =
-    totalNbSessionsData?.total_nb_sessions;
-
   useEffect(() => {
-    if (latestClustering?.status === "completed") {
-      setClusteringUnavailable(false);
+    if (clusterings === undefined) {
+      setSelectedClustering(undefined);
+      return;
     }
-    if (latestClustering?.status === undefined) {
-      setClusteringUnavailable(false);
+    if (clusterings.length === 0) {
+      setSelectedClustering(undefined);
+      return;
     }
-  }, [latestClustering?.status]);
+    // if the selected clustering is not set, select the latest clustering
+    if (selectedClustering === undefined) {
+      setSelectedClustering(clusterings[0]);
+      return;
+    }
+    // if the selectedClustering is not in the list of clusterings, select the latest clustering
+    if (
+      selectedClustering !== undefined &&
+      !clusterings.some((clustering) => clustering.id === selectedClustering.id)
+    ) {
+      setSelectedClustering(clusterings[0]);
+      return;
+    }
+  }, [JSON.stringify(clusterings), project_id]);
+
+  // Add a useEffect triggered every few seconds to update the clustering status
+  useEffect(() => {
+    if (selectedClustering && selectedClustering?.status !== "completed") {
+      const interval = setInterval(async () => {
+        // Use the fetch function to update the clustering status
+        const response = await authFetcher(
+          `/api/explore/${project_id}/clusterings/${selectedClustering?.id}`,
+          accessToken,
+          "POST",
+        );
+        // Update the selectedClustering with the new status
+        setSelectedClustering({
+          ...selectedClustering,
+          ...response,
+        });
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [JSON.stringify(selectedClustering), project_id]);
 
   if (!project_id) {
     return <></>;
@@ -106,25 +118,61 @@ const Clusters: React.FC = () => {
             </div>
             <div className="flex flex-col space-y-1 justify-center items-center">
               <RunClusters
-                totalNbTasks={totalNbTasks}
-                totalNbSessions={totalNbSessions}
-                mutateClusterings={mutateClusterings}
-                clusteringUnavailable={clusteringUnavailable}
                 sheetOpen={sheetClusterOpen}
                 setSheetOpen={setSheetClusterOpen}
+                setSelectedClustering={setSelectedClustering}
               />
-              <div className="text-muted-foreground text-xs">
-                Last update:{" "}
-                {maxCreatedAt
-                  ? formatUnixTimestampToLiteralDatetime(maxCreatedAt)
-                  : "Never"}
-              </div>
             </div>
           </div>
         </CardHeader>
       </Card>
-      <div className="flex-col space-y-2 md:flex pb-10">
-        <ClustersCards setSheetClusterOpen={setSheetClusterOpen} />
+      <div>
+        <ClusteringDropDown
+          selectedClustering={selectedClustering}
+          setSelectedClustering={setSelectedClustering}
+          clusterings={clusterings}
+          selectedClusteringName={selectedClusteringName}
+        />
+        <div className="flex-col space-y-2 md:flex pb-10">
+          {!selectedClustering && (
+            <div className="w-full text-muted-foreground flex justify-center text-sm h-20">
+              Run a clustering to see clusters here.
+            </div>
+          )}
+          {selectedClustering && selectedClustering.status !== "completed" && (
+            <div className="w-full flex flex-col items-center">
+              {selectedClustering.percent_of_completion && (
+                <Progress
+                  value={selectedClustering.percent_of_completion}
+                  className="w-[100%] transition-all duration-500 ease-in-out mb-4 h-4"
+                />
+              )}
+              {selectedClustering.status === "started" && (
+                <div className="flex flex-row items-center text-muted-foreground text-sm">
+                  <Spinner className="mr-1" />
+                  Computing embeddings...
+                </div>
+              )}
+              {selectedClustering.status === "summaries" && (
+                <div className="flex flex-row items-center text-muted-foreground text-sm">
+                  <Spinner className="mr-1" />
+                  Generating summaries...
+                </div>
+              )}
+            </div>
+          )}
+          {selectedClustering !== undefined && selectedClustering !== null && (
+            <CustomPlot
+              selected_clustering_id={selectedClustering.id}
+              selectedClustering={selectedClustering}
+            />
+          )}
+          <ClustersCards
+            setSheetClusterOpen={setSheetClusterOpen}
+            selected_clustering_id={selectedClustering?.id}
+            selectedClustering={selectedClustering}
+          />
+        </div>
       </div>
     </>
   );

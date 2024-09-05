@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -22,6 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import { SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { getEventsFromTemplateName } from "@/lib/events-lib";
 import { authFetcher } from "@/lib/fetcher";
 import {
   DetectionEngine,
@@ -35,15 +42,10 @@ import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import Link from "next/link";
+import { use, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 
 export default function CreateEvent({
   setOpen,
@@ -54,8 +56,10 @@ export default function CreateEvent({
   eventToEdit?: EventDefinition;
   defaultEventCategory?: string;
 }) {
-  // Component to create an event or edit an existing event
+  /* Create a new event definition (analytics) or edit an existing event definition (analytics)
+   */
 
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const { mutate } = useSWRConfig();
@@ -68,12 +72,21 @@ export default function CreateEvent({
       keepPreviousData: true,
     },
   );
+  const [eventsTemplate, setEventsTemplate] = useState<EventDefinition[]>([]);
 
   const currentEvents = selectedProject?.settings?.events || {};
 
   // Max number of events depends on the plan
   const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
   const current_nb_events = Object.keys(currentEvents).length;
+
+  useEffect(() => {
+    if (selectedOrgId && project_id) {
+      setEventsTemplate(
+        getEventsFromTemplateName("All", selectedOrgId, project_id),
+      );
+    }
+  }, [selectedOrgId, project_id]);
 
   // If we are editing an event, we need to pre-fill the form
   const formSchema = z.object({
@@ -101,52 +114,85 @@ export default function CreateEvent({
     regex_pattern: z.string().optional(),
     score_range_settings: z
       .object({
-        min: z.number().min(0).max(1),
-        max: z.number().min(1).max(5),
-        score_type: z.enum(["confidence", "range", "category"]),
-        categories: z.any().transform((value, ctx) => {
-          // If array of string, return it
-          if (Array.isArray(value)) {
-            return value;
-          }
-          // If not a string, raise an error
-          if (typeof value !== "string") {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Categories must be a string.",
-            });
-            return z.NEVER;
-          }
-          // Split the string into an array of categories
-          let categories = value.split(",").map((category) => category.trim());
-          // Remove empty strings
-          categories = categories.filter((category) => category !== "");
-          // Raise an error if there are less than 1 category or more than 9
-          if (categories.length < 1 || categories.length > 9) {
+        score_type: z.enum([
+          ScoreRangeType.category,
+          ScoreRangeType.confidence,
+          ScoreRangeType.range,
+        ]),
+        categories: z
+          .any()
+          .transform((value, ctx) => {
+            // If array of string, return it
+            if (Array.isArray(value)) {
+              value = value.filter((category) => category !== "");
+              return value;
+            }
+            // If not a string, raise an error
+            if (typeof value !== "string") {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Categories must be a string.",
+              });
+              return z.NEVER;
+            }
+            // Split the string into an array of categories
+            let categories = value
+              .split(",")
+              .map((category) => category.trim());
+            // Remove empty strings
+            categories = categories.filter((category) => category !== "");
+            return categories;
+          })
+          .optional(),
+      })
+      .transform((value, ctx) => {
+        // Raise an error if there are less than 1 category or more than 9
+        if (value.score_type === ScoreRangeType.confidence) {
+          return {
+            score_type: ScoreRangeType.confidence,
+            min: 0,
+            max: 1,
+            categories: [],
+          };
+        }
+        if (value.score_type === ScoreRangeType.range) {
+          return {
+            score_type: ScoreRangeType.range,
+            min: 1,
+            max: 5,
+            categories: [],
+          };
+        }
+        if (value.score_type === ScoreRangeType.category) {
+          if (value.categories.length < 1 || value.categories.length > 9) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: "Categories must be between 1 and 9.",
             });
             return z.NEVER;
           }
-          return categories;
-        }),
+          return {
+            score_type: ScoreRangeType.category,
+            min: 1,
+            max: value.categories.length,
+            categories: value.categories,
+          };
+        }
       })
       .optional(),
     is_last_task: z.boolean(),
   });
 
   let defaultScoreRangeSettings = {
-    score_type: "confidence",
+    score_type: ScoreRangeType.confidence,
     min: 0,
     max: 1,
     categories: [],
   } as ScoreRangeSettings;
-  console.log("defaultEventCategory", defaultEventCategory);
   if (eventToEdit?.score_range_settings) {
     defaultScoreRangeSettings = eventToEdit.score_range_settings;
   } else {
-    if (defaultEventCategory === "confidence") {
+    if (defaultEventCategory === ScoreRangeType.confidence) {
       defaultScoreRangeSettings = {
         score_type: ScoreRangeType.confidence,
         min: 0,
@@ -154,7 +200,7 @@ export default function CreateEvent({
         categories: [],
       };
     }
-    if (defaultEventCategory === "range") {
+    if (defaultEventCategory === ScoreRangeType.range) {
       defaultScoreRangeSettings = {
         score_type: ScoreRangeType.range,
         min: 1,
@@ -162,7 +208,7 @@ export default function CreateEvent({
         categories: [],
       };
     }
-    if (defaultEventCategory === "category") {
+    if (defaultEventCategory === ScoreRangeType.category) {
       defaultScoreRangeSettings = {
         score_type: ScoreRangeType.category,
         min: 1,
@@ -189,13 +235,10 @@ export default function CreateEvent({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Submitting event:", values);
     if (!selectedProject) {
-      console.log("Submit: No selected project");
       return;
     }
     if (!selectedProject.settings) {
-      console.log("Submit: No selected project settings");
       return;
     }
     if (
@@ -221,10 +264,9 @@ export default function CreateEvent({
       detection_scope: values.detection_scope as DetectionScope,
       keywords: values.keywords,
       regex_pattern: values.regex_pattern,
-      score_range_settings: values.score_range_settings as ScoreRangeSettings,
+      score_range_settings: values.score_range_settings,
       is_last_task: values.is_last_task,
     };
-    console.log("Updated selected project:", selectedProject);
 
     try {
       const creation_response = await fetch(`/api/projects/${project_id}`, {
@@ -261,9 +303,7 @@ export default function CreateEvent({
         >
           <SheetHeader>
             <SheetTitle className="text-xl">
-              {(!eventToEdit) && (
-                <div>Setup new event</div>
-              )}
+              {!eventToEdit && <div>Setup new event</div>}
               {eventToEdit && <div>Edit event "{eventToEdit?.event_name}"</div>}
             </SheetTitle>
           </SheetHeader>
@@ -271,71 +311,69 @@ export default function CreateEvent({
           {/* Event templates */}
           <div>
             <h2 className="text-muted-foreground text-xs mb-1">Templates</h2>
-            <div className="flex space-x-4">
-              <Button
-                onClick={(mouseEvent) => {
-                  mouseEvent.stopPropagation();
-                  form.setValue("event_name", "Penetration testing");
-                  form.setValue(
-                    "description",
-                    "The user is trying to jailbreak the assistant. Example: asking to ignore any previous instruction, asking malicious questions, etc.",
-                  );
-                  form.setValue("detection_scope", "task");
-                  form.setValue("detection_engine", "llm_detection");
-                  // Prevent the form from submitting
-                  mouseEvent.preventDefault();
-                }}
-              >
-                Penetration testing
-              </Button>
-              <Button
-                onClick={(mouseEvent) => {
-                  mouseEvent.stopPropagation();
-                  form.setValue("event_name", "Assistant coherence");
-                  form.setValue(
-                    "description",
-                    "The agent answers coherently and consistently.",
-                  );
-                  form.setValue("detection_scope", "session");
-                  form.setValue("detection_engine", "llm_detection");
-                  // Prevent the form from submitting
-                  mouseEvent.preventDefault();
-                }}
-              >
-                Coherence
-              </Button>
-              <Button
-                onClick={(mouseEvent) => {
-                  mouseEvent.stopPropagation();
-                  form.setValue("event_name", "Assistant correctness");
-                  form.setValue(
-                    "description",
-                    "The assistant correctly answered the question.",
-                  );
-                  form.setValue("detection_scope", "task");
-                  form.setValue("detection_engine", "llm_detection");
-                  // Prevent the form from submitting
-                  mouseEvent.preventDefault();
-                }}
-              >
-                Correctness
-              </Button>
-              <Button
-                onClick={(mouseEvent) => {
-                  mouseEvent.stopPropagation();
-                  form.setValue("event_name", "Assistant plausibility");
-                  form.setValue(
-                    "description",
-                    "The assistant's answer is plausible and makes sense.",
-                  );
-                  form.setValue("detection_scope", "task");
-                  form.setValue("detection_engine", "llm_detection");
-                  // Prevent the form from submitting
-                  mouseEvent.preventDefault();
-                }}
-              >
-                Plausibility
-              </Button>
+            <div className="flex flex-wrap">
+              {eventsTemplate.map((eventDefinition) => {
+                return (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="text-xs m-0.5"
+                      onClick={(mouseEvent) => {
+                        mouseEvent.stopPropagation();
+                        form.setValue("event_name", eventDefinition.event_name);
+                        form.setValue(
+                          "description",
+                          eventDefinition.description,
+                        );
+                        form.setValue(
+                          "detection_scope",
+                          eventDefinition.detection_scope,
+                        );
+                        form.setValue("keywords", eventDefinition.keywords);
+                        form.setValue(
+                          "regex_pattern",
+                          eventDefinition.regex_pattern,
+                        );
+                        form.setValue("detection_engine", "llm_detection");
+                        form.setValue(
+                          "is_last_task",
+                          eventDefinition.is_last_task ?? false,
+                        );
+
+                        if (eventDefinition.score_range_settings) {
+                          const scoreRangeSettings = {
+                            score_type:
+                              eventDefinition.score_range_settings.score_type ??
+                              (ScoreRangeType.confidence as ScoreRangeType),
+                            min: eventDefinition.score_range_settings.min ?? 0,
+                            max: eventDefinition.score_range_settings.max ?? 1,
+                            categories:
+                              eventDefinition.score_range_settings.categories ??
+                              [],
+                          };
+                          form.setValue(
+                            "score_range_settings",
+                            scoreRangeSettings,
+                          );
+                        } else {
+                          form.setValue("score_range_settings", {
+                            score_type: ScoreRangeType.confidence,
+                            categories: [],
+                            min: 0,
+                            max: 1,
+                          });
+                        }
+
+                        // Prevent the form from submitting
+                        mouseEvent.preventDefault();
+                      }}
+                    >
+                      {eventDefinition.event_name}
+                    </Button>
+                  </>
+                );
+              })}
             </div>
           </div>
           <Separator />
@@ -350,7 +388,9 @@ export default function CreateEvent({
                     <FormControl>
                       <Input
                         spellCheck
-                        placeholder={"e.g.: rude tone of voice, user frustration, user says 'I want to cancel'..."}
+                        placeholder={
+                          "e.g.: rude tone of voice, user frustration, user says 'I want to cancel'..."
+                        }
                         {...field}
                       />
                     </FormControl>
@@ -397,7 +437,9 @@ export default function CreateEvent({
                   <FormControl>
                     <Textarea
                       id="description"
-                      placeholder={ "Use simple language. Refer to speakers as 'the user' and 'the assistant'."}
+                      placeholder={
+                        "Use simple language. Refer to speakers as 'the user' and 'the assistant'."
+                      }
                       {...field}
                     />
                   </FormControl>
@@ -412,6 +454,7 @@ export default function CreateEvent({
                 <FormItem>
                   <FormLabel>Engine</FormLabel>
                   <Select
+                    value={field.value ?? "llm_detection"}
                     onValueChange={field.onChange}
                     defaultValue={field.value ?? "llm_detection"}
                   >
@@ -452,47 +495,55 @@ export default function CreateEvent({
                       <FormLabel>Output type</FormLabel>
                       <FormControl>
                         <Select
+                          value={
+                            field.value?.score_type ?? ScoreRangeType.confidence
+                          }
                           onValueChange={(value) => {
-                            if (value === "confidence") {
+                            if (value === ScoreRangeType.confidence) {
                               field.onChange({
-                                score_type: "confidence",
+                                score_type: ScoreRangeType.confidence,
                                 min: 0,
                                 max: 1,
-                                categories: [],
+                                categories: "",
                               });
-                            } else if (value === "range") {
+                            } else if (value === ScoreRangeType.range) {
                               field.onChange({
                                 score_type: "range",
                                 min: 1,
                                 max: 5,
-                                categories: [],
+                                categories: "",
                               });
-                            } else if (value === "category") {
+                            } else if (value === ScoreRangeType.category) {
                               field.onChange({
                                 score_type: "category",
                                 min: 1,
                                 max: 1,
-                                categories: "",
+                                categories:
+                                  form.getValues().score_range_settings
+                                    ?.categories ?? [],
                               });
                             }
                           }}
-                          defaultValue={field.value?.score_type ?? "confidence"}
+                          defaultValue={
+                            field.value?.score_type ?? ScoreRangeType.confidence
+                          }
                         >
                           <SelectTrigger>
                             <SelectValue
                               defaultValue={
-                                field.value?.score_type ?? "confidence"
+                                field.value?.score_type ??
+                                ScoreRangeType.confidence
                               }
                             />
                           </SelectTrigger>
                           <SelectContent position="popper">
-                            <SelectItem value="confidence">
+                            <SelectItem value={ScoreRangeType.confidence}>
                               Yes/No (boolean)
                             </SelectItem>
-                            <SelectItem value="range">
+                            <SelectItem value={ScoreRangeType.range}>
                               1-5 score (number)
                             </SelectItem>
-                            <SelectItem value="category">
+                            <SelectItem value={ScoreRangeType.category}>
                               Category (enum)
                             </SelectItem>
                           </SelectContent>
@@ -512,13 +563,33 @@ export default function CreateEvent({
                     <FormItem>
                       <FormLabel>Categories</FormLabel>
                       <FormControl>
-                        <Input placeholder="happy,sad,neutral" {...field} />
+                        <Input
+                          placeholder="happy,sad,neutral"
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange({
+                              target: { value: value.split(",") },
+                            });
+                            // update the score_range_settings object
+                            form.resetField("score_range_settings.score_type");
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               )}
+            {form.watch("detection_engine") === "llm_detection" && (
+              // This is used to display the right error message when the user selects a category score type
+              <FormField
+                control={form.control}
+                // @ts-ignore Renders the error message for the score_range_settings object
+                name="score_range_settings.root"
+                render={({ field }) => <FormMessage />}
+              />
+            )}
             {form.watch("detection_engine") === "keyword_detection" && (
               <FormField
                 control={form.control}
@@ -588,7 +659,6 @@ export default function CreateEvent({
                   Advanced settings (optional)
                 </AccordionTrigger>
                 <AccordionContent>
-
                   <Separator />
                   <div className="flex flex-row space-x-2 w-full mt-2">
                     <FormField
@@ -628,21 +698,8 @@ export default function CreateEvent({
             </Accordion>
           </div>
           <SheetFooter>
-            <Button
-              type="submit"
-              disabled={
-                loading ||
-                // !form.formState.isValid ||
-                // too many events
-                ((!eventToEdit ) &&
-                  currentEvents &&
-                  max_nb_events &&
-                  current_nb_events + 1 >= max_nb_events)
-              }
-            >
-              {(!eventToEdit) && (
-                <div>Add event</div>
-              )}
+            <Button type="submit" disabled={loading}>
+              {!eventToEdit && <div>Add event</div>}
               {eventToEdit && <div>Save edits</div>}
             </Button>
           </SheetFooter>

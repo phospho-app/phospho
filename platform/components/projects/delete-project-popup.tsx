@@ -100,7 +100,6 @@ const AlertDialogDeleteProject = () => {
                   const response_json = await response.json();
                   // Update the list of projects and the selected project
                   if (response_json.id === selectedProject.id) {
-                    console.log("Project deleted");
                     const filteredProjects = projects.filter(
                       (project) => project.id !== selectedProject.id,
                     );
@@ -119,7 +118,6 @@ const AlertDialogDeleteProject = () => {
                     setClicked(false);
                     router.push("/org/transcripts/tasks");
                   } else {
-                    console.log("Project deletion failed");
                     setClicked(false);
                   }
                 }}

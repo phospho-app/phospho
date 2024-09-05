@@ -142,7 +142,9 @@ async def main() -> None:
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     try:
-        loop.create_task(aiohealthcheck.tcp_health_endpoint(port=8080))
+        if config.ENVIRONMENT in ["production", "staging"]:
+            # Perform a health check on the worker (only in production/staging)
+            loop.create_task(aiohealthcheck.tcp_health_endpoint(port=8080))
         loop.run_until_complete(main())
     except KeyboardInterrupt:
         interrupt_event.set()

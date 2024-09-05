@@ -147,7 +147,6 @@ const RunAnalysisInPast = () => {
     router.push("/");
 
     if (!response.ok) {
-      console.log("Error: ", response);
       toast({
         title: "Checkout Error - Please try again later",
         description: `Details: ${response.status} - ${response.statusText}`,

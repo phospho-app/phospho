@@ -162,11 +162,9 @@ const SessionsDataviz: React.FC = () => {
         if (!data?.date_last_clustering_timestamp) {
           return null;
         }
-        console.log("dateLastClustering", data?.date_last_clustering_timestamp);
         const date_last_clustering = new Date(
           data?.date_last_clustering_timestamp * 1000,
         );
-        console.log("dateLastClustering", date_last_clustering);
         return date_last_clustering.toDateString();
       }),
     {

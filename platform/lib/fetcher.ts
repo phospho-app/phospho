@@ -6,7 +6,9 @@ const authFetcher = async (
   method?: string,
   body?: any,
 ) => {
-  // args?: Request
+  /*
+    Fetch data from the server with the access token
+    */
 
   {
     if (!accessToken) {

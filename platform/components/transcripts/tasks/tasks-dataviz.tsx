@@ -141,11 +141,9 @@ const TasksDataviz: React.FC = () => {
         if (!data?.date_last_clustering_timestamp) {
           return null;
         }
-        console.log("dateLastClustering", data?.date_last_clustering_timestamp);
         const date_last_clustering = new Date(
           data?.date_last_clustering_timestamp * 1000,
         );
-        console.log("dateLastClustering", date_last_clustering);
         return date_last_clustering.toDateString();
       }),
     {
@@ -232,7 +230,6 @@ const TasksDataviz: React.FC = () => {
 
   const CustomTooltipEvent = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      console.log("payload", payload);
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
           <p className="text-secondary font-semibold">{`${payload[0].payload.event_name}`}</p>
