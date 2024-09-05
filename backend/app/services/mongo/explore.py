@@ -1055,7 +1055,7 @@ async def get_last_clustering_composition(
 
     clustering = (
         await mongo_db["private-clusterings"]
-        .find({"project_id": project_id})
+        .find({"project_id": project_id, "status": "completed"})
         .sort([("created_at", -1)])
         .limit(1)
         .to_list(length=1)
