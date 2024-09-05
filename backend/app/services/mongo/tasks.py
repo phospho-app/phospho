@@ -434,7 +434,6 @@ async def get_total_nb_of_tasks(
     Get the total number of tasks of a project.
     """
     mongo_db = await get_mongo_db()
-    # Time range filter
     global_filters, collection = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters
     )
@@ -455,8 +454,6 @@ async def get_total_nb_of_tasks(
         return None
 
     total_nb_tasks = query_result[0]["nb_tasks"]
-
-    logger.debug(f"Total number of tasks: {total_nb_tasks}")
     return total_nb_tasks
 
 

@@ -34,25 +34,28 @@ export default function Page({ params }: { params: { id: string } }) {
         <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
       <div>
-        {cluster?.name && (
-          <div className="text-3xl font-bold tracking-tight mr-8">
-            Cluster '{cluster.name}'
+        <div className="pb-4">
+          {cluster?.name && (
+            <div className="text-3xl font-bold tracking-tight mr-8">
+              Cluster '{cluster.name}'
+            </div>
+          )}
+          {cluster?.description && (
+            <div className="text-muted-foreground">{cluster.description}</div>
+          )}
+        </div>
+        {Array.isArray(tasks_ids) && tasks_ids.length > 0 && (
+          <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
+            <TasksTable tasks_ids={tasks_ids} />
           </div>
         )}
-        {cluster?.description && (
-          <div className="text-muted-foreground">{cluster.description}</div>
+        {Array.isArray(sessions_ids) && sessions_ids.length > 0 && (
+          <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
+            <SessionsTable sessions_ids={sessions_ids} />
+          </div>
         )}
+        <div className="h-10"></div>
       </div>
-      {Array.isArray(tasks_ids) && tasks_ids.length > 0 && (
-        <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
-          <TasksTable tasks_ids={tasks_ids} />
-        </div>
-      )}
-      {Array.isArray(sessions_ids) && sessions_ids.length > 0 && (
-        <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
-          <SessionsTable sessions_ids={sessions_ids} />
-        </div>
-      )}
     </>
   );
 }
