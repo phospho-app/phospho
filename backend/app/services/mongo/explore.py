@@ -1538,6 +1538,12 @@ async def fetch_all_clusterings(
                         "as": "clusters",
                     }
                 },
+                {
+                    "$project": {
+                        "pca": 0,
+                        "tsne": 0,
+                    }
+                },
             ]
         )
 
