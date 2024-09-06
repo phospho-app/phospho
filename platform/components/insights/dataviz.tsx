@@ -69,10 +69,19 @@ const DatavizGraph = ({
       authFetcher(url, accessToken, "POST", {
         metric: metric.toLowerCase(),
         metric_metadata: metadata_metric?.toLowerCase(),
-        breakdown_by: breakdown_by.toLowerCase(),
+        breakdown_by:
+          breakdown_by !== "None" ? breakdown_by.toLowerCase() : null,
         filters: dataFilters,
       }).then((response) => {
-        return response?.pivot_table;
+        const pivotTable = response?.pivot_table;
+        // Replace "breakdown_by": null with "breakdown_by": "None"
+        pivotTable.forEach((element: any) => {
+          if (element["breakdown_by"] === null) {
+            element["breakdown_by"] = "None";
+          }
+        });
+        console.log("pivotTable", pivotTable);
+        return pivotTable;
       }),
     {
       keepPreviousData: true,
@@ -108,18 +117,16 @@ const DatavizGraph = ({
           <Card>
             <CardHeader>
               <CardTitle className="text-xl font-light tracking-tight">
-                {!pivotData[0]["breakdown_by"] && (
-                  <p>{pivotData[0]["breakdown_by"]}</p>
+                {pivotData[0]["breakdown_by"] !== "None" && (
+                  <p>
+                    {breakdown_by}: {pivotData[0]["breakdown_by"]}
+                  </p>
                 )}
-                {pivotData[0]["breakdown_by"] === "NaN" && <p>No breakdown</p>}
+                {pivotData[0]["breakdown_by"] === "None" && <p>No breakdown</p>}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-xl font-extrabold">
-              <p>
-                {Math.round(
-                  pivotData[0][`${metric}${metadata_metric ?? ""}`] * 10000,
-                ) / 10000}
-              </p>
+              <p>{Math.round(pivotData[0].metric * 10000) / 10000}</p>
             </CardContent>
           </Card>
         </>
