@@ -47,6 +47,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
+import { nb } from "date-fns/locale";
 import { ChevronRight, Sparkles, TestTubeDiagonal } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
@@ -218,6 +219,12 @@ const RunClusters = ({
       setClusteringCost((nbTasksInSessions ?? 0) * 2);
     }
   }, [form.getValues("limit")]);
+
+  useEffect(() => {
+    if (form.getValues("scope") === "sessions") {
+      setClusteringCost((nbTasksInSessions ?? 0) * 2);
+    }
+  }, [nbTasksInSessions]);
 
   const canRunClusterAnalysis: boolean =
     (form.getValues("scope") === "messages" &&
