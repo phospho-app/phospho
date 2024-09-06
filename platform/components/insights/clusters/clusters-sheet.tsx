@@ -212,8 +212,8 @@ const RunClusters = ({
           instruction: formData.instruction,
           nb_clusters: formData.nb_clusters,
           clustering_mode: formData.detect_outliers
-            ? "DBSCAN"
-            : "Agglomerative",
+            ? "dbscan"
+            : "agglomerative",
         }),
       }).then(async (response) => {
         if (response.ok) {

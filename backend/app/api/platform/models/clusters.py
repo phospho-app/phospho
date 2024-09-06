@@ -23,7 +23,7 @@ class ClusteringRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     instruction: Optional[str] = "user intent"
     nb_clusters: Optional[int] = None
-    clustering_mode: Literal["Agglomerative", "DBSCAN"] = "Agglomerative"
+    clustering_mode: Literal["agglomerative", "dbscan"] = "agglomerative"
     merge_clusters: Optional[bool] = False
     customer_id: Optional[str] = None
     nb_credits_used: int

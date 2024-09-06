@@ -57,7 +57,7 @@ class DetectClustersRequest(BaseModel):
     scope: Literal["messages", "sessions"] = "messages"
     instruction: Optional[str] = "user intent"
     nb_clusters: Optional[int] = None
-    clustering_mode: Literal["Agglomerative", "DBSCAN"] = "Agglomerative"
+    clustering_mode: Literal["agglomerative", "dbscan"] = "agglomerative"
 
 
 class FetchClustersRequest(BaseModel):
