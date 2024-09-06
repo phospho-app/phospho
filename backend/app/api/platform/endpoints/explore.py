@@ -400,6 +400,8 @@ async def post_detect_clusters(
     """
     org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
 
+    logger.debug(f"clustering mode:{query.clustering_mode}")
+
     usage_quota = await get_quota_for_org(org_id)
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
@@ -458,6 +460,7 @@ async def post_detect_clusters(
         nb_credits_used=clustering_billing,
         clustering_id=clustering_id,
         clustering_name=clustering_name,
+        clustering_mode=query.clustering_mode,
     )
     logger.info(
         f"Clustering id {clustering_id} cluster name {clustering_name} for project {project_id} requested."
