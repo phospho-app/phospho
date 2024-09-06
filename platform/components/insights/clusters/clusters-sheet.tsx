@@ -210,7 +210,7 @@ const RunClusters = ({
           filters: dataFilters,
           scope: formData.scope,
           instruction: formData.instruction,
-          nb_clusters: formData.nb_clusters,
+          nb_clusters: formData.detect_outliers ? null : formData.nb_clusters,
           clustering_mode: formData.detect_outliers
             ? "dbscan"
             : "agglomerative",
@@ -409,22 +409,16 @@ const RunClusters = ({
                       control={form.control}
                       name="detect_outliers"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                          <FormLabel className="space-y-1 leading-none">
-                            Detect outliers
-                          </FormLabel>
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 mt-2">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  field.onChange(true);
-                                } else {
-                                  field.onChange(false);
-                                }
-                              }}
+                              onCheckedChange={field.onChange}
                             />
                           </FormControl>
+                          <FormLabel className="space-y-1 leading-none">
+                            Detect outliers mode
+                          </FormLabel>
                         </FormItem>
                       )}
                     ></FormField>
