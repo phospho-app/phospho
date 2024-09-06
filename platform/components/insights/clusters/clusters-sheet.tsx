@@ -141,6 +141,7 @@ const RunClusters = ({
       })
       .min(1, "Number of clusters must be at least 1")
       .max(128, "Number of clusters must be at most 128"),
+    limit: z.number().min(0),
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -300,6 +301,35 @@ const RunClusters = ({
               />
 
               <FilterComponent variant="tasks" />
+            </div>
+            <div className="flex items-center space-x-2">
+              <FormLabel>Limit number of {form.getValues("scope")}:</FormLabel>
+              <FormField
+                control={form.control}
+                name="limit"
+                render={({ field }) => (
+                  <FormItem className="flex-grow">
+                    <FormControl>
+                      <Input
+                        className="w-32"
+                        max={nbElements}
+                        min={0}
+                        step={1}
+                        type="number"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e.target.valueAsNumber);
+                          setDataFilters({
+                            ...dataFilters,
+                            limit: e.target.valueAsNumber,
+                          });
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">

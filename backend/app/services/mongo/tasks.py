@@ -438,13 +438,18 @@ async def get_total_nb_of_tasks(
         project_id=project_id, filters=filters
     )
 
+    pipeline = [
+        {"$match": global_filters},
+        {"$count": "nb_tasks"},
+    ]
+
+    if filters is not None and filters.limit is not None:
+        pipeline.append({"$limit": filters.limit})
+
     query_result = (
         await mongo_db[collection]
         .aggregate(
-            [
-                {"$match": global_filters},
-                {"$count": "nb_tasks"},
-            ]
+            pipeline,
         )
         .to_list(length=1)
     )
