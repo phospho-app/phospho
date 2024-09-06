@@ -431,31 +431,33 @@ const RunClusters = ({
                       )}
                     ></FormField>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <FormLabel>Number of clusters:</FormLabel>
-                    <FormField
-                      control={form.control}
-                      name="nb_clusters"
-                      render={({ field }) => (
-                        <FormItem className="flex-grow">
-                          <FormControl>
-                            <Input
-                              className="w-32"
-                              max={nbElements}
-                              min={0}
-                              step={1}
-                              type="number"
-                              {...field}
-                              onChange={(e) => {
-                                field.onChange(e.target.valueAsNumber);
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {!form.getValues("detect_outliers") && (
+                    <div className="flex items-center space-x-2">
+                      <FormLabel>Number of clusters:</FormLabel>
+                      <FormField
+                        control={form.control}
+                        name="nb_clusters"
+                        render={({ field }) => (
+                          <FormItem className="flex-grow">
+                            <FormControl>
+                              <Input
+                                className="w-32"
+                                max={nbElements}
+                                min={0}
+                                step={1}
+                                type="number"
+                                {...field}
+                                onChange={(e) => {
+                                  field.onChange(e.target.valueAsNumber);
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
