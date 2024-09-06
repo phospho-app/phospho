@@ -1109,6 +1109,53 @@ async def get_total_nb_of_sessions(
     return total_nb_sessions
 
 
+async def get_nb_tasks_in_sessions(
+    project_id: str,
+    filters: Optional[ProjectDataFilters] = None,
+) -> Optional[int]:
+    """
+    Get the total number of tasks in a set of sessions of a project.
+    """
+
+    logger.debug(f"Getting the number of tasks in sessions for project {project_id}")
+    mongo_db = await get_mongo_db()
+    logger.debug(f"limit: {filters.limit}")
+
+    global_filters, collection = await session_filtering_pipeline_match(
+        project_id=project_id, filters=filters
+    )
+
+    pipeline = [
+        {"$match": global_filters},
+    ]
+    if filters is not None and filters.limit is not None and filters.limit > 0:
+        pipeline.append({"$limit": filters.limit})
+
+    pipeline.extend(
+        [
+            {
+                "$lookup": {
+                    "from": "tasks",
+                    "localField": "id",
+                    "foreignField": "session_id",
+                    "as": "tasks",
+                }
+            },
+            {"$unwind": "$tasks"},
+            {"$count": "nb_tasks"},
+        ]
+    )
+
+    query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=1)
+
+    if len(query_result) == 0:
+        return None
+
+    nb_tasks_in_sessions = query_result[0]["nb_tasks"]
+    logger.debug(f"Number of tasks in sessions: {nb_tasks_in_sessions}")
+    return nb_tasks_in_sessions
+
+
 async def get_global_average_session_length(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
@@ -1374,6 +1421,7 @@ async def get_sessions_aggregated_metrics(
             "nb_sessions_per_day",
             "session_length_histogram",
             "success_rate_per_task_position",
+            "nb_tasks_in_sessions",
         ]
 
     today_datetime = datetime.datetime.now(datetime.timezone.utc)
@@ -1415,7 +1463,10 @@ async def get_sessions_aggregated_metrics(
         ] = await get_success_rate_per_task_position(
             project_id=project_id, quantile_filter=quantile_filter, filters=filters
         )
-
+    if "nb_tasks_in_sessions" in metrics:
+        output["nb_tasks_in_sessions"] = await get_nb_tasks_in_sessions(
+            project_id=project_id, filters=filters
+        )
     return output
 
 
@@ -2960,13 +3011,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values[event_name]:
@@ -2985,13 +3036,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -3022,13 +3073,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] = event_result["count"]
+                    divide_for_correct_average[event_result["version_id"]] = (
+                        event_result["count"]
+                    )
                 else:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] += event_result["count"]
+                    divide_for_correct_average[event_result["version_id"]] += (
+                        event_result["count"]
+                    )
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (
