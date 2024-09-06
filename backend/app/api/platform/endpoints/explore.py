@@ -652,9 +652,7 @@ async def get_event_detection_metrics(
     if isinstance(filters.created_at_end, datetime.datetime):
         filters.created_at_end = int(filters.created_at_end.timestamp())
 
-    # Override the event_name filter
-    # TODO : Use event_id instead of event_name
-    # filters.event_id = [event.id]
+    # Override the event_id filter
     filters.event_id = [event.id]
 
     output = await get_events_aggregated_metrics(
