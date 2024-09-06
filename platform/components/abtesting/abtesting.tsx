@@ -52,8 +52,6 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
     ([url, accessToken]) =>
       authFetcher(url, accessToken)?.then((res) => {
         const abtests = res.abtests as ABTest[];
-        console.log("abtests", res);
-
         // Round the score and score_std to 2 decimal places
         abtests.forEach((abtest) => {
           abtest.score = Math.round(abtest.score * 10000) / 100;
@@ -69,7 +67,7 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
   );
 
   // We create a list of all the version IDs
-  const versionIDs = abTests?.map((abtest) => abtest.version_id);
+  const versionIDs = abTests?.map((abtest) => abtest.version_id) ?? [];
 
   const columns = getColumns();
 
@@ -99,7 +97,8 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
                 <CardDescription>
                   <div className="text-muted-foreground">
                     When logging, add a <code>version_id</code> in{" "}
-                    <code>metadata</code> to compare their success rate.
+                    <code>metadata</code> to compare their analytics
+                    distribution.
                   </div>
                 </CardDescription>
               </div>
@@ -119,9 +118,7 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
           <TableNavigation table={table} />
         </div>
 
-        {versionIDs && versionIDs.length > 1 && (
-          <ABTestingDataviz versionIDs={versionIDs} />
-        )}
+        <ABTestingDataviz versionIDs={versionIDs} />
 
         <div className="rounded-md border">
           <Table>

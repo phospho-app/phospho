@@ -31,6 +31,8 @@ import {
 } from "recharts";
 import useSWR from "swr";
 
+import { Skeleton } from "../ui/skeleton";
+
 export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   // In the URL, use the search params ?a=version_id&b=version_id to set the default versions in the dropdown
 
@@ -64,7 +66,10 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   );
 
   useEffect(() => {
-    if (versionIDs.length >= 2) {
+    if (versionIDs.length == 1) {
+      setVersionIDA(versionIDs[0]);
+      setVersionIDB(versionIDs[0]);
+    } else if (versionIDs.length >= 2) {
       setVersionIDA(computeVersionsIds().versionADefault);
       setVersionIDB(computeVersionsIds().versionBDefault);
     }
@@ -89,16 +94,10 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
     },
   );
 
-  if (!project_id || !versionIDs || versionIDs.length < 2) {
-    return <></>;
-  }
+  console.log("graphData", graphData);
 
-  if (!graphData) {
-    return (
-      <div className="flex flex-col items-center">
-        <Spinner className="my-40" />
-      </div>
-    );
+  if (!project_id || !versionIDs) {
+    return <></>;
   }
 
   return (
@@ -107,15 +106,19 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
-              Version A: {versionIDA} <ChevronDown className="h-4 w-4 ml-2" />
+              <div className="flex flex-row items-center justify-between min-w-[10rem]">
+                Reference version A: {versionIDA}{" "}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="overflow-y-auto max-h-[40rem]"
+            className="overflow-y-auto max-h-[40rem] "
           >
             {versionIDs.map((versionID) => (
               <DropdownMenuItem
+                className="min-w-[10rem]"
                 key={`${versionID}_A`}
                 onClick={() => setVersionIDA(versionID)}
               >
@@ -125,12 +128,22 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
                 {versionID}
               </DropdownMenuItem>
             ))}
+            {versionIDs.length === 0 && (
+              <DropdownMenuItem disabled className="min-w-[10rem]">
+                <p>
+                  No <code>version_id</code> found
+                </p>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
-              Version B: {versionIDB} <ChevronDown className="h-4 w-4 ml-2" />
+              <div className="flex flex-row items-center justify-between min-w-[10rem]">
+                Candidate version B: {versionIDB}{" "}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -148,19 +161,29 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
                 {versionID}
               </DropdownMenuItem>
             ))}
+            {versionIDs.length === 0 && (
+              <DropdownMenuItem disabled>
+                <p>
+                  No <code>version_id</code> found
+                </p>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="flex flex-col items-center">
-        <ResponsiveContainer width={"100%"} height={400}>
-          <BarChart data={graphData}>
-            <XAxis dataKey="event_name" />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar dataKey={versionIDA} fill="#28BB62" />
-            <Bar dataKey={versionIDB} fill="#82ca9d" />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="flex flex-col items-center my-2">
+        {!graphData && <Skeleton className="w-[100%] h-[400px]" />}
+        {graphData && (
+          <ResponsiveContainer width={"100%"} height={400}>
+            <BarChart data={graphData}>
+              <XAxis dataKey="event_name" />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              <Bar dataKey={versionIDA} fill="#28BB62" />
+              <Bar dataKey={versionIDB} fill="#82ca9d" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </>
   );
