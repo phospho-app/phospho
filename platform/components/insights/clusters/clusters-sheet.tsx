@@ -139,9 +139,6 @@ const RunClusters = ({
     },
   });
 
-  console.log("scope", form.getValues("scope"));
-  console.log("limit", form.getValues("limit"));
-
   const { data: totalNbSessionsData } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/sessions`,
@@ -150,11 +147,17 @@ const RunClusters = ({
       form.getValues("scope"),
       "total_nb_sessions",
       "nb_tasks_in_sessions",
+      nbElements,
+      form.getValues("limit"),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_sessions", "nb_tasks_in_sessions"],
         filters: { ...dataFilters },
+        limit: form.getValues("limit"),
+      }).then((data) => {
+        console.log("limit", form.getValues("limit"));
+        return data;
       }),
     {
       keepPreviousData: true,
@@ -181,10 +184,6 @@ const RunClusters = ({
       }
       setClusteringCost(totalNbTasks * 2);
       form.setValue("limit", totalNbTasks);
-      setDataFilters({
-        ...dataFilters,
-        limit: totalNbTasks,
-      });
     }
     if (form.getValues("scope") === "sessions") {
       if (totalNbSessions === null || totalNbSessions === undefined) {
@@ -202,10 +201,6 @@ const RunClusters = ({
       }
       setClusteringCost((nbTasksInSessions ?? 0) * 2);
       form.setValue("limit", totalNbSessions);
-      setDataFilters({
-        ...dataFilters,
-        limit: totalNbSessions,
-      });
     }
   }, [totalNbSessions, totalNbTasks, update]);
 
@@ -215,6 +210,7 @@ const RunClusters = ({
       setClusteringCost(form.getValues("limit") * 2);
     }
     if (form.getValues("scope") === "sessions") {
+      console.log("limit", form.getValues("limit"));
       setNbElements(form.getValues("limit"));
       setClusteringCost((nbTasksInSessions ?? 0) * 2);
     }

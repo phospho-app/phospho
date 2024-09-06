@@ -776,7 +776,6 @@ class ProjectDataFilters(BaseModel):
     clusters_ids: Optional[List[str]] = None  # A list of clusters
     is_last_task: Optional[bool] = None
     sessions_ids: Optional[List[str]] = None
-    limit: Optional[int] = None
 
 
 class Cluster(ProjectElementBaseModel):

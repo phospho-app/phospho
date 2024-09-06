@@ -876,6 +876,7 @@ async def get_total_nb_of_sessions(
 async def get_nb_tasks_in_sessions(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
+    limit: Optional[int] = None,
 ) -> Optional[int]:
     """
     Get the total number of tasks in a set of sessions of a project.
@@ -883,7 +884,7 @@ async def get_nb_tasks_in_sessions(
 
     logger.debug(f"Getting the number of tasks in sessions for project {project_id}")
     mongo_db = await get_mongo_db()
-    logger.debug(f"limit: {filters.limit}")
+    logger.debug(f"limit: {limit}")
 
     global_filters, collection = await session_filtering_pipeline_match(
         project_id=project_id, filters=filters
@@ -892,8 +893,8 @@ async def get_nb_tasks_in_sessions(
     pipeline = [
         {"$match": global_filters},
     ]
-    if filters is not None and filters.limit is not None and filters.limit > 0:
-        pipeline.append({"$limit": filters.limit})
+    if limit is not None and limit > 0:
+        pipeline.append({"$limit": limit})
 
     pipeline.extend(
         [
@@ -1166,6 +1167,7 @@ async def get_sessions_aggregated_metrics(
     quantile_filter: Optional[float] = None,
     metrics: Optional[List[str]] = None,
     filters: Optional[ProjectDataFilters] = None,
+    limit: Optional[int] = None,
 ) -> Dict[str, object]:
     """
     Compute aggregated metrics for the sessions of a project. Used for the Sessions dashboard.
@@ -1229,7 +1231,9 @@ async def get_sessions_aggregated_metrics(
         )
     if "nb_tasks_in_sessions" in metrics:
         output["nb_tasks_in_sessions"] = await get_nb_tasks_in_sessions(
-            project_id=project_id, filters=filters
+            project_id=project_id,
+            filters=filters,
+            limit=limit,
         )
     return output
 
