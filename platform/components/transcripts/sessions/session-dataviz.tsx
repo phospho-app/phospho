@@ -93,7 +93,7 @@ const SessionsDataviz: React.FC = () => {
           return undefined;
         }
         if (!data.nb_sessions_per_day) {
-          return [];
+          return null;
         }
         return data.nb_sessions_per_day?.map((element: NbSessions) => {
           const date = new Date(element.date);
@@ -303,7 +303,7 @@ const SessionsDataviz: React.FC = () => {
           </Card>
           <div className="flex-1">
             <h3 className="text-muted-foreground mb-2">Number of sessions</h3>
-            {totalNbSessions === null && (
+            {nbSessionsPerDay === null && (
               <div className="flex flex-col text-center items-center h-full">
                 <p className="text-muted-foreground mb-2 text-sm pt-6">
                   Start sending data to get more insights
@@ -314,7 +314,7 @@ const SessionsDataviz: React.FC = () => {
                 </Button>
               </div>
             )}
-            {totalNbSessions === undefined && (
+            {nbSessionsPerDay === undefined && (
               <ChartContainer
                 config={chartConfig}
                 className="w-[100%] h-[10rem]"
@@ -322,7 +322,7 @@ const SessionsDataviz: React.FC = () => {
                 <Skeleton className="w-[100%] h-[10rem]" />
               </ChartContainer>
             )}
-            {totalNbSessions && (
+            {nbSessionsPerDay && (
               <ChartContainer
                 config={chartConfig}
                 className="w-[100%] h-[10rem]"

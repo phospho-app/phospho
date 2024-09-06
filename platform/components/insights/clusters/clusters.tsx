@@ -33,7 +33,6 @@ const Clusters: React.FC = () => {
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST").then((res) => {
-        if (!res?.clusterings) return undefined;
         return res;
       }),
     {
@@ -68,12 +67,17 @@ const Clusters: React.FC = () => {
       setSelectedClustering(clusterings[0]);
       return;
     }
-    // if the selectedClustering is not in the list of clusterings, select the latest clustering
+    // If project_id of the selectedClustering is different from the
+    // one in the navigationStateStore, select the latest clustering
     if (
-      selectedClustering !== undefined &&
-      !clusterings.some((clustering) => clustering.id === selectedClustering.id)
+      selectedClustering.project_id !== project_id &&
+      clusterings.length > 0
     ) {
       setSelectedClustering(clusterings[0]);
+      return;
+    } else if (selectedClustering.project_id !== project_id) {
+      // If the clusterings are empty, set the selectedClustering to undefined
+      setSelectedClustering(undefined);
       return;
     }
   }, [JSON.stringify(clusterings), project_id]);
@@ -141,12 +145,16 @@ const Clusters: React.FC = () => {
           )}
           {selectedClustering && selectedClustering.status !== "completed" && (
             <div className="w-full flex flex-col items-center">
-              {selectedClustering.percent_of_completion && (
-                <Progress
-                  value={selectedClustering.percent_of_completion}
-                  className="w-[100%] transition-all duration-500 ease-in-out mb-4 h-4"
-                />
-              )}
+              {selectedClustering.status === "started" ||
+                (selectedClustering.status === "summaries" && (
+                  <Progress
+                    value={Math.max(
+                      selectedClustering.percent_of_completion ?? 0,
+                      1,
+                    )}
+                    className="w-[100%] transition-all duration-500 ease-in-out mb-4 h-4"
+                  />
+                ))}
               {selectedClustering.status === "started" && (
                 <div className="flex flex-row items-center text-muted-foreground text-sm">
                   <Spinner className="mr-1" />
@@ -174,6 +182,7 @@ const Clusters: React.FC = () => {
           />
         </div>
       </div>
+      <div className="h-10"></div>
     </>
   );
 };
