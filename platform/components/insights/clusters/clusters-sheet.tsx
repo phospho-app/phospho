@@ -156,7 +156,6 @@ const RunClusters = ({
         filters: { ...dataFilters },
         limit: form.getValues("limit"),
       }).then((data) => {
-        console.log("limit", form.getValues("limit"));
         return data;
       }),
     {
@@ -210,7 +209,6 @@ const RunClusters = ({
       setClusteringCost(form.getValues("limit") * 2);
     }
     if (form.getValues("scope") === "sessions") {
-      console.log("limit", form.getValues("limit"));
       setNbElements(form.getValues("limit"));
       setClusteringCost((nbTasksInSessions ?? 0) * 2);
     }
