@@ -406,7 +406,7 @@ const FilterComponent = ({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <TextSearch className="h-4 w-4 mr-2" />
-              <span>Events</span>
+              <span>Tags</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent className="overflow-y-auto">
