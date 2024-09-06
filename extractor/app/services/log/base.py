@@ -104,7 +104,7 @@ def get_nb_tokens_completion_tokens(
                 usage = log_event.raw_output.get("usage", {})
                 logger.debug(f"Usage: {usage}")
                 if usage:
-                    return usage.get("total_tokens", 0)
+                    return usage.get("total_tokens", None)
                 else:
                     generated_choices = log_event.raw_output.get("choices", [])
                     logger.debug(f"Generated choices: {generated_choices}")
@@ -119,7 +119,7 @@ def get_nb_tokens_completion_tokens(
                 logger.warning(
                     f"Error in get_nb_tokens_completion_tokens with model: {model}, {e}"
                 )
-                return 0
+                return None
         if isinstance(log_event.raw_output, list):
             raw_output_nonull = [x for x in log_event.raw_output if x is not None]
             # Assume it's a list of str
