@@ -416,7 +416,16 @@ const RunClusters = ({
                             Detect outliers (coming soon)
                           </FormLabel>
                           <FormControl>
-                            <Checkbox checked={field.value} />
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange(true);
+                                } else {
+                                  field.onChange(false);
+                                }
+                              }}
+                            />
                           </FormControl>
                         </FormItem>
                       )}
