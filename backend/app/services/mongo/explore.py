@@ -6,40 +6,37 @@ import datetime
 import math
 from collections import defaultdict
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
-from sklearn.metrics import (
-    f1_score,
-    mean_squared_error,
-    precision_score,
-    recall_score,
-    r2_score,
-)
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
+
 import pandas as pd
 import pydantic
 
 # Models
-from app.api.platform.models import ABTest, ProjectDataFilters
-from app.db.models import AnalyticsQuery, Eval, FlattenedTask
+from app.api.platform.models import ABTest, Pagination, ProjectDataFilters
+from app.api.platform.models.explore import ClusteringEmbeddingCloud
+from app.db.models import Eval, FlattenedTask
 from app.db.mongo import get_mongo_db
 from app.services.mongo.events import get_all_events
-from app.services.mongo.tasks import get_all_tasks
+from app.services.mongo.sessions import session_filtering_pipeline_match
 from app.services.mongo.tasks import (
+    get_all_tasks,
     get_total_nb_of_tasks,
     task_filtering_pipeline_match,
 )
-from app.services.mongo.sessions import session_filtering_pipeline_match
 from app.utils import generate_timestamp, get_last_week_timestamps
 from fastapi import HTTPException
 from loguru import logger
 from pymongo import InsertOne, UpdateOne
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from sklearn.metrics import (
+    f1_score,
+    mean_squared_error,
+    precision_score,
+    r2_score,
+    recall_score,
+)
 
 from phospho.models import Cluster, Clustering, Event
-from app.api.platform.models import Pagination
-
-from app.core import config
-
-from app.api.platform.models.explore import ClusteringEmbeddingCloud
 
 
 async def project_has_tasks(project_id: str) -> bool:
@@ -513,239 +510,6 @@ def generate_date_range(
             ).replace(day=1)
 
     return date_list
-
-
-async def run_analytics_query(
-    query: AnalyticsQuery, fill_missing_dates: bool = False
-) -> List[dict]:
-    """
-    Function to run complex analytics queries, returned as a list of dictionaries.
-    For instance, it should be used for the frontend dataviz.
-    TODO: try to use it as much as possible in more specific functions below.
-
-    The `AnalyticsQuery` model defines the expected input:
-    - project_id: The project id
-    - collection: The collection to aggregate (e.g., tasks, sessions, events, clusters)
-    - aggregation_operation: The type of aggregation to perform ("count", "sum", "avg", "min", "max")
-    - aggregation_field: The field to aggregate on. Not required for count. Can be `metadata.{field_name}` for metadata fields or any nested field.
-    - dimensions: The dimensions to group by (e.g., flag, metadata.model, ...). Can be `month`, `day`, `hour`, or`minute`, which will be computed from the created_at field. Can be `metadata.{field_name}` for metadata fields or any nested field.
-    - filters: Optional filters to apply, passed in MongoDB query format if need be (e.g., {"created_at": {"$gte": 1723218277}})
-    - sort: Optional sorting criteria (e.g., {"date": 1} for ascending, {"date": -1} for descending)
-    - limit: Optional limit on the number of results to return
-
-    fill_missing_dates: If True, fill missing dates between start and end with 0. Default is False.
-
-    In dimensions, the following special values are supported:
-    - "minute": the minute part of the created_at field, "YYYY-MM-DD HH:mm"
-    - hour": the hour part of the created_at field, "YYYY-MM-DD HH"
-    - "day": the date part of the created_at field, "YYYY-MM-DD"
-    - "month": the month part of the created_at field, "YYYY-MM"
-    They will be generated from the created_at field in a new field with the same name.
-
-    If the query is not valid, mongo will raise an hunhandled error.
-
-    Returns a list of dictionaries.
-    """
-
-    mongo_db = await get_mongo_db()
-
-    # Let's build the pipeline
-    pipeline: List[Dict[str, object]] = [
-        {"$match": {"project_id": query.project_id}},
-    ]
-
-    # Add the filters
-    if query.filters:
-        pipeline.append({"$match": query.filters})
-
-    # If there is some dimensions month, day, hour, minute, we need to generate them from the created_at field UNIX timestamp in seconds
-    # It's in a new field with the same name
-
-    # Generate the query to create new fields for the dimensions
-    for dimension in query.dimensions:
-        if dimension == "minute":
-            pipeline.append(
-                {
-                    "$addFields": {
-                        "minute": {
-                            "$dateToString": {
-                                "format": "%Y-%m-%d %H:%M",
-                                "date": {
-                                    "$toDate": {"$multiply": ["$created_at", 1000]}
-                                },
-                            }
-                        }
-                    }
-                }
-            )
-        elif dimension == "hour":
-            pipeline.append(
-                {
-                    "$addFields": {
-                        "hour": {
-                            "$dateToString": {
-                                "format": "%Y-%m-%d %H",
-                                "date": {
-                                    "$toDate": {"$multiply": ["$created_at", 1000]}
-                                },
-                            }
-                        }
-                    }
-                }
-            )
-        elif dimension == "day":
-            pipeline.append(
-                {
-                    "$addFields": {
-                        "day": {
-                            "$dateToString": {
-                                "format": "%Y-%m-%d",
-                                "date": {
-                                    "$toDate": {"$multiply": ["$created_at", 1000]}
-                                },
-                            }
-                        }
-                    }
-                }
-            )
-        elif dimension == "month":
-            pipeline.append(
-                {
-                    "$addFields": {
-                        "month": {
-                            "$dateToString": {
-                                "format": "%Y-%m",
-                                "date": {
-                                    "$toDate": {"$multiply": ["$created_at", 1000]}
-                                },
-                            }
-                        }
-                    }
-                }
-            )
-        # Then we add the other dimensions
-        else:
-            # If there is some . in the dimension, we need to rename the field as it's not supported by mongo
-            dimension_name = dimension
-            if "." in dimension_name:
-                dimension_name = dimension_name.replace(".", "_")
-            pipeline.append({"$addFields": {dimension_name: f"${dimension}"}})
-
-    # from now on, we need to refere to the new field names
-    dimension_names = [
-        dimension if "." not in dimension else dimension.replace(".", "_")
-        for dimension in query.dimensions
-    ]
-
-    # Add the group by
-    if query.aggregation_operation == "count":
-        pipeline.append(
-            {
-                "$group": {
-                    "_id": {
-                        dimension: f"${dimension}" for dimension in dimension_names
-                    },
-                    "value": {"$sum": 1},
-                }
-            }
-        )
-    else:
-        assert (
-            query.aggregation_field is not None
-        ), "Field is required for non-count aggregation"
-        pipeline.append(
-            {
-                "$group": {
-                    "_id": {
-                        dimension: f"${dimension}" for dimension in dimension_names
-                    },
-                    "value": {
-                        f"${query.aggregation_operation}": f"${query.aggregation_field}"
-                    },
-                }
-            }
-        )
-
-    # Add the $project stage to unpack _id
-    pipeline.append(
-        {
-            "$project": {
-                "_id": 0,  # Exclude the _id field
-                **{dimension: f"$_id.{dimension}" for dimension in dimension_names},
-                "value": 1,  # Include the value field
-            }
-        }
-    )
-
-    # Add the sort
-    if query.sort:
-        pipeline.append({"$sort": query.sort})
-
-    # Run the query
-    result = (
-        await mongo_db[query.collection].aggregate(pipeline).to_list(length=query.limit)
-    )
-
-    # Fill missing dates with 0
-    if fill_missing_dates:
-        # we select the smallest time dimension for the date range
-        time_dimension = next(
-            (d for d in query.dimensions if d in ["minute", "hour", "day", "month"]),
-            None,
-        )
-        if time_dimension:
-            # Extract date range from filters
-            start_date, end_date = extract_date_range(query.filters)
-            logger.debug(f"Start date: {start_date}, End date: {end_date}")
-
-            if start_date and end_date:
-                # Generate all dates in the range
-                all_dates = generate_date_range(start_date, end_date, time_dimension)
-                logger.debug(f"Generated nb of dates: {len(all_dates)}")
-
-                # Create a dictionary of existing results
-                result_dict = {
-                    tuple(item[d] for d in query.dimensions): item for item in result
-                }
-
-                # Fill in missing dates with zero values
-                filled_result = []
-                for date in all_dates:
-                    key = tuple(
-                        date if d == time_dimension else "" for d in query.dimensions
-                    )
-                    if key in result_dict:
-                        filled_result.append(result_dict[key])
-                    else:
-                        filled_result.append(
-                            {
-                                **{
-                                    d: (date if d == time_dimension else "")
-                                    for d in query.dimensions
-                                },
-                                "value": 0,
-                            }
-                        )
-
-                result = filled_result
-            else:
-                logger.warning(
-                    f"Fill missing dates is enabled but no start and end filters for project {query.project_id}"
-                )
-
-        else:
-            logger.warning(
-                f"Fill missing dates is enabled but no time dimension found in the query dimensions for project {query.project_id}"
-            )
-
-    # To avoid blocking the backend when sending back a massive list, we limit the number of results to QUERY_MAX_LEN_LIMIT
-    if len(result) >= config.QUERY_MAX_LEN_LIMIT:
-        logger.warning(
-            f"Query returned {len(result)} results for project {query.project_id}. Returning truncated list of size {config.QUERY_MAX_LEN_LIMIT} (the limit)"
-        )
-        result = result[: config.QUERY_MAX_LEN_LIMIT]
-
-    return result
 
 
 async def get_nb_of_daily_tasks(
