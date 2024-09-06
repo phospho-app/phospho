@@ -802,6 +802,7 @@ class Clustering(ProjectElementBaseModel):
     percent_of_completion: Optional[float] = None  # 0-100
     clusters: Optional[List[Cluster]] = None
     scope: Optional[Literal["messages", "sessions"]] = None
+    clustering_mode: Literal["agglomerative", "dbscan"] = "agglomerative"
     name: Optional[str] = None
     instruction: Optional[str] = None
     pca: Optional[dict] = None
