@@ -15,7 +15,6 @@ from .log import (
 )
 from .models import Model, ModelsResponse
 from .projects import (
-    AnalyticsQueryRequest,
     ComputeJobsRequest,
     EventDefinition,
     FlattenedTasksRequest,

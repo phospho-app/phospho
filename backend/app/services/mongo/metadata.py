@@ -826,5 +826,6 @@ async def breakdown_by_sum_of_metadata_field(
 
     logger.info(f"Running pipeline: {pipeline}")
     result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=200)
+    logger.info(f"Analytics query Result: {result}")
 
     return result
