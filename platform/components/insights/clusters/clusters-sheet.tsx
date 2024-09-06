@@ -345,39 +345,7 @@ const RunClusters = ({
               />
               <FilterComponent variant="tasks" />
             </div>
-            <div className="flex items-center space-x-2">
-              <FormLabel>Limit number of {form.getValues("scope")}:</FormLabel>
-              <FormField
-                control={form.control}
-                name="limit"
-                render={({ field }) => (
-                  <FormItem className="flex-grow">
-                    <FormControl>
-                      <Input
-                        className="w-32"
-                        max={
-                          form.getValues("scope") === "messages"
-                            ? totalNbTasks ?? 0
-                            : totalNbSessions ?? 0
-                        }
-                        min={1}
-                        step={1}
-                        type="number"
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(e.target.valueAsNumber);
-                          setDataFilters({
-                            ...dataFilters,
-                            limit: e.target.valueAsNumber,
-                          });
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
                 <AccordionTrigger>
@@ -387,6 +355,41 @@ const RunClusters = ({
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-3 space-x-1">
+                  <div className="flex items-center space-x-2">
+                    <FormLabel>
+                      Limit number of {form.getValues("scope")}:
+                    </FormLabel>
+                    <FormField
+                      control={form.control}
+                      name="limit"
+                      render={({ field }) => (
+                        <FormItem className="flex-grow">
+                          <FormControl>
+                            <Input
+                              className="w-32"
+                              max={
+                                form.getValues("scope") === "messages"
+                                  ? totalNbTasks ?? 0
+                                  : totalNbSessions ?? 0
+                              }
+                              min={1}
+                              step={1}
+                              type="number"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e.target.valueAsNumber);
+                                setDataFilters({
+                                  ...dataFilters,
+                                  limit: e.target.valueAsNumber,
+                                });
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormLabel>
                     <div className="flex space-x-2">
                       <span>Clustering instruction</span>
