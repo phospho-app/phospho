@@ -50,7 +50,7 @@ def get_time_created_at(
 
 def get_nb_tokens_prompt_tokens(
     log_event: LogEventForTasks, model: Optional[str]
-) -> int:
+) -> int | None:
     """
     Returns the number of tokens in the prompt tokens, using
     different heuristics depending on the input type.
@@ -58,12 +58,24 @@ def get_nb_tokens_prompt_tokens(
     tokenizer = get_tokenizer(model)
     if isinstance(log_event.raw_input, dict):
         # Assume there is a key 'messages' (OpenAI-like input)
-        messages = log_event.raw_input.get("messages", [])
-        if isinstance(messages, list) and all(isinstance(x, dict) for x in messages):
-            return num_tokens_from_messages(
-                messages,
-                model=model,
-                tokenizer=tokenizer,
+        try:
+            if isinstance(log_event.raw_output, dict):
+                usage = log_event.raw_output.get("usage", {})
+                if usage:
+                    return usage.get("prompt_tokens", None)
+            else:
+                messages = log_event.raw_input.get("messages", [])
+                if isinstance(messages, list) and all(
+                    isinstance(x, dict) for x in messages
+                ):
+                    return num_tokens_from_messages(
+                        messages,
+                        model=model,
+                        tokenizer=tokenizer,
+                    )
+        except Exception as e:
+            logger.warning(
+                f"Error in get_nb_tokens_prompt_tokens with model: {model}, {e}"
             )
     if isinstance(log_event.raw_input, list):
         if all(isinstance(x, str) for x in log_event.raw_input):
@@ -80,41 +92,52 @@ def get_nb_tokens_prompt_tokens(
 
 def get_nb_tokens_completion_tokens(
     log_event: LogEventForTasks, model: Optional[str]
-) -> int:
+) -> int | None:
     """
     Returns the number of tokens in the completion tokens, using
     different heuristics depending on the output type.
     """
     try:
-        tokenizer = get_tokenizer(model)
         if isinstance(log_event.raw_output, dict):
             # Assume there is a key 'choices' (OpenAI-like output)
-            generated_choices = log_event.raw_output.get("choices", [])
-            if isinstance(generated_choices, list) and all(
-                isinstance(x, dict) for x in generated_choices
-            ):
-                generated_messages = [
-                    choice.get("message", {}) for choice in generated_choices
-                ]
-                return num_tokens_from_messages(
-                    generated_messages, model=model, tokenizer=tokenizer
+            try:
+                usage = log_event.raw_output.get("usage", {})
+                logger.debug(f"Usage: {usage}")
+                if usage:
+                    return usage.get("total_tokens", None)
+                else:
+                    generated_choices = log_event.raw_output.get("choices", [])
+                    logger.debug(f"Generated choices: {generated_choices}")
+                    if isinstance(generated_choices, list) and all(
+                        isinstance(x, dict) for x in generated_choices
+                    ):
+                        generated_messages = [
+                            choice.get("message", {}) for choice in generated_choices
+                        ]
+                        return num_tokens_from_messages(generated_messages, model=model)
+            except Exception as e:
+                logger.warning(
+                    f"Error in get_nb_tokens_completion_tokens with model: {model}, {e}"
                 )
+                return None
         if isinstance(log_event.raw_output, list):
             raw_output_nonull = [x for x in log_event.raw_output if x is not None]
             # Assume it's a list of str
             if all(isinstance(x, str) for x in raw_output_nonull):
+                tokenizer = get_tokenizer(model)
                 return sum(len(tokenizer.encode(x)) for x in raw_output_nonull)
             # If it's a list of dict, assume it's a list of streamed chunks
             if all(isinstance(x, dict) for x in raw_output_nonull):
                 return len(log_event.raw_output)
         if log_event.output is not None:
+            tokenizer = get_tokenizer(model)
             return len(tokenizer.encode(log_event.output))
     except Exception as e:
         logger.error(
             f"Error in get_nb_tokens_completion_tokens with model: {model}, {e}"
         )
 
-    return 0
+    return None
 
 
 def collect_metadata(log_event: LogEventForTasks) -> dict:
