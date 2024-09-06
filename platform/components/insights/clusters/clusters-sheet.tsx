@@ -370,13 +370,6 @@ const RunClusters = ({
                               step={1}
                               type="number"
                               {...field}
-                              onChange={(e) => {
-                                field.onChange(e.target.valueAsNumber);
-                                setDataFilters({
-                                  ...dataFilters,
-                                  limit: e.target.valueAsNumber,
-                                });
-                              }}
                             />
                           </FormControl>
                           <FormMessage />
