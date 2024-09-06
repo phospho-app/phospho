@@ -18,12 +18,13 @@ from app.api.platform.models import (
     Events,
     FetchClustersRequest,
     ProjectDataFilters,
+    AggregatedSessionsRequest,
 )
 from app.api.platform.models.explore import ABTestVersions, ClusteringEmbeddingCloud
 from app.core import config
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
-from app.security.authorization import get_quota, get_quota_for_org
+from app.security.authorization import get_quota_for_org
 from app.services.mongo.ai_hub import AIHubClient
 from app.services.mongo.events import get_all_events, get_event_definition_from_event_id
 from app.services.mongo.explore import (
@@ -201,16 +202,18 @@ async def get_tasks_project_metrics(
 )
 async def get_sessions_project_metrics(
     project_id: str,
-    metrics: Optional[List[str]] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    query: AggregatedSessionsRequest,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
     Get aggregated metrics for the sessions of a project. Used for the Sessions dashboard.
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    if filters is None:
-        filters = ProjectDataFilters(event_name=None)
+    metrics = query.metrics
+    filters = query.filters
+    limit = query.limit
+    logger.debug(f"limit: {limit}")
+
     if isinstance(filters.event_name, str):
         filters.event_name = [filters.event_name]
     # Convert to UNIX timestamp in seconds
@@ -223,6 +226,7 @@ async def get_sessions_project_metrics(
         project_id=project_id,
         metrics=metrics,
         filters=filters,
+        limit=limit,
     )
     return output
 
