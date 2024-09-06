@@ -17,8 +17,8 @@ class EventsMetricsFilter(BaseModel):
 
 
 class ABTestVersions(BaseModel):
-    versionA: str
-    versionB: str
+    versionA: Optional[str]
+    versionB: Optional[str]
 
 
 class ClusteringEmbeddingCloud(BaseModel):

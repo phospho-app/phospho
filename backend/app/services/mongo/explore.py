@@ -2647,8 +2647,8 @@ async def update_from_flattened_tasks(
 
 async def get_ab_tests_versions(
     project_id: str,
-    versionA: str,
-    versionB: str,
+    versionA: Optional[str],
+    versionB: Optional[str],
 ) -> List[Dict[str, Union[str, float, int]]]:
     """
     - For boolean events, gets the number of times the event was detected in each task with the two versions of the model.
@@ -2746,6 +2746,9 @@ async def get_ab_tests_versions(
     ]
 
     results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
+    if not results:
+        logger.info("No results found")
+        return []
 
     # This dict will have event_names as keys, and the values will be dictionnaries with the version_id as keys and the count as values
     total_tasks_with_A = await mongo_db["tasks"].count_documents(

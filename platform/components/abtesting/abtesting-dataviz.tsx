@@ -58,15 +58,18 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
     return { versionADefault, versionBDefault };
   }
 
-  const [versionIDA, setVersionIDA] = useState<string>(
+  const [versionIDA, setVersionIDA] = useState<string | null>(
     computeVersionsIds().versionADefault,
   );
-  const [versionIDB, setVersionIDB] = useState<string>(
+  const [versionIDB, setVersionIDB] = useState<string | null>(
     computeVersionsIds().versionBDefault,
   );
 
   useEffect(() => {
-    if (versionIDs.length == 1) {
+    if (versionIDs.length === 0) {
+      setVersionIDA(null);
+      setVersionIDB(null);
+    } else if (versionIDs.length == 1) {
       setVersionIDA(versionIDs[0]);
       setVersionIDB(versionIDs[0]);
     } else if (versionIDs.length >= 2) {
@@ -76,7 +79,7 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   }, [JSON.stringify(versionIDs)]);
 
   const { data: graphData } = useSWR(
-    project_id && versionIDA && versionIDB
+    project_id
       ? [
           `/api/explore/${encodeURI(project_id)}/ab-tests/compare-versions`,
           accessToken,
@@ -95,6 +98,8 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   );
 
   console.log("graphData", graphData);
+  console.log("versionIDA", versionIDA);
+  console.log("versionIDB", versionIDB);
 
   if (!project_id || !versionIDs) {
     return <></>;
@@ -172,8 +177,11 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
         </DropdownMenu>
       </div>
       <div className="flex flex-col items-center my-2">
-        {!graphData && <Skeleton className="w-[100%] h-[400px]" />}
-        {graphData && (
+        {(!graphData ||
+          !versionIDA ||
+          !versionIDB ||
+          graphData.length == 0) && <Skeleton className="w-[100%] h-[400px]" />}
+        {graphData && versionIDA && versionIDB && graphData.length > 0 && (
           <ResponsiveContainer width={"100%"} height={400}>
             <BarChart data={graphData}>
               <XAxis dataKey="event_name" />
