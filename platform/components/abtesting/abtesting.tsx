@@ -52,6 +52,8 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
     ([url, accessToken]) =>
       authFetcher(url, accessToken)?.then((res) => {
         const abtests = res.abtests as ABTest[];
+        console.log("abtests", res);
+
         // Round the score and score_std to 2 decimal places
         abtests.forEach((abtest) => {
           abtest.score = Math.round(abtest.score * 10000) / 100;
