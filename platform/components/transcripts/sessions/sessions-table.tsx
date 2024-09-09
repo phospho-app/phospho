@@ -34,7 +34,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import useSWR from "swr";
 
-import { getColumns } from "./sessions-table-columns";
+import { useColumns } from "./sessions-table-columns";
 
 interface DataTableProps<TData, TValue> {
   userFilter?: string | null;
@@ -127,7 +127,7 @@ export function SessionsTable<TData, TValue>({
   );
   const totalNbSessions = totalNbSessionsData?.total_nb_sessions;
 
-  const columns = getColumns({
+  const columns = useColumns({
     mutateSessions: mutateSessions,
     setSheetOpen: setSheetOpen,
     setSheetToOpen: setSheetToOpen,

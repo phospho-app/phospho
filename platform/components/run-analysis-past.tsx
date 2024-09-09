@@ -185,8 +185,8 @@ const RunAnalysisInPast = () => {
                 <FormItem>
                   <div className="mb-8">
                     <FormLabel className="text-base">
-                      Select analytics to run on the data of the project '
-                      {selectedProject?.project_name}'
+                      Select analytics to run on the data of the project &apos;
+                      {selectedProject?.project_name}&apos;
                     </FormLabel>
                   </div>
                   <div className="flex flex-wrap space-x-2">

@@ -78,7 +78,7 @@ async function flagTask({
   });
 }
 
-export function getColumns({
+export function useColumns({
   mutateTasks,
   setSheetOpen,
   setSheetToOpen,
@@ -105,29 +105,7 @@ export function getColumns({
   const events = selectedProject?.settings?.events || {};
   const eventArray = Object.entries(events);
 
-  const { data: uniqueEvents } = useSWR(
-    project_id
-      ? [`/api/projects/${project_id}/unique-events`, accessToken]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-
   const columns: ColumnDef<TaskWithEvents>[] = [
-    // id
-    // {
-    //   header: ({ column }) => {
-    //     return <></>;
-    //   },
-    //   accessorKey: "id",
-    //   cell: ({ row }) => {
-    //     return <></>;
-    //   },
-    //   enableHiding: true,
-    // },
-    // Date
     {
       header: ({ column }) => {
         return (

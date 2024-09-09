@@ -24,7 +24,6 @@ import {
 } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { version } from "os";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 

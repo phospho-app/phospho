@@ -116,7 +116,7 @@ export default function AddEvents({
         ),
       );
     }
-  }, [selectedOrgId]);
+  }, [selectedOrgId, customEvents, project_id]);
 
   const handleToggle = (eventName: string) => {
     setIsSelected((prevIsSelected) => ({
@@ -127,15 +127,15 @@ export default function AddEvents({
 
   const saveSelectedEvents = async () => {
     const selectedEvents = Object.entries(isSelected)
-      ?.filter(([_key, value]) => value)
-      ?.map(([key, _value]) => key);
+      ?.filter(([, value]) => value)
+      ?.map(([key]) => key);
     // Now get the full events from custom events
     // and save the selected events to the project
     const selectedEventDefinitions = customEvents?.filter((eventDefintion) =>
       selectedEvents.includes(eventDefintion.event_name),
     );
 
-    const response = await fetch(`/api/projects/${project_id}/add-events`, {
+    await fetch(`/api/projects/${project_id}/add-events`, {
       method: "POST",
       headers: {
         Authorization: "Bearer " + accessToken,
@@ -258,7 +258,7 @@ export default function AddEvents({
             className="w-full"
             onClick={async () => {
               setSendEventsLoading(true);
-              saveSelectedEvents().then((response) => {
+              saveSelectedEvents().then(() => {
                 router.push(redirectTo);
                 toast({
                   title: "Your config has been saved! 🎉",

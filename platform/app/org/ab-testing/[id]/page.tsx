@@ -30,7 +30,7 @@ export default function Page({ params }: { params: { id: string } }) {
         ...dataFilters,
       });
     };
-  }, []);
+  }, [dataFilters, setDataFilters]);
 
   return (
     <>

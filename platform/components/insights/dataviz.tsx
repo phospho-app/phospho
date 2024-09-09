@@ -175,10 +175,14 @@ const DatavizGraph = ({
                           const color = graphColors[index % graphColors.length];
 
                           return (
-                            <div className="flex flex-row space-x-2 items-center">
+                            <div
+                              className="flex flex-row space-x-2 items-center"
+                              key={item.name}
+                            >
                               <div
                                 className="w-4 h-4"
                                 style={{ backgroundColor: color }}
+                                key={item.name}
                               ></div>
                               <div key={item.name} className="text-secondary">
                                 {itemName}: {formatedValue}

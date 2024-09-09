@@ -52,7 +52,6 @@ function RunAnalyticsForm({
 }) {
   const router = useRouter();
   const { accessToken } = useUser();
-  const [checkedEval, setCheckedEval] = useState(true);
   const [checkedEvent, setCheckedEvent] = useState(true);
   const [checkedLangSent, setCheckedLangSent] = useState(true);
   const [totalAnalytics, setTotalAnalytics] = useState(0);
@@ -68,15 +67,13 @@ function RunAnalyticsForm({
   React.useEffect(() => {
     if (totalNbTasks) {
       setTotalAnalytics(
-        ((checkedEval ? 1 : 0) +
-          (checkedEvent ? nbrEvents : 0) +
-          (checkedLangSent ? 2 : 0)) *
+        ((checkedEvent ? nbrEvents : 0) + (checkedLangSent ? 2 : 0)) *
           totalNbTasks,
       );
     } else {
       setTotalAnalytics(0);
     }
-  }, [checkedEval, checkedEvent, checkedLangSent, nbrEvents, totalNbTasks]);
+  }, [checkedEvent, checkedLangSent, nbrEvents, totalNbTasks]);
 
   const form_choices = [
     {
@@ -131,7 +128,7 @@ function RunAnalyticsForm({
     toast({
       title: "Your analytics are running 🚀",
       description:
-        "This may take a few minutes. Feel free to reach out - we're here to help.",
+        "This may take a few minutes. Feel free to reach out - we&apos;re here to help.",
     });
   }
 
@@ -145,8 +142,8 @@ function RunAnalyticsForm({
             <FormItem>
               <div className="mb-8">
                 <FormLabel className="text-base">
-                  Select analytics to run on the data of the project '
-                  {selectedProject?.project_name}'
+                  Select analytics to run on the data of the project &apos;
+                  {selectedProject?.project_name}&apos;
                 </FormLabel>
               </div>
               {form_choices.map((item) => (
@@ -259,7 +256,7 @@ export default function Page() {
   const decoded_project_id_in_url = project_id_in_url
     ? decodeURIComponent(project_id_in_url)
     : null;
-  let project_id =
+  const project_id =
     navigationStateStore((state) => state.project_id) ??
     decoded_project_id_in_url;
 
@@ -327,11 +324,11 @@ export default function Page() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <p>We can't wait to see what you'll build.</p>
+            <p>We can&apos;t wait to see what you&apos;ll build.</p>
           </CardContent>
           <CardFooter className="flex justify-center">
             <Button className="bg-green-500" onClick={onBoogieClick}>
-              Let's boogie.
+              Let&apos;s boogie.
             </Button>
           </CardFooter>
         </Card>

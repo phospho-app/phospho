@@ -14,7 +14,7 @@ import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
 import { ClustersCards } from "./clusters-cards";
@@ -80,7 +80,7 @@ const Clusters: React.FC = () => {
       setSelectedClustering(undefined);
       return;
     }
-  }, [JSON.stringify(clusterings), project_id]);
+  }, [JSON.stringify(clusterings), project_id, selectedClustering]);
 
   // Add a useEffect triggered every few seconds to update the clustering status
   useEffect(() => {

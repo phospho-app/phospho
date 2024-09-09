@@ -1,5 +1,6 @@
 import * as Progress from "@radix-ui/react-progress";
 import React from "react";
+import { useEffect } from "react";
 
 // TODO : Refacto this to use shadcn instead
 
@@ -11,14 +12,17 @@ interface ProgressProps {
 const TaskProgress = ({ currentValue, maxValue }: ProgressProps) => {
   const [progress, setProgress] = React.useState(0);
 
+  useEffect(() => {
+    if (currentValue === undefined || maxValue === undefined) {
+      return;
+    }
+    const timer = setTimeout(() => setProgress(currentValue), 500);
+    return () => clearTimeout(timer);
+  }, [currentValue, maxValue]);
+
   if (currentValue === undefined || maxValue === undefined) {
     return <></>;
   }
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => setProgress(currentValue), 500);
-    return () => clearTimeout(timer);
-  }, [currentValue]);
 
   const translation = currentValue ? currentValue / maxValue : 0;
 

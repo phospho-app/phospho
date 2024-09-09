@@ -20,6 +20,7 @@ import { AlertDialog } from "@radix-ui/react-alert-dialog";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import { useMemo } from "react";
 import { Bar, BarChart, Label, Pie, PieChart, XAxis, YAxis } from "recharts";
 import useSWR from "swr";
 
@@ -259,6 +260,14 @@ const SessionsDataviz: React.FC = () => {
     return null;
   };
 
+  const totalClusters = useMemo(() => {
+    return lastClusteringComposition?.reduce((acc, _) => acc + 1, 0) ?? 0;
+  }, [lastClusteringComposition]);
+
+  const totalTags = useMemo(() => {
+    return eventsRanking?.reduce((acc, curr) => acc + curr.nb_events, 0) ?? 0;
+  }, [eventsRanking]);
+
   if (!project_id) {
     return <></>;
   }
@@ -397,12 +406,7 @@ const SessionsDataviz: React.FC = () => {
                                 y={(viewBox.cy || 0) + 5}
                                 className="fill-foreground text-3xl font-bold"
                               >
-                                {React.useMemo(() => {
-                                  return lastClusteringComposition?.reduce(
-                                    (acc, _) => acc + 1,
-                                    0,
-                                  );
-                                }, [])?.toLocaleString()}
+                                {totalClusters.toLocaleString()}
                               </tspan>
                               <tspan
                                 x={viewBox.cx}
@@ -475,12 +479,7 @@ const SessionsDataviz: React.FC = () => {
                                 y={viewBox.cy || 0 + 5}
                                 className="fill-foreground text-3xl font-bold"
                               >
-                                {React.useMemo(() => {
-                                  return eventsRanking?.reduce(
-                                    (acc, curr) => acc + curr.nb_events,
-                                    0,
-                                  );
-                                }, [])?.toLocaleString()}
+                                {totalTags.toLocaleString()}
                               </tspan>
                               <tspan
                                 x={viewBox.cx}
