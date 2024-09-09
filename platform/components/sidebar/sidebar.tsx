@@ -245,7 +245,7 @@ export function Sidebar() {
             href="/org/insights/clusters"
             icon={<Boxes size={16} className="mr-2" />}
           >
-            Clustering
+            Clusterings
           </SideBarElement>
           <SideBarElement
             href="/org/insights/events"
