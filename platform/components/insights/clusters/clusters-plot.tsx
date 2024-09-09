@@ -121,7 +121,10 @@ export function CustomPlot({
       layout={{
         height: Math.max(window.innerHeight * 0.6, 300),
         // set it to be the size of the current div in pixel
-        width: document.getElementsByClassName("custom-plot")[0].clientWidth,
+        width:
+          // The custom-plot div is the width of the cards
+          document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
+          window.innerWidth * 0.8,
         // autosize: true,
         scene: {
           xaxis: {

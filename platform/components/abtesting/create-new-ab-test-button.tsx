@@ -70,7 +70,7 @@ const CreateNewABTestButton = () => {
           <PopoverTrigger asChild>
             <Button>
               <PlusIcon className="h-4 w-4 mr-2" />
-              Create New AB Test
+              New AB Test
             </Button>
           </PopoverTrigger>
           {/* <Button onClick={clearABTest} className="ml-2">
