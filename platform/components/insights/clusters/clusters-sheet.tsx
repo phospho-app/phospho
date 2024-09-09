@@ -203,6 +203,8 @@ const RunClusteringSheet = ({
     }
   }, [totalNbSessions, totalNbTasks, update]);
 
+  const formLimit = form.getValues("limit");
+
   useEffect(() => {
     if (form.getValues("scope") === "messages") {
       setNbElements(form.getValues("limit"));
@@ -212,13 +214,15 @@ const RunClusteringSheet = ({
       setNbElements(form.getValues("limit"));
       setClusteringCost((nbTasksInSessions ?? 0) * 2);
     }
-  }, [form.getValues("limit")]);
+  }, [form, formLimit, nbTasksInSessions]);
+
+  const formScope = form.getValues("scope");
 
   useEffect(() => {
     if (form.getValues("scope") === "sessions") {
       setClusteringCost((nbTasksInSessions ?? 0) * 2);
     }
-  }, [nbTasksInSessions]);
+  }, [nbTasksInSessions, form, formScope]);
 
   const canRunClusterAnalysis: boolean =
     (form.getValues("scope") === "messages" &&

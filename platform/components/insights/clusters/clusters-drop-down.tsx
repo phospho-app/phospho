@@ -9,7 +9,7 @@ import {
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
 import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export function ClusteringDropDown({
   selectedClustering,
@@ -24,9 +24,14 @@ export function ClusteringDropDown({
 }) {
   const [refresh, setRefresh] = useState(false);
 
+  const clusteringsJSON = useMemo(
+    () => JSON.stringify(clusterings),
+    [clusterings],
+  );
+
   useEffect(() => {
     setRefresh(!refresh);
-  }, [JSON.stringify(clusterings)]);
+  }, [clusteringsJSON]);
 
   return (
     <div className="flex flex-row gap-x-2 items-center mb-2 mr-2">
