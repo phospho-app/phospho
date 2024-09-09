@@ -470,8 +470,12 @@ async def post_upload_tasks(
 
     # Strip and lowercase the columns
     tasks_df.columns = tasks_df.columns.str.strip().str.lower()
-    logger.debug(f"Columns: {tasks_df.columns}")
+    logger.debug(f"Columns: {list(tasks_df.columns)}")
 
+    # strip and lowercase the columns
+    tasks_df.columns = (
+        tasks_df.columns.str.strip().str.lower().str.replace("\ufeff", "")  # Remove BOM
+    )
     # Rename task_input to input and task_output to output
     tasks_df.rename(
         columns={
@@ -483,14 +487,15 @@ async def post_upload_tasks(
 
     # Verify if the required columns are present
     required_columns = ["input", "output"]
-    missing_columns = set(required_columns) - set(tasks_df.columns)
+    missing_columns = set(required_columns) - set(list(tasks_df.columns))
+    logger.debug(f"Missing columns: {missing_columns}")
     if missing_columns:
         # The file has been uploaded but the columns are missing (wrong format)
         # We send a slack notification to the phospho team for manual verification
         if config.GCP_BUCKET_CLIENT:
             # Otherwise filepath is undefined, see above
             await slack_notification(
-                f"[ACTION REQUIRED] Project {project_id} uploaded a file with missing columns. File path: {filepath}"
+                f"[ACTION REQUIRED] {user.email} project {project_id} uploaded a file with missing columns {missing_columns}. File path: {filepath}"
             )
 
         raise HTTPException(

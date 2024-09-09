@@ -3,10 +3,16 @@
 import { SelectOrgButton } from "@/components/settings/select-org-dropdown";
 import { CenteredSpinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
 import { CircleUser, CopyIcon, ExternalLink, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function Page() {
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
@@ -16,8 +22,17 @@ export default function Page() {
 
   const { redirectToAccountPage, redirectToOrgPage } = useRedirectFunctions();
   const { loading, user } = useUser();
+  const [copied, setCopied] = useState(false);
 
   const plan = selectedOrgMetadata?.plan ?? "hobby";
+
+  const handleCopy = () => {
+    if (selectedOrgId === null || selectedOrgId === undefined) {
+      return;
+    }
+    navigator.clipboard.writeText(selectedOrgId);
+    setCopied(true);
+  };
 
   if (loading) {
     return <CenteredSpinner />;
@@ -56,18 +71,24 @@ export default function Page() {
               Organization id:{" "}
               <code className="bg-secondary p-1.5">{selectedOrgId}</code>
             </p>
-            <Button
-              variant="outline"
-              className="ml-2"
-              size="icon"
-              onClick={() => {
-                if (selectedOrgId) {
-                  navigator.clipboard.writeText(selectedOrgId);
-                }
-              }}
-            >
-              <CopyIcon className="w-3 h-3" />
-            </Button>
+            <HoverCard openDelay={80} closeDelay={30}>
+              <HoverCardTrigger>
+                <Button
+                  variant="outline"
+                  className="ml-2"
+                  size="icon"
+                  onClick={handleCopy}
+                >
+                  <CopyIcon className="w-3 h-3" />
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent
+                side="bottom"
+                className="text-sm text-center ml-2"
+              >
+                {copied ? "Copied!" : "Copy"}
+              </HoverCardContent>
+            </HoverCard>
           </div>
         </div>
         <div className="space-y-2 pb-4">

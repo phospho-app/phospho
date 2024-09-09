@@ -35,6 +35,7 @@ from .explore import (
     Pagination,
     ProjectDataFilters,
     QuerySessionsTasksRequest,
+    AggregatedSessionsRequest,
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
 from .organizations import CreateCheckoutRequest, UserCreatedEventWebhook

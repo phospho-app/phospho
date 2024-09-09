@@ -18,7 +18,7 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ChevronRight } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import {
@@ -31,6 +31,10 @@ import {
 } from "recharts";
 import useSWR from "swr";
 
+import { SendDataAlertDialog } from "../callouts/import-data";
+import { AlertDialog } from "../ui/alert-dialog";
+import { Skeleton } from "../ui/skeleton";
+
 export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   // In the URL, use the search params ?a=version_id&b=version_id to set the default versions in the dropdown
 
@@ -41,37 +45,53 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   const searchParams = useSearchParams();
 
   function computeVersionsIds() {
-    let versionADefault = searchParams.get("a");
-    let versionBDefault = searchParams.get("b");
-    if (versionADefault) {
-      versionADefault = decodeURIComponent(versionADefault);
-    } else {
-      versionADefault = versionIDs[0];
+    let currVersionA = null;
+    let currVersionB = null;
+    // let versionA = searchParams.get("a");
+    // let versionB = searchParams.get("b");
+
+    if (versionIDs.length === 1) {
+      currVersionA = versionIDs[0];
+      currVersionB = versionIDs[0];
+    } else if (versionIDs.length >= 2) {
+      currVersionA = versionIDs[0];
+      currVersionB = versionIDs[1];
     }
-    if (versionBDefault) {
-      versionBDefault = decodeURIComponent(versionBDefault);
-    } else {
-      versionBDefault = versionIDs[1];
+
+    // Override the default versions if the URL has the search params
+    if (searchParams.get("a")) {
+      currVersionA = searchParams.get("a");
     }
-    return { versionADefault, versionBDefault };
+    if (searchParams.get("b")) {
+      currVersionB = searchParams.get("b");
+    }
+
+    return { currVersionA, currVersionB };
   }
 
-  const [versionIDA, setVersionIDA] = useState<string>(
-    computeVersionsIds().versionADefault,
+  const [versionIDA, setVersionIDA] = useState<string | null>(
+    computeVersionsIds().currVersionA,
   );
-  const [versionIDB, setVersionIDB] = useState<string>(
-    computeVersionsIds().versionBDefault,
+  const [versionIDB, setVersionIDB] = useState<string | null>(
+    computeVersionsIds().currVersionB,
   );
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (versionIDs.length >= 2) {
-      setVersionIDA(computeVersionsIds().versionADefault);
-      setVersionIDB(computeVersionsIds().versionBDefault);
+    if (versionIDs.length === 0) {
+      setVersionIDA(null);
+      setVersionIDB(null);
+    } else if (versionIDs.length == 1) {
+      setVersionIDA(versionIDs[0]);
+      setVersionIDB(versionIDs[0]);
+    } else if (versionIDs.length >= 2) {
+      setVersionIDA(computeVersionsIds().currVersionA);
+      setVersionIDB(computeVersionsIds().currVersionB);
     }
   }, [JSON.stringify(versionIDs)]);
 
   const { data: graphData } = useSWR(
-    project_id && versionIDA && versionIDB
+    project_id
       ? [
           `/api/explore/${encodeURI(project_id)}/ab-tests/compare-versions`,
           accessToken,
@@ -89,79 +109,120 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
     },
   );
 
-  if (!project_id || !versionIDs || versionIDs.length < 2) {
-    return <></>;
-  }
+  console.log("graphData", graphData);
+  console.log("versionIDA", versionIDA);
+  console.log("versionIDB", versionIDB);
 
-  if (!graphData) {
-    return (
-      <div className="flex flex-col items-center">
-        <Spinner className="my-40" />
-      </div>
-    );
+  if (!project_id || !versionIDs) {
+    return <></>;
   }
 
   return (
     <>
-      <div className="flex justify-center z-0 space-x-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              Version A: {versionIDA} <ChevronDown className="h-4 w-4 ml-2" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="overflow-y-auto max-h-[40rem]"
-          >
-            {versionIDs.map((versionID) => (
-              <DropdownMenuItem
-                key={`${versionID}_A`}
-                onClick={() => setVersionIDA(versionID)}
-              >
-                {versionID === versionIDA && (
-                  <Check className="h-4 w-4 mr-2 text-green-500" />
-                )}
-                {versionID}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              Version B: {versionIDB} <ChevronDown className="h-4 w-4 ml-2" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="overflow-y-auto max-h-[40rem]"
-          >
-            {versionIDs.map((versionID) => (
-              <DropdownMenuItem
-                key={`${versionID}_B`}
-                onClick={() => setVersionIDB(versionID)}
-              >
-                {versionID === versionIDB && (
-                  <Check className="h-4 w-4 mr-2 text-green-500" />
-                )}
-                {versionID}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="flex flex-col items-center">
-        <ResponsiveContainer width={"100%"} height={400}>
-          <BarChart data={graphData}>
-            <XAxis dataKey="event_name" />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar dataKey={versionIDA} fill="#28BB62" />
-            <Bar dataKey={versionIDB} fill="#82ca9d" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      <AlertDialog open={open}>
+        <SendDataAlertDialog setOpen={setOpen} key="ab_testing" />
+        <div className="flex justify-center z-0 space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <div className="flex flex-row items-center justify-between min-w-[10rem]">
+                  Reference version A: {versionIDA}{" "}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="overflow-y-auto max-h-[40rem] "
+            >
+              {versionIDs.map((versionID) => (
+                <DropdownMenuItem
+                  className="min-w-[10rem]"
+                  key={`${versionID}_A`}
+                  onClick={() => setVersionIDA(versionID)}
+                >
+                  {versionID === versionIDA && (
+                    <Check className="h-4 w-4 mr-2 text-green-500" />
+                  )}
+                  {versionID}
+                </DropdownMenuItem>
+              ))}
+              {versionIDs.length === 0 && (
+                <DropdownMenuItem disabled className="min-w-[10rem]">
+                  <p>
+                    No <code>version_id</code> found
+                  </p>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <div className="flex flex-row items-center justify-between min-w-[10rem]">
+                  Candidate version B: {versionIDB}{" "}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="overflow-y-auto max-h-[40rem]"
+            >
+              {versionIDs.map((versionID) => (
+                <DropdownMenuItem
+                  key={`${versionID}_B`}
+                  onClick={() => setVersionIDB(versionID)}
+                >
+                  {versionID === versionIDB && (
+                    <Check className="h-4 w-4 mr-2 text-green-500" />
+                  )}
+                  {versionID}
+                </DropdownMenuItem>
+              ))}
+              {versionIDs.length === 0 && (
+                <DropdownMenuItem disabled>
+                  <p>
+                    No <code>version_id</code> found
+                  </p>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="flex flex-col items-center my-2">
+          {graphData === undefined && (
+            <Skeleton className="w-[100%] h-[400px]" />
+          )}
+          {graphData &&
+            (!versionIDA || !versionIDs || graphData.length == 0) && (
+              <div className="h-[400px] w-[100%] flex items-center justify-center">
+                <div className="flex flex-col text-center items-center">
+                  <div className="mb-20">
+                    <p className="text-muted-foreground mb-2 text-sm pt-6">
+                      Start sending data to get more insights
+                    </p>
+                    <Button variant="outline" onClick={() => setOpen(true)}>
+                      Import data
+                      <ChevronRight className="ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          {graphData && versionIDA && versionIDB && graphData.length > 0 && (
+            <ResponsiveContainer width={"100%"} height={400}>
+              <BarChart data={graphData}>
+                <XAxis dataKey="event_name" />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Bar dataKey={versionIDA} fill="#28BB62" />
+                <Bar dataKey={versionIDB} fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </AlertDialog>
     </>
   );
 };

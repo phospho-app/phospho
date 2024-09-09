@@ -873,6 +873,54 @@ async def get_total_nb_of_sessions(
     return total_nb_sessions
 
 
+async def get_nb_tasks_in_sessions(
+    project_id: str,
+    filters: Optional[ProjectDataFilters] = None,
+    limit: Optional[int] = None,
+) -> Optional[int]:
+    """
+    Get the total number of tasks in a set of sessions of a project.
+    """
+
+    logger.debug(f"Getting the number of tasks in sessions for project {project_id}")
+    mongo_db = await get_mongo_db()
+    logger.debug(f"limit: {limit}")
+
+    global_filters, collection = await session_filtering_pipeline_match(
+        project_id=project_id, filters=filters
+    )
+
+    pipeline = [
+        {"$match": global_filters},
+    ]
+    if limit is not None and limit > 0:
+        pipeline.append({"$limit": limit})
+
+    pipeline.extend(
+        [
+            {
+                "$lookup": {
+                    "from": "tasks",
+                    "localField": "id",
+                    "foreignField": "session_id",
+                    "as": "tasks",
+                }
+            },
+            {"$unwind": "$tasks"},
+            {"$count": "nb_tasks"},
+        ]
+    )
+
+    query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=1)
+
+    if len(query_result) == 0:
+        return None
+
+    nb_tasks_in_sessions = query_result[0]["nb_tasks"]
+    logger.debug(f"Number of tasks in sessions: {nb_tasks_in_sessions}")
+    return nb_tasks_in_sessions
+
+
 async def get_global_average_session_length(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
@@ -1119,6 +1167,7 @@ async def get_sessions_aggregated_metrics(
     quantile_filter: Optional[float] = None,
     metrics: Optional[List[str]] = None,
     filters: Optional[ProjectDataFilters] = None,
+    limit: Optional[int] = None,
 ) -> Dict[str, object]:
     """
     Compute aggregated metrics for the sessions of a project. Used for the Sessions dashboard.
@@ -1138,6 +1187,7 @@ async def get_sessions_aggregated_metrics(
             "nb_sessions_per_day",
             "session_length_histogram",
             "success_rate_per_task_position",
+            "nb_tasks_in_sessions",
         ]
 
     today_datetime = datetime.datetime.now(datetime.timezone.utc)
@@ -1179,7 +1229,12 @@ async def get_sessions_aggregated_metrics(
         ] = await get_success_rate_per_task_position(
             project_id=project_id, quantile_filter=quantile_filter, filters=filters
         )
-
+    if "nb_tasks_in_sessions" in metrics:
+        output["nb_tasks_in_sessions"] = await get_nb_tasks_in_sessions(
+            project_id=project_id,
+            filters=filters,
+            limit=limit,
+        )
     return output
 
 
@@ -1198,7 +1253,6 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
                     "$match": {
                         "project_id": project_id,
                         "test_id": None,
-                        "flag": {"$in": ["success", "failure"]},
                     }
                 },
                 {
@@ -1247,6 +1301,7 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
         )
         .to_list(length=limit)
     )
+    logger.info(f"AB tests: {ab_tests}")
     # Validate models
     valid_ab_tests = []
     for ab_test in ab_tests:
@@ -2592,8 +2647,8 @@ async def update_from_flattened_tasks(
 
 async def get_ab_tests_versions(
     project_id: str,
-    versionA: str,
-    versionB: str,
+    versionA: Optional[str],
+    versionB: Optional[str],
 ) -> List[Dict[str, Union[str, float, int]]]:
     """
     - For boolean events, gets the number of times the event was detected in each task with the two versions of the model.
@@ -2691,6 +2746,9 @@ async def get_ab_tests_versions(
     ]
 
     results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
+    if not results:
+        logger.info("No results found")
+        return []
 
     # This dict will have event_names as keys, and the values will be dictionnaries with the version_id as keys and the count as values
     total_tasks_with_A = await mongo_db["tasks"].count_documents(

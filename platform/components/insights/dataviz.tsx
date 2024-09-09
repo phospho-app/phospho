@@ -80,7 +80,6 @@ const DatavizGraph = ({
             element["breakdown_by"] = "None";
           }
         });
-        console.log("pivotTable", pivotTable);
         return pivotTable;
       }),
     {

@@ -17,8 +17,8 @@ class EventsMetricsFilter(BaseModel):
 
 
 class ABTestVersions(BaseModel):
-    versionA: str
-    versionB: str
+    versionA: Optional[str]
+    versionB: Optional[str]
 
 
 class ClusteringEmbeddingCloud(BaseModel):
@@ -63,3 +63,9 @@ class DetectClustersRequest(BaseModel):
 class FetchClustersRequest(BaseModel):
     clustering_id: Optional[str] = None
     limit: int = 100
+
+
+class AggregatedSessionsRequest(BaseModel):
+    metrics: List[str] = Field(default_factory=list)
+    filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
+    limit: Optional[int] = None

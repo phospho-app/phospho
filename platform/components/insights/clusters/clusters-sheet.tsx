@@ -47,6 +47,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
+import { nb } from "date-fns/locale";
 import { ChevronRight, Sparkles, TestTubeDiagonal } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
@@ -72,6 +73,7 @@ const RunClusters = ({
   const { mutate } = useSWRConfig();
 
   const [clusteringCost, setClusteringCost] = useState(0);
+
   const [nbElements, setNbElements] = useState(0);
   const [loading, setLoading] = useState(false);
   const [update, setUpdate] = useState(false);
@@ -96,25 +98,6 @@ const RunClusters = ({
   );
   let totalNbTasks: number | null | undefined =
     totalNbTasksData?.total_nb_tasks;
-
-  const { data: totalNbSessionsData } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/sessions`,
-      accessToken,
-      JSON.stringify(dataFilters),
-      "total_nb_sessions",
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["total_nb_sessions"],
-        filters: { ...dataFilters },
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-  let totalNbSessions: number | null | undefined =
-    totalNbSessionsData?.total_nb_sessions;
 
   const hobby = orgMetadata?.plan === "hobby";
 
@@ -142,6 +125,7 @@ const RunClusters = ({
       })
       .min(1, "Number of clusters must be at least 1")
       .max(128, "Number of clusters must be at most 128"),
+    limit: z.number().min(0),
     detect_outliers: z.boolean(),
   });
 
@@ -154,6 +138,34 @@ const RunClusters = ({
       // Note: don't set the nb_clusters default value here, since it's updated dynamically using an API call
     },
   });
+
+  const { data: totalNbSessionsData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/sessions`,
+      accessToken,
+      JSON.stringify(dataFilters),
+      form.getValues("scope"),
+      "total_nb_sessions",
+      "nb_tasks_in_sessions",
+      nbElements,
+      form.getValues("limit"),
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_sessions", "nb_tasks_in_sessions"],
+        filters: { ...dataFilters },
+        limit: form.getValues("limit"),
+      }).then((data) => {
+        return data;
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+  let totalNbSessions: number | null | undefined =
+    totalNbSessionsData?.total_nb_sessions;
+  let nbTasksInSessions: number | null | undefined =
+    totalNbSessionsData?.nb_tasks_in_sessions;
 
   useEffect(() => {
     // Update the default number of clusters when the total number of tasks changes
@@ -170,6 +182,7 @@ const RunClusters = ({
         form.setValue("nb_clusters", 5);
       }
       setClusteringCost(totalNbTasks * 2);
+      form.setValue("limit", totalNbTasks);
     }
     if (form.getValues("scope") === "sessions") {
       if (totalNbSessions === null || totalNbSessions === undefined) {
@@ -185,17 +198,35 @@ const RunClusters = ({
       } else {
         form.setValue("nb_clusters", 5);
       }
-      setClusteringCost(totalNbTasks * 2);
+      setClusteringCost((nbTasksInSessions ?? 0) * 2);
+      form.setValue("limit", totalNbSessions);
     }
   }, [totalNbSessions, totalNbTasks, update]);
+
+  useEffect(() => {
+    if (form.getValues("scope") === "messages") {
+      setNbElements(form.getValues("limit"));
+      setClusteringCost(form.getValues("limit") * 2);
+    }
+    if (form.getValues("scope") === "sessions") {
+      setNbElements(form.getValues("limit"));
+      setClusteringCost((nbTasksInSessions ?? 0) * 2);
+    }
+  }, [form.getValues("limit")]);
+
+  useEffect(() => {
+    if (form.getValues("scope") === "sessions") {
+      setClusteringCost((nbTasksInSessions ?? 0) * 2);
+    }
+  }, [nbTasksInSessions]);
 
   const canRunClusterAnalysis: boolean =
     (form.getValues("scope") === "messages" &&
       !!totalNbTasks &&
-      totalNbTasks >= 5) ||
+      nbElements >= 5) ||
     (form.getValues("scope") === "sessions" &&
       !!totalNbSessions &&
-      totalNbSessions >= 5);
+      nbElements >= 5);
 
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
     setLoading(true);
@@ -308,6 +339,7 @@ const RunClusters = ({
               />
               <FilterComponent variant="tasks" />
             </div>
+
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
                 <AccordionTrigger>
@@ -317,6 +349,34 @@ const RunClusters = ({
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-3 space-x-1">
+                  <div className="flex items-center space-x-2">
+                    <FormLabel>
+                      Limit number of {form.getValues("scope")}:
+                    </FormLabel>
+                    <FormField
+                      control={form.control}
+                      name="limit"
+                      render={({ field }) => (
+                        <FormItem className="flex-grow">
+                          <FormControl>
+                            <Input
+                              className="w-32"
+                              max={
+                                form.getValues("scope") === "messages"
+                                  ? totalNbTasks ?? 0
+                                  : totalNbSessions ?? 0
+                              }
+                              min={1}
+                              step={1}
+                              type="number"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormLabel>
                     <div className="flex space-x-2">
                       <span>Clustering instruction</span>
@@ -464,7 +524,7 @@ const RunClusters = ({
               <div className="mt-4">
                 We will clusterize {nbElements} {form.getValues("scope")}{" "}
                 {form.getValues("scope") === "sessions" && (
-                  <>{totalNbTasks ?? 0} user messages</>
+                  <>{nbTasksInSessions ?? 0} user messages</>
                 )}{" "}
                 for a total of {clusteringCost} credits.{" "}
               </div>
