@@ -127,17 +127,15 @@ export function NavBarSettings() {
                 Project settings
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <AlertDialogTrigger
-                onClick={() => {
-                  setOpen(true);
-                }}
-              >
-                <div className="flex flex-row items-center">
-                  <FileUp className="w-4 h-4 mr-1" />
-                  Import data
-                </div>
-              </AlertDialogTrigger>
+            <DropdownMenuItem
+              onClick={() => {
+                setOpen(true);
+              }}
+            >
+              <div className="flex flex-row items-center">
+                <FileUp className="w-4 h-4 mr-1" />
+                Import data
+              </div>
             </DropdownMenuItem>
             <ExportDataButton />
             <DropdownMenuSeparator />

@@ -296,137 +296,138 @@ export default function Page() {
   return (
     <>
       <FetchOrgProject />
-      <Card className="flex flex-col md:flex-row p-4 items-center space-x-8 space-y-8">
-        <div className="w-full">
-          <CardHeader>
-            <CardTitle>Setup your first phospho project</CardTitle>
-            <CardDescription>Let's get you started.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-left justify-center">
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-8"
-              >
-                <FormField
-                  control={form.control}
-                  name="project_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex flex-row space-x-2">
-                        Project name
-                        <HoverCard openDelay={0} closeDelay={0}>
-                          <HoverCardTrigger>
-                            <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5 ml-1" />
-                          </HoverCardTrigger>
-                          <HoverCardContent>
-                            <div className="p-1 flex flex-col space-y-1 text-xs">
-                              <div>You can change this later.</div>
-                              <div>project_id: {selectedProject.id}</div>
+      <AlertDialog
+        onOpenChange={setImportDataDialogOpen}
+        open={importDataDialogOpen}
+      >
+        <SendDataAlertDialog setOpen={setImportDataDialogOpen} />
+        <Card className="flex flex-col md:flex-row p-4 items-center space-x-8 space-y-8">
+          <div className="w-full">
+            <CardHeader>
+              <CardTitle>Setup your first phospho project</CardTitle>
+              <CardDescription>Let's get you started.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-left justify-center">
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-8"
+                >
+                  <FormField
+                    control={form.control}
+                    name="project_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex flex-row space-x-2">
+                          Project name
+                          <HoverCard openDelay={0} closeDelay={0}>
+                            <HoverCardTrigger>
+                              <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5 ml-1" />
+                            </HoverCardTrigger>
+                            <HoverCardContent>
+                              <div className="p-1 flex flex-col space-y-1 text-xs">
+                                <div>You can change this later.</div>
+                                <div>project_id: {selectedProject.id}</div>
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="My chatbot"
+                            {...field}
+                            className="font-normal"
+                            autoFocus
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormItem>
+                    <FormLabel className="flex flex-row space-x-2">
+                      Upload a dataset (You can do that later)
+                      <HoverCard openDelay={0} closeDelay={0}>
+                        <HoverCardTrigger>
+                          <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5 ml-1" />
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <div className="p-1 flex flex-col space-y-1 text-xs">
+                            <div>
+                              No data yet? Click on Continue to skip this step.
                             </div>
-                          </HoverCardContent>
-                        </HoverCard>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="My chatbot"
-                          {...field}
-                          className="font-normal"
-                          autoFocus
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormItem>
-                  <FormLabel className="flex flex-row space-x-2">
-                    Upload a dataset (You can do that later)
-                    <HoverCard openDelay={0} closeDelay={0}>
-                      <HoverCardTrigger>
-                        <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5 ml-1" />
-                      </HoverCardTrigger>
-                      <HoverCardContent>
-                        <div className="p-1 flex flex-col space-y-1 text-xs">
-                          <div>
-                            No data yet? Click on Continue to skip this step.
                           </div>
-                        </div>
-                      </HoverCardContent>
-                    </HoverCard>
-                  </FormLabel>
-                  <UploadDatasetButton setFile={setFile} />
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="instructions">
-                      <AccordionTrigger>
-                        How to format the dataset?
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <UploadDatasetInstructions />
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                  <AlertDialog
-                    onOpenChange={setImportDataDialogOpen}
-                    open={importDataDialogOpen}
-                  >
+                        </HoverCardContent>
+                      </HoverCard>
+                    </FormLabel>
+                    <UploadDatasetButton setFile={setFile} />
+                    <Accordion type="single" collapsible className="w-full">
+                      <AccordionItem value="instructions">
+                        <AccordionTrigger>
+                          How to format the dataset?
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <UploadDatasetInstructions />
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+
                     <AlertDialogTrigger className="flex justify-end w-full">
                       <div className="underline text-xs">
                         Other data import options
                       </div>
                     </AlertDialogTrigger>
-                    <SendDataAlertDialog setOpen={setImportDataDialogOpen} />
-                  </AlertDialog>
-                </FormItem>
+                  </FormItem>
 
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    disabled={userLoading || creatingProject}
-                    className="w-full"
-                  >
-                    {redirecting && <Spinner className="mr-1" />}
-                    {file && "Upload and continue"}
-                    {!file && "Skip (import data later)"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </div>
-        <div className="border-2 rounded-lg border-dashed border-muted-foreground">
-          <div>
-            <CardHeader className="pb-4">
-              <CardTitle>Just looking? Explore a sample project.</CardTitle>
-              <CardDescription>
-                Get a feel for phospho by discovering a project with sample
-                data.
-              </CardDescription>
-            </CardHeader>
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={userLoading || creatingProject}
+                      className="w-full"
+                    >
+                      {redirecting && <Spinner className="mr-1" />}
+                      {file && "Upload and continue"}
+                      {!file && "Skip (import data later)"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
           </div>
-          <CardContent className="space-y-8">
-            <div className="flex justify-center flex-col">
-              <img
-                src="/image/onboarding.svg"
-                alt="Onboarding Image"
-                className="mx-4"
-              />
+          <div className="border-2 rounded-lg border-dashed border-muted-foreground">
+            <div>
+              <CardHeader className="pb-4">
+                <CardTitle>Just looking? Explore a sample project.</CardTitle>
+                <CardDescription>
+                  Get a feel for phospho by discovering a project with sample
+                  data.
+                </CardDescription>
+              </CardHeader>
             </div>
-            <div className="flex justify-center">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  defaultProject();
-                }}
-                disabled={userLoading || creatingProject || redirecting}
-              >
-                {redirecting && <Spinner className="mr-1" />}
-                Explore sample project
-              </Button>
-            </div>
-          </CardContent>
-        </div>
-      </Card>
+            <CardContent className="space-y-8">
+              <div className="flex justify-center flex-col">
+                <img
+                  src="/image/onboarding.svg"
+                  alt="Onboarding Image"
+                  className="mx-4"
+                />
+              </div>
+              <div className="flex justify-center">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    defaultProject();
+                  }}
+                  disabled={userLoading || creatingProject || redirecting}
+                >
+                  {redirecting && <Spinner className="mr-1" />}
+                  Explore sample project
+                </Button>
+              </div>
+            </CardContent>
+          </div>
+        </Card>
+      </AlertDialog>
     </>
   );
 }

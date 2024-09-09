@@ -18,7 +18,7 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ChevronRight } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import {
@@ -31,6 +31,8 @@ import {
 } from "recharts";
 import useSWR from "swr";
 
+import { SendDataAlertDialog } from "../callouts/import-data";
+import { AlertDialog } from "../ui/alert-dialog";
 import { Skeleton } from "../ui/skeleton";
 
 export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
@@ -73,6 +75,7 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   const [versionIDB, setVersionIDB] = useState<string | null>(
     computeVersionsIds().currVersionB,
   );
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (versionIDs.length === 0) {
@@ -116,92 +119,110 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
 
   return (
     <>
-      <div className="flex justify-center z-0 space-x-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <div className="flex flex-row items-center justify-between min-w-[10rem]">
-                Reference version A: {versionIDA}{" "}
-                <ChevronDown className="h-4 w-4 ml-2" />
+      <AlertDialog open={open}>
+        <SendDataAlertDialog setOpen={setOpen} key="ab_testing" />
+        <div className="flex justify-center z-0 space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <div className="flex flex-row items-center justify-between min-w-[10rem]">
+                  Reference version A: {versionIDA}{" "}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="overflow-y-auto max-h-[40rem] "
+            >
+              {versionIDs.map((versionID) => (
+                <DropdownMenuItem
+                  className="min-w-[10rem]"
+                  key={`${versionID}_A`}
+                  onClick={() => setVersionIDA(versionID)}
+                >
+                  {versionID === versionIDA && (
+                    <Check className="h-4 w-4 mr-2 text-green-500" />
+                  )}
+                  {versionID}
+                </DropdownMenuItem>
+              ))}
+              {versionIDs.length === 0 && (
+                <DropdownMenuItem disabled className="min-w-[10rem]">
+                  <p>
+                    No <code>version_id</code> found
+                  </p>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <div className="flex flex-row items-center justify-between min-w-[10rem]">
+                  Candidate version B: {versionIDB}{" "}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="overflow-y-auto max-h-[40rem]"
+            >
+              {versionIDs.map((versionID) => (
+                <DropdownMenuItem
+                  key={`${versionID}_B`}
+                  onClick={() => setVersionIDB(versionID)}
+                >
+                  {versionID === versionIDB && (
+                    <Check className="h-4 w-4 mr-2 text-green-500" />
+                  )}
+                  {versionID}
+                </DropdownMenuItem>
+              ))}
+              {versionIDs.length === 0 && (
+                <DropdownMenuItem disabled>
+                  <p>
+                    No <code>version_id</code> found
+                  </p>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="flex flex-col items-center my-2">
+          {graphData === undefined && (
+            <Skeleton className="w-[100%] h-[400px]" />
+          )}
+          {graphData &&
+            (!versionIDA || !versionIDs || graphData.length == 0) && (
+              <div className="h-[400px] w-[100%] flex items-center justify-center">
+                <div className="flex flex-col text-center items-center">
+                  <div className="mb-20">
+                    <p className="text-muted-foreground mb-2 text-sm pt-6">
+                      Start sending data to get more insights
+                    </p>
+                    <Button variant="outline" onClick={() => setOpen(true)}>
+                      Import data
+                      <ChevronRight className="ml-2" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="overflow-y-auto max-h-[40rem] "
-          >
-            {versionIDs.map((versionID) => (
-              <DropdownMenuItem
-                className="min-w-[10rem]"
-                key={`${versionID}_A`}
-                onClick={() => setVersionIDA(versionID)}
-              >
-                {versionID === versionIDA && (
-                  <Check className="h-4 w-4 mr-2 text-green-500" />
-                )}
-                {versionID}
-              </DropdownMenuItem>
-            ))}
-            {versionIDs.length === 0 && (
-              <DropdownMenuItem disabled className="min-w-[10rem]">
-                <p>
-                  No <code>version_id</code> found
-                </p>
-              </DropdownMenuItem>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <div className="flex flex-row items-center justify-between min-w-[10rem]">
-                Candidate version B: {versionIDB}{" "}
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="overflow-y-auto max-h-[40rem]"
-          >
-            {versionIDs.map((versionID) => (
-              <DropdownMenuItem
-                key={`${versionID}_B`}
-                onClick={() => setVersionIDB(versionID)}
-              >
-                {versionID === versionIDB && (
-                  <Check className="h-4 w-4 mr-2 text-green-500" />
-                )}
-                {versionID}
-              </DropdownMenuItem>
-            ))}
-            {versionIDs.length === 0 && (
-              <DropdownMenuItem disabled>
-                <p>
-                  No <code>version_id</code> found
-                </p>
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="flex flex-col items-center my-2">
-        {(!graphData ||
-          !versionIDA ||
-          !versionIDB ||
-          graphData.length == 0) && <Skeleton className="w-[100%] h-[400px]" />}
-        {graphData && versionIDA && versionIDB && graphData.length > 0 && (
-          <ResponsiveContainer width={"100%"} height={400}>
-            <BarChart data={graphData}>
-              <XAxis dataKey="event_name" />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Bar dataKey={versionIDA} fill="#28BB62" />
-              <Bar dataKey={versionIDB} fill="#82ca9d" />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
+          {graphData && versionIDA && versionIDB && graphData.length > 0 && (
+            <ResponsiveContainer width={"100%"} height={400}>
+              <BarChart data={graphData}>
+                <XAxis dataKey="event_name" />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Bar dataKey={versionIDA} fill="#28BB62" />
+                <Bar dataKey={versionIDB} fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </AlertDialog>
     </>
   );
 };
