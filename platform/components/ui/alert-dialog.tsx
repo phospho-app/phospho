@@ -8,12 +8,6 @@ import * as React from "react";
 
 // @ts-nocheck
 
-// @ts-nocheck
-
-// @ts-nocheck
-
-// tslint:disable
-
 const AlertDialog = AlertDialogPrimitive.Root;
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;

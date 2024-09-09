@@ -23,7 +23,7 @@ export default function Page() {
       <Card className="w-96">
         <CardHeader>
           <CardTitle className="font-bold">Second thoughts?</CardTitle>
-          <CardDescription className="text-xl">That's ok.</CardDescription>
+          <CardDescription className="text-xl">That&apos;s ok.</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
           <p>We can discuss your needs and how we can help you.</p>

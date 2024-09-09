@@ -9,11 +9,8 @@ import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export function getColumns() {
-  const router = useRouter();
-
   // Create the columns for the data table
   const columns: ColumnDef<ABTest>[] = [
     // version_id
@@ -34,7 +31,7 @@ export function getColumns() {
     },
     // name
     {
-      header: ({ column }) => {
+      header: () => {
         return (
           <div className="md:flex items-center align-items space-x-2">
             <div>Average Success Rate</div>
@@ -44,7 +41,7 @@ export function getColumns() {
               </HoverCardTrigger>
               <HoverCardContent>
                 <div className="w-96">
-                  The average success rate is (nb of "success" system
+                  The average success rate is (nb of &quot;success&quot; system
                   responses)/(total nb of system responses).{" "}
                 </div>
                 <div>Higher is better.</div>
@@ -59,7 +56,7 @@ export function getColumns() {
       },
     },
     {
-      header: ({ column }) => {
+      header: () => {
         return (
           <div className="md:flex items-center align-items space-x-2">
             <div>95% Confidence interval</div>
@@ -96,7 +93,7 @@ export function getColumns() {
     },
     // description
     {
-      header: ({ column }) => {
+      header: () => {
         return (
           <div className="md:flex items-center align-items space-x-2">
             <div>Succes Rate Std</div>

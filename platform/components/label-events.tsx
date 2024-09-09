@@ -326,11 +326,7 @@ export const AddEventDropdownForTasks = ({
   setSheetOpen?: (open: boolean) => void;
   setSheetToOpen?: (sheet: string | null) => void;
 }) => {
-  if (!task) {
-    return <></>;
-  }
   const { accessToken } = useUser();
-  const events = task.events;
   const project_id = task.project_id;
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -339,6 +335,12 @@ export const AddEventDropdownForTasks = ({
       keepPreviousData: true,
     },
   );
+
+  if (!task) {
+    return <></>;
+  }
+
+  const events = task.events;
 
   if (!selectedProject) {
     return <></>;
@@ -411,7 +413,7 @@ export const AddEventDropdownForTasks = ({
               event.score_range_settings?.score_type ?? "confidence";
 
             return (
-              <HoverCard openDelay={0} closeDelay={0}>
+              <HoverCard openDelay={0} closeDelay={0} key={event.id}>
                 <HoverCardTrigger>
                   {score_type === "confidence" && (
                     <DropdownMenuItem
@@ -730,11 +732,7 @@ export const AddEventDropdownForSessions = ({
   setSheetOpen?: (open: boolean) => void;
   setSheetToOpen?: (sheet: string | null) => void;
 }) => {
-  if (!session) {
-    return <></>;
-  }
   const { accessToken } = useUser();
-  const events = session.events;
   const project_id = session.project_id;
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -743,6 +741,10 @@ export const AddEventDropdownForSessions = ({
       keepPreviousData: true,
     },
   );
+  if (!session) {
+    return <></>;
+  }
+  const events = session.events;
 
   if (!selectedProject) {
     return <></>;
@@ -815,7 +817,7 @@ export const AddEventDropdownForSessions = ({
               event.score_range_settings?.score_type ?? "confidence";
 
             return (
-              <HoverCard openDelay={0} closeDelay={0}>
+              <HoverCard openDelay={0} closeDelay={0} key={event.id}>
                 <HoverCardTrigger>
                   {score_type === "confidence" && (
                     <DropdownMenuItem

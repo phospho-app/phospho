@@ -23,6 +23,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { Check, ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useCallback } from "react";
 import React, { useEffect, useState } from "react";
 import {
   Bar,
@@ -43,11 +44,9 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   // Get the version IDs from the URL. If not present, use the first two version IDs
   const searchParams = useSearchParams();
 
-  function computeVersionsIds() {
+  const computeVersionsIds = useCallback(() => {
     let currVersionA = null;
     let currVersionB = null;
-    // let versionA = searchParams.get("a");
-    // let versionB = searchParams.get("b");
 
     if (versionIDs.length === 1) {
       currVersionA = versionIDs[0];
@@ -66,28 +65,17 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
     }
 
     return { currVersionA, currVersionB };
-  }
+  }, [versionIDs, searchParams]);
 
-  const [versionIDA, setVersionIDA] = useState<string | null>(
-    computeVersionsIds().currVersionA,
-  );
-  const [versionIDB, setVersionIDB] = useState<string | null>(
-    computeVersionsIds().currVersionB,
-  );
+  const [versionIDA, setVersionIDA] = useState<string | null>(null);
+  const [versionIDB, setVersionIDB] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (versionIDs.length === 0) {
-      setVersionIDA(null);
-      setVersionIDB(null);
-    } else if (versionIDs.length == 1) {
-      setVersionIDA(versionIDs[0]);
-      setVersionIDB(versionIDs[0]);
-    } else if (versionIDs.length >= 2) {
-      setVersionIDA(computeVersionsIds().currVersionA);
-      setVersionIDB(computeVersionsIds().currVersionB);
-    }
-  }, [JSON.stringify(versionIDs)]);
+    const { currVersionA, currVersionB } = computeVersionsIds();
+    setVersionIDA(currVersionA);
+    setVersionIDB(currVersionB);
+  }, [computeVersionsIds]);
 
   const { data: graphData } = useSWR(
     project_id
@@ -250,7 +238,10 @@ export const CustomTooltip = ({ active, payload, label }: any) => {
           </CardHeader>
           <CardContent>
             {payload.map((pld: any) => (
-              <div style={{ display: "inline-block", padding: 10 }}>
+              <div
+                key={pld.dataKey}
+                style={{ display: "inline-block", padding: 10 }}
+              >
                 <div>{pld.payload[pld.dataKey + "_tooltip"].toFixed(2)}</div>
                 <div>{pld.dataKey}</div>
               </div>

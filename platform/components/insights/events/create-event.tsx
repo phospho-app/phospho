@@ -42,7 +42,7 @@ import { dataStateStore, navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
@@ -304,7 +304,9 @@ export default function CreateEvent({
           <SheetHeader>
             <SheetTitle className="text-xl">
               {!eventToEdit && <div>Setup new event</div>}
-              {eventToEdit && <div>Edit event "{eventToEdit?.event_name}"</div>}
+              {eventToEdit && (
+                <div>Edit event &quot;{eventToEdit?.event_name}&quot;</div>
+              )}
             </SheetTitle>
           </SheetHeader>
           {/* <Separator /> */}
@@ -623,8 +625,9 @@ export default function CreateEvent({
                       Test your regex pattern here
                     </Link>{" "}
                     <FormMessage>
-                      Be careful, "happy" will also match "unhappy" unless you
-                      add whitespaces like so: " happy "
+                      Be careful, &quot;happy&quot; will also match
+                      &quot;unhappy&quot; unless you add whitespaces like so:
+                      &quot; happy &quot;
                     </FormMessage>
                     <FormControl>
                       <Input

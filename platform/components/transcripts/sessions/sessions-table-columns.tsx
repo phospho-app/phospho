@@ -53,19 +53,16 @@ async function flagSession({
   if (!accessToken) return;
   if (!project_id) return;
 
-  const creation_response = await fetch(
-    `/api/sessions/${session_id}/human-eval`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        human_eval: flag,
-      }),
+  await fetch(`/api/sessions/${session_id}/human-eval`, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + accessToken,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      human_eval: flag,
+    }),
+  });
   mutateTasks((data: any) => {
     // Edit the Task with the same task id
     data.session = data.sessions.map((session: SessionWithEvents) => {
@@ -78,7 +75,7 @@ async function flagSession({
   });
 }
 
-export function getColumns({
+export function useColumns({
   mutateSessions,
   setSheetOpen,
   setSheetToOpen,
@@ -107,23 +104,6 @@ export function getColumns({
 
   // Create the columns for the data table
   const columns: ColumnDef<SessionWithEvents>[] = [
-    // id
-    // {
-    //   filterFn: (row, id, filterValue) => {
-    //     // if is in the filtervalue
-    //     if (filterValue === null) return true;
-    //     return filterValue.includes(row.original.id);
-    //   },
-    //   header: ({ column }) => {
-    //     return <></>;
-    //   },
-    //   accessorKey: "id",
-    //   cell: ({ row }) => {
-    //     return <></>;
-    //   },
-    //   enableHiding: true,
-    // },
-    // Date
     {
       header: ({ column }) => {
         return (

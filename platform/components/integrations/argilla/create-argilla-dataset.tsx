@@ -28,6 +28,7 @@ const CreateDataset = () => {
   // Params for the dataset creation
   const [limit, setLimit] = useState(400); // Limit on the dataset size
   const [useSmartSampling, setUseSmartSampling] = useState(false); // To know wich sampling_type send to the backend
+  const [datasetName, setDatasetName] = useState(generateSlug());
 
   // Hardcoded limit for the dataset size
   const MAX_LIMIT = 2000;
@@ -35,8 +36,6 @@ const CreateDataset = () => {
   if (!project_id) {
     return <></>;
   }
-
-  const [datasetName, setDatasetName] = useState(generateSlug());
 
   async function createNewDataset() {
     // Disable the button while we are creating the dataset

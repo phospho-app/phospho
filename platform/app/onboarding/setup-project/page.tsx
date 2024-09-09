@@ -43,6 +43,7 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -87,18 +88,18 @@ export default function Page() {
     },
   );
 
-  useEffect(() => {
-    if (form.getValues("project_name") === undefined) {
-      form.setValue("project_name", selectedProject?.project_name);
-    }
-  }, [selectedProject]);
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       project_name: undefined,
     },
   });
+
+  useEffect(() => {
+    if (form.getValues("project_name") === undefined) {
+      form.setValue("project_name", selectedProject?.project_name);
+    }
+  }, [selectedProject, form]);
 
   async function defaultProject() {
     setRedirecting(true);
@@ -172,13 +173,10 @@ export default function Page() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(selectedProject),
-      }).then(async (response) => {
-        mutate(
-          [`/api/projects/${project_id}`, accessToken],
-          async (data: any) => {
-            return { project: project_id };
-          },
-        );
+      }).then(async () => {
+        mutate([`/api/projects/${project_id}`, accessToken], async () => {
+          return { project: project_id };
+        });
         // Also mutate the project list
         mutate(
           [`/api/organizations/${selectedOrgId}/projects`, accessToken],
@@ -305,7 +303,7 @@ export default function Page() {
           <div className="w-full">
             <CardHeader>
               <CardTitle>Setup your first phospho project</CardTitle>
-              <CardDescription>Let's get you started.</CardDescription>
+              <CardDescription>Let&apos;s get you started.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-left justify-center">
               <Form {...form}>
@@ -406,10 +404,12 @@ export default function Page() {
             </div>
             <CardContent className="space-y-8">
               <div className="flex justify-center flex-col">
-                <img
+                <Image
                   src="/image/onboarding.svg"
                   alt="Onboarding Image"
                   className="mx-4"
+                  width={40}
+                  height={20}
                 />
               </div>
               <div className="flex justify-center">

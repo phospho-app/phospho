@@ -12,7 +12,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
-import { UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -30,7 +29,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import useSWR from "swr";
 
-import { getColumns } from "./users-table-columns";
+import { useColumns } from "./users-table-columns";
 
 interface DataTableProps<TData, TValue> {}
 
@@ -53,7 +52,7 @@ export function UsersTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
 
   const router = useRouter();
 
-  const columns = getColumns();
+  const columns = useColumns();
 
   const table = useReactTable({
     data: usersMetadata,

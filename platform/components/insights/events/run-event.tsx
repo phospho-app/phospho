@@ -146,7 +146,7 @@ export default function RunEvent({
         >
           <SheetHeader>
             <SheetTitle className="text-xl">
-              Detect event "{eventToRun.event_name}" on past data
+              Detect event &quot;{eventToRun.event_name}&quot; on past data
             </SheetTitle>
             <SheetDescription>
               Detect if this event happened on a sample of previously logged

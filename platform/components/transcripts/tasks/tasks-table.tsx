@@ -34,7 +34,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import useSWR from "swr";
 
-import { getColumns } from "./tasks-table-columns";
+import { useColumns } from "./tasks-table-columns";
 
 interface DataTableProps<TData, TValue> {
   // columns: any[]; // ColumnDef<TData, TValue>[];
@@ -135,7 +135,7 @@ export function TasksTable<TData, TValue>({
     ? Math.ceil(totalNbTasks / tasksPagination.pageSize)
     : 1;
 
-  const columns = getColumns({
+  const columns = useColumns({
     mutateTasks: mutateTasks,
     setSheetOpen: setSheetOpen,
     setSheetToOpen: setSheetToOpen,

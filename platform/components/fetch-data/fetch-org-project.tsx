@@ -69,7 +69,17 @@ export default function FetchOrgProject() {
         console.error("Error initializing organization:", error);
       }
     })();
-  }, [selectedOrgId, loading]);
+  }, [
+    selectedOrgId,
+    loading,
+    accessToken,
+    isLoggedIn,
+    pathname,
+    project_id,
+    router,
+    setproject_id,
+    toast,
+  ]);
 
   if (user && !loading && user.orgIdToOrgMemberInfo !== undefined) {
     const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
@@ -87,7 +97,7 @@ export default function FetchOrgProject() {
   }
 
   // Fetch the org metadata
-  const { data: fetchedOrgMetadata, error: orgMetadataError } = useSWR(
+  const { data: fetchedOrgMetadata } = useSWR(
     selectedOrgId
       ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
       : null,

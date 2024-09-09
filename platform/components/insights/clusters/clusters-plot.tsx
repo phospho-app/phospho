@@ -11,33 +11,6 @@ import useSWR from "swr";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
-// const Animated3DScatterPlot = () => {
-//   const plotRef = useRef(null);
-
-//   useEffect(() => {
-//     let angle = 0;
-//     const radius = 10;
-//     const speed = 0.01;
-
-//     const animate = () => {
-//       if (plotRef.current) {
-//         const eye = {
-//           x: radius * Math.cos(angle),
-//           y: radius * Math.sin(angle),
-//           z: 2,
-//         };
-
-//         angle += speed;
-//         if (angle > 2 * Math.PI) angle = 0;
-//       }
-//     };
-
-//     const interval = setInterval(animate, 100);
-
-//     return () => clearInterval(interval); // Clean up on unmount
-//   }, []);
-// };
-
 export function CustomPlot({
   selected_clustering_id,
   selectedClustering,

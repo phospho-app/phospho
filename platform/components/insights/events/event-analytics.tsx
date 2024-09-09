@@ -129,7 +129,9 @@ function EventAnalytics({ eventId }: { eventId: string }) {
   return (
     <>
       <div>
-        <h4 className="text-xl font-bold">Event : "{event?.event_name}"</h4>
+        <h4 className="text-xl font-bold">
+          Event : &quot;{event?.event_name}&quot;
+        </h4>
       </div>
       {/* if the score type is range but there is not enough data to compute the scores, we display a not enough feedback message */}
       {!regressionMetrics?.mean_squared_error &&

@@ -182,7 +182,7 @@ const CreateProjectDialog = ({
           )}
           {projectToEdit && (
             <AlertDialogTitle>
-              Edit project "{projectToEdit.project_name}"
+              Edit project &quot;{projectToEdit.project_name}&quot;
             </AlertDialogTitle>
           )}
         </AlertDialogHeader>

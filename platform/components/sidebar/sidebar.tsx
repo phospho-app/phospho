@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { OnboardingProgress } from "./sidebar-progress";
 
@@ -132,6 +132,10 @@ export function Sidebar() {
   );
 
   const [hasUpdated, setHasUpdated] = useState(false);
+  const sideBarString = useMemo(
+    () => JSON.stringify(sidebarState),
+    [sidebarState],
+  );
 
   useEffect(() => {
     // Based on the current pathname, force open the corresponding sidebar elements
@@ -158,7 +162,7 @@ export function Sidebar() {
     }
     setSidebarState(updatedState);
     setHasUpdated(true);
-  }, [JSON.stringify(sidebarState)]);
+  }, [sideBarString, hasUpdated, pathname, setSidebarState, sidebarState]);
 
   useEffect(() => {
     const handleResize = () => {
