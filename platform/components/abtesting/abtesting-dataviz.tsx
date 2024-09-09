@@ -1,6 +1,7 @@
 // This component displays a bar chart showing the number of events detected in each task with the version number
 // Each event has 2 bars, one for each version
-import { Spinner } from "@/components/small-spinner";
+import { SendDataAlertDialog } from "@/components/callouts/import-data";
+import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,10 +16,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, ChevronDown, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import {
@@ -30,10 +33,6 @@ import {
   XAxis,
 } from "recharts";
 import useSWR from "swr";
-
-import { SendDataAlertDialog } from "../callouts/import-data";
-import { AlertDialog } from "../ui/alert-dialog";
-import { Skeleton } from "../ui/skeleton";
 
 export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   // In the URL, use the search params ?a=version_id&b=version_id to set the default versions in the dropdown
@@ -197,15 +196,26 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
           {graphData &&
             (!versionIDA || !versionIDs || graphData.length == 0) && (
               <div className="h-[400px] w-[100%] flex items-center justify-center">
-                <div className="flex flex-col text-center items-center">
+                <div className="flex space-x-40 text-center items-center">
                   <div className="mb-20">
                     <p className="text-muted-foreground mb-2 text-sm pt-6">
-                      Start sending data to get more insights
+                      1 - Start sending data
                     </p>
                     <Button variant="outline" onClick={() => setOpen(true)}>
                       Import data
                       <ChevronRight className="ml-2" />
                     </Button>
+                  </div>
+                  <div className="mb-20">
+                    <p className="text-muted-foreground mb-2 text-sm pt-6">
+                      2 - Setup analytics
+                    </p>
+                    <Link href="/org/insights/events">
+                      <Button variant="outline">
+                        Setup analytics
+                        <ChevronRight className="ml-2" />
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </div>
