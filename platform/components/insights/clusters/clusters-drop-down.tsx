@@ -31,7 +31,7 @@ export function ClusteringDropDown({
 
   useEffect(() => {
     setRefresh(!refresh);
-  }, [clusteringsJSON]);
+  }, [clusteringsJSON, refresh]);
 
   return (
     <div className="flex flex-row gap-x-2 items-center mb-2 mr-2">
