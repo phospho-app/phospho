@@ -53,11 +53,6 @@ const Clusters: React.FC = () => {
     );
   }
 
-  const clusteringsString = useMemo(
-    () => JSON.stringify(clusterings),
-    [clusterings],
-  );
-
   useEffect(() => {
     if (clusterings === undefined) {
       setSelectedClustering(undefined);
@@ -85,7 +80,7 @@ const Clusters: React.FC = () => {
       setSelectedClustering(undefined);
       return;
     }
-  }, [clusteringsString, project_id, selectedClustering]);
+  }, [JSON.stringify(clusterings), project_id, selectedClustering]);
 
   // Add a useEffect triggered every few seconds to update the clustering status
   useEffect(() => {
