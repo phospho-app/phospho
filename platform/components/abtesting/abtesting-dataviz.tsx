@@ -43,26 +43,35 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   const searchParams = useSearchParams();
 
   function computeVersionsIds() {
-    let versionADefault = searchParams.get("a");
-    let versionBDefault = searchParams.get("b");
-    if (versionADefault) {
-      versionADefault = decodeURIComponent(versionADefault);
-    } else {
-      versionADefault = versionIDs[0];
+    let currVersionA = null;
+    let currVersionB = null;
+    // let versionA = searchParams.get("a");
+    // let versionB = searchParams.get("b");
+
+    if (versionIDs.length === 1) {
+      currVersionA = versionIDs[0];
+      currVersionB = versionIDs[0];
+    } else if (versionIDs.length >= 2) {
+      currVersionA = versionIDs[0];
+      currVersionB = versionIDs[1];
     }
-    if (versionBDefault) {
-      versionBDefault = decodeURIComponent(versionBDefault);
-    } else {
-      versionBDefault = versionIDs[1];
+
+    // Override the default versions if the URL has the search params
+    if (searchParams.get("a")) {
+      currVersionA = searchParams.get("a");
     }
-    return { versionADefault, versionBDefault };
+    if (searchParams.get("b")) {
+      currVersionB = searchParams.get("b");
+    }
+
+    return { currVersionA, currVersionB };
   }
 
   const [versionIDA, setVersionIDA] = useState<string | null>(
-    computeVersionsIds().versionADefault,
+    computeVersionsIds().currVersionA,
   );
   const [versionIDB, setVersionIDB] = useState<string | null>(
-    computeVersionsIds().versionBDefault,
+    computeVersionsIds().currVersionB,
   );
 
   useEffect(() => {
@@ -73,8 +82,8 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
       setVersionIDA(versionIDs[0]);
       setVersionIDB(versionIDs[0]);
     } else if (versionIDs.length >= 2) {
-      setVersionIDA(computeVersionsIds().versionADefault);
-      setVersionIDB(computeVersionsIds().versionBDefault);
+      setVersionIDA(computeVersionsIds().currVersionA);
+      setVersionIDB(computeVersionsIds().currVersionB);
     }
   }, [JSON.stringify(versionIDs)]);
 
