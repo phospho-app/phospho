@@ -18,7 +18,7 @@ import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
 import { ClustersCards } from "./clusters-cards";
@@ -60,6 +60,15 @@ const Clusters: React.FC = () => {
     );
   }
 
+  const clusteringsJSON = useMemo(
+    () => JSON.stringify(clusterings),
+    [clusterings],
+  );
+  const selectedClusteringJSON = useMemo(
+    () => JSON.stringify(selectedClustering),
+    [selectedClustering],
+  );
+
   useEffect(() => {
     if (clusterings === undefined) {
       setSelectedClustering(undefined);
@@ -87,7 +96,13 @@ const Clusters: React.FC = () => {
       setSelectedClustering(undefined);
       return;
     }
-  }, [JSON.stringify(clusterings), project_id, selectedClustering]);
+  }, [
+    clusterings,
+    clusteringsJSON,
+    project_id,
+    selectedClustering,
+    setSelectedClustering,
+  ]);
 
   // Add a useEffect triggered every few seconds to update the clustering status
   useEffect(() => {
@@ -107,7 +122,13 @@ const Clusters: React.FC = () => {
       }, 3000);
       return () => clearInterval(interval);
     }
-  }, [JSON.stringify(selectedClustering), project_id]);
+  }, [
+    selectedClusteringJSON,
+    project_id,
+    accessToken,
+    selectedClustering,
+    setSelectedClustering,
+  ]);
 
   if (!project_id) {
     return <></>;
