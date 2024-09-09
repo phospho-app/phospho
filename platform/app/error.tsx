@@ -11,11 +11,14 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div>
+    <div className="flex flex-col space-y-2">
       <h2>
         Something went wrong! Please make sure your browser is up to date.
       </h2>
-      <code>{error.message}</code>
+      <div className="max-w-3/4 bg-secondary p-3">
+        <div>Details:</div>
+        <code className="text-xs">{error.message}</code>
+      </div>
       <Button
         onClick={() => {
           navigationStateStore.persist.clearStorage();
