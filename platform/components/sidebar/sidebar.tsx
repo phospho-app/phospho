@@ -216,6 +216,25 @@ export function Sidebar() {
             </div>
           )}
           <SideBarElement
+            href="/org/insights/clusters"
+            icon={<Boxes size={16} className="mr-2" />}
+          >
+            Clusterings
+          </SideBarElement>
+          <WhiteSpaceSeparator />
+          <SideBarElement
+            href="/org/insights/events"
+            icon={<TextSearch size={16} className="mr-2" />}
+          >
+            Analytics
+          </SideBarElement>
+          <SideBarElement
+            href="/org/ab-testing"
+            icon={<Shuffle size={16} className="mr-2" />}
+          >
+            AB Testing
+          </SideBarElement>
+          <SideBarElement
             href="/org/dataviz/"
             icon={<BarChartBig className="h-4 w-4 mr-2" />}
             collapsible={true}
@@ -240,25 +259,6 @@ export function Sidebar() {
               </SideBarElement>
             </div>
           )}
-          <WhiteSpaceSeparator />
-          <SideBarElement
-            href="/org/insights/clusters"
-            icon={<Boxes size={16} className="mr-2" />}
-          >
-            Clusterings
-          </SideBarElement>
-          <SideBarElement
-            href="/org/insights/events"
-            icon={<TextSearch size={16} className="mr-2" />}
-          >
-            Analytics
-          </SideBarElement>
-          <SideBarElement
-            href="/org/ab-testing"
-            icon={<Shuffle size={16} className="mr-2" />}
-          >
-            AB Testing
-          </SideBarElement>
           {/* <SideBarElement
           href="/org/tests"
           icon={<TestTubeDiagonal size={16} className="mr-2" />}

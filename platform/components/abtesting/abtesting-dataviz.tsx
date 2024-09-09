@@ -34,6 +34,8 @@ import {
 } from "recharts";
 import useSWR from "swr";
 
+import CreateNewABTestButton from "./create-new-ab-test-button";
+
 export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   // In the URL, use the search params ?a=version_id&b=version_id to set the default versions in the dropdown
 
@@ -120,13 +122,13 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
     <>
       <AlertDialog open={open}>
         <SendDataAlertDialog setOpen={setOpen} key="ab_testing" />
-        <div className="flex justify-center z-0 space-x-2">
+        <div className="flex z-0 space-x-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
                 <div className="flex flex-row items-center justify-between min-w-[10rem]">
-                  Reference version A: {versionIDA}{" "}
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <span className="font-semibold mr-1">Reference A: </span>
+                  {versionIDA} <ChevronDown className="h-4 w-4 ml-2" />
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -159,8 +161,8 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
                 <div className="flex flex-row items-center justify-between min-w-[10rem]">
-                  Candidate version B: {versionIDB}{" "}
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <span className="font-semibold mr-1">Candidate B:</span>
+                  {versionIDB} <ChevronDown className="h-4 w-4 ml-2" />
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -188,6 +190,7 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+          <CreateNewABTestButton />
         </div>
         <div className="flex flex-col items-center my-2">
           {graphData === undefined && (

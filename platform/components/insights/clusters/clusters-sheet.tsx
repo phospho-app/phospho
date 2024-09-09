@@ -297,8 +297,8 @@ const RunClusteringSheet = ({
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-2">
           <SheetTitle>Configure clusters detection</SheetTitle>
           <SheetDescription>
-            Run a cluster analysis on your user sessions to detect patterns and
-            group similar messages together.
+            Detect recurring topics, trends, and outliers using unsupervized
+            machine learning.
           </SheetDescription>
           <Separator className="my-8" />
           <div className="flex flex-wrap space-x-2 space-y-2 items-end">
