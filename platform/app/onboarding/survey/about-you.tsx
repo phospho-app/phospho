@@ -70,7 +70,7 @@ export default function AboutYou({
   setPhosphoTaskId: (taskId: string) => void;
 }) {
   const router = useRouter();
-  const [project, setProject] = useState<Project | null>(null);
+  const [project] = useState<Project | null>(null);
   const { loading, accessToken } = useUser();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const [redirect, setRedirect] = useState(false);
@@ -102,7 +102,7 @@ export default function AboutYou({
         }
       }
     })();
-  }, [loading, selectedOrgId, accessToken, project]);
+  }, [loading, selectedOrgId, accessToken, project, router]);
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
@@ -170,7 +170,7 @@ export default function AboutYou({
                   name="customer"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>What's your job title ?</FormLabel>
+                      <FormLabel>What&apos;s your job title ?</FormLabel>
                       <ToggleGroup
                         type="single"
                         className="flex-wrap"

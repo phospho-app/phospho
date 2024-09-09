@@ -202,8 +202,8 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
           <CardHeader>
             <h2 className="text-lg font-semibold">Event suggestion</h2>
             <p className="text-sm text-muted-foreground">
-              Based on the session's content, we recommend creating this new
-              event
+              Based on the session&apos;s content, we recommend creating this
+              new event
             </p>
             <Form {...form}>
               <form

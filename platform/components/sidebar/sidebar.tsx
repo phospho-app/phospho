@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { OnboardingProgress } from "./sidebar-progress";
 
@@ -132,6 +132,10 @@ export function Sidebar() {
   );
 
   const [hasUpdated, setHasUpdated] = useState(false);
+  const sideBarString = useMemo(
+    () => JSON.stringify(sidebarState),
+    [sidebarState],
+  );
 
   useEffect(() => {
     // Based on the current pathname, force open the corresponding sidebar elements
@@ -158,7 +162,7 @@ export function Sidebar() {
     }
     setSidebarState(updatedState);
     setHasUpdated(true);
-  }, [JSON.stringify(sidebarState)]);
+  }, [sideBarString, hasUpdated, pathname, setSidebarState, sidebarState]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -176,8 +180,8 @@ export function Sidebar() {
   }, []);
 
   const displayedSidebarState = sidebarState ?? {
-    transcriptOpen: pathname.includes("transcripts"),
-    datavizOpen: pathname.includes("dataviz"),
+    transcriptOpen: true,
+    datavizOpen: true,
     settingsOpen: pathname.includes("settings"),
   };
 
@@ -216,6 +220,25 @@ export function Sidebar() {
             </div>
           )}
           <SideBarElement
+            href="/org/insights/clusters"
+            icon={<Boxes size={16} className="mr-2" />}
+          >
+            Clusterings
+          </SideBarElement>
+          <WhiteSpaceSeparator />
+          <SideBarElement
+            href="/org/insights/events"
+            icon={<TextSearch size={16} className="mr-2" />}
+          >
+            Analytics
+          </SideBarElement>
+          <SideBarElement
+            href="/org/ab-testing"
+            icon={<Shuffle size={16} className="mr-2" />}
+          >
+            AB Testing
+          </SideBarElement>
+          <SideBarElement
             href="/org/dataviz/"
             icon={<BarChartBig className="h-4 w-4 mr-2" />}
             collapsible={true}
@@ -240,25 +263,6 @@ export function Sidebar() {
               </SideBarElement>
             </div>
           )}
-          <WhiteSpaceSeparator />
-          <SideBarElement
-            href="/org/insights/clusters"
-            icon={<Boxes size={16} className="mr-2" />}
-          >
-            Clustering
-          </SideBarElement>
-          <SideBarElement
-            href="/org/insights/events"
-            icon={<TextSearch size={16} className="mr-2" />}
-          >
-            Analytics
-          </SideBarElement>
-          <SideBarElement
-            href="/org/ab-testing"
-            icon={<Shuffle size={16} className="mr-2" />}
-          >
-            AB Testing
-          </SideBarElement>
           {/* <SideBarElement
           href="/org/tests"
           icon={<TestTubeDiagonal size={16} className="mr-2" />}

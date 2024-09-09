@@ -37,7 +37,7 @@ export default function Page({ params }: { params: { id: string } }) {
         <div className="pb-4">
           {cluster?.name && (
             <div className="text-3xl font-bold tracking-tight mr-8">
-              Cluster '{cluster.name}'
+              Cluster &apos;{cluster.name}&apos;
             </div>
           )}
           {cluster?.description && (

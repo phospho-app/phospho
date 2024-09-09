@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
 import { redirect, useRouter } from "next/navigation";
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page() {
   // This page is no longer used
 
   redirect("/");

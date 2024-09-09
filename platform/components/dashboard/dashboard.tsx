@@ -36,7 +36,6 @@ import {
   Pencil,
   Plus,
   Trash,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect } from "react";
@@ -200,7 +199,7 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
                 </AlertDialogTrigger>
                 <DropdownMenuItem
                   className="text-red-500 flex flex-row items-center space-x-2"
-                  onClick={async (mouseEvent) => {
+                  onClick={async () => {
                     // Remove the card from the grid
                     // Get this card's parent gridstack item using the id
                     const closestParentGridStackItem = document.getElementById(
@@ -223,23 +222,20 @@ const DashboardTileCard: React.FC<DashboardTileProps> = ({
                       selectedProject.settings.dashboard_tiles = newTiles;
                       // Update the project settings
                       try {
-                        const creation_response = await fetch(
-                          `/api/projects/${selectedProject.id}`,
-                          {
-                            method: "POST",
-                            headers: {
-                              Authorization: "Bearer " + accessToken,
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify(selectedProject),
+                        await fetch(`/api/projects/${selectedProject.id}`, {
+                          method: "POST",
+                          headers: {
+                            Authorization: "Bearer " + accessToken,
+                            "Content-Type": "application/json",
                           },
-                        ).then((response) => {
+                          body: JSON.stringify(selectedProject),
+                        }).then(() => {
                           mutate(
                             [
                               `/api/projects/${selectedProject.id}`,
                               accessToken,
                             ],
-                            async (data: any) => {
+                            async () => {
                               return { project: selectedProject };
                             },
                           );
@@ -359,7 +355,15 @@ const Dashboard: React.FC = () => {
       setCurrentGridProjectId(selectedProject?.id);
       return;
     }
-  }, [selectedProject?.id, currentGridProjectId]);
+  }, [
+    selectedProject?.id,
+    currentGridProjectId,
+    accessToken,
+    customDashboardTiles,
+    grid,
+    selectedProject,
+    toast,
+  ]);
 
   if (!project_id) {
     return <></>;

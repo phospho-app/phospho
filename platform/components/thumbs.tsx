@@ -9,11 +9,13 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Task } from "@/models/models";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
 import { PenSquare, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useState } from "react";
+import { useEffect } from "react";
 
 import { CardHeader } from "./ui/card";
 
@@ -34,99 +36,93 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
   setFlag,
   key,
 }) => {
-  // If no task, no thumbs
-  if (task === null || task === undefined) return <></>;
-
-  // PropelAuth
   const { user, loading, accessToken } = useUser();
-
-  const [notes, setNotes] = useState(task.notes);
-  const [currentNotes, setCurrentNotes] = useState(notes ?? "");
+  const [notes, setNotes] = useState("");
+  const [currentNotes, setCurrentNotes] = useState("");
   const [saveNoteButtonClicked, setSaveNoteButtonClicked] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const { toast } = useToast();
 
-  const noteButtonColor =
-    notes === null || notes === undefined || notes === ""
-      ? "bg-secondary"
-      : "bg-green-500";
-
-  // Function to flag a task as succes or failure
-  async function flagTask(flag: string) {
-    if (user === null || user === undefined) return;
-    if (task === null || task === undefined) return;
-
-    const creation_response = await fetch(`/api/tasks/${task.id}/human-eval`, {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        human_eval: flag,
-      }),
-    });
-
-    const responseBody = await creation_response.json();
-
-    // If no task, don't update
-    if (responseBody === null || responseBody === undefined) {
-      return;
+  useEffect(() => {
+    if (task?.notes) {
+      setNotes(task.notes);
+      setCurrentNotes(task.notes);
     }
+  }, [task]);
 
-    // Update the task in the state
-    let updatedTask = task;
-    updatedTask.flag = responseBody.flag;
-    updatedTask.last_eval = responseBody.last_eval;
-    setTask(updatedTask);
-    setFlag(responseBody.flag);
-  }
+  const noteButtonColor = notes ? "bg-green-500" : "bg-secondary";
 
-  // Function to update the note
+  const flagTask = async (newFlag: string) => {
+    if (!user || !task || !accessToken) return;
+
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/human-eval`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ human_eval: newFlag }),
+      });
+
+      if (!response.ok) throw new Error("Failed to flag task");
+
+      const responseBody = await response.json();
+      setTask({
+        ...task,
+        flag: responseBody.flag,
+        last_eval: responseBody.last_eval,
+      });
+      setFlag(responseBody.flag);
+    } catch (error) {
+      console.error("Error flagging task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to flag the task",
+      });
+    }
+  };
+
   const handleNoteEdit = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCurrentNotes(event.target.value);
   };
 
   const handleSaveButton = async () => {
-    setPopoverOpen(false);
-    if (user === null || user === undefined) return;
-    if (task === null || task === undefined) return;
+    if (!user || !task || !accessToken) return;
     setSaveNoteButtonClicked(true);
+    setPopoverOpen(false);
 
-    // Create a project object in the database with the URL
-    const creation_response = await fetch(`/api/tasks/${task.id}`, {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        notes: currentNotes,
-      }),
-    });
-    const responseBody = await creation_response.json();
+    try {
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ notes: currentNotes }),
+      });
 
-    // If no task, don't update
-    if (responseBody === null || responseBody === undefined) {
-      setSaveNoteButtonClicked(false);
+      if (!response.ok) throw new Error("Failed to save notes");
+
+      const responseBody = await response.json();
+      setTask({ ...task, notes: responseBody.notes });
+      setNotes(responseBody.notes);
+      toast({
+        title: "Notes saved",
+        description: "Your notes have been saved",
+      });
+    } catch (error) {
+      console.error("Error saving notes:", error);
       toast({
         title: "Error",
         description: "An error occurred while saving your notes",
       });
-      return;
+    } finally {
+      setSaveNoteButtonClicked(false);
     }
-
-    // Update the task in the state
-    let updatedTask = task;
-    updatedTask.notes = responseBody.notes;
-    setTask(updatedTask);
-    setNotes(responseBody.notes);
-    setSaveNoteButtonClicked(false);
-
-    toast({
-      title: "Notes saved",
-      description: "Your notes have been saved",
-    });
   };
+
+  if (!task) return null;
 
   const successByUser = (
     <>

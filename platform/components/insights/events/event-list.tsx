@@ -31,7 +31,6 @@ import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { set } from "date-fns";
 import { ChevronRight, Pencil, Sparkles, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -158,8 +157,9 @@ function EventRow({
               </DropdownMenu>
               <AlertDialogContent className="md:w-1/3">
                 <AlertDialogTitle>
-                  Are you sure you want to delete "{eventDefinition.event_name}
-                  "?
+                  Are you sure you want to delete &quot;
+                  {eventDefinition.event_name}
+                  &quot;?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   <div>

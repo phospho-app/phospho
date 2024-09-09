@@ -135,7 +135,11 @@ const TaskBox = ({
                     ? value.substring(0, 50) + "..."
                     : value;
                 return (
-                  <Badge variant="outline" className="mx-2 text-xs font-normal">
+                  <Badge
+                    variant="outline"
+                    className="mx-2 text-xs font-normal"
+                    key={"button-" + key}
+                  >
                     <p key={key}>
                       {key}: {shortValue}
                     </p>

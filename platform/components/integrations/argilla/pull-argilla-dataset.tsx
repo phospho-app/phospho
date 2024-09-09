@@ -33,12 +33,24 @@ const PullDataset = () => {
   const [isPullingDataset, setIsPullingDataset] = useState(false);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const [datasetName, setDatasetName] = useState("");
+
+  const { data: datasets_names }: { data: string[] | undefined } = useSWR(
+    project_id ? [`/api/argilla/datasets/names`, accessToken] : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        project_id: project_id,
+        workspace_id: orgMetadata?.argilla_workspace_id,
+        filters: dataFilters,
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   if (!project_id) {
     return <></>;
   }
-
-  const [datasetName, setDatasetName] = useState("");
 
   async function pullArgillaDataset() {
     // Disable the button while we are creating the dataset
@@ -85,19 +97,6 @@ const PullDataset = () => {
       setIsPullingDataset(false);
     }
   }
-
-  const { data: datasets_names }: { data: string[] | undefined } = useSWR(
-    project_id ? [`/api/argilla/datasets/names`, accessToken] : null,
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        project_id: project_id,
-        workspace_id: orgMetadata?.argilla_workspace_id,
-        filters: dataFilters,
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
 
   const handleValueChange = (dataset_name: string) => {
     // Match the selected project name with the project in the projects array

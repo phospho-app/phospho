@@ -191,6 +191,7 @@ const FilterComponent = ({
                   setDataFilters({ ...dataFilters, event_name: null });
                   resetPagination();
                 }}
+                key={event_name}
               >
                 {dataFilters.event_name}
                 <X className="h-4 w-4 ml-2" />
@@ -243,6 +244,7 @@ const FilterComponent = ({
                   });
                   resetPagination();
                 }}
+                key={key + value}
               >
                 {key}:{" "}
                 {value.length > 20 ? value.substring(0, 20) + "..." : value}
@@ -293,6 +295,7 @@ const FilterComponent = ({
                   });
                   resetPagination();
                 }}
+                key={cluster_id}
               >
                 cluster: {""}
                 {cluster?.name.length > 50

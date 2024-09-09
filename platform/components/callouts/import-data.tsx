@@ -1,5 +1,3 @@
-"use client";
-
 import { PasswordInput } from "@/components/password-input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -431,7 +429,7 @@ export const SendDataAlertDialog = ({
         langsmith_api_key: values.langsmith_api_key,
       }),
     }).then(async (response) => {
-      const responseBody = await response.json();
+      await response.json();
       if (response.ok) {
         setDisableLS(false);
         if (showModal) {
@@ -467,7 +465,7 @@ export const SendDataAlertDialog = ({
         langfuse_secret_key: values.langfuse_secret_key,
       }),
     }).then(async (response) => {
-      const responseBody = await response.json();
+      await response.json();
       if (response.ok) {
         setDisableLF(false);
         if (showModal) {
@@ -812,7 +810,7 @@ export const SendDataAlertDialog = ({
                     I need to log messages.
                   </CardTitle>
                   <CardDescription>
-                    What's your app's backend language?
+                    What&apos;s your app&apos;s backend language?
                   </CardDescription>
                   <ToggleGroup
                     type="single"
@@ -938,7 +936,7 @@ phospho.log({input, output});`}
               </Card>
               <Alert>
                 <AlertTitle className="text-sm">
-                  I don't have an LLM app
+                  I don&apos;t have an LLM app
                 </AlertTitle>
                 <AlertDescription className="flex flex-row items-center">
                   <Link href="https://www.youtube.com/watch?v=4QeNPa4xOc8">
@@ -1061,7 +1059,7 @@ export const SendDataCallout = () => {
                     Send data to phospho
                   </CardTitle>
                   <CardDescription className="flex justify-between">
-                    We'll show you how to get started
+                    We&apos;ll show you how to get started
                   </CardDescription>
                 </div>
                 <AlertDialog open={open}>

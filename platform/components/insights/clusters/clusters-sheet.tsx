@@ -48,14 +48,14 @@ import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { nb } from "date-fns/locale";
-import { ChevronRight, Sparkles, TestTubeDiagonal } from "lucide-react";
+import { ChevronRight, Plus, Sparkles, TestTubeDiagonal } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import * as z from "zod";
 
-const RunClusters = ({
+const RunClusteringSheet = ({
   sheetOpen,
   setSheetOpen,
   setSelectedClustering,
@@ -292,91 +292,48 @@ const RunClusters = ({
   }
 
   return (
-    <Sheet open={sheetOpen} onOpenChange={setSheetOpenWrapper}>
-      <SheetTrigger>
-        <Button className="default">
-          <Sparkles className="w-4 h-4 mr-2 text-green-500" /> Configure
-          clusters detection
-          <ChevronRight className="w-4 h-4 ml-2" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent className="md:w-1/2 overflow-auto">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-6 mt-2"
-          >
-            <SheetTitle>Configure clusters detection</SheetTitle>
-            <SheetDescription>
-              Run a cluster analysis on your user sessions to detect patterns
-              and group similar messages together.
-            </SheetDescription>
-            <Separator className="my-8" />
-            <div className="flex flex-wrap space-x-2 space-y-2 items-end">
-              <DatePickerWithRange />
-              <FormField
-                control={form.control}
-                name="scope"
-                render={({ field }) => (
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      setUpdate(!update);
-                    }}
-                    defaultValue={field.value}
-                  >
-                    <SelectTrigger className="max-w-[20rem]">
-                      {field.value === "messages" ? "Messages" : "Sessions"}
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="messages">Messages</SelectItem>
-                        <SelectItem value="sessions">Sessions</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <FilterComponent variant="tasks" />
-            </div>
-
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="item-1">
-                <AccordionTrigger>
-                  <div className="flex items-center">
-                    <TestTubeDiagonal className="w-4 h-4 mr-2 text-green-500" />
-                    More settings
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="space-y-3 space-x-1">
-                  <div className="flex items-center space-x-2">
-                    <FormLabel>
-                      Limit number of {form.getValues("scope")}:
-                    </FormLabel>
-                    <FormField
-                      control={form.control}
-                      name="limit"
-                      render={({ field }) => (
-                        <FormItem className="flex-grow">
-                          <FormControl>
-                            <Input
-                              className="w-32"
-                              max={
-                                form.getValues("scope") === "messages"
-                                  ? totalNbTasks ?? 0
-                                  : totalNbSessions ?? 0
-                              }
-                              min={1}
-                              step={1}
-                              type="number"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+    <SheetContent className="md:w-1/2 overflow-auto">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-2">
+          <SheetTitle>Configure clusters detection</SheetTitle>
+          <SheetDescription>
+            Detect recurring topics, trends, and outliers using unsupervized
+            machine learning.
+          </SheetDescription>
+          <Separator className="my-8" />
+          <div className="flex flex-wrap space-x-2 space-y-2 items-end">
+            <DatePickerWithRange />
+            <FormField
+              control={form.control}
+              name="scope"
+              render={({ field }) => (
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setUpdate(!update);
+                  }}
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger className="max-w-[20rem]">
+                    {field.value === "messages" ? "Messages" : "Sessions"}
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="messages">Messages</SelectItem>
+                      <SelectItem value="sessions">Sessions</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            <FilterComponent variant="tasks" />
+          </div>
+          <div className="flex flex-col space-y-4">
+            <FormField
+              control={form.control}
+              name="instruction"
+              render={({ field }) => (
+                <div className="flex flex-col space-y-2 bg-secondary p-2 rounded-lg">
                   <FormLabel>
                     <div className="flex space-x-2">
                       <span>Clustering instruction</span>
@@ -394,25 +351,14 @@ const RunClusters = ({
                       </HoverCard>
                     </div>
                   </FormLabel>
-                  <FormField
-                    control={form.control}
-                    name="instruction"
-                    render={({ field }) => (
-                      <FormItem className="flex-grow">
-                        <FormControl>
-                          <Input placeholder="user intent" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div>
-                    <h2 className="text-muted-foreground text-xs mb-1">
-                      Templates
+                  <div className="flex items-center justify-start space-x-4">
+                    <h2 className="text-muted-foreground text-xs">
+                      Templates:
                     </h2>
-                    <div className="flex space-x-4">
+                    <div className="flex space-x-2">
                       <Button
-                        variant="secondary"
+                        className="text-xs"
+                        variant="outline"
                         size="sm"
                         onClick={(mouseEvent) => {
                           mouseEvent.stopPropagation();
@@ -424,7 +370,8 @@ const RunClusters = ({
                         user intent
                       </Button>
                       <Button
-                        variant="secondary"
+                        className="text-xs"
+                        variant="outline"
                         size="sm"
                         onClick={(mouseEvent) => {
                           mouseEvent.stopPropagation();
@@ -439,7 +386,8 @@ const RunClusters = ({
                         support
                       </Button>
                       <Button
-                        variant="secondary"
+                        className="text-xs"
+                        variant="outline"
                         size="sm"
                         onClick={(mouseEvent) => {
                           mouseEvent.stopPropagation();
@@ -451,7 +399,8 @@ const RunClusters = ({
                         medical chatbot
                       </Button>
                       <Button
-                        variant="secondary"
+                        className="text-xs"
+                        variant="outline"
                         size="sm"
                         onClick={(mouseEvent) => {
                           mouseEvent.stopPropagation();
@@ -464,89 +413,148 @@ const RunClusters = ({
                       </Button>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <FormField
-                      control={form.control}
-                      name="detect_outliers"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0 mt-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel className="space-y-1 leading-none">
-                            Detect outliers mode
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    ></FormField>
-                  </div>
-                  {!form.getValues("detect_outliers") && (
-                    <div className="flex items-center space-x-2">
-                      <FormLabel>Number of clusters:</FormLabel>
-                      <FormField
-                        control={form.control}
-                        name="nb_clusters"
-                        render={({ field }) => (
-                          <FormItem className="flex-grow">
-                            <FormControl>
-                              <Input
-                                className="w-32"
-                                max={nbElements}
-                                min={0}
-                                step={1}
-                                type="number"
-                                {...field}
-                                onChange={(e) => {
-                                  field.onChange(e.target.valueAsNumber);
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                  <FormItem>
+                    <FormControl>
+                      <Input placeholder="user intent" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                </div>
+              )}
+            />
+
+            <div className="flex flex-col space-y-2 bg-secondary p-2 rounded-lg">
+              <FormField
+                control={form.control}
+                name="detect_outliers"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Clustering mode</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value === "true");
+                      }}
+                      defaultValue={field.value ? "true" : "false"}
+                    >
+                      <SelectTrigger>
+                        {field.value
+                          ? "Detect outliers (beta)"
+                          : "Uniform groups (default)"}
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="false">
+                            Uniform groups (default)
+                          </SelectItem>
+                          <SelectItem value="true">
+                            Detect outliers (beta)
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              {!form.getValues("detect_outliers") && (
+                <div className="flex items-center space-x-2">
+                  <FormLabel>Number of clusters:</FormLabel>
+                  <FormField
+                    control={form.control}
+                    name="nb_clusters"
+                    render={({ field }) => (
+                      <FormItem className="flex-grow">
+                        <FormControl>
+                          <Input
+                            className="w-32"
+                            max={nbElements}
+                            min={0}
+                            step={1}
+                            type="number"
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e.target.valueAsNumber);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>
+                <div className="flex items-center text-sm">
+                  <TestTubeDiagonal className="w-4 h-4 mr-2 text-green-500" />
+                  More settings
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="limit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Limit number of {form.getValues("scope")}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          className="w-32"
+                          max={
+                            form.getValues("scope") === "messages"
+                              ? totalNbTasks ?? 0
+                              : totalNbSessions ?? 0
+                          }
+                          min={1}
+                          step={1}
+                          type="number"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-            {!canRunClusterAnalysis && (
-              <div className="mt-4">
-                You need at least 5 {form.getValues("scope")} to run a cluster
-                analysis. There are currently {nbElements}{" "}
-                {form.getValues("scope")}.
-              </div>
-            )}
-            {canRunClusterAnalysis && (
-              <div className="mt-4">
-                We will clusterize {nbElements} {form.getValues("scope")}{" "}
-                {form.getValues("scope") === "sessions" && (
-                  <>{nbTasksInSessions ?? 0} user messages</>
-                )}{" "}
-                for a total of {clusteringCost} credits.{" "}
-              </div>
-            )}
-            {hobby && (
-              <div className="flex justify-end mt-4">
-                <UpgradeButton tagline="Run cluster analysis" green={false} />
-              </div>
-            )}
-            {!hobby && canRunClusterAnalysis && (
-              <div className="flex justify-end mt-4">
-                <Button type="submit" disabled={loading}>
-                  {loading && <Spinner className="mr-2" />}
-                  Run cluster analysis
-                </Button>
-              </div>
-            )}
-          </form>
-        </Form>
-      </SheetContent>
-    </Sheet>
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          {!canRunClusterAnalysis && (
+            <div className="mt-4">
+              You need at least 5 {form.getValues("scope")} to run a cluster
+              analysis. There are currently {nbElements}{" "}
+              {form.getValues("scope")}.
+            </div>
+          )}
+          {canRunClusterAnalysis && (
+            <div className="mt-4">
+              We will clusterize {nbElements} {form.getValues("scope")}{" "}
+              {form.getValues("scope") === "sessions" && (
+                <>{nbTasksInSessions ?? 0} user messages</>
+              )}{" "}
+              for a total of {clusteringCost} credits.{" "}
+            </div>
+          )}
+          {hobby && (
+            <div className="flex justify-end mt-4">
+              <UpgradeButton tagline="Run cluster analysis" green={false} />
+            </div>
+          )}
+          {!hobby && canRunClusterAnalysis && (
+            <div className="flex justify-end mt-4">
+              <Button type="submit" disabled={loading}>
+                {loading && <Spinner className="mr-2" />}
+                Run cluster analysis
+              </Button>
+            </div>
+          )}
+        </form>
+      </Form>
+    </SheetContent>
   );
 };
 
-export default RunClusters;
+export default RunClusteringSheet;
