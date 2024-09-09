@@ -176,8 +176,8 @@ export function Sidebar() {
   }, []);
 
   const displayedSidebarState = sidebarState ?? {
-    transcriptOpen: pathname.includes("transcripts"),
-    datavizOpen: pathname.includes("dataviz"),
+    transcriptOpen: true,
+    datavizOpen: true,
     settingsOpen: pathname.includes("settings"),
   };
 
