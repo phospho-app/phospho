@@ -1,42 +1,19 @@
+import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { set } from "date-fns";
+import { is } from "date-fns/locale";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Data } from "plotly.js";
-import { useEffect, useState } from "react";
+import Plotly, { Data } from "plotly.js";
+import { ComponentType, use, useCallback, useEffect, useState } from "react";
+import { PlotParams } from "react-plotly.js";
 import useSWR from "swr";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
-
-// const Animated3DScatterPlot = () => {
-//   const plotRef = useRef(null);
-
-//   useEffect(() => {
-//     let angle = 0;
-//     const radius = 10;
-//     const speed = 0.01;
-
-//     const animate = () => {
-//       if (plotRef.current) {
-//         const eye = {
-//           x: radius * Math.cos(angle),
-//           y: radius * Math.sin(angle),
-//           z: 2,
-//         };
-
-//         angle += speed;
-//         if (angle > 2 * Math.PI) angle = 0;
-//       }
-//     };
-
-//     const interval = setInterval(animate, 100);
-
-//     return () => clearInterval(interval); // Clean up on unmount
-//   }, []);
-// };
 
 export function CustomPlot({
   selected_clustering_id,
@@ -49,6 +26,7 @@ export function CustomPlot({
   const [refresh, setRefresh] = useState(false);
   const router = useRouter();
   const { accessToken } = useUser();
+  const [isAnimating, setIsAnimating] = useState(true);
 
   const { data } = useSWR(
     project_id
@@ -112,6 +90,86 @@ export function CustomPlot({
     },
   );
 
+  const defaultLayout = {
+    height: Math.max(window.innerHeight * 0.6, 300),
+    // set it to be the size of the current div in pixel
+    width: document.getElementsByClassName("custom-plot")[0].clientWidth,
+    // autosize: true,
+    scene: {
+      xaxis: {
+        visible: false,
+        showgrid: false,
+        zeroline: false,
+        showline: false,
+        showticklabels: false,
+        spikesides: false,
+        showspikes: false,
+      },
+      yaxis: {
+        visible: false,
+        showgrid: false,
+        zeroline: false,
+        showline: false,
+        showticklabels: false,
+        spikesides: false,
+        showspikes: false,
+      },
+      zaxis: {
+        visible: false,
+        showgrid: false,
+        zeroline: false,
+        showline: false,
+        showticklabels: false,
+        spikesides: false,
+        showspikes: false,
+      },
+    },
+    paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
+    plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
+  };
+
+  const [layout, setLayout] = useState(defaultLayout);
+
+  useEffect(() => {
+    console.log("Animating:", isAnimating);
+
+    if (isAnimating) {
+      let frame = 0;
+      const totalFrames = 3600;
+      const zoomCycles = 2; // Number of zoom in/out cycles per full rotation
+
+      const animate = () => {
+        if (!isAnimating) return;
+
+        const t = frame / totalFrames;
+        const zoomT = (Math.sin(2 * Math.PI * zoomCycles * t) + 1) / 2; // Oscillates between 0 and 1
+        const zoom = 1 + zoomT * 1.5; // Zoom factor oscillates between 1.25 and 1.75
+
+        const newEye = {
+          x: zoom * Math.cos(2 * Math.PI * t),
+          y: zoom * Math.sin(2 * Math.PI * t),
+          z: 1.25 + zoomT * 0.25, // Slight vertical oscillation
+        };
+
+        setLayout((prevLayout) => ({
+          ...prevLayout,
+          scene: {
+            ...prevLayout.scene,
+            camera: { eye: newEye },
+          },
+        }));
+
+        frame = (frame + 1) % totalFrames;
+        requestAnimationFrame(animate);
+      };
+      animate();
+    } else {
+      requestAnimationFrame(() => {});
+
+      setLayout(defaultLayout);
+    }
+  }, [isAnimating]);
+
   useEffect(() => {
     // When the project_id changes, force a refresh to resize the plot
     setRefresh(!refresh);
@@ -133,65 +191,72 @@ export function CustomPlot({
     };
   }, []);
 
-  if (!project_id) {
-    return <></>;
-  }
-
-  if (data === null || data === undefined) {
-    return <></>;
-  }
-
   return (
-    <Plot
-      data={[data]}
-      config={{ displayModeBar: true, responsive: true }}
-      layout={{
-        height: Math.max(window.innerHeight * 0.6, 300),
-        // set it to be the size of the current div in pixel
-        width: document.getElementsByClassName("custom-plot")[0].clientWidth,
-        // autosize: true,
-        scene: {
-          xaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-          yaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-          zaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-        },
-        paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
-        plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
-      }}
-      onClick={(data) => {
-        if (data.points.length !== 1) {
-          return;
-        }
-        if (data.points[0].text) {
-          router.push(
-            `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
-          );
-        }
-      }}
-    />
+    <>
+      <div onClick={() => setIsAnimating(false)}>
+        {isAnimating && data && (
+          <Plot
+            data={[data]}
+            config={{ displayModeBar: true, responsive: true }}
+            layout={layout}
+          />
+        )}
+        {!isAnimating && data && (
+          <Plot
+            data={[data]}
+            config={{ displayModeBar: true, responsive: true }}
+            layout={{
+              height: Math.max(window.innerHeight * 0.6, 300),
+              // set it to be the size of the current div in pixel
+              width:
+                document.getElementsByClassName("custom-plot")[0].clientWidth,
+              // autosize: true,
+              scene: {
+                xaxis: {
+                  visible: false,
+                  showgrid: false,
+                  zeroline: false,
+                  showline: false,
+                  showticklabels: false,
+                  spikesides: false,
+                  showspikes: false,
+                },
+                yaxis: {
+                  visible: false,
+                  showgrid: false,
+                  zeroline: false,
+                  showline: false,
+                  showticklabels: false,
+                  spikesides: false,
+                  showspikes: false,
+                },
+                zaxis: {
+                  visible: false,
+                  showgrid: false,
+                  zeroline: false,
+                  showline: false,
+                  showticklabels: false,
+                  spikesides: false,
+                  showspikes: false,
+                },
+              },
+              paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
+              plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
+              dragmode: "turntable",
+            }}
+            onClick={(data) => {
+              if (data.points.length !== 1) {
+                return;
+              }
+              if (data.points[0].text) {
+                router.push(
+                  `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
+                );
+              }
+            }}
+          />
+        )}
+      </div>
+    </>
   );
 }
