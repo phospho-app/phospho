@@ -260,7 +260,6 @@ export const navigationStateStore = create(
       setSelectedClustering: (clustering: Clustering | undefined) =>
         set(() => ({ selectedClustering: clustering })),
     }),
-
     {
       name: "navigation-storage",
       storage: createJSONStorage(() => sessionStorage),
