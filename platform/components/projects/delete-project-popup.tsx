@@ -68,7 +68,7 @@ const AlertDialogDeleteProject = () => {
         <AlertDialogContent className="md:w-1/3">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete the project "{selectedProject.project_name}"?
+              Delete the project &quot;{selectedProject.project_name}&quot;?
             </AlertDialogTitle>
             <AlertDialogDescription className="mt-4">
               Are you sure? No undo.

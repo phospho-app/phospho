@@ -54,26 +54,6 @@ const CreateNewABTestButton = () => {
     setABButtonClicked(false);
   }
 
-  async function clearABTest() {
-    await fetch(`/api/projects/${project_id}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        settings: {
-          ab_version_id: null,
-        },
-      }),
-    }).then(() => {
-      toast({
-        title: "Version ID cleared",
-        description: "No version_id will be added to your logs",
-      });
-    });
-  }
-
   const [aBButtonClicked, setABButtonClicked] = useState(false);
 
   const form = useForm<z.infer<typeof FormSchema>>({

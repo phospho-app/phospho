@@ -304,15 +304,16 @@ const OnboardingProgressPopover = ({
       </div>
       <div className="mt-2 text-sm space-y-2 space-x-2">
         <div className="mt-4 text-primary-500">Next steps:</div>
-        {/* Display all the uncompleted tasks */}
+        {/* Display all the incomplete tasks */}
         {onboardingTasks.map(
-          (task) =>
+          (task, index) =>
             !task.completed && (
               <OnboardingTask
                 title={task.title}
                 description={task.description}
                 onClick={task.onClick}
                 completed={task.completed}
+                key={"task-incomplete-" + index}
               />
             ),
         )}
@@ -321,13 +322,14 @@ const OnboardingProgressPopover = ({
         <div className="mt-4 text-primary-500 space-y-4">Completed: </div>
         {/* Display all the completed tasks */}
         {onboardingTasks.map(
-          (task) =>
+          (task, index) =>
             task.completed && (
               <OnboardingTask
                 title={task.title}
                 description={task.description}
                 onClick={task.onClick}
                 completed={task.completed}
+                key={"task-complete-" + index}
               />
             ),
         )}

@@ -11,10 +11,10 @@ export default function NoOrg() {
         provided.
       </p>
       <p className="text-neutral-100 mt-4 max-w-[1089px]">
-        Our aim is to understand your organization's needs and ensure a smooth
-        onboarding process. You can expect to hear from us within the next 24-48
-        hours. If you have any immediate questions or concerns, feel free to
-        reach out to us at{" "}
+        Our aim is to understand your organization&apos;s needs and ensure a
+        smooth onboarding process. You can expect to hear from us within the
+        next 24-48 hours. If you have any immediate questions or concerns, feel
+        free to reach out to us at{" "}
         <a className="italic" href="mailto:contact@phospho.ai">
           contact@phospho.ai
         </a>

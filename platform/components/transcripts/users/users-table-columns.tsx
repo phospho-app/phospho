@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/hover-card";
 import { authFetcher } from "@/lib/fetcher";
 import { Event, Project, UserMetadata } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -28,10 +28,9 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
-export function getColumns() {
+export function useColumns() {
   const { accessToken } = useUser();
   let uniqueEventNamesInData: string[] = [];
   const project_id = navigationStateStore((state) => state.project_id);

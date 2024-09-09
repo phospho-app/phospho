@@ -35,7 +35,7 @@ const KPIs: React.FC<{}> = ({}) => {
       setUserCount(response_json.value);
       setUserCountIsLoading(false);
     })();
-  }, [project_id]);
+  }, [project_id, accessToken]);
 
   // KPIs on number of messages
   const [kpiMessagesIsLoading, setKpiMessagesIsLoading] =
@@ -64,7 +64,7 @@ const KPIs: React.FC<{}> = ({}) => {
       const response_json = await response.json();
       setKpiMessagesIsLoading(false);
     })();
-  }, [project_id]);
+  }, [project_id, accessToken]);
 
   useEffect(() => {
     // Fetch aggregated metrics from the API
@@ -88,7 +88,7 @@ const KPIs: React.FC<{}> = ({}) => {
       setKpiMessagesTop10(response_json.top_quantile);
       setKpiMessagesIsLoading(false);
     })();
-  }, [project_id]);
+  }, [project_id, accessToken]);
 
   // Do the same for sessions instead of tasks
 
@@ -120,7 +120,7 @@ const KPIs: React.FC<{}> = ({}) => {
       setKpiSessionsCount(response_json.value);
       setKpiSessionsIsLoading(false);
     })();
-  }, [project_id]);
+  }, [project_id, accessToken]);
 
   useEffect(() => {
     // Fetch aggregated metrics from the API
@@ -144,7 +144,7 @@ const KPIs: React.FC<{}> = ({}) => {
       setKpiSessionsTop10(response_json.top_quantile);
       setKpiSessionsIsLoading(false);
     })();
-  }, [project_id]);
+  }, [project_id, accessToken]);
 
   // Do the same as for tasks and sessions fo rthe success rate
   const [kpiSuccessIsLoading, setKpiSuccessIsLoading] = useState<boolean>(true);
@@ -174,7 +174,7 @@ const KPIs: React.FC<{}> = ({}) => {
       setKpiSuccessTop10(response_json.top_quantile);
       setKpiSuccessIsLoading(false);
     })();
-  }, [project_id]);
+  }, [project_id, accessToken]);
 
   return <ComingSoon />;
 

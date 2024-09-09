@@ -87,7 +87,7 @@ const Clusters: React.FC = () => {
       setSelectedClustering(undefined);
       return;
     }
-  }, [JSON.stringify(clusterings), project_id]);
+  }, [JSON.stringify(clusterings), project_id, selectedClustering]);
 
   // Add a useEffect triggered every few seconds to update the clustering status
   useEffect(() => {

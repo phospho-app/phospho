@@ -62,7 +62,7 @@ export default function Page() {
         <div className="flex items-center">
           <div className="flex flex-row items-center">
             <BriefcaseBusiness className="w-6 h-6 mr-2" />
-            Project "{selectedProject.project_name}"
+            Project &quot;{selectedProject.project_name}&quot;
           </div>
         </div>
       </h2>
