@@ -127,7 +127,7 @@ class AIHubClient:
                         data_converter=pydantic_data_converter,
                     )
                 except Exception as e:
-                    logger.error("Have you started a local Temporal server?")
+                    logger.warning("Have you started a local Temporal server?")
                     logger.error(f"Error connecting to Temporal: {e}")
                     raise e
             else:
@@ -199,7 +199,8 @@ class AIHubClient:
 
         if response is None:
             raise HTTPException(
-                status_code=500, detail=f"Error while calling AI Hub: {response}"
+                status_code=500,
+                detail=f"Error while calling AI Hub: {response}",  # TODO: Because we now fire and forget, response is None and we trigger this error
             )
 
     async def generate_embeddings(
