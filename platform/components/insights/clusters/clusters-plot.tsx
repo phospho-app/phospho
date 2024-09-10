@@ -250,11 +250,6 @@ export function CustomPlot({
 
   requestAnimationFrame(animate);
 
-  useEffect(() => {
-    if (isAnimating) {
-    }
-  }, [isAnimating, animate]);
-
   const handleResize = useCallback(() => {
     setLayout((prevLayout) => ({
       ...prevLayout,
