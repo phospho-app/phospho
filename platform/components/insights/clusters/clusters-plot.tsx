@@ -93,7 +93,11 @@ export function CustomPlot({
   const defaultLayout = {
     height: Math.max(window.innerHeight * 0.6, 300),
     // set it to be the size of the current div in pixel
-    width: document.getElementsByClassName("custom-plot")[0].clientWidth,
+    width: Math.max(
+      document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
+        window.innerWidth * 0.8,
+      640,
+    ),
     // autosize: true,
     scene: {
       xaxis: {
@@ -130,50 +134,42 @@ export function CustomPlot({
 
   const [layout, setLayout] = useState(defaultLayout);
 
-  useEffect(() => {
-    console.log("Animating:", isAnimating);
+  // Animation
+  let frame = 0;
+  const totalFrames = 3600;
+  const zoomCycles = 2; // Number of zoom in/out cycles per full rotation
 
-    if (isAnimating) {
-      let frame = 0;
-      const totalFrames = 3600;
-      const zoomCycles = 2; // Number of zoom in/out cycles per full rotation
+  const animate = useCallback(() => {
+    if (!isAnimating) return;
+    console.log("frame", frame);
+    const t = frame / totalFrames;
+    const zoomT = (Math.sin(2 * Math.PI * zoomCycles * t) + 1) / 2; // Oscillates between 0 and 1
+    const zoom = 1 + zoomT * 0.3; // Zoom factor oscillates between 1.25 and 1.75
 
-      const animate = () => {
-        if (!isAnimating) return;
+    const newEye = {
+      x: zoom * Math.cos(2 * Math.PI * t),
+      y: zoom * Math.sin(2 * Math.PI * t),
+      z: 0 + zoomT * 0.1, // Slight vertical oscillation
+    };
 
-        const t = frame / totalFrames;
-        const zoomT = (Math.sin(2 * Math.PI * zoomCycles * t) + 1) / 2; // Oscillates between 0 and 1
-        const zoom = 1 + zoomT * 1.5; // Zoom factor oscillates between 1.25 and 1.75
+    setLayout((prevLayout) => ({
+      ...prevLayout,
+      scene: {
+        ...prevLayout.scene,
+        camera: { eye: newEye },
+      },
+    }));
 
-        const newEye = {
-          x: zoom * Math.cos(2 * Math.PI * t),
-          y: zoom * Math.sin(2 * Math.PI * t),
-          z: 1.25 + zoomT * 0.25, // Slight vertical oscillation
-        };
-
-        setLayout((prevLayout) => ({
-          ...prevLayout,
-          scene: {
-            ...prevLayout.scene,
-            camera: { eye: newEye },
-          },
-        }));
-
-        frame = (frame + 1) % totalFrames;
-        requestAnimationFrame(animate);
-      };
-      animate();
-    } else {
-      requestAnimationFrame(() => {});
-
-      setLayout(defaultLayout);
-    }
+    // frame = (frame + 1) % totalFrames;
+    frame = (frame + 1) % totalFrames;
   }, [isAnimating]);
+  requestAnimationFrame(animate);
 
   useEffect(() => {
     // When the project_id changes, force a refresh to resize the plot
     setRefresh(!refresh);
-  }, [project_id]);
+    setIsAnimating(true);
+  }, [project_id, selected_clustering_id]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -191,71 +187,28 @@ export function CustomPlot({
     };
   }, []);
 
+  if (!data) {
+    return <></>;
+  }
+
   return (
     <>
       <div onClick={() => setIsAnimating(false)}>
-        {isAnimating && data && (
-          <Plot
-            data={[data]}
-            config={{ displayModeBar: true, responsive: true }}
-            layout={layout}
-          />
-        )}
-        {!isAnimating && data && (
-          <Plot
-            data={[data]}
-            config={{ displayModeBar: true, responsive: true }}
-            layout={{
-              height: Math.max(window.innerHeight * 0.6, 300),
-              // set it to be the size of the current div in pixel
-              width:
-                document.getElementsByClassName("custom-plot")[0].clientWidth,
-              // autosize: true,
-              scene: {
-                xaxis: {
-                  visible: false,
-                  showgrid: false,
-                  zeroline: false,
-                  showline: false,
-                  showticklabels: false,
-                  spikesides: false,
-                  showspikes: false,
-                },
-                yaxis: {
-                  visible: false,
-                  showgrid: false,
-                  zeroline: false,
-                  showline: false,
-                  showticklabels: false,
-                  spikesides: false,
-                  showspikes: false,
-                },
-                zaxis: {
-                  visible: false,
-                  showgrid: false,
-                  zeroline: false,
-                  showline: false,
-                  showticklabels: false,
-                  spikesides: false,
-                  showspikes: false,
-                },
-              },
-              paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
-              plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
-              dragmode: "turntable",
-            }}
-            onClick={(data) => {
-              if (data.points.length !== 1) {
-                return;
-              }
-              if (data.points[0].text) {
-                router.push(
-                  `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
-                );
-              }
-            }}
-          />
-        )}
+        <Plot
+          data={[data]}
+          config={{ displayModeBar: true, responsive: true }}
+          layout={layout}
+          onClick={(data) => {
+            if (data.points.length !== 1) {
+              return;
+            }
+            if (data.points[0].text) {
+              router.push(
+                `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
+              );
+            }
+          }}
+        />
       </div>
     </>
   );
