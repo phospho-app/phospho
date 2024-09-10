@@ -54,6 +54,10 @@ EXTRACTOR_URL="http://127.0.0.1:7605" # In test mode
 # For access to phospho models
 PHOSPHO_AI_HUB_URL=""
 PHOSPHO_AI_HUB_API_KEY=""
+
+# For the chat completion endpoint
+AZURE_OPENAI_KEY=""
+AZURE_OPENAI_ENDPOINT=""
 ```
 
 ### Run tests

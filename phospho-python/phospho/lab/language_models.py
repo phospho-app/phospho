@@ -4,10 +4,10 @@ from typing import Literal, Optional, Tuple
 import phospho.config as config
 
 try:
-    from openai import AsyncOpenAI, OpenAI
+    from openai import AsyncOpenAI, OpenAI, AsyncAzureOpenAI
 
 except ImportError:
-    AsyncOpenAI = OpenAI = object
+    AsyncOpenAI = OpenAI = AsyncAzureOpenAI = object
 
 
 def get_provider_and_model(model: str) -> Tuple[str, str]:
@@ -52,6 +52,7 @@ def get_async_client(
         "together",
         "anyscale",
         "fireworks",
+        "azure",
     ],
     api_key: Optional[str] = None,
 ) -> AsyncOpenAI:
@@ -87,6 +88,20 @@ def get_async_client(
             base_url="https://api.fireworks.ai/inference/v1/",
             api_key=api_key or os.getenv("FIREWORKS_API_KEY"),
         )
+    if provider == "azure":
+        if os.getenv("AZURE_OPENAI_KEY") is None:
+            raise ValueError("AZURE_OPENAI_KEY environment variable is not set.")
+        if os.getenv("AZURE_OPENAI_ENDPOINT") is None:
+            raise ValueError("AZURE_OPENAI_ENDPOINT environment variable is not set.")
+
+        return AsyncAzureOpenAI(
+            # https://learn.microsoft.com/azure/ai-services/openai/reference#rest-api-versioning
+            api_version="2023-03-15-preview",
+            # https://learn.microsoft.com/azure/cognitive-services/openai/how-to/create-resource?pivots=web-portal#create-a-resource
+            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", ""),
+            api_key=os.environ.get("AZURE_OPENAI_KEY"),
+        )
+
     raise NotImplementedError(f"Provider {provider} is not supported.")
 
 

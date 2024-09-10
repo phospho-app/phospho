@@ -69,6 +69,8 @@ jobs:
           TEMPORAL_NAMESPACE: ${{ vars.TEMPORAL_NAMESPACE }}
           TEMPORAL_MTLS_TLS_CERT_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_CERT_BASE64 }}
           TEMPORAL_MTLS_TLS_KEY_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_KEY_BASE64 }}
+          AZURE_OPENAI_KEY: ${{ secrets.AZURE_OPENAI_KEY }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
         # Specify here the tests you want to run after the -k flag
         run: |
           cd backend
