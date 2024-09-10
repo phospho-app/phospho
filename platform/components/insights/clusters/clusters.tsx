@@ -204,11 +204,6 @@ const Clusters: React.FC = () => {
             </div>
           )}
           <div className="flex-col space-y-2 md:flex pb-10">
-            {!selectedClustering && (
-              <div className="w-full text-muted-foreground flex justify-center text-sm h-20">
-                Run a clustering to see clusters here.
-              </div>
-            )}
             {selectedClustering &&
               selectedClustering.status !== "completed" && (
                 <div className="w-full flex flex-col items-center">
@@ -236,6 +231,12 @@ const Clusters: React.FC = () => {
                   )}
                 </div>
               )}
+            {clusterings && clusterings.length === 0 && (
+              <CustomPlot
+                dummyData={true}
+                setSheetClusterOpen={setSheetClusterOpen}
+              />
+            )}
             {selectedClustering !== undefined &&
               selectedClustering !== null && (
                 <CustomPlot
