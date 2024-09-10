@@ -1,13 +1,19 @@
+import { SendDataAlertDialog } from "@/components/callouts/import-data";
+import { AlertDialog } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { ChevronRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Data } from "plotly.js";
 import {
   Suspense,
   lazy,
+  use,
   useCallback,
   useEffect,
   useRef,
@@ -17,22 +23,98 @@ import useSWR from "swr";
 
 const Plot = lazy(() => import("react-plotly.js"));
 
+function generateDummyData() {
+  // Generate placeholder data for the plot
+  // Generate four clusters of nearby points with the same color
+  const numPoints = 50;
+  const x = new Array(numPoints * 4);
+  const y = new Array(numPoints * 4);
+  const z = new Array(numPoints * 4);
+  const colors = new Array(numPoints * 4);
+
+  for (let i = 0; i < numPoints; i++) {
+    x[i] = Math.random() * 0.4 - 0.1;
+    y[i] = Math.random() * 0.2;
+    z[i] = Math.random() * 0.2 - 0.1;
+    colors[i] = graphColors[0];
+  }
+
+  for (let i = numPoints; i < numPoints * 2; i++) {
+    x[i] = Math.random() * 0.6;
+    y[i] = Math.random() * 0.2 + 0.2;
+    z[i] = Math.random() * 0.15 + 0.1;
+    colors[i] = graphColors[1];
+  }
+
+  for (let i = numPoints * 2; i < numPoints * 3; i++) {
+    x[i] = Math.random() * 0.2 + 0.1;
+    y[i] = Math.random() * 0.2 - 0.1;
+    z[i] = Math.random() * 0.1 + 0.1;
+    colors[i] = graphColors[2];
+  }
+
+  for (let i = numPoints * 3; i < numPoints * 4; i++) {
+    x[i] = Math.random() * 0.2 + 0.1;
+    y[i] = Math.random() * 0.2 + 0.1;
+    z[i] = Math.random() * 0.1 + 0.1;
+    colors[i] = graphColors[3];
+  }
+
+  return {
+    x,
+    y,
+    z,
+    mode: "markers",
+    type: "scatter3d",
+    marker: {
+      size: 6,
+      color: colors,
+      opacity: 0.4,
+    },
+  } as Data;
+}
+
 export function CustomPlot({
   selected_clustering_id,
   selectedClustering,
+  dummyData = false,
+  setSheetClusterOpen,
 }: {
-  selected_clustering_id: string;
-  selectedClustering: Clustering;
+  selected_clustering_id?: string;
+  selectedClustering?: Clustering;
+  dummyData?: boolean;
+  setSheetClusterOpen?: (value: boolean) => void;
 }) {
   const project_id = navigationStateStore((state) => state.project_id);
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
   const { accessToken } = useUser();
   const [isAnimating, setIsAnimating] = useState(true);
+  const [displayedData, setDisplayedData] = useState<Data | null | undefined>(
+    undefined,
+  );
+  const [open, setOpen] = useState(false);
   const frameRef = useRef(0);
 
+  const width =
+    Math.round(
+      Math.max(
+        document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
+          window.innerWidth * 0.8,
+        640,
+      ) / 10,
+    ) * 10;
+  const height = Math.round(Math.max(window.innerHeight * 0.6, 300) / 10) * 10;
+  // Skeleton style is used to set the width and height of the plot
+  // And to load the skeleton with the correct size
+  const skeletonStyle = `w-[${width}px] h-[${height}px]`;
+
+  useEffect(() => {
+    setRefreshKey(refreshKey + 1);
+  }, [skeletonStyle]);
+
   const { data } = useSWR(
-    project_id
+    project_id && !dummyData
       ? [
           `/api/explore/${project_id}/data-cloud`,
           accessToken,
@@ -94,13 +176,17 @@ export function CustomPlot({
     },
   );
 
+  useEffect(() => {
+    if (dummyData) {
+      setDisplayedData(generateDummyData());
+    } else {
+      setDisplayedData(data);
+    }
+  }, [data, dummyData]);
+
   const [layout, setLayout] = useState(() => ({
-    height: Math.max(window.innerHeight * 0.6, 300),
-    width: Math.max(
-      document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
-        window.innerWidth * 0.8,
-      640,
-    ),
+    height: height,
+    width: width,
     scene: {
       xaxis: {
         visible: false,
@@ -159,14 +245,10 @@ export function CustomPlot({
     }));
 
     frameRef.current = (frameRef.current + 1) % totalFrames;
-    requestAnimationFrame(animate);
+    // requestAnimationFrame(animate);
   }, [isAnimating, totalFrames, zoomCycles]);
 
-  useEffect(() => {
-    if (isAnimating) {
-      requestAnimationFrame(animate);
-    }
-  }, [isAnimating, animate]);
+  requestAnimationFrame(animate);
 
   const handleResize = useCallback(() => {
     setLayout((prevLayout) => ({
@@ -197,28 +279,72 @@ export function CustomPlot({
     setRefreshKey((prev) => prev + 1); // Trigger a refresh when project_id or selected_clustering_id changes
   }, [project_id, selected_clustering_id]);
 
-  if (!data) {
+  if (!displayedData) {
     return <></>;
   }
 
   return (
-    <>
-      <Suspense fallback={<></>}>
-        <div onClick={() => setIsAnimating(false)}>
-          <Plot
-            data={[data]}
-            config={{ displayModeBar: true, responsive: true }}
-            layout={layout}
-            onClick={(data) => {
-              if (data.points.length === 1 && data.points[0].text) {
-                router.push(
-                  `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
-                );
-              }
-            }}
-          />
+    <AlertDialog open={open}>
+      <SendDataAlertDialog setOpen={setOpen} key="ab_testing" />
+      <div
+        onClick={() => {
+          if (!dummyData) {
+            setIsAnimating(false);
+          }
+        }}
+      >
+        <div className={`relative ${skeletonStyle}`}>
+          <Suspense fallback={<Skeleton className={skeletonStyle} />}>
+            <Plot
+              data={[displayedData]}
+              config={{ displayModeBar: !dummyData, responsive: true }}
+              layout={layout}
+              onClick={(displayedData) => {
+                if (
+                  displayedData.points.length === 1 &&
+                  displayedData.points[0].text
+                ) {
+                  router.push(
+                    `/org/transcripts/tasks/${encodeURIComponent(displayedData.points[0].text)}`,
+                  );
+                }
+              }}
+            />
+          </Suspense>
+          {dummyData && (
+            // display a gradient background from green to purple
+            <div className="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center ">
+              <div className="bg-secondary p-4 rounded-lg flex flex-col justify-center space-y-4">
+                <div className="flex flex-col justify-center">
+                  <p className="text-muted-foreground text-sm mb-2">
+                    1 - Start sending data
+                  </p>
+                  <Button variant="outline" onClick={() => setOpen(true)}>
+                    Import data
+                    <ChevronRight className="ml-2" />
+                  </Button>
+                </div>
+                <div className="flex flex-col justify-center">
+                  <p className="text-muted-foreground text-sm mb-2">
+                    2 - Create a new clustering
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (setSheetClusterOpen) {
+                        setSheetClusterOpen(true);
+                      }
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    New clustering
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      </Suspense>
-    </>
+      </div>
+    </AlertDialog>
   );
 }
