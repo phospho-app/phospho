@@ -100,11 +100,17 @@ class ExtractorClient:
         self,
         endpoint: str,  # Should be the name of the workflow
         data: dict,  # Should be just one pydantic model
-        on_success_callback: Optional[Callable] = None,
+        return_response: bool = False,
     ) -> Optional[httpx.Response]:
         """
-        Post data to the extractor temporal worker
+        Post data to the extractor temporal worker.
+
+        If return_response is True, the function will return the response from the workflow.
+
+        If return_response is False, the function will return None. This is useful for fire-and-forget workflows.
         """
+
+        response = None
 
         # We check that "org_id" and"project_id" are present in the data
         if endpoint not in ["store_open_telemetry_data_workflow"] and (
@@ -165,12 +171,14 @@ class ExtractorClient:
                 ).hexdigest()
             )
 
-            response = await client.start_workflow(
-                endpoint, data, id=unique_id, task_queue="default"
-            )
-
-            if on_success_callback:
-                await on_success_callback(response)
+            if not return_response:
+                await client.start_workflow(
+                    endpoint, data, id=unique_id, task_queue="default"
+                )
+            else:
+                response = await client.execute_workflow(
+                    endpoint, data, id=unique_id, task_queue="default"
+                )
 
         except WorkflowAlreadyStartedError as e:
             logger.warning(
@@ -194,7 +202,7 @@ class ExtractorClient:
                     slack_message = error_message
                 await slack_notification(slack_message)
 
-        return None
+        return response
 
     async def run_process_log_for_tasks(
         self,
@@ -285,6 +293,7 @@ class ExtractorClient:
             {
                 "task": task.model_dump(mode="json"),
             },
+            return_response=True,
         )
         if result is None or result.status_code != 200:
             return PipelineResults()
@@ -311,6 +320,7 @@ class ExtractorClient:
             {
                 "messages": [message.model_dump(mode="json") for message in messages],
             },
+            return_response=True,
         )
         if result is None or result.status_code != 200:
             return PipelineResults()
