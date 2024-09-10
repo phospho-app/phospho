@@ -281,7 +281,7 @@ export function CustomPlot({
           }
         }}
       >
-        <Suspense fallback={<div className={skeletonStyle} />}>
+        <Suspense fallback={<Skeleton className={skeletonStyle} />}>
           <Plot
             data={[displayedData]}
             config={{ displayModeBar: !dummyData, responsive: true }}
