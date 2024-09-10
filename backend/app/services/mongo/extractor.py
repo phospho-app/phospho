@@ -212,6 +212,9 @@ class ExtractorClient:
         """
         Run the log procesing pipeline on a task asynchronously
         """
+        logger.info(
+            f"Running process log for {len(logs_to_process)} tasks for project {self.project_id}"
+        )
         if extra_logs_to_save is None:
             extra_logs_to_save = []
 
