@@ -21,6 +21,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Temporal CLI
+        uses: temporalio/setup-temporal@v0
+
+      - name: Start a local Temporal server
+        shell: bash
+        run: temporal server start-dev --headless &
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -65,10 +72,8 @@ jobs:
           ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
           PHOSPHO_AI_HUB_URL: ${{ vars.PHOSPHO_AI_HUB_URL }}
           PHOSPHO_AI_HUB_API_KEY: ${{ secrets.PHOSPHO_AI_HUB_API_KEY }}
-          TEMPORAL_HOST_URL: ${{ vars.TEMPORAL_HOST_URL }}
-          TEMPORAL_NAMESPACE: ${{ vars.TEMPORAL_NAMESPACE }}
-          TEMPORAL_MTLS_TLS_CERT_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_CERT_BASE64 }}
-          TEMPORAL_MTLS_TLS_KEY_BASE64: ${{ secrets.TEMPORAL_MTLS_TLS_KEY_BASE64 }}
+          TEMPORAL_HOST_URL: "http://localhost:7233"
+          TEMPORAL_NAMESPACE: "default"
         # Specify here the tests you want to run after the -k flag
         run: |
           cd backend

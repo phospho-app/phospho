@@ -2746,7 +2746,7 @@ async def get_ab_tests_versions(
     ]
 
     results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
-    if not results:
+    if not results or len(results) == 0:
         logger.info("No results found")
         return []
 
@@ -2770,6 +2770,8 @@ async def get_ab_tests_versions(
     events_to_normalize = []
     for result in results:
         if "event_name" not in result:
+            continue
+        if "version_id" not in result:
             continue
         if (
             "event_type" not in result or result["event_type"] == "confidence"
@@ -2863,9 +2865,9 @@ async def get_ab_tests_versions(
         else:
             logger.error(f"New event type is not handled: {result['event_type']}")
 
-    if not versionA:
+    if versionA is None:
         versionA = "None"
-    if not versionB:
+    if versionB is None:
         versionB = "None"
 
     formatted_graph_values = []
