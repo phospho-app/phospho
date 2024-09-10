@@ -3,13 +3,12 @@ import { graphColors } from "@/lib/utils";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Data } from "plotly.js";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 
-const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
+const Plot = lazy(() => import("react-plotly.js"));
 
 export function CustomPlot({
   selected_clustering_id,
@@ -22,6 +21,7 @@ export function CustomPlot({
   const [refresh, setRefresh] = useState(false);
   const router = useRouter();
   const { accessToken } = useUser();
+  const [isAnimating, setIsAnimating] = useState(true);
 
   const { data } = useSWR(
     project_id
@@ -85,10 +85,86 @@ export function CustomPlot({
     },
   );
 
+  const defaultLayout = {
+    height: Math.max(window.innerHeight * 0.6, 300),
+    // set it to be the size of the current div in pixel
+    width: Math.max(
+      document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
+        window.innerWidth * 0.8,
+      640,
+    ),
+    // autosize: true,
+    scene: {
+      xaxis: {
+        visible: false,
+        showgrid: false,
+        zeroline: false,
+        showline: false,
+        showticklabels: false,
+        spikesides: false,
+        showspikes: false,
+      },
+      yaxis: {
+        visible: false,
+        showgrid: false,
+        zeroline: false,
+        showline: false,
+        showticklabels: false,
+        spikesides: false,
+        showspikes: false,
+      },
+      zaxis: {
+        visible: false,
+        showgrid: false,
+        zeroline: false,
+        showline: false,
+        showticklabels: false,
+        spikesides: false,
+        showspikes: false,
+      },
+    },
+    paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
+    plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
+  };
+
+  const [layout, setLayout] = useState(defaultLayout);
+
+  // Animation
+  let frame = 0;
+  const totalFrames = 3600;
+  const zoomCycles = 2; // Number of zoom in/out cycles per full rotation
+
+  const animate = useCallback(() => {
+    if (!isAnimating) return;
+    console.log("frame", frame);
+    const t = frame / totalFrames;
+    const zoomT = (Math.sin(2 * Math.PI * zoomCycles * t) + 1) / 2; // Oscillates between 0 and 1
+    const zoom = 1 + zoomT * 0.3; // Zoom factor oscillates between 1.25 and 1.75
+
+    const newEye = {
+      x: zoom * Math.cos(2 * Math.PI * t),
+      y: zoom * Math.sin(2 * Math.PI * t),
+      z: 0 + zoomT * 0.1, // Slight vertical oscillation
+    };
+
+    setLayout((prevLayout) => ({
+      ...prevLayout,
+      scene: {
+        ...prevLayout.scene,
+        camera: { eye: newEye },
+      },
+    }));
+
+    // frame = (frame + 1) % totalFrames;
+    frame = (frame + 1) % totalFrames;
+  }, [isAnimating]);
+  requestAnimationFrame(animate);
+
   useEffect(() => {
     // When the project_id changes, force a refresh to resize the plot
     setRefresh(!refresh);
-  }, [project_id]);
+    setIsAnimating(true);
+  }, [project_id, selected_clustering_id]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -106,68 +182,31 @@ export function CustomPlot({
     };
   }, []);
 
-  if (!project_id) {
-    return <></>;
-  }
-
-  if (data === null || data === undefined) {
+  if (!data) {
     return <></>;
   }
 
   return (
-    <Plot
-      data={[data]}
-      config={{ displayModeBar: true, responsive: true }}
-      layout={{
-        height: Math.max(window.innerHeight * 0.6, 300),
-        // set it to be the size of the current div in pixel
-        width:
-          // The custom-plot div is the width of the cards
-          document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
-          window.innerWidth * 0.8,
-        // autosize: true,
-        scene: {
-          xaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-          yaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-          zaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-        },
-        paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
-        plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
-      }}
-      onClick={(data) => {
-        if (data.points.length !== 1) {
-          return;
-        }
-        if (data.points[0].text) {
-          router.push(
-            `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
-          );
-        }
-      }}
-    />
+    <>
+      <Suspense fallback={<></>}>
+        <div onClick={() => setIsAnimating(false)}>
+          <Plot
+            data={[data]}
+            config={{ displayModeBar: true, responsive: true }}
+            layout={layout}
+            onClick={(data) => {
+              if (data.points.length !== 1) {
+                return;
+              }
+              if (data.points[0].text) {
+                router.push(
+                  `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
+                );
+              }
+            }}
+          />
+        </div>
+      </Suspense>
+    </>
   );
 }

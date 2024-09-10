@@ -17,7 +17,8 @@ import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Plus } from "lucide-react";
+import { Boxes, Plus } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
@@ -145,17 +146,26 @@ const Clusters: React.FC = () => {
         {clusterings && clusterings.length <= 1 && (
           <Card className="bg-secondary">
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-                    Automatic cluster detection
-                  </CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Detect recurring topics, trends, and outliers using
-                    unsupervized machine learning.
-                  </CardDescription>
+              <div className="flex justify-between items-center">
+                <div className="flex">
+                  <Boxes className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+                  <div>
+                    <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
+                      Automatic cluster detection
+                    </CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      Detect recurring topics, trends, and outliers using
+                      unsupervized machine learning.{" "}
+                      <a
+                        href="https://docs.phospho.ai/analytics/clustering"
+                        target="_blank"
+                        className="underline"
+                      >
+                        Learn more.
+                      </a>
+                    </CardDescription>
+                  </div>
                 </div>
-                <div className="flex flex-col space-y-1 justify-center items-center"></div>
               </div>
             </CardHeader>
           </Card>

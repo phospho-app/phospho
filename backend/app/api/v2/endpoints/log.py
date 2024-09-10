@@ -94,22 +94,22 @@ async def store_batch_of_log_events(
             ):
                 current_usage += 1
                 nbr_valid_logs += 1
-                logged_events.append(valid_log_event)
                 await extractor_client.run_process_log_for_tasks(
                     logs_to_process=[valid_log_event],
                 )
+                logged_events.append(valid_log_event)
             else:
                 logger.warning(f"Max usage quota reached for project: {project_id}")
                 background_tasks.add_task(send_quota_exceeded_email, project_id)
-                logged_events.append(
-                    LogError(
-                        error_in_log=f"Max usage quota reached for project {project_id}: {current_usage}/{max_usage} logs"
-                    )
-                )
                 nbr_extra_logs += 1
                 await extractor_client.run_process_log_for_tasks(
                     logs_to_process=[],
                     extra_logs_to_save=[valid_log_event],
+                )
+                logged_events.append(
+                    LogError(
+                        error_in_log=f"Max usage quota reached for project {project_id}: {current_usage}/{max_usage} logs"
+                    )
                 )
         except ValidationError as e:
             logger.info(f"Skip logevent processing due to validation error: {e}")
