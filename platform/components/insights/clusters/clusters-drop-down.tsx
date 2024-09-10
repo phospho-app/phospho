@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -8,8 +7,7 @@ import {
 } from "@/components/ui/select";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
-import { Check } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 export function ClusteringDropDown({
   selectedClustering,
@@ -22,17 +20,6 @@ export function ClusteringDropDown({
   clusterings: Clustering[] | undefined;
   selectedClusteringName: string | undefined;
 }) {
-  const [refresh, setRefresh] = useState(false);
-
-  const clusteringsJSON = useMemo(
-    () => JSON.stringify(clusterings),
-    [clusterings],
-  );
-
-  useEffect(() => {
-    setRefresh(!refresh);
-  }, [clusteringsJSON]);
-
   return (
     <div className="flex flex-row gap-x-2 items-center mb-2 mr-2">
       <div>
@@ -66,7 +53,6 @@ export function ClusteringDropDown({
           <SelectContent className="overflow-y-auto max-h-[20rem]">
             <SelectGroup>
               {clusterings &&
-                (refresh || !refresh) &&
                 clusterings.length > 0 &&
                 clusterings.map((clustering) => (
                   <SelectItem key={clustering.id} value={clustering.id}>

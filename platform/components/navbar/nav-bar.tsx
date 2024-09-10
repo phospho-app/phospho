@@ -1,20 +1,19 @@
 "use client";
 
+import { NavBarHelp } from "@/components/navbar/help";
+import { NavBarSettings } from "@/components/navbar/navsettings";
+import { NavBarProject } from "@/components/navbar/project";
+import ShareButton from "@/components/share-button";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
-import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
-import { Menu, Share2 } from "lucide-react";
+import { Menu } from "lucide-react";
 import getConfig from "next/config";
 import Link from "next/link";
 import React from "react";
-
-import { NavBarHelp } from "./help";
-import { NavBarSettings } from "./navsettings";
-import { NavBarProject } from "./project";
 
 let version: string;
 try {
@@ -27,17 +26,7 @@ export function Navbar({
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
   const [open, setOpen] = React.useState(false);
-  const { redirectToOrgPage } = useRedirectFunctions();
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const { user } = useUser();
-  // The share button is only visible if the user has the permission to invite others
-  // This button redirects to propelauth user management page
-  const userCanInviteOthers =
-    selectedOrgId && user?.orgIdToOrgMemberInfo
-      ? user.orgIdToOrgMemberInfo[selectedOrgId].hasPermission(
-          "propelauth::can_invite",
-        )
-      : false;
 
   return (
     <div>
@@ -79,16 +68,7 @@ export function Navbar({
             <NavBarSettings />
             <NavBarProject />
 
-            {userCanInviteOthers && selectedOrgId && (
-              <Button
-                className="h-8"
-                onClick={() => redirectToOrgPage(selectedOrgId)}
-                variant="outline"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
-              </Button>
-            )}
+            <ShareButton selectedOrgId={selectedOrgId} />
           </div>
         </div>
       </nav>

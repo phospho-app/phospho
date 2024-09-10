@@ -1,3 +1,4 @@
+import { Blockwall } from "@/components/blockwall";
 import { DatePickerWithRange } from "@/components/date-range";
 import FilterComponent from "@/components/filters";
 import { Spinner } from "@/components/small-spinner";
@@ -7,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -35,7 +37,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
-import UpgradeButton from "@/components/upgrade-button";
 import { authFetcher } from "@/lib/fetcher";
 import { Clustering } from "@/models/models";
 import { dataStateStore } from "@/store/store";
@@ -46,7 +47,7 @@ import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { TestTubeDiagonal } from "lucide-react";
 import React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import * as z from "zod";
@@ -74,7 +75,9 @@ const RunClusteringSheet = ({
   const [loading, setLoading] = useState(false);
   const [update, setUpdate] = useState(false);
 
-  let defaultNbClusters = 0;
+  const totalNbTasksRef = useRef<number>(0);
+  const totalNbSessionsRef = useRef<number>(0);
+  const defaultNbClustersRef = useRef<number>(0);
 
   const { data: totalNbTasksData } = useSWR(
     [
@@ -96,17 +99,6 @@ const RunClusteringSheet = ({
     totalNbTasksData?.total_nb_tasks;
 
   const hobby = orgMetadata?.plan === "hobby";
-
-  function setSheetOpenWrapper(value: boolean) {
-    // Reset the dataFilters when the sheet is closed
-    if (!value) {
-      const currentDataFilters = dataFilters;
-      delete currentDataFilters.clustering_id;
-      delete currentDataFilters.clusters_ids;
-      setDataFilters(dataFilters);
-    }
-    setSheetOpen(value);
-  }
 
   const FormSchema = z.object({
     scope: z.enum(["messages", "sessions"]),
@@ -158,46 +150,39 @@ const RunClusteringSheet = ({
       keepPreviousData: true,
     },
   );
-  let totalNbSessions: number | null | undefined =
-    totalNbSessionsData?.total_nb_sessions;
   let nbTasksInSessions: number | null | undefined =
     totalNbSessionsData?.nb_tasks_in_sessions;
 
   useEffect(() => {
-    // Update the default number of clusters when the total number of tasks changes
     if (form.getValues("scope") === "messages") {
-      if (totalNbTasks === null || totalNbTasks === undefined) {
-        totalNbTasks = 0;
-      }
-      setNbElements(totalNbTasks);
-      defaultNbClusters = Math.floor(totalNbTasks / 100);
+      totalNbTasksRef.current = totalNbTasksData?.total_nb_tasks ?? 0;
+      setNbElements(totalNbTasksRef.current);
+      defaultNbClustersRef.current = Math.floor(totalNbTasksRef.current / 100);
 
-      if (defaultNbClusters >= 5) {
-        form.setValue("nb_clusters", defaultNbClusters);
+      if (defaultNbClustersRef.current >= 5) {
+        form.setValue("nb_clusters", defaultNbClustersRef.current);
       } else {
         form.setValue("nb_clusters", 5);
       }
-      setClusteringCost(totalNbTasks * 2);
-      form.setValue("limit", totalNbTasks);
+      setClusteringCost(totalNbTasksRef.current * 2);
+      form.setValue("limit", totalNbTasksRef.current);
     }
     if (form.getValues("scope") === "sessions") {
-      if (totalNbSessions === null || totalNbSessions === undefined) {
-        totalNbSessions = 0;
-      }
-      if (totalNbTasks === null || totalNbTasks === undefined) {
-        totalNbTasks = 0;
-      }
-      setNbElements(totalNbSessions);
-      defaultNbClusters = Math.floor(totalNbSessions / 100);
-      if (defaultNbClusters >= 5) {
-        form.setValue("nb_clusters", Math.floor(defaultNbClusters));
+      totalNbSessionsRef.current = totalNbSessionsData?.total_nb_sessions ?? 0;
+      totalNbTasksRef.current = totalNbTasksData?.total_nb_tasks ?? 0;
+      setNbElements(totalNbSessionsRef.current);
+      defaultNbClustersRef.current = Math.floor(
+        totalNbSessionsRef.current / 100,
+      );
+      if (defaultNbClustersRef.current >= 5) {
+        form.setValue("nb_clusters", defaultNbClustersRef.current);
       } else {
         form.setValue("nb_clusters", 5);
       }
-      setClusteringCost((nbTasksInSessions ?? 0) * 2);
-      form.setValue("limit", totalNbSessions);
+      setClusteringCost((totalNbSessionsData?.nb_tasks_in_sessions ?? 0) * 2);
+      form.setValue("limit", totalNbSessionsRef.current);
     }
-  }, [totalNbSessions, totalNbTasks, update]);
+  }, [totalNbSessionsData, totalNbTasksData, form, update]);
 
   const formLimit = form.getValues("limit");
 
@@ -208,25 +193,29 @@ const RunClusteringSheet = ({
     }
     if (form.getValues("scope") === "sessions") {
       setNbElements(form.getValues("limit"));
-      setClusteringCost((nbTasksInSessions ?? 0) * 2);
+      setClusteringCost((totalNbSessionsData?.nb_tasks_in_sessions ?? 0) * 2);
     }
-  }, [form, formLimit, nbTasksInSessions]);
+  }, [form, formLimit, totalNbSessionsData?.nb_tasks_in_sessions]);
 
   const formScope = form.getValues("scope");
 
   useEffect(() => {
     if (form.getValues("scope") === "sessions") {
-      setClusteringCost((nbTasksInSessions ?? 0) * 2);
+      setClusteringCost((totalNbSessionsData?.nb_tasks_in_sessions ?? 0) * 2);
     }
-  }, [nbTasksInSessions, form, formScope]);
+  }, [totalNbSessionsData?.nb_tasks_in_sessions, form, formScope]);
 
   const canRunClusterAnalysis: boolean =
     (form.getValues("scope") === "messages" &&
-      !!totalNbTasks &&
+      totalNbTasksRef.current > 0 &&
       nbElements >= 5) ||
     (form.getValues("scope") === "sessions" &&
-      !!totalNbSessions &&
+      totalNbSessionsRef.current > 0 &&
       nbElements >= 5);
+
+  function handleSkip() {
+    setSheetOpen(false);
+  }
 
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
     setLoading(true);
@@ -506,8 +495,8 @@ const RunClusteringSheet = ({
                           className="w-32"
                           max={
                             form.getValues("scope") === "messages"
-                              ? totalNbTasks ?? 0
-                              : totalNbSessions ?? 0
+                              ? totalNbTasksRef.current
+                              : totalNbSessionsRef.current
                           }
                           min={1}
                           step={1}
@@ -531,7 +520,7 @@ const RunClusteringSheet = ({
           )}
           {canRunClusterAnalysis && (
             <div className="mt-4">
-              We will clusterize {nbElements} {form.getValues("scope")}{" "}
+              We will cluster {nbElements} {form.getValues("scope")}{" "}
               {form.getValues("scope") === "sessions" && (
                 <>{nbTasksInSessions ?? 0} user messages</>
               )}{" "}
@@ -539,9 +528,12 @@ const RunClusteringSheet = ({
             </div>
           )}
           {hobby && (
-            <div className="flex justify-end mt-4">
-              <UpgradeButton tagline="Run cluster analysis" green={false} />
-            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button> Run cluster analysis </Button>
+              </AlertDialogTrigger>
+              {Blockwall({ handleSkip })}
+            </AlertDialog>
           )}
           {!hobby && canRunClusterAnalysis && (
             <div className="flex justify-end mt-4">
