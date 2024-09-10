@@ -1,16 +1,12 @@
-import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { set } from "date-fns";
-import { is } from "date-fns/locale";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import Plotly, { Data } from "plotly.js";
-import { ComponentType, use, useCallback, useEffect, useState } from "react";
-import { PlotParams } from "react-plotly.js";
+import { Data } from "plotly.js";
+import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
