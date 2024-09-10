@@ -74,7 +74,7 @@ function ClusterCard({
   return (
     <Card
       key={cluster.id}
-      className="rounded-lg shadow-md p-4 flex flex-col justify-between h-full"
+      className="rounded-lg shadow-md p-4 flex flex-col justify-between"
     >
       <HoverCard openDelay={0} closeDelay={0}>
         <div className="flex justify-between items-start space-x-2 mb-2">

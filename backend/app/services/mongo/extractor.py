@@ -165,7 +165,7 @@ class ExtractorClient:
                 ).hexdigest()
             )
 
-            response = await client.execute_workflow(
+            response = await client.start_workflow(
                 endpoint, data, id=unique_id, task_queue="default"
             )
 
