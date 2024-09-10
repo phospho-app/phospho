@@ -146,7 +146,7 @@ class AIHubClient:
                 # Generate a random id
                 unique_id = generate_uuid()
 
-            await client.execute_workflow(
+            await client.start_workflow(
                 endpoint, data, id=unique_id, task_queue="ai-hub"
             )
 
