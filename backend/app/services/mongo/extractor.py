@@ -103,7 +103,7 @@ class ExtractorClient:
         """
         Connects to the Temporal server
         """
-        if self.client is not None:
+        if self.temporal_client is not None:
             # Already connected
             return
 
