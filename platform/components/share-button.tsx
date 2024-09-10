@@ -45,13 +45,12 @@ const ShareButton: React.FC<ShareButtonProps> = ({ selectedOrgId }) => {
 
   // A user can invite others if they have the pro tier or usage based plan
   // On the free tier, they can only invite others if they have less than 3 members
-  // const userCanInviteOthers =
-  //   (user?.orgIdToOrgMemberInfo?.[selectedOrgId]?.hasPermission(
-  //     "propelauth::can_invite",
-  //   ) &&
-  //     (nbrUsersInOrg < 3 || orgPlan === "usage_based" || orgPlan === "pro")) ??
-  //   false;
-  const userCanInviteOthers = false;
+  const userCanInviteOthers =
+    (user?.orgIdToOrgMemberInfo?.[selectedOrgId]?.hasPermission(
+      "propelauth::can_invite",
+    ) &&
+      (nbrUsersInOrg < 3 || orgPlan === "usage_based" || orgPlan === "pro")) ??
+    false;
 
   const handleShare = async () => {
     setIsLoading(true);
