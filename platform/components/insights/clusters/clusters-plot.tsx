@@ -3,13 +3,12 @@ import { graphColors } from "@/lib/utils";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Data } from "plotly.js";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 
-const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
+const Plot = lazy(() => import("react-plotly.js"));
 
 export function CustomPlot({
   selected_clustering_id,
@@ -189,23 +188,25 @@ export function CustomPlot({
 
   return (
     <>
-      <div onClick={() => setIsAnimating(false)}>
-        <Plot
-          data={[data]}
-          config={{ displayModeBar: true, responsive: true }}
-          layout={layout}
-          onClick={(data) => {
-            if (data.points.length !== 1) {
-              return;
-            }
-            if (data.points[0].text) {
-              router.push(
-                `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
-              );
-            }
-          }}
-        />
-      </div>
+      <Suspense fallback={<></>}>
+        <div onClick={() => setIsAnimating(false)}>
+          <Plot
+            data={[data]}
+            config={{ displayModeBar: true, responsive: true }}
+            layout={layout}
+            onClick={(data) => {
+              if (data.points.length !== 1) {
+                return;
+              }
+              if (data.points[0].text) {
+                router.push(
+                  `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
+                );
+              }
+            }}
+          />
+        </div>
+      </Suspense>
     </>
   );
 }
