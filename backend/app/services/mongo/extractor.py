@@ -83,6 +83,8 @@ class ExtractorClient:
     A client to interact with the extractor server
     """
 
+    temporal_client: Optional[Client] = None
+
     def __init__(
         self,
         org_id: str,
@@ -95,6 +97,43 @@ class ExtractorClient:
         """
         self.org_id = org_id
         self.project_id = project_id
+        self.temporal_client = None
+
+    async def connect(self):
+        """
+        Connects to the Temporal server
+        """
+        if self.client is not None:
+            # Already connected
+            return
+
+        if config.ENVIRONMENT in ["production", "staging"]:
+            client_cert = config.TEMPORAL_MTLS_TLS_CERT
+            client_key = config.TEMPORAL_MTLS_TLS_KEY
+
+            self.temporal_client: Client = await Client.connect(
+                config.TEMPORAL_HOST_URL,
+                namespace=config.TEMPORAL_NAMESPACE,
+                tls=TLSConfig(
+                    client_cert=client_cert,
+                    client_private_key=client_key,
+                ),
+                data_converter=pydantic_data_converter,
+            )
+        elif config.ENVIRONMENT in ["test", "preview"]:
+            try:
+                self.temporal_client = await Client.connect(
+                    config.TEMPORAL_HOST_URL,
+                    namespace=config.TEMPORAL_NAMESPACE,
+                    tls=False,
+                    data_converter=pydantic_data_converter,
+                )
+            except Exception as e:
+                logger.error("Have you started a local Temporal server?")
+                logger.error(f"Error connecting to Temporal: {e}")
+                raise e
+        else:
+            raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
 
     async def _post(
         self,
@@ -119,6 +158,9 @@ class ExtractorClient:
             logger.error(f"Missing org_id or project_id for endpoint {endpoint}")
             return None
 
+        # Connect to the temporal server
+        await self.connect()
+
         org = propelauth.fetch_org(self.org_id)
         org_metadata = org.get("metadata", {})
         org_plan = org_metadata.get("plan", "hobby")
@@ -134,34 +176,6 @@ class ExtractorClient:
         data["max_usage"] = usage_quota.max_usage
 
         try:
-            if config.ENVIRONMENT in ["production", "staging"]:
-                client_cert = config.TEMPORAL_MTLS_TLS_CERT
-                client_key = config.TEMPORAL_MTLS_TLS_KEY
-
-                client: Client = await Client.connect(
-                    config.TEMPORAL_HOST_URL,
-                    namespace=config.TEMPORAL_NAMESPACE,
-                    tls=TLSConfig(
-                        client_cert=client_cert,
-                        client_private_key=client_key,
-                    ),
-                    data_converter=pydantic_data_converter,
-                )
-            elif config.ENVIRONMENT in ["test", "preview"]:
-                try:
-                    client = await Client.connect(
-                        config.TEMPORAL_HOST_URL,
-                        namespace=config.TEMPORAL_NAMESPACE,
-                        tls=False,
-                        data_converter=pydantic_data_converter,
-                    )
-                except Exception as e:
-                    logger.error("Have you started a local Temporal server?")
-                    logger.error(f"Error connecting to Temporal: {e}")
-                    raise e
-            else:
-                raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
-
             # Hash the data to generate a unique determinist id
             unique_id = (
                 endpoint
