@@ -203,3 +203,7 @@ except Exception:
     )
     TEMPORAL_MTLS_TLS_CERT = None
     TEMPORAL_MTLS_TLS_KEY = None
+
+API_TRIGGER_SECRET = os.getenv("API_TRIGGER_SECRET")
+if API_TRIGGER_SECRET is None:
+    logger.warning("API_TRIGGER_SECRET is missing from the environment variables")
