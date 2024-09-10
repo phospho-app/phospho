@@ -246,7 +246,7 @@ const RunClusteringSheet = ({
   }
 
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
-    // setLoading(true);
+    setLoading(true);
     try {
       await fetch(`/api/explore/${project_id}/detect-clusters`, {
         method: "POST",
@@ -616,7 +616,7 @@ const RunClusteringSheet = ({
           )}
           {!hobby && canRunClusterAnalysis && (
             <div className="flex justify-end mt-4">
-              <Button type="submit">
+              <Button type="submit" disabled={loading}>
                 {loading && <Spinner className="mr-2" />}
                 Run cluster analysis
               </Button>
