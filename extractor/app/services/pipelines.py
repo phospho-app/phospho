@@ -551,7 +551,7 @@ class MainPipeline:
                     most_common_flag=most_common_flag,
                 )
 
-                await mongo_db["sessions"].update_one(
+                mongo_db["sessions"].update_one(
                     {"id": session_id},
                     {
                         "$set": {
@@ -647,7 +647,7 @@ class MainPipeline:
                 sentiment_object = None
 
             # We update the task item
-            await mongo_db["tasks"].update_one(
+            mongo_db["tasks"].update_one(
                 {
                     "id": task.id,
                     "project_id": task.project_id,

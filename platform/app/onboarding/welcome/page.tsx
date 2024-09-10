@@ -28,7 +28,8 @@ function WhatIsPhospho() {
         <CardContent className={CARD_STYLE}>
           <div className="pt-10">Welcome to phospho.</div>
           <div>
-            phospho helps you understand your Users' behavior on your LLM app.
+            phospho helps you understand your Users&apos; behavior on your LLM
+            app.
           </div>
           <div className="flex justify-center pt-10">
             <ArrowBigDown
@@ -52,7 +53,7 @@ function WhatAreTasks() {
           <div className="flex flex-col justify-center text-sm font-normal space-y-2">
             <div className="w-full flex justify-end items-center">
               <div className="rounded-sm bg-blue-600 text-white p-2">
-                What's the capital of France?
+                What&apos;s the capital of France?
               </div>
               <User className="w-6 h-6 ml-2 text-primary" />
             </div>
@@ -245,7 +246,7 @@ function LetsGo() {
               className="bg-green-500 text-2xl p-10"
               variant="outline"
             >
-              Got it. Let's get started!
+              Got it. Let&apos;s get started!
             </Button>
           </div>
         </CardContent>

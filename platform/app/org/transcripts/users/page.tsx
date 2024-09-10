@@ -22,7 +22,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, HeartHandshake } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-import { Bar, BarChart, Label, Pie, PieChart, XAxis, YAxis } from "recharts";
+import { Label, Pie, PieChart } from "recharts";
 import useSWR from "swr";
 
 // TODO : Add graph colors like in tasks-dataviz.tsx
@@ -44,14 +44,13 @@ const UsersDataviz = () => {
   const project_id = navigationStateStore((state) => state.project_id);
 
   // Fetch all users
-  const { data: usersData } = useSWR(
+  const {} = useSWR(
     project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
     },
   );
-  const usersMetadata = usersData?.users;
 
   // Fetch graph data
   const { data: userCountData, error: fetchUserCountError } = useSWR(
@@ -140,6 +139,10 @@ const UsersDataviz = () => {
       },
     );
 
+  const totalJobTitles = React.useMemo(() => {
+    return userJobTitles?.reduce((acc, _) => acc + 1, 0) || 0;
+  }, [userJobTitles]);
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -217,12 +220,7 @@ const UsersDataviz = () => {
                                   y={(viewBox.cy || 0) + 5}
                                   className="fill-foreground text-3xl font-bold"
                                 >
-                                  {React.useMemo(() => {
-                                    return userJobTitles?.reduce(
-                                      (acc, _) => acc + 1,
-                                      0,
-                                    );
-                                  }, [])?.toLocaleString()}
+                                  {totalJobTitles.toLocaleString()}
                                 </tspan>
                                 <tspan
                                   x={viewBox.cx}
@@ -294,12 +292,7 @@ const UsersDataviz = () => {
                                   y={(viewBox.cy || 0) + 5}
                                   className="fill-foreground text-3xl font-bold"
                                 >
-                                  {React.useMemo(() => {
-                                    return userIndustry?.reduce(
-                                      (acc, _) => acc + 1,
-                                      0,
-                                    );
-                                  }, [])?.toLocaleString()}
+                                  {totalJobTitles.toLocaleString()}
                                 </tspan>
                                 <tspan
                                   x={viewBox.cx}

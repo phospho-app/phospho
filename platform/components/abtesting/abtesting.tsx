@@ -24,7 +24,6 @@ import {
 } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { version } from "os";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
@@ -86,7 +85,7 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
 
   return (
     <>
-      {(!abTests || (abTests?.length ?? 0) <= 1) && (
+      {abTests && (abTests?.length ?? 0) <= 1 && (
         <Card className="bg-secondary">
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -112,14 +111,14 @@ export function ABTesting<TData, TValue>({}: DataTableProps<TData, TValue>) {
           </CardHeader>
         </Card>
       )}
+      {abTests && abTests.length > 1 && (
+        <h1 className="text-2xl font-bold">AB Testing</h1>
+      )}
       <div className="pb-10">
-        <div className="flex flex-row items-center mb-2 justify-between">
-          <CreateNewABTestButton />
+        <ABTestingDataviz versionIDs={versionIDs} />
+        <div className="flex flex-row items-center mb-2 justify-end">
           <TableNavigation table={table} />
         </div>
-
-        <ABTestingDataviz versionIDs={versionIDs} />
-
         <div className="rounded-md border">
           <Table>
             <TableHeader>

@@ -1,6 +1,7 @@
 "use client";
 
 import CreateDataset from "@/components/integrations/argilla/create-argilla-dataset";
+import PullDataset from "@/components/integrations/argilla/pull-argilla-dataset";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,10 +12,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { dataStateStore } from "@/store/store";
-import { CircleAlert, Download } from "lucide-react";
+import { CircleAlert } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import PullDataset from "./pull-argilla-dataset";
 
 const ArgillaIntegrations: React.FC = () => {
   const selectedOrgMetadata = dataStateStore(
@@ -34,10 +35,12 @@ const ArgillaIntegrations: React.FC = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex">
-          <img
+          <Image
             src="/image/argilla.png"
             alt="Argilla Logo"
             className="w-10 h-5 mr-2"
+            width={40}
+            height={20}
           />
           Argilla
         </CardTitle>

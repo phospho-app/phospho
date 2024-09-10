@@ -8,7 +8,7 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Boxes, ChevronRight, Sparkles } from "lucide-react";
+import { Boxes, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import useSWR from "swr";

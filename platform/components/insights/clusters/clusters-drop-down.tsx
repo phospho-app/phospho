@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/select";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
-import { useEffect, useState } from "react";
+import { Check } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 export function ClusteringDropDown({
   selectedClustering,
@@ -23,12 +24,17 @@ export function ClusteringDropDown({
 }) {
   const [refresh, setRefresh] = useState(false);
 
+  const clusteringsJSON = useMemo(
+    () => JSON.stringify(clusterings),
+    [clusterings],
+  );
+
   useEffect(() => {
     setRefresh(!refresh);
-  }, [JSON.stringify(clusterings)]);
+  }, [clusteringsJSON]);
 
   return (
-    <div className="flex flex-row gap-x-2 items-center mb-2 custom-plot w-full">
+    <div className="flex flex-row gap-x-2 items-center mb-2 mr-2">
       <div>
         <Select
           onValueChange={(value: string) => {
@@ -44,16 +50,12 @@ export function ClusteringDropDown({
             );
           }}
           defaultValue={
-            clusterings && clusterings?.length > 0
-              ? formatUnixTimestampToLiteralDatetime(clusterings[0].created_at)
-              : ""
+            selectedClustering ? selectedClustering.id : "no-clustering"
           }
         >
-          <SelectTrigger>
+          <SelectTrigger className="min-w-[20rem]">
             <div>
-              {clusterings && clusterings?.length > 0 && (
-                <span>{selectedClusteringName}</span>
-              )}
+              {selectedClusteringName && <span>{selectedClusteringName}</span>}
               {clusterings?.length === 0 && (
                 <span className="text-muted-foreground">
                   No clustering available
@@ -85,12 +87,6 @@ export function ClusteringDropDown({
             </SelectGroup>
           </SelectContent>
         </Select>
-      </div>
-      <div>
-        <Badge>{selectedClustering?.instruction ?? "No instruction"}</Badge>
-      </div>
-      <div>
-        <Badge>{selectedClustering?.nb_clusters ?? "No"} clusters</Badge>
       </div>
     </div>
   );

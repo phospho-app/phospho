@@ -76,11 +76,9 @@ export function SelectProjectButton() {
       <SelectTrigger className="py-1 h-8">
         <span className="flex space-x-1">
           <div className="flex items-center">Project</div>
-          <SelectValue
-            asChild={true}
-            children={<div>{selectedProjectName}</div>}
-            id={project_id}
-          />
+          <SelectValue asChild={true} id={project_id}>
+            <div>{selectedProjectName}</div>
+          </SelectValue>
         </span>
       </SelectTrigger>
       <SelectContent

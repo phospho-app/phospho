@@ -1,7 +1,6 @@
 "use client";
 
 import { SendDataCallout } from "@/components/callouts/import-data";
-import { RunClusteringCallout } from "@/components/callouts/run-clustering";
 import React from "react";
 
 import TasksDataviz from "./tasks-dataviz";

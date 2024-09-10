@@ -54,26 +54,6 @@ const CreateNewABTestButton = () => {
     setABButtonClicked(false);
   }
 
-  async function clearABTest() {
-    await fetch(`/api/projects/${project_id}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        settings: {
-          ab_version_id: null,
-        },
-      }),
-    }).then(() => {
-      toast({
-        title: "Version ID cleared",
-        description: "No version_id will be added to your logs",
-      });
-    });
-  }
-
   const [aBButtonClicked, setABButtonClicked] = useState(false);
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -90,7 +70,7 @@ const CreateNewABTestButton = () => {
           <PopoverTrigger asChild>
             <Button>
               <PlusIcon className="h-4 w-4 mr-2" />
-              Create New AB Test
+              New AB Test
             </Button>
           </PopoverTrigger>
           {/* <Button onClick={clearABTest} className="ml-2">

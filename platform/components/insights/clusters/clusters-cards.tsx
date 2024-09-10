@@ -74,7 +74,7 @@ function ClusterCard({
   return (
     <Card
       key={cluster.id}
-      className="rounded-lg shadow-md p-4 flex flex-col justify-between h-full"
+      className="rounded-lg shadow-md p-4 flex flex-col justify-between"
     >
       <HoverCard openDelay={0} closeDelay={0}>
         <div className="flex justify-between items-start space-x-2 mb-2">
@@ -200,7 +200,8 @@ export function ClustersCards({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    // We set this as custom-plot to align the width of plotly to the width of the cards
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 custom-plot min-w-full">
       {clustersData?.map((cluster) => {
         return (
           <ClusterCard

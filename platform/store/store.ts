@@ -1,5 +1,6 @@
 import { SidebarState } from "@/components/sidebar/sidebar";
 import {
+  Clustering,
   CustomDateRange,
   HasEnoughLabelledTasks,
   OrgMetadata,
@@ -49,6 +50,8 @@ interface navigationState {
 
   sidebarState: SidebarState | null;
   setSidebarState: (sidebarState: SidebarState) => void;
+  selectedClustering: Clustering | undefined;
+  setSelectedClustering: (clustering: Clustering | undefined) => void;
 }
 
 export const navigationStateStore = create(
@@ -252,8 +255,11 @@ export const navigationStateStore = create(
       sidebarState: null,
       setSidebarState: (sidebarState: SidebarState) =>
         set(() => ({ sidebarState: sidebarState })),
-    }),
 
+      selectedClustering: undefined,
+      setSelectedClustering: (clustering: Clustering | undefined) =>
+        set(() => ({ selectedClustering: clustering })),
+    }),
     {
       name: "navigation-storage",
       storage: createJSONStorage(() => sessionStorage),
