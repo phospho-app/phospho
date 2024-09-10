@@ -562,3 +562,19 @@ async def post_propelauth_webhook(
             },
         )
     return {"status": "ok"}
+
+
+@router.get(
+    "/organizations/{org_id}/nb-users-and-plan",
+    description="Get the number of users in an organization",
+)
+async def get_org_number_users(
+    org_id: str,
+    user: User = Depends(propelauth.require_user),
+):
+    propelauth.require_org_member(user, org_id)
+    org = propelauth.fetch_users_in_org(org_id)
+    total_users = org.get("totalUsers", 0)
+    org_metadata = org.get("metadata", {})
+    org_plan = org_metadata.get("plan", "hobby")
+    return {"total_users": total_users, "plan": org_plan}
