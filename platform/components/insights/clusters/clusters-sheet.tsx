@@ -7,7 +7,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -44,7 +55,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import { TestTubeDiagonal } from "lucide-react";
+import { TestTubeDiagonal, TriangleAlert } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -228,64 +239,136 @@ const RunClusteringSheet = ({
       !!totalNbSessions &&
       nbElements >= 5);
 
+  function handleSkip() {
+    setSheetOpen(false);
+  }
+
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
-    setLoading(true);
-    try {
-      await fetch(`/api/explore/${project_id}/detect-clusters`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + accessToken,
-        },
-        body: JSON.stringify({
-          filters: dataFilters,
-          scope: formData.scope,
-          instruction: formData.instruction,
-          nb_clusters: formData.detect_outliers ? null : formData.nb_clusters,
-          clustering_mode: formData.detect_outliers
-            ? "dbscan"
-            : "agglomerative",
-        }),
-      }).then(async (response) => {
-        if (response.ok) {
-          // The endpoint returns the new clustering
-          const newClustering = (await response.json()) as Clustering;
-          // Update the clusterings list
-          mutate(
-            project_id
-              ? [`/api/explore/${project_id}/clusterings`, accessToken]
-              : null,
-            (data: any) => {
-              const clusterings = data?.clusterings || [];
-              return {
-                clusterings: [newClustering, ...clusterings],
-              };
-            },
-          ).then(() => {
-            // Update the selected clustering
-            setSelectedClustering(newClustering);
-          });
-          toast({
-            title: `Cluster detection ${newClustering.name} started ⏳`,
-            description: "This may take a few minutes.",
-          });
-          setSheetOpen(false);
-        } else {
-          toast({
-            title: "Error when starting detection",
-            description: response.text(),
-          });
-        }
-        setLoading(false);
-      });
-    } catch (e) {
-      toast({
-        title: "Error when starting detection",
-        description: JSON.stringify(e),
-      });
-      setLoading(false);
+    if (orgMetadata && orgMetadata?.plan === "hobby") {
+      return (
+        <SheetContent className="md:w-1/2 overflow-auto">
+          <div>zizi</div>
+        </SheetContent>
+      );
     }
   }
+  {
+    /* </SheetContent></><AlertDialogContent className="md:max-w-1/2 flex flex-col justify-between">
+            <AlertDialogHeader>
+              <div className="flex justify-between">
+                <div className="flex flex-col space-y-2 w-full">
+                  <AlertDialogTitle className="text-2xl font-bold tracking-tight mb-1">
+                    One more thing...
+                  </AlertDialogTitle>
+                  <Card className="w-full border-red-500 bg-red-200">
+                    <CardTitle className="text-xl mt-2 ml-2 text-black">
+                      <div className="flex align-center">
+                        <TriangleAlert className="mr-2" />
+                        Your account is missing billing information
+                      </div>
+                    </CardTitle>
+                    <CardHeader>
+                      <CardDescription className="text-black">
+                        Please add payment information to enable data analytics
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </div>
+              </div>
+            </AlertDialogHeader> */
+  }
+
+  {
+    /* <div className="text-muted-foreground mx-[5%]">
+<p>Add your info to access advanced analytics features:</p>
+<ul>
+<li> - Sentiment Analytics</li>
+<li> - Success/Failure flags</li>
+<li> - Custom event detection </li>
+<li> - Language Detection</li>
+<li> - Data Clustering</li>
+</ul>
+</div>
+<div className="mx-[5%] font-semibold">
+Enable analytics now to get 10$ of free credits 🎁
+</div>
+
+<div className="flex justify-between">
+<Button
+onClick={() => handleSkip()}
+variant={"link"}
+className="text-muted-foreground"
+>
+Ignore
+</Button>
+<div className="flex flex-col justify-center items-center">
+<UpgradeButton tagline="Enable Analytics" />
+</div>
+</div> */
+  }
+  //         </AlertDialogContent></>
+  //       </>
+  //     );
+  //   } else {
+  //     console.log("submitting");
+  //     // setLoading(true);
+  //     try {
+  //       await fetch(`/api/explore/${project_id}/detect-clusters`, {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: "Bearer " + accessToken,
+  //         },
+  //         body: JSON.stringify({
+  //           filters: dataFilters,
+  //           scope: formData.scope,
+  //           instruction: formData.instruction,
+  //           nb_clusters: formData.detect_outliers ? null : formData.nb_clusters,
+  //           clustering_mode: formData.detect_outliers
+  //             ? "dbscan"
+  //             : "agglomerative",
+  //         }),
+  //       }).then(async (response) => {
+  //         if (response.ok) {
+  //           // The endpoint returns the new clustering
+  //           const newClustering = (await response.json()) as Clustering;
+  //           // Update the clusterings list
+  //           mutate(
+  //             project_id
+  //               ? [`/api/explore/${project_id}/clusterings`, accessToken]
+  //               : null,
+  //             (data: any) => {
+  //               const clusterings = data?.clusterings || [];
+  //               return {
+  //                 clusterings: [newClustering, ...clusterings],
+  //               };
+  //             },
+  //           ).then(() => {
+  //             // Update the selected clustering
+  //             setSelectedClustering(newClustering);
+  //           });
+  //           toast({
+  //             title: `Cluster detection ${newClustering.name} started ⏳`,
+  //             description: "This may take a few minutes.",
+  //           });
+  //           setSheetOpen(false);
+  //         } else {
+  //           toast({
+  //             title: "Error when starting detection",
+  //             description: response.text(),
+  //           });
+  //         }
+  //         setLoading(false);
+  //       });
+  //     } catch (e) {
+  //       toast({
+  //         title: "Error when starting detection",
+  //         description: JSON.stringify(e),
+  //       });
+  //       setLoading(false);
+  //     }
+  //   }
+  // }
 
   if (!project_id) {
     return <></>;
@@ -545,7 +628,7 @@ const RunClusteringSheet = ({
           )}
           {!hobby && canRunClusterAnalysis && (
             <div className="flex justify-end mt-4">
-              <Button type="submit" disabled={loading}>
+              <Button type="submit">
                 {loading && <Spinner className="mr-2" />}
                 Run cluster analysis
               </Button>
