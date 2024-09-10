@@ -1,3 +1,4 @@
+import { Blockwall } from "@/components/blockwall";
 import { DatePickerWithRange } from "@/components/date-range";
 import FilterComponent from "@/components/filters";
 import { Spinner } from "@/components/small-spinner";
@@ -7,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -35,7 +37,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
-import UpgradeButton from "@/components/upgrade-button";
 import { authFetcher } from "@/lib/fetcher";
 import { Clustering } from "@/models/models";
 import { dataStateStore } from "@/store/store";
@@ -227,6 +228,10 @@ const RunClusteringSheet = ({
     (form.getValues("scope") === "sessions" &&
       !!totalNbSessions &&
       nbElements >= 5);
+
+  function handleSkip() {
+    setSheetOpen(false);
+  }
 
   async function onSubmit(formData: z.infer<typeof FormSchema>) {
     setLoading(true);
@@ -539,9 +544,12 @@ const RunClusteringSheet = ({
             </div>
           )}
           {hobby && (
-            <div className="flex justify-end mt-4">
-              <UpgradeButton tagline="Run cluster analysis" green={false} />
-            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button> Run cluster analysis </Button>
+              </AlertDialogTrigger>
+              {Blockwall({ handleSkip })}
+            </AlertDialog>
           )}
           {!hobby && canRunClusterAnalysis && (
             <div className="flex justify-end mt-4">
