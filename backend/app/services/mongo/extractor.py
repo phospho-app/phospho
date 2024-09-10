@@ -1,28 +1,24 @@
 import hashlib
 import time
 import traceback
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 import httpx
 import stripe
-
 from app.api.v2.models import LogEvent
 from app.api.v3.models import MinimalLogEventForMessages
 from app.core import config
-from app.services.slack import slack_notification
-from app.utils import generate_uuid
-from app.temporal.pydantic_converter import pydantic_data_converter
 from app.security import propelauth
+from app.services.mongo.organizations import get_usage_quota
+from app.services.slack import slack_notification
+from app.temporal.pydantic_converter import pydantic_data_converter
+from app.utils import generate_uuid
 from loguru import logger
+from temporalio.client import Client, TLSConfig
+from temporalio.exceptions import WorkflowAlreadyStartedError
 
 from phospho.lab import Message
 from phospho.models import PipelineResults, Recipe, Task
-
-from temporalio.client import Client, TLSConfig
-from temporalio.exceptions import WorkflowAlreadyStartedError
-from app.services.mongo.organizations import get_usage_quota
-
-import os
 
 
 async def bill_on_stripe(
@@ -83,6 +79,8 @@ class ExtractorClient:
     A client to interact with the extractor server
     """
 
+    temporal_client: Optional[Client] = None
+
     def __init__(
         self,
         org_id: str,
@@ -95,16 +93,59 @@ class ExtractorClient:
         """
         self.org_id = org_id
         self.project_id = project_id
+        self.temporal_client = None
+
+    async def connect_temporal_client(self):
+        """
+        Connects to the Temporal server
+        """
+        if self.temporal_client is not None:
+            # Already connected
+            return
+
+        if config.ENVIRONMENT in ["production", "staging"]:
+            client_cert = config.TEMPORAL_MTLS_TLS_CERT
+            client_key = config.TEMPORAL_MTLS_TLS_KEY
+
+            self.temporal_client: Client = await Client.connect(
+                config.TEMPORAL_HOST_URL,
+                namespace=config.TEMPORAL_NAMESPACE,
+                tls=TLSConfig(
+                    client_cert=client_cert,
+                    client_private_key=client_key,
+                ),
+                data_converter=pydantic_data_converter,
+            )
+        elif config.ENVIRONMENT in ["test", "preview"]:
+            try:
+                self.temporal_client = await Client.connect(
+                    config.TEMPORAL_HOST_URL,
+                    namespace=config.TEMPORAL_NAMESPACE,
+                    tls=False,
+                    data_converter=pydantic_data_converter,
+                )
+            except Exception as e:
+                logger.error("Have you started a local Temporal server?")
+                logger.error(f"Error connecting to Temporal: {e}")
+                raise e
+        else:
+            raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
 
     async def _post(
         self,
         endpoint: str,  # Should be the name of the workflow
         data: dict,  # Should be just one pydantic model
-        on_success_callback: Optional[Callable] = None,
+        return_response: bool = False,
     ) -> Optional[httpx.Response]:
         """
-        Post data to the extractor temporal worker
+        Post data to the extractor temporal worker.
+
+        If return_response is True, the function will return the response from the workflow.
+
+        If return_response is False, the function will return None. This is useful for fire-and-forget workflows.
         """
+
+        response = None
 
         # We check that "org_id" and"project_id" are present in the data
         if endpoint not in ["store_open_telemetry_data_workflow"] and (
@@ -112,6 +153,11 @@ class ExtractorClient:
         ):
             logger.error(f"Missing org_id or project_id for endpoint {endpoint}")
             return None
+
+        # Connect to the temporal server
+        await self.connect_temporal_client()
+        if self.temporal_client is None:
+            raise ValueError("Temporal client is not connected")
 
         org = propelauth.fetch_org(self.org_id)
         org_metadata = org.get("metadata", {})
@@ -128,34 +174,6 @@ class ExtractorClient:
         data["max_usage"] = usage_quota.max_usage
 
         try:
-            if config.ENVIRONMENT in ["production", "staging"]:
-                client_cert = config.TEMPORAL_MTLS_TLS_CERT
-                client_key = config.TEMPORAL_MTLS_TLS_KEY
-
-                client: Client = await Client.connect(
-                    config.TEMPORAL_HOST_URL,
-                    namespace=config.TEMPORAL_NAMESPACE,
-                    tls=TLSConfig(
-                        client_cert=client_cert,
-                        client_private_key=client_key,
-                    ),
-                    data_converter=pydantic_data_converter,
-                )
-            elif config.ENVIRONMENT in ["test", "preview"]:
-                try:
-                    client = await Client.connect(
-                        config.TEMPORAL_HOST_URL,
-                        namespace=config.TEMPORAL_NAMESPACE,
-                        tls=False,
-                        data_converter=pydantic_data_converter,
-                    )
-                except Exception as e:
-                    logger.error("Have you started a local Temporal server?")
-                    logger.error(f"Error connecting to Temporal: {e}")
-                    raise e
-            else:
-                raise ValueError(f"Unknown environment {config.ENVIRONMENT}")
-
             # Hash the data to generate a unique determinist id
             unique_id = (
                 endpoint
@@ -165,12 +183,14 @@ class ExtractorClient:
                 ).hexdigest()
             )
 
-            response = await client.execute_workflow(
-                endpoint, data, id=unique_id, task_queue="default"
-            )
-
-            if on_success_callback:
-                await on_success_callback(response)
+            if not return_response:
+                await self.temporal_client.start_workflow(
+                    endpoint, data, id=unique_id, task_queue="default"
+                )
+            else:
+                response = await self.temporal_client.execute_workflow(
+                    endpoint, data, id=unique_id, task_queue="default"
+                )
 
         except WorkflowAlreadyStartedError as e:
             logger.warning(
@@ -194,7 +214,7 @@ class ExtractorClient:
                     slack_message = error_message
                 await slack_notification(slack_message)
 
-        return None
+        return response
 
     async def run_process_log_for_tasks(
         self,
@@ -204,6 +224,9 @@ class ExtractorClient:
         """
         Run the log procesing pipeline on a task asynchronously
         """
+        logger.info(
+            f"Running process log for {len(logs_to_process)} tasks for project {self.project_id}"
+        )
         if extra_logs_to_save is None:
             extra_logs_to_save = []
 
@@ -285,6 +308,7 @@ class ExtractorClient:
             {
                 "task": task.model_dump(mode="json"),
             },
+            return_response=True,
         )
         if result is None or result.status_code != 200:
             return PipelineResults()
@@ -311,6 +335,7 @@ class ExtractorClient:
             {
                 "messages": [message.model_dump(mode="json") for message in messages],
             },
+            return_response=True,
         )
         if result is None or result.status_code != 200:
             return PipelineResults()

@@ -72,19 +72,19 @@ class BaseWorkflow:
         self.request_class = request_class
         self.bill = bill
         self.max_retries = max_retries
-
-    async def run_activity(self, request: dict) -> None:
-        retry_policy = RetryPolicy(
+        self.retry_policy = RetryPolicy(
             maximum_attempts=self.max_retries,
             maximum_interval=timedelta(minutes=5),
             non_retryable_error_types=["ValueError"],
         )
+
+    async def run_activity(self, request: dict) -> None:
         request_model = self.request_class(**request)
         response = await workflow.execute_activity(
             self.activity_func,
             request,
             start_to_close_timeout=timedelta(minutes=15),
-            retry_policy=retry_policy,
+            retry_policy=self.retry_policy,
         )
         if self.bill:
             await workflow.execute_activity(

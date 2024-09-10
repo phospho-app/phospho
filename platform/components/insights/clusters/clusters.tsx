@@ -17,8 +17,9 @@ import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Boxes, Plus } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
 import { ClustersCards } from "./clusters-cards";
@@ -60,6 +61,15 @@ const Clusters: React.FC = () => {
     );
   }
 
+  const clusteringsJSON = useMemo(
+    () => JSON.stringify(clusterings),
+    [clusterings],
+  );
+  const selectedClusteringJSON = useMemo(
+    () => JSON.stringify(selectedClustering),
+    [selectedClustering],
+  );
+
   useEffect(() => {
     if (clusterings === undefined) {
       setSelectedClustering(undefined);
@@ -87,7 +97,13 @@ const Clusters: React.FC = () => {
       setSelectedClustering(undefined);
       return;
     }
-  }, [JSON.stringify(clusterings), project_id, selectedClustering]);
+  }, [
+    clusterings,
+    clusteringsJSON,
+    project_id,
+    selectedClustering,
+    setSelectedClustering,
+  ]);
 
   // Add a useEffect triggered every few seconds to update the clustering status
   useEffect(() => {
@@ -107,7 +123,13 @@ const Clusters: React.FC = () => {
       }, 3000);
       return () => clearInterval(interval);
     }
-  }, [JSON.stringify(selectedClustering), project_id]);
+  }, [
+    selectedClusteringJSON,
+    project_id,
+    accessToken,
+    selectedClustering,
+    setSelectedClustering,
+  ]);
 
   if (!project_id) {
     return <></>;
@@ -124,17 +146,26 @@ const Clusters: React.FC = () => {
         {clusterings && clusterings.length <= 1 && (
           <Card className="bg-secondary">
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-                    Automatic cluster detection
-                  </CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Detect recurring topics, trends, and outliers using
-                    unsupervized machine learning.
-                  </CardDescription>
+              <div className="flex justify-between items-center">
+                <div className="flex">
+                  <Boxes className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+                  <div>
+                    <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
+                      Automatic cluster detection
+                    </CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      Detect recurring topics, trends, and outliers using
+                      unsupervized machine learning.{" "}
+                      <a
+                        href="https://docs.phospho.ai/analytics/clustering"
+                        target="_blank"
+                        className="underline"
+                      >
+                        Learn more.
+                      </a>
+                    </CardDescription>
+                  </div>
                 </div>
-                <div className="flex flex-col space-y-1 justify-center items-center"></div>
               </div>
             </CardHeader>
           </Card>
@@ -173,11 +204,6 @@ const Clusters: React.FC = () => {
             </div>
           )}
           <div className="flex-col space-y-2 md:flex pb-10">
-            {!selectedClustering && (
-              <div className="w-full text-muted-foreground flex justify-center text-sm h-20">
-                Run a clustering to see clusters here.
-              </div>
-            )}
             {selectedClustering &&
               selectedClustering.status !== "completed" && (
                 <div className="w-full flex flex-col items-center">
@@ -205,6 +231,12 @@ const Clusters: React.FC = () => {
                   )}
                 </div>
               )}
+            {clusterings && clusterings.length === 0 && (
+              <CustomPlot
+                dummyData={true}
+                setSheetClusterOpen={setSheetClusterOpen}
+              />
+            )}
             {selectedClustering !== undefined &&
               selectedClustering !== null && (
                 <CustomPlot
