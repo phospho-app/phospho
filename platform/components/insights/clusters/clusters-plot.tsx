@@ -3,13 +3,12 @@ import { graphColors } from "@/lib/utils";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Data } from "plotly.js";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import useSWR from "swr";
 
-const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
+const Plot = lazy(() => import("react-plotly.js"));
 
 export function CustomPlot({
   selected_clustering_id,
@@ -115,59 +114,61 @@ export function CustomPlot({
   }
 
   return (
-    <Plot
-      data={[data]}
-      config={{ displayModeBar: true, responsive: true }}
-      layout={{
-        height: Math.max(window.innerHeight * 0.6, 300),
-        // set it to be the size of the current div in pixel
-        width:
-          // The custom-plot div is the width of the cards
-          document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
-          window.innerWidth * 0.8,
-        // autosize: true,
-        scene: {
-          xaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
+    <Suspense fallback={<></>}>
+      <Plot
+        data={[data]}
+        config={{ displayModeBar: true, responsive: true }}
+        layout={{
+          height: Math.max(window.innerHeight * 0.6, 300),
+          // set it to be the size of the current div in pixel
+          width:
+            // The custom-plot div is the width of the cards
+            document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
+            window.innerWidth * 0.8,
+          // autosize: true,
+          scene: {
+            xaxis: {
+              visible: false,
+              showgrid: false,
+              zeroline: false,
+              showline: false,
+              showticklabels: false,
+              spikesides: false,
+              showspikes: false,
+            },
+            yaxis: {
+              visible: false,
+              showgrid: false,
+              zeroline: false,
+              showline: false,
+              showticklabels: false,
+              spikesides: false,
+              showspikes: false,
+            },
+            zaxis: {
+              visible: false,
+              showgrid: false,
+              zeroline: false,
+              showline: false,
+              showticklabels: false,
+              spikesides: false,
+              showspikes: false,
+            },
           },
-          yaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-          zaxis: {
-            visible: false,
-            showgrid: false,
-            zeroline: false,
-            showline: false,
-            showticklabels: false,
-            spikesides: false,
-            showspikes: false,
-          },
-        },
-        paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
-        plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
-      }}
-      onClick={(data) => {
-        if (data.points.length !== 1) {
-          return;
-        }
-        if (data.points[0].text) {
-          router.push(
-            `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
-          );
-        }
-      }}
-    />
+          paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
+          plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
+        }}
+        onClick={(data) => {
+          if (data.points.length !== 1) {
+            return;
+          }
+          if (data.points[0].text) {
+            router.push(
+              `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
+            );
+          }
+        }}
+      />
+    </Suspense>
   );
 }
