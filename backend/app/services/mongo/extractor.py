@@ -95,7 +95,7 @@ class ExtractorClient:
         self.project_id = project_id
         self.temporal_client = None
 
-    async def connect(self):
+    async def connect_temporal_client(self):
         """
         Connects to the Temporal server
         """
@@ -155,7 +155,9 @@ class ExtractorClient:
             return None
 
         # Connect to the temporal server
-        await self.connect()
+        await self.connect_temporal_client()
+        if self.temporal_client is None:
+            raise ValueError("Temporal client is not connected")
 
         org = propelauth.fetch_org(self.org_id)
         org_metadata = org.get("metadata", {})
