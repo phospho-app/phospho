@@ -253,7 +253,7 @@ async def get_org_metadata(
 
 
 @router.post(
-    "/organizations/{org_id}c",
+    "/organizations/{org_id}/create-checkout",
     description="Create a stripe checkout session for an organization",
 )
 async def post_create_checkout_session(
