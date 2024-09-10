@@ -37,7 +37,6 @@ export function RunClusteringCallout() {
             <CardHeader>
               <div className="flex">
                 <Boxes className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
-
                 <div className="flex flex-grow justify-between items-center">
                   <div>
                     <CardTitle className="text-2xl font-bold tracking-tight mb-0">
