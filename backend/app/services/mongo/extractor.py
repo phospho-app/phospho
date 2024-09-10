@@ -186,11 +186,11 @@ class ExtractorClient:
             )
 
             if not return_response:
-                await client.start_workflow(
+                await self.temporal_client.start_workflow(
                     endpoint, data, id=unique_id, task_queue="default"
                 )
             else:
-                response = await client.execute_workflow(
+                response = await self.temporal_client.execute_workflow(
                     endpoint, data, id=unique_id, task_queue="default"
                 )
 
