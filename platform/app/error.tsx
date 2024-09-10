@@ -25,6 +25,7 @@ export default function Error({
         className="max-w-1/4"
         onClick={() => {
           navigationStateStore.persist.clearStorage();
+          window.location.reload();
           reset();
         }}
       >
