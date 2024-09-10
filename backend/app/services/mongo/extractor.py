@@ -1,28 +1,24 @@
 import hashlib
 import time
 import traceback
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 import httpx
 import stripe
-
 from app.api.v2.models import LogEvent
 from app.api.v3.models import MinimalLogEventForMessages
 from app.core import config
-from app.services.slack import slack_notification
-from app.utils import generate_uuid
-from app.temporal.pydantic_converter import pydantic_data_converter
 from app.security import propelauth
+from app.services.mongo.organizations import get_usage_quota
+from app.services.slack import slack_notification
+from app.temporal.pydantic_converter import pydantic_data_converter
+from app.utils import generate_uuid
 from loguru import logger
+from temporalio.client import Client, TLSConfig
+from temporalio.exceptions import WorkflowAlreadyStartedError
 
 from phospho.lab import Message
 from phospho.models import PipelineResults, Recipe, Task
-
-from temporalio.client import Client, TLSConfig
-from temporalio.exceptions import WorkflowAlreadyStartedError
-from app.services.mongo.organizations import get_usage_quota
-
-import os
 
 
 async def bill_on_stripe(
