@@ -5,7 +5,14 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
 import { Data } from "plotly.js";
-import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import useSWR from "swr";
 
 const Plot = lazy(() => import("react-plotly.js"));
@@ -18,10 +25,11 @@ export function CustomPlot({
   selectedClustering: Clustering;
 }) {
   const project_id = navigationStateStore((state) => state.project_id);
-  const [refresh, setRefresh] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
   const { accessToken } = useUser();
   const [isAnimating, setIsAnimating] = useState(true);
+  const frameRef = useRef(0);
 
   const { data } = useSWR(
     project_id
@@ -29,6 +37,7 @@ export function CustomPlot({
           `/api/explore/${project_id}/data-cloud`,
           accessToken,
           JSON.stringify(selectedClustering),
+          refreshKey, // Add refreshKey to the dependency array
         ]
       : null,
     ([url, accessToken]) =>
@@ -85,15 +94,13 @@ export function CustomPlot({
     },
   );
 
-  const defaultLayout = {
+  const [layout, setLayout] = useState(() => ({
     height: Math.max(window.innerHeight * 0.6, 300),
-    // set it to be the size of the current div in pixel
     width: Math.max(
       document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
         window.innerWidth * 0.8,
       640,
     ),
-    // autosize: true,
     scene: {
       xaxis: {
         visible: false,
@@ -125,19 +132,15 @@ export function CustomPlot({
     },
     paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
     plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
-  };
+  }));
 
-  const [layout, setLayout] = useState(defaultLayout);
-
-  // Animation
-  let frame = 0;
   const totalFrames = 3600;
   const zoomCycles = 2; // Number of zoom in/out cycles per full rotation
 
   const animate = useCallback(() => {
     if (!isAnimating) return;
-    console.log("frame", frame);
-    const t = frame / totalFrames;
+
+    const t = frameRef.current / totalFrames;
     const zoomT = (Math.sin(2 * Math.PI * zoomCycles * t) + 1) / 2; // Oscillates between 0 and 1
     const zoom = 1 + zoomT * 0.3; // Zoom factor oscillates between 1.25 and 1.75
 
@@ -155,32 +158,44 @@ export function CustomPlot({
       },
     }));
 
-    // frame = (frame + 1) % totalFrames;
-    frame = (frame + 1) % totalFrames;
-  }, [isAnimating]);
-  requestAnimationFrame(animate);
+    frameRef.current = (frameRef.current + 1) % totalFrames;
+    requestAnimationFrame(animate);
+  }, [isAnimating, totalFrames, zoomCycles]);
 
   useEffect(() => {
-    // When the project_id changes, force a refresh to resize the plot
-    setRefresh(!refresh);
-    setIsAnimating(true);
-  }, [project_id, selected_clustering_id]);
+    if (isAnimating) {
+      requestAnimationFrame(animate);
+    }
+  }, [isAnimating, animate]);
+
+  const handleResize = useCallback(() => {
+    setLayout((prevLayout) => ({
+      ...prevLayout,
+      height: Math.max(window.innerHeight * 0.6, 300),
+      width: Math.max(
+        document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
+          window.innerWidth * 0.8,
+        640,
+      ),
+    }));
+    setRefreshKey((prev) => prev + 1); // Increment refreshKey to trigger a re-fetch
+  }, []);
 
   useEffect(() => {
-    const handleResize = () => {
-      // Force a refresh to resize the plot
-      setRefresh(!refresh);
-    };
-    // Set the initial state
-    handleResize();
-    // Add event listener for window resize
+    handleResize(); // Initial resize
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", handleResize);
     // Clean up the event listener when the component is unmounted
     return () => {
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
     };
-  }, []);
+  }, [handleResize]);
+
+  useEffect(() => {
+    setIsAnimating(true);
+    setRefreshKey((prev) => prev + 1); // Trigger a refresh when project_id or selected_clustering_id changes
+  }, [project_id, selected_clustering_id]);
 
   if (!data) {
     return <></>;
@@ -195,10 +210,7 @@ export function CustomPlot({
             config={{ displayModeBar: true, responsive: true }}
             layout={layout}
             onClick={(data) => {
-              if (data.points.length !== 1) {
-                return;
-              }
-              if (data.points[0].text) {
+              if (data.points.length === 1 && data.points[0].text) {
                 router.push(
                   `/org/transcripts/tasks/${encodeURIComponent(data.points[0].text)}`,
                 );
