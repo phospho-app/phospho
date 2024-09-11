@@ -1,10 +1,11 @@
 from typing import Any, Dict, Iterable, List, Literal, Optional, Union
 
 from app.db.mongo import get_mongo_db
+from fastapi.requests import Request
+from fastapi_simple_rate_limiter import rate_limiter
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 from openai.types.chat.chat_completion import ChatCompletion
-
 
 from app.core import config
 from app.security.authentification import authenticate_org_key
@@ -125,8 +126,10 @@ async def log_to_project(
     "/{project_id}/chat/completions",
     description="Create a chat completion",
 )
+@rate_limiter(limit=500, seconds=60)
 async def create(
     project_id: str,
+    request: Request,
     create_request: CreateRequest,
     background_tasks: BackgroundTasks,
     org: dict = Depends(authenticate_org_key),
