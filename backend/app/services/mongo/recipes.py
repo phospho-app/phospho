@@ -143,7 +143,7 @@ async def run_recipe_types_on_tasks(
                     sample_rate=None,
                     filters=filters,
                 )
-        elif recipe_type == "evaluation" or recipe_type == "sentiment_language":
+        elif recipe_type == "sentiment_language":
             recipe = Recipe(
                 recipe_type=recipe_type,
                 org_id=org_id,
