@@ -6,13 +6,15 @@ from app.services.mongo.ai_hub import AIHubClient
 from app.services.mongo.ai_hub import ClusteringRequest
 from loguru import logger
 from app.db.mongo import get_mongo_db
+from phospho.models import Task
+from app.services.mongo.triggers import aggregate_tasks_into_sessions
 
 router = APIRouter(tags=["Trigger"])
 
 
 @router.post(
     "/triggers/clustering",
-    description="Run the synchronisation pipeline for Langsmith and Langfuse",
+    description="Run a clustering for a given project",
     response_model=dict,
 )
 @rate_limiter(limit=4, seconds=60)
@@ -42,5 +44,50 @@ async def trigger_clustering(
             scope=clustering.scope,
         )
         return {"status": "ok", "message": "Clustering triggered successfully"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@router.post(
+    "/triggers/calculate-sessions/{project_id}",
+    description="Recalculate sessions for a given project",
+    response_model=dict,
+)
+@rate_limiter(limit=4, seconds=60)
+async def trigger_calculate_sessions(
+    project_id: str,
+    _: Request,
+    key: str | None = Header(default=None),
+) -> dict:
+    if key != config.API_TRIGGER_SECRET:
+        return {"status": "error", "message": "Invalid secret key"}
+    logger.info(f"Triggering session calculation for project {project_id}")
+    try:
+        mongo_db = await get_mongo_db()
+
+        tasks = await mongo_db["tasks"].find({"project_id": project_id}).to_list(None)
+        for task in tasks:
+            del task["_id"]
+        validated_tasks = [Task.model_validate(task) for task in tasks]
+
+        sessions = aggregate_tasks_into_sessions(validated_tasks, project_id=project_id)
+
+        if sessions:
+            logger.debug(f"Deleting all sessions for project {project_id}")
+            await mongo_db["sessions"].delete_many({"project_id": project_id})
+            logger.debug(f"Sessions deleted for project {project_id}")
+
+            await mongo_db["sessions"].insert_many(
+                [session.model_dump() for session in sessions]
+            )
+            logger.info(
+                f"Inserted {len(sessions)} new sessions for project {project_id}"
+            )
+
+        return {
+            "status": "ok",
+            "message": "Sessions calculated successfully",
+            "nbr sessions created": len(sessions),
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}
