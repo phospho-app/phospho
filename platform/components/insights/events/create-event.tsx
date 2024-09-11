@@ -448,8 +448,8 @@ export default function CreateEvent({
                         className="text-xs p-2 max-w-[20rem]"
                       >
                         To log a system prompt, add a <code>system_prompt</code>{" "}
-                        in the Task's <code>metadata</code>. This should be a{" "}
-                        <code>string</code>.
+                        in the Task&aposs <code>metadata</code>. This should be
+                        a <code>string</code>.
                       </HoverCardContent>
                     </HoverCard>
                   </FormItem>
