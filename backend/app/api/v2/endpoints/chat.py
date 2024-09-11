@@ -1,5 +1,6 @@
 from typing import Any, Dict, Iterable, List, Literal, Optional, Union
 
+from app.db.mongo import get_mongo_db
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 from openai.types.chat.chat_completion import ChatCompletion
@@ -10,6 +11,11 @@ from app.security.authentification import authenticate_org_key
 from app.services.mongo.predict import metered_prediction
 from phospho.lab.language_models import get_async_client, get_provider_and_model
 import pydantic
+
+from app.services.mongo.projects import get_project_by_id
+from app.services.mongo.organizations import create_project_by_org
+from app.services.mongo.extractor import ExtractorClient
+from app.api.v2.models.log import LogEvent
 
 router = APIRouter(tags=["chat"])
 
@@ -49,6 +55,77 @@ class CreateRequest(pydantic.BaseModel):
     # extra_query: Query | None = None
     # extra_body: Body | None = None
     timeout: float | None | None = None
+
+
+async def log_to_project(
+    org_id: str,
+    create_request: CreateRequest,
+    response: ChatCompletion,
+):
+    mongo_db = await get_mongo_db()
+    logging_project_setup = await mongo_db["completion_projects"].find_one(
+        {
+            "org_id": org_id,
+        }
+    )
+    if logging_project_setup:
+        logging_project_id = logging_project_setup.get("project_id")
+    else:
+        logging_project_id = None
+
+    if logging_project_id:
+        logging_project = await get_project_by_id(
+            logging_project_id["project_id"],
+        )
+    else:  # No logging project setup
+        # Create a new project
+        logging_project = await create_project_by_org(
+            org_id=org_id, user_id=None, project_name="Completions"
+        )
+        # Add the setup to completion_projects
+        await mongo_db["completion_projects"].insert_one(
+            {
+                "org_id": org_id,
+                "project_id": logging_project.id,
+            }
+        )
+        logging_project_id = logging_project.id
+
+    # Log the completion to the project
+    extractor_client = ExtractorClient(
+        org_id=org_id,
+        project_id=logging_project_id,
+    )
+    if create_request.messages:
+        input = create_request.messages[-1].content
+    output = response.choices[0].message.content
+
+    if input:
+        await extractor_client.run_process_log_for_tasks(
+            logs_to_process=[
+                LogEvent(
+                    project_id=logging_project_id,
+                    input=input,
+                    output=output,
+                    metadata={
+                        "model": create_request.model,
+                        "frequency_penalty": create_request.frequency_penalty,
+                        "logit_bias": create_request.logit_bias,
+                        "logprobs": create_request.logprobs,
+                        "max_tokens": create_request.max_tokens,
+                        "n": create_request.n,
+                        "presence_penalty": create_request.presence_penalty,
+                        "seed": create_request.seed,
+                        "stop": create_request.stop,
+                        "temperature": create_request.temperature,
+                        "top_logprobs": create_request.top_logprobs,
+                        "top_p": create_request.top_p,
+                    },
+                )
+            ]
+        )
+    else:
+        logger.warning("No input found for logging completion.")
 
 
 @router.post(
@@ -140,6 +217,12 @@ async def create(
             inputs=[create_request.model_dump()],
             predictions=[response.model_dump()],
             project_id=project_id,
+        )
+        background_tasks.add_task(
+            log_to_project,
+            org_id=org["org"]["org_id"],
+            create_request=create_request,
+            response=response,
         )
 
     return response
