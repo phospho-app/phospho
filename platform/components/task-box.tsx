@@ -22,12 +22,10 @@ const TaskBox = ({
   task,
   setTask,
   setFlag,
-  refresh,
 }: {
   task: TaskWithEvents;
   setTask: (task: TaskWithEvents) => void;
   setFlag: (flag: string) => void;
-  refresh: boolean;
 }) => {
   return (
     <div className="flex flex-col space-y-1 p-1 border-2 border-secondary rounded-md mb-2">
@@ -116,7 +114,7 @@ const TaskBox = ({
           Object.entries(task.metadata)
             .sort(
               // sort by alphabetic key
-              ([key1, value1], [key2, value2]) => {
+              ([key1], [key2]) => {
                 if (key1 < key2) {
                   return -1;
                 }

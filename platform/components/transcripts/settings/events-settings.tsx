@@ -5,7 +5,6 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EventDefinition } from "@/models/models";
@@ -40,7 +39,7 @@ export const RunEventsSettings = ({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuGroup className="overflow-y-auto max-h-[20rem]">
-          {eventArray.map(([event_name, event_definition]) => {
+          {eventArray.map(([, event_definition]) => {
             return (
               <DropdownMenuItem
                 key={event_definition.event_name}

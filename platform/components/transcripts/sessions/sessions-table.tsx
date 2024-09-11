@@ -36,15 +36,15 @@ import useSWR from "swr";
 
 import { useColumns } from "./sessions-table-columns";
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProps {
   userFilter?: string | null;
   sessions_ids?: string[];
 }
 
-export function SessionsTable<TData, TValue>({
+export function SessionsTable({
   userFilter = null,
   sessions_ids,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps) {
   const project_id = navigationStateStore((state) => state.project_id);
 
   const sessionsSorting = navigationStateStore(
@@ -66,7 +66,7 @@ export function SessionsTable<TData, TValue>({
   const { accessToken } = useUser();
   const router = useRouter();
 
-  const [tableIsClickable, setTableIsClickable] = React.useState<boolean>(true);
+  const [, setTableIsClickable] = React.useState<boolean>(true);
   const [sheetOpen, setSheetOpen] = React.useState<boolean>(false);
   const [sheetToOpen, setSheetToOpen] = React.useState<string | null>(null);
   const [eventDefinition, setEventDefinition] =

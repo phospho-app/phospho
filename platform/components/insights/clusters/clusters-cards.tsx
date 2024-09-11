@@ -14,17 +14,12 @@ import { Project } from "@/models/models";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pickaxe, PlusIcon } from "lucide-react";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
 
 import CreateEvent from "../events/create-event";
 import "./style.css";
-
-// Dynamically import the Plotly component
-// https://github.com/plotly/react-plotly.js/issues/272
-const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 function ClusterCard({
   cluster,
@@ -57,7 +52,7 @@ function ClusterCard({
   // Max number of events depends on the plan
   const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
   const current_nb_events = Object.keys(events).length;
-  let isDisabled = max_nb_events && current_nb_events >= max_nb_events;
+  const isDisabled = max_nb_events && current_nb_events >= max_nb_events;
 
   const eventToEdit = {
     project_id: project_id,
@@ -155,11 +150,9 @@ function ClusterCard({
 
 export function ClustersCards({
   setSheetClusterOpen: setSheetClusterOpen,
-  selected_clustering_id: selected_clustering_id,
   selectedClustering: selectedClustering,
 }: {
   setSheetClusterOpen: (value: boolean) => void;
-  selected_clustering_id: string | undefined;
   selectedClustering: Clustering | undefined;
 }) {
   /* This is the group of all cluster cards */

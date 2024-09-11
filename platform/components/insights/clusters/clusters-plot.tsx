@@ -13,7 +13,6 @@ import { Data } from "plotly.js";
 import {
   Suspense,
   lazy,
-  use,
   useCallback,
   useEffect,
   useRef,
@@ -299,14 +298,22 @@ export function CustomPlot({
               data={[displayedData]}
               config={{ displayModeBar: !dummyData, responsive: true }}
               layout={layout}
-              onClick={(displayedData) => {
+              onClick={(displayedDataPoints) => {
                 if (
-                  displayedData.points.length === 1 &&
-                  displayedData.points[0].text
+                  displayedDataPoints.points.length === 1 &&
+                  displayedDataPoints.points[0].text
                 ) {
-                  router.push(
-                    `/org/transcripts/tasks/${encodeURIComponent(displayedData.points[0].text)}`,
-                  );
+                  if (selectedClustering?.scope === "sessions") {
+                    router.push(
+                      `/org/transcripts/sessions/${encodeURIComponent(
+                        displayedDataPoints.points[0].text,
+                      )}`,
+                    );
+                  } else if (selectedClustering?.scope === "messages") {
+                    router.push(
+                      `/org/transcripts/tasks/${encodeURIComponent(displayedDataPoints.points[0].text)}`,
+                    );
+                  }
                 }
               }}
             />

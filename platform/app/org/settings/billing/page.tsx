@@ -79,11 +79,6 @@ export default function Page() {
       : "...";
 
   // TODO : Add somewhere the next invoice amount due
-  const nextInvoiceAmountDue =
-    usage?.next_invoice_amount_due !== undefined &&
-    usage?.next_invoice_amount_due !== null
-      ? `$${usage.next_invoice_amount_due / 100}`
-      : "...";
 
   if (loading) {
     return <>Loading...</>;

@@ -16,14 +16,6 @@ import {
 } from "recharts";
 import useSWR from "swr";
 
-interface DailyDate {
-  date: string;
-  formated_date: string;
-  success: number;
-  failure: number;
-  undefined: number;
-}
-
 const OverviewLast7Days = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
@@ -38,11 +30,11 @@ const OverviewLast7Days = () => {
           }),
         ]
       : null,
-    ([url, accessToken, body]) =>
+    ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         graph_name: ["number_of_daily_tasks"],
       }).then((data) => {
-        let number_of_daily_tasks = data?.number_of_daily_tasks;
+        const number_of_daily_tasks = data?.number_of_daily_tasks;
         number_of_daily_tasks?.forEach((item: any) => {
           item.formated_date = new Date(item.date).toLocaleDateString([], {
             month: "short",

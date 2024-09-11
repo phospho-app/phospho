@@ -36,14 +36,11 @@ import useSWR from "swr";
 
 import { useColumns } from "./tasks-table-columns";
 
-interface DataTableProps<TData, TValue> {
-  // columns: any[]; // ColumnDef<TData, TValue>[];
+interface DataTableProps {
   tasks_ids?: string[];
 }
 
-export function TasksTable<TData, TValue>({
-  tasks_ids,
-}: DataTableProps<TData, TValue>) {
+export function TasksTable({ tasks_ids }: DataTableProps) {
   const project_id = navigationStateStore((state) => state.project_id);
   const setTasksWithoutHumanLabel = dataStateStore(
     (state) => state.setTasksWithoutHumanLabel,
@@ -62,7 +59,7 @@ export function TasksTable<TData, TValue>({
   const { accessToken } = useUser();
   const router = useRouter();
 
-  const [tableIsClickable, setTableIsClickable] = React.useState<boolean>(true);
+  const [, setTableIsClickable] = React.useState<boolean>(true);
   const [sheetOpen, setSheetOpen] = React.useState<boolean>(false);
   const [sheetToOpen, setSheetToOpen] = React.useState<string | null>(null);
   const [eventDefinition, setEventDefinition] =

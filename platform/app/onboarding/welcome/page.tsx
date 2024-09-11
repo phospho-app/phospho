@@ -7,12 +7,7 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { ArrowBigDown, Bot, ThumbsDown, ThumbsUp, User } from "lucide-react";
+import { ArrowBigDown, Bot, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -80,64 +75,6 @@ function WhatAreTasks() {
   );
 }
 
-function WhatIsEvaluation() {
-  const [thumbs, set_thumbs] = useState<"up" | "down" | null>(null);
-
-  return (
-    <div className="p-1">
-      <Card>
-        <CardContent className={CARD_STYLE}>
-          <div>A task is made of an input and an output.</div>
-
-          <div>
-            phospho evaluates automatically if this output was{" "}
-            <span className="text-green-500">good</span> or{" "}
-            <span className="text-red-500">bad</span>.
-          </div>
-          <div className="flex items-center font-normal text-muted-foreground">
-            Improve automatic evaluation by collecting user feedback, using the
-            API, and adding labels.
-          </div>
-          <div className="flex justify-center flex-grow">
-            <div className="flex flex-row items-center p-2 space-x-4">
-              <HoverCard openDelay={0} closeDelay={0}>
-                <HoverCardTrigger>
-                  <ThumbsDown
-                    className={`w-16 h-16 hover:text-red-500 cursor-pointer rounded-sm p-1
-                  ${thumbs === "down" ? "text-white bg-red-500 hover:text-white" : ""}`}
-                    onClick={() => {
-                      if (thumbs === "down") set_thumbs(null);
-                      else set_thumbs("down");
-                    }}
-                  />
-                </HoverCardTrigger>
-                <HoverCardContent side="top">Click me!</HoverCardContent>
-              </HoverCard>
-
-              <HoverCard openDelay={0} closeDelay={0}>
-                <HoverCardTrigger>
-                  <ThumbsUp
-                    className={`w-16 h-16 hover:text-green-500 cursor-pointer rounded-sm p-1
-                  ${thumbs === "up" ? "text-white bg-green-500 hover:text-white" : ""}`}
-                    onClick={() => {
-                      if (thumbs === "up") set_thumbs(null);
-                      else set_thumbs("up");
-                    }}
-                  />
-                </HoverCardTrigger>
-                <HoverCardContent side="top">Click me!</HoverCardContent>
-              </HoverCard>
-            </div>
-          </div>
-          <div className="flex justify-center flex-grow text-muted-foreground font-normal text-sm italic">
-            Add labels to improve automatic evaluation.
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
 function WhatAreSessions() {
   return (
     <div className="p-1">
@@ -184,8 +121,6 @@ function WhatAreSessions() {
 }
 
 function WhatAreEvents() {
-  const router = useRouter();
-
   return (
     <div className="p-1">
       <Card>

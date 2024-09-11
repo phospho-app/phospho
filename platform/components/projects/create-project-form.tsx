@@ -20,7 +20,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 // zustand state management
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
@@ -48,7 +48,6 @@ const CreateProjectDialog = ({
 
   const [isCreating, setIsCreating] = useState(false);
   const [isCreated, setIsCreated] = useState(false);
-  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
   const router = useRouter();
 
   const { data: selectedProject }: { data: Project } = useSWR(
@@ -133,13 +132,10 @@ const CreateProjectDialog = ({
         "Content-Type": "application/json",
       },
       body: JSON.stringify(selectedProject),
-    }).then(async (response) => {
-      mutate(
-        [`/api/projects/${projectToEdit.id}`, accessToken],
-        async (data: any) => {
-          return { project: projectToEdit };
-        },
-      );
+    }).then(async () => {
+      mutate([`/api/projects/${projectToEdit.id}`, accessToken], async () => {
+        return { project: projectToEdit };
+      });
       // Also mutate the project list
       mutate(
         [`/api/organizations/${selectedOrgId}/projects`, accessToken],

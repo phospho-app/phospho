@@ -8,7 +8,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/components/ui/use-toast";
 import { useToast } from "@/components/ui/use-toast";
 import { Task } from "@/models/models";
 // PropelAuth
@@ -36,10 +35,10 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
   setFlag,
   key,
 }) => {
-  const { user, loading, accessToken } = useUser();
+  const { user, accessToken } = useUser();
   const [notes, setNotes] = useState("");
   const [currentNotes, setCurrentNotes] = useState("");
-  const [saveNoteButtonClicked, setSaveNoteButtonClicked] = useState(false);
+  const [, setSaveNoteButtonClicked] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const { toast } = useToast();
 

@@ -98,7 +98,7 @@ export default function RunEvent({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    let sampleSize = Math.floor(totalNbTasks ?? 0 * values.sample_rate);
+    const sampleSize = Math.floor(totalNbTasks ?? 0 * values.sample_rate);
     if (!selectedProject) {
       return;
     }

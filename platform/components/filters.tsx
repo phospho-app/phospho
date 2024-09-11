@@ -38,7 +38,6 @@ import {
   TextSearch,
   ThumbsDown,
   ThumbsUp,
-  User,
   X,
 } from "lucide-react";
 import React from "react";

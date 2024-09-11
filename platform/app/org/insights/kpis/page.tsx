@@ -8,7 +8,7 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import React, { useEffect, useState } from "react";
 
-const KPIs: React.FC<{}> = ({}) => {
+const KPIs: React.FC = () => {
   // PropelAuth
   const { accessToken } = useUser();
   // Store variables
@@ -38,9 +38,8 @@ const KPIs: React.FC<{}> = ({}) => {
   }, [project_id, accessToken]);
 
   // KPIs on number of messages
-  const [kpiMessagesIsLoading, setKpiMessagesIsLoading] =
-    useState<boolean>(true);
-  const [kpiMessagesCount, setKpiMessagesCount] = useState<number>(0);
+  const [, setKpiMessagesIsLoading] = useState<boolean>(true);
+  const [kpiMessagesCount] = useState<number>(0);
   const [kpiMessagesAverage, setKpiMessagesAverage] = useState<number>(0);
   const [kpiMessagesTop10, setKpiMessagesTop10] = useState<number>(0);
   const [kpiMessagesBottom10, setKpiMessagesBottom10] = useState<number>(0);
@@ -61,7 +60,7 @@ const KPIs: React.FC<{}> = ({}) => {
           headers: headers,
         },
       );
-      const response_json = await response.json();
+      await response.json();
       setKpiMessagesIsLoading(false);
     })();
   }, [project_id, accessToken]);
@@ -93,8 +92,7 @@ const KPIs: React.FC<{}> = ({}) => {
   // Do the same for sessions instead of tasks
 
   // KPIs on number of messages
-  const [kpiSessionsIsLoading, setKpiSessionsIsLoading] =
-    useState<boolean>(true);
+  const [, setKpiSessionsIsLoading] = useState<boolean>(true);
   const [kpiSessionsCount, setKpiSessionsCount] = useState<number>(0);
   const [kpiSessionsAverage, setKpiSessionsAverage] = useState<number>(0);
   const [kpiSessionsTop10, setKpiSessionsTop10] = useState<number>(0);
@@ -147,7 +145,7 @@ const KPIs: React.FC<{}> = ({}) => {
   }, [project_id, accessToken]);
 
   // Do the same as for tasks and sessions fo rthe success rate
-  const [kpiSuccessIsLoading, setKpiSuccessIsLoading] = useState<boolean>(true);
+  const [, setKpiSuccessIsLoading] = useState<boolean>(true);
   const [kpiSuccessAverage, setKpiSuccessAverage] = useState<number>(0);
   const [kpiSuccessTop10, setKpiSuccessTop10] = useState<number>(0);
   const [kpiSuccessBottom10, setKpiSuccessBottom10] = useState<number>(0);

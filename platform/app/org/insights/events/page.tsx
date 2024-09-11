@@ -2,7 +2,6 @@
 
 import CreateEvent from "@/components/insights/events/create-event";
 import EventsList from "@/components/insights/events/event-list";
-import SuccessRateByEvent from "@/components/insights/events/success-rate-by-event";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {

@@ -15,7 +15,7 @@ interface Session {
     score: string;
     rating: string;
   };
-  data: {};
+  data: object;
 }
 
 export const countObjectsPerDay = (data: Session[]): Record<string, number> => {

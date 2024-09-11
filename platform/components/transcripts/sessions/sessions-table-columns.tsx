@@ -220,7 +220,7 @@ export function useColumns({
     },
     // Language
     {
-      header: ({ column }) => {
+      header: () => {
         return (
           <div className="flex items-center space-x-2 justify-between">
             <div className="flex items-center">
