@@ -1,14 +1,12 @@
 "use client";
 
-import { EventDefinition } from "@/models/models";
 import { useState } from "react";
 
 import AboutYou from "./about-you";
+import { AboutYouFormValues } from "./about-you";
 
 export default function Page() {
-  const [, setAboutYouValues] = useState(null);
-  const [, setCustomEvents] = useState<EventDefinition[] | null>(null);
-  const [, setPhosphoTaskId] = useState<string | null>(null);
+  const [, setAboutYouValues] = useState<AboutYouFormValues | null>(null);
 
   // This page is called during onboarding, but also when the users clicks the
   // "Add suggested events" in the dashboard. In the latter case, there is
@@ -17,11 +15,7 @@ export default function Page() {
 
   return (
     <>
-      <AboutYou
-        setAboutYouValues={setAboutYouValues}
-        setCustomEvents={setCustomEvents}
-        setPhosphoTaskId={setPhosphoTaskId}
-      />
+      <AboutYou setAboutYouValues={setAboutYouValues} />
     </>
   );
 }
