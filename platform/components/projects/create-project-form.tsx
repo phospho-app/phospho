@@ -93,15 +93,12 @@ const CreateProjectDialog = ({
     const responseBody = await creation_response.json();
     if (responseBody.project_name === projectName) {
       // Change the selected project
-
-      await delay(1000);
       mutate(
         [`/api/organizations/${selectedOrgId}/projects`, accessToken],
         async (data: any) => {
           return { projects: [responseBody, data.projects] };
         },
       );
-      await delay(1000);
       setproject_id(responseBody.id);
       setIsCreated(true);
       setIsCreating(false);

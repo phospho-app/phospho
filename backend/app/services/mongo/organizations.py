@@ -50,7 +50,9 @@ async def get_projects_from_org_id(org_id: str, limit: int = 1000) -> List[Proje
     return projects
 
 
-async def create_project_by_org(org_id: str, user_id: str, **kwargs) -> Project:
+async def create_project_by_org(
+    org_id: str, user_id: Optional[str], **kwargs
+) -> Project:
     if "settings" in kwargs:
         if kwargs["settings"] is None:
             # Let the default field creator be used
