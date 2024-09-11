@@ -337,6 +337,12 @@ Label the following interaction with the event '{event_name}':
                 value=None,
                 logs=["No system_prompt in the message"],
             )
+        if not isinstance(system_prompt_in_message, str):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["system_prompt in the message is not a string"],
+            )
         truncated_context = shorten_text(
             system_prompt_in_message,
             MAX_TOKENS,

@@ -16,6 +16,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -412,29 +417,41 @@ export default function CreateEvent({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Detection scope</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value ?? "task"}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent position="popper">
-                        <SelectItem value="task">Task</SelectItem>
-                        <SelectItem value="session">Session</SelectItem>
-                        <SelectItem value="task_input_only">
-                          Task input only
-                        </SelectItem>
-                        <SelectItem value="task_output_only">
-                          Task output only
-                        </SelectItem>
-                        <SelectItem value="system_prompt">
-                          System prompt
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <HoverCard openDelay={0} closeDelay={0}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value ?? "task"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent position="popper">
+                          <SelectItem value="task">Task</SelectItem>
+                          <SelectItem value="session">Session</SelectItem>
+                          <SelectItem value="task_input_only">
+                            Task input only
+                          </SelectItem>
+                          <SelectItem value="task_output_only">
+                            Task output only
+                          </SelectItem>
+                          <HoverCardTrigger>
+                            <SelectItem value="system_prompt">
+                              System prompt
+                            </SelectItem>
+                          </HoverCardTrigger>
+                        </SelectContent>
+                      </Select>
+                      <HoverCardContent
+                        side="left"
+                        className="text-xs p-2 max-w-[20rem]"
+                      >
+                        To log a system prompt, add a <code>system_prompt</code>{" "}
+                        in the Task's <code>metadata</code>. This should be a{" "}
+                        <code>string</code>.
+                      </HoverCardContent>
+                    </HoverCard>
                   </FormItem>
                 )}
               />
