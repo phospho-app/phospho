@@ -413,6 +413,7 @@ class LlmCall(DatedBaseModel, extra="allow"):
     session_id: Optional[str] = None
     job_id: Optional[str] = None
     recipe_id: Optional[str] = None
+    system_prompt: Optional[str] = None
 
 
 class FlattenedTask(BaseModel, extra="allow"):

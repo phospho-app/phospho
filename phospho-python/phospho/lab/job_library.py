@@ -189,18 +189,22 @@ async def event_detection(
             unsuccessful_example = example
             break
 
-    system_prompt = """"""
-    prompt = """"""
     # Build the prompt
-    if detection_scope != "system_prompt":
-        system_prompt = f"You are an impartial judge reading a conversation between a user and an assistant."
+    system_prompt = ""
+    prompt = ""
+
+    #
+    if detection_scope == "system_prompt":
+        system_prompt = "You are an impartial judge reading an assistant system prompt."
+        during_interaction = "in the system prompt"
+        the_interaction = "system prompt"
     else:
-        system_prompt = (
-            f"You are an impartial judge reading an assistant system prompt."
-        )
+        system_prompt = "You are an impartial judge reading a conversation between a user and an assistant."
+        during_interaction = "during the interaction"
+        the_interaction = "interaction"
 
     if score_range_settings.score_type == "confidence":
-        system_prompt += f"You must determine if the event '{event_name}' happened during the latest interaction."
+        system_prompt += f"You must determine if the event '{event_name}' happened {during_interaction}."
     elif score_range_settings.score_type == "range":
         system_prompt = f"You must evaluate the event '{event_name}'."
     elif score_range_settings.score_type == "category":
@@ -350,13 +354,6 @@ Label the following system prompt with the event '{event_name}':
             f"Unknown event_scope : {detection_scope}. Valid values are: {DetectionScope.__args__}"
         )
 
-    if detection_scope != "system_prompt":
-        during_interaction = "during the interaction"
-        the_interaction = "interaction"
-    else:
-        during_interaction = "in the system prompt"
-        the_interaction = "system prompt"
-
     if score_range_settings.score_type == "confidence":
         prompt += f"""
 Did the event '{event_name}' happen {during_interaction}? 
@@ -413,6 +410,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
     llm_call = {
         "model": model_name,
         "prompt": prompt,
+        "system_prompt": system_prompt,
         "llm_output": llm_response,
         "api_call_time": api_call_time,
     }
