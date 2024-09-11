@@ -74,10 +74,16 @@ async def log_to_project(
         logging_project_id = None
 
     if logging_project_id:
-        logging_project = await get_project_by_id(
-            logging_project_id["project_id"],
-        )
-    else:  # No logging project setup
+        try:
+            logging_project = await get_project_by_id(
+                logging_project_id["project_id"],
+            )
+        except Exception as e:
+            logging_project = None
+
+    if (
+        logging_project_id is None or logging_project is None
+    ):  # No logging project setup
         # Create a new project
         logging_project = await create_project_by_org(
             org_id=org_id, user_id=None, project_name="Completions"
@@ -96,8 +102,16 @@ async def log_to_project(
         org_id=org_id,
         project_id=logging_project_id,
     )
+    input = None
     if create_request.messages:
         input = create_request.messages[-1].content
+    system_prompt = None
+    if create_request.messages:
+        # Look for the system_prompt in the messages
+        system_prompt_list = [m for m in create_request.messages if m.role == "system"]
+        if system_prompt_list:
+            system_prompt = system_prompt_list[0].content
+
     output = response.choices[0].message.content
 
     if input:
@@ -110,16 +124,10 @@ async def log_to_project(
                     metadata={
                         "model": create_request.model,
                         "frequency_penalty": create_request.frequency_penalty,
-                        "logit_bias": create_request.logit_bias,
-                        "logprobs": create_request.logprobs,
                         "max_tokens": create_request.max_tokens,
-                        "n": create_request.n,
-                        "presence_penalty": create_request.presence_penalty,
                         "seed": create_request.seed,
-                        "stop": create_request.stop,
                         "temperature": create_request.temperature,
-                        "top_logprobs": create_request.top_logprobs,
-                        "top_p": create_request.top_p,
+                        "system_prompt": system_prompt,
                     },
                 )
             ]
