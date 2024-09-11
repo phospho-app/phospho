@@ -97,7 +97,7 @@ function RunAnalyticsForm({
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      recipe_type_list: ["evaluation", "event_detection", "sentiment_language"],
+      recipe_type_list: ["event_detection", "sentiment_language"],
     },
   });
 
@@ -163,9 +163,6 @@ function RunAnalyticsForm({
                             onCheckedChange={(checked) => {
                               if (checked) {
                                 field.onChange([...field.value, item.id]);
-                                // if (item.id === "evaluation") {
-                                //   setCheckedEval(true);
-                                // }
                                 if (item.id === "event_detection") {
                                   setCheckedEvent(true);
                                 }
@@ -178,9 +175,6 @@ function RunAnalyticsForm({
                                     (value) => value !== item.id,
                                   ),
                                 );
-                                // if (item.id === "evaluation") {
-                                //   setCheckedEval(false);
-                                // }
                                 if (item.id === "event_detection") {
                                   setCheckedEvent(false);
                                 }
