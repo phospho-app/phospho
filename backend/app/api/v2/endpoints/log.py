@@ -38,7 +38,7 @@ async def store_batch_of_log_events(
     """Store the batched_log_events in the logs database"""
 
     # Check if we are in maintenance mode
-    if config.IS_MAINTENANCE:
+    if config.IS_MAINTENANCE or project_id == "895bdb48f9a449c6bcb01358a3a5b52d":
         raise HTTPException(
             status_code=503, detail="Planned maintenance. Please try again later."
         )
