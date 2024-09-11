@@ -136,6 +136,7 @@ export enum DetectionScope {
   Session = "session",
   TaskInputOnly = "task_input_only",
   TaskOutputOnly = "task_output_only",
+  SystemPrompt = "system_prompt",
 }
 
 export enum ScoreRangeType {

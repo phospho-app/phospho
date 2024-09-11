@@ -91,6 +91,9 @@ async def run_backtests(
                     input=message.content,
                     output=response_text,
                     version_id=version_id,
+                    metadata={
+                        "system_prompt": system_prompt,
+                    },
                 )
             ]
         )

@@ -25,7 +25,7 @@ class ChatCompletionMessageParam(pydantic.BaseModel):
 
 class CreateRequest(pydantic.BaseModel):
     messages: List[ChatCompletionMessageParam]
-    model: Literal["openai:gpt-4o",]
+    model: Literal["openai:gpt-4o", "openai:gpt-4o-mini"]
     frequency_penalty: Optional[float] | None = None
     # function_call: completion_create_params.FunctionCall | None = None
     # functions: Iterable[completion_create_params.Function] | None = None
@@ -63,6 +63,9 @@ async def create(
 ) -> ChatCompletion:
     """
     Generate a chat completion
+
+    The org identified by the API key must have access to the completion service.
+    This means that the metadata has_completion_access must be set to True in Propelauth.
     """
     # Get customer_id
     logger.debug(f"Creating chat completion: {create_request}")
@@ -97,7 +100,9 @@ async def create(
             detail="You need to request access to this feature to the phospho team. Please contact us at contact@phospho.ai",
         )
 
-    SUPPORTED_MODELS = ["openai:gpt-4o"]
+    SUPPORTED_MODELS = [
+        "openai:gpt-4o"
+    ]  # Add "openai:gpt-4o-mini" and update the pricing accordingly
     if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
             status_code=400,
@@ -105,6 +110,9 @@ async def create(
         )
 
     provider, model_name = get_provider_and_model(create_request.model)
+
+    # For this endpoint, we route requests to Azure OpenAI
+    provider = "azure"
     openai_client = get_async_client(provider)
 
     # Change the model name to the one used by OpenAI
@@ -121,6 +129,7 @@ async def create(
         )
 
     if org_id != config.PHOSPHO_ORG_ID and config.ENVIRONMENT == "production":
+        # TODO: add here in the background task the log to the project
         background_tasks.add_task(
             metered_prediction,
             org_id=org["org"]["org_id"],

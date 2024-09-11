@@ -74,6 +74,9 @@ jobs:
           PHOSPHO_AI_HUB_API_KEY: ${{ secrets.PHOSPHO_AI_HUB_API_KEY }}
           TEMPORAL_HOST_URL: "http://localhost:7233"
           TEMPORAL_NAMESPACE: "default"
+          AZURE_OPENAI_KEY: ${{ secrets.AZURE_OPENAI_KEY }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+
         # Specify here the tests you want to run after the -k flag
         run: |
           cd backend
