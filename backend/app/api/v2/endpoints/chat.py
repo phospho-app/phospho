@@ -65,10 +65,12 @@ async def log_to_project(
 ):
     mongo_db = await get_mongo_db()
     logging_project_id = project_id
+    logger.info(f"Logging completion to project {logging_project_id}")
 
     try:
         logging_project = await get_project_by_id(logging_project_id)
     except Exception as e:
+        logger.warning(f"Error getting project {logging_project_id}: {e}")
         logging_project = None
 
     if logging_project is None:  # No logging project setup
@@ -76,13 +78,7 @@ async def log_to_project(
         logging_project = await create_project_by_org(
             org_id=org_id, user_id=None, project_name="Completions"
         )
-        # Add the setup to completion_projects
-        await mongo_db["completion_projects"].insert_one(
-            {
-                "org_id": org_id,
-                "project_id": logging_project.id,
-            }
-        )
+        logger.info(f"Creating logging project for org {org_id}: {logging_project}")
         logging_project_id = logging_project.id
 
     # Log the completion to the project
