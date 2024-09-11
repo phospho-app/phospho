@@ -110,7 +110,7 @@ export function CustomPlot({
   const skeletonStyle = `w-[${width}px] h-[${height}px]`;
 
   useEffect(() => {
-    setRefreshKey(refreshKey + 1);
+    setRefreshKey((r) => r + 1);
   }, [skeletonStyle]);
 
   const { data } = useSWR(
