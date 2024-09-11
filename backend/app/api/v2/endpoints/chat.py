@@ -209,12 +209,12 @@ async def create(
             predictions=[response.model_dump()],
             project_id=project_id,
         )
-        background_tasks.add_task(
-            log_to_project,
-            org_id=org["org"]["org_id"],
-            project_id=project_id,
-            create_request=create_request,
-            response=response,
-        )
+    background_tasks.add_task(
+        log_to_project,
+        org_id=org["org"]["org_id"],
+        project_id=project_id,
+        create_request=create_request,
+        response=response,
+    )
 
     return response
