@@ -61,6 +61,10 @@ const formSchema = z.object({
     }),
 });
 
+interface ProjectData {
+  projects: Project[];
+}
+
 export default function Page() {
   const router = useRouter();
   const { mutate } = useSWRConfig();
@@ -180,15 +184,19 @@ export default function Page() {
         // Also mutate the project list
         mutate(
           [`/api/organizations/${selectedOrgId}/projects`, accessToken],
-          async (data: any) => {
-            // Find the project to edit
+          async (data: ProjectData | undefined) => {
             if (!data?.projects) return;
             const index = data.projects.findIndex(
               (project: Project) => project.id === project_id,
             );
-            // Replace the project
-            data.projects[index] = project_id;
-            return { projects: data.projects };
+            if (index !== -1 && project_id) {
+              const updatedProject: Project = {
+                ...data.projects[index],
+                id: project_id,
+              };
+              data.projects[index] = updatedProject;
+              return { projects: data.projects };
+            }
           },
         );
       });
