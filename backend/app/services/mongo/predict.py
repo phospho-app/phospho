@@ -58,8 +58,9 @@ async def metered_prediction(
     if model_id == "phospho-multimodal":
         # We bill through stripe, $10 / 1k images
         nb_credits_used = 10 * len(jobresults)
-    elif model_id == "openai:gpt-4o" or model_id == "azure:gpt-4o":
+    elif model_id == "openai:gpt-4o":
         # Bill based on the number of tokens
+        # Only the orga Y has access to this model
         input_tokens = sum(
             [response["usage"]["prompt_tokens"] for response in predictions]
         )
@@ -68,6 +69,42 @@ async def metered_prediction(
         )
         nb_credits_used = (input_tokens + 3 * completion_tokens) * 250
         meter_event_name = "phospho_token_based_meter"
+
+    elif model_id == "azure:gpt-4o":
+        # Any other orgs using requesting OpenAI completion will be routed through Azure OpenAI
+        input_tokens = sum(
+            [response["usage"]["prompt_tokens"] for response in predictions]
+        )
+        completion_tokens = sum(
+            [response["usage"]["completion_tokens"] for response in predictions]
+        )
+
+        # We send to the 2 meters (input and output tokens)
+        if bill:
+            # First, we bill the input tokens
+            await bill_on_stripe(
+                org_id=org_id,
+                nb_credits_used=input_tokens,
+                meter_event_name="gpt-4o_input_tokens",
+            )
+            logger.debug(
+                f"Bill for org_id {org_id} with model_id {model_id} completed, {input_tokens} tokens billed"
+            )
+            # Then, we bill the output tokens
+            await bill_on_stripe(
+                org_id=org_id,
+                nb_credits_used=completion_tokens,
+                meter_event_name="gpt-4o_output_tokens",
+            )
+            logger.debug(
+                f"Bill for org_id {org_id} with model_id {model_id} completed, {completion_tokens} tokens billed"
+            )
+
+        # We return here has we have already billed the org and we don't need to bill phospho credits
+        # TODO: what should we return here? As it is not linked to phospho credits, we return 0
+        # As of today, the return value is not used
+        return 0
+
     elif model_id == "phospho:intent-embed":
         # Compute token count of input texts
         inputs_token_count = sum([len(encoding.encode(input)) for input in inputs])
