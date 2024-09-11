@@ -4,15 +4,23 @@ Each job is a function that takes a message and a set of parameters and returns 
 The result is a JobResult object.
 """
 
-from collections import defaultdict
 import logging
 import math
 import os
 import random
 import time
+from collections import defaultdict
 from typing import List, Literal, Optional, Tuple, cast
 
-from phospho.models import ScoreRange, ScoreRangeSettings
+from phospho.models import (
+    DetectionScope,
+    JobResult,
+    Message,
+    ResultType,
+    ScoreRange,
+    ScoreRangeSettings,
+    Task,
+)
 from phospho.utils import get_number_of_tokens, shorten_text
 
 try:
@@ -20,8 +28,8 @@ try:
 except ImportError:
     pass
 
+
 from .language_models import get_async_client, get_provider_and_model, get_sync_client
-from phospho.models import JobResult, Message, ResultType, DetectionScope
 
 logger = logging.getLogger(__name__)
 
@@ -326,16 +334,25 @@ Label the following interaction with the event '{event_name}':
     elif detection_scope == "system_prompt":
         # Detection on the system_prompt metadata in the message
         # The system_prompt is canonically stored in the task metadata
-        system_prompt_in_message = (
-            message.metadata.get("task", {})
-            .get("metadata", {})
-            .get("system_prompt", None)
-        )
+        message_task: Optional[Task] = message.metadata.get("task")
+        if not isinstance(message_task, Task):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No task in the message"],
+            )
+        if not isinstance(message_task.metadata, dict):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No metadata in the task"],
+            )
+        system_prompt_in_message = message_task.metadata.get("system_prompt", None)
         if system_prompt_in_message is None:
             return JobResult(
                 result_type=ResultType.error,
                 value=None,
-                logs=["No system_prompt in the message"],
+                logs=["No system_prompt in the task metadata"],
             )
         if not isinstance(system_prompt_in_message, str):
             return JobResult(
@@ -861,16 +878,25 @@ async def keyword_event_detection(
             message.transcript(with_role=True, with_previous_messages=True)
         ]
     elif event_scope == "system_prompt":
-        system_prompt_in_message = (
-            message.metadata.get("task", {})
-            .get("metadata", {})
-            .get("system_prompt", None)
-        )
+        message_task: Optional[Task] = message.metadata.get("task")
+        if not isinstance(message_task, Task):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No task in the message"],
+            )
+        if not isinstance(message_task.metadata, dict):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No metadata in the task"],
+            )
+        system_prompt_in_message = message_task.metadata.get("system_prompt", None)
         if system_prompt_in_message is None:
             return JobResult(
                 result_type=ResultType.error,
                 value=None,
-                logs=["No system_prompt in the message"],
+                logs=["No system_prompt in the task metadata"],
             )
         if not isinstance(system_prompt_in_message, str):
             return JobResult(
@@ -960,16 +986,25 @@ async def regex_event_detection(
             message.transcript(with_role=True, with_previous_messages=True)
         ]
     elif event_scope == "system_prompt":
-        system_prompt_in_message = (
-            message.metadata.get("task", {})
-            .get("metadata", {})
-            .get("system_prompt", None)
-        )
+        message_task: Optional[Task] = message.metadata.get("task")
+        if not isinstance(message_task, Task):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No task in the message"],
+            )
+        if not isinstance(message_task.metadata, dict):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No metadata in the task"],
+            )
+        system_prompt_in_message = message_task.metadata.get("system_prompt", None)
         if system_prompt_in_message is None:
             return JobResult(
                 result_type=ResultType.error,
                 value=None,
-                logs=["No system_prompt in the message"],
+                logs=["No system_prompt in the task metadata"],
             )
         if not isinstance(system_prompt_in_message, str):
             return JobResult(
