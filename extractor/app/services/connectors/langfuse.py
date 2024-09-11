@@ -125,7 +125,7 @@ class LangfuseConnector(BaseConnector):
             try:
                 return datetime.strptime(last_langfuse_extract, "%Y-%m-%dT%H:%M:%S.%f")
             except:
-                return datetime.strptime(last_langfuse_extract, "%Y-%m-%dT%H:%M:%S.%f")
+                return datetime.strptime(last_langfuse_extract, "%Y-%m-%d %H:%M:%S.%f")
         elif last_langfuse_extract is None:
             return None
         else:
