@@ -95,6 +95,8 @@ async def log_to_project(
         system_prompt_list = [m for m in create_request.messages if m.role == "system"]
         if system_prompt_list:
             system_prompt = system_prompt_list[0].content
+            if input is None:
+                input = system_prompt
 
     output = response.choices[0].message.content
 
