@@ -63,7 +63,6 @@ async def log_to_project(
     create_request: CreateRequest,
     response: ChatCompletion,
 ):
-    mongo_db = await get_mongo_db()
     logging_project_id = project_id
     logger.info(f"Logging completion to project {logging_project_id}")
 
