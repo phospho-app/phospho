@@ -75,6 +75,7 @@ DetectionScope = Literal[
     "session",
     "task_input_only",
     "task_output_only",
+    "system_prompt",
 ]
 
 DetectionEngine = Literal[
@@ -325,17 +326,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name]["event_name"] = (
-                            event_name
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "event_name"
+                        ] = event_name
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["org_id"] = (
-                            project_data["org_id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "org_id"
+                        ] = project_data["org_id"]
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["project_id"] = (
-                            project_data["id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "project_id"
+                        ] = project_data["id"]
 
             # Transition dashboard_tiles to lowercase and new fields
             if "dashboard_tiles" in project_data["settings"].keys():
@@ -412,6 +413,7 @@ class LlmCall(DatedBaseModel, extra="allow"):
     session_id: Optional[str] = None
     job_id: Optional[str] = None
     recipe_id: Optional[str] = None
+    system_prompt: Optional[str] = None
 
 
 class FlattenedTask(BaseModel, extra="allow"):

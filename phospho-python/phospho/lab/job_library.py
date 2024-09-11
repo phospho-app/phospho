@@ -4,15 +4,23 @@ Each job is a function that takes a message and a set of parameters and returns 
 The result is a JobResult object.
 """
 
-from collections import defaultdict
 import logging
 import math
 import os
 import random
 import time
+from collections import defaultdict
 from typing import List, Literal, Optional, Tuple, cast
 
-from phospho.models import ScoreRange, ScoreRangeSettings
+from phospho.models import (
+    DetectionScope,
+    JobResult,
+    Message,
+    ResultType,
+    ScoreRange,
+    ScoreRangeSettings,
+    Task,
+)
 from phospho.utils import get_number_of_tokens, shorten_text
 
 try:
@@ -20,8 +28,8 @@ try:
 except ImportError:
     pass
 
+
 from .language_models import get_async_client, get_provider_and_model, get_sync_client
-from phospho.models import JobResult, Message, ResultType, DetectionScope
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +149,7 @@ async def event_detection(
     event_name: str,
     event_description: str,
     score_range_settings: Optional[ScoreRangeSettings] = None,
-    event_scope: DetectionScope = "task",
+    detection_scope: DetectionScope = "task",
     model: str = "openai:gpt-4o",
     **kwargs,
 ) -> JobResult:
@@ -189,24 +197,29 @@ async def event_detection(
             unsuccessful_example = example
             break
 
-    system_prompt = """"""
-    prompt = """"""
     # Build the prompt
+    system_prompt = ""
+    prompt = ""
+
+    #
+    if detection_scope == "system_prompt":
+        system_prompt = "You are an impartial judge reading an assistant system prompt."
+        during_interaction = "in the system prompt"
+        the_interaction = "system prompt"
+    else:
+        system_prompt = "You are an impartial judge reading a conversation between a user and an assistant."
+        during_interaction = "during the interaction"
+        the_interaction = "interaction"
+
     if score_range_settings.score_type == "confidence":
-        system_prompt = f"""You are an impartial judge reading a conversation between a user and an assistant.
-You must determine if the event '{event_name}' happened during the latest interaction.
-"""
+        system_prompt += f"You must determine if the event '{event_name}' happened {during_interaction}."
     elif score_range_settings.score_type == "range":
-        system_prompt = f"""You are an impartial judge reading a conversation between a user and an assistant.
-You must evaluate the event '{event_name}'.
-"""
+        system_prompt = f"You must evaluate the event '{event_name}'."
     elif score_range_settings.score_type == "category":
-        system_prompt = f"""You are an impartial judge reading a conversation between a user and an assistant.
-You must categorize the event '{event_name}'.
-"""
+        system_prompt = f"You must categorize the event '{event_name}'."
 
     if event_description is not None and len(event_description) > 0:
-        system_prompt += f"""'{event_name}' can be describe like so:
+        system_prompt += f"""'{event_name}' is described to you like so:
 '{event_description}'
 """
     else:
@@ -229,11 +242,12 @@ Here is an example of an interaction where the event '{event_name}' did not happ
 [EXAMPLE END]
 """
 
-    system_prompt += """
-I will now give you an interaction to evaluate.
-"""
+    if detection_scope != "system_prompt":
+        system_prompt += "\nI will now give you an interaction to evaluate."
+    else:
+        system_prompt += "\nI will now give you a system prompt to evaluate."
 
-    if len(message.previous_messages) > 1 and "task" in event_scope:
+    if len(message.previous_messages) > 1 and "task" in detection_scope:
         truncated_context = shorten_text(
             message.latest_interaction_context(),
             MAX_TOKENS,
@@ -247,13 +261,13 @@ Here is the context of the conversation:
 [CONTEXT END]
 """
 
-    if event_scope == "task":
+    if detection_scope == "task":
         prompt += f"""Label the following interaction with the event '{event_name}':
 [INTERACTION TO LABEL START]
 {message.latest_interaction()}
 [INTERACTION END]
 """
-    elif event_scope == "task_input_only":
+    elif detection_scope == "task_input_only":
         message_list = message.as_list()
         # Filter to keep only the user messages
         message_list = [m for m in message_list if m.role.lower() == "user"]
@@ -276,7 +290,7 @@ Label the following user message with the event '{event_name}':
 User: {truncated_context}
 [INTERACTION END]
 """
-    elif event_scope == "task_output_only":
+    elif detection_scope == "task_output_only":
         message_list = message.as_list()
         # Filter to keep only the assistant messages
         message_list = [m for m in message_list if m.role.lower() == "assistant"]
@@ -304,7 +318,7 @@ Label the following assistant message with the event '{event_name}':
 Assistant: {truncated_context}
 [INTERACTION END]
 """
-    elif event_scope == "session":
+    elif detection_scope == "session":
         truncated_context = shorten_text(
             message.transcript(with_role=True, with_previous_messages=True),
             MAX_TOKENS,
@@ -317,18 +331,59 @@ Label the following interaction with the event '{event_name}':
 {truncated_context}
 [INTERACTION END]
 """
+    elif detection_scope == "system_prompt":
+        # Detection on the system_prompt metadata in the message
+        # The system_prompt is canonically stored in the task metadata
+        message_task: Optional[Task] = message.metadata.get("task")
+        if not isinstance(message_task, Task):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No task in the message"],
+            )
+        if not isinstance(message_task.metadata, dict):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No metadata in the task"],
+            )
+        system_prompt_in_message = message_task.metadata.get("system_prompt", None)
+        if system_prompt_in_message is None:
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No system_prompt in the task metadata"],
+            )
+        if not isinstance(system_prompt_in_message, str):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["system_prompt in the message is not a string"],
+            )
+        truncated_context = shorten_text(
+            system_prompt_in_message,
+            MAX_TOKENS,
+            get_number_of_tokens(prompt) + 100,
+            how="right",
+        )
+        prompt += f"""
+Label the following system prompt with the event '{event_name}':
+[SYSTEM PROMPT TO LABEL START]
+{truncated_context}
+[INTERACTION END]
+"""
     else:
         raise ValueError(
-            f"Unknown event_scope : {event_scope}. Valid values are: {DetectionScope.__args__}"
+            f"Unknown event_scope : {detection_scope}. Valid values are: {DetectionScope.__args__}"
         )
 
     if score_range_settings.score_type == "confidence":
         prompt += f"""
-Did the event '{event_name}' happen during the interaction? 
+Did the event '{event_name}' happen {during_interaction}? 
 Respond with only one word: Yes or No."""
     elif score_range_settings.score_type == "range":
         prompt += f"""
-How would you assess the '{event_name}' during the interaction? 
+How would you assess the '{event_name}' {during_interaction}? 
 Respond with a whole number between {score_range_settings.min} and {score_range_settings.max}.
 """
     elif (
@@ -342,10 +397,10 @@ Respond with a whole number between {score_range_settings.min} and {score_range_
             ]
         )
         prompt += f"""
-How would you categorize the interaction according to the event '{event_name}'? 
+How would you categorize the {the_interaction} according to the event '{event_name}'? 
 Respond with a number between 1 and {len(score_range_settings.categories)}, where each number corresponds to a category:
 {formatted_categories}
-If the event '{event_name}' is not present in the interaction or you can't categorize it, respond with 0.
+If the event '{event_name}' is not present in the {the_interaction} or you can't categorize it, respond with 0.
 """
 
     # Call the API
@@ -378,6 +433,7 @@ If the event '{event_name}' is not present in the interaction or you can't categ
     llm_call = {
         "model": model_name,
         "prompt": prompt,
+        "system_prompt": system_prompt,
         "llm_output": llm_response,
         "api_call_time": api_call_time,
     }
@@ -805,26 +861,54 @@ async def keyword_event_detection(
     listExchangeToSearch: List[str] = []
     if event_scope == "task":
         listExchangeToSearch = [message.latest_interaction()]
-
     elif event_scope == "task_input_only":
         message_list = message.as_list()
         # Filter to keep only the user messages
         listExchangeToSearch = [
-            " " + m.content + " " for m in message_list if m.role == "User"
+            " " + m.content + " " for m in message_list if m.role.lower() == "user"
         ]
-
     elif event_scope == "task_output_only":
         message_list = message.as_list()
         # Filter to keep only the assistant messages
         listExchangeToSearch = [
-            " " + m.content + " " for m in message_list if m.role == "Assistant"
+            " " + m.content + " " for m in message_list if m.role.lower() == "assistant"
         ]
-        print(listExchangeToSearch)
-
     elif event_scope == "session":
         listExchangeToSearch = [
             message.transcript(with_role=True, with_previous_messages=True)
         ]
+    elif event_scope == "system_prompt":
+        message_task: Optional[Task] = message.metadata.get("task")
+        if not isinstance(message_task, Task):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No task in the message"],
+            )
+        if not isinstance(message_task.metadata, dict):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No metadata in the task"],
+            )
+        system_prompt_in_message = message_task.metadata.get("system_prompt", None)
+        if system_prompt_in_message is None:
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No system_prompt in the task metadata"],
+            )
+        if not isinstance(system_prompt_in_message, str):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["system_prompt in the message is not a string"],
+            )
+        listExchangeToSearch = [system_prompt_in_message]
+    else:
+        raise ValueError(
+            f"Unknown event_scope : {event_scope}. Valid values are: {DetectionScope.__args__}"
+        )
 
     # text to look into for the keywords
     text = " ".join(listExchangeToSearch).lower()
@@ -889,20 +973,50 @@ async def regex_event_detection(
         message_list = message.as_list()
         # Filter to keep only the user messages
         listExchangeToSearch = [
-            " " + m.content + " " for m in message_list if m.role == "User"
+            " " + m.content + " " for m in message_list if m.role.lower() == "user"
         ]
-
     elif event_scope == "task_output_only":
         message_list = message.as_list()
         # Filter to keep only the assistant messages
         listExchangeToSearch = [
-            " " + m.content + " " for m in message_list if m.role == "Assistant"
+            " " + m.content + " " for m in message_list if m.role.lower() == "assistant"
         ]
-
     elif event_scope == "session":
         listExchangeToSearch = [
             message.transcript(with_role=True, with_previous_messages=True)
         ]
+    elif event_scope == "system_prompt":
+        message_task: Optional[Task] = message.metadata.get("task")
+        if not isinstance(message_task, Task):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No task in the message"],
+            )
+        if not isinstance(message_task.metadata, dict):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No metadata in the task"],
+            )
+        system_prompt_in_message = message_task.metadata.get("system_prompt", None)
+        if system_prompt_in_message is None:
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No system_prompt in the task metadata"],
+            )
+        if not isinstance(system_prompt_in_message, str):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["system_prompt in the message is not a string"],
+            )
+        listExchangeToSearch = [system_prompt_in_message]
+    else:
+        raise ValueError(
+            f"Unknown event_scope : {event_scope}. Valid values are: {DetectionScope.__args__}"
+        )
 
     text = " ".join(listExchangeToSearch)
 
@@ -927,59 +1041,4 @@ async def regex_event_detection(
             result_type=ResultType.error,
             value=None,
             logs=[str(e)],
-        )
-
-
-async def get_topic_of_conversation(
-    message: Message,
-    model: str = "openai:gpt-4o",
-) -> JobResult:
-    """
-    Uses an LLM to get the topic of the session
-    The goal is to get the LLM to respond with one word that describes the topic of the conversation
-    """
-    from phospho.utils import shorten_text
-
-    provider, model_name = get_provider_and_model(model)
-    openai_client = get_sync_client(provider)
-
-    # We look at the full session
-    messages = message.transcript(with_role=True, with_previous_messages=True)
-    max_tokens_input_lenght = (
-        128 * 1000 - 1000
-    )  # We remove 1k to accomodate for the system prompt
-    messages = shorten_text(messages, max_tokens_input_lenght)
-
-    system_prompt = "You must tell me the topic of this conversation, respond with one simple word that is the topic of this conversation."
-    prompt = "DISCUSSION START" + messages + "DISCUSSION END"
-
-    try:
-        response = openai_client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-            temperature=0,
-            max_tokens=2,
-        )
-
-        llm_response = response.choices[0].message.content
-        llm_response = llm_response.lower()
-
-        return JobResult(
-            result_type=ResultType.bool,
-            value=llm_response,
-            logs=[prompt, llm_response],
-        )
-
-    except Exception as e:
-        logger.error(f"get_topic_of_conversation call to OpenAI API failed : {e}")
-        return JobResult(
-            result_type=ResultType.error,
-            value=None,
-            logs=[prompt, str(e)],
         )
