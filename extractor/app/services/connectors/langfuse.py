@@ -122,7 +122,10 @@ class LangfuseConnector(BaseConnector):
         elif isinstance(last_langfuse_extract, datetime):
             return last_langfuse_extract
         elif isinstance(last_langfuse_extract, str):
-            return datetime.strptime(last_langfuse_extract, "%Y-%m-%d %H:%M:%S.%f")
+            try:
+                return datetime.strptime(last_langfuse_extract, "%Y-%m-%dT%H:%M:%S.%f")
+            except:
+                return datetime.strptime(last_langfuse_extract, "%Y-%m-%dT%H:%M:%S.%f")
         elif last_langfuse_extract is None:
             return None
         else:
@@ -192,8 +195,48 @@ class LangfuseConnector(BaseConnector):
 
         for observation in self.observations.data:
             try:
-                input = observation.input
-                output = observation.output
+                raw_input = observation.input
+                raw_output = observation.output
+
+                input = None
+                output = None
+                system_prompt = None
+
+                # Input processing
+                if isinstance(raw_input, str):
+                    input = raw_input
+                if isinstance(raw_input, list):
+                    # input is a list of messagess
+                    user_messages = [
+                        m
+                        for m in raw_input
+                        if isinstance(m, dict) and m.get("role") == "user"
+                    ]
+                    system_messages = [
+                        m
+                        for m in raw_input
+                        if isinstance(m, dict) and m.get("role") == "system"
+                    ]
+                    if len(user_messages) > 0:
+                        input = user_messages[-1].get("content", None)
+                    if len(system_messages) > 0:
+                        output = system_messages[-1].get("content", None)
+
+                # Output processing
+                if isinstance(raw_output, dict):
+                    output = raw_output.get("content", None)
+                if isinstance(raw_output, str):
+                    output = raw_output
+
+                if input is None:
+                    logger.error(
+                        f"Languse connector: Error while processing project {self.project_id} of orga {org_id}: input is None. Skipping. raw_input: {raw_input}"
+                    )
+                if not isinstance(input, str):
+                    logger.error(
+                        f"Languse connector: Error while processing project {self.project_id} of orga {org_id}: input is not a string. Skipping. raw_input: {raw_input}"
+                    )
+                    continue
 
                 log_event = LogEventForTasks(
                     created_at=int(observation.start_time.timestamp()),
@@ -201,7 +244,11 @@ class LangfuseConnector(BaseConnector):
                     output=output,
                     session_id=str(observation.trace_id),
                     project_id=self.project_id,
-                    metadata={"langsfuse_run_id": observation.id},
+                    metadata={
+                        "langsfuse_run_id": observation.id,
+                        "system_prompt": system_prompt,
+                        "source": "langfuse",
+                    },
                     org_id=org_id,
                 )
 
