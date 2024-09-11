@@ -86,6 +86,7 @@ async def process_file_upload_into_log_events(
     Optional columns: session_id, created_at, task_id, user_id
     """
 
+    logger.debug(f"Processing file uplload into log events for project {project_id}")
     # session_id: if provided, concatenate with project_id to avoid collisions
     if "session_id" in tasks_df.columns:
         try:
