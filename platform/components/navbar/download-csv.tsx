@@ -12,7 +12,7 @@ const ExportDataButton: React.FC<DownloadButtonProps> = () => {
   // PropelAuth
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const { user, loading, accessToken } = useUser();
+  const { user, accessToken } = useUser();
   const { toast } = useToast();
 
   if (!user) {

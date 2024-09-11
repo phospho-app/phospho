@@ -11,7 +11,7 @@ declare global {
 }
 
 const IntercomClientComponent: React.FC = () => {
-  const { user, loading } = useUser();
+  const { user } = useUser();
   useEffect(() => {
     window.intercomSettings = {
       api_base: "https://api-iam.intercom.io",

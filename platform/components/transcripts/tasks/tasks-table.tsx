@@ -36,14 +36,11 @@ import useSWR from "swr";
 
 import { useColumns } from "./tasks-table-columns";
 
-interface DataTableProps<TData, TValue> {
-  // columns: any[]; // ColumnDef<TData, TValue>[];
+interface DataTableProps {
   tasks_ids?: string[];
 }
 
-export function TasksTable<TData, TValue>({
-  tasks_ids,
-}: DataTableProps<TData, TValue>) {
+export function TasksTable({ tasks_ids }: DataTableProps) {
   const project_id = navigationStateStore((state) => state.project_id);
   const setTasksWithoutHumanLabel = dataStateStore(
     (state) => state.setTasksWithoutHumanLabel,

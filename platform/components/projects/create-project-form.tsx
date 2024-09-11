@@ -48,7 +48,6 @@ const CreateProjectDialog = ({
 
   const [isCreating, setIsCreating] = useState(false);
   const [isCreated, setIsCreated] = useState(false);
-  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
   const router = useRouter();
 
   const { data: selectedProject }: { data: Project } = useSWR(

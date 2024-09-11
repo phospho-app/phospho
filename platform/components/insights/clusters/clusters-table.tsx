@@ -37,15 +37,15 @@ import useSWR from "swr";
 
 import { getColumns } from "./clusters-table-columns";
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProps {
   clusterings?: Clustering[];
   setSheetOpen: (value: boolean) => void;
 }
 
-export function ClustersTable<TData, TValue>({
+export function ClustersTable({
   clusterings = [],
   setSheetOpen,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps) {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
 

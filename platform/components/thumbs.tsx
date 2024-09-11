@@ -35,7 +35,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
   setFlag,
   key,
 }) => {
-  const { user, loading, accessToken } = useUser();
+  const { user, accessToken } = useUser();
   const [notes, setNotes] = useState("");
   const [currentNotes, setCurrentNotes] = useState("");
   const [, setSaveNoteButtonClicked] = useState(false);
