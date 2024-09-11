@@ -111,8 +111,11 @@ async def create(
 
     provider, model_name = get_provider_and_model(create_request.model)
 
-    # For this endpoint, we route requests to Azure OpenAI
-    provider = "azure"
+    if (
+        org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d"
+    ):  # TODO: This is an exception for a custom org, temporary
+        # For this endpoint, we route requests to Azure OpenAI
+        provider = "azure"
     openai_client = get_async_client(provider)
 
     # Change the model name to the one used by OpenAI
