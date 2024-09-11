@@ -59,31 +59,19 @@ class CreateRequest(pydantic.BaseModel):
 
 async def log_to_project(
     org_id: str,
+    project_id: str,
     create_request: CreateRequest,
     response: ChatCompletion,
 ):
     mongo_db = await get_mongo_db()
-    logging_project_setup = await mongo_db["completion_projects"].find_one(
-        {
-            "org_id": org_id,
-        }
-    )
-    if logging_project_setup:
-        logging_project_id = logging_project_setup.get("project_id")
-    else:
-        logging_project_id = None
+    logging_project_id = project_id
 
-    if logging_project_id:
-        try:
-            logging_project = await get_project_by_id(
-                logging_project_id["project_id"],
-            )
-        except Exception as e:
-            logging_project = None
+    try:
+        logging_project = await get_project_by_id(logging_project_id)
+    except Exception as e:
+        logging_project = None
 
-    if (
-        logging_project_id is None or logging_project is None
-    ):  # No logging project setup
+    if logging_project is None:  # No logging project setup
         # Create a new project
         logging_project = await create_project_by_org(
             org_id=org_id, user_id=None, project_name="Completions"
@@ -228,6 +216,7 @@ async def create(
         background_tasks.add_task(
             log_to_project,
             org_id=org["org"]["org_id"],
+            project_id=project_id,
             create_request=create_request,
             response=response,
         )
