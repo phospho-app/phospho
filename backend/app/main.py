@@ -133,6 +133,7 @@ from app.api.v2.endpoints import (
     events,
     chat,
     cron,
+    triggers,
 )
 
 api_v2 = FastAPI(
@@ -161,6 +162,7 @@ api_v2.include_router(health.router)
 api_v2.include_router(events.router)
 api_v2.include_router(chat.router)
 api_v2.include_router(cron.router)
+api_v2.include_router(triggers.router)
 
 
 # Mount the subapplication on the main app with the prefix /v2/
