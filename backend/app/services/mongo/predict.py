@@ -58,7 +58,7 @@ async def metered_prediction(
     if model_id == "phospho-multimodal":
         # We bill through stripe, $10 / 1k images
         nb_credits_used = 10 * len(jobresults)
-    elif model_id == "openai:gpt-4o":
+    elif model_id == "openai:gpt-4o" or model_id == "azure:gpt-4o":
         # Bill based on the number of tokens
         input_tokens = sum(
             [response["usage"]["prompt_tokens"] for response in predictions]
