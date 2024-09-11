@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/hover-card";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { BriefcaseBusiness, CopyIcon, Pencil } from "lucide-react";
 import { useState } from "react";
@@ -27,9 +27,6 @@ export default function Page() {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
-  );
   const project_id = navigationStateStore((state) => state.project_id);
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -46,8 +43,6 @@ export default function Page() {
     navigator.clipboard.writeText(project_id);
     setCopied(true);
   };
-
-  const plan = selectedOrgMetadata?.plan || "hobby";
 
   if (project_id === null || project_id === undefined) {
     return <>No project selected</>;

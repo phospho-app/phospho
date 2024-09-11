@@ -56,7 +56,7 @@ async function flagTask({
   if (!accessToken) return;
   if (!project_id) return;
 
-  const creation_response = await fetch(`/api/tasks/${task_id}/human-eval`, {
+  await fetch(`/api/tasks/${task_id}/human-eval`, {
     method: "POST",
     headers: {
       Authorization: "Bearer " + accessToken,

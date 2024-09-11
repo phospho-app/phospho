@@ -5,7 +5,7 @@ export const Icons = {
   spinner: Loader2,
 };
 
-export function Spinner({ className, ...props }: { className?: string }) {
+export function Spinner({ className }: { className?: string }) {
   return (
     <>
       <Icons.spinner className={cn("h-4 w-4 animate-spin", className)} />

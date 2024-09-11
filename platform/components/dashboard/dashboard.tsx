@@ -307,7 +307,7 @@ const Dashboard: React.FC = () => {
       if (!selectedProject.settings) return;
 
       // Find the tile that was moved
-      selectedProject.settings.dashboard_tiles.forEach((tile, tile_index) => {
+      selectedProject.settings.dashboard_tiles.forEach((tile) => {
         items.forEach((item) => {
           if (item.id === tile.id) {
             if (!selectedProject.settings) return;
@@ -386,7 +386,7 @@ const Dashboard: React.FC = () => {
 
       {customDashboardTiles && (
         <div className="grid-stack">
-          {customDashboardTiles.map((tile, index) => (
+          {customDashboardTiles.map((tile) => (
             <DashboardTileCard key={tile.id} tile={tile} grid={grid}>
               <DatavizGraph
                 metric={tile.metric}

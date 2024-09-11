@@ -25,7 +25,7 @@ import {
 } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
 import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
-import { Check, ChevronRight, PlusIcon, Trash } from "lucide-react";
+import { Check, PlusIcon, Trash } from "lucide-react";
 import useSWR from "swr";
 
 export const EventDetectionDescription = ({
@@ -37,9 +37,6 @@ export const EventDetectionDescription = ({
 }) => {
   const roundedConfidenceScore = event.score_range?.value
     ? Math.round(event.score_range?.value * 100)
-    : null;
-  const roundedScore = event.score_range?.value
-    ? Math.round(event.score_range?.value * 100) / 100
     : null;
 
   return (
@@ -354,7 +351,7 @@ export const AddEventDropdownForTasks = ({
   }
 
   const eventsNotInTask = Object.entries(projectEvents).filter(
-    ([event_name, event]) => {
+    ([event_name]) => {
       // If the event is already in the task, don't show it
       return !events?.some((e) => e.event_name === event_name);
     },
@@ -758,7 +755,7 @@ export const AddEventDropdownForSessions = ({
   }
 
   const eventsNotInSession = Object.entries(projectEvents).filter(
-    ([event_name, event]) => {
+    ([event_name]) => {
       // If the event is already in the task, don't show it
       return !events?.some((e) => e.event_name === event_name);
     },

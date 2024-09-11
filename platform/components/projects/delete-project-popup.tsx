@@ -109,7 +109,7 @@ const AlertDialogDeleteProject = () => {
                         `/api/organizations/${selectedOrgId}/projects`,
                         accessToken,
                       ],
-                      async (data: any) => {
+                      async () => {
                         return { projects: filteredProjects };
                       },
                     );

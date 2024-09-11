@@ -20,7 +20,7 @@ import { z } from "zod";
 
 import { Spinner } from "../../small-spinner";
 
-export const SentimentSettings = ({}: {}) => {
+export const SentimentSettings = () => {
   const [thresholdOpen, setThresholdOpen] = useState(false);
   const [clicked, setClicked] = useState(false);
   const { mutate } = useSWRConfig();

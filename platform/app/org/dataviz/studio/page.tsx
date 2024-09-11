@@ -337,10 +337,10 @@ const MetadataForm: React.FC = () => {
                     "Content-Type": "application/json",
                   },
                   body: JSON.stringify(selectedProject),
-                }).then((response) => {
+                }).then(() => {
                   mutate(
                     [`/api/projects/${selectedProject.id}`, accessToken],
-                    async (data: any) => {
+                    async () => {
                       return { project: selectedProject };
                     },
                   );

@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -20,14 +18,7 @@ import {
 } from "@/components/ui/hover-card";
 import { useUser } from "@propelauth/nextjs/client";
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
-import {
-  Dot,
-  FolderInput,
-  HelpCircle,
-  LifeBuoy,
-  MailIcon,
-  Upload,
-} from "lucide-react";
+import { Dot, FolderInput, HelpCircle, LifeBuoy, MailIcon } from "lucide-react";
 import Link from "next/link";
 import { usePostHog } from "posthog-js/react";
 import React from "react";

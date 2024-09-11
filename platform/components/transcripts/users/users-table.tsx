@@ -31,9 +31,9 @@ import useSWR from "swr";
 
 import { useColumns } from "./users-table-columns";
 
-interface DataTableProps<TData, TValue> {}
+interface DataTableProps {}
 
-export function UsersTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
+export function UsersTable({}: DataTableProps) {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
 

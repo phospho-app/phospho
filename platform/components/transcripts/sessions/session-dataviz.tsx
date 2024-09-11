@@ -41,11 +41,6 @@ interface EventsRanking {
   nb_events: number;
 }
 
-interface SessionLengthHist {
-  session_length: number;
-  nb_sessions: number;
-}
-
 const chartConfig: ChartConfig = {};
 
 const SessionsDataviz: React.FC = () => {
@@ -224,7 +219,7 @@ const SessionsDataviz: React.FC = () => {
       },
     );
 
-  const CustomTooltipEvent = ({ active, payload, label }: any) => {
+  const CustomTooltipEvent = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
@@ -236,7 +231,7 @@ const SessionsDataviz: React.FC = () => {
     return null;
   };
 
-  const CustomTooltipClustering = ({ active, payload, label }: any) => {
+  const CustomTooltipClustering = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
@@ -261,7 +256,7 @@ const SessionsDataviz: React.FC = () => {
   };
 
   const totalClusters = useMemo(() => {
-    return lastClusteringComposition?.reduce((acc, _) => acc + 1, 0) ?? 0;
+    return lastClusteringComposition?.reduce((acc) => acc + 1, 0) ?? 0;
   }, [lastClusteringComposition]);
 
   const totalTags = useMemo(() => {

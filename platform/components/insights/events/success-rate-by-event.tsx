@@ -5,7 +5,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Filter } from "lucide-react";
 import {
   Bar,
   BarChart,

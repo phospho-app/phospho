@@ -25,9 +25,9 @@ import {
 import * as React from "react";
 import useSWR from "swr";
 
-interface DataTableProps<TData, TValue> {}
+interface DataTableProps {}
 
-export function DataTable<TData, TValue>({}: DataTableProps<TData, TValue>) {
+export function DataTable({}: DataTableProps) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );

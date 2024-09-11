@@ -19,11 +19,11 @@ export function getColumns({
   const columns: ColumnDef<Cluster>[] = [
     // id
     {
-      header: ({ column }) => {
+      header: () => {
         return <></>;
       },
       accessorKey: "id",
-      cell: ({ row }) => {
+      cell: () => {
         return <></>;
       },
       enableHiding: true,

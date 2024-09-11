@@ -53,7 +53,7 @@ const UsersDataviz = () => {
   );
 
   // Fetch graph data
-  const { data: userCountData, error: fetchUserCountError } = useSWR(
+  const { data: userCountData } = useSWR(
     [`/api/metadata/${project_id}/count/tasks/user_id`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
@@ -62,7 +62,7 @@ const UsersDataviz = () => {
   );
   const userCount = userCountData?.value;
 
-  const { data: userAverageData, error: fetchUserAverageError } = useSWR(
+  const { data: userAverageData } = useSWR(
     [`/api/metadata/${project_id}/average/tasks/user_id`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
@@ -140,10 +140,10 @@ const UsersDataviz = () => {
     );
 
   const totalJobTitles = React.useMemo(() => {
-    return userJobTitles?.reduce((acc, _) => acc + 1, 0) || 0;
+    return userJobTitles?.reduce((acc) => acc + 1, 0) || 0;
   }, [userJobTitles]);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
@@ -339,7 +339,7 @@ const Users = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const { data: userCountData, error: fetchUserCountError } = useSWR(
+  const { data: userCountData } = useSWR(
     [`/api/metadata/${project_id}/count/tasks/user_id`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
