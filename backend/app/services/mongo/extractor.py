@@ -224,6 +224,11 @@ class ExtractorClient:
         """
         Run the log procesing pipeline on a task asynchronously
         """
+        if self.project_id == "895bdb48f9a449c6bcb01358a3a5b52d":
+            logger.warning(
+                "Skipping log processing for project 895bdb48f9a449c6bcb01358a3a5b52d"
+            )
+            return
         logger.info(
             f"Running process log for {len(logs_to_process)} tasks for project {self.project_id}"
         )
