@@ -844,26 +844,45 @@ async def keyword_event_detection(
     listExchangeToSearch: List[str] = []
     if event_scope == "task":
         listExchangeToSearch = [message.latest_interaction()]
-
     elif event_scope == "task_input_only":
         message_list = message.as_list()
         # Filter to keep only the user messages
         listExchangeToSearch = [
-            " " + m.content + " " for m in message_list if m.role == "User"
+            " " + m.content + " " for m in message_list if m.role.lower() == "user"
         ]
-
     elif event_scope == "task_output_only":
         message_list = message.as_list()
         # Filter to keep only the assistant messages
         listExchangeToSearch = [
-            " " + m.content + " " for m in message_list if m.role == "Assistant"
+            " " + m.content + " " for m in message_list if m.role.lower() == "assistant"
         ]
-        print(listExchangeToSearch)
-
     elif event_scope == "session":
         listExchangeToSearch = [
             message.transcript(with_role=True, with_previous_messages=True)
         ]
+    elif event_scope == "system_prompt":
+        system_prompt_in_message = (
+            message.metadata.get("task", {})
+            .get("metadata", {})
+            .get("system_prompt", None)
+        )
+        if system_prompt_in_message is None:
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No system_prompt in the message"],
+            )
+        if not isinstance(system_prompt_in_message, str):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["system_prompt in the message is not a string"],
+            )
+        listExchangeToSearch = [system_prompt_in_message]
+    else:
+        raise ValueError(
+            f"Unknown event_scope : {event_scope}. Valid values are: {DetectionScope.__args__}"
+        )
 
     # text to look into for the keywords
     text = " ".join(listExchangeToSearch).lower()
@@ -928,20 +947,41 @@ async def regex_event_detection(
         message_list = message.as_list()
         # Filter to keep only the user messages
         listExchangeToSearch = [
-            " " + m.content + " " for m in message_list if m.role == "User"
+            " " + m.content + " " for m in message_list if m.role.lower() == "user"
         ]
-
     elif event_scope == "task_output_only":
         message_list = message.as_list()
         # Filter to keep only the assistant messages
         listExchangeToSearch = [
-            " " + m.content + " " for m in message_list if m.role == "Assistant"
+            " " + m.content + " " for m in message_list if m.role.lower() == "assistant"
         ]
-
     elif event_scope == "session":
         listExchangeToSearch = [
             message.transcript(with_role=True, with_previous_messages=True)
         ]
+    elif event_scope == "system_prompt":
+        system_prompt_in_message = (
+            message.metadata.get("task", {})
+            .get("metadata", {})
+            .get("system_prompt", None)
+        )
+        if system_prompt_in_message is None:
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["No system_prompt in the message"],
+            )
+        if not isinstance(system_prompt_in_message, str):
+            return JobResult(
+                result_type=ResultType.error,
+                value=None,
+                logs=["system_prompt in the message is not a string"],
+            )
+        listExchangeToSearch = [system_prompt_in_message]
+    else:
+        raise ValueError(
+            f"Unknown event_scope : {event_scope}. Valid values are: {DetectionScope.__args__}"
+        )
 
     text = " ".join(listExchangeToSearch)
 
