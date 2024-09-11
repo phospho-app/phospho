@@ -108,7 +108,13 @@ export default function CreateEvent({
       .enum(["llm_detection", "regex_detection", "keyword_detection"])
       .default("llm_detection"),
     detection_scope: z
-      .enum(["task", "session", "task_input_only", "task_output_only"])
+      .enum([
+        "task",
+        "session",
+        "task_input_only",
+        "task_output_only",
+        "system_prompt",
+      ])
       .default("task"),
     keywords: z.string().optional(),
     regex_pattern: z.string().optional(),
@@ -423,6 +429,9 @@ export default function CreateEvent({
                         </SelectItem>
                         <SelectItem value="task_output_only">
                           Task output only
+                        </SelectItem>
+                        <SelectItem value="system_prompt">
+                          System prompt
                         </SelectItem>
                       </SelectContent>
                     </Select>
