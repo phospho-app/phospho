@@ -19,8 +19,15 @@ async def metered_prediction(
     bill: bool = True,
 ) -> int:
     """
-    Make a prediction using a model from the AI Hub and bill the organization accordingly
-    model_id: "{provider}:{model_name}"
+    Store the predictions in the job_results database and bill the org_id based on the model_id.
+
+    Args:
+        org_id: The organization id
+        model_id: "{provider}:{model_name}"
+        inputs: The inputs used for the predictions
+        predictions: The predictions
+        project_id: The project id
+        bill: Whether to bill the org_id
     """
     logger.debug(f"Making predictions for org_id {org_id} with model_id {model_id}")
 
