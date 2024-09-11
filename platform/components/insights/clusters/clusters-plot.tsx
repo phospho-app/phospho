@@ -303,9 +303,16 @@ export function CustomPlot({
                   displayedData.points.length === 1 &&
                   displayedData.points[0].text
                 ) {
-                  router.push(
-                    `/org/transcripts/tasks/${encodeURIComponent(displayedData.points[0].text)}`,
-                  );
+                  if (selectedClustering?.scope === "messages") {
+                    router.push(
+                      `/org/transcripts/tasks/${encodeURIComponent(displayedData.points[0].text)}`,
+                    );
+                  }
+                  if (selectedClustering?.scope === "sessions") {
+                    router.push(
+                      `/org/transcripts/sessions/${encodeURIComponent(displayedData.points[0].text)}`,
+                    );
+                  }
                 }
               }}
             />
