@@ -50,6 +50,7 @@ class LogEventForTasks(MinimalLogEventForTasks, extra="allow"):
     environment: str = "default environment"
     # Backcompute
     job_ids: Optional[List[str]] = None
+    org_id: Optional[str] = None
 
 
 class LogProcessRequestForTasks(BaseModel):

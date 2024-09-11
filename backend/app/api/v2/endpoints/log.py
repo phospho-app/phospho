@@ -37,6 +37,10 @@ async def store_batch_of_log_events(
 ) -> LogReply:
     """Store the batched_log_events in the logs database"""
 
+    logger.debug(
+        f"Received log request for project {project_id}, {len(log_request.batched_log_events)} logs"
+    )
+
     # Check if we are in maintenance mode
     if config.IS_MAINTENANCE:
         raise HTTPException(

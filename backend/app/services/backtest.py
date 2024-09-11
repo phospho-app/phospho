@@ -1,7 +1,7 @@
 from typing import Iterator, List, Optional
 from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.tasks import get_all_tasks
-from fastapi import HTTPException
+from loguru import logger
 import phospho
 from app.api.v2.models import LogEvent
 
@@ -64,6 +64,8 @@ async def run_backtests(
     openai_api_key: str,
 ) -> None:
     # Provider verification has been done in the API endpoint
+
+    logger.info(f"Running backtests for project {project_id}")
     provider, model = phospho.lab.get_provider_and_model(provider_and_model)
     client = phospho.lab.get_async_client(provider, api_key=openai_api_key)
 

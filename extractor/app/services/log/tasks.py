@@ -352,7 +352,7 @@ async def process_log_with_session_id(
             logger.error(error_mesagge)
 
     # Add sessions to database
-    if len(sessions_to_create) > 0:
+    if len(sessions_to_create) > 0 and len(tasks_to_create) > 0:
         sessions_to_create_dump: List[dict] = []
         for session_id, session_data in sessions_to_create.items():
             # logger.info(
