@@ -11,15 +11,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
 import { Menu } from "lucide-react";
-import getConfig from "next/config";
 import Link from "next/link";
 import React from "react";
-
-let version: string;
-try {
-  const { publicRuntimeConfig } = getConfig();
-  version = publicRuntimeConfig.version;
-} catch {}
 
 export function Navbar({
   className,

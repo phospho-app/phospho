@@ -27,7 +27,7 @@ const CreateDataset = () => {
   const [isCreatingDataset, setIsCreatingDataset] = useState(false);
   // Params for the dataset creation
   const [limit, setLimit] = useState(400); // Limit on the dataset size
-  const [useSmartSampling, setUseSmartSampling] = useState(false); // To know wich sampling_type send to the backend
+  const [useSmartSampling] = useState(false); // To know wich sampling_type send to the backend
   const [datasetName, setDatasetName] = useState(generateSlug());
 
   // Hardcoded limit for the dataset size
@@ -86,10 +86,6 @@ const CreateDataset = () => {
       setIsCreatingDataset(false);
     }
   }
-
-  const handleSmartSamplingChange = (checked: boolean) => {
-    setUseSmartSampling(checked === true);
-  };
 
   return (
     <Sheet>

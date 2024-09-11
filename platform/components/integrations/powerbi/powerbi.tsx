@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
-import { useUser } from "@propelauth/nextjs/client";
 import { CircleAlert } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,10 +21,7 @@ const PowerBIIntegrations: React.FC = () => {
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
-  const org_id = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
-
-  const { accessToken } = useUser();
 
   // If the selectedOrgMetadata.argilla_worspace_id exists and is not null, then Argilla is set up
   const [isPowerBISetup, setIsPowerBISetup] = useState<boolean>(false);

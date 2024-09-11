@@ -53,18 +53,15 @@ import useSWR, { useSWRConfig } from "swr";
 import * as z from "zod";
 
 const RunClusteringSheet = ({
-  sheetOpen,
   setSheetOpen,
   setSelectedClustering,
 }: {
-  sheetOpen: boolean;
   setSheetOpen: (value: boolean) => void;
   setSelectedClustering: (value: Clustering) => void;
 }) => {
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
-  const setDataFilters = navigationStateStore((state) => state.setDataFilters);
 
   const { accessToken } = useUser();
   const { mutate } = useSWRConfig();
@@ -95,8 +92,6 @@ const RunClusteringSheet = ({
       keepPreviousData: true,
     },
   );
-  let totalNbTasks: number | null | undefined =
-    totalNbTasksData?.total_nb_tasks;
 
   const hobby = orgMetadata?.plan === "hobby";
 
@@ -150,7 +145,7 @@ const RunClusteringSheet = ({
       keepPreviousData: true,
     },
   );
-  let nbTasksInSessions: number | null | undefined =
+  const nbTasksInSessions: number | null | undefined =
     totalNbSessionsData?.nb_tasks_in_sessions;
 
   useEffect(() => {

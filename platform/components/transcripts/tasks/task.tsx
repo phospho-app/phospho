@@ -71,7 +71,6 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
   // To re-render the component when the flag is updated, we need to use a state
   // For the flag. This is because just having the task as a prop doesn't trigger
   // a re-render when the flag is updated (passage via reference)
-  const flag = task.flag;
   const setFlag = (flag: string) => {
     mutateTask({ ...task, flag: flag });
     setRefresh(!refresh);
@@ -161,7 +160,6 @@ const TaskOverview: React.FC<TaskProps> = ({ task_id }) => {
               mutateTask(task as TaskWithEvents);
             }}
             setFlag={setFlag}
-            refresh={refresh}
           />
         </CardContent>
         <CardFooter className="flex justify-around ">

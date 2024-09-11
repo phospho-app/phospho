@@ -18,7 +18,6 @@ import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Boxes, Plus } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 
@@ -139,7 +138,6 @@ const Clusters: React.FC = () => {
     <>
       <Sheet open={sheetClusterOpen} onOpenChange={setSheetClusterOpen}>
         <RunClusteringSheet
-          sheetOpen={sheetClusterOpen}
           setSheetOpen={setSheetClusterOpen}
           setSelectedClustering={setSelectedClustering}
         />
@@ -246,7 +244,6 @@ const Clusters: React.FC = () => {
               )}
             <ClustersCards
               setSheetClusterOpen={setSheetClusterOpen}
-              selected_clustering_id={selectedClustering?.id}
               selectedClustering={selectedClustering}
             />
           </div>

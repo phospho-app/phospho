@@ -1,4 +1,3 @@
-import ComingSoon from "@/components/coming-soon";
 import { Button } from "@/components/ui/button";
 import {
   Card,

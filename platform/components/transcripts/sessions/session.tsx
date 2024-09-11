@@ -108,7 +108,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
             <div className="space-y-2">
               {session_with_events?.metadata &&
                 Object.entries(session_with_events.metadata)
-                  .sort(([key1, value1], [key2, value2]) => {
+                  .sort(([key1], [key2]) => {
                     if (key1 < key2) return -1;
                     if (key1 > key2) return 1;
                     return 0;
@@ -180,7 +180,6 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
                 mutateSessionTasks(newTasks, false);
                 setRefresh(!refresh);
               }}
-              refresh={refresh}
             ></TaskBox>
           ))}
         </CardContent>

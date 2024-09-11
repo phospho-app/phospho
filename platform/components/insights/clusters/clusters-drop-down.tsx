@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/select";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
-import { useMemo } from "react";
 
 export function ClusteringDropDown({
   selectedClustering,
