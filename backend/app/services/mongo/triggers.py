@@ -41,7 +41,9 @@ def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Se
                     [
                         task.metadata["total_tokens"]
                         for task in session.tasks
-                        if task.metadata is not None and "total_tokens" in task.metadata
+                        if task.metadata is not None
+                        and "total_tokens" in task.metadata
+                        and task.metadata["total_tokens"] is not None
                     ]
                 ),
                 "prompt_tokens": sum(
@@ -50,6 +52,7 @@ def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Se
                         for task in session.tasks
                         if task.metadata is not None
                         and "prompt_tokens" in task.metadata
+                        and task.metadata["prompt_tokens"] is not None
                     ]
                 ),
                 "completion_tokens": sum(
@@ -58,6 +61,7 @@ def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Se
                         for task in session.tasks
                         if task.metadata is not None
                         and "completion_tokens" in task.metadata
+                        and task.metadata["completion_tokens"] is not None
                     ]
                 ),
             }
@@ -68,6 +72,7 @@ def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Se
                         for task in session.tasks
                         if task.metadata is not None
                         and "magnitude_score" in task.metadata
+                        and task.metadata["magnitude_score"] is not None
                     ]
                 )
                 / session.session_length,
@@ -77,6 +82,7 @@ def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Se
                         for task in session.tasks
                         if task.metadata is not None
                         and "sentiment_score" in task.metadata
+                        and task.metadata["sentiment_score"] is not None
                     ]
                 )
                 / session.session_length,
@@ -90,13 +96,16 @@ def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Se
                         for task in session.tasks
                         if task.metadata is not None
                         and "sentiment_label" in task.metadata
+                        and task.metadata["sentiment_label"] is not None
                     ]
                 ),
                 human_eval=get_most_common(
                     [
                         task.metadata["human_eval"]
                         for task in session.tasks
-                        if task.metadata is not None and "human_eval" in task.metadata
+                        if task.metadata is not None
+                        and "human_eval" in task.metadata
+                        and task.metadata["human_eval"] is not None
                     ]
                 ),
             )
