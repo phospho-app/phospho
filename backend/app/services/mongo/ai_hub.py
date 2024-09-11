@@ -183,25 +183,19 @@ class AIHubClient:
         Call the clustering endpoint of the AI Hub
         """
         if scope == "messages":
-            response = await self._post(
+            await self._post(
                 endpoint="generate_clustering_messages_workflow",
                 data=clustering_request.model_dump(mode="json"),
                 hash_data_for_id=False,
             )
         elif scope == "sessions":
-            response = await self._post(
+            await self._post(
                 endpoint="generate_clustering_sessions_workflow",
                 data=clustering_request.model_dump(mode="json"),
                 hash_data_for_id=False,
             )
         else:
             raise ValueError(f"Invalid value for messages_or_sessions: {scope}")
-
-        if response is None:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error while calling AI Hub: {response}",  # TODO: Because we now fire and forget, response is None and we trigger this error
-            )
 
     async def generate_embeddings(
         self, embedding_request: EmbeddingRequest
