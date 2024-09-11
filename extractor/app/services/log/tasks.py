@@ -432,6 +432,12 @@ async def process_logs_for_tasks(
     - Create a Session
     - Trigger the Tasks processing pipeline
     """
+    if project_id == "895bdb48f9a449c6bcb01358a3a5b52d":
+        logger.warning(
+            "Ignoring processing for project 895bdb48f9a449c6bcb01358a3a5b52d"
+        )
+        return
+
     mongo_db = await get_mongo_db()
     logger.info(f"Project {project_id}: processing {len(logs_to_process)} log events")
 
