@@ -209,7 +209,6 @@ async def create(
         )
 
     if org_id != config.PHOSPHO_ORG_ID and config.ENVIRONMENT == "production":
-        # TODO: add here in the background task the log to the project
         background_tasks.add_task(
             metered_prediction,
             org_id=org["org"]["org_id"],
