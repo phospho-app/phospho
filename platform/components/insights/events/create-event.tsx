@@ -43,7 +43,7 @@ import {
   ScoreRangeType,
 } from "@/models/models";
 import { ScoreRangeSettings } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import Link from "next/link";
@@ -66,7 +66,6 @@ export default function CreateEvent({
 
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const project_id = navigationStateStore((state) => state.project_id);
-  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const { mutate } = useSWRConfig();
   const { loading, accessToken } = useUser();
   const { toast } = useToast();
@@ -78,12 +77,6 @@ export default function CreateEvent({
     },
   );
   const [eventsTemplate, setEventsTemplate] = useState<EventDefinition[]>([]);
-
-  const currentEvents = selectedProject?.settings?.events || {};
-
-  // Max number of events depends on the plan
-  const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
-  const current_nb_events = Object.keys(currentEvents).length;
 
   useEffect(() => {
     if (selectedOrgId && project_id) {
@@ -280,21 +273,18 @@ export default function CreateEvent({
     };
 
     try {
-      const creation_response = await fetch(`/api/projects/${project_id}`, {
+      await fetch(`/api/projects/${project_id}`, {
         method: "POST",
         headers: {
           Authorization: "Bearer " + accessToken,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(selectedProject),
-      }).then((response) => {
+      }).then(() => {
         setOpen(false);
-        mutate(
-          [`/api/projects/${project_id}`, accessToken],
-          async (data: any) => {
-            return { project: selectedProject };
-          },
-        );
+        mutate([`/api/projects/${project_id}`, accessToken], async () => {
+          return { project: selectedProject };
+        });
       });
     } catch (error) {
       toast({
@@ -613,9 +603,9 @@ export default function CreateEvent({
               // This is used to display the right error message when the user selects a category score type
               <FormField
                 control={form.control}
-                // @ts-ignore Renders the error message for the score_range_settings object
+                // @ts-expect-error Renders the error message for the score_range_settings object
                 name="score_range_settings.root"
-                render={({ field }) => <FormMessage />}
+                render={() => <FormMessage />}
               />
             )}
             {form.watch("detection_engine") === "keyword_detection" && (

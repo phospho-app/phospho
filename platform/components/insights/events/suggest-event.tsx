@@ -160,20 +160,17 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
     };
 
     try {
-      const creation_response = await fetch(`/api/projects/${project_id}`, {
+      await fetch(`/api/projects/${project_id}`, {
         method: "POST",
         headers: {
           Authorization: "Bearer " + accessToken,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(selectedProject),
-      }).then((response) => {
-        mutate(
-          [`/api/projects/${project_id}`, accessToken],
-          async (data: any) => {
-            return { project: selectedProject };
-          },
-        );
+      }).then(() => {
+        mutate([`/api/projects/${project_id}`, accessToken], async () => {
+          return { project: selectedProject };
+        });
         toast({
           title: "Event created",
           description: `Event "${values.event_name}" has been created`,

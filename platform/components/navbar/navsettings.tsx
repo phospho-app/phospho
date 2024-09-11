@@ -2,7 +2,7 @@
 
 import { SendDataAlertDialog } from "@/components/callouts/import-data";
 import { ExportDataButton } from "@/components/navbar/download-csv";
-import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

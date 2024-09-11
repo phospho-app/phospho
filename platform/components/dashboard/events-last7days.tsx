@@ -21,14 +21,6 @@ interface EventColorMapping {
   [key: string]: string;
 }
 
-interface DailyEvents {
-  [key: string]: number[] | string[];
-  unique_event_names: string[];
-  date: string[];
-  formated_date: string[];
-  total: number[];
-}
-
 const EventsLast7Days = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
@@ -61,11 +53,11 @@ const EventsLast7Days = () => {
           }),
         ]
       : null,
-    ([url, accessToken, body]) =>
+    ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         graph_name: ["events_per_day"],
       }).then((data) => {
-        let events_per_day = data?.events_per_day;
+        const events_per_day = data?.events_per_day;
         events_per_day?.data.forEach((item: any) => {
           item.formated_date = new Date(item.date).toLocaleDateString([], {
             month: "short",

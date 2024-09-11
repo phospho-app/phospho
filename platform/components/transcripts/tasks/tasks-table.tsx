@@ -62,7 +62,7 @@ export function TasksTable<TData, TValue>({
   const { accessToken } = useUser();
   const router = useRouter();
 
-  const [tableIsClickable, setTableIsClickable] = React.useState<boolean>(true);
+  const [, setTableIsClickable] = React.useState<boolean>(true);
   const [sheetOpen, setSheetOpen] = React.useState<boolean>(false);
   const [sheetToOpen, setSheetToOpen] = React.useState<string | null>(null);
   const [eventDefinition, setEventDefinition] =

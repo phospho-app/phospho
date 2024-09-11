@@ -250,7 +250,7 @@ function EventsList({ event_type }: { event_type?: string }) {
     delete selectedProject.settings.events[eventNameToDelete];
 
     try {
-      const creation_response = await fetch(`/api/projects/${project_id}`, {
+      await fetch(`/api/projects/${project_id}`, {
         method: "POST",
         headers: {
           Authorization: "Bearer " + accessToken,
@@ -258,12 +258,9 @@ function EventsList({ event_type }: { event_type?: string }) {
         },
         body: JSON.stringify(selectedProject),
       });
-      mutate(
-        [`/api/projects/${project_id}`, accessToken],
-        async (data: any) => {
-          return { project: selectedProject };
-        },
-      );
+      mutate([`/api/projects/${project_id}`, accessToken], async () => {
+        return { project: selectedProject };
+      });
     } catch (error) {
       console.error("Error deleting event:", error);
     }
@@ -284,7 +281,7 @@ function EventsList({ event_type }: { event_type?: string }) {
   const noEvents =
     events === null ||
     eventArray.filter(
-      ([eventName, eventDefinition]) =>
+      ([, eventDefinition]) =>
         event_type === undefined ||
         eventDefinition.score_range_settings?.score_type === event_type,
     ).length === 0;
@@ -304,7 +301,7 @@ function EventsList({ event_type }: { event_type?: string }) {
             </TableHeader>
             <TableBody>
               {!noEvents &&
-                eventArray.map(([eventName, eventDefinition], index) => {
+                eventArray.map(([, eventDefinition], index) => {
                   if (
                     event_type !== undefined &&
                     eventDefinition.score_range_settings?.score_type !==

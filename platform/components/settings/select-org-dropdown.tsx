@@ -10,11 +10,6 @@ import {
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 
-interface OrgMemberInfo {
-  orgId: string;
-  orgName: string;
-}
-
 export function SelectOrgButton() {
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const setSelectedOrgId = navigationStateStore(

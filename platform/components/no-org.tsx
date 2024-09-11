@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export default function NoOrg() {
   // To be displayed when the user has no org but is logged in
   return (

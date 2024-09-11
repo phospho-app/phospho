@@ -31,7 +31,6 @@ import { TableNavigation } from "../table-navigation";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { getColumns } from "./abtesting-columns";
 import { ABTestingDataviz } from "./abtesting-dataviz";
-import CreateNewABTestButton from "./create-new-ab-test-button";
 
 interface DataTableProps<TData, TValue> {}
 

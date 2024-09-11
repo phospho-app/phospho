@@ -43,7 +43,6 @@ import {
   MonitorPlay,
   NotebookText,
   Telescope,
-  TriangleAlert,
   Unplug,
   Upload,
   X,
@@ -58,7 +57,6 @@ import { z } from "zod";
 
 import { Blockwall } from "../blockwall";
 import { Spinner } from "../small-spinner";
-import UpgradeButton from "../upgrade-button";
 
 const PythonIcon = () => {
   return (
@@ -94,7 +92,7 @@ const JavaScriptIcon = () => {
   );
 };
 
-const SidebarSendData = ({ setOpen }: { setOpen: (open: boolean) => void }) => {
+const SidebarSendData = () => {
   return (
     <>
       <div className="flex flex-col col-span-1 justify-end">
@@ -566,7 +564,7 @@ export const SendDataAlertDialog = ({
             </div>
           </AlertDialogHeader>
           <div className="overflow-y-auto">
-            <SidebarSendData setOpen={setOpen} />
+            <SidebarSendData />
             <div className="space-y-2 flex flex-col">
               <Card>
                 <CardHeader>

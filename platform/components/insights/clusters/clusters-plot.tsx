@@ -13,7 +13,6 @@ import { Data } from "plotly.js";
 import {
   Suspense,
   lazy,
-  use,
   useCallback,
   useEffect,
   useRef,

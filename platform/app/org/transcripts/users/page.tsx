@@ -140,10 +140,10 @@ const UsersDataviz = () => {
     );
 
   const totalJobTitles = React.useMemo(() => {
-    return userJobTitles?.reduce((acc, _) => acc + 1, 0) || 0;
+    return userJobTitles?.reduce((acc) => acc + 1, 0) || 0;
   }, [userJobTitles]);
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
