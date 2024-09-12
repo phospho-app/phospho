@@ -465,6 +465,7 @@ async def post_detect_clusters(
         clustering_id=clustering_id,
         clustering_name=clustering_name,
         clustering_mode=query.clustering_mode,
+        user_email=user.email,
     )
     logger.info(
         f"Clustering id {clustering_id} cluster name {clustering_name} for project {project_id} requested."
