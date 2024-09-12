@@ -44,7 +44,10 @@ export default function OnboardingLayout({
                 // Reset the navigation store
                 setSelectedOrgId(null);
                 setproject_id(null);
-                await logoutFn().then(() => router.push("/authenticate"));
+                await logoutFn().then(() => {
+                  navigationStateStore.persist.clearStorage();
+                  router.push("/authenticate");
+                });
               }}
             >
               Log out
