@@ -164,6 +164,7 @@ export function NavBarSettings() {
                 await logoutFn().then(() => {
                   setSelectedOrgId(null);
                   setproject_id(null);
+                  navigationStateStore.persist.clearStorage();
                   router.push("/authenticate");
                 });
               }}
