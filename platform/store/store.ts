@@ -4,7 +4,6 @@ import {
   CustomDateRange,
   HasEnoughLabelledTasks,
   OrgMetadata,
-  Project,
   ProjectDataFilters,
   Task,
 } from "@/models/models";
@@ -36,6 +35,8 @@ interface navigationState {
   dataFilters: ProjectDataFilters;
   setDataFilters: (tasksColumnsFilters: ProjectDataFilters) => void;
 
+  warningShowed: boolean;
+  setWarningShowed: (showed: boolean) => void;
   dateRangePreset: string | null;
   dateRange: CustomDateRange | undefined;
   setDateRangePreset: (dateRangePreset: string | null) => void;
@@ -59,15 +60,17 @@ export const navigationStateStore = create(
     (set) => ({
       selectedOrgId: undefined,
       setSelectedOrgId: (orgId: string | null) =>
-        set((state) => ({ selectedOrgId: orgId })),
+        set(() => ({ selectedOrgId: orgId })),
 
       project_id: null,
       setproject_id: (projectId: string | null) =>
-        set((state) => ({ project_id: projectId })),
+        set(() => ({ project_id: projectId })),
 
-      dataFilters: {} as ProjectDataFilters,
+      dataFilters: {
+        created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
+      } as ProjectDataFilters,
       setDataFilters: (filters: ProjectDataFilters) =>
-        set((state) => ({ dataFilters: filters })),
+        set(() => ({ dataFilters: filters })),
 
       tasksPagination: {
         pageSize: 10,
@@ -139,7 +142,10 @@ export const navigationStateStore = create(
           };
         }),
 
-      dateRangePreset: "all-time",
+      warningShowed: false,
+      setWarningShowed: (showed: boolean) =>
+        set(() => ({ warningShowed: showed })),
+      dateRangePreset: "last-7-days",
       dateRange: {
         from: undefined,
         to: undefined,
@@ -241,7 +247,6 @@ export const navigationStateStore = create(
           },
         }));
       },
-
       selectedMetric: "nb_messages",
       setSelectedMetric: (metric: string) =>
         set(() => ({ selectedMetric: metric })),
@@ -286,13 +291,13 @@ interface dataState {
 export const dataStateStore = create<dataState>((set) => ({
   selectedOrgMetadata: null,
   setSelectOrgMetadata: (selectOrgMetadata: OrgMetadata) =>
-    set((state) => ({ selectedOrgMetadata: selectOrgMetadata })),
+    set(() => ({ selectedOrgMetadata: selectOrgMetadata })),
 
   hasLabelledTasks: null,
   setHasLabelledTasks: (hasLabelledTasks: HasEnoughLabelledTasks | null) =>
-    set((state) => ({ hasLabelledTasks: hasLabelledTasks })),
+    set(() => ({ hasLabelledTasks: hasLabelledTasks })),
 
   tasksWithoutHumanLabel: null,
   setTasksWithoutHumanLabel: (tasks: Task[]) =>
-    set((state) => ({ tasksWithoutHumanLabel: tasks })),
+    set(() => ({ tasksWithoutHumanLabel: tasks })),
 }));

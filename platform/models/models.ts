@@ -214,6 +214,10 @@ export interface Project {
   settings?: ProjectSettings;
 }
 
+export interface ProjectsData {
+  projects: Project[];
+}
+
 export interface PostgresCredentials {
   org_id: string;
   server: string;

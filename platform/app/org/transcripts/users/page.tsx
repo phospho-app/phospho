@@ -23,6 +23,11 @@ import { ChevronRight, HeartHandshake } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { Label, Pie, PieChart } from "recharts";
+import { TooltipProps } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 // TODO : Add graph colors like in tasks-dataviz.tsx
@@ -32,11 +37,13 @@ const chartConfig: ChartConfig = {};
 interface JobTitles {
   category: string;
   count: number;
+  fill?: string;
 }
 
 interface Industry {
   category: string;
   count: number;
+  fill?: string;
 }
 
 const UsersDataviz = () => {
@@ -95,7 +102,7 @@ const UsersDataviz = () => {
           if (!jobTitles) {
             return null;
           }
-          jobTitles.forEach((dataPoint: any, index: number) => {
+          jobTitles.forEach((dataPoint: JobTitles, index: number) => {
             dataPoint.fill = graphColors[index % graphColors.length];
           });
           return jobTitles;
@@ -129,7 +136,7 @@ const UsersDataviz = () => {
           if (!userIndustry) {
             return null;
           }
-          userIndustry.forEach((dataPoint: any, index: number) => {
+          userIndustry.forEach((dataPoint: Industry, index: number) => {
             dataPoint.fill = graphColors[index % graphColors.length];
           });
           return userIndustry;
@@ -143,7 +150,10 @@ const UsersDataviz = () => {
     return userJobTitles?.reduce((acc) => acc + 1, 0) || 0;
   }, [userJobTitles]);
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">

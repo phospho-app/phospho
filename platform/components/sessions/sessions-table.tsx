@@ -105,27 +105,31 @@ export function SessionsTable({
     sessionsWithEvents = sessionsData.sessions;
   }
 
-  const { data: totalNbSessionsData } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/sessions`,
-      accessToken,
-      JSON.stringify(userFilter),
-      JSON.stringify(dateRange),
-      "total_nb_sessions",
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["total_nb_sessions"],
-        filters: {
-          ...dataFilters,
-          sessions_ids: sessions_ids,
-        },
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const totalNbSessions = totalNbSessionsData?.total_nb_sessions;
+  const { data: totalNbSessionsData, isLoading: isTotalNbSessionsLoading } =
+    useSWR(
+      [
+        `/api/explore/${project_id}/aggregated/sessions`,
+        accessToken,
+        JSON.stringify(userFilter),
+        JSON.stringify(dateRange),
+        "total_nb_sessions",
+      ],
+      ([url, accessToken]) =>
+        authFetcher(url, accessToken, "POST", {
+          metrics: ["total_nb_sessions"],
+          filters: {
+            ...dataFilters,
+            sessions_ids: sessions_ids,
+          },
+        }),
+      {
+        keepPreviousData: true,
+      },
+    );
+
+  const totalNbSessions: number | null | undefined = isTotalNbSessionsLoading
+    ? undefined
+    : (totalNbSessionsData?.total_nb_sessions ?? null);
 
   const columns = useColumns({
     mutateSessions: mutateSessions,
@@ -164,7 +168,7 @@ export function SessionsTable({
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className="flex flex-row justify-between gap-x-2 items-center mb-2">
           <div className="flex flex-row space-x-2 items-center">
-            <DatePickerWithRange />
+            <DatePickerWithRange nbrItems={totalNbSessions} />
             <FilterComponent variant="sessions" />
             <RunAnalysisInPast />
           </div>

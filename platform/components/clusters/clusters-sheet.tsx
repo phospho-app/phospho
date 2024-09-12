@@ -151,11 +151,19 @@ const RunClusteringSheet = ({
   const nbTasksInSessions: number | null | undefined =
     totalNbSessionsData?.nb_tasks_in_sessions;
 
+  const FormValues = () => {
+    const limit = form.getValues("limit");
+    const scope = form.getValues("scope");
+    return { limit, scope };
+  };
+
+  const { limit, scope } = FormValues();
+
   useEffect(() => {
     let nbElements = 0;
-    const formLimit = form.getValues("limit");
+    const formLimit = limit;
 
-    if (form.getValues("scope") === "messages") {
+    if (scope === "messages") {
       totalNbTasksRef.current = totalNbTasksData?.total_nb_tasks ?? 0;
       defaultNbClustersRef.current = Math.floor(totalNbTasksRef.current / 100);
 
@@ -169,7 +177,7 @@ const RunClusteringSheet = ({
 
       nbElements = Math.min(formLimit ?? 0, totalNbTasksRef.current);
     }
-    if (form.getValues("scope") === "sessions") {
+    if (scope === "sessions") {
       totalNbSessionsRef.current = totalNbSessionsData?.total_nb_sessions ?? 0;
       totalNbTasksRef.current = totalNbTasksData?.total_nb_tasks ?? 0;
       defaultNbClustersRef.current = Math.floor(
@@ -202,14 +210,7 @@ const RunClusteringSheet = ({
     // Update the nbElements considered for clustering cost
     setNbElements(nbElements);
     setClusteringCost(nbElements * 2);
-  }, [
-    totalNbSessionsData,
-    totalNbTasksData,
-    form,
-    update,
-    form.getValues("limit"),
-    form.getValues("scope"),
-  ]);
+  }, [totalNbSessionsData, totalNbTasksData, form, update, limit, scope]);
 
   const canRunClusterAnalysis: boolean =
     (form.getValues("scope") === "messages" &&
@@ -251,7 +252,7 @@ const RunClusteringSheet = ({
             project_id
               ? [`/api/explore/${project_id}/clusterings`, accessToken]
               : null,
-            (data: any) => {
+            (data: { clusterings: Clustering[] } | undefined) => {
               const clusterings = data?.clusterings || [];
               return {
                 clusterings: [newClustering, ...clusterings],

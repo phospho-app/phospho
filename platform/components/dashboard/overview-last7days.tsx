@@ -11,10 +11,17 @@ import {
   Legend,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
+
+import { EventData } from "./events-last7days";
 
 const OverviewLast7Days = () => {
   const { accessToken } = useUser();
@@ -35,7 +42,7 @@ const OverviewLast7Days = () => {
         graph_name: ["number_of_daily_tasks"],
       }).then((data) => {
         const number_of_daily_tasks = data?.number_of_daily_tasks;
-        number_of_daily_tasks?.forEach((item: any) => {
+        number_of_daily_tasks?.forEach((item: EventData) => {
           item.formated_date = new Date(item.date).toLocaleDateString([], {
             month: "short",
             day: "numeric",
@@ -48,12 +55,16 @@ const OverviewLast7Days = () => {
     },
   );
 
-  const CustomToolTip = ({ active, payload, label }: any) => {
+  const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+    label,
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div>
           <p>{label}</p>
-          {payload.map((item: any) => {
+          {payload.map((item) => {
             return (
               <p key={item.name}>
                 {item.name}: {item.value}
@@ -86,7 +97,7 @@ const OverviewLast7Days = () => {
           >
             <XAxis dataKey="date" />
             <YAxis />
-            <Tooltip content={<CustomToolTip />} />
+            <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
               dataKey={`undefined`}

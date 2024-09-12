@@ -150,6 +150,9 @@ async def post_init_org(
             "detail": "Organization already initialized",
         }
 
+    # Organization not initialized. Redirect to onboarding
+    output["redirect_url"] = "/onboarding"
+
     # Alternative for historical users: check if the plan is already set
     if org_metadata.get("plan", None) is not None:
         # Org already initialized

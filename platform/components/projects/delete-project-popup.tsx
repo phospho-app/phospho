@@ -37,7 +37,7 @@ const AlertDialogDeleteProject = () => {
     mutate: setProjects,
   }: {
     data: { projects: Project[] } | null | undefined;
-    mutate: (data: any) => void;
+    mutate: (data: { projects: Project[] }) => void;
   } = useSWR(
     selectedOrgId
       ? [`/api/organizations/${selectedOrgId}/projects`, accessToken]

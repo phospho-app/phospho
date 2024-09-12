@@ -107,7 +107,7 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
     );
   }
 
-  const { data: totalNbTasksData } = useSWR(
+  const { data: totalNbTasksData, isLoading: isTotalNbTasksLoading } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -126,8 +126,10 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
       keepPreviousData: true,
     },
   );
-  const totalNbTasks: number | null | undefined =
-    totalNbTasksData?.total_nb_tasks;
+  const totalNbTasks: number | null | undefined = isTotalNbTasksLoading
+    ? undefined
+    : (totalNbTasksData?.total_nb_tasks ?? null);
+
   const maxNbPages = totalNbTasks
     ? Math.ceil(totalNbTasks / tasksPagination.pageSize)
     : 1;
@@ -166,7 +168,7 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className="flex flex-row justify-between gap-x-2 items-center mb-2">
           <div className="flex flex-row space-x-2 items-center">
-            <DatePickerWithRange />
+            <DatePickerWithRange nbrItems={totalNbTasks} />
             <FilterComponent variant="tasks" />
             <RunAnalysisInPast />
           </div>

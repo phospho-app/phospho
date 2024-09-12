@@ -7,7 +7,7 @@ import {
   ChevronRightIcon,
 } from "lucide-react";
 
-export function TableNavigation({ table }: { table: Table<any> }) {
+export function TableNavigation<TData>({ table }: { table: Table<TData> }) {
   return (
     <div className="flex space-x-1 items-center align-middle">
       <Button

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
+import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, ChevronDown, ChevronRight } from "lucide-react";
@@ -31,8 +32,13 @@ import {
   Legend,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 import CreateNewABTestButton from "./create-new-ab-test-button";
@@ -73,6 +79,26 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   const [versionIDB, setVersionIDB] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
+  // Used to mark the hint as "done" when the user has set up analytics
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const noEventDefinitions =
+    selectedProject?.settings?.events === undefined ||
+    Object.keys(selectedProject?.settings?.events).length === 0;
+
+  // Used to mark the hint as "done" when the user has sent data
+  const { data: hasTasksData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
+  );
+  const hasTasks: boolean = hasTasksData?.has_tasks;
+
   useEffect(() => {
     const { currVersionA, currVersionB } = computeVersionsIds();
     setVersionIDA(currVersionA);
@@ -97,10 +123,6 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
       keepPreviousData: true,
     },
   );
-
-  console.log("graphData", graphData);
-  console.log("versionIDA", versionIDA);
-  console.log("versionIDB", versionIDB);
 
   if (!project_id || !versionIDs) {
     return <></>;
@@ -192,21 +214,37 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
                     <p className="text-muted-foreground mb-2 text-sm pt-6">
                       1 - Start sending data
                     </p>
-                    <Button variant="outline" onClick={() => setOpen(true)}>
-                      Import data
-                      <ChevronRight className="ml-2" />
-                    </Button>
+                    {!hasTasks && (
+                      <Button variant="outline" onClick={() => setOpen(true)}>
+                        Import data
+                        <ChevronRight className="ml-2" />
+                      </Button>
+                    )}
+                    {hasTasks && (
+                      <Button variant="outline" disabled>
+                        <Check className="mr-1" />
+                        Done
+                      </Button>
+                    )}
                   </div>
                   <div className="mb-20">
                     <p className="text-muted-foreground mb-2 text-sm pt-6">
                       2 - Setup analytics
                     </p>
-                    <Link href="/org/insights/events">
-                      <Button variant="outline">
-                        Setup analytics
-                        <ChevronRight className="ml-2" />
+                    {noEventDefinitions && (
+                      <Link href="/org/insights/events">
+                        <Button variant="outline">
+                          Setup analytics
+                          <ChevronRight className="ml-2" />
+                        </Button>
+                      </Link>
+                    )}
+                    {!noEventDefinitions && (
+                      <Button variant="outline" disabled>
+                        <Check className="mr-1" />
+                        Done
                       </Button>
-                    </Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -228,7 +266,21 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   );
 };
 
-export const CustomTooltip = ({ active, payload, label }: any) => {
+interface CustomPayloadItem {
+  dataKey: string;
+  name: string;
+  value: ValueType;
+  payload: {
+    [key: string]: number;
+  };
+  color?: string;
+}
+
+export const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+  active,
+  payload,
+  label,
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="custom-tooltip">
@@ -240,15 +292,22 @@ export const CustomTooltip = ({ active, payload, label }: any) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {payload.map((pld: any) => (
-              <div
-                key={pld.dataKey}
-                style={{ display: "inline-block", padding: 10 }}
-              >
-                <div>{pld.payload[pld.dataKey + "_tooltip"].toFixed(2)}</div>
-                <div>{pld.dataKey}</div>
-              </div>
-            ))}
+            {payload.map((pld, index) => {
+              const typedPld = pld as unknown as CustomPayloadItem;
+              return (
+                <div
+                  key={typedPld.dataKey || index}
+                  style={{ display: "inline-block", padding: 10 }}
+                >
+                  <div>
+                    {typedPld.payload[`${typedPld.dataKey}_tooltip`]?.toFixed(
+                      2,
+                    )}
+                  </div>
+                  <div>{typedPld.dataKey}</div>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       </div>

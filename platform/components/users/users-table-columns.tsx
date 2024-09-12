@@ -222,6 +222,8 @@ export function useColumns() {
               const eventDefinition =
                 selectedProject?.settings?.events[event.event_name];
 
+              if (!eventDefinition) return <></>;
+
               return (
                 <HoverCard openDelay={0} closeDelay={0} key={event.id}>
                   <HoverCardTrigger asChild>

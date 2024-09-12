@@ -121,7 +121,6 @@ def check_health_backend():
 from app.api.v2.endpoints import (
     embeddings,
     evals,
-    files,
     health,
     log,
     me,
@@ -150,7 +149,6 @@ api_v2 = FastAPI(
 
 api_v2.include_router(embeddings.router)
 api_v2.include_router(evals.router)
-api_v2.include_router(files.router)
 api_v2.include_router(log.router)
 api_v2.include_router(me.router)
 api_v2.include_router(models.router)

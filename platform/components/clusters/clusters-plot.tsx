@@ -150,7 +150,7 @@ export function CustomPlot({
             graphColors[index % graphColors.length],
           );
         });
-        const colors: string[] = res.clusters_ids.map((cluster_id: any) => {
+        const colors: string[] = res.clusters_ids.map((cluster_id: string) => {
           return clusterIdToColor.get(cluster_id) as string;
         });
 

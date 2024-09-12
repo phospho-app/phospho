@@ -48,7 +48,7 @@ async function flagSession({
   flag: string;
   accessToken?: string;
   project_id?: string | null;
-  mutateTasks: KeyedMutator<any>;
+  mutateTasks: KeyedMutator<SessionWithEvents[]>;
 }) {
   if (!accessToken) return;
   if (!project_id) return;
@@ -63,9 +63,12 @@ async function flagSession({
       human_eval: flag,
     }),
   });
-  mutateTasks((data: any) => {
+  mutateTasks((data: SessionWithEvents[] | undefined) => {
+    if (!data) {
+      return data;
+    }
     // Edit the Task with the same task id
-    data.session = data.sessions.map((session: SessionWithEvents) => {
+    data = data.map((session: SessionWithEvents) => {
       if (session.id === session_id) {
         session.stats.human_eval = flag;
       }
@@ -273,15 +276,16 @@ export function useColumns({
                   session={row.row.original as SessionWithEvents}
                   setSession={(session: SessionWithEvents) => {
                     // Update the session in the table
-                    mutateSessions((data: any) => {
-                      data.sessions = data.sessions.map(
-                        (existingSession: SessionWithEvents) => {
-                          if (existingSession.id === session.id) {
-                            return session;
-                          }
-                          return existingSession;
-                        },
-                      );
+                    mutateSessions((data: SessionWithEvents[] | undefined) => {
+                      if (!data) {
+                        return data;
+                      }
+                      data = data.map((existingSession: SessionWithEvents) => {
+                        if (existingSession.id === session.id) {
+                          return session;
+                        }
+                        return existingSession;
+                      });
                       return data;
                     });
                   }}
@@ -292,17 +296,19 @@ export function useColumns({
               key={`add_event_session_${row.row.original.id}`}
               session={row.row.original as SessionWithEvents}
               setSession={(session: SessionWithEvents) => {
-                mutateSessions((data: any) => {
-                  data.sessions = data.sessions.map(
-                    (existingSession: SessionWithEvents) => {
+                mutateSessions(
+                  (currentSession: SessionWithEvents[] | undefined) => {
+                    if (!currentSession) {
+                      return currentSession;
+                    }
+                    return currentSession.map((existingSession) => {
                       if (existingSession.id === session.id) {
                         return session;
                       }
                       return existingSession;
-                    },
-                  );
-                  return data;
-                });
+                    });
+                  },
+                );
               }}
               setSheetOpen={setSheetOpen}
               setSheetToOpen={setSheetToOpen}
