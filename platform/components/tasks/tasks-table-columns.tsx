@@ -2,7 +2,7 @@ import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
 } from "@/components/label-events";
-import { RunEventsSettings } from "@/components/transcripts/settings/events-settings";
+import { RunEventsSettings } from "@/components/settings/events-settings";
 import { SentimentSettings } from "@/components/transcripts/settings/sentiment-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
