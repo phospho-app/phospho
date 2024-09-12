@@ -83,12 +83,13 @@ async def post_create_project(
 async def post_create_default_project(
     org_id: str,
     user: User = Depends(propelauth.require_user),
+    target_project_id: str = None,
 ) -> Project:
     org_member_info = propelauth.require_org_member(user, org_id)
     project = await create_project_by_org(
         org_id=org_id, user_id=user.user_id, project_name="Default Project"
     )
-    await populate_default(project_id=project.id, org_id=org_id)
+    await populate_default(project_id=project.id, org_id=org_id, target_project_id=None)
     # Send a notification if it's not a phospho project
     if (
         config.ENVIRONMENT == "production"

@@ -784,6 +784,7 @@ def only_keep_fields(data: dict, fields: List[str]) -> dict:
 async def populate_default(
     project_id: str,
     org_id: str,
+    target_project_id: Optional[str] = None,
 ) -> None:
     """
     Populate the project with default values
@@ -799,10 +800,11 @@ async def populate_default(
     cluster_pairs = {}
     clustering_pairs = {}
 
-    if config.ENVIRONMENT == "production":
-        target_project_id = "6a6323d1447a44ddac2dae42d7c39749"
-    else:
-        target_project_id = "bc1fb4266d994abc8f6b24a2a07827d4"
+    if target_project_id is None:
+        if config.ENVIRONMENT == "production":
+            target_project_id = "6a6323d1447a44ddac2dae42d7c39749"
+        else:
+            target_project_id = "bc1fb4266d994abc8f6b24a2a07827d4"
     target_project = await get_project_by_id(
         target_project_id,
     )

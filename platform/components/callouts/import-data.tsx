@@ -487,7 +487,7 @@ export const SendDataAlertDialog = ({
     });
   }
 
-  async function createDefaultProject() {
+  async function createDefaultProject(targetProjectId: string | undefined) {
     setOpen(false);
     if (!selectedOrgId) {
       // fetch the org id from the user
@@ -506,6 +506,9 @@ export const SendDataAlertDialog = ({
         Authorization: "Bearer " + accessToken,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        target_project_id: targetProjectId,
+      }),
     }).then(async (response) => {
       const responseBody = await response.json();
       if (responseBody.id !== undefined) {
@@ -956,7 +959,7 @@ phospho.log({input, output});`}
                   <Button
                     variant="ghost"
                     className="text-xs"
-                    onClick={() => createDefaultProject()}
+                    onClick={() => createDefaultProject(undefined)}
                   >
                     <Telescope className="h-4 w-4 mr-2" />
                     Explore sample data
