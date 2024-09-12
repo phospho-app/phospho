@@ -40,6 +40,10 @@ import Link from "next/link";
 import React from "react";
 import useSWR, { KeyedMutator } from "swr";
 
+interface TaskData {
+  tasks: TaskWithEvents[];
+}
+
 async function flagTask({
   task_id,
   flag,
@@ -51,7 +55,7 @@ async function flagTask({
   flag: string;
   accessToken?: string;
   project_id?: string | null;
-  mutateTasks: KeyedMutator<any>;
+  mutateTasks: KeyedMutator<TaskData>;
 }) {
   if (!accessToken) return;
   if (!project_id) return;
@@ -67,6 +71,7 @@ async function flagTask({
     }),
   });
   mutateTasks((data: any) => {
+    if (!data) return data;
     // Edit the Task with the same task id
     data.tasks = data.tasks.map((task: TaskWithEvents) => {
       if (task.id === task_id) {
@@ -84,7 +89,7 @@ export function useColumns({
   setSheetToOpen,
   setEventDefinition,
 }: {
-  mutateTasks: KeyedMutator<any>;
+  mutateTasks: KeyedMutator<TaskData>;
   setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSheetToOpen: React.Dispatch<React.SetStateAction<string | null>>;
   setEventDefinition: React.Dispatch<
