@@ -14,6 +14,9 @@ class Embedding(BaseModel):
     task_id: Optional[str] = (
         None  # The task id (phospho) used to generate the embedding, optional
     )
+    session_id: Optional[str] = (
+        None  # The session id used to generate the embedding, optional
+    )
 
 
 class EmbeddingRequest(BaseModel, extra="allow"):

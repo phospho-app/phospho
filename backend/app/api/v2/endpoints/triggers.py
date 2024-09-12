@@ -40,6 +40,7 @@ async def trigger_clustering(
                 org_id=org_id,
                 limit=clustering.limit,
                 nb_credits_used=0,
+                user_email=None,  # This will NOT send an email
             ),
             scope=clustering.scope,
         )

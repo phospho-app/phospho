@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
+import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, ChevronDown, ChevronRight } from "lucide-react";
@@ -78,6 +79,26 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   const [versionIDB, setVersionIDB] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
+  // Used to mark the hint as "done" when the user has set up analytics
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const noEventDefinitions =
+    selectedProject?.settings?.events === undefined ||
+    Object.keys(selectedProject?.settings?.events).length === 0;
+
+  // Used to mark the hint as "done" when the user has sent data
+  const { data: hasTasksData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
+  );
+  const hasTasks: boolean = hasTasksData?.has_tasks;
+
   useEffect(() => {
     const { currVersionA, currVersionB } = computeVersionsIds();
     setVersionIDA(currVersionA);
@@ -102,10 +123,6 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
       keepPreviousData: true,
     },
   );
-
-  console.log("graphData", graphData);
-  console.log("versionIDA", versionIDA);
-  console.log("versionIDB", versionIDB);
 
   if (!project_id || !versionIDs) {
     return <></>;
@@ -197,21 +214,37 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
                     <p className="text-muted-foreground mb-2 text-sm pt-6">
                       1 - Start sending data
                     </p>
-                    <Button variant="outline" onClick={() => setOpen(true)}>
-                      Import data
-                      <ChevronRight className="ml-2" />
-                    </Button>
+                    {!hasTasks && (
+                      <Button variant="outline" onClick={() => setOpen(true)}>
+                        Import data
+                        <ChevronRight className="ml-2" />
+                      </Button>
+                    )}
+                    {hasTasks && (
+                      <Button variant="outline" disabled>
+                        <Check className="mr-1" />
+                        Done
+                      </Button>
+                    )}
                   </div>
                   <div className="mb-20">
                     <p className="text-muted-foreground mb-2 text-sm pt-6">
                       2 - Setup analytics
                     </p>
-                    <Link href="/org/insights/events">
-                      <Button variant="outline">
-                        Setup analytics
-                        <ChevronRight className="ml-2" />
+                    {noEventDefinitions && (
+                      <Link href="/org/insights/events">
+                        <Button variant="outline">
+                          Setup analytics
+                          <ChevronRight className="ml-2" />
+                        </Button>
+                      </Link>
+                    )}
+                    {!noEventDefinitions && (
+                      <Button variant="outline" disabled>
+                        <Check className="mr-1" />
+                        Done
                       </Button>
-                    </Link>
+                    )}
                   </div>
                 </div>
               </div>

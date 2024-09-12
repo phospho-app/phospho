@@ -2,6 +2,7 @@ import datetime
 import io
 from typing import Dict, List, Optional
 
+from app.api.v2.models.embeddings import Embedding
 import pandas as pd
 import resend
 from app.api.platform.models import Pagination, UserMetadata
@@ -35,7 +36,7 @@ from fastapi import HTTPException
 from loguru import logger
 from propelauth_fastapi import User
 
-from phospho.models import Threshold, EventDefinition
+from phospho.models import Cluster, Clustering, Threshold, EventDefinition
 
 
 async def get_project_by_id(project_id: str) -> Project:
@@ -488,9 +489,9 @@ async def get_all_sessions(
             additional_sessions_filter["stats.most_common_language"] = filters.language
 
         if filters.sentiment is not None:
-            additional_sessions_filter[
-                "stats.most_common_sentiment_label"
-            ] = filters.sentiment
+            additional_sessions_filter["stats.most_common_sentiment_label"] = (
+                filters.sentiment
+            )
 
         if filters.metadata is not None:
             for key, value in filters.metadata.items():
@@ -793,12 +794,15 @@ async def populate_default(
     event_definition_pairs = {}
     event_pairs = {}
     task_pairs = {}
-    session_ids = []
+    session_pairs = {}
+    embedding_pairs: Dict[str, str] = {}
+    cluster_pairs = {}
+    clustering_pairs = {}
 
     if config.ENVIRONMENT == "production":
         target_project_id = "6a6323d1447a44ddac2dae42d7c39749"
     else:
-        target_project_id = "5383b5ce54314a76a9bb1774839e8417"
+        target_project_id = "bc1fb4266d994abc8f6b24a2a07827d4"
     target_project = await get_project_by_id(
         target_project_id,
     )
@@ -810,11 +814,12 @@ async def populate_default(
     default_sessions = await get_all_sessions(target_project_id, get_events=True)
     sessions = []
     for session in default_sessions:
+        old_session_id = session.id
         session.id = generate_uuid()
         session.created_at = generate_timestamp()
         session.project_id = project_id
         session.org_id = org_id
-        session_ids.append(session.id)
+        session_pairs[old_session_id] = session
         sessions.append(session.model_dump())
     await mongo_db["sessions"].insert_many(sessions)
 
@@ -823,7 +828,7 @@ async def populate_default(
     default_event_defintiions = (
         await mongo_db["event_definitions"]
         .find({"project_id": target_project_id})
-        .to_list(length=10)
+        .to_list(length=None)
     )
     event_definitions = []
     for event_definition in default_event_defintiions:
@@ -831,9 +836,9 @@ async def populate_default(
         validated_event_definition.id = generate_uuid()
         validated_event_definition.project_id = project_id
         validated_event_definition.org_id = org_id
-        event_definition_pairs[
-            validated_event_definition.event_name
-        ] = validated_event_definition
+        event_definition_pairs[validated_event_definition.event_name] = (
+            validated_event_definition
+        )
         event_definitions.append(validated_event_definition)
     await mongo_db["event_definitions"].insert_many(
         [event_definition.model_dump() for event_definition in event_definitions]
@@ -842,7 +847,6 @@ async def populate_default(
     # Add tasks to the project
     default_tasks = await get_all_tasks(target_project_id, get_events=True)
     tasks = []
-    i = 0
     for task in default_tasks:
         old_task_id = task.id
         task.id = generate_uuid()
@@ -860,33 +864,22 @@ async def populate_default(
                 "sentiment_magnitude",
             ],
         )
-        task.last_eval.id = generate_uuid()
-        task.last_eval.created_at = generate_timestamp()
-        task.last_eval.project_id = project_id = project_id
-        task.last_eval.org_id = org_id
-        task.last_eval.task_id = task.id
-        if config.ENVIRONMENT == "production":
-            if i < 2:
-                task.session_id = session_ids[0]
-                task.last_eval.session_id = session_ids[0]
-            elif i < 5:
-                task.session_id = session_ids[1]
-                task.last_eval.session_id = session_ids[1]
-            else:
-                task.session_id = session_ids[2]
-                task.last_eval.session_id = session_ids[2]
-        else:
-            task.session_id = session_ids[0]
-            task.last_eval.session_id = session_ids[0]
+        if task.last_eval:
+            task.last_eval.id = generate_uuid()
+            task.last_eval.created_at = generate_timestamp()
+            task.last_eval.project_id = project_id
+            task.last_eval.org_id = org_id
+            task.last_eval.task_id = task.id
+            task.last_eval.session_id = session_pairs.get(task.last_eval.session_id).id
+        task.session_id = session_pairs.get(task.session_id).id
         task_pairs[old_task_id] = task
-        i += 1
         tasks.append(task)
 
     # Add events to the project
     default_events = (
         await mongo_db["events"]
         .find({"project_id": target_project_id})
-        .to_list(length=10)
+        .to_list(length=None)
     )
 
     events = []
@@ -901,7 +894,7 @@ async def populate_default(
         validated_event.created_at = generate_timestamp()
         validated_event.project_id = project_id
         validated_event.org_id = org_id
-        validated_event.session_id = task_pairs.get(validated_event.task_id).session_id
+        validated_event.session_id = session_pairs.get(validated_event.session_id).id
         validated_event.task_id = task_pairs.get(validated_event.task_id).id
         validated_event.event_definition = event_definition_pairs.get(
             validated_event.event_definition.event_name
@@ -920,6 +913,96 @@ async def populate_default(
         tasks[index] = task
 
     await mongo_db["tasks"].insert_many([task.model_dump() for task in tasks])
+
+    # Import the clusterings, the clusters and the embeddings from the target project
+
+    default_embeddings = (
+        await mongo_db["private-embeddings"]
+        .find({"project_id": target_project_id})
+        .to_list(length=None)
+    )
+    embeddings = []
+    for embedding in default_embeddings:
+        validated_embedding = Embedding.model_validate(embedding)
+        old_embedding_id = validated_embedding.id
+        validated_embedding.id = generate_uuid()
+        validated_embedding.project_id = project_id
+        validated_embedding.org_id = org_id
+        if validated_embedding.session_id:
+            validated_embedding.session_id = session_pairs.get(
+                validated_embedding.session_id
+            ).id
+        if validated_embedding.task_id:
+            validated_embedding.task_id = task_pairs.get(validated_embedding.task_id).id
+        embeddings.append(validated_embedding)
+        embedding_pairs[old_embedding_id] = validated_embedding
+
+    await mongo_db["private-embeddings"].insert_many(
+        [embedding.model_dump() for embedding in embeddings]
+    )
+
+    default_clusters = (
+        await mongo_db["private-clusters"]
+        .find({"project_id": target_project_id})
+        .to_list(length=None)
+    )
+
+    clusters = []
+    for cluster in default_clusters:
+        validated_cluster = Cluster.model_validate(cluster)
+        old_cluster_id = validated_cluster.id
+        logger.debug(f"old_cluster_id: {old_cluster_id}")
+        validated_cluster.id = generate_uuid()
+        validated_cluster.project_id = project_id
+        validated_cluster.org_id = org_id
+        for i, session_id in enumerate(validated_cluster.sessions_ids):
+            validated_cluster.sessions_ids[i] = session_pairs.get(session_id).id
+        for i, task_id in enumerate(validated_cluster.tasks_ids):
+            validated_cluster.tasks_ids[i] = task_pairs.get(task_id).id
+        clusters.append(validated_cluster)
+        cluster_pairs[old_cluster_id] = validated_cluster
+
+    logger.debug(f"len clusters: {len(clusters)}")
+
+    default_clusterings = (
+        await mongo_db["private-clusterings"]
+        .find({"project_id": target_project_id})
+        .to_list(length=None)
+    )
+    clusterings = []
+    for clustering in default_clusterings:
+        validated_clustering = Clustering.model_validate(clustering)
+        old_clustering_id = validated_clustering.id
+        validated_clustering.id = generate_uuid()
+        validated_clustering.project_id = project_id
+        validated_clustering.org_id = org_id
+        for i, cluster_id in enumerate(validated_clustering.clusters_ids):
+            logger.debug(f"Clusters id {validated_clustering.clusters_ids}")
+            logger.debug(f"Cluster_pairs: {cluster_pairs.keys()}")
+            logger.debug(f"Cluster: {cluster_id}")
+            validated_clustering.clusters_ids[i] = cluster_pairs.get(cluster_id).id
+        for i, cluster_id in enumerate(validated_clustering.pca.get("clusters_ids")):
+            validated_clustering.pca["clusters_ids"][i] = cluster_pairs.get(
+                cluster_id
+            ).id
+        for i, embedding_id in enumerate(
+            validated_clustering.pca.get("embeddings_ids")
+        ):
+            validated_clustering.pca["embeddings_ids"][i] = embedding_pairs.get(
+                embedding_id
+            ).id
+        clusterings.append(validated_clustering)
+        clustering_pairs[old_clustering_id] = validated_clustering
+
+    for cluster in clusters:
+        cluster.clustering_id = clustering_pairs.get(cluster.clustering_id).id
+
+    await mongo_db["private-clusters"].insert_many(
+        [cluster.model_dump() for cluster in clusters]
+    )
+    await mongo_db["private-clusterings"].insert_many(
+        [clustering.model_dump() for clustering in clusterings]
+    )
 
     logger.debug(
         f"Populated project {project_id} with event definitions {event_definition_pairs}"

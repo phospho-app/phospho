@@ -1,6 +1,8 @@
 "use client";
 
 import { DatePickerWithRange } from "@/components/date-range";
+import FilterComponent from "@/components/filters";
+import { Spinner } from "@/components/small-spinner";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -25,12 +27,13 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { EventDefinition, Project } from "@/models/models";
+import { EventDefinition } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
@@ -48,15 +51,8 @@ export default function RunEvent({
   const project_id = navigationStateStore((state) => state.project_id);
   const { loading, accessToken } = useUser();
   const { toast } = useToast();
-  const dateRange = navigationStateStore((state) => state.dateRange);
-
-  const { data: selectedProject }: { data: Project } = useSWR(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const [startrunLoading, setStartrunLoading] = useState(false);
 
   const { data: hasTasksData } = useSWR(
     project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
@@ -68,16 +64,13 @@ export default function RunEvent({
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
-      JSON.stringify(dateRange),
+      JSON.stringify(dataFilters),
       "total_nb_tasks",
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        filters: {
-          created_at_start: dateRange?.created_at_start,
-          created_at_end: dateRange?.created_at_end,
-        },
+        filters: dataFilters,
       }),
     {
       keepPreviousData: true,
@@ -99,11 +92,9 @@ export default function RunEvent({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const sampleSize = Math.floor(totalNbTasks ?? 0 * values.sample_rate);
-    if (!selectedProject) {
-      return;
-    }
+    setStartrunLoading(true);
     try {
-      const creation_response = await fetch(`/api/events/${project_id}/run`, {
+      fetch(`/api/events/${project_id}/run`, {
         method: "POST",
         headers: {
           Authorization: "Bearer " + accessToken,
@@ -112,27 +103,29 @@ export default function RunEvent({
         body: JSON.stringify({
           event_id: eventToRun.id,
           sample_rate: values.sample_rate,
-          created_at_start: dateRange?.created_at_start,
-          created_at_end: dateRange?.created_at_end,
+          filters: dataFilters,
         }),
+      }).then(async (res) => {
+        setStartrunLoading(false);
+        if (res.ok) {
+          toast({
+            title: `Event detection for "${eventToRun.event_name}" started.`,
+            description: `Running on ${sampleSize} tasks`,
+          });
+          setOpen(false);
+        } else {
+          toast({
+            title: "Error starting event detection",
+            description: await res.text(),
+          });
+        }
       });
-      if (creation_response.ok) {
-        toast({
-          title: `Event detection for "${eventToRun.event_name}" started.`,
-          description: `Running on ${sampleSize} tasks`,
-        });
-        setOpen(false);
-      } else {
-        toast({
-          title: "Error starting event detection",
-          description: await creation_response.text(),
-        });
-      }
     } catch (error) {
       toast({
         title: "Error starting event detection",
         description: `${error}`,
       });
+      setStartrunLoading(false);
     }
   }
 
@@ -155,10 +148,10 @@ export default function RunEvent({
           </SheetHeader>
           <Separator />
           <div className="flex-col space-y-4">
-            <FormItem>
-              <FormLabel>Date range</FormLabel>
+            <div className="flex space-x-2">
               <DatePickerWithRange />
-            </FormItem>
+              <FilterComponent variant="tasks" />
+            </div>
             <FormField
               control={form.control}
               name="sample_rate"
@@ -230,9 +223,13 @@ export default function RunEvent({
             <Button
               type="submit"
               disabled={
-                loading || totalNbTasks === undefined || totalNbTasks === 0
+                loading ||
+                totalNbTasks === undefined ||
+                totalNbTasks === 0 ||
+                startrunLoading
               }
             >
+              {startrunLoading && <Spinner className="mr-1" />}
               Run detection
             </Button>
           </SheetFooter>
