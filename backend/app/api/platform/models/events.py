@@ -1,11 +1,11 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+from phospho.models import ProjectDataFilters
 
 
 class EventBackfillRequest(BaseModel):
-    created_at_start: Optional[float] = None
-    created_at_end: Optional[float] = None
     event_id: str
+    filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     sample_rate: float = Field(ge=0, le=1)
 
 

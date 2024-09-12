@@ -139,7 +139,7 @@ const RunClusteringSheet = ({
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_sessions", "nb_tasks_in_sessions"],
-        filters: { ...dataFilters },
+        filters: dataFilters,
         limit: form.getValues("limit"),
       }).then((data) => {
         return data;
@@ -322,7 +322,11 @@ const RunClusteringSheet = ({
                 </Select>
               )}
             />
-            <FilterComponent variant="tasks" />
+            <FilterComponent
+              variant={
+                form.getValues("scope") === "sessions" ? "sessions" : "tasks"
+              }
+            />
           </div>
           <div className="flex flex-col space-y-4">
             <FormField
