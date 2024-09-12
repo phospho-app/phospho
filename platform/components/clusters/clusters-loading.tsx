@@ -1,3 +1,4 @@
+import ShareButton from "@/components/share-button";
 import { Spinner } from "@/components/small-spinner";
 import { Progress } from "@/components/ui/progress";
 import { authFetcher } from "@/lib/fetcher";
@@ -67,6 +68,12 @@ function ClusteringLoading({
           Generating summaries...
         </div>
       )}
+      <div className="flex flex-col text-muted-foreground text-sm space-y-2 pt-8">
+        <div>
+          While this is running, why not invite your team to the project?
+        </div>
+        <ShareButton variant="secondary" />
+      </div>
     </div>
   );
 }
