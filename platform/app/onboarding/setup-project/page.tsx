@@ -301,7 +301,6 @@ export default function Page() {
 
   return (
     <>
-      <FetchOrgProject />
       <AlertDialog
         onOpenChange={setImportDataDialogOpen}
         open={importDataDialogOpen}

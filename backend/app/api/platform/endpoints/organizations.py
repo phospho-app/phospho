@@ -130,6 +130,7 @@ async def post_init_org(
             user_id=user.user_id,
             project_name=generate_version_id(with_date=False),
         )
+        output["redirect_url"] = "/onboarding"
     else:
         # The org already has a project
         selected_project = org_projects[0]
