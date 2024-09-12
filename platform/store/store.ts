@@ -36,6 +36,8 @@ interface navigationState {
   dataFilters: ProjectDataFilters;
   setDataFilters: (tasksColumnsFilters: ProjectDataFilters) => void;
 
+  warningShowed: boolean;
+  setWarningShowed: (showed: boolean) => void;
   dateRangePreset: string | null;
   dateRange: CustomDateRange | undefined;
   setDateRangePreset: (dateRangePreset: string | null) => void;
@@ -139,7 +141,10 @@ export const navigationStateStore = create(
           };
         }),
 
-      dateRangePreset: "all-time",
+      warningShowed: false,
+      setWarningShowed: (showed: boolean) =>
+        set(() => ({ warningShowed: showed })),
+      dateRangePreset: "last-7-days",
       dateRange: {
         from: undefined,
         to: undefined,
@@ -241,7 +246,6 @@ export const navigationStateStore = create(
           },
         }));
       },
-
       selectedMetric: "nb_messages",
       setSelectedMetric: (metric: string) =>
         set(() => ({ selectedMetric: metric })),
