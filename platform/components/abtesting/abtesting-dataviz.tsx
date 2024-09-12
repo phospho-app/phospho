@@ -32,8 +32,13 @@ import {
   Legend,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 import CreateNewABTestButton from "./create-new-ab-test-button";
@@ -261,7 +266,21 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   );
 };
 
-export const CustomTooltip = ({ active, payload, label }: any) => {
+interface CustomPayloadItem {
+  dataKey: string;
+  name: string;
+  value: ValueType;
+  payload: {
+    [key: string]: number;
+  };
+  color?: string;
+}
+
+export const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+  active,
+  payload,
+  label,
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="custom-tooltip">
@@ -273,15 +292,22 @@ export const CustomTooltip = ({ active, payload, label }: any) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {payload.map((pld: any) => (
-              <div
-                key={pld.dataKey}
-                style={{ display: "inline-block", padding: 10 }}
-              >
-                <div>{pld.payload[pld.dataKey + "_tooltip"].toFixed(2)}</div>
-                <div>{pld.dataKey}</div>
-              </div>
-            ))}
+            {payload.map((pld, index) => {
+              const typedPld = pld as unknown as CustomPayloadItem;
+              return (
+                <div
+                  key={typedPld.dataKey || index}
+                  style={{ display: "inline-block", padding: 10 }}
+                >
+                  <div>
+                    {typedPld.payload[`${typedPld.dataKey}_tooltip`]?.toFixed(
+                      2,
+                    )}
+                  </div>
+                  <div>{typedPld.dataKey}</div>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       </div>

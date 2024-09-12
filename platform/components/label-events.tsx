@@ -33,7 +33,7 @@ export const EventDetectionDescription = ({
   eventDefinition,
 }: {
   event: Event;
-  eventDefinition: any;
+  eventDefinition: EventDefinition;
 }) => {
   const roundedConfidenceScore = event.score_range?.value
     ? Math.round(event.score_range?.value * 100)
@@ -133,6 +133,10 @@ export const InteractiveEventBadgeForTasks = ({
 
   // Find the event definition in the project settings
   const eventDefinition = selectedProject.settings?.events[event.event_name];
+
+  if (!eventDefinition) {
+    return <></>;
+  }
 
   return (
     <DropdownMenu>
@@ -536,6 +540,10 @@ export const InteractiveEventBadgeForSessions = ({
 
   // Find the event definition in the project settings
   const eventDefinition = selectedProject.settings?.events[event.event_name];
+
+  if (!eventDefinition) {
+    return <></>;
+  }
 
   return (
     <DropdownMenu>

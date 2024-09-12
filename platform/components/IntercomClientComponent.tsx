@@ -3,10 +3,29 @@
 import { useUser } from "@propelauth/nextjs/client";
 import { useEffect } from "react";
 
+interface IntercomSettings {
+  api_base: string;
+  app_id: string | undefined;
+  user_id?: string;
+  email?: string;
+}
+
+type IntercomCommand =
+  | "reattach_activator"
+  | "update"
+  | "hide"
+  | "show"
+  | "showNewMessage"
+  | string; // For any other commands
+
+interface IntercomFunc {
+  (command: IntercomCommand, settings?: IntercomSettings): void;
+  (command: "boot", settings: IntercomSettings): void;
+}
 declare global {
   interface Window {
-    intercomSettings: any;
-    Intercom: any;
+    intercomSettings: IntercomSettings;
+    Intercom: IntercomFunc;
   }
 }
 

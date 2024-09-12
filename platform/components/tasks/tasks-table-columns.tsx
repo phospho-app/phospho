@@ -40,6 +40,10 @@ import Link from "next/link";
 import React from "react";
 import useSWR, { KeyedMutator } from "swr";
 
+interface TaskData {
+  tasks: TaskWithEvents[];
+}
+
 async function flagTask({
   task_id,
   flag,
@@ -51,7 +55,7 @@ async function flagTask({
   flag: string;
   accessToken?: string;
   project_id?: string | null;
-  mutateTasks: KeyedMutator<any>;
+  mutateTasks: KeyedMutator<TaskData>;
 }) {
   if (!accessToken) return;
   if (!project_id) return;
@@ -66,7 +70,8 @@ async function flagTask({
       human_eval: flag,
     }),
   });
-  mutateTasks((data: any) => {
+  mutateTasks((data: TaskData | undefined) => {
+    if (!data) return data;
     // Edit the Task with the same task id
     data.tasks = data.tasks.map((task: TaskWithEvents) => {
       if (task.id === task_id) {
@@ -84,7 +89,7 @@ export function useColumns({
   setSheetToOpen,
   setEventDefinition,
 }: {
-  mutateTasks: KeyedMutator<any>;
+  mutateTasks: KeyedMutator<TaskData>;
   setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSheetToOpen: React.Dispatch<React.SetStateAction<string | null>>;
   setEventDefinition: React.Dispatch<
@@ -295,7 +300,8 @@ export function useColumns({
                   task={row.row.original as TaskWithEvents}
                   setTask={(task: TaskWithEvents) => {
                     // Use mutateTasks
-                    mutateTasks((data: any) => {
+                    mutateTasks((data: TaskData | undefined) => {
+                      if (!data) return data;
                       data.tasks = data.tasks.map(
                         (exisingTask: TaskWithEvents) => {
                           if (exisingTask.id === task.id) {
@@ -314,7 +320,8 @@ export function useColumns({
               key={`add_event_task_${row.row.original.id}`}
               task={row.row.original as TaskWithEvents}
               setTask={(task: TaskWithEvents) => {
-                mutateTasks((data: any) => {
+                mutateTasks((data: TaskData | undefined) => {
+                  if (!data) return data;
                   data.tasks = data.tasks.map((exisingTask: TaskWithEvents) => {
                     if (exisingTask.id === task.id) {
                       return task;

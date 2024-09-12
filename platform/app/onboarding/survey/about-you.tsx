@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { EventDefinition, Project } from "@/models/models";
+import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -62,12 +62,14 @@ const formSchema = z.object({
   customContact: myString.optional(),
 });
 
+export type AboutYouFormValues = z.infer<typeof formSchema>;
+
 export default function AboutYou({
   setAboutYouValues,
 }: {
-  setAboutYouValues: (values: any) => void;
-  setCustomEvents: (values: EventDefinition[]) => void;
-  setPhosphoTaskId: (taskId: string) => void;
+  setAboutYouValues: React.Dispatch<
+    React.SetStateAction<AboutYouFormValues | null>
+  >;
 }) {
   const router = useRouter();
   const [project] = useState<Project | null>(null);
@@ -104,15 +106,10 @@ export default function AboutYou({
     })();
   }, [loading, selectedOrgId, accessToken, project, router]);
 
-  // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    // defaultValues: {
-    //   project_name: "Default project",
-    // },
   });
 
-  // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setRedirect(true);
     router.push("/onboarding/setup-project");

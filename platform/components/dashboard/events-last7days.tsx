@@ -12,11 +12,21 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
+export interface EventData {
+  date: string;
+  formated_date: string;
+  [key: string]: number | string;
+}
 interface EventColorMapping {
   [key: string]: string;
 }
@@ -58,8 +68,8 @@ const EventsLast7Days = () => {
         graph_name: ["events_per_day"],
       }).then((data) => {
         const events_per_day = data?.events_per_day;
-        events_per_day?.data.forEach((item: any) => {
-          item.formated_date = new Date(item.date).toLocaleDateString([], {
+        events_per_day?.data.forEach((item: EventData) => {
+          item.fomated_data = new Date(item.date).toLocaleDateString([], {
             month: "short",
             day: "numeric",
           });
@@ -95,12 +105,16 @@ const EventsLast7Days = () => {
   );
 
   // Customize the tooltipe to display the event names
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+    label,
+  }) => {
     if (active && payload) {
       return (
         <div>
           <p className="label">{`${label}`}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index: number) => (
             <p key={`value-${index}`} style={{ color: entry.color }}>
               {`${entry.name} : ${entry.value}`}
             </p>

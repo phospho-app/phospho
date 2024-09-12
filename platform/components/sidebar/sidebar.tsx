@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 
 import { OnboardingProgress } from "./sidebar-progress";
 
@@ -41,7 +41,7 @@ export interface SidebarState {
 interface SideBarElementProps {
   children: React.ReactNode;
   href?: string;
-  icon?: any;
+  icon?: ReactNode;
   collapsible?: boolean;
   collapsibleState?: boolean;
   setCollapsibleState?: (state: boolean) => void;

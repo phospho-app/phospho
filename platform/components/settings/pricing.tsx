@@ -29,7 +29,7 @@ interface PricingData {
     };
     enterprise: {
       title: string;
-      price: string | null;
+      price: string;
       tagline: string;
     };
   };
@@ -43,6 +43,20 @@ interface PricingData {
       enterprise: string | number | boolean;
     };
   }[];
+}
+
+interface Tiers {
+  hobby?: string | number | boolean;
+  usage_based?: string | number | boolean;
+  pro?: string | number | boolean;
+  enterprise?: string | number | boolean;
+  [key: string]: string | number | boolean | undefined;
+}
+
+interface Criteria {
+  type: "title" | "section"; // Updated to match the exact string literal types
+  label: string;
+  tiers?: Tiers; // Made optional
 }
 
 function CtaButton({
@@ -87,7 +101,13 @@ function CtaButton({
   return <></>;
 }
 
-function CriteriaDisplay({ tierName, criteria }: any) {
+function CriteriaDisplay({
+  tierName,
+  criteria,
+}: {
+  tierName: string;
+  criteria: Criteria;
+}) {
   // if currentPlan not in criteria.tiers, then return nothing
 
   const { type, label, tiers } = criteria;
@@ -105,7 +125,7 @@ function CriteriaDisplay({ tierName, criteria }: any) {
     );
   }
   // if currentPlan is not in criteria.tiers, then return nothing
-  if (!tiers[tierName]) {
+  if (!tiers || !tiers[tierName]) {
     return <></>;
   }
 
@@ -155,7 +175,7 @@ function PricingCard({
   currentPlan: string | null;
   selectedPlan: string | null;
   tierName: string;
-  tier: any;
+  tier: Tiers;
   pricingData: PricingData;
   proPlanTagline?: string;
   displayHobbyCTA?: boolean;

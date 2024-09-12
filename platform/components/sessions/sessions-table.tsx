@@ -125,7 +125,8 @@ export function SessionsTable({
       keepPreviousData: true,
     },
   );
-  const totalNbSessions = totalNbSessionsData?.total_nb_sessions;
+  const totalNbSessions: number | null | undefined =
+    totalNbSessionsData?.total_nb_sessions;
 
   const columns = useColumns({
     mutateSessions: mutateSessions,
@@ -164,7 +165,7 @@ export function SessionsTable({
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className="flex flex-row justify-between gap-x-2 items-center mb-2">
           <div className="flex flex-row space-x-2 items-center">
-            <DatePickerWithRange />
+            <DatePickerWithRange nbrItems={totalNbSessions} />
             <FilterComponent variant="sessions" />
             <RunAnalysisInPast />
           </div>

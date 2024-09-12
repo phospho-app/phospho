@@ -21,7 +21,20 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { useMemo } from "react";
-import { Bar, BarChart, Label, Pie, PieChart, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  Label,
+  Pie,
+  PieChart,
+  TooltipProps,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 interface NbSessions {
@@ -129,7 +142,7 @@ const SessionsDataviz: React.FC = () => {
             b.size - a.size,
         );
         data?.last_clustering_composition?.forEach(
-          (clustering: any, index: number) => {
+          (clustering: { fill: string }, index: number) => {
             clustering.fill = graphColors[index % graphColors.length];
           },
         );
@@ -209,9 +222,11 @@ const SessionsDataviz: React.FC = () => {
           data?.events_ranking?.sort(
             (a: EventsRanking, b: EventsRanking) => b.nb_events - a.nb_events,
           );
-          data?.events_ranking?.forEach((event: any, index: number) => {
-            event.fill = graphColors[index % graphColors.length];
-          });
+          data?.events_ranking?.forEach(
+            (event: { fill: string }, index: number) => {
+              event.fill = graphColors[index % graphColors.length];
+            },
+          );
           return data?.events_ranking;
         }),
       {
@@ -219,7 +234,10 @@ const SessionsDataviz: React.FC = () => {
       },
     );
 
-  const CustomTooltipEvent = ({ active, payload }: any) => {
+  const CustomTooltipEvent: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
@@ -231,24 +249,28 @@ const SessionsDataviz: React.FC = () => {
     return null;
   };
 
-  const CustomTooltipClustering = ({ active, payload }: any) => {
+  const CustomTooltipClustering: React.FC<
+    TooltipProps<ValueType, NameType>
+  > = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
           <p className="text-secondary font-semibold">{`Cluster ${payload[0].name}`}</p>
           <p className="text-secondary">{`Description: ${payload[0].payload.description}`}</p>
-          <p className="text-green-500">{`${payload[0].value.toFixed(0)} messages in cluster`}</p>
+          <p className="text-green-500">{`${payload[0].value ? Number(payload[0].value).toFixed(0) : 0} messages in cluster`}</p>
         </div>
       );
     }
   };
 
-  const CustomTooltipNbrSessions = ({ active, payload, label }: any) => {
+  const CustomTooltipNbrSessions: React.FC<
+    TooltipProps<ValueType, NameType>
+  > = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
           <p className="text-secondary font-semibold">{`${label}`}</p>
-          <p className="text-green-500">{`${payload[0].value === 1 ? payload[0].value + " session" : payload[0].value.toFixed(0) + " sessions"}`}</p>
+          <p className="text-green-500">{`${payload[0].value === 1 ? payload[0].value + " session" : payload[0].value ? Number(payload[0].value).toFixed(0) : "0" + " sessions"}`}</p>
         </div>
       );
     }
