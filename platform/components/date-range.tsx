@@ -160,19 +160,13 @@ export function DatePickerWithRange({
           </div>
         </HoverCardTrigger>
         <HoverCardContent
-          side="bottom"
+          side="top"
           align="start"
-          className="p-4 border rounded-lg shadow-lg"
+          className="p-2 border rounded-lg shadow-lg m-0 text-xs text-background bg-foreground flex items-center cursor-pointer"
+          onClick={closeWarning}
         >
-          Filter set to last 7 days.
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={closeWarning}
-          >
-            <X className="h-4 w-4 pt-1" />
-          </Button>
+          Change the date range to see more data
+          <X className="ml-2 h-4 w-4" />
         </HoverCardContent>
       </HoverCard>
     </div>
