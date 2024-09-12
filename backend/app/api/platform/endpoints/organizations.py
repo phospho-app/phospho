@@ -130,7 +130,6 @@ async def post_init_org(
             user_id=user.user_id,
             project_name=generate_version_id(with_date=False),
         )
-        output["redirect_url"] = "/onboarding"
     else:
         # The org already has a project
         selected_project = org_projects[0]
@@ -150,6 +149,9 @@ async def post_init_org(
             "status": "ok",
             "detail": "Organization already initialized",
         }
+
+    # Organization not initialized. Redirect to onboarding
+    output["redirect_url"] = "/onboarding"
 
     # Alternative for historical users: check if the plan is already set
     if org_metadata.get("plan", None) is not None:
