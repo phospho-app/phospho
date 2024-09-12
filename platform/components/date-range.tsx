@@ -44,15 +44,11 @@ export function DatePickerWithRange({
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
-    if (
-      !warningShown &&
-      nbrItems == null &&
-      dateRangePreset === "last-7-days"
-    ) {
+    const showCondition =
+      !warningShown && nbrItems === null && dateRangePreset === "last-7-days";
+    if (showCondition) {
       setShowWarning(true);
       setWarningShowed(true);
-    } else {
-      setShowWarning(false);
     }
   }, [nbrItems, dateRangePreset, setWarningShowed, warningShown]);
 
@@ -175,7 +171,7 @@ export function DatePickerWithRange({
             className="h-6 w-6"
             onClick={closeWarning}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4 pt-1" />
           </Button>
         </HoverCardContent>
       </HoverCard>

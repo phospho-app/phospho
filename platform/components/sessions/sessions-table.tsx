@@ -105,28 +105,31 @@ export function SessionsTable({
     sessionsWithEvents = sessionsData.sessions;
   }
 
-  const { data: totalNbSessionsData } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/sessions`,
-      accessToken,
-      JSON.stringify(userFilter),
-      JSON.stringify(dateRange),
-      "total_nb_sessions",
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["total_nb_sessions"],
-        filters: {
-          ...dataFilters,
-          sessions_ids: sessions_ids,
-        },
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const totalNbSessions: number | null | undefined =
-    totalNbSessionsData?.total_nb_sessions;
+  const { data: totalNbSessionsData, isLoading: isTotalNbSessionsLoading } =
+    useSWR(
+      [
+        `/api/explore/${project_id}/aggregated/sessions`,
+        accessToken,
+        JSON.stringify(userFilter),
+        JSON.stringify(dateRange),
+        "total_nb_sessions",
+      ],
+      ([url, accessToken]) =>
+        authFetcher(url, accessToken, "POST", {
+          metrics: ["total_nb_sessions"],
+          filters: {
+            ...dataFilters,
+            sessions_ids: sessions_ids,
+          },
+        }),
+      {
+        keepPreviousData: true,
+      },
+    );
+
+  const totalNbSessions: number | null | undefined = isTotalNbSessionsLoading
+    ? undefined
+    : (totalNbSessionsData?.total_nb_sessions ?? null);
 
   const columns = useColumns({
     mutateSessions: mutateSessions,
