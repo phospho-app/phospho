@@ -66,7 +66,9 @@ export const navigationStateStore = create(
       setproject_id: (projectId: string | null) =>
         set(() => ({ project_id: projectId })),
 
-      dataFilters: {} as ProjectDataFilters,
+      dataFilters: {
+        created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
+      } as ProjectDataFilters,
       setDataFilters: (filters: ProjectDataFilters) =>
         set(() => ({ dataFilters: filters })),
 
@@ -289,13 +291,13 @@ interface dataState {
 export const dataStateStore = create<dataState>((set) => ({
   selectedOrgMetadata: null,
   setSelectOrgMetadata: (selectOrgMetadata: OrgMetadata) =>
-    set((state) => ({ selectedOrgMetadata: selectOrgMetadata })),
+    set(() => ({ selectedOrgMetadata: selectOrgMetadata })),
 
   hasLabelledTasks: null,
   setHasLabelledTasks: (hasLabelledTasks: HasEnoughLabelledTasks | null) =>
-    set((state) => ({ hasLabelledTasks: hasLabelledTasks })),
+    set(() => ({ hasLabelledTasks: hasLabelledTasks })),
 
   tasksWithoutHumanLabel: null,
   setTasksWithoutHumanLabel: (tasks: Task[]) =>
-    set((state) => ({ tasksWithoutHumanLabel: tasks })),
+    set(() => ({ tasksWithoutHumanLabel: tasks })),
 }));
