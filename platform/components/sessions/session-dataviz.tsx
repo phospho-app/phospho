@@ -255,7 +255,7 @@ const SessionsDataviz: React.FC = () => {
         <div className="bg-primary shadow-md p-2 rounded-md">
           <p className="text-secondary font-semibold">{`Cluster ${payload[0].name}`}</p>
           <p className="text-secondary">{`Description: ${payload[0].payload.description}`}</p>
-          <p className="text-green-500">{`${payload[0].value ? Number(payload[0].value).toFixed(0) : "..."} messages in cluster`}</p>
+          <p className="text-green-500">{`${payload[0].value ? Number(payload[0].value).toFixed(0) : 0} messages in cluster`}</p>
         </div>
       );
     }
@@ -268,7 +268,7 @@ const SessionsDataviz: React.FC = () => {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
           <p className="text-secondary font-semibold">{`${label}`}</p>
-          <p className="text-green-500">{`${payload[0].value === 1 ? payload[0].value + " session" : payload[0].value ? Number(payload[0].value).toFixed(0) : "..." + " sessions"}`}</p>
+          <p className="text-green-500">{`${payload[0].value === 1 ? payload[0].value + " session" : payload[0].value ? Number(payload[0].value).toFixed(0) : "0" + " sessions"}`}</p>
         </div>
       );
     }

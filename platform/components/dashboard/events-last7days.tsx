@@ -22,6 +22,11 @@ import {
 } from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
+export interface EventData {
+  date: string;
+  formated_date: string;
+  [key: string]: number | string;
+}
 interface EventColorMapping {
   [key: string]: string;
 }
@@ -63,8 +68,8 @@ const EventsLast7Days = () => {
         graph_name: ["events_per_day"],
       }).then((data) => {
         const events_per_day = data?.events_per_day;
-        events_per_day?.data.forEach((item: any) => {
-          item.formated_date = new Date(item.date).toLocaleDateString([], {
+        events_per_day?.data.forEach((item: EventData) => {
+          item.fomated_data = new Date(item.date).toLocaleDateString([], {
             month: "short",
             day: "numeric",
           });
@@ -109,7 +114,7 @@ const EventsLast7Days = () => {
       return (
         <div>
           <p className="label">{`${label}`}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index: number) => (
             <p key={`value-${index}`} style={{ color: entry.color }}>
               {`${entry.name} : ${entry.value}`}
             </p>
