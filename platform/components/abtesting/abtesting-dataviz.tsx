@@ -32,8 +32,13 @@ import {
   Legend,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 import CreateNewABTestButton from "./create-new-ab-test-button";
@@ -261,7 +266,11 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   );
 };
 
-export const CustomTooltip = ({ active, payload, label }: any) => {
+export const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+  active,
+  payload,
+  label,
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="custom-tooltip">

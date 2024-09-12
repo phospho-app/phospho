@@ -21,7 +21,20 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { useMemo } from "react";
-import { Bar, BarChart, Label, Pie, PieChart, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  Label,
+  Pie,
+  PieChart,
+  TooltipProps,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 interface NbDailyTasks {
@@ -216,7 +229,11 @@ const TasksDataviz: React.FC = () => {
       },
     );
 
-  const CustomTooltipNbrTasks = ({ active, payload, label }: any) => {
+  const CustomTooltipNbrTasks: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+    label,
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
@@ -229,7 +246,10 @@ const TasksDataviz: React.FC = () => {
     return null;
   };
 
-  const CustomTooltipEvent = ({ active, payload }: any) => {
+  const CustomTooltipEvent: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
@@ -242,7 +262,9 @@ const TasksDataviz: React.FC = () => {
     return null;
   };
 
-  const CustomTooltipClustering = ({ active, payload }: any) => {
+  const CustomTooltipClustering: React.FC<
+    TooltipProps<ValueType, NameType>
+  > = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
@@ -250,7 +272,7 @@ const TasksDataviz: React.FC = () => {
           <p className="text-secondary text-xs">
             {payload[0].payload.description}
           </p>
-          <p className="text-green-500">{`${payload[0].value.toFixed(0)} messages`}</p>
+          <p className="text-green-500">{`${Number(payload[0]?.value).toFixed(0)} messages`}</p>
         </div>
       );
     }

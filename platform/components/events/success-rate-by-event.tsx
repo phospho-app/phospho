@@ -10,9 +10,14 @@ import {
   BarChart,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 interface SuccessRate {
@@ -55,13 +60,17 @@ function SuccessRateByEvent() {
     },
   );
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+    label,
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
           <p className="text-secondary font-semibold">{`${label}`}</p>
           <p className="text-green-500">
-            {`${payload[0].value.toFixed(2)}% success rate`}
+            {`${(Number(payload[0].value) ?? 0).toFixed(2)}% success rate`}
           </p>
         </div>
       );

@@ -12,9 +12,14 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 interface EventColorMapping {
@@ -95,7 +100,11 @@ const EventsLast7Days = () => {
   );
 
   // Customize the tooltipe to display the event names
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+    label,
+  }) => {
     if (active && payload) {
       return (
         <div>
