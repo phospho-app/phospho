@@ -1,5 +1,6 @@
 "use client";
 
+import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
 import { useState } from "react";
 
 import AboutYou from "./about-you";
@@ -15,6 +16,7 @@ export default function Page() {
 
   return (
     <>
+      <FetchOrgProject />
       <AboutYou setAboutYouValues={setAboutYouValues} />
     </>
   );
