@@ -4,6 +4,7 @@ const authFetcher = async (
   url: string,
   accessToken?: string,
   method?: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?: any,
 ) => {
   /*

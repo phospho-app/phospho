@@ -27,7 +27,7 @@ import useSWR from "swr";
 
 interface PivotTableElement {
   breakdown_by: string | null;
-  [key: string]: any;
+  [key: string]: string | number | null;
 }
 
 const DatavizGraph = ({
@@ -216,9 +216,9 @@ const DatavizGraph = ({
               tickLine={false}
               axisLine={false}
               type="category"
-              tickFormatter={(value: any) => {
+              tickFormatter={(value: string) => {
                 // if value is a string and is too long, truncate it
-                if (typeof value === "string" && value.length > 30) {
+                if (value.length > 30) {
                   return value.slice(0, 30) + "...";
                 }
                 return value;

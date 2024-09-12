@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { Project } from "@/models/models";
+import { Project, ProjectsData } from "@/models/models";
 // zustand state management
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -94,8 +94,8 @@ const CreateProjectDialog = ({
       // Change the selected project
       mutate(
         [`/api/organizations/${selectedOrgId}/projects`, accessToken],
-        async (data: any) => {
-          return { projects: [responseBody, data.projects] };
+        async (data: ProjectsData | undefined) => {
+          return { projects: [responseBody, data?.projects] };
         },
       );
       setproject_id(responseBody.id);
@@ -139,14 +139,25 @@ const CreateProjectDialog = ({
       // Also mutate the project list
       mutate(
         [`/api/organizations/${selectedOrgId}/projects`, accessToken],
-        async (data: any) => {
+        async (data: ProjectsData | undefined) => {
+          if (!data) {
+            return { projects: [projectToEdit] };
+          }
           // Find the project to edit
           const index = data.projects.findIndex(
             (project: Project) => project.id === projectToEdit.id,
           );
           // Replace the project
-          data.projects[index] = projectToEdit;
-          return { projects: data.projects };
+          if (index === -1) {
+            return data;
+          }
+
+          const updatedProjects = [
+            ...data.projects.slice(0, index),
+            projectToEdit,
+            ...data.projects.slice(index + 1),
+          ];
+          return { projects: updatedProjects };
         },
       );
     });
