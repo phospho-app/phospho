@@ -1,3 +1,4 @@
+from typing import Any
 from app.core.constants import (
     RESERVED_CATEGORY_METADATA_FIELDS,
     RESERVED_NUMBER_METADATA_FIELDS,
@@ -75,8 +76,16 @@ async def process_file_upload_into_log_events(
             )
     for metadata_field in RESERVED_NUMBER_METADATA_FIELDS:
         if metadata_field in tasks_df.columns:
+
+            def safe_cast_to_float(x: Any) -> Any:
+                try:
+                    return float(x)
+                except ValueError:
+                    return None
+
             tasks_df[metadata_field] = tasks_df[metadata_field].apply(
-                lambda x: float(x) if x is not None else None
+                # Cast only if this is castable to float
+                lambda x: safe_cast_to_float(x)
             )
 
     usage_quota = await get_quota(project_id)
