@@ -52,13 +52,17 @@ export default function FetchOrgProject() {
         if (init_response.status !== 200) {
           toast({
             title: "Error initializing organization",
-            description: "Please try again later",
+            description: init_response.statusText,
           });
           return;
         }
         const responseBody = await init_response.json();
         // Set the project id if it is not set
         if (!project_id && responseBody?.selected_project?.id) {
+          setproject_id(responseBody.selected_project.id);
+        }
+        // If redirect to onboarding, set the project_id
+        if (responseBody?.redirect_url?.includes("/onboarding")) {
           setproject_id(responseBody.selected_project.id);
         }
         // Redirect to the page
