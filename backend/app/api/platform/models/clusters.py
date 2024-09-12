@@ -29,3 +29,4 @@ class ClusteringRequest(BaseModel):
     nb_credits_used: int
     clustering_id: Optional[str] = None
     clustering_name: Optional[str] = None
+    user_email: Optional[str] = None
