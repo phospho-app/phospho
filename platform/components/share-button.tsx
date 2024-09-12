@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
+import { cn } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
 import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
 import { Share2 } from "lucide-react";
@@ -18,10 +19,22 @@ import useSWR from "swr";
 import UpgradeButton from "./upgrade-button";
 
 interface ShareButtonProps {
-  selectedOrgId: string | undefined | null;
+  className?: string;
+  variant?:
+    | "outline"
+    | "link"
+    | "default"
+    | "destructive"
+    | "secondary"
+    | "ghost"
+    | null
+    | undefined;
 }
 
-const ShareButton: React.FC<ShareButtonProps> = ({ selectedOrgId }) => {
+const ShareButton: React.FC<ShareButtonProps> = ({
+  className,
+  variant = "outline",
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const { redirectToOrgPage } = useRedirectFunctions();
@@ -39,14 +52,14 @@ const ShareButton: React.FC<ShareButtonProps> = ({ selectedOrgId }) => {
   const nbrUsersInOrg: number = orgData?.total_users;
   const orgPlan: string = orgData?.plan;
 
-  if (!selectedOrgId) {
+  if (!org_id) {
     return null;
   }
 
   // A user can invite others if they have the pro tier or usage based plan
   // On the free tier, they can only invite others if they have less than 3 members
   const userCanInviteOthers =
-    (user?.orgIdToOrgMemberInfo?.[selectedOrgId]?.hasPermission(
+    (user?.orgIdToOrgMemberInfo?.[org_id]?.hasPermission(
       "propelauth::can_invite",
     ) &&
       (nbrUsersInOrg < 3 || orgPlan === "usage_based" || orgPlan === "pro")) ??
@@ -56,7 +69,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({ selectedOrgId }) => {
     setIsLoading(true);
     if (userCanInviteOthers) {
       try {
-        await redirectToOrgPage(selectedOrgId);
+        await redirectToOrgPage(org_id);
       } catch (error) {
         console.error("Error redirecting:", error);
         setIsLoading(false);
@@ -72,8 +85,8 @@ const ShareButton: React.FC<ShareButtonProps> = ({ selectedOrgId }) => {
       <Button
         onClick={handleShare}
         disabled={isLoading}
-        className="h-8"
-        variant="outline"
+        className={cn("h-8", className)}
+        variant={variant}
       >
         {isLoading ? (
           <Spinner className="w-4 h-4 mr-2" />
@@ -105,3 +118,4 @@ const ShareButton: React.FC<ShareButtonProps> = ({ selectedOrgId }) => {
 };
 
 export default ShareButton;
+export { ShareButton };

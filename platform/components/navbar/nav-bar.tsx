@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { navigationStateStore } from "@/store/store";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import React from "react";
@@ -19,7 +18,6 @@ export function Navbar({
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
   const [open, setOpen] = React.useState(false);
-  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
 
   return (
     <div>
@@ -60,13 +58,11 @@ export function Navbar({
             <NavBarHelp />
             <NavBarSettings />
             <NavBarProject />
-
-            <ShareButton selectedOrgId={selectedOrgId} />
+            <ShareButton />
           </div>
         </div>
       </nav>
       <Separator />
-      {/* <AlphaNotificationBar></AlphaNotificationBar> */}
     </div>
   );
 }
