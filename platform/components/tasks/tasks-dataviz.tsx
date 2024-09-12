@@ -126,7 +126,7 @@ const TasksDataviz: React.FC = () => {
             b.size - a.size,
         );
         data?.last_clustering_composition?.forEach(
-          (clustering: any, index: number) => {
+          (clustering: { fill: string }, index: number) => {
             clustering.fill = graphColors[index % graphColors.length];
           },
         );
@@ -219,9 +219,11 @@ const TasksDataviz: React.FC = () => {
           data?.events_ranking?.sort(
             (a: EventsRanking, b: EventsRanking) => b.nb_events - a.nb_events,
           );
-          data?.events_ranking?.forEach((event: any, index: number) => {
-            event.fill = graphColors[index % graphColors.length];
-          });
+          data?.events_ranking?.forEach(
+            (event: { fill: string }, index: number) => {
+              event.fill = graphColors[index % graphColors.length];
+            },
+          );
           return data?.events_ranking;
         }),
       {

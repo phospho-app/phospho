@@ -18,7 +18,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
+import { Payload } from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
+
+interface PivotTableElement {
+  breakdown_by: string | null;
+  [key: string]: any;
+}
 
 const DatavizGraph = ({
   metric,
@@ -75,7 +85,7 @@ const DatavizGraph = ({
       }).then((response) => {
         const pivotTable = response?.pivot_table;
         // Replace "breakdown_by": null with "breakdown_by": "None"
-        pivotTable.forEach((element: any) => {
+        pivotTable.forEach((element: PivotTableElement) => {
           if (element["breakdown_by"] === null) {
             element["breakdown_by"] = "None";
           }
@@ -155,10 +165,11 @@ const DatavizGraph = ({
                     <div className="bg-primary shadow-md p-2 rounded-md space-y-1">
                       <div className="text-secondary font-semibold">{`${breakdown_by}: ${label}`}</div>
                       <div>
-                        {payload.map((item: any) => {
-                          const itemName = item.name.split(".")[1]
-                            ? item.name.split(".")[1]
-                            : item.name;
+                        {payload.map((item: Payload<ValueType, NameType>) => {
+                          const itemName =
+                            item.name && item.name.toString().split(".")[1]
+                              ? item.name.toString().split(".")[1]
+                              : item.name;
                           const formatedValue =
                             typeof item.value === "number"
                               ? Math.round(item.value * 1000) / 1000
@@ -170,7 +181,9 @@ const DatavizGraph = ({
                             // use Object.keys(selectedProject?.settings?.events to get the index color
                             index = Object.keys(
                               selectedProject?.settings?.events ?? {},
-                            ).indexOf(item.name.split(".")[1]);
+                            ).indexOf(
+                              item.name?.toString().split(".")[1] ?? "",
+                            );
                           }
                           const color = graphColors[index % graphColors.length];
 
