@@ -18,12 +18,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Project } from "@/models/models";
-import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -72,39 +70,8 @@ export default function AboutYou({
   >;
 }) {
   const router = useRouter();
-  const [project] = useState<Project | null>(null);
-  const { loading, accessToken } = useUser();
-  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const { accessToken } = useUser();
   const [redirect, setRedirect] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      if (!project) return;
-      if (!selectedOrgId) return;
-      const response = await fetch(
-        `/api/organizations/${selectedOrgId}/metadata`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: "Bearer " + accessToken,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-      const response_json = await response.json();
-      if (response_json.plan === "hobby") {
-        // Without events, skip
-        if (!project.settings?.events) {
-          return;
-        }
-        if (Object.keys(project.settings?.events).length >= 10) {
-          // Reached the events limit
-          // Redirect to the home page
-          router.push("/");
-        }
-      }
-    })();
-  }, [loading, selectedOrgId, accessToken, project, router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -112,7 +79,6 @@ export default function AboutYou({
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setRedirect(true);
-    router.push("/onboarding/setup-project");
     fetch(`/api/onboarding/log-onboarding-survey`, {
       method: "POST",
       headers: {
@@ -126,8 +92,10 @@ export default function AboutYou({
         contact: values.contact,
         custom_contact: values.customContact,
       }),
+    }).then(() => {
+      setAboutYouValues(values);
+      router.push("/onboarding/setup-project");
     });
-    setAboutYouValues(values);
   }
 
   return (
