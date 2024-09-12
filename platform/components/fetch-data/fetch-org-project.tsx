@@ -2,8 +2,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { set } from "date-fns";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 export default function FetchOrgProject() {
@@ -13,6 +14,7 @@ export default function FetchOrgProject() {
   const { toast } = useToast();
   const pathname = usePathname();
   const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
 
   const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
@@ -30,9 +32,10 @@ export default function FetchOrgProject() {
     // Creates a project if it has no projects
     // Otherwise, select the first project
     (async () => {
-      if (loading) return;
+      console.log("Triggered org init");
 
-      if (!loading && !isLoggedIn) {
+      if (loading) return;
+      if (!isLoggedIn) {
         router.push("/authenticate");
       }
 
@@ -57,35 +60,39 @@ export default function FetchOrgProject() {
           return;
         }
         const responseBody = await init_response.json();
+        console.log("Init response", responseBody);
+
         // Set the project id if it is not set
         if (!project_id && responseBody?.selected_project?.id) {
           setproject_id(responseBody.selected_project.id);
         }
         // If redirect to onboarding, set the project_id
-        if (responseBody?.redirect_url?.includes("/onboarding")) {
+        else if (responseBody?.redirect_url?.includes("/onboarding")) {
           setproject_id(responseBody.selected_project.id);
         }
         // Redirect to the page
-        if (pathname === "/") {
-          router.push(responseBody?.redirect_url);
+        if (pathname === "/" && responseBody?.redirect_url && !redirecting) {
+          setRedirecting(true);
+          router.push(responseBody.redirect_url);
         }
       } catch (error) {
         console.error("Error initializing organization:", error);
       }
     })();
   }, [
-    selectedOrgId,
     loading,
+    pathname,
+    selectedOrgId,
     accessToken,
     isLoggedIn,
-    pathname,
     project_id,
     router,
     setproject_id,
     toast,
+    redirecting,
   ]);
 
-  if (user && !loading && user.orgIdToOrgMemberInfo !== undefined) {
+  if (isLoggedIn && user.orgIdToOrgMemberInfo !== undefined) {
     const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
     if (selectedOrgId === undefined || selectedOrgId === null) {
       // Put the first org id in the state
