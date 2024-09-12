@@ -107,8 +107,9 @@ const RunClusteringSheet = ({
         required_error: "Please enter the number of clusters",
       })
       .min(1, "Number of clusters must be at least 1")
-      .max(128, "Number of clusters must be at most 128"),
-    limit: z.number().min(0),
+      .max(128, "Number of clusters must be at most 128")
+      .optional(),
+    limit: z.number().min(0).optional(),
     detect_outliers: z.boolean(),
   });
 
@@ -119,6 +120,8 @@ const RunClusteringSheet = ({
       instruction: "user intent",
       detect_outliers: false,
       // Note: don't set the nb_clusters default value here, since it's updated dynamically using an API call
+      nb_clusters: undefined,
+      limit: undefined,
     },
   });
 
@@ -149,56 +152,64 @@ const RunClusteringSheet = ({
     totalNbSessionsData?.nb_tasks_in_sessions;
 
   useEffect(() => {
+    let nbElements = 0;
+    const formLimit = form.getValues("limit");
+
     if (form.getValues("scope") === "messages") {
       totalNbTasksRef.current = totalNbTasksData?.total_nb_tasks ?? 0;
-      setNbElements(totalNbTasksRef.current);
       defaultNbClustersRef.current = Math.floor(totalNbTasksRef.current / 100);
 
-      if (defaultNbClustersRef.current >= 5) {
-        form.setValue("nb_clusters", defaultNbClustersRef.current);
-      } else {
-        form.setValue("nb_clusters", 5);
+      // if the form limit has more messages, update the limit
+      if (totalNbTasksRef.current < (formLimit ?? 0)) {
+        form.setValue("limit", totalNbTasksRef.current);
       }
-      setClusteringCost(totalNbTasksRef.current * 2);
-      form.setValue("limit", totalNbTasksRef.current);
+      if (formLimit === undefined || formLimit === 0) {
+        form.setValue("limit", totalNbTasksRef.current);
+      }
+
+      nbElements = Math.min(formLimit ?? 0, totalNbTasksRef.current);
     }
     if (form.getValues("scope") === "sessions") {
       totalNbSessionsRef.current = totalNbSessionsData?.total_nb_sessions ?? 0;
       totalNbTasksRef.current = totalNbTasksData?.total_nb_tasks ?? 0;
-      setNbElements(totalNbSessionsRef.current);
       defaultNbClustersRef.current = Math.floor(
         totalNbSessionsRef.current / 100,
       );
+
+      // if the form limit has more messages, update the limit
+      if (totalNbSessionsRef.current < (formLimit ?? 0)) {
+        form.setValue("limit", totalNbSessionsRef.current);
+      }
+      if (formLimit === undefined || formLimit === 0) {
+        form.setValue("limit", totalNbSessionsRef.current);
+      }
+
+      nbElements = Math.min(formLimit ?? 0, totalNbSessionsRef.current);
+    }
+
+    // Set the nb_clusters to 5 or the default value if not set
+    const formNbClusters = form.getValues("nb_clusters");
+    if (formNbClusters === undefined || formNbClusters === 0) {
       if (defaultNbClustersRef.current >= 5) {
         form.setValue("nb_clusters", defaultNbClustersRef.current);
       } else {
         form.setValue("nb_clusters", 5);
       }
-      setClusteringCost((totalNbSessionsData?.nb_tasks_in_sessions ?? 0) * 2);
-      form.setValue("limit", totalNbSessionsRef.current);
+    } else if (formNbClusters > nbElements) {
+      form.setValue("nb_clusters", nbElements);
     }
-  }, [totalNbSessionsData, totalNbTasksData, form, update]);
 
-  const formLimit = form.getValues("limit");
-
-  useEffect(() => {
-    if (form.getValues("scope") === "messages") {
-      setNbElements(form.getValues("limit"));
-      setClusteringCost(form.getValues("limit") * 2);
-    }
-    if (form.getValues("scope") === "sessions") {
-      setNbElements(form.getValues("limit"));
-      setClusteringCost((totalNbSessionsData?.nb_tasks_in_sessions ?? 0) * 2);
-    }
-  }, [form, formLimit, totalNbSessionsData?.nb_tasks_in_sessions]);
-
-  const formScope = form.getValues("scope");
-
-  useEffect(() => {
-    if (form.getValues("scope") === "sessions") {
-      setClusteringCost((totalNbSessionsData?.nb_tasks_in_sessions ?? 0) * 2);
-    }
-  }, [totalNbSessionsData?.nb_tasks_in_sessions, form, formScope]);
+    // Update the nbElements considered for clustering cost
+    setNbElements(nbElements);
+    setClusteringCost(nbElements * 2);
+  }, [
+    totalNbSessionsData,
+    totalNbTasksData,
+    form,
+    update,
+    form.getValues("limit"),
+    form.getValues("scope"),
+  ]);
 
   const canRunClusterAnalysis: boolean =
     (form.getValues("scope") === "messages" &&
@@ -229,6 +240,7 @@ const RunClusteringSheet = ({
           clustering_mode: formData.detect_outliers
             ? "dbscan"
             : "agglomerative",
+          limit: formData.limit,
         }),
       }).then(async (response) => {
         if (response.ok) {
@@ -497,6 +509,9 @@ const RunClusteringSheet = ({
                           step={1}
                           type="number"
                           {...field}
+                          onChange={(e) => {
+                            field.onChange(e.target.valueAsNumber);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -515,7 +530,10 @@ const RunClusteringSheet = ({
           )}
           {canRunClusterAnalysis && (
             <div className="mt-4">
-              We will cluster {nbElements} {form.getValues("scope")}{" "}
+              We will cluster{" "}
+              {form.getValues("scope") === "messages" && (
+                <>{nbElements ?? 0} user messages</>
+              )}
               {form.getValues("scope") === "sessions" && (
                 <>{nbTasksInSessions ?? 0} user messages</>
               )}{" "}
@@ -527,7 +545,7 @@ const RunClusteringSheet = ({
               <AlertDialogTrigger asChild>
                 <Button> Run cluster analysis </Button>
               </AlertDialogTrigger>
-              {Blockwall({ handleSkip })}
+              <Blockwall handleSkip={handleSkip} />
             </AlertDialog>
           )}
           {!hobby && canRunClusterAnalysis && (
