@@ -1,5 +1,9 @@
 from typing import List
 
+from app.core.constants import (
+    RESERVED_CATEGORY_METADATA_FIELDS,
+    RESERVED_NUMBER_METADATA_FIELDS,
+)
 import pandas as pd
 from app.api.v2.models.log import LogEvent
 from app.core.config import CSV_UPLOAD_MAX_ROWS
@@ -22,11 +26,9 @@ async def process_csv_file_as_df(
     correct_columns: List[str] = ["text", "label", "label_text"],
 ):
     """
-    Used for finetuning.
+    Process a csv file as a pandas dataframe and store it in the database.
 
-    "text",
-    "label", # True or False
-    "label_text", # A text describing the label when True (ex: The user is asking about pricing)
+    We parse csv, and cast input, output, session_id, task_id, user_id, version_id as string.
     """
 
     # Check that the csv has less than max_rows
@@ -58,7 +60,16 @@ async def process_csv_file_as_df(
     # Validate each record with DatasetRow model
     valid_records: List[dict] = []
     for record in records:
+        logger.debug(f"version_id: {record.get('version_id')}")
         try:
+            for metadata_field in RESERVED_CATEGORY_METADATA_FIELDS:
+                if record.get(metadata_field) is not None and not isinstance(
+                    record[metadata_field], str
+                ):
+                    record[metadata_field] = str(record[metadata_field])
+            for metadata_field in RESERVED_NUMBER_METADATA_FIELDS:
+                if record.get(metadata_field).isdigit():
+                    record[metadata_field] = float(record[metadata_field])
             valid_record = DatasetRow(**record).model_dump()
             valid_records.append(valid_record)
         except ValidationError as e:
@@ -130,6 +141,17 @@ async def process_file_upload_into_log_events(
         except Exception as e:
             logger.error(f"Error converting created_at to timestamp: {e}")
             tasks_df.drop("created_at", axis=1, inplace=True)
+
+    for metadata_field in RESERVED_CATEGORY_METADATA_FIELDS:
+        if metadata_field in tasks_df.columns:
+            tasks_df[metadata_field] = tasks_df[metadata_field].apply(
+                lambda x: str(x) if x is not None else None
+            )
+    for metadata_field in RESERVED_NUMBER_METADATA_FIELDS:
+        if metadata_field in tasks_df.columns:
+            tasks_df[metadata_field] = tasks_df[metadata_field].apply(
+                lambda x: float(x) if x is not None else None
+            )
 
     usage_quota = await get_quota(project_id)
     current_usage = usage_quota.current_usage
