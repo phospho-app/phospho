@@ -1,9 +1,9 @@
 import {
-  AddEventDropdownForTasks,
-  InteractiveEventBadgeForTasks,
+  AddEventDropdownForSessions,
+  InteractiveEventBadgeForSessions,
 } from "@/components/label-events";
-import { RunEventsSettings } from "@/components/transcripts/settings/events-settings";
-import { SentimentSettings } from "@/components/transcripts/settings/sentiment-settings";
+import { RunEventsSettings } from "@/components/settings/events-settings";
+import { SentimentSettings } from "@/components/settings/sentiment-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,12 +19,8 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
-import {
-  Event,
-  EventDefinition,
-  Project,
-  TaskWithEvents,
-} from "@/models/models";
+import { Event, EventDefinition, SessionWithEvents } from "@/models/models";
+import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
@@ -38,16 +34,17 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import React from "react";
-import useSWR, { KeyedMutator } from "swr";
+import { KeyedMutator } from "swr";
+import useSWR from "swr";
 
-async function flagTask({
-  task_id,
+async function flagSession({
+  session_id,
   flag,
   accessToken,
   project_id,
   mutateTasks,
 }: {
-  task_id: string;
+  session_id: string;
   flag: string;
   accessToken?: string;
   project_id?: string | null;
@@ -56,7 +53,7 @@ async function flagTask({
   if (!accessToken) return;
   if (!project_id) return;
 
-  await fetch(`/api/tasks/${task_id}/human-eval`, {
+  await fetch(`/api/sessions/${session_id}/human-eval`, {
     method: "POST",
     headers: {
       Authorization: "Bearer " + accessToken,
@@ -68,31 +65,31 @@ async function flagTask({
   });
   mutateTasks((data: any) => {
     // Edit the Task with the same task id
-    data.tasks = data.tasks.map((task: TaskWithEvents) => {
-      if (task.id === task_id) {
-        task.flag = flag;
+    data.session = data.sessions.map((session: SessionWithEvents) => {
+      if (session.id === session_id) {
+        session.stats.human_eval = flag;
       }
-      return task;
+      return session;
     });
     return data;
   });
 }
 
 export function useColumns({
-  mutateTasks,
+  mutateSessions,
   setSheetOpen,
   setSheetToOpen,
   setEventDefinition,
 }: {
-  mutateTasks: KeyedMutator<any>;
+  mutateSessions: KeyedMutator<SessionWithEvents[]>;
   setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSheetToOpen: React.Dispatch<React.SetStateAction<string | null>>;
   setEventDefinition: React.Dispatch<
     React.SetStateAction<EventDefinition | null>
   >;
-}): ColumnDef<TaskWithEvents>[] {
-  const { accessToken } = useUser();
+}): ColumnDef<SessionWithEvents>[] {
   const project_id = navigationStateStore((state) => state.project_id);
+  const { accessToken } = useUser();
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -105,11 +102,12 @@ export function useColumns({
   const events = selectedProject?.settings?.events || {};
   const eventArray = Object.entries(events);
 
-  const columns: ColumnDef<TaskWithEvents>[] = [
+  // Create the columns for the data table
+  const columns: ColumnDef<SessionWithEvents>[] = [
     {
       header: ({ column }) => {
         return (
-          <div className="flex flex-row items-center space-x-2 justify-between">
+          <div className="flex flex-row items-center justify-between space-x-2">
             Date
             <Button
               variant="ghost"
@@ -132,44 +130,17 @@ export function useColumns({
       },
       accessorKey: "created_at",
       cell: ({ row }) => (
-        <div>
+        <span>
           {formatUnixTimestampToLiteralDatetime(
             Number(row.original.created_at),
           )}
-        </div>
+        </span>
       ),
     },
-    // Input
+    // Preview
     {
-      header: "User message",
-      accessorKey: "input",
-      cell: (row) => {
-        const input = row.getValue() as string; // asserting the type as string
-        return (
-          <Popover>
-            <PopoverTrigger
-              onClick={(mouseEvent) => {
-                mouseEvent.stopPropagation();
-              }}
-              className="text-left"
-            >
-              {input
-                ? input.length > 80
-                  ? input.substring(0, 80) + "..."
-                  : input
-                : "-"}
-            </PopoverTrigger>
-            <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
-              {input}
-            </PopoverContent>
-          </Popover>
-        );
-      },
-      minSize: 100,
-    },
-    {
-      header: "System response",
-      accessorKey: "output",
+      header: "Preview",
+      accessorKey: "preview",
       cell: (row) => {
         const output = row.getValue() as string; // asserting the type as string
         return (
@@ -181,23 +152,28 @@ export function useColumns({
               className="text-left"
             >
               {output
-                ? output.length > 80
-                  ? output.substring(0, 80) + "..."
+                ? output.length > 50
+                  ? output.substring(0, 50) + "..."
                   : output
                 : "-"}
             </PopoverTrigger>
             <PopoverContent className="text-sm overflow-y-auto max-h-[20rem]">
-              {output}
+              {output &&
+                output.split("\n").map((line, index) => (
+                  <React.Fragment key={index}>
+                    {line}
+                    <br />
+                    <br />
+                  </React.Fragment>
+                ))}
             </PopoverContent>
           </Popover>
         );
       },
-      minSize: 100,
     },
-    // Human evaluation
     {
       header: "Human evaluation",
-      accessorKey: "human_eval.flag",
+      accessorKey: "stats.human_eval",
       cell: (row) => {
         const human_eval = row.getValue() as string; // asserting the type as string
         return (
@@ -214,12 +190,12 @@ export function useColumns({
                   className="h-6 w-6 text-green-500 cursor-pointer hover:fill-green-500"
                   onClick={(mouseEvent) => {
                     mouseEvent.stopPropagation();
-                    flagTask({
-                      task_id: row.row.original.id,
+                    flagSession({
+                      session_id: row.row.original.id,
                       flag: "success",
                       accessToken: accessToken,
                       project_id: project_id,
-                      mutateTasks: mutateTasks,
+                      mutateTasks: mutateSessions,
                     });
                   }}
                 />
@@ -227,12 +203,12 @@ export function useColumns({
                   className="h-6 w-6 text-red-500 cursor-pointer hover:fill-red-500"
                   onClick={(mouseEvent) => {
                     mouseEvent.stopPropagation();
-                    flagTask({
-                      task_id: row.row.original.id,
+                    flagSession({
+                      session_id: row.row.original.id,
                       flag: "failure",
                       accessToken: accessToken,
                       project_id: project_id,
-                      mutateTasks: mutateTasks,
+                      mutateTasks: mutateSessions,
                     });
                   }}
                 />
@@ -246,13 +222,15 @@ export function useColumns({
     {
       header: () => {
         return (
-          <div className="flex items-center">
-            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-            Language
+          <div className="flex items-center space-x-2 justify-between">
+            <div className="flex items-center">
+              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+              Language
+            </div>
           </div>
         );
       },
-      accessorKey: "language",
+      accessorKey: "stats.most_common_language",
       cell: (row) => (
         <HoverCard openDelay={80} closeDelay={30}>
           <HoverCardTrigger>
@@ -285,23 +263,23 @@ export function useColumns({
       },
       accessorKey: "events",
       cell: (row) => (
-        <div className="group flex items-center justify-between">
+        <div className="group flex items-center justify-between space-y-1">
           <div className="flex flex-wrap items-center justify-center">
             {(row.getValue() as Event[]).map((event: Event) => {
               return (
-                <InteractiveEventBadgeForTasks
-                  key={`${event.event_name}_task_${row.row.original.id}`}
+                <InteractiveEventBadgeForSessions
+                  key={`${event.event_name}_session_${row.row.original.id}`}
                   event={event}
-                  task={row.row.original as TaskWithEvents}
-                  setTask={(task: TaskWithEvents) => {
-                    // Use mutateTasks
-                    mutateTasks((data: any) => {
-                      data.tasks = data.tasks.map(
-                        (exisingTask: TaskWithEvents) => {
-                          if (exisingTask.id === task.id) {
-                            return task;
+                  session={row.row.original as SessionWithEvents}
+                  setSession={(session: SessionWithEvents) => {
+                    // Update the session in the table
+                    mutateSessions((data: any) => {
+                      data.sessions = data.sessions.map(
+                        (existingSession: SessionWithEvents) => {
+                          if (existingSession.id === session.id) {
+                            return session;
                           }
-                          return exisingTask;
+                          return existingSession;
                         },
                       );
                       return data;
@@ -310,17 +288,19 @@ export function useColumns({
                 />
               );
             })}
-            <AddEventDropdownForTasks
-              key={`add_event_task_${row.row.original.id}`}
-              task={row.row.original as TaskWithEvents}
-              setTask={(task: TaskWithEvents) => {
-                mutateTasks((data: any) => {
-                  data.tasks = data.tasks.map((exisingTask: TaskWithEvents) => {
-                    if (exisingTask.id === task.id) {
-                      return task;
-                    }
-                    return exisingTask;
-                  });
+            <AddEventDropdownForSessions
+              key={`add_event_session_${row.row.original.id}`}
+              session={row.row.original as SessionWithEvents}
+              setSession={(session: SessionWithEvents) => {
+                mutateSessions((data: any) => {
+                  data.sessions = data.sessions.map(
+                    (existingSession: SessionWithEvents) => {
+                      if (existingSession.id === session.id) {
+                        return session;
+                      }
+                      return existingSession;
+                    },
+                  );
                   return data;
                 });
               }}
@@ -332,7 +312,7 @@ export function useColumns({
       ),
     },
 
-    // Sentiment Analysis
+    // Sentiment
     {
       header: () => {
         return (
@@ -345,7 +325,7 @@ export function useColumns({
           </div>
         );
       },
-      accessorKey: "sentiment.label",
+      accessorKey: "stats.most_common_sentiment_label",
       cell: (row) => {
         const sentiment_label = row.getValue() as string;
         return (
@@ -367,7 +347,7 @@ export function useColumns({
               </HoverCardTrigger>
               <HoverCardContent side="top" className="text-sm text-left w-50">
                 <h2 className="font-bold">Sentiment label</h2>
-                <p>Automatic sentiment analysis of the user message</p>
+                <p>Automatic sentiment analysis of the Task input</p>
               </HoverCardContent>
             </HoverCard>
           </div>
@@ -375,17 +355,51 @@ export function useColumns({
       },
       maxSize: 10,
     },
+    // Session Length
+    {
+      header: ({ column }) => {
+        return (
+          <div className="flex flex-row justify-between space-x-2 items-center">
+            Length
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              {
+                // Show the sorting icon based on the current sorting state
+                column.getIsSorted() === "desc" ? (
+                  <ArrowUp className="h-4 w-4" />
+                ) : (
+                  <ArrowDown className="h-4 w-4" />
+                )
+              }
+            </Button>
+          </div>
+        );
+      },
+      accessorKey: "session_length",
+      cell: ({ row }) => (
+        <span className="flex justify-center">
+          {row.original.session_length}
+        </span>
+      ),
+    },
 
     {
       header: "",
       accessorKey: "view",
       cell: ({ row }) => {
-        const task = row.original;
+        const session = row.original;
         // Match the task object with this key
         // Handle undefined edge case
-        if (!task) return <></>;
+        if (!session) return <></>;
         return (
-          <Link href={`/org/transcripts/tasks/${encodeURIComponent(task.id)}`}>
+          <Link
+            href={`/org/transcripts/sessions/${encodeURIComponent(session.id)}`}
+          >
             <Button variant="ghost" size="icon">
               <ChevronRight />
             </Button>

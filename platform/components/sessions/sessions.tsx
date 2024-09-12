@@ -1,7 +1,7 @@
 "use client";
 
 import { SendDataCallout } from "@/components/callouts/import-data";
-import SessionsDataviz from "@/components/transcripts/sessions/session-dataviz";
+import SessionsDataviz from "@/components/sessions/session-dataviz";
 import { Button } from "@/components/ui/button";
 import {
   Card,

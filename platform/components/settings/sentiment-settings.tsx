@@ -18,7 +18,7 @@ import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
 
-import { Spinner } from "../../small-spinner";
+import { Spinner } from "../small-spinner";
 
 export const SentimentSettings = () => {
   const [thresholdOpen, setThresholdOpen] = useState(false);

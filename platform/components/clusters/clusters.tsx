@@ -1,6 +1,6 @@
 "use client";
 
-import RunClusteringSheet from "@/components/insights/clusters/clusters-sheet";
+import RunClusteringSheet from "@/components/clusters/clusters-sheet";
 import { Spinner } from "@/components/small-spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

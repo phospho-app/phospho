@@ -2,7 +2,7 @@
 
 import EventsLast7Days from "@/components/dashboard/events-last7days";
 import OverviewLast7Days from "@/components/dashboard/overview-last7days";
-import DatavizGraph from "@/components/insights/dataviz";
+import DatavizGraph from "@/components/dataviz";
 import { CenteredSpinner } from "@/components/small-spinner";
 import {
   AlertDialog,

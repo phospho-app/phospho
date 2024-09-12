@@ -1,7 +1,7 @@
 "use client";
 
-import { SessionsTable } from "@/components/transcripts/sessions/sessions-table";
-import { TasksTable } from "@/components/transcripts/tasks/tasks-table";
+import { SessionsTable } from "@/components/sessions/sessions-table";
+import { TasksTable } from "@/components/tasks/tasks-table";
 import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
 import { Cluster } from "@/models/models";
