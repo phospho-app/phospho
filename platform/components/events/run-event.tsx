@@ -54,14 +54,6 @@ export default function RunEvent({
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const [startrunLoading, setStartrunLoading] = useState(false);
 
-  const { data: selectedProject }: { data: Project } = useSWR(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-
   const { data: hasTasksData } = useSWR(
     project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
