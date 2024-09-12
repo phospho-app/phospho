@@ -4,7 +4,6 @@ import {
   CustomDateRange,
   HasEnoughLabelledTasks,
   OrgMetadata,
-  Project,
   ProjectDataFilters,
   Task,
 } from "@/models/models";
@@ -61,15 +60,15 @@ export const navigationStateStore = create(
     (set) => ({
       selectedOrgId: undefined,
       setSelectedOrgId: (orgId: string | null) =>
-        set((state) => ({ selectedOrgId: orgId })),
+        set(() => ({ selectedOrgId: orgId })),
 
       project_id: null,
       setproject_id: (projectId: string | null) =>
-        set((state) => ({ project_id: projectId })),
+        set(() => ({ project_id: projectId })),
 
       dataFilters: {} as ProjectDataFilters,
       setDataFilters: (filters: ProjectDataFilters) =>
-        set((state) => ({ dataFilters: filters })),
+        set(() => ({ dataFilters: filters })),
 
       tasksPagination: {
         pageSize: 10,

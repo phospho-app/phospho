@@ -107,7 +107,7 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
     );
   }
 
-  const { data: totalNbTasksData } = useSWR(
+  const { data: totalNbTasksData, isLoading: isTotalNbTasksLoading } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -126,8 +126,10 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
       keepPreviousData: true,
     },
   );
-  const totalNbTasks: number | null | undefined =
-    totalNbTasksData?.total_nb_tasks;
+  const totalNbTasks: number | null | undefined = isTotalNbTasksLoading
+    ? undefined
+    : (totalNbTasksData?.total_nb_tasks ?? null);
+
   const maxNbPages = totalNbTasks
     ? Math.ceil(totalNbTasks / tasksPagination.pageSize)
     : 1;
