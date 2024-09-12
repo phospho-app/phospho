@@ -16,7 +16,6 @@ from phospho.utils import (
 
 # Add other job types here
 RecipeType = Literal[
-    "evaluation",
     "event_detection",
     "sentiment_language",
     "session_info",

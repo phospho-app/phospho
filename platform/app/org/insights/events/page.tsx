@@ -1,7 +1,7 @@
 "use client";
 
-import CreateEvent from "@/components/insights/events/create-event";
-import EventsList from "@/components/insights/events/event-list";
+import CreateEvent from "@/components/events/create-event";
+import EventsList from "@/components/events/event-list";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {

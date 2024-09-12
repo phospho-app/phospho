@@ -7,7 +7,7 @@ import { graphColors } from "@/lib/utils";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { ChevronRight, Plus } from "lucide-react";
+import { Check, ChevronRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Data } from "plotly.js";
 import {
@@ -278,6 +278,22 @@ export function CustomPlot({
     setRefreshKey((prev) => prev + 1); // Trigger a refresh when project_id or selected_clustering_id changes
   }, [project_id, selected_clustering_id]);
 
+  // The total nb of task is used to personalize the tooltip
+  const { data: totalNbTasksData } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/tasks`,
+      accessToken,
+      "total_nb_tasks",
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_tasks"],
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+
   if (!displayedData) {
     return <></>;
   }
@@ -326,10 +342,19 @@ export function CustomPlot({
                   <p className="text-muted-foreground text-sm mb-2">
                     1 - Start sending data
                   </p>
-                  <Button variant="outline" onClick={() => setOpen(true)}>
-                    Import data
-                    <ChevronRight className="ml-2" />
-                  </Button>
+                  {!totalNbTasksData?.total_nb_tasks && (
+                    <Button variant="outline" onClick={() => setOpen(true)}>
+                      Import data
+                      <ChevronRight className="ml-2" />
+                    </Button>
+                  )}
+                  {totalNbTasksData?.total_nb_tasks > 0 && (
+                    // Display a "Done"
+                    <Button variant="outline" disabled>
+                      <Check className="w-4 h-4 mr-1" />
+                      Done
+                    </Button>
+                  )}
                 </div>
                 <div className="flex flex-col justify-center">
                   <p className="text-muted-foreground text-sm mb-2">

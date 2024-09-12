@@ -6,6 +6,13 @@ import tiktoken
 import datetime
 import httpx
 from loguru import logger
+from collections import Counter
+
+
+def get_most_common(items):
+    if not items:
+        return None
+    return Counter(items).most_common(1)[0][0]
 
 
 def generate_uuid(prefix: str = "") -> str:

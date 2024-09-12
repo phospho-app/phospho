@@ -1,10 +1,11 @@
 from typing import Any, Dict, Iterable, List, Literal, Optional, Union
 
 from app.db.mongo import get_mongo_db
+from fastapi.requests import Request
+from fastapi_simple_rate_limiter import rate_limiter
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 from openai.types.chat.chat_completion import ChatCompletion
-
 
 from app.core import config
 from app.security.authentification import authenticate_org_key
@@ -63,12 +64,13 @@ async def log_to_project(
     create_request: CreateRequest,
     response: ChatCompletion,
 ):
-    mongo_db = await get_mongo_db()
     logging_project_id = project_id
+    logger.info(f"Logging completion to project {logging_project_id}")
 
     try:
         logging_project = await get_project_by_id(logging_project_id)
     except Exception as e:
+        logger.warning(f"Error getting project {logging_project_id}: {e}")
         logging_project = None
 
     if logging_project is None:  # No logging project setup
@@ -76,13 +78,7 @@ async def log_to_project(
         logging_project = await create_project_by_org(
             org_id=org_id, user_id=None, project_name="Completions"
         )
-        # Add the setup to completion_projects
-        await mongo_db["completion_projects"].insert_one(
-            {
-                "org_id": org_id,
-                "project_id": logging_project.id,
-            }
-        )
+        logger.info(f"Creating logging project for org {org_id}: {logging_project}")
         logging_project_id = logging_project.id
 
     # Log the completion to the project
@@ -99,6 +95,8 @@ async def log_to_project(
         system_prompt_list = [m for m in create_request.messages if m.role == "system"]
         if system_prompt_list:
             system_prompt = system_prompt_list[0].content
+            if input is None:
+                input = system_prompt
 
     output = response.choices[0].message.content
 
@@ -128,8 +126,10 @@ async def log_to_project(
     "/{project_id}/chat/completions",
     description="Create a chat completion",
 )
+@rate_limiter(limit=500, seconds=60)
 async def create(
     project_id: str,
+    request: Request,
     create_request: CreateRequest,
     background_tasks: BackgroundTasks,
     org: dict = Depends(authenticate_org_key),
@@ -213,12 +213,12 @@ async def create(
             predictions=[response.model_dump()],
             project_id=project_id,
         )
-        background_tasks.add_task(
-            log_to_project,
-            org_id=org["org"]["org_id"],
-            project_id=project_id,
-            create_request=create_request,
-            response=response,
-        )
+    background_tasks.add_task(
+        log_to_project,
+        org_id=org["org"]["org_id"],
+        project_id=project_id,
+        create_request=create_request,
+        response=response,
+    )
 
     return response

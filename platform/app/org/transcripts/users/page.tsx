@@ -1,6 +1,5 @@
 "use client";
 
-import { UsersTable } from "@/components/transcripts/users/users-table";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,6 +14,7 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UsersTable } from "@/components/users/users-table";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
