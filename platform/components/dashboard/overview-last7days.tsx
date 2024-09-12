@@ -11,9 +11,14 @@ import {
   Legend,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 const OverviewLast7Days = () => {
@@ -48,7 +53,11 @@ const OverviewLast7Days = () => {
     },
   );
 
-  const CustomToolTip = ({ active, payload, label }: any) => {
+  const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+    label,
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div>
@@ -86,7 +95,7 @@ const OverviewLast7Days = () => {
           >
             <XAxis dataKey="date" />
             <YAxis />
-            <Tooltip content={<CustomToolTip />} />
+            <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
               dataKey={`undefined`}
