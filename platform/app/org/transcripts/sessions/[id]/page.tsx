@@ -1,6 +1,6 @@
 "use client";
 
-import Session from "@/components/transcripts/sessions/session";
+import Session from "@/components/sessions/session";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";

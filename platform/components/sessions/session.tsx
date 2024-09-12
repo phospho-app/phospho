@@ -1,6 +1,6 @@
 "use client";
 
-import SuggestEvent from "@/components/insights/events/suggest-event";
+import SuggestEvent from "@/components/events/suggest-event";
 import TaskBox from "@/components/task-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

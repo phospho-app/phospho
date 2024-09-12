@@ -1,9 +1,9 @@
 "use client";
 
 import { DatavizCallout } from "@/components/callouts/import-data";
+import DatavizGraph from "@/components/dataviz";
 import { DatePickerWithRange } from "@/components/date-range";
 import FilterComponent from "@/components/filters";
-import DatavizGraph from "@/components/insights/dataviz";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
