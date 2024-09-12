@@ -1,7 +1,7 @@
 "use client";
 
+import { ClusteringLoading } from "@/components/clusters/clusters-loading";
 import RunClusteringSheet from "@/components/clusters/clusters-sheet";
-import { Spinner } from "@/components/small-spinner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
@@ -64,10 +63,6 @@ const Clusters: React.FC = () => {
     () => JSON.stringify(clusterings),
     [clusterings],
   );
-  const selectedClusteringJSON = useMemo(
-    () => JSON.stringify(selectedClustering),
-    [selectedClustering],
-  );
 
   useEffect(() => {
     if (clusterings === undefined) {
@@ -100,32 +95,6 @@ const Clusters: React.FC = () => {
     clusterings,
     clusteringsJSON,
     project_id,
-    selectedClustering,
-    setSelectedClustering,
-  ]);
-
-  // Add a useEffect triggered every few seconds to update the clustering status
-  useEffect(() => {
-    if (selectedClustering && selectedClustering?.status !== "completed") {
-      const interval = setInterval(async () => {
-        // Use the fetch function to update the clustering status
-        const response = await authFetcher(
-          `/api/explore/${project_id}/clusterings/${selectedClustering?.id}`,
-          accessToken,
-          "POST",
-        );
-        // Update the selectedClustering with the new status
-        setSelectedClustering({
-          ...selectedClustering,
-          ...response,
-        });
-      }, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [
-    selectedClusteringJSON,
-    project_id,
-    accessToken,
     selectedClustering,
     setSelectedClustering,
   ]);
@@ -204,30 +173,10 @@ const Clusters: React.FC = () => {
           <div className="flex-col space-y-2 md:flex pb-10">
             {selectedClustering &&
               selectedClustering.status !== "completed" && (
-                <div className="w-full flex flex-col items-center">
-                  {selectedClustering.status === "started" ||
-                    (selectedClustering.status === "summaries" && (
-                      <Progress
-                        value={Math.max(
-                          selectedClustering.percent_of_completion ?? 0,
-                          1,
-                        )}
-                        className="w-[100%] transition-all duration-500 ease-in-out mb-4 h-4"
-                      />
-                    ))}
-                  {selectedClustering.status === "started" && (
-                    <div className="flex flex-row items-center text-muted-foreground text-sm">
-                      <Spinner className="mr-1" />
-                      Computing embeddings...
-                    </div>
-                  )}
-                  {selectedClustering.status === "summaries" && (
-                    <div className="flex flex-row items-center text-muted-foreground text-sm">
-                      <Spinner className="mr-1" />
-                      Generating summaries...
-                    </div>
-                  )}
-                </div>
+                <ClusteringLoading
+                  selectedClustering={selectedClustering}
+                  setSelectedClustering={setSelectedClustering}
+                />
               )}
             {clusterings && clusterings.length === 0 && (
               <CustomPlot
