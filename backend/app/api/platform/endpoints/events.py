@@ -59,18 +59,15 @@ async def post_backfill_event(
             detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
         )
 
-    if event_backfill_request.created_at_end is not None:
-        event_backfill_request.created_at_end = round(
-            event_backfill_request.created_at_end
+    if isinstance(event_backfill_request.filters.created_at_end, float):
+        event_backfill_request.filters.created_at_end = round(
+            event_backfill_request.filters.created_at_end
         )
-    if event_backfill_request.created_at_start is not None:
-        event_backfill_request.created_at_start = round(
-            event_backfill_request.created_at_start
+    if isinstance(event_backfill_request.filters.created_at_start, float):
+        event_backfill_request.filters.created_at_start = round(
+            event_backfill_request.filters.created_at_start
         )
-    filters = ProjectDataFilters(
-        created_at_start=event_backfill_request.created_at_start,
-        created_at_end=event_backfill_request.created_at_end,
-    )
+
     recipe = await get_recipe_from_event_definition_id(
         project_id=project_id, event_definition_id=event_backfill_request.event_id
     )
@@ -79,7 +76,7 @@ async def post_backfill_event(
         project_id=project_id,
         recipe=recipe,
         org_id=org_id,
-        filters=filters,
+        filters=event_backfill_request.filters,
         sample_rate=event_backfill_request.sample_rate,
     )
     return {"status": "ok"}
