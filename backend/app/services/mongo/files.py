@@ -76,7 +76,7 @@ async def process_file_upload_into_log_events(
     for metadata_field in RESERVED_NUMBER_METADATA_FIELDS:
         if metadata_field in tasks_df.columns:
             tasks_df[metadata_field] = tasks_df[metadata_field].apply(
-                lambda x: float(x) if x is not None else None
+                lambda x: float(x) if x is not None and x.isdigit() else None
             )
 
     usage_quota = await get_quota(project_id)
