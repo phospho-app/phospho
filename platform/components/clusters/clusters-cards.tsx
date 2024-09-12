@@ -1,5 +1,6 @@
 "use client";
 
+import CreateEvent from "@/components/events/create-event";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -18,7 +19,6 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useSWR from "swr";
 
-import CreateEvent from "../events/create-event";
 import "./style.css";
 
 function ClusterCard({
