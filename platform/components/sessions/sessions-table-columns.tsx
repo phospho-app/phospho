@@ -3,7 +3,7 @@ import {
   InteractiveEventBadgeForSessions,
 } from "@/components/label-events";
 import { RunEventsSettings } from "@/components/settings/events-settings";
-import { SentimentSettings } from "@/components/transcripts/settings/sentiment-settings";
+import { SentimentSettings } from "@/components/settings/sentiment-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
