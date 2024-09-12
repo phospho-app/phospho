@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
+import { EventDefinition } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pencil, Sparkles, Trash } from "lucide-react";
@@ -64,7 +65,7 @@ function EventRow({
   handleDeleteEvent,
   handleOnClick,
 }: {
-  eventDefinition: any;
+  eventDefinition: EventDefinition;
   handleDeleteEvent: (eventNameToDelete: string) => void;
   handleOnClick: (eventName: string) => void;
 }) {
@@ -78,7 +79,7 @@ function EventRow({
       onClick={(mouseEvent) => {
         mouseEvent.stopPropagation();
         if (tableIsClickable) {
-          handleOnClick(eventDefinition.id);
+          handleOnClick(eventDefinition.id ?? "");
         }
       }}
       className="cursor-pointer"

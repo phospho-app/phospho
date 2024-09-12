@@ -21,6 +21,8 @@ import {
 } from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
+import { EventData } from "./events-last7days";
+
 const OverviewLast7Days = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
@@ -40,7 +42,7 @@ const OverviewLast7Days = () => {
         graph_name: ["number_of_daily_tasks"],
       }).then((data) => {
         const number_of_daily_tasks = data?.number_of_daily_tasks;
-        number_of_daily_tasks?.forEach((item: any) => {
+        number_of_daily_tasks?.forEach((item: EventData) => {
           item.formated_date = new Date(item.date).toLocaleDateString([], {
             month: "short",
             day: "numeric",
@@ -62,7 +64,7 @@ const OverviewLast7Days = () => {
       return (
         <div>
           <p>{label}</p>
-          {payload.map((item: any) => {
+          {payload.map((item) => {
             return (
               <p key={item.name}>
                 {item.name}: {item.value}

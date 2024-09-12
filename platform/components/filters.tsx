@@ -45,6 +45,11 @@ import useSWR from "swr";
 
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 
+interface LanguageFilterOption {
+  value: string;
+  label: string;
+}
+
 const FilterComponent = ({
   variant = "tasks",
 }: {
@@ -453,28 +458,31 @@ const FilterComponent = ({
                   </DropdownMenuItem>
                 )}
                 {languageFilterOptions &&
-                  languageFilterOptions.map((languageFilterOption: any) => {
-                    return (
-                      <DropdownMenuItem
-                        key={languageFilterOption.value}
-                        onClick={() => {
-                          setDataFilters({
-                            ...dataFilters,
-                            language: languageFilterOption.value,
-                          });
-                          resetPagination();
-                        }}
-                        style={{
-                          color:
-                            dataFilters.language === languageFilterOption.value
-                              ? "green"
-                              : "inherit",
-                        }}
-                      >
-                        {languageFilterOption.label}
-                      </DropdownMenuItem>
-                    );
-                  })}
+                  languageFilterOptions.map(
+                    (languageFilterOption: LanguageFilterOption) => {
+                      return (
+                        <DropdownMenuItem
+                          key={languageFilterOption.value}
+                          onClick={() => {
+                            setDataFilters({
+                              ...dataFilters,
+                              language: languageFilterOption.value,
+                            });
+                            resetPagination();
+                          }}
+                          style={{
+                            color:
+                              dataFilters.language ===
+                              languageFilterOption.value
+                                ? "green"
+                                : "inherit",
+                          }}
+                        >
+                          {languageFilterOption.label}
+                        </DropdownMenuItem>
+                      );
+                    },
+                  )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>

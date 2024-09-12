@@ -266,6 +266,16 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
   );
 };
 
+interface CustomPayloadItem {
+  dataKey: string;
+  name: string;
+  value: ValueType;
+  payload: {
+    [key: string]: number;
+  };
+  color?: string;
+}
+
 export const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
   active,
   payload,
@@ -282,15 +292,22 @@ export const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {payload.map((pld: any) => (
-              <div
-                key={pld.dataKey}
-                style={{ display: "inline-block", padding: 10 }}
-              >
-                <div>{pld.payload[pld.dataKey + "_tooltip"].toFixed(2)}</div>
-                <div>{pld.dataKey}</div>
-              </div>
-            ))}
+            {payload.map((pld, index) => {
+              const typedPld = pld as unknown as CustomPayloadItem;
+              return (
+                <div
+                  key={typedPld.dataKey || index}
+                  style={{ display: "inline-block", padding: 10 }}
+                >
+                  <div>
+                    {typedPld.payload[`${typedPld.dataKey}_tooltip`]?.toFixed(
+                      2,
+                    )}
+                  </div>
+                  <div>{typedPld.dataKey}</div>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
       </div>

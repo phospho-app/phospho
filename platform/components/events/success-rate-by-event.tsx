@@ -47,13 +47,15 @@ function SuccessRateByEvent() {
         metrics: ["success_rate_by_event_name"],
         filters: dataFilters,
       }).then((response) => {
-        return response?.success_rate_by_event_name?.map((event: any) => {
-          // Round the success rate to 2 decimal places
-          return {
-            event_name: event.event_name,
-            success_rate: Math.round(event.success_rate * 10000) / 100,
-          };
-        });
+        return response?.success_rate_by_event_name?.map(
+          (event: SuccessRate) => {
+            // Round the success rate to 2 decimal places
+            return {
+              event_name: event.event_name,
+              success_rate: Math.round(event.success_rate * 10000) / 100,
+            };
+          },
+        );
       }),
     {
       keepPreviousData: true,
