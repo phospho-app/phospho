@@ -23,7 +23,7 @@ from app.services.mongo.organizations import (
     get_projects_from_org_id,
     get_usage_quota,
 )
-from app.services.mongo.projects import get_project_by_id, populate_default
+from app.services.mongo.projects import get_project_by_id, copy_template_project_to_new
 from app.services.slack import slack_notification
 from phospho.models import UsageQuota
 from phospho.utils import generate_version_id
@@ -107,7 +107,7 @@ async def post_create_default_project(
         )
     logger.debug(f"Creating default project for org {org_id}")
     logger.debug(f"Target project id: {template_name}")
-    await populate_default(
+    await copy_template_project_to_new(
         project_id=project.id, org_id=org_id, template_name=template_name
     )
     # Send a notification if it's not a phospho project
