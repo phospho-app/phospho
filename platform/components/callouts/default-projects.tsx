@@ -17,7 +17,6 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { BookMarked, Microscope, Stethoscope, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useSWRConfig } from "swr";
 
 const DefaultProjects = ({
   handleClose,
@@ -33,8 +32,6 @@ const DefaultProjects = ({
     (state) => state.setSelectedOrgId,
   );
   const toast = useToast();
-  const { mutate } = useSWRConfig();
-  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
   const setproject_id = navigationStateStore((state) => state.setproject_id);
 
   async function createDefaultProject(
