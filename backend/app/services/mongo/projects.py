@@ -829,7 +829,7 @@ async def copy_template_project_to_new(
         raise ValueError(f"Template name {template_name} not found")
 
     # Verify that the template project exists
-    template_project = await get_project_by_id(template_project_id)
+    await get_project_by_id(template_project_id)
 
     # Add sessions to the project
     sessions_in_template = await get_all_sessions(template_project_id, get_events=True)
@@ -864,10 +864,10 @@ async def copy_template_project_to_new(
     event_definitions: List[EventDefinition] = []
     for event_definition in event_definitions_in_template:
         event_definition_model = EventDefinition.model_validate(event_definition)
+        event_definition_pairs[event_definition_model.id] = event_definition_model
         event_definition_model.id = generate_uuid()
         event_definition_model.project_id = project_id
         event_definition_model.org_id = org_id
-        event_definition_pairs[event_definition_model.id] = event_definition_model
         event_definitions.append(event_definition_model)
 
     if len(event_definitions) > 0:
@@ -876,7 +876,9 @@ async def copy_template_project_to_new(
         )
 
     # Add tasks to the project
-    tasks_in_template = await get_all_tasks(template_project_id, get_events=False)
+    tasks_in_template = await get_all_tasks(
+        project_id=template_project_id, get_events=False
+    )
     tasks: List[Task] = []
     for task in tasks_in_template:
         old_task_id = task.id
@@ -926,7 +928,6 @@ async def copy_template_project_to_new(
             {
                 "project_id": template_project_id,
                 "removed": {"$ne": True},
-                "task_id": {"$in": [task.id for task in tasks_in_template]},
             }
         )
         .to_list(length=None)
@@ -936,10 +937,11 @@ async def copy_template_project_to_new(
     for event in default_events:
         event_model = Event.model_validate(event)
         if event_model.task_id not in task_pairs:
-            logger.warning(
+            logger.error(
                 f"Default project has been modified, task {event_model.task_id} not found in task_pairs. Skipping event {event_model.event_name}"
             )
             continue
+        event_pairs[event_model.id] = event_model
         event_model.id = generate_uuid()
         event_model.created_at = generate_timestamp()
         event_model.project_id = project_id
@@ -957,7 +959,6 @@ async def copy_template_project_to_new(
             if paired_event_definition:
                 event_model.event_definition = paired_event_definition
 
-        event_pairs[event_model.id] = event_model
         # Don't add the event if it's a duplicate
         if event_model.event_name not in [
             event.event_name for event in events if event.task_id == event_model.task_id
