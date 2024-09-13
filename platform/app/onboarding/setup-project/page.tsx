@@ -43,6 +43,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { UploadIcon } from "lucide-react";
+import { Telescope } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -381,7 +382,6 @@ const ExploreSampleProjectOnboarding: React.FC<
       title: "Creating default project",
       description: "Data will be available shortly.",
     });
-
     fetch(`/api/organizations/${selectedOrgId}/create-default-project`, {
       method: "POST",
       headers: {

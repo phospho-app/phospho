@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel
 
 
@@ -19,3 +19,4 @@ class UserCreatedEventWebhook(BaseModel, extra="allow"):
 
 class CreateDefaultProjectRequest(BaseModel):
     project_id: Optional[str] = None
+    template_name: Literal["history", "animals", "medical"]
