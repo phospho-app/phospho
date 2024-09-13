@@ -14,7 +14,8 @@ export default function Page({ params }: { params: { id: string } }) {
   // to the correct page after the onboarding is complete.
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
-  const redirectTo = redirect == "events" ? "/org/insights/events" : "/org";
+  const redirectTo =
+    redirect == "events" ? "/org/insights/events" : "/onboarding/clustering";
 
   return (
     <>
