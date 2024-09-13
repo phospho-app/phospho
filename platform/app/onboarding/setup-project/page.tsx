@@ -385,7 +385,8 @@ export default function Page() {
                   <AlertDialogTrigger asChild>
                     <Button variant="secondary" className="text-xs">
                       {" "}
-                      <Telescope className="h-4 w-4 mr-2" /> Explore sample data{" "}
+                      <Telescope className="h-4 w-4 mr-2" /> Explore example
+                      project{" "}
                     </Button>
                   </AlertDialogTrigger>
                   <DefaultProjects
