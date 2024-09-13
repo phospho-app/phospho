@@ -731,7 +731,7 @@ async def backcompute_recipe(
     for i in range(0, len(tasks_to_process), batch_size):
         tasks_batch = tasks_to_process[i : i + batch_size]
         await extractor_client.run_recipe_on_tasks(
-            tasks=tasks_batch,
+            tasks_ids=[task.id for task in tasks_batch],
             recipe=recipe,
         )
 
@@ -933,9 +933,10 @@ async def copy_template_project_to_new(
             if paired_session:
                 event_model.session_id = paired_session.id
         event_model.task_id = task_pairs[event_model.task_id].id
-        event_model.event_definition = event_definition_pairs[
-            event_model.event_definition.id
-        ]
+        if event_model.event_definition:
+            event_model.event_definition = event_definition_pairs[
+                event_model.event_definition.id
+            ]
         event_model.task = task_pairs.get(event_model.task_id)
         events.append(event_model)
         event_pairs[event_model.event_name] = event_model
