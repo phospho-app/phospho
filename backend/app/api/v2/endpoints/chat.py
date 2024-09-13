@@ -1,11 +1,27 @@
-from typing import Any, Dict, Iterable, List, Literal, Optional, Union
-
-from app.db.mongo import get_mongo_db
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Union,
+    AsyncIterator,
+    Tuple,
+)
+import json
 from fastapi.requests import Request
-from fastapi_simple_rate_limiter import rate_limiter
+from fastapi.responses import StreamingResponse
+from fastapi_simple_rate_limiter import rate_limiter  # type: ignore
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
-from openai.types.chat.chat_completion import ChatCompletion
+from openai.types.chat.chat_completion import (
+    ChatCompletion,
+    ChatCompletionMessage,
+    Choice,
+)
+from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
+from openai import AsyncOpenAI
 
 from app.core import config
 from app.security.authentification import authenticate_org_key
@@ -44,7 +60,7 @@ class CreateRequest(pydantic.BaseModel):
     # response_format: completion_create_params.ResponseFormat | None = None
     seed: Optional[int] | None = None
     stop: Union[Optional[str], List[str]] | None = None
-    # stream: Optional[Literal[False]] | None = None
+    stream: Optional[bool] | None = None
     # stream_options: Optional[ChatCompletionStreamOptionsParam] | None = None
     temperature: Optional[float] | None = None
     # tool_choice: ChatCompletionToolChoiceOptionParam | None = None
@@ -86,17 +102,14 @@ async def log_to_project(
         org_id=org_id,
         project_id=logging_project_id,
     )
-    input = None
-    if create_request.messages:
-        input = create_request.messages[-1].content
-    system_prompt = None
-    if create_request.messages:
-        # Look for the system_prompt in the messages
-        system_prompt_list = [m for m in create_request.messages if m.role == "system"]
-        if system_prompt_list:
-            system_prompt = system_prompt_list[0].content
-            if input is None:
-                input = system_prompt
+
+    input = create_request.messages[-1].content if create_request.messages else None
+    system_prompt = next(
+        (m.content for m in create_request.messages if m.role == "system"), None
+    )
+
+    if input is None and system_prompt:
+        input = system_prompt
 
     output = response.choices[0].message.content
 
@@ -122,9 +135,78 @@ async def log_to_project(
         logger.warning("No input found for logging completion.")
 
 
+async def stream_and_capture(
+    openai_client: AsyncOpenAI, query_inputs: Dict[str, Any]
+) -> AsyncIterator[Tuple[Union[ChatCompletionChunk, ChatCompletion], ChatCompletion]]:
+    full_response = ChatCompletion(
+        id="", choices=[], created=0, model="", object="chat.completion", usage=None
+    )
+    try:
+        async for chunk in await openai_client.chat.completions.create(**query_inputs):
+            if isinstance(chunk, ChatCompletionChunk):
+                if full_response.id == "":
+                    full_response.id = chunk.id
+                    full_response.created = chunk.created
+                    full_response.model = chunk.model
+
+                for choice in chunk.choices:
+                    if len(full_response.choices) <= choice.index:
+                        full_response.choices.append(
+                            Choice(
+                                index=choice.index,
+                                message=ChatCompletionMessage(
+                                    role="assistant", content=""
+                                ),
+                                finish_reason="stop",  # Initialize with a valid value
+                            )
+                        )
+
+                    current_choice = full_response.choices[choice.index]
+
+                    if (
+                        choice.delta.content is not None
+                        and current_choice.message.content is not None
+                    ):
+                        current_choice.message.content += choice.delta.content
+
+                    if choice.finish_reason is not None:
+                        current_choice.finish_reason = choice.finish_reason
+
+            yield chunk, full_response
+    except Exception as e:
+        logger.error(f"Error in stream_and_capture: {e}")
+        raise
+
+
+async def log_and_meter(
+    org_id: str,
+    project_id: str,
+    create_request: CreateRequest,
+    response: ChatCompletion,
+    provider: str,
+    model_name: str,
+) -> None:
+    logger.debug(f"Response: {response.model_dump()}")
+    if org_id != config.PHOSPHO_ORG_ID and config.ENVIRONMENT == "production":
+        await metered_prediction(
+            org_id=org_id,
+            model_id=f"{provider}:{model_name}",
+            inputs=[create_request.model_dump()],
+            predictions=[response.model_dump()],
+            project_id=project_id,
+        )
+    await log_to_project(
+        org_id=org_id,
+        project_id=project_id,
+        create_request=create_request,
+        response=response,
+    )
+
+
 @router.post(
     "/{project_id}/chat/completions",
     description="Create a chat completion",
+    response_model=ChatCompletion,
 )
 @rate_limiter(limit=500, seconds=60)
 async def create(
@@ -133,7 +215,7 @@ async def create(
     create_request: CreateRequest,
     background_tasks: BackgroundTasks,
     org: dict = Depends(authenticate_org_key),
-) -> ChatCompletion:
+) -> ChatCompletion:  # Can also be a StreamingResponse if stream is True
     """
     Generate a chat completion
 
@@ -141,7 +223,7 @@ async def create(
     This means that the metadata has_completion_access must be set to True in Propelauth.
     """
     # Get customer_id
-    logger.debug(f"Creating chat completion: {create_request}")
+    logger.info(f"Received chat completions request for project {project_id}")
     org_metadata = org["org"].get("metadata", {})
     org_id = org["org"]["org_id"]
     customer_id = None
@@ -183,42 +265,62 @@ async def create(
         )
 
     provider, model_name = get_provider_and_model(create_request.model)
-
-    if (
-        org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d"
-    ):  # TODO: This is an exception for a custom org, temporary
-        # For this endpoint, we route requests to Azure OpenAI
+    if org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d":  # We don't route Y to Azure
         provider = "azure"
     openai_client = get_async_client(provider)
 
-    # Change the model name to the one used by OpenAI
     create_request.model = model_name
-
     query_inputs = create_request.model_dump()
-    response = await openai_client.chat.completions.create(
-        **query_inputs,
-    )
-    if not response:
-        raise HTTPException(
-            status_code=500,
-            detail="An error occurred while generating predictions.",
-        )
 
-    if org_id != config.PHOSPHO_ORG_ID and config.ENVIRONMENT == "production":
-        background_tasks.add_task(
-            metered_prediction,
-            org_id=org["org"]["org_id"],
-            model_id=f"{provider}:{model_name}",
-            inputs=[create_request.model_dump()],
-            predictions=[response.model_dump()],
-            project_id=project_id,
-        )
-    background_tasks.add_task(
-        log_to_project,
-        org_id=org["org"]["org_id"],
-        project_id=project_id,
-        create_request=create_request,
-        response=response,
-    )
+    should_stream = query_inputs.get("stream", False)
 
-    return response
+    if should_stream:
+
+        async def generate() -> AsyncIterator[str]:
+            try:
+                async for chunk, full_response in stream_and_capture(
+                    openai_client, query_inputs
+                ):
+                    yield f"data: {chunk.model_dump_json()}\n\n"
+
+                yield "data: [DONE]\n\n"
+
+                # Perform logging and metering tasks with the aggregated full_response
+                background_tasks.add_task(
+                    log_and_meter,
+                    org_id=org["org"]["org_id"],
+                    project_id=project_id,
+                    create_request=create_request,
+                    response=full_response,
+                    provider=provider,
+                    model_name=model_name,
+                )
+            except Exception as e:
+                logger.error(f"Error in generate: {e}")
+                error_json = {"error": {"message": str(e), "type": type(e).__name__}}
+                yield f"data: {json.dumps(error_json)}\n\n"
+                yield "data: [DONE]\n\n"
+                raise
+
+        return StreamingResponse(generate(), media_type="text/event-stream")
+    else:
+        # Non-streaming response
+        try:
+            response: ChatCompletion = await openai_client.chat.completions.create(
+                **query_inputs
+            )
+
+            # Perform logging and metering tasks
+            background_tasks.add_task(
+                log_and_meter,
+                org_id=org["org"]["org_id"],
+                project_id=project_id,
+                create_request=create_request,
+                response=response,
+                provider=provider,
+                model_name=model_name,
+            )
+
+            return response
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
