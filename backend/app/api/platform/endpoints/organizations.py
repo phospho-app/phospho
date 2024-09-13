@@ -1,4 +1,5 @@
 from typing import Any, Dict
+from app.api.v2.models.projects import DefaultProjectRequest
 import stripe
 from customerio import analytics
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
@@ -82,13 +83,29 @@ async def post_create_project(
 )
 async def post_create_default_project(
     org_id: str,
+    default_project_request: DefaultProjectRequest,
     user: User = Depends(propelauth.require_user),
 ) -> Project:
     org_member_info = propelauth.require_org_member(user, org_id)
+    template_name = default_project_request.template_name
+
+    # The project will be created with a specific name
+    template_to_project_name = {
+        "history": "The History I forgot",
+        "animals": "Rude Biology teacher",
+        "medical": "The Worst Doctor",
+    }
+
     project = await create_project_by_org(
-        org_id=org_id, user_id=user.user_id, project_name="Default Project"
+        org_id=org_id,
+        user_id=user.user_id,
+        project_name=template_to_project_name.get(template_name, "Default Project"),
     )
-    await populate_default(project_id=project.id, org_id=org_id)
+    logger.debug(f"Creating default project for org {org_id}")
+    logger.debug(f"Target project id: {template_name}")
+    await populate_default(
+        project_id=project.id, org_id=org_id, template_name=template_name
+    )
     # Send a notification if it's not a phospho project
     if (
         config.ENVIRONMENT == "production"
