@@ -82,6 +82,7 @@ const DefaultProjects = ({
           title: "Error when creating project",
           description: response.statusText,
         });
+        return;
       }
       const responseBody = await response.json();
       if (responseBody.id !== undefined) {
@@ -92,7 +93,7 @@ const DefaultProjects = ({
       } else {
         toast.toast({
           title: "Error when creating project",
-          description: responseBody.error,
+          description: "No project ID returned",
         });
       }
     });
