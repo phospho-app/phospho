@@ -829,7 +829,7 @@ async def copy_template_project_to_new(
         raise ValueError(f"Template name {template_name} not found")
 
     # Verify that the template project exists
-    await get_project_by_id(template_project_id)
+    template_project = await get_project_by_id(template_project_id)
 
     # Add sessions to the project
     sessions_in_template = await get_all_sessions(template_project_id, get_events=True)
@@ -927,11 +927,6 @@ async def copy_template_project_to_new(
                 "project_id": template_project_id,
                 "removed": {"$ne": True},
                 "task_id": {"$in": [task.id for task in tasks_in_template]},
-                "event_definition.id": {
-                    "$in": [
-                        event_definition.id for event_definition in event_definitions
-                    ]
-                },
             }
         )
         .to_list(length=None)
@@ -971,6 +966,8 @@ async def copy_template_project_to_new(
 
     if len(events) > 0:
         await mongo_db["events"].insert_many([event.model_dump() for event in events])
+    else:
+        raise ValueError("No events found in the default project")
 
     # Import the clusterings, the clusters and the embeddings from the target project
 
