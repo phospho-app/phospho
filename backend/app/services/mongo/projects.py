@@ -801,7 +801,11 @@ async def populate_default(
     clustering_pairs = {}
 
     if config.ENVIRONMENT == "production":
-        template_name_to_project_id = {}
+        template_name_to_project_id = {
+            "history": "b161b57d6ae94e2ea41e31a88ffbe99b",
+            "animals": "9812dc9ba7a9402283621e56b49a03c8",
+            "medical": "856870f888d941d48316f70b575de0a1",
+        }
     else:
         template_name_to_project_id = {
             "history": "4feeb60f97834502b8af822c09a43d17",
