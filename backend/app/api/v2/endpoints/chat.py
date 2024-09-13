@@ -206,7 +206,6 @@ async def log_and_meter(
 @router.post(
     "/{project_id}/chat/completions",
     description="Create a chat completion",
-    response_model=ChatCompletion,
 )
 @rate_limiter(limit=500, seconds=60)
 async def create(
@@ -215,7 +214,7 @@ async def create(
     create_request: CreateRequest,
     background_tasks: BackgroundTasks,
     org: dict = Depends(authenticate_org_key),
-) -> ChatCompletion:  # Can also be a StreamingResponse if stream is True
+):  # Can be ChatCompletion or StreamingResponse
     """
     Generate a chat completion
 
