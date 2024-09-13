@@ -168,6 +168,9 @@ const Clusters: React.FC = () => {
                   selectedClustering.created_at,
                 )}
               </Badge>
+              <Badge variant="secondary">
+                scope: {selectedClustering.scope}
+              </Badge>
             </div>
           )}
           <div className="flex-col space-y-2 md:flex pb-10">
