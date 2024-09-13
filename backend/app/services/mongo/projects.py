@@ -493,9 +493,9 @@ async def get_all_sessions(
             additional_sessions_filter["stats.most_common_language"] = filters.language
 
         if filters.sentiment is not None:
-            additional_sessions_filter[
-                "stats.most_common_sentiment_label"
-            ] = filters.sentiment
+            additional_sessions_filter["stats.most_common_sentiment_label"] = (
+                filters.sentiment
+            )
 
         if filters.metadata is not None:
             for key, value in filters.metadata.items():
@@ -849,9 +849,9 @@ async def populate_default(
         validated_event_definition.id = generate_uuid()
         validated_event_definition.project_id = project_id
         validated_event_definition.org_id = org_id
-        event_definition_pairs[
-            validated_event_definition.event_name
-        ] = validated_event_definition
+        event_definition_pairs[validated_event_definition.event_name] = (
+            validated_event_definition
+        )
         event_definitions.append(validated_event_definition)
 
     if len(event_definitions) > 0:
@@ -980,10 +980,12 @@ async def populate_default(
         validated_cluster.id = generate_uuid()
         validated_cluster.project_id = project_id
         validated_cluster.org_id = org_id
-        for i, session_id in enumerate(validated_cluster.sessions_ids):
-            validated_cluster.sessions_ids[i] = session_pairs.get(session_id).id
-        for i, task_id in enumerate(validated_cluster.tasks_ids):
-            validated_cluster.tasks_ids[i] = task_pairs.get(task_id).id
+        if validated_cluster.sessions_ids:
+            for i, session_id in enumerate(validated_cluster.sessions_ids):
+                validated_cluster.sessions_ids[i] = session_pairs.get(session_id).id
+        if validated_cluster.tasks_ids:
+            for i, task_id in enumerate(validated_cluster.tasks_ids):
+                validated_cluster.tasks_ids[i] = task_pairs.get(task_id).id
         clusters.append(validated_cluster)
         cluster_pairs[old_cluster_id] = validated_cluster
 
