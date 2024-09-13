@@ -68,6 +68,7 @@ interface ProjectData {
 }
 
 export default function Page() {
+  const [open, setOpen] = React.useState(false);
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const { toast } = useToast();
@@ -258,8 +259,6 @@ export default function Page() {
   function handleClose(): void {
     setOpen(false);
   }
-
-  const [open, setOpen] = React.useState(false);
 
   return (
     <>
