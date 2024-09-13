@@ -5,6 +5,7 @@ import {
   AlertDialogDescription,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ import { z } from "zod";
 
 import { Blockwall } from "../blockwall";
 import { Spinner } from "../small-spinner";
+import { DefaultProjects } from "./default-projects";
 
 const PythonIcon = () => {
   return (
@@ -956,14 +958,16 @@ phospho.log({input, output});`}
                       Example Colab notebook
                     </Button>
                   </Link>
-                  <Button
-                    variant="ghost"
-                    className="text-xs"
-                    onClick={() => createDefaultProject(undefined)}
-                  >
-                    <Telescope className="h-4 w-4 mr-2" />
-                    Explore sample data
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" className="text-xs">
+                        {" "}
+                        <Telescope className="h-4 w-4 mr-2" /> Explore sample
+                        data{" "}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <DefaultProjects handleClose={handleClose} />
+                  </AlertDialog>
                   <Button
                     variant="ghost"
                     className="text-xs"
