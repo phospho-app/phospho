@@ -60,7 +60,3 @@ class ComputeJobsRequest(BaseModel):
 
 class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
-
-
-class DefaultProjectRequest(BaseModel):
-    template_name: Literal["history", "animals", "medical"] = "animals"

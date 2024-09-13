@@ -1,5 +1,5 @@
 from typing import Any, Dict
-from app.api.v2.models.projects import DefaultProjectRequest
+
 import stripe
 from customerio import analytics
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
@@ -8,6 +8,7 @@ from propelauth_fastapi import User
 
 from app.api.platform.models import (
     CreateCheckoutRequest,
+    CreateDefaultProjectRequest,
     Project,
     ProjectCreationRequest,
     Projects,
@@ -22,7 +23,7 @@ from app.services.mongo.organizations import (
     get_projects_from_org_id,
     get_usage_quota,
 )
-from app.services.mongo.projects import populate_default
+from app.services.mongo.projects import get_project_by_id, populate_default
 from app.services.slack import slack_notification
 from phospho.models import UsageQuota
 from phospho.utils import generate_version_id
@@ -83,11 +84,11 @@ async def post_create_project(
 )
 async def post_create_default_project(
     org_id: str,
-    default_project_request: DefaultProjectRequest,
+    request: CreateDefaultProjectRequest,
     user: User = Depends(propelauth.require_user),
 ) -> Project:
     org_member_info = propelauth.require_org_member(user, org_id)
-    template_name = default_project_request.template_name
+    template_name = request.template_name
 
     # The project will be created with a specific name
     template_to_project_name = {
@@ -96,11 +97,14 @@ async def post_create_default_project(
         "medical": "The Worst Doctor",
     }
 
-    project = await create_project_by_org(
-        org_id=org_id,
-        user_id=user.user_id,
-        project_name=template_to_project_name.get(template_name, "Default Project"),
-    )
+    if request.project_id:
+        project = await get_project_by_id(request.project_id)
+    else:
+        project = await create_project_by_org(
+            org_id=org_id,
+            user_id=user.user_id,
+            project_name=template_to_project_name.get(template_name, "Default Project"),
+        )
     logger.debug(f"Creating default project for org {org_id}")
     logger.debug(f"Target project id: {template_name}")
     await populate_default(

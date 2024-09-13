@@ -22,7 +22,6 @@ from .projects import (
     ProjectCreationRequest,
     Projects,
     ProjectUpdateRequest,
-    DefaultProjectRequest,
     UserMetadata,
     Users,
     ProjectDataFilters,

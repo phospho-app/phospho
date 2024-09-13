@@ -22,7 +22,7 @@ import useSWR from "swr";
 
 const Plot = lazy(() => import("react-plotly.js"));
 
-function generateDummyData() {
+function generateDummyData({ displayCTA = false }: { displayCTA?: boolean }) {
   // Generate placeholder data for the plot
   // Generate four clusters of nearby points with the same color
   const numPoints = 50;
@@ -30,12 +30,14 @@ function generateDummyData() {
   const y = new Array(numPoints * 4);
   const z = new Array(numPoints * 4);
   const colors = new Array(numPoints * 4);
+  const clusterNames = new Array(numPoints * 4);
 
   for (let i = 0; i < numPoints; i++) {
     x[i] = Math.random() * 0.4 - 0.1;
     y[i] = Math.random() * 0.2;
     z[i] = Math.random() * 0.2 - 0.1;
     colors[i] = graphColors[0];
+    clusterNames[i] = "Question about the products";
   }
 
   for (let i = numPoints; i < numPoints * 2; i++) {
@@ -43,6 +45,7 @@ function generateDummyData() {
     y[i] = Math.random() * 0.2 + 0.2;
     z[i] = Math.random() * 0.15 + 0.1;
     colors[i] = graphColors[1];
+    clusterNames[i] = "Asking for help";
   }
 
   for (let i = numPoints * 2; i < numPoints * 3; i++) {
@@ -50,6 +53,7 @@ function generateDummyData() {
     y[i] = Math.random() * 0.2 - 0.1;
     z[i] = Math.random() * 0.1 + 0.1;
     colors[i] = graphColors[2];
+    clusterNames[i] = "Feedback";
   }
 
   for (let i = numPoints * 3; i < numPoints * 4; i++) {
@@ -57,6 +61,7 @@ function generateDummyData() {
     y[i] = Math.random() * 0.2 + 0.1;
     z[i] = Math.random() * 0.1 + 0.1;
     colors[i] = graphColors[3];
+    clusterNames[i] = "Bug report";
   }
 
   return {
@@ -68,8 +73,10 @@ function generateDummyData() {
     marker: {
       size: 6,
       color: colors,
-      opacity: 0.4,
+      opacity: displayCTA ? 0.5 : 0.8,
     },
+    hoverinfo: "text",
+    hovertext: clusterNames,
   } as Data;
 }
 
@@ -77,11 +84,13 @@ export function CustomPlot({
   selected_clustering_id,
   selectedClustering,
   dummyData = false,
+  displayCTA = false,
   setSheetClusterOpen,
 }: {
   selected_clustering_id?: string;
   selectedClustering?: Clustering;
   dummyData?: boolean;
+  displayCTA?: boolean;
   setSheetClusterOpen?: (value: boolean) => void;
 }) {
   const project_id = navigationStateStore((state) => state.project_id);
@@ -95,15 +104,22 @@ export function CustomPlot({
   const [open, setOpen] = useState(false);
   const frameRef = useRef(0);
 
-  const width =
-    Math.round(
-      Math.max(
-        document.getElementsByClassName("custom-plot")[0]?.clientWidth ??
-          window.innerWidth * 0.8,
-        640,
-      ) / 10,
-    ) * 10;
-  const height = Math.round(Math.max(window.innerHeight * 0.6, 300) / 10) * 10;
+  let width = 640;
+  let height = 300;
+  // For SSR, we need to check if document is defined
+  if (typeof document !== "undefined") {
+    width =
+      Math.round(
+        Math.max(
+          document?.getElementsByClassName("custom-plot")[0]?.clientWidth ??
+            window.innerWidth * 0.8,
+          640,
+        ) / 10,
+      ) * 10;
+  }
+  if (typeof window !== "undefined") {
+    height = Math.round(Math.max(window.innerHeight * 0.6, 300) / 10) * 10;
+  }
   // Skeleton style is used to set the width and height of the plot
   // And to load the skeleton with the correct size
   const skeletonStyle = `w-[${width}px] h-[${height}px]`;
@@ -177,7 +193,7 @@ export function CustomPlot({
 
   useEffect(() => {
     if (dummyData) {
-      setDisplayedData(generateDummyData());
+      setDisplayedData(generateDummyData({ displayCTA }));
     } else {
       setDisplayedData(data);
     }
@@ -218,36 +234,6 @@ export function CustomPlot({
     paper_bgcolor: "rgba(0,0,0,0)", // Fully transparent paper background
     plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
   }));
-
-  const totalFrames = 3600;
-  const zoomCycles = 2; // Number of zoom in/out cycles per full rotation
-
-  const animate = useCallback(() => {
-    if (!isAnimating) return;
-
-    const t = frameRef.current / totalFrames;
-    const zoomT = (Math.sin(2 * Math.PI * zoomCycles * t) + 1) / 2; // Oscillates between 0 and 1
-    const zoom = 1 + zoomT * 0.3; // Zoom factor oscillates between 1.25 and 1.75
-
-    const newEye = {
-      x: zoom * Math.cos(2 * Math.PI * t),
-      y: zoom * Math.sin(2 * Math.PI * t),
-      z: 0 + zoomT * 0.1, // Slight vertical oscillation
-    };
-
-    setLayout((prevLayout) => ({
-      ...prevLayout,
-      scene: {
-        ...prevLayout.scene,
-        camera: { eye: newEye },
-      },
-    }));
-
-    frameRef.current = (frameRef.current + 1) % totalFrames;
-    // requestAnimationFrame(animate);
-  }, [isAnimating, totalFrames, zoomCycles]);
-
-  requestAnimationFrame(animate);
 
   const handleResize = useCallback(() => {
     setLayout((prevLayout) => ({
@@ -294,6 +280,38 @@ export function CustomPlot({
     },
   );
 
+  const totalFrames = 3600;
+  const zoomCycles = 2; // Number of zoom in/out cycles per full rotation
+
+  const animate = useCallback(() => {
+    if (!isAnimating) return;
+
+    const t = frameRef.current / totalFrames;
+    const zoomT = (Math.sin(2 * Math.PI * zoomCycles * t) + 1) / 2; // Oscillates between 0 and 1
+    const zoom = 1 + zoomT * 0.3; // Zoom factor oscillates between 1.25 and 1.75
+
+    const newEye = {
+      x: zoom * Math.cos(2 * Math.PI * t),
+      y: zoom * Math.sin(2 * Math.PI * t),
+      z: 0 + zoomT * 0.1, // Slight vertical oscillation
+    };
+
+    setLayout((prevLayout) => ({
+      ...prevLayout,
+      scene: {
+        ...prevLayout.scene,
+        camera: { eye: newEye },
+      },
+    }));
+
+    frameRef.current = (frameRef.current + 1) % totalFrames;
+    // requestAnimationFrame(animate);
+  }, [isAnimating, totalFrames, zoomCycles]);
+
+  if (typeof window !== "undefined") {
+    requestAnimationFrame(animate);
+  }
+
   if (!displayedData) {
     return <></>;
   }
@@ -334,7 +352,7 @@ export function CustomPlot({
               }}
             />
           </Suspense>
-          {dummyData && (
+          {displayCTA && (
             // display a gradient background from green to purple
             <div className="absolute top-0 left-0 bottom-0 right-0 flex justify-center items-center ">
               <div className="bg-secondary p-4 rounded-lg flex flex-col justify-center space-y-4">

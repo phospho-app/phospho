@@ -94,7 +94,11 @@ export default function AboutYou({
       }),
     }).then(() => {
       setAboutYouValues(values);
-      router.push("/onboarding/setup-project");
+      if (values.code === "yes") {
+        router.push("/onboarding/setup-project?code=yes");
+      } else {
+        router.push("/onboarding/setup-project");
+      }
     });
   }
 
