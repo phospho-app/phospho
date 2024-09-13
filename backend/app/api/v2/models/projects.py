@@ -60,3 +60,7 @@ class ComputeJobsRequest(BaseModel):
 
 class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
+
+
+class DefaultProjectRequest(BaseModel):
+    target_project_id: str = None

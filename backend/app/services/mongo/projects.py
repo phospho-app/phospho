@@ -842,9 +842,11 @@ async def populate_default(
             validated_event_definition
         )
         event_definitions.append(validated_event_definition)
-    await mongo_db["event_definitions"].insert_many(
-        [event_definition.model_dump() for event_definition in event_definitions]
-    )
+
+    if len(event_definitions) > 0:
+        await mongo_db["event_definitions"].insert_many(
+            [event_definition.model_dump() for event_definition in event_definitions]
+        )
 
     # Add tasks to the project
     default_tasks = await get_all_tasks(target_project_id, get_events=True)
@@ -864,6 +866,8 @@ async def populate_default(
                 "sentiment_label",
                 "sentiment_score",
                 "sentiment_magnitude",
+                "user_id",
+                "version_id",
             ],
         )
         if task.last_eval:
@@ -904,7 +908,9 @@ async def populate_default(
         validated_event.task = task_pairs.get(validated_event.task_id)
         events.append(validated_event)
         event_pairs[validated_event.event_name] = validated_event
-    await mongo_db["events"].insert_many([event.model_dump() for event in events])
+
+    if len(events) > 0:
+        await mongo_db["events"].insert_many([event.model_dump() for event in events])
 
     # Redefine events on tasks
     for index in range(len(tasks)):
@@ -939,9 +945,10 @@ async def populate_default(
         embeddings.append(validated_embedding)
         embedding_pairs[old_embedding_id] = validated_embedding
 
-    await mongo_db["private-embeddings"].insert_many(
-        [embedding.model_dump() for embedding in embeddings]
-    )
+    if len(embeddings) > 0:
+        await mongo_db["private-embeddings"].insert_many(
+            [embedding.model_dump() for embedding in embeddings]
+        )
 
     default_clusters = (
         await mongo_db["private-clusters"]
@@ -999,12 +1006,13 @@ async def populate_default(
     for cluster in clusters:
         cluster.clustering_id = clustering_pairs.get(cluster.clustering_id).id
 
-    await mongo_db["private-clusters"].insert_many(
-        [cluster.model_dump() for cluster in clusters]
-    )
-    await mongo_db["private-clusterings"].insert_many(
-        [clustering.model_dump() for clustering in clusterings]
-    )
+    if len(clusters) > 0:
+        await mongo_db["private-clusters"].insert_many(
+            [cluster.model_dump() for cluster in clusters]
+        )
+        await mongo_db["private-clusterings"].insert_many(
+            [clustering.model_dump() for clustering in clusterings]
+        )
 
     logger.debug(
         f"Populated project {project_id} with event definitions {event_definition_pairs}"
