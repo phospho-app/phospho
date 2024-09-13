@@ -853,7 +853,12 @@ async def copy_template_project_to_new(
     # Add events definitions to the project
     event_definitions_in_template = (
         await mongo_db["event_definitions"]
-        .find({"project_id": template_project_id})
+        .find(
+            {
+                "project_id": template_project_id,
+                "removed": {"$ne": True},
+            }
+        )
         .to_list(length=None)
     )
     event_definitions: List[EventDefinition] = []
@@ -871,7 +876,7 @@ async def copy_template_project_to_new(
         )
 
     # Add tasks to the project
-    tasks_in_template = await get_all_tasks(template_project_id, get_events=True)
+    tasks_in_template = await get_all_tasks(template_project_id, get_events=False)
     tasks: List[Task] = []
     for task in tasks_in_template:
         old_task_id = task.id
@@ -909,10 +914,26 @@ async def copy_template_project_to_new(
         task_pairs[old_task_id] = task
         tasks.append(task)
 
+    if len(tasks) > 0:
+        await mongo_db["tasks"].insert_many([task.model_dump() for task in tasks])
+    else:
+        raise ValueError("No tasks found in the default project")
+
     # Add events to the project
     default_events = (
         await mongo_db["events"]
-        .find({"project_id": template_project_id})
+        .find(
+            {
+                "project_id": template_project_id,
+                "removed": {"$ne": True},
+                "task_id": {"$in": [task.id for task in tasks_in_template]},
+                "event_definition.id": {
+                    "$in": [
+                        event_definition.id for event_definition in event_definitions
+                    ]
+                },
+            }
+        )
         .to_list(length=None)
     )
 
@@ -928,26 +949,28 @@ async def copy_template_project_to_new(
         event_model.created_at = generate_timestamp()
         event_model.project_id = project_id
         event_model.org_id = org_id
+        event_model.task_id = task_pairs[event_model.task_id].id
+        event_model.task = task_pairs[event_model.task_id]
         if event_model.session_id:
             paired_session = session_pairs.get(event_model.session_id)
             if paired_session:
                 event_model.session_id = paired_session.id
-        event_model.task_id = task_pairs[event_model.task_id].id
         if event_model.event_definition:
-            event_model.event_definition = event_definition_pairs.get(
+            paired_event_definition = event_definition_pairs.get(
                 event_model.event_definition.id
             )
-        event_model.task = task_pairs.get(event_model.task_id)
-        events.append(event_model)
-        event_pairs[event_model.event_name] = event_model
+            if paired_event_definition:
+                event_model.event_definition = paired_event_definition
+
+        event_pairs[event_model.id] = event_model
+        # Don't add the event if it's a duplicate
+        if event_model.event_name not in [
+            event.event_name for event in events if event.task_id == event_model.task_id
+        ]:
+            events.append(event_model)
 
     if len(events) > 0:
         await mongo_db["events"].insert_many([event.model_dump() for event in events])
-
-    if len(tasks) > 0:
-        await mongo_db["tasks"].insert_many([task.model_dump() for task in tasks])
-    else:
-        raise ValueError("No tasks found in the default project")
 
     # Import the clusterings, the clusters and the embeddings from the target project
 
