@@ -153,7 +153,7 @@ export function UploadDatasetButton({
           <CloudUpload className="w-10 h-10" />
         </div>
         <div className="text-xl font-bold">
-          {fileName ?? "Click box to upload"}
+          {fileName ?? "Click box to select file"}
         </div>
         <div className="text-sm text-muted-foreground">
           Supported formats: .csv, .xlsx
