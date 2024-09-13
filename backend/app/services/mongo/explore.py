@@ -2287,7 +2287,7 @@ async def get_dashboard_aggregated_metrics(
 
 async def fetch_flattened_tasks(
     project_id: str,
-    limit: int = 1000,
+    limit: Optional[int] = 1000,
     with_events: bool = True,
     with_sessions: bool = True,
     pagination: Optional[Pagination] = None,

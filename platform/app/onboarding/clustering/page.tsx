@@ -14,7 +14,7 @@ import Link from "next/link";
 export default function Page() {
   return (
     <>
-      <Card className="flex flex-col items-center max-w-full md:w-1/2 md:max-w-1/2">
+      <Card className="flex flex-col items-center max-w-[100dvw] md:w-1/2 md:max-w-1/2">
         <CardHeader className="w-full flex flex-row">
           <Boxes className="mr-4 h-28 w-28 hover:text-green-500 transition-colors" />
           <div>
@@ -38,7 +38,7 @@ export default function Page() {
             <Link href="/org">
               <Button variant="outline" className="w-full">
                 <BookOpenText className="w-4 h-4 mr-1" />
-                Explore transcripts first
+                Explore transcripts
               </Button>
             </Link>
           </div>
