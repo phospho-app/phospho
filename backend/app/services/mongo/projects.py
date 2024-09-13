@@ -946,8 +946,9 @@ async def copy_template_project_to_new(
         event_model.created_at = generate_timestamp()
         event_model.project_id = project_id
         event_model.org_id = org_id
-        event_model.task_id = task_pairs[event_model.task_id].id
+        # Copy the whole task before overriding the task_id
         event_model.task = task_pairs[event_model.task_id]
+        event_model.task_id = task_pairs[event_model.task_id].id
         if event_model.session_id:
             paired_session = session_pairs.get(event_model.session_id)
             if paired_session:
