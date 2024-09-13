@@ -341,8 +341,10 @@ const ToggleButton = ({ children }: { children: React.ReactNode }) => {
 
 export const SendDataAlertDialog = ({
   setOpen,
+  exampleProjects = true,
 }: {
   setOpen: (open: boolean) => void;
+  exampleProjects?: boolean;
 }) => {
   const { accessToken } = useUser();
   const toast = useToast();
@@ -907,19 +909,20 @@ phospho.log({input, output});`}
                       Example Colab notebook
                     </Button>
                   </Link>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" className="text-xs">
-                        {" "}
-                        <Telescope className="h-4 w-4 mr-2" /> Explore sample
-                        data{" "}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <DefaultProjects
-                      handleClose={handleClose}
-                      setOpen={setOpen}
-                    />
-                  </AlertDialog>
+                  {exampleProjects && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" className="text-xs">
+                          <Telescope className="h-4 w-4 mr-2" /> Explore sample
+                          data
+                        </Button>
+                      </AlertDialogTrigger>
+                      <DefaultProjects
+                        handleClose={handleClose}
+                        setOpen={setOpen}
+                      />
+                    </AlertDialog>
+                  )}
                   <Button
                     variant="ghost"
                     className="text-xs"

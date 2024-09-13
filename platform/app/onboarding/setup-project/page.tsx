@@ -330,7 +330,6 @@ const ImportDataOnboarding: React.FC<ImportDataOnboardingProps> = ({
               <div className="underline text-xs">Other data import options</div>
             </AlertDialogTrigger>
           </FormItem>
-
           <div className="flex justify-center">
             <Button
               type="submit"
@@ -408,7 +407,10 @@ export default function Page() {
         onOpenChange={setImportDataDialogOpen}
         open={importDataDialogOpen}
       >
-        <SendDataAlertDialog setOpen={setImportDataDialogOpen} />
+        <SendDataAlertDialog
+          setOpen={setImportDataDialogOpen}
+          exampleProjects={false}
+        />
         <Card className="flex flex-col items-center space-y-4 max-w-full md:w-1/2 md:max-w-1/2">
           <CardHeader className="w-full">
             <CardTitle>Create your first phospho project</CardTitle>
@@ -424,6 +426,7 @@ export default function Page() {
             redirecting={redirecting}
             creatingProject={creatingProject}
           />
+          <div /> {/* Used to add a bit of space at the bottom */}
         </Card>
       </AlertDialog>
     </>

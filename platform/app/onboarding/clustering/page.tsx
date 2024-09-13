@@ -19,11 +19,16 @@ export default function Page() {
           <Boxes className="mr-4 h-28 w-28 hover:text-green-500 transition-colors" />
           <div>
             <CardTitle className="mb-2">
-              Use the phospho <span className="text-green-500">clustering</span>{" "}
-              to uncover topics, user segments, and outliers.
+              Discover the{" "}
+              <span className="text-green-500">phospho clustering</span> and
+              uncover topics, user segments, and outliers in text data.
             </CardTitle>
             <CardDescription>
-              Go to the <b>clustering tab</b> to run your first clustering.
+              Group similar conversations or messages into clusters.
+            </CardDescription>
+            <CardDescription>
+              Focus on user intent, product categories, or anything else. The
+              floor is yours.
             </CardDescription>
           </div>
         </CardHeader>

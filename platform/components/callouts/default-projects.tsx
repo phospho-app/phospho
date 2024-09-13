@@ -15,7 +15,13 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { BookMarked, Microscope, Stethoscope, X } from "lucide-react";
+import {
+  BookMarked,
+  Microscope,
+  Stethoscope,
+  Telescope,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const DefaultProjects = ({
@@ -58,8 +64,8 @@ const DefaultProjects = ({
 
     //Create default project for orgID
     toast.toast({
-      title: "Creating project... ⌛︎",
-      description: "This may take a few seconds",
+      title: "Creating example project ⌛︎",
+      description: "This should be quick.",
     });
     fetch(`/api/organizations/${selectedOrgId}/create-default-project`, {
       method: "POST",
@@ -99,14 +105,15 @@ const DefaultProjects = ({
   return (
     <AlertDialogContent className="md:h-3/4 md:max-w-3/4 flex flex-col justify-between overflow-y-auto max-h-[100dvh]">
       <AlertDialogHeader>
-        <div className="flex justify-between">
+        <div className="flex justify-between space-x-2">
+          <Telescope className="h-16 w-16 hover:text-green-500 transition-colors" />
           <div className="flex flex-col space-y-2 w-full">
-            <AlertDialogTitle className="text-2xl font-bold tracking-tight mb-1">
+            <AlertDialogTitle className="text-2xl font-bold">
               Explore a project with example data
             </AlertDialogTitle>
             <AlertDialogDescription>
-              These projects contain text data from various AI apps. Discover
-              what went right, and what went wrong.
+              These projects contain text data from AI apps. Discover what went
+              right, and what went wrong during development.
             </AlertDialogDescription>
           </div>
           <X onClick={handleClose} className="cursor-pointer h-8 w-8" />
