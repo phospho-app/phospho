@@ -63,7 +63,7 @@ const TasksDataviz: React.FC = () => {
 
   const [open, setOpen] = React.useState(false);
 
-  const { data: totalNbTasksData } = useSWR(
+  const { data: totalNbTasksData, isLoading: isTotalNbTasksLoading } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -79,10 +79,17 @@ const TasksDataviz: React.FC = () => {
       keepPreviousData: true,
     },
   );
-  const totalNbTasks: number | null | undefined =
-    totalNbTasksData?.total_nb_tasks;
 
-  const { data: mostDetectedEventData } = useSWR(
+  const totalNbTasks: number | null | undefined = isTotalNbTasksLoading
+    ? undefined
+    : totalNbTasksData
+      ? (totalNbTasksData.total_nb_tasks as number)
+      : null;
+
+  const {
+    data: mostDetectedEventData,
+    isLoading: isMostDetectedEventDataLoading,
+  } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -99,11 +106,17 @@ const TasksDataviz: React.FC = () => {
     },
   );
   const mostDetectedEvent: string | null | undefined =
-    mostDetectedEventData?.most_detected_event;
+    isMostDetectedEventDataLoading
+      ? undefined
+      : mostDetectedEventData
+        ? mostDetectedEventData.most_detected_event
+        : null;
 
   const {
     data: lastClusteringComposition,
-  }: { data: LastClusteringComposition[] | null | undefined } = useSWR(
+  }: {
+    data: LastClusteringComposition[] | null | undefined;
+  } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -137,7 +150,10 @@ const TasksDataviz: React.FC = () => {
     },
   );
 
-  const { data: dateLastClustering } = useSWR(
+  const {
+    data: dateLastClusteringData,
+    isLoading: isDateLastClusteringLoading,
+  } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -164,6 +180,13 @@ const TasksDataviz: React.FC = () => {
       keepPreviousData: true,
     },
   );
+
+  const dateLastClustering: string | null | undefined =
+    isDateLastClusteringLoading
+      ? undefined
+      : dateLastClusteringData
+        ? (dateLastClusteringData as string)
+        : null;
 
   const { data: nbDailyTasks }: { data: NbDailyTasks[] | null | undefined } =
     useSWR(
@@ -306,9 +329,11 @@ const TasksDataviz: React.FC = () => {
               <CardDescription>Total number of user messages</CardDescription>
             </CardHeader>
             <CardContent>
-              {((totalNbTasks === null || totalNbTasks === undefined) && (
-                <p>...</p>
-              )) || <p className="text-xl">{totalNbTasks}</p>}
+              {(totalNbTasks === undefined && <p>...</p>) || (
+                <p className="text-xl">
+                  {totalNbTasks == null ? "No messages found" : totalNbTasks}
+                </p>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -316,9 +341,12 @@ const TasksDataviz: React.FC = () => {
               <CardDescription>Date of last clustering</CardDescription>
             </CardHeader>
             <CardContent>
-              {((dateLastClustering === null ||
-                dateLastClustering === undefined) && <p>...</p>) || (
-                <p className="text-xl">{dateLastClustering}</p>
+              {(dateLastClustering === undefined && <p>...</p>) || (
+                <p className="text-xl">
+                  {dateLastClustering == null
+                    ? "No clustering found"
+                    : dateLastClustering}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -327,8 +355,10 @@ const TasksDataviz: React.FC = () => {
               <CardDescription>Most detected tagger</CardDescription>
             </CardHeader>
             <CardContent>
-              {(!mostDetectedEvent && <p>...</p>) || (
-                <p className="text-xl">{mostDetectedEvent}</p>
+              {(mostDetectedEvent === undefined && <p>...</p>) || (
+                <p className="text-xl">
+                  {mostDetectedEvent == null ? "No tags found" : totalNbTasks}
+                </p>
               )}
             </CardContent>
           </Card>

@@ -25,14 +25,9 @@ export default function OnboardingLayout({
     <>
       <FetchOrgProject />
       <section>
-        <div className="flex flex-row justify-between items-bottom p-8">
+        <div className="flex flex-row justify-between items-bottom p-4">
           <div>
-            <h2
-              className="text-3xl font-semibold text-green-500 pt-0"
-              style={{
-                position: "fixed",
-              }}
-            >
+            <h2 className="text-3xl font-semibold text-green-500 pt-0">
               phospho
             </h2>
           </div>
@@ -58,7 +53,7 @@ export default function OnboardingLayout({
         </div>
         <div className="max-w-screen overflow-hidden ">
           {/* <div className="flex flex-col align-middle"> */}
-          <div className="flex flex-col items-center justify-center p-4">
+          <div className="flex flex-col items-center justify-center">
             {children}
           </div>
         </div>

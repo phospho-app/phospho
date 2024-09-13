@@ -60,8 +60,8 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
       currVersionA = versionIDs[0];
       currVersionB = versionIDs[0];
     } else if (versionIDs.length >= 2) {
-      currVersionA = versionIDs[0];
-      currVersionB = versionIDs[1];
+      currVersionA = versionIDs[1];
+      currVersionB = versionIDs[0];
     }
 
     // Override the default versions if the URL has the search params
