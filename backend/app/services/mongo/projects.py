@@ -801,7 +801,7 @@ async def copy_template_project_to_new(
     logger.info(f"Populating project {project_id} with default values")
     mongo_db = await get_mongo_db()
 
-    # event_name -> EventDefinition
+    # event_definition_id -> EventDefinition
     event_definition_pairs: Dict[str, EventDefinition] = {}
     event_pairs: Dict[str, Event] = {}
     task_pairs: Dict[str, Task] = {}
