@@ -1024,7 +1024,7 @@ async def copy_template_project_to_new(
             for i, cluster_id in enumerate(
                 clustering_model.pca.get("clusters_ids", [])
             ):
-                clustering_model.pca["clusters_ids"][i] = cluster_pairs[cluster_id]
+                clustering_model.pca["clusters_ids"][i] = cluster_pairs[cluster_id].id
             for i, embedding_id in enumerate(
                 clustering_model.pca.get("embeddings_ids", [])
             ):
