@@ -163,7 +163,10 @@ async def stream_and_capture(
 
                     current_choice = full_response.choices[choice.index]
 
-                    if choice.delta.content is not None:
+                    if (
+                        choice.delta.content is not None
+                        and current_choice.message.content is not None
+                    ):
                         current_choice.message.content += choice.delta.content
 
                     if choice.finish_reason is not None:
@@ -212,7 +215,7 @@ async def create(
     create_request: CreateRequest,
     background_tasks: BackgroundTasks,
     org: dict = Depends(authenticate_org_key),
-) -> ChatCompletion:
+) -> ChatCompletion:  # Can also be a StreamingResponse if stream is True
     """
     Generate a chat completion
 
