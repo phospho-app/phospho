@@ -130,7 +130,7 @@ const DefaultProjects = ({
               chatbot, that we make more and more patient.
             </CardDescription>
           </CardHeader>
-          <div className="h-full w-full bg-secondary bg-gradient-to-tr from-green-800 to-blue-200 rounded-3xl"></div>
+          <div className="min-h-48 h-full w-full bg-secondary bg-gradient-to-tr from-green-800 to-blue-200 rounded-3xl"></div>
           <CardFooter>
             <div className="w-full flex justify-end">
               <Button
@@ -151,7 +151,7 @@ const DefaultProjects = ({
               and more knowledgeable.
             </CardDescription>
           </CardHeader>
-          <div className="h-full w-full bg-secondary bg-gradient-to-t from-pink-500 to-blue-400 rounded-3xl"></div>
+          <div className="min-h-48 h-full w-full bg-secondary bg-gradient-to-t from-pink-500 to-blue-400 rounded-3xl"></div>
           <CardFooter>
             <div className="w-full flex justify-end">
               <Button
@@ -172,7 +172,7 @@ const DefaultProjects = ({
               sometimes gives wrong answers.
             </CardDescription>
           </CardHeader>
-          <div className="h-full w-full bg-secondary bg-gradient-to-r from-indigo-500 to-purple-700 rounded-3xl"></div>
+          <div className="min-h-48 h-full w-full bg-secondary bg-gradient-to-r from-indigo-500 to-purple-700 rounded-3xl"></div>
           <CardFooter>
             <div className="w-full flex justify-end">
               <Button
