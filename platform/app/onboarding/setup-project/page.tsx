@@ -44,7 +44,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { UploadIcon } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import React from "react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -359,7 +359,6 @@ const ExploreSampleProjectOnboarding: React.FC<
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
-  const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
 
   async function defaultProject() {
@@ -449,7 +448,7 @@ export default function Page() {
   const [redirecting, setRedirecting] = useState(false);
   const [importDataDialogOpen, setImportDataDialogOpen] = useState(false);
 
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
   // const canCode = searchParams.get("code") === "yes";
 
   return (
