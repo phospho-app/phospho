@@ -934,9 +934,9 @@ async def copy_template_project_to_new(
                 event_model.session_id = paired_session.id
         event_model.task_id = task_pairs[event_model.task_id].id
         if event_model.event_definition:
-            event_model.event_definition = event_definition_pairs[
+            event_model.event_definition = event_definition_pairs.get(
                 event_model.event_definition.id
-            ]
+            )
         event_model.task = task_pairs.get(event_model.task_id)
         events.append(event_model)
         event_pairs[event_model.event_name] = event_model
