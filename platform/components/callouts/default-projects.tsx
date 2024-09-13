@@ -38,7 +38,7 @@ export const DefaultProjects = ({
   const setproject_id = navigationStateStore((state) => state.setproject_id);
 
   async function CreateDefaultProject(
-    targetProjectId: string | undefined,
+    templateName: "history" | "animals" | "medical" | undefined,
     setOpen: (value: boolean) => void,
   ) {
     setOpen(false);
@@ -52,7 +52,6 @@ export const DefaultProjects = ({
         router.push("/");
       }
     }
-    console.log("targetProjectId", targetProjectId);
     //Create default project for orgID
     fetch(`/api/organizations/${selectedOrgId}/create-default-project`, {
       method: "POST",
@@ -61,7 +60,7 @@ export const DefaultProjects = ({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        target_project_id: targetProjectId,
+        template_name: templateName,
       }),
     }).then(async (response) => {
       const responseBody = await response.json();
@@ -96,24 +95,21 @@ export const DefaultProjects = ({
         </div>
       </AlertDialogHeader>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 custom-plot min-w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 custom-plot min-w-full h-full">
         <Card className="rounded-lg shadow-md p-4 flex flex-col justify-between">
           <CardHeader>
             <CardTitle>Biology teacher</CardTitle>
             <CardDescription>Educative ChatBot for students</CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button
-              className="items-center"
-              onClick={() =>
-                CreateDefaultProject(
-                  "436a6aa53b8c49fe95cadc6297bcd6ec",
-                  setOpen,
-                )
-              }
-            >
-              Use this project <Microscope className="h-4 w-4 ml-2" />{" "}
-            </Button>
+            <div className="w-full flex justify-end">
+              <Button
+                className="flex justify-end mt-4"
+                onClick={() => CreateDefaultProject("animals", setOpen)}
+              >
+                Explore project <Microscope className="h-4 w-4 ml-2" />{" "}
+              </Button>
+            </div>
           </CardFooter>
         </Card>
 
@@ -123,17 +119,14 @@ export const DefaultProjects = ({
             <CardDescription>Educative ChatBot for students</CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button
-              className="items-center"
-              onClick={() =>
-                CreateDefaultProject(
-                  "4feeb60f97834502b8af822c09a43d17",
-                  setOpen,
-                )
-              }
-            >
-              Use this project <BookMarked className="h-4 w-4 ml-2" />{" "}
-            </Button>
+            <div className="w-full flex justify-end">
+              <Button
+                className="flex justify-end mt-4"
+                onClick={() => CreateDefaultProject("history", setOpen)}
+              >
+                Explore project <BookMarked className="h-4 w-4 ml-2" />{" "}
+              </Button>
+            </div>
           </CardFooter>
         </Card>
 
@@ -143,17 +136,14 @@ export const DefaultProjects = ({
             <CardDescription>Assistant ChatBot</CardDescription>
           </CardHeader>
           <CardFooter>
-            <Button
-              className="items-center"
-              onClick={() =>
-                CreateDefaultProject(
-                  "b85f4086435a425b8b1cca4d0988e0c1",
-                  setOpen,
-                )
-              }
-            >
-              Use this project <Stethoscope className="h-4 w-4 ml-2" />{" "}
-            </Button>
+            <div className="w-full flex justify-end">
+              <Button
+                className="flex justify-end"
+                onClick={() => CreateDefaultProject("medical", setOpen)}
+              >
+                Explore project <Stethoscope className="h-4 w-4 ml-2" />{" "}
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       </div>

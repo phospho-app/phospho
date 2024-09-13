@@ -1,6 +1,6 @@
 import datetime
 import io
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
 
 from app.api.v2.models.embeddings import Embedding
 import pandas as pd
@@ -784,7 +784,7 @@ def only_keep_fields(data: dict, fields: List[str]) -> dict:
 async def populate_default(
     project_id: str,
     org_id: str,
-    target_project_id: Optional[str] = None,
+    template_name: Literal["history", "animals", "medical"] = "animals",
 ) -> None:
     """
     Populate the project with default values
@@ -800,11 +800,17 @@ async def populate_default(
     cluster_pairs = {}
     clustering_pairs = {}
 
-    if target_project_id is None:
-        if config.ENVIRONMENT == "production":
-            target_project_id = "6a6323d1447a44ddac2dae42d7c39749"
-        else:
-            target_project_id = "bc1fb4266d994abc8f6b24a2a07827d4"
+    if config.ENVIRONMENT == "production":
+        template_name_to_project_id = {}
+    else:
+        template_name_to_project_id = {
+            "history": "4feeb60f97834502b8af822c09a43d17",
+            "animals": "436a6aa53b8c49fe95cadc6297bcd6ec",
+            "medical": "b85f4086435a425b8b1cca4d0988e0c1",
+        }
+
+    target_project_id = template_name_to_project_id.get(template_name)
+
     target_project = await get_project_by_id(
         target_project_id,
     )
@@ -849,7 +855,7 @@ async def populate_default(
         )
 
     # Add tasks to the project
-    default_tasks = await get_all_tasks(target_project_id, get_events=True)
+    default_tasks = await get_all_tasks(template_name, get_events=True)
     tasks = []
     for task in default_tasks:
         old_task_id = task.id

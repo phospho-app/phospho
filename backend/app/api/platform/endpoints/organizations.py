@@ -87,14 +87,14 @@ async def post_create_default_project(
     user: User = Depends(propelauth.require_user),
 ) -> Project:
     org_member_info = propelauth.require_org_member(user, org_id)
-    target_project_id = default_project_request.target_project_id
+    template_name = default_project_request.template_name
     project = await create_project_by_org(
         org_id=org_id, user_id=user.user_id, project_name="Default Project"
     )
     logger.debug(f"Creating default project for org {org_id}")
-    logger.debug(f"Target project id: {target_project_id}")
+    logger.debug(f"Target project id: {template_name}")
     await populate_default(
-        project_id=project.id, org_id=org_id, target_project_id=target_project_id
+        project_id=project.id, org_id=org_id, template_name=template_name
     )
     # Send a notification if it's not a phospho project
     if (

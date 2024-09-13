@@ -63,4 +63,4 @@ class QuerySessionsTasksRequest(BaseModel):
 
 
 class DefaultProjectRequest(BaseModel):
-    target_project_id: str = None
+    template_name: Literal["history", "animals", "medical"] = "animals"
