@@ -88,8 +88,18 @@ async def post_create_default_project(
 ) -> Project:
     org_member_info = propelauth.require_org_member(user, org_id)
     template_name = default_project_request.template_name
+
+    # The project will be created with a specific name
+    template_to_project_name = {
+        "history": "The History I forgot",
+        "animals": "Rude Biology teacher",
+        "medical": "The Worst Doctor",
+    }
+
     project = await create_project_by_org(
-        org_id=org_id, user_id=user.user_id, project_name="Default Project"
+        org_id=org_id,
+        user_id=user.user_id,
+        project_name=template_to_project_name.get(template_name, "Default Project"),
     )
     logger.debug(f"Creating default project for org {org_id}")
     logger.debug(f"Target project id: {template_name}")

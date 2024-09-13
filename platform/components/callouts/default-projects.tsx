@@ -67,9 +67,14 @@ const DefaultProjects = ({
         template_name: templateName,
       }),
     }).then(async (response) => {
+      if (!response.ok) {
+        toast.toast({
+          title: "Error when creating project",
+          description: response.statusText,
+        });
+      }
       const responseBody = await response.json();
       if (responseBody.id !== undefined) {
-        mutate([`/api/organizations/${selectedOrgId}/projects`, accessToken]);
         setproject_id(responseBody.id);
         router.push(`/org`);
       } else {

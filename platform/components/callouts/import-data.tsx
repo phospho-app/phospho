@@ -1,4 +1,7 @@
+import { Blockwall } from "@/components/blockwall";
+import { DefaultProjects } from "@/components/callouts/default-projects";
 import { PasswordInput } from "@/components/password-input";
+import { Spinner } from "@/components/small-spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialogContent,
@@ -55,10 +58,6 @@ import { CopyBlock, dracula } from "react-code-blocks";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
-
-import { Blockwall } from "../blockwall";
-import { Spinner } from "../small-spinner";
-import { DefaultProjects } from "./default-projects";
 
 const PythonIcon = () => {
   return (
