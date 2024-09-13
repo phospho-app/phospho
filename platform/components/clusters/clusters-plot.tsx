@@ -104,15 +104,22 @@ export function CustomPlot({
   const [open, setOpen] = useState(false);
   const frameRef = useRef(0);
 
-  const width =
-    Math.round(
-      Math.max(
-        document?.getElementsByClassName("custom-plot")[0]?.clientWidth ??
-          window.innerWidth * 0.8,
-        640,
-      ) / 10,
-    ) * 10;
-  const height = Math.round(Math.max(window.innerHeight * 0.6, 300) / 10) * 10;
+  let width = 640;
+  let height = 300;
+  // For SSR, we need to check if document is defined
+  if (typeof document !== "undefined") {
+    width =
+      Math.round(
+        Math.max(
+          document?.getElementsByClassName("custom-plot")[0]?.clientWidth ??
+            window.innerWidth * 0.8,
+          640,
+        ) / 10,
+      ) * 10;
+  }
+  if (typeof window !== "undefined") {
+    height = Math.round(Math.max(window.innerHeight * 0.6, 300) / 10) * 10;
+  }
   // Skeleton style is used to set the width and height of the plot
   // And to load the skeleton with the correct size
   const skeletonStyle = `w-[${width}px] h-[${height}px]`;
@@ -228,36 +235,6 @@ export function CustomPlot({
     plot_bgcolor: "rgba(0,0,0,0)", // Fully transparent plot background
   }));
 
-  const totalFrames = 3600;
-  const zoomCycles = 2; // Number of zoom in/out cycles per full rotation
-
-  const animate = useCallback(() => {
-    if (!isAnimating) return;
-
-    const t = frameRef.current / totalFrames;
-    const zoomT = (Math.sin(2 * Math.PI * zoomCycles * t) + 1) / 2; // Oscillates between 0 and 1
-    const zoom = 1 + zoomT * 0.3; // Zoom factor oscillates between 1.25 and 1.75
-
-    const newEye = {
-      x: zoom * Math.cos(2 * Math.PI * t),
-      y: zoom * Math.sin(2 * Math.PI * t),
-      z: 0 + zoomT * 0.1, // Slight vertical oscillation
-    };
-
-    setLayout((prevLayout) => ({
-      ...prevLayout,
-      scene: {
-        ...prevLayout.scene,
-        camera: { eye: newEye },
-      },
-    }));
-
-    frameRef.current = (frameRef.current + 1) % totalFrames;
-    // requestAnimationFrame(animate);
-  }, [isAnimating, totalFrames, zoomCycles]);
-
-  requestAnimationFrame(animate);
-
   const handleResize = useCallback(() => {
     setLayout((prevLayout) => ({
       ...prevLayout,
@@ -302,6 +279,38 @@ export function CustomPlot({
       keepPreviousData: true,
     },
   );
+
+  const totalFrames = 3600;
+  const zoomCycles = 2; // Number of zoom in/out cycles per full rotation
+
+  const animate = useCallback(() => {
+    if (!isAnimating) return;
+
+    const t = frameRef.current / totalFrames;
+    const zoomT = (Math.sin(2 * Math.PI * zoomCycles * t) + 1) / 2; // Oscillates between 0 and 1
+    const zoom = 1 + zoomT * 0.3; // Zoom factor oscillates between 1.25 and 1.75
+
+    const newEye = {
+      x: zoom * Math.cos(2 * Math.PI * t),
+      y: zoom * Math.sin(2 * Math.PI * t),
+      z: 0 + zoomT * 0.1, // Slight vertical oscillation
+    };
+
+    setLayout((prevLayout) => ({
+      ...prevLayout,
+      scene: {
+        ...prevLayout.scene,
+        camera: { eye: newEye },
+      },
+    }));
+
+    frameRef.current = (frameRef.current + 1) % totalFrames;
+    // requestAnimationFrame(animate);
+  }, [isAnimating, totalFrames, zoomCycles]);
+
+  if (typeof window !== "undefined") {
+    requestAnimationFrame(animate);
+  }
 
   if (!displayedData) {
     return <></>;
