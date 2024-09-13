@@ -64,23 +64,29 @@ const SessionsDataviz: React.FC = () => {
 
   const [open, setOpen] = React.useState(false);
 
-  const { data: totalNbSessionsData } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/sessions`,
-      accessToken,
-      "total_nb_sessions",
-      JSON.stringify(dataFilters),
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["total_nb_sessions"],
-        filters: dataFilters,
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const totalNbSessions = totalNbSessionsData?.total_nb_sessions;
+  const { data: totalNbSessionsData, isLoading: isTotalNbSessionsLoading } =
+    useSWR(
+      [
+        `/api/explore/${project_id}/aggregated/sessions`,
+        accessToken,
+        "total_nb_sessions",
+        JSON.stringify(dataFilters),
+      ],
+      ([url, accessToken]) =>
+        authFetcher(url, accessToken, "POST", {
+          metrics: ["total_nb_sessions"],
+          filters: dataFilters,
+        }),
+      {
+        keepPreviousData: true,
+      },
+    );
+
+  const totalNbSessions: number | null | undefined = isTotalNbSessionsLoading
+    ? undefined
+    : totalNbSessionsData
+      ? ((totalNbSessionsData.total_nb_sessions as number) ?? null)
+      : null;
 
   const {
     data: nbSessionsPerDay,
@@ -153,7 +159,10 @@ const SessionsDataviz: React.FC = () => {
     },
   );
 
-  const { data: dateLastClustering } = useSWR(
+  const {
+    data: dateLastClusteringData,
+    isLoading: isDateLastClusteringLoading,
+  } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -181,7 +190,17 @@ const SessionsDataviz: React.FC = () => {
     },
   );
 
-  const { data: mostDetectedEventData } = useSWR(
+  const dateLastClustering: string | null | undefined =
+    isDateLastClusteringLoading
+      ? undefined
+      : dateLastClusteringData
+        ? dateLastClusteringData
+        : null;
+
+  const {
+    data: mostDetectedEventData,
+    isLoading: isMostDetectedEventDataLoading,
+  } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -198,7 +217,11 @@ const SessionsDataviz: React.FC = () => {
     },
   );
   const mostDetectedEvent: string | null | undefined =
-    mostDetectedEventData?.most_detected_event;
+    isMostDetectedEventDataLoading
+      ? undefined
+      : mostDetectedEventData
+        ? (mostDetectedEventData.most_detected_event as string)
+        : null;
 
   const { data: eventsRanking }: { data: EventsRanking[] | null | undefined } =
     useSWR(
@@ -301,8 +324,12 @@ const SessionsDataviz: React.FC = () => {
               <CardDescription>Total number of Sessions</CardDescription>
             </CardHeader>
             <CardContent>
-              {(!totalNbSessions && <p>...</p>) || (
-                <p className="text-xl">{totalNbSessions}</p>
+              {(totalNbSessions === undefined && <p>...</p>) || (
+                <p className="text-xl">
+                  {totalNbSessions == null
+                    ? "No sessions found"
+                    : totalNbSessions}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -311,9 +338,12 @@ const SessionsDataviz: React.FC = () => {
               <CardDescription>Date of last clustering</CardDescription>
             </CardHeader>
             <CardContent>
-              {((dateLastClustering === null ||
-                dateLastClustering === undefined) && <p>...</p>) || (
-                <p className="text-xl">{dateLastClustering}</p>
+              {(dateLastClustering === undefined && <p>...</p>) || (
+                <p className="text-xl">
+                  {dateLastClustering == null
+                    ? "No clustering found"
+                    : dateLastClustering}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -322,8 +352,12 @@ const SessionsDataviz: React.FC = () => {
               <CardDescription>Most detected tagger</CardDescription>
             </CardHeader>
             <CardContent>
-              {(!mostDetectedEvent && <p>...</p>) || (
-                <p className="text-xl">{mostDetectedEvent}</p>
+              {(mostDetectedEvent === undefined && <p>...</p>) || (
+                <p className="text-xl">
+                  {mostDetectedEvent == null
+                    ? "No tags found"
+                    : mostDetectedEvent}
+                </p>
               )}
             </CardContent>
           </Card>
