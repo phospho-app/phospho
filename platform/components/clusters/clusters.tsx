@@ -181,6 +181,7 @@ const Clusters: React.FC = () => {
             {clusterings && clusterings.length === 0 && (
               <CustomPlot
                 dummyData={true}
+                displayCTA={true}
                 setSheetClusterOpen={setSheetClusterOpen}
               />
             )}

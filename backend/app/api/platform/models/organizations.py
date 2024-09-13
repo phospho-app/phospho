@@ -15,3 +15,7 @@ class UserCreatedEventWebhook(BaseModel, extra="allow"):
     picture_url: Optional[str] = None
     user_id: str
     username: Optional[str] = None
+
+
+class CreateDefaultProjectRequest(BaseModel):
+    project_id: Optional[str] = None

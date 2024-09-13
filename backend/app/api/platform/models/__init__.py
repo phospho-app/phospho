@@ -38,7 +38,11 @@ from .explore import (
     AggregatedSessionsRequest,
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
-from .organizations import CreateCheckoutRequest, UserCreatedEventWebhook
+from .organizations import (
+    CreateCheckoutRequest,
+    UserCreatedEventWebhook,
+    CreateDefaultProjectRequest,
+)
 from .projects import (
     AddEventsQuery,
     OnboardingSurvey,

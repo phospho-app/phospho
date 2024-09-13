@@ -359,13 +359,13 @@ const ExploreSampleProjectOnboarding: React.FC<
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
+  const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
 
   async function defaultProject() {
-    setRedirecting(true);
-    if (creatingProject) {
-      return;
-    }
+    if (creatingProject) return;
+    if (!accessToken) return;
+
     if (!selectedOrgId) {
       // fetch the org id from the user
       const orgId = user?.getOrgs()[0].orgId;
@@ -376,31 +376,37 @@ const ExploreSampleProjectOnboarding: React.FC<
         router.push("/");
       }
     }
+
     //Create default project for orgID
     toast({
-      title: "We are creating your project.",
-      description: "You will be redirected in a couple seconds.",
+      title: "Creating default project",
+      description: "Data will be available shortly.",
     });
+
     fetch(`/api/organizations/${selectedOrgId}/create-default-project`, {
       method: "POST",
       headers: {
         Authorization: "Bearer " + accessToken,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        project_id: null, // This creates a new project. Specify the project_id to update an existing project.
+      }),
     }).then(async (response) => {
       const responseBody = await response.json();
-
       if (responseBody.id !== undefined) {
         mutate([`/api/organizations/${selectedOrgId}/projects`, accessToken]);
         setproject_id(responseBody.id);
-        router.push(`/org`);
       } else {
         toast({
           title: "Error when creating project",
-          description: responseBody.error,
+          description: response.statusText,
         });
       }
     });
+
+    setRedirecting(true);
+    router.push(`/onboarding/clustering`);
   }
 
   return (
@@ -444,7 +450,7 @@ export default function Page() {
   const [importDataDialogOpen, setImportDataDialogOpen] = useState(false);
 
   const searchParams = useSearchParams();
-  const canCode = searchParams.get("code") === "yes";
+  // const canCode = searchParams.get("code") === "yes";
 
   return (
     <>
@@ -469,7 +475,6 @@ export default function Page() {
             setRedirecting={setRedirecting}
             creatingProject={creatingProject}
           />
-
           <div className="h-2"></div>
         </Card>
       </AlertDialog>
