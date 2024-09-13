@@ -1,5 +1,6 @@
 "use client";
 
+import { DefaultProjects } from "@/components/callouts/default-projects";
 import {
   SendDataAlertDialog,
   UploadDatasetButton,
@@ -43,7 +44,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { UploadIcon } from "lucide-react";
-import { Telescope } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -76,7 +76,6 @@ interface ImportDataOnboardingProps {
 
 interface ExploreSampleProjectOnboardingProps {
   redirecting: boolean;
-  setRedirecting: (value: boolean) => void;
   creatingProject: boolean;
 }
 
@@ -351,93 +350,45 @@ const ImportDataOnboarding: React.FC<ImportDataOnboardingProps> = ({
 
 const ExploreSampleProjectOnboarding: React.FC<
   ExploreSampleProjectOnboardingProps
-> = ({ redirecting, setRedirecting, creatingProject }) => {
-  const router = useRouter();
-  const { mutate } = useSWRConfig();
-  const { toast } = useToast();
-  const { user, accessToken, loading: userLoading } = useUser();
-  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const setSelectedOrgId = navigationStateStore(
-    (state) => state.setSelectedOrgId,
-  );
-  const setproject_id = navigationStateStore((state) => state.setproject_id);
-
-  async function defaultProject() {
-    if (creatingProject) return;
-    if (!accessToken) return;
-
-    if (!selectedOrgId) {
-      // fetch the org id from the user
-      const orgId = user?.getOrgs()[0].orgId;
-      if (orgId) {
-        setSelectedOrgId(orgId);
-      } else {
-        // if the user has no orgs, redirect to the auth
-        router.push("/");
-      }
-    }
-
-    //Create default project for orgID
-    toast({
-      title: "Creating default project",
-      description: "Data will be available shortly.",
-    });
-    fetch(`/api/organizations/${selectedOrgId}/create-default-project`, {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        project_id: null, // This creates a new project. Specify the project_id to update an existing project.
-      }),
-    }).then(async (response) => {
-      const responseBody = await response.json();
-      if (responseBody.id !== undefined) {
-        mutate([`/api/organizations/${selectedOrgId}/projects`, accessToken]);
-        setproject_id(responseBody.id);
-      } else {
-        toast({
-          title: "Error when creating project",
-          description: response.statusText,
-        });
-      }
-    });
-
-    setRedirecting(true);
-    router.push(`/onboarding/clustering`);
-  }
+> = ({ redirecting, creatingProject }) => {
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="px-4  w-full">
       <div className="border-2 rounded-lg border-dashed border-muted-foreground bg-secondary">
-        <CardContent className="space-x-2 flex justify-center flex-row items-center">
-          <Image
-            src="/image/onboarding.svg"
-            alt="Onboarding Image"
-            width={160}
-            height={120}
+        <AlertDialog open={open} onOpenChange={setOpen}>
+          <CardContent className="space-x-2 flex justify-center flex-row items-center">
+            <Image
+              src="/image/onboarding.svg"
+              alt="Onboarding Image"
+              width={160}
+              height={120}
+            />
+            <div className="flex flex-col items-center">
+              <CardHeader className="pb-2">
+                <CardTitle>No data, just looking?</CardTitle>
+                <CardDescription>
+                  Explore one of the example projects.
+                </CardDescription>
+              </CardHeader>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="hover:bg-green-500 transition-colors"
+                  disabled={creatingProject || redirecting}
+                >
+                  {redirecting && <Spinner className="mr-1" />}
+                  Explore example project
+                </Button>
+              </AlertDialogTrigger>
+            </div>
+          </CardContent>
+          <DefaultProjects
+            setOpen={setOpen}
+            redirect={"/onboarding/clustering"}
+            earlyRedirect={true}
           />
-          <div className="flex flex-col items-center">
-            <CardHeader className="pb-2">
-              <CardTitle>No data, just looking?</CardTitle>
-              <CardDescription>
-                Explore one of the example projects.
-              </CardDescription>
-            </CardHeader>
-            <Button
-              variant="outline"
-              className="hover:bg-green-500 transition-colors"
-              onClick={() => {
-                defaultProject();
-              }}
-              disabled={userLoading || creatingProject || redirecting}
-            >
-              {redirecting && <Spinner className="mr-1" />}
-              Explore example project
-            </Button>
-          </div>
-        </CardContent>
+        </AlertDialog>
       </div>
     </div>
   );
@@ -471,10 +422,8 @@ export default function Page() {
           />
           <ExploreSampleProjectOnboarding
             redirecting={redirecting}
-            setRedirecting={setRedirecting}
             creatingProject={creatingProject}
           />
-          <div className="h-2"></div>
         </Card>
       </AlertDialog>
     </>
