@@ -294,6 +294,27 @@ export default function CreateEvent({
     }
   }
 
+  const scoreRangeSettings: ScoreRangeSettings | undefined = form.watch(
+    "score_range_settings",
+  );
+
+  const getDescriptionPlaceholder = (
+    settings: ScoreRangeSettings | undefined,
+  ): string => {
+    const scoreType = settings?.score_type;
+
+    switch (scoreType) {
+      case ScoreRangeType.confidence:
+        return "Describe when this event occurs. Use simple language. Refer to speakers as 'the user' and 'the assistant'.";
+      case ScoreRangeType.range:
+        return "Describe what a 1 and a 5 score means for this event. Use simple language. Refer to speakers as 'the user' and 'the assistant'.";
+      case ScoreRangeType.category:
+        return "Describe what each category means for this event. Use simple language. Refer to speakers as 'the user' and 'the assistant'.";
+      default:
+        return "Use simple language. Refer to speakers as 'the user' and 'the assistant'.";
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Form {...form}>
@@ -455,9 +476,9 @@ export default function CreateEvent({
                   <FormControl>
                     <Textarea
                       id="description"
-                      placeholder={
-                        "Use simple language. Refer to speakers as 'the user' and 'the assistant'."
-                      }
+                      placeholder={getDescriptionPlaceholder(
+                        scoreRangeSettings,
+                      )}
                       {...field}
                     />
                   </FormControl>
