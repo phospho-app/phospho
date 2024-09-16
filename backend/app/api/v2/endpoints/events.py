@@ -31,7 +31,7 @@ async def post_detect_events_in_task(
     Detect events in a Task
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
-    raise_error_if_not_in_pro_tier(org, enforce=True)
+    raise_error_if_not_in_pro_tier(org)
 
     task = Task(**event_detection_request.model_dump())
     extractor_client = ExtractorClient(
@@ -62,7 +62,7 @@ async def post_detect_events_in_messages_list(
     The list of message is a continuous list of messages from a conversation.
     """
     await verify_propelauth_org_owns_project_id(org, project_id)
-    raise_error_if_not_in_pro_tier(org, enforce=True)
+    raise_error_if_not_in_pro_tier(org)
 
     extractor_client = ExtractorClient(
         project_id=project_id,

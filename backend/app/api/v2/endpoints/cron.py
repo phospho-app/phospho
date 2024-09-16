@@ -1,7 +1,7 @@
 import datetime
 
 from fastapi import APIRouter, Header, Request
-from fastapi_simple_rate_limiter import rate_limiter
+from fastapi_simple_rate_limiter import rate_limiter  # type: ignore
 
 from app.core import config
 from app.services.mongo.cron import (
