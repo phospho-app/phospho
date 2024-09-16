@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from pydantic import BaseModel
 from app.db.models import Event
 from phospho.models import Message
@@ -18,4 +18,4 @@ class DetectEventInMessagesRequest(BaseModel):
 
 
 class EventDetectionReply(BaseModel, extra="allow"):
-    events: List[Event]
+    events: Dict[str, List[Event]]

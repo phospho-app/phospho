@@ -33,6 +33,12 @@ from app.services.mongo.projects import get_project_by_id
 from app.services.mongo.organizations import create_project_by_org
 from app.services.mongo.extractor import ExtractorClient
 from app.api.v2.models.log import LogEvent
+from typing import cast
+from openai.types.chat import completion_create_params
+from openai.types.chat import (
+    ChatCompletionToolParam,
+    ChatCompletionToolChoiceOptionParam,
+)
 
 router = APIRouter(tags=["chat"])
 
@@ -50,8 +56,8 @@ class CreateRequest(pydantic.BaseModel):
     messages: List[ChatCompletionMessageParam]
     model: Literal["openai:gpt-4o", "openai:gpt-4o-mini"]
     frequency_penalty: Optional[float] | None = None
-    # function_call: completion_create_params.FunctionCall | None = None
-    # functions: Iterable[completion_create_params.Function] | None = None
+    function_call: completion_create_params.FunctionCall | None = None
+    functions: Iterable[completion_create_params.Function] | None = None
     logit_bias: Optional[Dict[str, int]] | None = None
     logprobs: Optional[bool] | None = None
     max_tokens: Optional[int] | None = None
@@ -63,8 +69,8 @@ class CreateRequest(pydantic.BaseModel):
     stream: Optional[bool] | None = None
     # stream_options: Optional[ChatCompletionStreamOptionsParam] | None = None
     temperature: Optional[float] | None = None
-    # tool_choice: ChatCompletionToolChoiceOptionParam | None = None
-    # tools: Iterable[ChatCompletionToolParam] | None = None
+    tool_choice: ChatCompletionToolChoiceOptionParam | None = None
+    tools: Iterable[ChatCompletionToolParam] | None = None
     top_logprobs: Optional[int] | None = None
     top_p: Optional[float] | None = None
     user: str | None = None
@@ -255,7 +261,7 @@ async def create(
         )
 
     SUPPORTED_MODELS = [
-        "openai:gpt-4o"
+        "openai:gpt-4o" "openai:gpt-4o-mini"
     ]  # Add "openai:gpt-4o-mini" and update the pricing accordingly
     if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
@@ -264,11 +270,22 @@ async def create(
         )
 
     provider, model_name = get_provider_and_model(create_request.model)
+
     if org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d":  # We don't route Y to Azure
         provider = "azure"
-    openai_client = get_async_client(provider)
+    openai_client = get_async_client(
+        cast(
+            Literal[
+                "openai",
+                "azure",
+            ],
+            provider,
+        )
+    )
 
-    create_request.model = model_name
+    create_request.model = cast(
+        Literal["openai:gpt-4o", "openai:gpt-4o-mini"], model_name
+    )
     query_inputs = create_request.model_dump()
 
     should_stream = query_inputs.get("stream", False)
