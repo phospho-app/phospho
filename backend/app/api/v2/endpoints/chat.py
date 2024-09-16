@@ -33,6 +33,7 @@ from app.services.mongo.projects import get_project_by_id
 from app.services.mongo.organizations import create_project_by_org
 from app.services.mongo.extractor import ExtractorClient
 from app.api.v2.models.log import LogEvent
+from typing import cast
 
 router = APIRouter(tags=["chat"])
 
@@ -255,7 +256,7 @@ async def create(
         )
 
     SUPPORTED_MODELS = [
-        "openai:gpt-4o"
+        "openai:gpt-4o" "openai:gpt-4o-mini"
     ]  # Add "openai:gpt-4o-mini" and update the pricing accordingly
     if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
@@ -264,11 +265,28 @@ async def create(
         )
 
     provider, model_name = get_provider_and_model(create_request.model)
+
     if org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d":  # We don't route Y to Azure
         provider = "azure"
-    openai_client = get_async_client(provider)
+    openai_client = get_async_client(
+        cast(
+            Literal[
+                "openai",
+                "mistral",
+                "ollama",
+                "solar",
+                "together",
+                "anyscale",
+                "fireworks",
+                "azure",
+            ],
+            provider,
+        )
+    )
 
-    create_request.model = model_name
+    create_request.model = cast(
+        Literal["openai:gpt-4o", "openai:gpt-4o-mini"], model_name
+    )
     query_inputs = create_request.model_dump()
 
     should_stream = query_inputs.get("stream", False)

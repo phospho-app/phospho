@@ -112,6 +112,33 @@ async def metered_prediction(
         # As of today, the return value is not used
         return 0
 
+    elif model_id == "openai:gpt-4o-mini":
+        input_tokens = sum(
+            [response["usage"]["prompt_tokens"] for response in predictions]
+        )
+        completion_tokens = sum(
+            [response["usage"]["completion_tokens"] for response in predictions]
+        )
+
+        if bill:
+            await bill_on_stripe(
+                org_id=org_id,
+                nb_credits_used=input_tokens,
+                meter_event_name="gpt-4o-mini_input_tokens",
+            )
+            logger.debug(
+                f"Bill for org_id {org_id} with model_id {model_id} completed, {input_tokens} tokens billed"
+            )
+
+            await bill_on_stripe(
+                org_id=org_id,
+                nb_credits_used=completion_tokens,
+                meter_event_name="gpt-4o-mini_output_tokens",
+            )
+            logger.debug(
+                f"Bill for org_id {org_id} with model_id {model_id} completed, {completion_tokens} tokens billed"
+            )
+
     elif model_id == "phospho:intent-embed":
         # Compute token count of input texts
         inputs_token_count = sum([len(encoding.encode(input)) for input in inputs])
