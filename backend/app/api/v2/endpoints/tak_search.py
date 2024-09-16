@@ -53,4 +53,14 @@ async def post_search(
                 detail="An error occurred while fetching the search results",
             )
 
-        return response_json
+        try:
+            # Load as a SearchResponse object
+            response_object = SearchResponse(**response_json)
+            return response_object
+
+        except Exception as e:
+            logger.error(f"Error loading the response: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail="An error occurred while processing the search results",
+            )
