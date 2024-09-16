@@ -34,6 +34,11 @@ from app.services.mongo.organizations import create_project_by_org
 from app.services.mongo.extractor import ExtractorClient
 from app.api.v2.models.log import LogEvent
 from typing import cast
+from openai.types.chat import completion_create_params
+from openai.types.chat import (
+    ChatCompletionToolParam,
+    ChatCompletionToolChoiceOptionParam,
+)
 
 router = APIRouter(tags=["chat"])
 
@@ -51,8 +56,8 @@ class CreateRequest(pydantic.BaseModel):
     messages: List[ChatCompletionMessageParam]
     model: Literal["openai:gpt-4o", "openai:gpt-4o-mini"]
     frequency_penalty: Optional[float] | None = None
-    # function_call: completion_create_params.FunctionCall | None = None
-    # functions: Iterable[completion_create_params.Function] | None = None
+    function_call: completion_create_params.FunctionCall | None = None
+    functions: Iterable[completion_create_params.Function] | None = None
     logit_bias: Optional[Dict[str, int]] | None = None
     logprobs: Optional[bool] | None = None
     max_tokens: Optional[int] | None = None
@@ -64,8 +69,8 @@ class CreateRequest(pydantic.BaseModel):
     stream: Optional[bool] | None = None
     # stream_options: Optional[ChatCompletionStreamOptionsParam] | None = None
     temperature: Optional[float] | None = None
-    # tool_choice: ChatCompletionToolChoiceOptionParam | None = None
-    # tools: Iterable[ChatCompletionToolParam] | None = None
+    tool_choice: ChatCompletionToolChoiceOptionParam | None = None
+    tools: Iterable[ChatCompletionToolParam] | None = None
     top_logprobs: Optional[int] | None = None
     top_p: Optional[float] | None = None
     user: str | None = None
