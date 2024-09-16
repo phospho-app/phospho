@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
@@ -19,6 +19,7 @@ from app.api.platform.models import (
     FetchClustersRequest,
     ProjectDataFilters,
     AggregatedSessionsRequest,
+    AggregatedProjectRequest,
 )
 from app.api.platform.models.explore import ABTestVersions, ClusteringEmbeddingCloud
 from app.core import config
@@ -41,8 +42,10 @@ from app.services.mongo.explore import (
     get_clustering_by_id,
     get_dashboard_aggregated_metrics,
     get_events_aggregated_metrics,
+    get_nb_tasks_in_sessions,
     get_sessions_aggregated_metrics,
     get_tasks_aggregated_metrics,
+    get_total_nb_of_sessions,
     nb_items_with_a_metadata_field,
     project_has_enough_labelled_tasks,
     project_has_sessions,
@@ -228,6 +231,74 @@ async def get_sessions_project_metrics(
         filters=filters,
         limit=limit,
     )
+    return output
+
+
+@router.post(
+    "/explore/{project_id}/aggregated/project",
+    description="Get aggregated metrics for the sessions of a project. Used for the Sessions dashboard.",
+    response_model=dict,
+)
+async def get_project_metrics(
+    project_id: str,
+    query: AggregatedProjectRequest,
+    user: User = Depends(propelauth.require_user),
+) -> dict:
+    """
+    Get aggregated metrics for the sessions of a project. Used for the Sessions dashboard.
+    """
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    filters = query.filters
+    limit = query.limit
+    logger.debug(f"limit: {limit}")
+
+    # TODO : put all of this into a service
+
+    if isinstance(filters.event_name, str):
+        filters.event_name = [filters.event_name]
+    # Convert to UNIX timestamp in seconds
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = int(filters.created_at_start.timestamp())
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = int(filters.created_at_end.timestamp())
+
+    total_nb_tasks = await get_total_nb_of_tasks(
+        project_id=project_id,
+        filters=filters,
+        limit=limit,
+    )
+    total_nb_sessions = await get_total_nb_of_sessions(
+        project_id=project_id,
+        filters=filters,
+        limit=limit,
+    )
+    nb_tasks_in_sessions = await get_nb_tasks_in_sessions(
+        project_id=project_id,
+        filters=filters,
+        limit=limit,
+    )
+
+    if query.scope == "sessions":
+        if isinstance(nb_tasks_in_sessions, int):
+            clustering_cost = 2 * nb_tasks_in_sessions
+        else:
+            clustering_cost = None
+        nb_elements = total_nb_sessions
+    elif query.scope == "messages":
+        if isinstance(total_nb_tasks, int):
+            clustering_cost = 2 * total_nb_tasks
+        else:
+            clustering_cost = None
+        nb_elements = total_nb_tasks
+
+    output: Dict[str, object] = {}
+    output["total_nb_tasks"] = total_nb_tasks
+    output["total_nb_sessions"] = total_nb_sessions
+    output["nb_tasks_in_sessions"] = nb_tasks_in_sessions
+    if clustering_cost:
+        output["clustering_cost"] = clustering_cost
+    if nb_elements:
+        output["nb_elements"] = nb_elements
     return output
 
 

@@ -28,6 +28,7 @@ from .clusters import Cluster, Clustering, ClusteringRequest, Clusterings, Clust
 from .events import EventBackfillRequest, LabelRequest, ScoreRequest
 from .explore import (
     AggregateMetricsRequest,
+    AggregatedProjectRequest,
     DashboardMetricsFilter,
     DetectClustersRequest,
     EventsMetricsFilter,
