@@ -21,9 +21,11 @@ class Embedding(BaseModel):
 
 class EmbeddingRequest(BaseModel, extra="allow"):
     input: str | List[str]  # The text used to generate the embedding
-    model: str  # The model used to generate the embedding (a model represent the full piepline and might be user facing, ex: embed-english-v3.0)
+    model: Literal[
+        "intent-embed"
+    ]  # The model used to generate the embedding (a model represent the full piepline and might be user facing, ex: embed-english-v3.0)
     org_id: Optional[str] = None  # Organization identifier, optional
-    project_id: Optional[str] = None  # Project identifier, optional
+    project_id: str  # Project identifier, optional
     task_id: Optional[str] = (
         None  # The task id (phospho) used to generate the embedding
     )
