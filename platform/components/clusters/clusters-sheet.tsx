@@ -96,7 +96,7 @@ const RunClusteringSheet = ({
   const hobby = orgMetadata?.plan === "hobby";
 
   const FormSchema = z.object({
-    scope: z.enum(["messages", "sessions"]),
+    scope: z.enum(["messages", "sessions", "users"]),
     instruction: z
       .string({
         required_error: "Please enter an instruction",
@@ -178,6 +178,23 @@ const RunClusteringSheet = ({
       nbElements = Math.min(formLimit ?? 0, totalNbTasksRef.current);
     }
     if (scope === "sessions") {
+      totalNbSessionsRef.current = totalNbSessionsData?.total_nb_sessions ?? 0;
+      totalNbTasksRef.current = totalNbTasksData?.total_nb_tasks ?? 0;
+      defaultNbClustersRef.current = Math.floor(
+        totalNbSessionsRef.current / 100,
+      );
+
+      // if the form limit has more messages, update the limit
+      if (totalNbSessionsRef.current < (formLimit ?? 0)) {
+        form.setValue("limit", totalNbSessionsRef.current);
+      }
+      if (formLimit === undefined || formLimit === 0) {
+        form.setValue("limit", totalNbSessionsRef.current);
+      }
+
+      nbElements = Math.min(formLimit ?? 0, totalNbSessionsRef.current);
+    }
+    if (scope === "users") {
       totalNbSessionsRef.current = totalNbSessionsData?.total_nb_sessions ?? 0;
       totalNbTasksRef.current = totalNbTasksData?.total_nb_tasks ?? 0;
       defaultNbClustersRef.current = Math.floor(
@@ -312,12 +329,19 @@ const RunClusteringSheet = ({
                   defaultValue={field.value}
                 >
                   <SelectTrigger className="max-w-[20rem]">
-                    {field.value === "messages" ? "Messages" : "Sessions"}
+                    {field.value === "messages"
+                      ? "Messages"
+                      : field.value === "sessions"
+                        ? "Sessions"
+                        : field.value === "users"
+                          ? "Unique Users"
+                          : "Messages"}
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value="messages">Messages</SelectItem>
                       <SelectItem value="sessions">Sessions</SelectItem>
+                      <SelectItem value="users">Unique Users</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
