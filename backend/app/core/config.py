@@ -207,3 +207,11 @@ except Exception:
 API_TRIGGER_SECRET = os.getenv("API_TRIGGER_SECRET")
 if API_TRIGGER_SECRET is None:
     logger.warning("API_TRIGGER_SECRET is missing from the environment variables")
+
+# Tak Search
+TAK_SEARCH_URL = os.getenv("TAK_SEARCH_URL")
+if TAK_SEARCH_URL is None:
+    logger.warning("TAK_SEARCH_URL is missing from the environment variables")
+TAK_APP_API_KEY = os.getenv("TAK_APP_API_KEY")
+if TAK_APP_API_KEY is None:
+    logger.warning("TAK_APP_API_KEY is missing from the environment variables")

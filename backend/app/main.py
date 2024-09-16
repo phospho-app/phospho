@@ -132,6 +132,7 @@ from app.api.v2.endpoints import (
     events,
     chat,
     cron,
+    tak_search,
     triggers,
 )
 
@@ -160,6 +161,7 @@ api_v2.include_router(health.router)
 api_v2.include_router(events.router)
 api_v2.include_router(chat.router)
 api_v2.include_router(cron.router)
+api_v2.include_router(tak_search.router)
 api_v2.include_router(triggers.router)
 
 
