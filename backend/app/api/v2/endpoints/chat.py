@@ -272,12 +272,6 @@ async def create(
         cast(
             Literal[
                 "openai",
-                "mistral",
-                "ollama",
-                "solar",
-                "together",
-                "anyscale",
-                "fireworks",
                 "azure",
             ],
             provider,
