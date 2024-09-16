@@ -10,7 +10,9 @@ except ImportError:
     AsyncOpenAI = OpenAI = AsyncAzureOpenAI = object
 
 
-def get_provider_and_model(model: str) -> Tuple[str, str]:
+def get_provider_and_model(
+    model: str,
+) -> Tuple[str, str]:
     """
     Get the provider and model from a string in the format "provider:model"
     If no provider is specified, it defaults to "openai".
