@@ -56,8 +56,8 @@ class CreateRequest(pydantic.BaseModel):
     messages: List[ChatCompletionMessageParam]
     model: Literal["openai:gpt-4o", "openai:gpt-4o-mini"]
     frequency_penalty: Optional[float] | None = None
-    function_call: completion_create_params.FunctionCall | None = None
-    functions: Iterable[completion_create_params.Function] | None = None
+    # function_call: completion_create_params.FunctionCall | None = None
+    # functions: Iterable[completion_create_params.Function] | None = None
     logit_bias: Optional[Dict[str, int]] | None = None
     logprobs: Optional[bool] | None = None
     max_tokens: Optional[int] | None = None
@@ -261,7 +261,8 @@ async def create(
         )
 
     SUPPORTED_MODELS = [
-        "openai:gpt-4o" "openai:gpt-4o-mini"
+        "openai:gpt-4o",
+        "openai:gpt-4o-mini",
     ]  # Add "openai:gpt-4o-mini" and update the pricing accordingly
     if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
