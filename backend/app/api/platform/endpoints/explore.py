@@ -19,7 +19,7 @@ from app.api.platform.models import (
     FetchClustersRequest,
     ProjectDataFilters,
     AggregatedSessionsRequest,
-    AggregatedProjectRequest,
+    ClusteringCostRequest,
 )
 from app.api.platform.models.explore import ABTestVersions, ClusteringEmbeddingCloud
 from app.core import config
@@ -235,13 +235,13 @@ async def get_sessions_project_metrics(
 
 
 @router.post(
-    "/explore/{project_id}/aggregated/project",
-    description="Get aggregated metrics for the sessions of a project. Used for the Sessions dashboard.",
+    "/explore/{project_id}/clustering-cost",
+    description="Aggregated statistics for running a clustering",
     response_model=dict,
 )
 async def get_project_metrics(
     project_id: str,
-    query: AggregatedProjectRequest,
+    query: ClusteringCostRequest,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     """
@@ -250,7 +250,6 @@ async def get_project_metrics(
     await verify_if_propelauth_user_can_access_project(user, project_id)
     filters = query.filters
     limit = query.limit
-    logger.debug(f"limit: {limit}")
 
     # TODO : put all of this into a service
 
@@ -262,44 +261,56 @@ async def get_project_metrics(
     if isinstance(filters.created_at_end, datetime.datetime):
         filters.created_at_end = int(filters.created_at_end.timestamp())
 
-    total_nb_tasks = await get_total_nb_of_tasks(
-        project_id=project_id,
-        filters=filters,
-        limit=limit,
-    )
-    total_nb_sessions = await get_total_nb_of_sessions(
-        project_id=project_id,
-        filters=filters,
-        limit=limit,
-    )
-    nb_tasks_in_sessions = await get_nb_tasks_in_sessions(
-        project_id=project_id,
-        filters=filters,
-        limit=limit,
-    )
+    nb_elements: Optional[int] = None
+    clustering_cost: Optional[int] = None
+    output: Dict[str, Optional[float]] = {}
+    logger.info(f"Clustering cost request: {query.model_dump()}")
 
     if query.scope == "sessions":
-        if isinstance(nb_tasks_in_sessions, int):
-            clustering_cost = 2 * nb_tasks_in_sessions
+        total_nb_sessions = await get_total_nb_of_sessions(
+            project_id=project_id,
+            filters=filters,
+        )
+        nb_tasks_in_sessions = await get_nb_tasks_in_sessions(
+            project_id=project_id,
+            filters=filters,
+            limit=limit,
+            sorted=True,
+        )
+        output["total_nb_sessions"] = total_nb_sessions
+        if limit is not None and total_nb_sessions is not None:
+            output["nb_sessions_in_scope"] = min(total_nb_sessions, limit)
         else:
-            clustering_cost = None
-        nb_elements = total_nb_sessions
-    elif query.scope == "messages":
-        if isinstance(total_nb_tasks, int):
-            clustering_cost = 2 * total_nb_tasks
-        else:
-            clustering_cost = None
-        nb_elements = total_nb_tasks
+            output["nb_sessions_in_scope"] = total_nb_sessions
+        output["nb_tasks_in_sessions"] = nb_tasks_in_sessions
+        if nb_tasks_in_sessions is not None:
+            nb_elements = nb_tasks_in_sessions
 
-    output: Dict[str, object] = {}
-    output["total_nb_tasks"] = total_nb_tasks
-    output["total_nb_sessions"] = total_nb_sessions
-    output["nb_tasks_in_sessions"] = nb_tasks_in_sessions
-    if clustering_cost:
-        output["clustering_cost"] = clustering_cost
-    if nb_elements:
-        output["nb_elements"] = nb_elements
-    return output
+    if query.scope == "messages":
+        total_nb_tasks = await get_total_nb_of_tasks(
+            project_id=project_id,
+            filters=filters,
+        )
+        output["total_nb_tasks"] = total_nb_tasks
+        logger.info(f"Total nb tasks: {total_nb_tasks}")
+        if total_nb_tasks is not None:
+            if limit is not None:
+                nb_elements = min(total_nb_tasks, limit)
+            else:
+                nb_elements = total_nb_tasks
+
+    if nb_elements is not None:
+        clustering_cost = 2 * nb_elements
+    else:
+        clustering_cost = None
+
+    logger.info(f"Clustering cost for project {project_id}: {clustering_cost}")
+
+    return {
+        "clustering_cost": clustering_cost,
+        "nb_elements": nb_elements,
+        **output,
+    }
 
 
 @router.post(

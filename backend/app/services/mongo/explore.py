@@ -845,7 +845,6 @@ async def get_last_clustering_composition(
 async def get_total_nb_of_sessions(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
-    limit: Optional[int] = None,
 ) -> Optional[int]:
     """
     Get the total number of sessions of a project.
@@ -871,9 +870,6 @@ async def get_total_nb_of_sessions(
         return None
 
     total_nb_sessions = query_result[0]["nb_sessions"]
-    if limit is not None and limit > 0:
-        total_nb_sessions = min(total_nb_sessions, limit)
-
     return total_nb_sessions
 
 
@@ -881,6 +877,7 @@ async def get_nb_tasks_in_sessions(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
     limit: Optional[int] = None,
+    sorted: Optional[bool] = False,
 ) -> Optional[int]:
     """
     Get the total number of tasks in a set of sessions of a project.
@@ -894,9 +891,12 @@ async def get_nb_tasks_in_sessions(
         project_id=project_id, filters=filters
     )
 
-    pipeline = [
+    pipeline: List[Dict[str, object]] = [
         {"$match": global_filters},
     ]
+    if sorted:
+        pipeline.append({"$sort": {"created_at": 1}})
+
     if limit is not None and limit > 0:
         pipeline.append({"$limit": limit})
 
@@ -2788,13 +2788,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values.get(event_name, []):
@@ -2815,13 +2815,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2854,13 +2854,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[event_result["version_id"]] = (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] = event_result["count"]
                 else:
-                    divide_for_correct_average[event_result["version_id"]] += (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] += event_result["count"]
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (

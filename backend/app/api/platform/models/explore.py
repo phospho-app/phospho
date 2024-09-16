@@ -71,7 +71,7 @@ class AggregatedSessionsRequest(BaseModel):
     limit: Optional[int] = None
 
 
-class AggregatedProjectRequest(BaseModel):
+class ClusteringCostRequest(BaseModel):
     scope: Literal["messages", "sessions"] = "messages"
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     limit: Optional[int] = None

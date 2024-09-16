@@ -429,7 +429,6 @@ async def task_filtering_pipeline_match(
 async def get_total_nb_of_tasks(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
-    limit: Optional[int] = None,
 ) -> Optional[int]:
     """
     Get the total number of tasks of a project.
@@ -454,9 +453,6 @@ async def get_total_nb_of_tasks(
         return None
 
     total_nb_tasks = query_result[0]["nb_tasks"]
-    if limit is not None and total_nb_tasks > limit:
-        total_nb_tasks = limit
-
     return total_nb_tasks
 
 

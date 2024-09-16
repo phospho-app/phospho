@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
+import useDebounce from "@/lib/useDebounce";
 import { Clustering } from "@/models/models";
 import { dataStateStore } from "@/store/store";
 import { navigationStateStore } from "@/store/store";
@@ -45,18 +46,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import { da, fi, nb } from "date-fns/locale";
 import { TestTubeDiagonal } from "lucide-react";
-import React, { use } from "react";
-import { useEffect, useRef, useState } from "react";
+import React from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import * as z from "zod";
 
 interface ProjectStatics {
-  total_nb_tasks: number;
-  nb_tasks_in_sessions: number;
-  total_nb_sessions: number;
+  total_nb_tasks?: number;
+  nb_tasks_in_sessions?: number;
+  total_nb_sessions?: number;
+  nb_sessions_in_scope?: number;
   nb_elements: number;
   clustering_cost: number;
 }
@@ -76,7 +77,6 @@ const RunClusteringSheet = ({
   const { mutate } = useSWRConfig();
 
   const [loading, setLoading] = useState(false);
-  const [update, setUpdate] = useState(false);
 
   const hobby = orgMetadata?.plan === "hobby";
 
@@ -110,17 +110,23 @@ const RunClusteringSheet = ({
     },
   });
 
+  const limit = form.getValues("limit");
+  const scope = form.getValues("scope");
+
+  const debouncedLimit = useDebounce(limit, 300);
   const {
     data: projectStatistics,
     isLoading: projectStatisticsLoading,
   }: { data: ProjectStatics | undefined; isLoading: boolean } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/project`,
-      accessToken,
-      JSON.stringify(dataFilters),
-      form.getValues("scope"),
-      form.getValues("limit"),
-    ],
+    project_id
+      ? [
+          `/api/explore/${project_id}/clustering-cost`,
+          accessToken,
+          JSON.stringify(dataFilters),
+          form.getValues("scope"),
+          debouncedLimit,
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         scope: form.getValues("scope"),
@@ -132,50 +138,29 @@ const RunClusteringSheet = ({
     },
   );
 
-  const FormValues = () => {
-    const limit = form.getValues("limit");
-    const scope = form.getValues("scope");
-    return { limit, scope };
-  };
-
-  const { limit, scope } = FormValues();
   const jsonDataFilters = JSON.stringify(dataFilters);
   const jsonProjectStatistics = JSON.stringify(projectStatistics);
 
   useEffect(() => {
     console.log("canRunClusterAnalysis", canRunClusterAnalysis);
     console.log("projectStatistics", projectStatistics);
-    const formLimit = limit;
     if (!projectStatistics) {
       return;
     }
-
     if (scope === "messages") {
-      if (formLimit === undefined || formLimit === 0) {
+      if (limit === undefined || limit === 0) {
         form.setValue("limit", projectStatistics.total_nb_tasks);
       }
     }
     if (scope === "sessions") {
-      projectStatistics.total_nb_tasks =
-        projectStatistics.nb_tasks_in_sessions ?? 0;
-
-      if (formLimit === undefined || formLimit === 0) {
+      if (limit === undefined || limit === 0) {
         form.setValue("limit", projectStatistics.total_nb_sessions);
       }
     }
-  }, [jsonProjectStatistics, form, update, limit, scope, jsonDataFilters]);
+  }, [jsonProjectStatistics, form, limit, scope, jsonDataFilters]);
 
   const canRunClusterAnalysis: boolean =
-    (form.getValues("scope") === "messages" &&
-      !!projectStatistics?.total_nb_tasks &&
-      projectStatistics.total_nb_tasks > 0 &&
-      !!projectStatistics?.nb_elements &&
-      projectStatistics.nb_elements >= 5) ||
-    (form.getValues("scope") === "sessions" &&
-      !!projectStatistics?.nb_tasks_in_sessions &&
-      projectStatistics.nb_tasks_in_sessions > 0 &&
-      !!projectStatistics?.nb_elements &&
-      projectStatistics.nb_elements >= 5);
+    !!projectStatistics?.nb_elements && projectStatistics.nb_elements >= 5;
   const defaultNbClusters = Math.max(
     Math.round((projectStatistics?.nb_elements ?? 0) / 100),
     5,
@@ -273,7 +258,6 @@ const RunClusteringSheet = ({
                 <Select
                   onValueChange={(value) => {
                     field.onChange(value);
-                    setUpdate(!update);
                   }}
                   defaultValue={field.value}
                 >
@@ -487,32 +471,24 @@ const RunClusteringSheet = ({
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-          <div className="flex flex-row space-x-2 items-center">
-            {projectStatisticsLoading && (
-              <div>
-                <Spinner />
-              </div>
-            )}
+          <div className="flex space-x-2 items-center pt-4">
+            {projectStatisticsLoading && <Spinner />}
             {!canRunClusterAnalysis && (
-              <div className="mt-4">
+              <span>
                 You need at least 5 {form.getValues("scope")} to run a cluster
                 analysis. There are currently{" "}
                 {projectStatistics?.nb_elements ?? 0} {form.getValues("scope")}.
-              </div>
+              </span>
             )}
             {canRunClusterAnalysis && (
-              <div className="mt-4">
+              <span>
                 We will cluster{" "}
-                {form.getValues("scope") === "messages" && (
-                  <>{projectStatistics?.nb_elements ?? 0} user messages</>
-                )}
+                {<>{projectStatistics?.nb_elements ?? 0} user messages</>}
                 {form.getValues("scope") === "sessions" && (
-                  <>
-                    {projectStatistics?.nb_tasks_in_sessions ?? 0} user messages
-                  </>
+                  <>({projectStatistics?.nb_sessions_in_scope ?? 0} sessions)</>
                 )}{" "}
                 for a total of {projectStatistics?.clustering_cost} credits.{" "}
-              </div>
+              </span>
             )}
           </div>
           {hobby && (
