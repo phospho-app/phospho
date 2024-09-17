@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { EventDefinition } from "@/models/models";
+import { EventDefinition, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -82,6 +82,16 @@ export default function RunEvent({
   const formSchema = z.object({
     sample_rate: z.coerce.number().min(0).max(1),
   });
+
+  const { data: selectedProject }: { data: Project } = useSWR(
+    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const eventDetectionEnabled =
+    selectedProject.settings?.run_event_detection ?? false;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -189,7 +199,11 @@ export default function RunEvent({
                 </Link>
               </div>
             )}
-            {totalNbTasks !== undefined &&
+            {!eventDetectionEnabled && (
+              <div>Event detection is disabled for this project. </div>
+            )}
+            {eventDetectionEnabled &&
+              totalNbTasks !== undefined &&
               totalNbTasks !== null &&
               totalNbTasks > 0 && (
                 <div className="flex flex-row space-x-1 items-center">
@@ -223,6 +237,7 @@ export default function RunEvent({
             <Button
               type="submit"
               disabled={
+                !eventDetectionEnabled ||
                 loading ||
                 totalNbTasks === undefined ||
                 totalNbTasks === 0 ||

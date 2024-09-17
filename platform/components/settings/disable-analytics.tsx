@@ -11,11 +11,12 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 
 export default function DisableAnalytics() {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const { mutate } = useSWRConfig();
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -44,13 +45,12 @@ export default function DisableAnalytics() {
 
   const handleChecked = (id: string) => {
     if (!accessToken) return;
-    if (!selectedProject) return;
-    if (!selectedProject.id) return;
+    if (!project_id) return;
     if (checkedEvent === undefined) return;
     if (checkedLanguage === undefined) return;
     if (checkedSentiment === undefined) return;
     const updateSettings = async () => {
-      await fetch(`/api/projects/${selectedProject.id}`, {
+      await fetch(`/api/projects/${project_id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,7 +66,16 @@ export default function DisableAnalytics() {
               id === "sentiment" ? !checkedSentiment : checkedSentiment,
           },
         }),
-      }).then(() => {
+      }).then(async (response) => {
+        if (!response.ok) {
+          toast({
+            title: "Error",
+            description: "An error occurred while updating the settings.",
+          });
+          return;
+        }
+        const updatedProject = (await response.json()) as Project;
+        mutate([`/api/projects/${project_id}`, accessToken], updatedProject);
         toast({
           title: "Settings updated",
           description: "Your next logs will be updated with the new settings.",
