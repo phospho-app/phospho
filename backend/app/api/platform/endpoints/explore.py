@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Union
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
@@ -43,9 +43,11 @@ from app.services.mongo.explore import (
     get_dashboard_aggregated_metrics,
     get_events_aggregated_metrics,
     get_nb_tasks_in_sessions,
+    get_nb_users_messages,
     get_sessions_aggregated_metrics,
     get_tasks_aggregated_metrics,
     get_total_nb_of_sessions,
+    get_total_nb_of_users,
     nb_items_with_a_metadata_field,
     project_has_enough_labelled_tasks,
     project_has_sessions,
@@ -286,7 +288,7 @@ async def get_project_metrics(
         if nb_tasks_in_sessions is not None:
             nb_elements = nb_tasks_in_sessions
 
-    if query.scope == "messages":
+    elif query.scope == "messages":
         total_nb_tasks = await get_total_nb_of_tasks(
             project_id=project_id,
             filters=filters,
@@ -298,6 +300,26 @@ async def get_project_metrics(
                 nb_elements = min(total_nb_tasks, limit)
             else:
                 nb_elements = total_nb_tasks
+
+    elif query.scope == "users":
+        total_nb_users = await get_total_nb_of_users(
+            project_id=project_id,
+            filters=filters,
+        )
+        output["total_nb_users"] = total_nb_users
+        if limit is not None and total_nb_users is not None:
+            output["nb_users_in_scope"] = min(total_nb_users, limit)
+        else:
+            output["nb_users_in_scope"] = total_nb_users
+
+        nb_users_messages = await get_nb_users_messages(
+            project_id=project_id,
+            filters=filters,
+            limit=output["nb_users_in_scope"],
+        )
+        output["nb_users_messages"] = nb_users_messages
+        if nb_users_messages is not None:
+            nb_elements = nb_users_messages
 
     if nb_elements is not None:
         clustering_cost = 2 * nb_elements

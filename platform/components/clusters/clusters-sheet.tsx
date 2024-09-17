@@ -30,6 +30,7 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
   SheetContent,
@@ -60,6 +61,9 @@ interface ProjectStatics {
   nb_sessions_in_scope?: number;
   nb_elements: number;
   clustering_cost: number;
+  nb_users_messages?: number;
+  total_nb_users?: number;
+  nb_users_in_scope?: number;
 }
 
 const RunClusteringSheet = ({
@@ -262,18 +266,13 @@ const RunClusteringSheet = ({
               render={({ field }) => (
                 <Select
                   onValueChange={(value) => {
+                    console.log("scope", value); // Debugging log
                     field.onChange(value);
                   }}
-                  defaultValue={field.value}
+                  value={field.value} // Ensure this is controlled
                 >
                   <SelectTrigger className="max-w-[20rem]">
-                    {field.value === "messages"
-                      ? "Messages"
-                      : field.value === "sessions"
-                        ? "Sessions"
-                        : field.value === "users"
-                          ? "Unique Users"
-                          : "Messages"}
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -284,11 +283,6 @@ const RunClusteringSheet = ({
                   </SelectContent>
                 </Select>
               )}
-            />
-            <FilterComponent
-              variant={
-                form.getValues("scope") === "sessions" ? "sessions" : "tasks"
-              }
             />
           </div>
           <div className="flex flex-col space-y-4">
@@ -496,13 +490,16 @@ const RunClusteringSheet = ({
               <span>
                 We will cluster{" "}
                 {<>{projectStatistics?.nb_elements ?? 0} user messages</>}
-                {form.getValues("scope") === "sessions" && (
+                {(form.getValues("scope") === "sessions" && (
                   <>
                     {" "}
                     ({projectStatistics?.nb_sessions_in_scope ??
                       0} sessions){" "}
                   </>
-                )}{" "}
+                )) ||
+                  (form.getValues("scope") === "users" && (
+                    <> ({projectStatistics?.nb_users_in_scope ?? 0} users) </>
+                  ))}{" "}
                 for a total of {projectStatistics?.clustering_cost} credits.{" "}
               </span>
             )}

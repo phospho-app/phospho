@@ -72,6 +72,6 @@ class AggregatedSessionsRequest(BaseModel):
 
 
 class ClusteringCostRequest(BaseModel):
-    scope: Literal["messages", "sessions"] = "messages"
+    scope: Literal["messages", "sessions", "users"] = "messages"
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     limit: Optional[int] = None
