@@ -109,6 +109,7 @@ const DatavizGraph = ({
   ) {
     return <></>;
   }
+
   if (
     metadata_metric === "sentiment_score" &&
     !numberMetadataFields.includes("sentiment_score")
@@ -116,7 +117,6 @@ const DatavizGraph = ({
     return <></>;
   }
 
-  // Display the data or "Loading..."
   return (
     <>
       {!pivotData && pivotLoading && <Spinner className="my-40 mx-60" />}

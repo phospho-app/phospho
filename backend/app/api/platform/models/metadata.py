@@ -48,6 +48,7 @@ class MetadataPivotQuery(BaseModel):
         "nb_messages",
         "nb_sessions",
         "tags_count",
+        "avg_scorer_value",
         "avg_success_rate",
         "avg_session_length",
         "tags_distribution",
