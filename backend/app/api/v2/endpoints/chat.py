@@ -43,7 +43,7 @@ from openai.types.chat import (
 router = APIRouter(tags=["chat"])
 
 
-class ChatCompletionMessageParam(pydantic.BaseModel):
+class ChatCompletionMessageParamModel(pydantic.BaseModel):
     content: str
     role: Literal["system", "user", "assistant", "tool", "function"]
     name: str | None = None
@@ -52,8 +52,20 @@ class ChatCompletionMessageParam(pydantic.BaseModel):
     tool_call_id: str | None = None  # will be ignored
 
 
+class FunctionDefinitionModel(pydantic.BaseModel):
+    name: str
+    description: str
+    parameters: dict
+    strict: Optional[bool]
+
+
+class ChatCompletionToolParamModel(pydantic.BaseModel):
+    function: FunctionDefinitionModel
+    type: Literal["function"]
+
+
 class CreateRequest(pydantic.BaseModel):
-    messages: List[ChatCompletionMessageParam]
+    messages: List[ChatCompletionMessageParamModel]
     model: Literal["openai:gpt-4o", "openai:gpt-4o-mini"]
     frequency_penalty: Optional[float] | None = None
     # function_call: completion_create_params.FunctionCall | None = None
@@ -69,8 +81,10 @@ class CreateRequest(pydantic.BaseModel):
     stream: Optional[bool] | None = None
     # stream_options: Optional[ChatCompletionStreamOptionsParam] | None = None
     temperature: Optional[float] | None = None
-    tool_choice: ChatCompletionToolChoiceOptionParam | None = None
-    tools: Iterable[ChatCompletionToolParam] | None = None
+    tool_choice: Union[
+        Literal["none", "auto", "required"], ChatCompletionToolParamModel
+    ] | None = None
+    tools: Iterable[ChatCompletionToolParamModel] | None = None
     top_logprobs: Optional[int] | None = None
     top_p: Optional[float] | None = None
     user: str | None = None
@@ -274,19 +288,9 @@ async def create(
 
     if org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d":  # We don't route Y to Azure
         provider = "azure"
-    openai_client = get_async_client(
-        cast(
-            Literal[
-                "openai",
-                "azure",
-            ],
-            provider,
-        )
-    )
+    openai_client = get_async_client(provider)
 
-    create_request.model = cast(
-        Literal["openai:gpt-4o", "openai:gpt-4o-mini"], model_name
-    )
+    create_request.model = model_name
     query_inputs = create_request.model_dump()
 
     should_stream = query_inputs.get("stream", False)
