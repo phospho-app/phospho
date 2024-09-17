@@ -1,5 +1,7 @@
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.requests import Request
+from fastapi_simple_rate_limiter import rate_limiter  # type: ignore
 from loguru import logger
 
 
@@ -11,8 +13,10 @@ router = APIRouter(tags=["tak-search"])
 
 
 @router.post("/search", response_model=SearchResponse)
+@rate_limiter(limit=50, seconds=60)
 async def post_search(
-    request: SearchRequest,
+    search_request: SearchRequest,
+    request: Request,
     org: dict = Depends(authenticate_org_key),
 ):
     """
@@ -31,15 +35,20 @@ async def post_search(
 
     # TODO: add a check on the Stripe customer ID
 
+    # Log the request
+    logger.info(
+        f"Search request from {org['org']['org_id']} for search_request: {search_request}"
+    )
+
     # Use HTTPX to call the tak search service
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    async with httpx.AsyncClient(timeout=20.0) as client:
         response = await client.post(
             f"{config.TAK_SEARCH_URL}/v1/search",  # Replace with the actual URL
             json={
-                "query": request.query,
-                "domain": request.domain,
-                "max_results": request.max_results,
-                "include_raw_content": request.include_raw_content,
+                "query": search_request.query,
+                "domain": search_request.domain,
+                "max_results": search_request.max_results,
+                "include_raw_content": search_request.include_raw_content,
             },
             headers={"Authorization": f"Bearer {config.TAK_APP_API_KEY}"},
         )
