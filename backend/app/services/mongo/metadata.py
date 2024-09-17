@@ -500,7 +500,7 @@ async def breakdown_by_sum_of_metadata_field(
     def _merge_sessions(pipeline: List[Dict[str, object]]) -> List[Dict[str, object]]:
         # if already merged, return the pipeline
         if any(
-            operator.get("$lookup", {}).get("from") == "sessions"
+            operator.get("$lookup", {}).get("from") == "sessions"  # type: ignore
             for operator in pipeline
         ):
             return pipeline
@@ -585,6 +585,8 @@ async def breakdown_by_sum_of_metadata_field(
         await compute_session_length(project_id=project_id)
         pipeline = _merge_sessions(pipeline)
         breakdown_by_col = "session_length"
+    elif breakdown_by is None:
+        breakdown_by_col = None
     else:
         breakdown_by_col = breakdown_by
 
@@ -595,6 +597,17 @@ async def breakdown_by_sum_of_metadata_field(
             {
                 "$match": {
                     "events.event_definition.score_range_settings.score_type": "confidence"
+                }
+            },
+        ]
+        breakdown_by_col = "events.event_name"
+    elif breakdown_by == "scorer_name":
+        pipeline += [
+            {"$unwind": "$events"},
+            # Filter to only keep the scorer events
+            {
+                "$match": {
+                    "events.event_definition.score_range_settings.score_type": "range",
                 }
             },
         ]
@@ -649,6 +662,29 @@ async def breakdown_by_sum_of_metadata_field(
                 "$group": {
                     "_id": f"${breakdown_by_col}",
                     "metric": {"$avg": "$is_success"},
+                },
+            },
+            {
+                "$project": {
+                    "breakdown_by": "$_id",
+                    "metric": 1,
+                }
+            },
+        ]
+
+    if metric == "avg_scorer_value":
+        pipeline += [
+            {"$unwind": "$events"},
+            # Filter to only keep the scorer events
+            {
+                "$match": {
+                    "events.event_definition.score_range_settings.score_type": "range",
+                }
+            },
+            {
+                "$group": {
+                    "_id": f"${breakdown_by_col}",
+                    "metric": {"$avg": "$events.score_range.value"},
                 },
             },
             {

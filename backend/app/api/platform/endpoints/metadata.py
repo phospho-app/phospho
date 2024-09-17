@@ -3,7 +3,7 @@ from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException
 
 from phospho.models import ProjectDataFilters
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 from app.security.authentification import propelauth
 from app.security import verify_if_propelauth_user_can_access_project
 
