@@ -69,3 +69,9 @@ class AggregatedSessionsRequest(BaseModel):
     metrics: List[str] = Field(default_factory=list)
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     limit: Optional[int] = None
+
+
+class ClusteringCostRequest(BaseModel):
+    scope: Literal["messages", "sessions"] = "messages"
+    filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
+    limit: Optional[int] = None
