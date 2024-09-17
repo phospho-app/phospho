@@ -2,11 +2,7 @@
 
 import { ClusteringLoading } from "@/components/clusters/clusters-loading";
 import RunClusteringSheet from "@/components/clusters/clusters-sheet";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +28,7 @@ import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Boxes, Pencil, Plus, Settings } from "lucide-react";
+import { Boxes, Pencil, Plus, Settings, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import * as React from "react";
 import useSWR from "swr";
@@ -40,6 +36,7 @@ import useSWR from "swr";
 import { ClustersCards } from "./clusters-cards";
 import { ClusteringDropDown } from "./clusters-drop-down";
 import { CustomPlot } from "./clusters-plot";
+import RenameClusteringDialog from "./rename-clustering";
 
 const Clusters: React.FC = () => {
   const project_id = navigationStateStore((state) => state.project_id);
@@ -52,6 +49,7 @@ const Clusters: React.FC = () => {
     (state) => state.setSelectedClustering,
   );
   const [openRename, setOpenRename] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
   const { data: clusteringsData } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
@@ -123,143 +121,145 @@ const Clusters: React.FC = () => {
 
   return (
     <>
-      <Sheet open={sheetClusterOpen} onOpenChange={setSheetClusterOpen}>
-        <RunClusteringSheet
-          setSheetOpen={setSheetClusterOpen}
-          setSelectedClustering={setSelectedClustering}
-        />
-        {clusterings && clusterings.length <= 1 && (
-          <Card className="bg-secondary">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div className="flex">
-                  <Boxes className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
-                  <div>
-                    <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-                      Automatic cluster detection
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                      Detect recurring topics, trends, and outliers using
-                      unsupervized machine learning.{" "}
-                      <a
-                        href="https://docs.phospho.ai/analytics/clustering"
-                        target="_blank"
-                        className="underline"
-                      >
-                        Learn more.
-                      </a>
-                    </CardDescription>
+      <AlertDialog open={openRename}>
+        <Sheet open={sheetClusterOpen} onOpenChange={setSheetClusterOpen}>
+          <RunClusteringSheet
+            setSheetOpen={setSheetClusterOpen}
+            setSelectedClustering={setSelectedClustering}
+          />
+          {clusterings && clusterings.length <= 1 && (
+            <Card className="bg-secondary">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div className="flex">
+                    <Boxes className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+                    <div>
+                      <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
+                        Automatic cluster detection
+                      </CardTitle>
+                      <CardDescription className="text-muted-foreground">
+                        Detect recurring topics, trends, and outliers using
+                        unsupervized machine learning.{" "}
+                        <a
+                          href="https://docs.phospho.ai/analytics/clustering"
+                          target="_blank"
+                          className="underline"
+                        >
+                          Learn more.
+                        </a>
+                      </CardDescription>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardHeader>
-          </Card>
-        )}
-        {clusterings && clusterings.length > 1 && (
-          <h1 className="text-2xl font-bold">Clusterings</h1>
-        )}
-        <div>
-          <div className="flex flex-row space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div>
-                  <HoverCard openDelay={0} closeDelay={0}>
-                    <HoverCardTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-primary h-8 w-8"
-                      >
-                        <Settings />
-                      </Button>
-                    </HoverCardTrigger>
-                    <HoverCardContent
-                      className="m-0 text-xs text-background bg-foreground"
-                      align="center"
-                      avoidCollisions={false}
-                    >
-                      <span>Settings</span>
-                    </HoverCardContent>
-                  </HoverCard>
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>
-                  <AlertDialog open={openRename} onOpenChange={setOpenRename}>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="secondary">
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Rename project
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="md:w-1/3">
-                      Coucou
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <ClusteringDropDown
-              selectedClustering={selectedClustering}
-              setSelectedClustering={setSelectedClustering}
-              clusterings={clusterings}
-              selectedClusteringName={selectedClusteringName}
-            />
-            <SheetTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-1" /> New clustering
-              </Button>
-            </SheetTrigger>
-          </div>
-          {selectedClustering && (
-            <div className="space-x-2 mb-2">
-              <Badge variant="secondary">
-                {`Instruction: ${selectedClustering?.instruction}` ??
-                  "No instruction"}
-              </Badge>
-              <Badge variant="secondary">
-                {selectedClustering?.nb_clusters ?? "No"} clusters
-              </Badge>
-              <Badge variant="secondary">
-                {formatUnixTimestampToLiteralDatetime(
-                  selectedClustering.created_at,
-                )}
-              </Badge>
-              <Badge variant="secondary">
-                scope: {selectedClustering.scope}
-              </Badge>
-            </div>
+              </CardHeader>
+            </Card>
           )}
-          <div className="flex-col space-y-2 md:flex pb-10">
-            {selectedClustering &&
-              selectedClustering.status !== "completed" && (
-                <ClusteringLoading
-                  selectedClustering={selectedClustering}
-                  setSelectedClustering={setSelectedClustering}
-                />
-              )}
-            {clusterings && clusterings.length === 0 && (
-              <CustomPlot
-                dummyData={true}
-                displayCTA={true}
-                setSheetClusterOpen={setSheetClusterOpen}
+          {clusterings && clusterings.length > 1 && (
+            <h1 className="text-2xl font-bold">Clusterings</h1>
+          )}
+          <div>
+            <div className="flex flex-row space-x-2">
+              <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <div>
+                    <HoverCard openDelay={0} closeDelay={0}>
+                      <HoverCardTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-primary h-8 w-8"
+                        >
+                          <Settings />
+                        </Button>
+                      </HoverCardTrigger>
+                      <HoverCardContent
+                        className="m-0 text-xs text-background bg-foreground"
+                        align="center"
+                        avoidCollisions={false}
+                      >
+                        <span>Settings</span>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setOpenRename(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Rename clustering
+                    <RenameClusteringDialog
+                      open={openRename}
+                      setOpen={setOpenRename}
+                      clusteringToEdit={selectedClustering}
+                    />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <ClusteringDropDown
+                selectedClustering={selectedClustering}
+                setSelectedClustering={setSelectedClustering}
+                clusterings={clusterings}
+                selectedClusteringName={selectedClusteringName}
               />
+              <SheetTrigger asChild>
+                <Button>
+                  <Plus className="w-4 h-4 mr-1" /> New clustering
+                </Button>
+              </SheetTrigger>
+            </div>
+            {selectedClustering && (
+              <div className="space-x-2 mb-2">
+                <Badge variant="secondary">
+                  {`Instruction: ${selectedClustering?.instruction}` ??
+                    "No instruction"}
+                </Badge>
+                <Badge variant="secondary">
+                  {selectedClustering?.nb_clusters ?? "No"} clusters
+                </Badge>
+                <Badge variant="secondary">
+                  {formatUnixTimestampToLiteralDatetime(
+                    selectedClustering.created_at,
+                  )}
+                </Badge>
+                <Badge variant="secondary">
+                  scope: {selectedClustering.scope}
+                </Badge>
+              </div>
             )}
-            {selectedClustering !== undefined &&
-              selectedClustering !== null && (
+            <div className="flex-col space-y-2 md:flex pb-10">
+              {selectedClustering &&
+                selectedClustering.status !== "completed" && (
+                  <ClusteringLoading
+                    selectedClustering={selectedClustering}
+                    setSelectedClustering={setSelectedClustering}
+                  />
+                )}
+              {clusterings && clusterings.length === 0 && (
                 <CustomPlot
-                  selected_clustering_id={selectedClustering.id}
-                  selectedClustering={selectedClustering}
+                  dummyData={true}
+                  displayCTA={true}
+                  setSheetClusterOpen={setSheetClusterOpen}
                 />
               )}
-            <ClustersCards
-              setSheetClusterOpen={setSheetClusterOpen}
-              selectedClustering={selectedClustering}
-            />
+              {selectedClustering !== undefined &&
+                selectedClustering !== null && (
+                  <CustomPlot
+                    selected_clustering_id={selectedClustering.id}
+                    selectedClustering={selectedClustering}
+                  />
+                )}
+              <ClustersCards
+                setSheetClusterOpen={setSheetClusterOpen}
+                selectedClustering={selectedClustering}
+              />
+            </div>
           </div>
-        </div>
-        <div className="h-10"></div>
-      </Sheet>
+          <div className="h-10"></div>
+        </Sheet>
+      </AlertDialog>
     </>
   );
 };
