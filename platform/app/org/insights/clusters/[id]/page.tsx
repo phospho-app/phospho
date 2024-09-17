@@ -39,6 +39,8 @@ export default function Page({ params }: { params: { id: string } }) {
       ...dataFilters,
       clustering_id: null,
       clusters_ids: null,
+      created_at_end: undefined,
+      created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
     });
     router.back();
   }

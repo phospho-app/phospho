@@ -19,6 +19,8 @@ export default function Page({ params }: { params: { id: string } }) {
     setDateRangePreset("all-time");
     setDataFilters({
       ...dataFilters,
+      created_at_start: null,
+      created_at_end: null,
       metadata: {
         version_id: version_id,
       },
@@ -26,13 +28,13 @@ export default function Page({ params }: { params: { id: string } }) {
   }
 
   function backClick() {
-    setDateRangePreset("last-7-days");
     setDataFilters({
       ...dataFilters,
-      metadata: {
-        version_id: null,
-      },
+      created_at_end: undefined,
+      created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
     });
+    setDateRangePreset("last-7-days");
+    // TODO: For some reason, the metadata is not being reset here
     router.back();
   }
 
