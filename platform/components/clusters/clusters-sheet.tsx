@@ -110,7 +110,7 @@ const RunClusteringSheet = ({
     },
   });
 
-  const limit = form.getValues("limit");
+  const limit = form.watch("limit");
   const scope = form.getValues("scope");
 
   const debouncedLimit = useDebounce(limit, 300);
@@ -142,8 +142,6 @@ const RunClusteringSheet = ({
   const jsonProjectStatistics = JSON.stringify(projectStatistics);
 
   useEffect(() => {
-    console.log("canRunClusterAnalysis", canRunClusterAnalysis);
-    console.log("projectStatistics", projectStatistics);
     if (!projectStatistics) {
       return;
     }
@@ -157,7 +155,14 @@ const RunClusteringSheet = ({
         form.setValue("limit", projectStatistics.total_nb_sessions);
       }
     }
-  }, [jsonProjectStatistics, form, limit, scope, jsonDataFilters]);
+  }, [
+    jsonProjectStatistics,
+    form,
+    limit,
+    scope,
+    jsonDataFilters,
+    projectStatistics,
+  ]);
 
   const canRunClusterAnalysis: boolean =
     !!projectStatistics?.nb_elements && projectStatistics.nb_elements >= 5;
@@ -169,7 +174,7 @@ const RunClusteringSheet = ({
   useEffect(() => {
     // Update the form default value for the number of clusters
     form.setValue("nb_clusters", defaultNbClusters);
-  }, [defaultNbClusters]);
+  }, [defaultNbClusters, form]);
 
   function handleSkip() {
     setSheetOpen(false);
