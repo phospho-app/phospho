@@ -76,6 +76,8 @@ jobs:
           TEMPORAL_NAMESPACE: "default"
           AZURE_OPENAI_KEY: ${{ secrets.AZURE_OPENAI_KEY }}
           AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          TAK_SEARCH_URL: ${{ vars.TAK_SEARCH_URL }}
+          TAK_APP_API_KEY: ${{ secrets.TAK_APP_API_KEY }}
 
         # Specify here the tests you want to run after the -k flag
         run: |
