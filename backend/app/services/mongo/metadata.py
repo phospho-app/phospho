@@ -500,7 +500,7 @@ async def breakdown_by_sum_of_metadata_field(
     def _merge_sessions(pipeline: List[Dict[str, object]]) -> List[Dict[str, object]]:
         # if already merged, return the pipeline
         if any(
-            operator.get("$lookup", {}).get("from") == "sessions"
+            operator.get("$lookup", {}).get("from") == "sessions"  # type: ignore
             for operator in pipeline
         ):
             return pipeline
@@ -585,6 +585,8 @@ async def breakdown_by_sum_of_metadata_field(
         await compute_session_length(project_id=project_id)
         pipeline = _merge_sessions(pipeline)
         breakdown_by_col = "session_length"
+    elif breakdown_by is None:
+        breakdown_by_col = None
     else:
         breakdown_by_col = breakdown_by
 
