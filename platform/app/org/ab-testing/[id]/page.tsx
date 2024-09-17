@@ -5,15 +5,18 @@ import { Button } from "@/components/ui/button";
 import { navigationStateStore } from "@/store/store";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function Page({ params }: { params: { id: string } }) {
   const router = useRouter();
   const version_id = decodeURIComponent(params.id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
+  const setDateRangePreset = navigationStateStore(
+    (state) => state.setDateRangePreset,
+  );
 
   if (dataFilters.metadata?.version_id !== version_id) {
+    setDateRangePreset("all-time");
     setDataFilters({
       ...dataFilters,
       metadata: {
@@ -22,19 +25,20 @@ export default function Page({ params }: { params: { id: string } }) {
     });
   }
 
-  // On component unmount, remove the version_id filter
-  useEffect(() => {
-    return () => {
-      delete dataFilters.metadata?.version_id;
-      setDataFilters({
-        ...dataFilters,
-      });
-    };
-  }, [dataFilters, setDataFilters]);
+  function backClick() {
+    setDateRangePreset("last-7-days");
+    setDataFilters({
+      ...dataFilters,
+      metadata: {
+        version_id: null,
+      },
+    });
+    router.back();
+  }
 
   return (
     <>
-      <Button onClick={() => router.back()}>
+      <Button onClick={backClick}>
         <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
       {
