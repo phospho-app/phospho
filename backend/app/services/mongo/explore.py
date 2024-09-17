@@ -877,6 +877,7 @@ async def get_nb_tasks_in_sessions(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
     limit: Optional[int] = None,
+    sorted: Optional[bool] = False,
 ) -> Optional[int]:
     """
     Get the total number of tasks in a set of sessions of a project.
@@ -890,9 +891,12 @@ async def get_nb_tasks_in_sessions(
         project_id=project_id, filters=filters
     )
 
-    pipeline = [
+    pipeline: List[Dict[str, object]] = [
         {"$match": global_filters},
     ]
+    if sorted:
+        pipeline.append({"$sort": {"created_at": 1}})
+
     if limit is not None and limit > 0:
         pipeline.append({"$limit": limit})
 
