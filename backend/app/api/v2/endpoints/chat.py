@@ -268,7 +268,7 @@ async def create(
 
     if (
         not customer_id
-        and org_id != config.PHOSPHO_ORG_ID
+        and org_id not in [config.PHOSPHO_ORG_ID, config.TEST_PROPELAUTH_ORG_ID]
         and (config.ENVIRONMENT == "production" or config.ENVIRONMENT == "staging")
     ):
         if config.ENVIRONMENT != "test":

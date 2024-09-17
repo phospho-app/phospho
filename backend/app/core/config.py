@@ -215,3 +215,7 @@ if TAK_SEARCH_URL is None:
 TAK_APP_API_KEY = os.getenv("TAK_APP_API_KEY")
 if TAK_APP_API_KEY is None:
     logger.warning("TAK_APP_API_KEY is missing from the environment variables")
+
+
+# Used for testing in staging or test
+TEST_PROPELAUTH_ORG_ID = os.getenv("TEST_PROPELAUTH_ORG_ID")
