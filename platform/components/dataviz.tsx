@@ -49,6 +49,12 @@ const DatavizGraph = ({
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
+      refreshInterval: 0,
+      refreshWhenHidden: false,
+      revalidateOnReconnect: true,
+      revalidateOnFocus: false,
+      revalidateOnMount: true,
+      refreshWhenOffline: false,
     },
   );
 
@@ -61,6 +67,12 @@ const DatavizGraph = ({
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {
       keepPreviousData: true,
+      refreshInterval: 0,
+      refreshWhenHidden: false,
+      revalidateOnReconnect: true,
+      revalidateOnFocus: false,
+      revalidateOnMount: true,
+      refreshWhenOffline: false,
     },
   );
   const numberMetadataFields: string[] | undefined = data?.number;
@@ -94,6 +106,12 @@ const DatavizGraph = ({
       }),
     {
       keepPreviousData: true,
+      refreshInterval: 0,
+      refreshWhenHidden: false,
+      revalidateOnReconnect: true,
+      revalidateOnFocus: false,
+      revalidateOnMount: true,
+      refreshWhenOffline: false,
     },
   );
 
