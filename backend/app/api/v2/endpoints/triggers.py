@@ -1,7 +1,7 @@
 from app.api.v2.models.triggers import TriggerClusteringRequest
 from app.core import config
 from fastapi import APIRouter, Header, Request
-from fastapi_simple_rate_limiter import rate_limiter
+from fastapi_simple_rate_limiter import rate_limiter  # type: ignore
 from app.services.mongo.ai_hub import AIHubClient
 from app.services.mongo.ai_hub import ClusteringRequest
 from loguru import logger

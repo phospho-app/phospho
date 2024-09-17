@@ -437,7 +437,6 @@ async def get_total_nb_of_tasks(
     global_filters, collection = await task_filtering_pipeline_match(
         project_id=project_id, filters=filters
     )
-
     query_result = (
         await mongo_db[collection]
         .aggregate(

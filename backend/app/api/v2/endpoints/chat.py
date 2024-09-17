@@ -33,21 +33,55 @@ from app.services.mongo.projects import get_project_by_id
 from app.services.mongo.organizations import create_project_by_org
 from app.services.mongo.extractor import ExtractorClient
 from app.api.v2.models.log import LogEvent
+from typing import cast
+from openai.types.chat import completion_create_params
+from openai.types.chat import (
+    ChatCompletionToolParam,
+    ChatCompletionToolChoiceOptionParam,
+)
 
 router = APIRouter(tags=["chat"])
 
 
-class ChatCompletionMessageParam(pydantic.BaseModel):
+class FunctionCallModel(pydantic.BaseModel):
+    arguments: str
+    name: str
+
+
+class FunctionModel(pydantic.BaseModel):
+    arguments: str
+    name: str
+
+
+class ChatCompletionMessageToolCallModel(pydantic.BaseModel):
+    id: str
+    function: FunctionModel
+    type: Literal["function"]
+
+
+class ChatCompletionMessageParamModel(pydantic.BaseModel):
     content: str
     role: Literal["system", "user", "assistant", "tool", "function"]
     name: str | None = None
-    function_call: Any | None = None  # will be ignored
-    tool_calls: Iterable[Any] | None = None  # will be ignored
-    tool_call_id: str | None = None  # will be ignored
+    function_call: FunctionCallModel | None = None  # deprecated
+    tool_calls: Iterable[ChatCompletionMessageToolCallModel] | None = None
+    tool_call_id: str | None = None
+
+
+class FunctionDefinitionModel(pydantic.BaseModel):
+    name: str
+    description: str
+    parameters: dict
+    strict: Optional[bool] = False
+
+
+class ChatCompletionToolParamModel(pydantic.BaseModel):
+    function: FunctionDefinitionModel
+    type: Literal["function"] = "function"
 
 
 class CreateRequest(pydantic.BaseModel):
-    messages: List[ChatCompletionMessageParam]
+    messages: List[ChatCompletionMessageParamModel]
     model: Literal["openai:gpt-4o", "openai:gpt-4o-mini"]
     frequency_penalty: Optional[float] | None = None
     # function_call: completion_create_params.FunctionCall | None = None
@@ -63,8 +97,10 @@ class CreateRequest(pydantic.BaseModel):
     stream: Optional[bool] | None = None
     # stream_options: Optional[ChatCompletionStreamOptionsParam] | None = None
     temperature: Optional[float] | None = None
-    # tool_choice: ChatCompletionToolChoiceOptionParam | None = None
-    # tools: Iterable[ChatCompletionToolParam] | None = None
+    tool_choice: Union[
+        Literal["none", "auto", "required"], ChatCompletionToolParamModel
+    ] | None = None
+    tools: Iterable[ChatCompletionToolParamModel] | None = None
     top_logprobs: Optional[int] | None = None
     top_p: Optional[float] | None = None
     user: str | None = None
@@ -255,7 +291,8 @@ async def create(
         )
 
     SUPPORTED_MODELS = [
-        "openai:gpt-4o"
+        "openai:gpt-4o",
+        "openai:gpt-4o-mini",
     ]  # Add "openai:gpt-4o-mini" and update the pricing accordingly
     if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
@@ -264,6 +301,7 @@ async def create(
         )
 
     provider, model_name = get_provider_and_model(create_request.model)
+
     if org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d":  # We don't route Y to Azure
         provider = "azure"
     openai_client = get_async_client(provider)
