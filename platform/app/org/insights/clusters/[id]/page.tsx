@@ -18,6 +18,9 @@ export default function Page({ params }: { params: { id: string } }) {
   const cluster_id = decodeURIComponent(params.id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
+  const setDateRangePreset = navigationStateStore(
+    (state) => state.setDateRangePreset,
+  );
 
   // todo: fetch from server
   const { data: cluster }: { data: Cluster | undefined | null } = useSWR(
@@ -31,6 +34,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const sessions_ids = cluster?.sessions_ids;
 
   function backClick() {
+    setDateRangePreset("last-7-days");
     setDataFilters({
       ...dataFilters,
       clustering_id: null,
