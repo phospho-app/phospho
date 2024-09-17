@@ -197,7 +197,7 @@ export function CustomPlot({
     } else {
       setDisplayedData(data);
     }
-  }, [data, dummyData]);
+  }, [data, dummyData, displayCTA]);
 
   const [layout, setLayout] = useState(() => ({
     height: height,
