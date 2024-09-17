@@ -672,6 +672,29 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
+    if metric == "avg_scorer_value":
+        pipeline += [
+            {"$unwind": "$events"},
+            # Filter to only keep the scorer events
+            {
+                "$match": {
+                    "events.event_definition.score_range_settings.score_type": "range",
+                }
+            },
+            {
+                "$group": {
+                    "_id": f"${breakdown_by_col}",
+                    "metric": {"$avg": "$events.score_range.value"},
+                },
+            },
+            {
+                "$project": {
+                    "breakdown_by": "$_id",
+                    "metric": 1,
+                }
+            },
+        ]
+
     if metric == "avg_session_length":
         pipeline = _merge_sessions(pipeline)
         pipeline += [
