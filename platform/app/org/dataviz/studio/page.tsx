@@ -134,6 +134,15 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
+                    setSelectedMetric("avg_scorer_value");
+                    setmetadata_metric(null);
+                  }}
+                >
+                  <TextSearch className="h-4 w-4 mr-2" />
+                  Scorer value
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
                     setSelectedMetric("avg_success_rate");
                     setmetadata_metric(null);
                   }}
@@ -228,6 +237,14 @@ const MetadataForm: React.FC = () => {
                 >
                   <TextSearch className="h-4 w-4 mr-2" />
                   Tagger name
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedGroupBy("scorer_name");
+                  }}
+                >
+                  <TextSearch className="h-4 w-4 mr-2" />
+                  Scorer name
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {

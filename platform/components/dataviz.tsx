@@ -23,7 +23,7 @@ import {
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
 import { Payload } from "recharts/types/component/DefaultTooltipContent";
-import useSWR from "swr";
+import useSWRImmutable from "swr/immutable";
 
 interface PivotTableElement {
   breakdown_by: string | null;
@@ -44,11 +44,17 @@ const DatavizGraph = ({
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
 
-  const { data: selectedProject }: { data: Project } = useSWR(
+  const { data: selectedProject }: { data: Project } = useSWRImmutable(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
+      refreshInterval: 0,
+      refreshWhenHidden: false,
+      revalidateOnReconnect: true,
+      revalidateOnFocus: false,
+      revalidateOnMount: true,
+      refreshWhenOffline: false,
     },
   );
 
@@ -56,17 +62,23 @@ const DatavizGraph = ({
     metadata_metric = "";
   }
 
-  const { data } = useSWR(
+  const { data } = useSWRImmutable(
     [`/api/metadata/${project_id}/fields`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
     {
       keepPreviousData: true,
+      refreshInterval: 0,
+      refreshWhenHidden: false,
+      revalidateOnReconnect: true,
+      revalidateOnFocus: false,
+      revalidateOnMount: true,
+      refreshWhenOffline: false,
     },
   );
   const numberMetadataFields: string[] | undefined = data?.number;
   const categoryMetadataFields: string[] | undefined = data?.string;
 
-  const { data: pivotData, isLoading: pivotLoading } = useSWR(
+  const { data: pivotData, isLoading: pivotLoading } = useSWRImmutable(
     [
       `/api/metadata/${project_id}/pivot/`,
       accessToken,
@@ -94,6 +106,12 @@ const DatavizGraph = ({
       }),
     {
       keepPreviousData: true,
+      refreshInterval: 0,
+      refreshWhenHidden: false,
+      revalidateOnReconnect: true,
+      revalidateOnFocus: false,
+      revalidateOnMount: true,
+      refreshWhenOffline: false,
     },
   );
 
@@ -109,6 +127,7 @@ const DatavizGraph = ({
   ) {
     return <></>;
   }
+
   if (
     metadata_metric === "sentiment_score" &&
     !numberMetadataFields.includes("sentiment_score")
@@ -116,10 +135,12 @@ const DatavizGraph = ({
     return <></>;
   }
 
-  // Display the data or "Loading..."
+  if (pivotLoading) {
+    return <Spinner className="my-40 mx-60" />;
+  }
+
   return (
     <>
-      {!pivotData && pivotLoading && <Spinner className="my-40 mx-60" />}
       {(pivotData === null || pivotData?.length == 0) && <>No data</>}
       {pivotData?.length == 1 && (
         <>
