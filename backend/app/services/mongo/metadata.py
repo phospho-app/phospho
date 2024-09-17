@@ -601,6 +601,17 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
         breakdown_by_col = "events.event_name"
+    elif breakdown_by == "scorer_name":
+        pipeline += [
+            {"$unwind": "$events"},
+            # Filter to only keep the scorer events
+            {
+                "$match": {
+                    "events.event_definition.score_range_settings.score_type": "range",
+                }
+            },
+        ]
+        breakdown_by_col = "events.event_name"
 
     if breakdown_by == "task_position":
         await compute_task_position(project_id=project_id, filters=filters)
