@@ -43,25 +43,41 @@ from openai.types.chat import (
 router = APIRouter(tags=["chat"])
 
 
+class FunctionCallModel(pydantic.BaseModel):
+    arguments: str
+    name: str
+
+
+class FunctionModel(pydantic.BaseModel):
+    arguments: str
+    name: str
+
+
+class ChatCompletionMessageToolCallModel(pydantic.BaseModel):
+    id: str
+    function: FunctionModel
+    type: Literal["function"]
+
+
 class ChatCompletionMessageParamModel(pydantic.BaseModel):
     content: str
     role: Literal["system", "user", "assistant", "tool", "function"]
     name: str | None = None
-    function_call: Any | None = None  # will be ignored
-    tool_calls: Iterable[Any] | None = None  # will be ignored
-    tool_call_id: str | None = None  # will be ignored
+    function_call: FunctionCallModel | None = None  # deprecated
+    tool_calls: Iterable[ChatCompletionMessageToolCallModel] | None = None
+    tool_call_id: str | None = None
 
 
 class FunctionDefinitionModel(pydantic.BaseModel):
     name: str
     description: str
     parameters: dict
-    strict: Optional[bool]
+    strict: Optional[bool] = False
 
 
 class ChatCompletionToolParamModel(pydantic.BaseModel):
     function: FunctionDefinitionModel
-    type: Literal["function"]
+    type: Literal["function"] = "function"
 
 
 class CreateRequest(pydantic.BaseModel):
