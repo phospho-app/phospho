@@ -2,6 +2,11 @@
 
 import { ClusteringLoading } from "@/components/clusters/clusters-loading";
 import RunClusteringSheet from "@/components/clusters/clusters-sheet";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,14 +15,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Boxes, Plus } from "lucide-react";
+import { Boxes, Pencil, Plus, Settings } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import * as React from "react";
 import useSWR from "swr";
 
 import { ClustersCards } from "./clusters-cards";
@@ -34,6 +51,7 @@ const Clusters: React.FC = () => {
   const setSelectedClustering = navigationStateStore(
     (state) => state.setSelectedClustering,
   );
+  const [openRename, setOpenRename] = useState(false);
 
   const { data: clusteringsData } = useSWR(
     project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
@@ -141,7 +159,46 @@ const Clusters: React.FC = () => {
           <h1 className="text-2xl font-bold">Clusterings</h1>
         )}
         <div>
-          <div className="flex flex-row">
+          <div className="flex flex-row space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div>
+                  <HoverCard openDelay={0} closeDelay={0}>
+                    <HoverCardTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-primary h-8 w-8"
+                      >
+                        <Settings />
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent
+                      className="m-0 text-xs text-background bg-foreground"
+                      align="center"
+                      avoidCollisions={false}
+                    >
+                      <span>Settings</span>
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem>
+                  <AlertDialog open={openRename} onOpenChange={setOpenRename}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="secondary">
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Rename project
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="md:w-1/3">
+                      Coucou
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <ClusteringDropDown
               selectedClustering={selectedClustering}
               setSelectedClustering={setSelectedClustering}
