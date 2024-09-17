@@ -1,6 +1,5 @@
 import { Blockwall } from "@/components/blockwall";
 import { DatePickerWithRange } from "@/components/date-range";
-import FilterComponent from "@/components/filters";
 import { Spinner } from "@/components/small-spinner";
 import {
   Accordion,

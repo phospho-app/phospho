@@ -3120,10 +3120,14 @@ async def get_nb_users_messages(
                 "_id": "$metadata.user_id",
             }
         },
-        {"$limit": limit},
     ]
 
-    query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=None)
+    if limit is not None:
+        pipeline.append(
+            {"$limit": limit},
+        )
+
+    query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=limit)
 
     if len(query_result) == 0:
         return None
