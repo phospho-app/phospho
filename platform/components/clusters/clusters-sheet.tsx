@@ -490,7 +490,11 @@ const RunClusteringSheet = ({
                 We will cluster{" "}
                 {<>{projectStatistics?.nb_elements ?? 0} user messages</>}
                 {form.getValues("scope") === "sessions" && (
-                  <>({projectStatistics?.nb_sessions_in_scope ?? 0} sessions)</>
+                  <>
+                    {" "}
+                    ({projectStatistics?.nb_sessions_in_scope ??
+                      0} sessions){" "}
+                  </>
                 )}{" "}
                 for a total of {projectStatistics?.clustering_cost} credits.{" "}
               </span>
