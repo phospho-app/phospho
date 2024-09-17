@@ -18,19 +18,19 @@ def test_chat(backend_url, org_id, access_token, api_key):
 
     # Call the chat API
     openai_client = openai.OpenAI(
-        api_key=api_key, base_url=f"{backend_url}/v3/{project_id}/"
+        api_key=api_key, base_url=f"{backend_url}/v2/{project_id}/"
     )
     # Sync call
     response = openai_client.chat.completions.create(
         messages=[{"role": "system", "content": "Answer yes"}],
-        model="gpt-4o",
+        model="gpt-4o-mini",
     )
     assert response is not None
 
     # Streaming call
     response = openai_client.chat.completions.create(
         messages=[{"role": "system", "content": "Answer yes"}],
-        model="gpt-4o",
+        model="gpt-4o-mini",
         stream=True,
     )
     for message in response:
