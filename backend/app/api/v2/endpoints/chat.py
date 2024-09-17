@@ -281,7 +281,10 @@ async def create(
         )
 
     # Check that the org has access to the completion service
-    if not org_metadata.get("has_completion_access", False):
+    if (
+        not org_metadata.get("has_completion_access", False)
+        and config.ENVIRONMENT == "production"
+    ):
         logger.warning(
             f"Org {org_id} does not have access to the completion service. Skipping metered prediction."
         )
