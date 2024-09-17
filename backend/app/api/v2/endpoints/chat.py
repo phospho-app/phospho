@@ -269,7 +269,7 @@ async def create(
     if (
         not customer_id
         and org_id != config.PHOSPHO_ORG_ID
-        and config.ENVIRONMENT != "preview"
+        and (config.ENVIRONMENT == "production" or config.ENVIRONMENT == "staging")
     ):
         if config.ENVIRONMENT != "test":
             raise HTTPException(
