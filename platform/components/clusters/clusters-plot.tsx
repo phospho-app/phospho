@@ -197,7 +197,7 @@ export function CustomPlot({
     } else {
       setDisplayedData(data);
     }
-  }, [data, dummyData, displayCTA]);
+  }, [data, dummyData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [layout, setLayout] = useState(() => ({
     height: height,
