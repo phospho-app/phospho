@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, List, Optional, Union
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
