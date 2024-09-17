@@ -32,7 +32,7 @@ async def post_search(
     # TODO: add a check on the Stripe customer ID
 
     # Use HTTPX to call the tak search service
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=15.0) as client:
         response = await client.post(
             f"{config.TAK_SEARCH_URL}/v1/search",  # Replace with the actual URL
             json={
