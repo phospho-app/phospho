@@ -126,7 +126,7 @@ const RunClusteringSheet = ({
           `/api/explore/${project_id}/clustering-cost`,
           accessToken,
           JSON.stringify(dataFilters),
-          form.getValues("scope"),
+          form.watch("scope"),
           debouncedLimit,
         ]
       : null,
