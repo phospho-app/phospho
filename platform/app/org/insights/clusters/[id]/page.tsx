@@ -16,6 +16,11 @@ export default function Page({ params }: { params: { id: string } }) {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const cluster_id = decodeURIComponent(params.id);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const setDataFilters = navigationStateStore((state) => state.setDataFilters);
+  const setDateRangePreset = navigationStateStore(
+    (state) => state.setDateRangePreset,
+  );
 
   // todo: fetch from server
   const { data: cluster }: { data: Cluster | undefined | null } = useSWR(
@@ -28,9 +33,21 @@ export default function Page({ params }: { params: { id: string } }) {
   const tasks_ids = cluster?.tasks_ids;
   const sessions_ids = cluster?.sessions_ids;
 
+  function backClick() {
+    setDateRangePreset("last-7-days");
+    setDataFilters({
+      ...dataFilters,
+      clustering_id: null,
+      clusters_ids: null,
+      created_at_end: undefined,
+      created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
+    });
+    router.back();
+  }
+
   return (
     <>
-      <Button onClick={() => router.back()}>
+      <Button onClick={backClick}>
         <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
       <div>

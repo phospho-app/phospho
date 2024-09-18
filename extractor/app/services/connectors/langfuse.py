@@ -5,8 +5,8 @@ from typing import List, Optional
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
-from langfuse import Langfuse
-from langfuse.client import ObservationsViews
+from langfuse import Langfuse  # type: ignore
+from langfuse.client import ObservationsViews  # type: ignore
 from loguru import logger
 
 from app.models import LogEventForTasks
@@ -229,12 +229,13 @@ class LangfuseConnector(BaseConnector):
                     output = raw_output
 
                 if input is None:
-                    logger.error(
-                        f"Languse connector: Error while processing project {self.project_id} of orga {org_id}: input is None. Skipping. raw_input: {raw_input}"
+                    logger.warning(
+                        f"Langfuse connector: Found empty input in project {self.project_id} of orga {org_id}: input is None. Skipping. raw_input: {raw_input}"
                     )
+                    continue
                 if not isinstance(input, str):
                     logger.error(
-                        f"Languse connector: Error while processing project {self.project_id} of orga {org_id}: input is not a string. Skipping. raw_input: {raw_input}"
+                        f"Langfuse connector: Found incompatible input while processing project {self.project_id} of orga {org_id}: input is not a string. Skipping. raw_input: {raw_input}"
                     )
                     continue
 

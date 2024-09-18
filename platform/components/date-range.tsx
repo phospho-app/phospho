@@ -81,7 +81,7 @@ export function DatePickerWithRange({
       } else {
         dateRangeLabel = "Pick a date";
       }
-    } catch (e) {
+    } catch {
       dateRangeLabel = "Pick a date";
     }
   }

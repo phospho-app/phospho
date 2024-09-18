@@ -36,6 +36,7 @@ class MetadataPivotQuery(BaseModel):
     - A metadata field
     - A time field: "day", "week", "month"
     - "tagger_name"
+    - "scorer_name"
     - "task_position"
     - None
     - "session_length"
@@ -47,6 +48,7 @@ class MetadataPivotQuery(BaseModel):
         "nb_messages",
         "nb_sessions",
         "tags_count",
+        "avg_scorer_value",
         "avg_success_rate",
         "avg_session_length",
         "tags_distribution",
@@ -60,12 +62,18 @@ class MetadataPivotQuery(BaseModel):
     )
     breakdown_by: (
         Literal[
-            "day", "week", "month", "tagger_name", "task_position", "session_length"
+            "day",
+            "week",
+            "month",
+            "tagger_name",
+            "scorer_name",
+            "task_position",
+            "session_length",
         ]
         | str
         | None
     ) = Field(
         "day",
-        description="The field to break down the metric by. Can be a metadata field, a time field, event_name, task_position, None, session_length",
+        description="The field to break down the metric by. Can be a metadata field, a time field, tagger_name, scorer_name, task_position, None, session_length",
     )
     filters: ProjectDataFilters | None = None

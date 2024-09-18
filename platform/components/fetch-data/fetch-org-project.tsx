@@ -31,8 +31,6 @@ export default function FetchOrgProject() {
     // Creates a project if it has no projects
     // Otherwise, select the first project
     (async () => {
-      console.log("Triggered org init");
-
       if (loading) return;
       if (!isLoggedIn) {
         router.push("/authenticate");
@@ -59,8 +57,6 @@ export default function FetchOrgProject() {
           return;
         }
         const responseBody = await init_response.json();
-        console.log("Init response", responseBody);
-
         // Set the project id if it is not set
         if (!project_id && responseBody?.selected_project?.id) {
           setproject_id(responseBody.selected_project.id);

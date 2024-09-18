@@ -209,6 +209,7 @@ from app.api.platform.endpoints import (
     tasks,
     recipes,
     onboarding,
+    clustering,
 )
 
 api_platform = FastAPI()
@@ -224,5 +225,6 @@ api_platform.include_router(explore.router)
 api_platform.include_router(metadata.router)
 api_platform.include_router(recipes.router)
 api_platform.include_router(onboarding.router)
+api_platform.include_router(clustering.router)
 
 app.mount("/api", api_platform)

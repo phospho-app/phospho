@@ -131,6 +131,9 @@ async def connect_and_init_db():
             mongo_db[MONGODB_NAME]["events"].create_index(
                 ["project_id", ("created_at", pymongo.DESCENDING)], background=True
             )
+            mongo_db[MONGODB_NAME]["events"].create_index(
+                ["project_id", "event_definition.id"], background=True
+            )
 
             try:
                 # if the view exists, delete it
@@ -311,6 +314,9 @@ async def connect_and_init_db():
             )
             mongo_db[MONGODB_NAME]["private-clusters"].create_index(
                 "project_id", background=True
+            )
+            mongo_db[MONGODB_NAME]["private-embeddings"].create_index(
+                ["id", "project_id"], background=True
             )
             mongo_db[MONGODB_NAME]["job_results"].create_index(
                 ["project_id", "job_metadata.id"], background=True

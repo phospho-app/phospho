@@ -151,6 +151,8 @@ jobs:
           AZURE_OPENAI_KEY: ${{ secrets.AZURE_OPENAI_KEY }}
           AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
           API_TRIGGER_SECRET: ${{ secrets.API_TRIGGER_SECRET }}
+          TAK_SEARCH_URL: ${{ vars.TAK_SEARCH_URL }}
+          TAK_APP_API_KEY: ${{ secrets.TAK_APP_API_KEY }}
         run: |
           gcloud run deploy phospho-backend \
             --project $GCP_PROJECT_ID \
@@ -167,5 +169,6 @@ jobs:
             --set-env-vars SQLDB_CONNECTION_STRING=$SQLDB_CONNECTION_STRING,CUSTOMERIO_WRITE_KEY=$CUSTOMERIO_WRITE_KEY \
             --set-env-vars TEMPORAL_HOST_URL=$TEMPORAL_HOST_URL,TEMPORAL_NAMESPACE=$TEMPORAL_NAMESPACE,TEMPORAL_MTLS_TLS_CERT_BASE64=$TEMPORAL_MTLS_TLS_CERT_BASE64,TEMPORAL_MTLS_TLS_KEY_BASE64=$TEMPORAL_MTLS_TLS_KEY_BASE64 \
             --set-env-vars AZURE_OPENAI_KEY=$AZURE_OPENAI_KEY,AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT,API_TRIGGER_SECRET=$API_TRIGGER_SECRET \
+            --set-env-vars TAK_SEARCH_URL=$TAK_SEARCH_URL,TAK_APP_API_KEY=$TAK_APP_API_KEY \
             --image europe-west1-docker.pkg.dev/portal-385519/phospho-backend/app:production \
             --min-instances 4

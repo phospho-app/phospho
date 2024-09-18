@@ -27,10 +27,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
     },
   );
 
-  const eventFilters = {
-    // created_at_start: dateRange?.created_at_start,
-    // created_at_end: dateRange?.created_at_end,
-  };
+  const eventFilters = {};
 
   // In the Record, find the event with the same id as the one passed in the props
   const eventsAsArray = Object.entries(selectedProject.settings?.events || {});
