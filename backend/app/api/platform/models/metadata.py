@@ -78,6 +78,6 @@ class MetadataPivotQuery(BaseModel):
     )
     scorer_id: str | None = Field(
         None,
-        description="This is the scorer id chosen when using the avg_scorer_value metric.",
+        description="When using the avg_scorer_value metric, this is the `EventDefinition.id` of the scorer. Check the id of the scorer in the Event page URL.",
     )
     filters: ProjectDataFilters | None = None
