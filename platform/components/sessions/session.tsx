@@ -21,6 +21,7 @@ import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
 import { EventDefinition } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
+import { CopyIcon } from "lucide-react";
 import React, { useState } from "react";
 import useSWR from "swr";
 
@@ -85,26 +86,43 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
             <div className="flex justify-between">Session</div>
           </CardTitle>
           <CardDescription>
-            {uniqueEvents && (
-              <div className="flex">
-                <span className="font-bold mr-2">Events:</span>
-                <div className="space-x-2 flex items-center">
-                  <SuggestEvent
-                    sessionId={session_id}
-                    event={{} as EventDefinition}
-                  />
-                  {uniqueEvents?.map((event: Event) => (
-                    <Badge variant="outline" key={event.id}>
-                      {event.event_name}
-                    </Badge>
-                  ))}
-                </div>
+            <div className="flex flex-col space-y-1">
+              <div>
+                <code className="bg-secondary p-1.5">{session_id}</code>
+                <Button
+                  variant="outline"
+                  className="m-1.5"
+                  size="icon"
+                  onClick={() => {
+                    navigator.clipboard.writeText(session_id);
+                  }}
+                >
+                  <CopyIcon className="w-3 h-3" />
+                </Button>
               </div>
-            )}
-            <span className="font-bold">Created at:</span>{" "}
-            {formatUnixTimestampToLiteralDatetime(
-              session_with_events.created_at,
-            )}
+              {uniqueEvents && (
+                <div className="flex">
+                  <span className="font-bold mr-2">Events:</span>
+                  <div className="space-x-2 flex items-center">
+                    <SuggestEvent
+                      sessionId={session_id}
+                      event={{} as EventDefinition}
+                    />
+                    {uniqueEvents?.map((event: Event) => (
+                      <Badge variant="outline" key={event.id}>
+                        {event.event_name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <span>
+                <span className="font-bold">Created at: </span>
+                {formatUnixTimestampToLiteralDatetime(
+                  session_with_events.created_at,
+                )}
+              </span>
+            </div>
             <div className="space-y-2">
               {session_with_events?.metadata &&
                 Object.entries(session_with_events.metadata)
