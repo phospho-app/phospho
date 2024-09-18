@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 from app.db.mongo import get_mongo_db
 from app.db.models import Task
-from langdetect import detect
+from langdetect import detect  # type: ignore
 from loguru import logger
 
 

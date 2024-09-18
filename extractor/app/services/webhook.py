@@ -2,6 +2,7 @@ from typing import Optional
 
 import aiohttp
 from loguru import logger
+from aiohttp import ClientTimeout
 
 
 async def trigger_webhook(
@@ -27,13 +28,13 @@ async def trigger_webhook(
         logger.info(f"Triggering webhook: {url}")
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                url, json=json, timeout=timeout, headers=headers
+                url, json=json, timeout=ClientTimeout(total=timeout), headers=headers
             ) as response:
                 response.raise_for_status()
                 logger.info(f"Webhook triggered successfully: {response.status}")
-                response_txt = await response.text()
+                await response.text()
             await session.close()
-        return response_txt
+        return None
     except aiohttp.ClientError as e:
         logger.error(f"Error sending webhook to {url}: {e}")
         await session.close()
