@@ -477,6 +477,12 @@ async def breakdown_by_sum_of_metadata_field(
     The output stack can be used to create a stacked bar chart.
     """
 
+    if scorer_id and metric != "avg_scorer_value":
+        raise HTTPException(
+            status_code=400,
+            detail="A scorer_id can only be provided when the metric is 'avg_scorer_value'",
+        )
+
     metric = metric.lower()
     metadata_field = metadata_field.lower() if metadata_field is not None else None
     breakdown_by = breakdown_by.lower() if breakdown_by is not None else None
