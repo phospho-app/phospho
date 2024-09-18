@@ -36,7 +36,6 @@ import {
   ThumbsDown,
   ThumbsUp,
 } from "lucide-react";
-import Link from "next/link";
 import React from "react";
 import useSWR, { KeyedMutator } from "swr";
 
@@ -55,7 +54,7 @@ async function flagTask({
   flag: string;
   accessToken?: string;
   project_id?: string | null;
-  mutateTasks: KeyedMutator<TaskData>;
+  mutateTasks: KeyedMutator<TaskWithEvents[]>;
 }) {
   if (!accessToken) return;
   if (!project_id) return;
@@ -70,10 +69,10 @@ async function flagTask({
       human_eval: flag,
     }),
   });
-  mutateTasks((data: TaskData | undefined) => {
+  mutateTasks((data: TaskWithEvents[] | undefined) => {
     if (!data) return data;
     // Edit the Task with the same task id
-    data.tasks = data.tasks.map((task: TaskWithEvents) => {
+    data = data.map((task: TaskWithEvents) => {
       if (task.id === task_id) {
         task.flag = flag;
       }
@@ -89,7 +88,7 @@ export function useColumns({
   setSheetToOpen,
   setEventDefinition,
 }: {
-  mutateTasks: KeyedMutator<TaskData>;
+  mutateTasks: KeyedMutator<TaskWithEvents[]>;
   setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSheetToOpen: React.Dispatch<React.SetStateAction<string | null>>;
   setEventDefinition: React.Dispatch<
@@ -300,16 +299,14 @@ export function useColumns({
                   task={row.row.original as TaskWithEvents}
                   setTask={(task: TaskWithEvents) => {
                     // Use mutateTasks
-                    mutateTasks((data: TaskData | undefined) => {
+                    mutateTasks((data: TaskWithEvents[] | undefined) => {
                       if (!data) return data;
-                      data.tasks = data.tasks.map(
-                        (exisingTask: TaskWithEvents) => {
-                          if (exisingTask.id === task.id) {
-                            return task;
-                          }
-                          return exisingTask;
-                        },
-                      );
+                      data = data.map((exisingTask: TaskWithEvents) => {
+                        if (exisingTask.id === task.id) {
+                          return task;
+                        }
+                        return exisingTask;
+                      });
                       return data;
                     });
                   }}
@@ -320,9 +317,9 @@ export function useColumns({
               key={`add_event_task_${row.row.original.id}`}
               task={row.row.original as TaskWithEvents}
               setTask={(task: TaskWithEvents) => {
-                mutateTasks((data: TaskData | undefined) => {
+                mutateTasks((data: TaskWithEvents[] | undefined) => {
                   if (!data) return data;
-                  data.tasks = data.tasks.map((exisingTask: TaskWithEvents) => {
+                  data = data.map((exisingTask: TaskWithEvents) => {
                     if (exisingTask.id === task.id) {
                       return task;
                     }

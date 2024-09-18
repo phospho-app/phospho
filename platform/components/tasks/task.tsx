@@ -5,7 +5,6 @@ import TaskBox from "@/components/task-box";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -40,25 +39,6 @@ const TaskOverview: React.FC<TaskProps> = ({
   );
   const task = taskData as TaskWithEvents;
 
-  // const flagTask = async (flag: string) => {
-  //   if (user === null || user === undefined) return;
-  //   if (task === null || task === undefined) return;
-
-  //   // Create a project object in the database with the URL
-  //   const creation_response = await fetch(`/api/tasks/${task.id}/human-eval`, {
-  //     method: "POST",
-  //     headers: {
-  //       Authorization: "Bearer " + accessToken,
-  //       "Content-Type": "application/json",
-  //     },
-  //     body: JSON.stringify({
-  //       human_eval: flag,
-  //     }),
-  //   });
-  //   const creation_response_json = await creation_response.json();
-  //   mutateTask(creation_response_json);
-  // };
-
   if (task === undefined) return <CenteredSpinner />;
 
   // To re-render the component when the flag is updated, we need to use a state
@@ -68,37 +48,6 @@ const TaskOverview: React.FC<TaskProps> = ({
     mutateTask({ ...task, flag: flag });
     setRefresh(!refresh);
   };
-
-  // const goToNextTask = () => {
-  //   // Remove the current task (if it's in the list)
-  //   if (!tasksWithoutHumanLabel) return;
-
-  //   const index = tasksWithoutHumanLabel.findIndex((t) => t.id === task.id);
-  //   if (index !== -1) {
-  //     tasksWithoutHumanLabel.splice(index, 1);
-  //   }
-  //   setTasksWithoutHumanLabel(tasksWithoutHumanLabel);
-
-  //   // Fetch the next task without label
-  //   if (tasksWithoutHumanLabel.length === 0) {
-  //     return;
-  //   }
-  //   const nextUnlabeledTask = tasksWithoutHumanLabel[0];
-  //   if (nextUnlabeledTask) {
-  //     router.push(`/org/transcripts/tasks/${nextUnlabeledTask.id}`);
-  //   }
-  // };
-
-  // const onDislikeShowNext = () => {
-  //   // Flag the task as a failure
-  //   flagTask("failure");
-  //   goToNextTask();
-  // };
-  // const onLikeShowNext = () => {
-  //   // Flag the task as a success
-  //   flagTask("success");
-  //   goToNextTask();
-  // };
 
   return (
     <div className="flex flex-col space-y-4">

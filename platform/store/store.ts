@@ -5,7 +5,6 @@ import {
   HasEnoughLabelledTasks,
   OrgMetadata,
   ProjectDataFilters,
-  Task,
 } from "@/models/models";
 import { PaginationState, SortingState, Updater } from "@tanstack/react-table";
 import { addDays } from "date-fns";
@@ -283,9 +282,6 @@ interface dataState {
   setHasLabelledTasks: (
     hasLabelledTasks: HasEnoughLabelledTasks | null,
   ) => void;
-
-  tasksWithoutHumanLabel: Task[] | null;
-  setTasksWithoutHumanLabel: (tasks: Task[]) => void;
 }
 
 export const dataStateStore = create<dataState>((set) => ({
@@ -296,8 +292,4 @@ export const dataStateStore = create<dataState>((set) => ({
   hasLabelledTasks: null,
   setHasLabelledTasks: (hasLabelledTasks: HasEnoughLabelledTasks | null) =>
     set(() => ({ hasLabelledTasks: hasLabelledTasks })),
-
-  tasksWithoutHumanLabel: null,
-  setTasksWithoutHumanLabel: (tasks: Task[]) =>
-    set(() => ({ tasksWithoutHumanLabel: tasks })),
 }));
