@@ -18,8 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
-import { EventDefinition, Task, TaskWithEvents } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { EventDefinition, TaskWithEvents } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   flexRender,

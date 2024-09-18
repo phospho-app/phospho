@@ -39,10 +39,6 @@ import {
 import React from "react";
 import useSWR, { KeyedMutator } from "swr";
 
-interface TaskData {
-  tasks: TaskWithEvents[];
-}
-
 async function flagTask({
   task_id,
   flag,
