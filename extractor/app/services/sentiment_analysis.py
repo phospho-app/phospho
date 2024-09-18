@@ -48,8 +48,6 @@ async def call_sentiment_and_language_api(
             timeout=10,
         )
 
-        logger.debug(f"Sentiment response: {response}")
-
         sentiment_response = SentimentObject(
             score=response.document_sentiment.score,
             magnitude=response.document_sentiment.magnitude,
