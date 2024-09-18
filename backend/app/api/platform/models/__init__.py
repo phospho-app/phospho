@@ -54,3 +54,4 @@ from .projects import (
 from .recipes import RunRecipeRequest
 from .tasks import AddEventRequest, RemoveEventRequest
 from .sessions import SessionHumanEvalRequest
+from .clustering import RenameClusteringRequest
