@@ -293,7 +293,7 @@ async def create(
     SUPPORTED_MODELS = [
         "openai:gpt-4o",
         "openai:gpt-4o-mini",
-    ]  # Add "openai:gpt-4o-mini" and update the pricing accordingly
+    ]
     if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
             status_code=400,
@@ -310,6 +310,8 @@ async def create(
     openai_client = get_async_client(cast(Literal["openai", "azure"], provider))
 
     query_inputs = create_request.model_dump()
+    # Update the model from provider:model_name to model_name (ex: openai:gpt-4o to gpt-4o)
+    query_inputs["model"] = model_name
 
     should_stream = query_inputs.get("stream", False)
 
