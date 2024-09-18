@@ -224,9 +224,9 @@ const Clusters: React.FC = () => {
           <h1 className="text-2xl font-bold">Clusterings</h1>
         )}
         <div>
-          <div className="flex flex-row space-x-2">
+          <div className="flex flex-row space-x-2 items-center">
             <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-              <DropdownMenuTrigger>
+              <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size={"icon"} onClick={toggleButton}>
                   <Settings className="h-4 w-4" />
                 </Button>
