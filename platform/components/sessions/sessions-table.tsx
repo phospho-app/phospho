@@ -170,8 +170,8 @@ export function SessionsTable({
   return (
     <div>
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <div className="flex flex-row justify-between gap-x-2 items-center mb-2">
-          <div className="flex flex-row space-x-2 items-center">
+        <div className="mb-2 flex flex-col items-start justify-between gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2">
+          <div className="flex flex-col items-start gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2 ">
             <DatePickerWithRange nbrItems={totalNbSessions} />
             <FilterComponent variant="sessions" />
             <RunAnalysisInPast />
