@@ -18,7 +18,6 @@ from phospho.utils import (
 RecipeType = Literal[
     "event_detection",
     "sentiment_language",
-    "session_info",
 ]
 
 
@@ -270,7 +269,7 @@ class ProjectSettings(BaseModel):
     sentiment_threshold: Optional[Threshold] = Field(default_factory=Threshold)
     last_langsmith_extract: Optional[Union[str, datetime.datetime]] = None
     last_langfuse_extract: Optional[Union[str, datetime.datetime]] = None
-    run_evals: Optional[bool] = True
+    run_evals: Optional[bool] = False
     run_sentiment: Optional[bool] = True
     run_language: Optional[bool] = True
     run_event_detection: Optional[bool] = True
@@ -325,17 +324,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "event_name"
-                        ] = event_name
+                        project_data["settings"]["events"][event_name]["event_name"] = (
+                            event_name
+                        )
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "org_id"
-                        ] = project_data["org_id"]
+                        project_data["settings"]["events"][event_name]["org_id"] = (
+                            project_data["org_id"]
+                        )
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "project_id"
-                        ] = project_data["id"]
+                        project_data["settings"]["events"][event_name]["project_id"] = (
+                            project_data["id"]
+                        )
 
             # Transition dashboard_tiles to lowercase and new fields
             if "dashboard_tiles" in project_data["settings"].keys():

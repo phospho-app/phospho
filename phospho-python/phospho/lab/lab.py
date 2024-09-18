@@ -308,8 +308,7 @@ class MessageCallable(Protocol):
     A function whose first argument is a Message.
     """
 
-    def __call__(self, message: Message, *args: Any, **kwargs: Any) -> Any:
-        ...
+    def __call__(self, message: Message, *args: Any, **kwargs: Any) -> Any: ...
 
 
 class Workload:
@@ -755,7 +754,7 @@ class Workload:
                     max_workers=max_parallelism
                 ) as executor:
                     # Submit tasks to the executor
-                    executor_results = executor.map(job_limit_wrap, messages)
+                    executor.map(job_limit_wrap, messages)
 
                 t.close()
         elif executor_type == "parallel_jobs":
@@ -780,9 +779,7 @@ class Workload:
                 max_workers=max_parallelism
             ) as executor:
                 # Submit tasks to the executor
-                executor_results = executor.map(
-                    message_job_limit_wrap, messages_and_jobs
-                )
+                executor.map(message_job_limit_wrap, messages_and_jobs)
 
             t.close()
         elif executor_type == "sequential":

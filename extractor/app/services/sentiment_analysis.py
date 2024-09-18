@@ -3,12 +3,14 @@ from typing import Optional
 from google.cloud import language_v2
 from loguru import logger
 
-from app.core.config import GCP_SENTIMENT_CLIENT
+from app.core.config import GCP_ASYNC_SENTIMENT_CLIENT
 from phospho.models import SentimentObject
 
 
 async def call_sentiment_and_language_api(
-    text: str, score_threshold: float, magnitude_threshold: float
+    text: str,
+    score_threshold: float,
+    magnitude_threshold: float,
 ) -> tuple[SentimentObject, Optional[str]]:
     """
     Analyzes Sentiment and Language of a given text.
@@ -20,7 +22,7 @@ async def call_sentiment_and_language_api(
     Args:
       text_content: The text content to analyze.
     """
-    if GCP_SENTIMENT_CLIENT is None:
+    if GCP_ASYNC_SENTIMENT_CLIENT is None:
         logger.warning("No client available for sentiment analysis")
         return SentimentObject(), None
 
@@ -41,22 +43,20 @@ async def call_sentiment_and_language_api(
         # See https://cloud.google.com/natural-language/docs/reference/rest/v2/EncodingType.
         encoding_type = language_v2.EncodingType.UTF8
 
-        response = GCP_SENTIMENT_CLIENT.analyze_sentiment(
+        response = await GCP_ASYNC_SENTIMENT_CLIENT.analyze_sentiment(
             request={"document": document, "encoding_type": encoding_type},
             timeout=10,
         )
-
-        logger.debug(f"Sentiment response: {response}")
 
         sentiment_response = SentimentObject(
             score=response.document_sentiment.score,
             magnitude=response.document_sentiment.magnitude,
         )
 
-        if response.language_code is None:
-            language = None
-        else:
-            language = response.language_code
+        language = (
+            response.language_code if response.language_code is not None else None
+        )
+
         # We interpret the sentiment score as follows:
         if sentiment_response.score is None:
             sentiment_response = SentimentObject()
