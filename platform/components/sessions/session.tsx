@@ -22,11 +22,18 @@ import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
 import { EventDefinition } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
-import { CopyIcon } from "lucide-react";
+import { ChevronRight, CopyIcon } from "lucide-react";
+import Link from "next/link";
 import React, { useState } from "react";
 import useSWR from "swr";
 
-const SessionStats = ({ session_id }: { session_id: string }) => {
+const SessionStats = ({
+  session_id,
+  showGoToSession = false,
+}: {
+  session_id: string;
+  showGoToSession?: boolean;
+}) => {
   const { accessToken } = useUser();
 
   const { data: sessionData }: { data: SessionWithEvents | undefined } = useSWR(
@@ -49,7 +56,17 @@ const SessionStats = ({ session_id }: { session_id: string }) => {
     <Card className="mt-4">
       <CardHeader>
         <CardTitle className="text-xl font-bold tracking-tight">
-          <div className="flex justify-between">Session</div>
+          <div className="flex justify-between">
+            Session
+            {showGoToSession && (
+              <Link href={`/org/transcripts/sessions/${session_id}`}>
+                <Button variant="secondary">
+                  Go to Session
+                  <ChevronRight />
+                </Button>
+              </Link>
+            )}
+          </div>
         </CardTitle>
         <CardDescription>
           <div className="flex flex-col space-y-1">

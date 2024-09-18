@@ -1,7 +1,3 @@
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
-
-import { Button } from "../ui/button";
 import { SessionStats, SessionTranscript } from "./session";
 
 function SessionPreview({
@@ -16,17 +12,7 @@ function SessionPreview({
 
   return (
     <div className="flex flex-col space-y-2">
-      <SessionStats session_id={session_id} />
-      <div className="flex w-full justify-start">
-        <Link
-          href={`/org/transcripts/sessions/${encodeURIComponent(session_id)}`}
-        >
-          <Button variant="secondary">
-            Go to session page
-            <ChevronRight />
-          </Button>
-        </Link>
-      </div>
+      <SessionStats session_id={session_id} showGoToSession={true} />
       <SessionTranscript session_id={session_id} />
     </div>
   );

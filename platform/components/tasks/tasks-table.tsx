@@ -30,10 +30,10 @@ import {
 } from "@tanstack/react-table";
 import { Database } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
 
+import { TaskPreview } from "./task-preview";
 import { useColumns } from "./tasks-table-columns";
 
 interface DataTableProps {
@@ -57,13 +57,13 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
     (state) => state.setTasksPagination,
   );
   const { accessToken } = useUser();
-  const router = useRouter();
 
-  const [, setTableIsClickable] = React.useState<boolean>(true);
-  const [sheetOpen, setSheetOpen] = React.useState<boolean>(false);
-  const [sheetToOpen, setSheetToOpen] = React.useState<string | null>(null);
+  const [, setTableIsClickable] = useState<boolean>(true);
+  const [sheetOpen, setSheetOpen] = useState<boolean>(false);
+  const [sheetToOpen, setSheetToOpen] = useState<string | null>(null);
   const [eventDefinition, setEventDefinition] =
-    React.useState<EventDefinition | null>(null);
+    useState<EventDefinition | null>(null);
+  const [taskPreviewId, setTaskToPreviewId] = useState<string | null>(null);
 
   let tasksWithEvents: TaskWithEvents[] = [];
 
@@ -207,9 +207,9 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
                     key={row.id}
                     // data-state={row.getIsSelected() && "selected"}
                     onClick={() => {
-                      router.push(
-                        `/org/transcripts/tasks/${encodeURIComponent(row.original.id)}`,
-                      );
+                      setTaskToPreviewId(row.original.id);
+                      setSheetToOpen("preview");
+                      setSheetOpen(true);
                     }}
                     className="cursor-pointer"
                   >
@@ -274,6 +274,7 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
             <RunEvent setOpen={setSheetOpen} eventToRun={eventDefinition} />
           )}
           {sheetToOpen === "edit" && <CreateEvent setOpen={setSheetOpen} />}
+          {sheetToOpen === "preview" && <TaskPreview task_id={taskPreviewId} />}
         </SheetContent>
       </Sheet>
     </div>

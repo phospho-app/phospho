@@ -403,13 +403,9 @@ export function useColumns({
         // Handle undefined edge case
         if (!session) return <></>;
         return (
-          <Link
-            href={`/org/transcripts/sessions/${encodeURIComponent(session.id)}`}
-          >
-            <Button variant="ghost" size="icon">
-              <ChevronRight />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon">
+            <ChevronRight />
+          </Button>
         );
       },
       size: 10,
