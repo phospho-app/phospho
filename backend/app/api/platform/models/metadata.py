@@ -76,4 +76,8 @@ class MetadataPivotQuery(BaseModel):
         "day",
         description="The field to break down the metric by. Can be a metadata field, a time field, tagger_name, scorer_name, task_position, None, session_length",
     )
+    scorer_id: str | None = Field(
+        None,
+        description="This is the scorer id chosen when using the avg_scorer_value metric.",
+    )
     filters: ProjectDataFilters | None = None

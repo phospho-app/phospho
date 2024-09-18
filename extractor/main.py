@@ -8,7 +8,7 @@ from temporalio.worker.workflow_sandbox import (
     SandboxRestrictions,
 )
 import sentry_sdk
-import aiohealthcheck
+import aiohealthcheck  # type: ignore
 from app.sentry.interceptor import SentryInterceptor
 
 from loguru import logger
@@ -82,8 +82,8 @@ async def main() -> None:
         client_key = config.TEMPORAL_MTLS_TLS_KEY
 
         client = await Client.connect(
-            config.TEMPORAL_HOST_URL,
-            namespace=config.TEMPORAL_NAMESPACE,
+            config.TEMPORAL_HOST_URL,  # type: ignore
+            namespace=config.TEMPORAL_NAMESPACE,  # type: ignore
             tls=TLSConfig(
                 client_cert=client_cert,
                 client_private_key=client_key,
@@ -93,8 +93,8 @@ async def main() -> None:
     elif config.ENVIRONMENT in ["test", "preview"]:
         try:
             client = await Client.connect(
-                config.TEMPORAL_HOST_URL,
-                namespace=config.TEMPORAL_NAMESPACE,
+                config.TEMPORAL_HOST_URL,  # type: ignore
+                namespace=config.TEMPORAL_NAMESPACE,  # type: ignore
                 tls=False,
                 data_converter=pydantic_data_converter,
             )
