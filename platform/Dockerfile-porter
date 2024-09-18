@@ -2,7 +2,6 @@ ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_APP_ENV
 ARG NEXT_PUBLIC_AUTH_URL
 ARG PROPELAUTH_REDIRECT_URI
-#
 ARG PROD_API_URL
 ARG PROPELAUTH_API_KEY
 ARG PROPELAUTH_VERIFIER_KEY
@@ -16,9 +15,10 @@ RUN apk add --no-cache libc6-compat g++ make python3
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN yarn add sharp
-RUN yarn install --frozen-lockfile
+COPY package.json package-lock.json* ./
+COPY .eslintrc.json ./
+RUN npm install sharp
+RUN npm ci
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -48,10 +48,7 @@ ENV PROD_API_URL=${PROD_API_URL}
 ENV PROPELAUTH_API_KEY=${PROPELAUTH_API_KEY}
 ENV PROPELAUTH_VERIFIER_KEY=${PROPELAUTH_VERIFIER_KEY}
 
-RUN yarn build
-
-# If using npm comment out above and use below instead
-# RUN npm run build
+RUN npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
@@ -89,7 +86,6 @@ ENV PROPELAUTH_REDIRECT_URI=${PROPELAUTH_REDIRECT_URI}
 ENV PROD_API_URL=${PROD_API_URL}
 ENV PROPELAUTH_API_KEY=${PROPELAUTH_API_KEY}
 ENV PROPELAUTH_VERIFIER_KEY=${PROPELAUTH_VERIFIER_KEY}
-
 
 USER nextjs
 
