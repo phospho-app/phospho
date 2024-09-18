@@ -67,7 +67,7 @@ export default function Page() {
             Your project id:{" "}
             <code className="bg-secondary p-1.5">{project_id}</code>
           </div>
-          <HoverCard openDelay={80} closeDelay={30}>
+          <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger>
               <Button
                 variant="outline"

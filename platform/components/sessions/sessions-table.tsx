@@ -30,10 +30,10 @@ import {
 } from "@tanstack/react-table";
 import { Database } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React from "react";
-import useSWR from "swr";
+import React, { useState } from "react";
+import useSWR, { KeyedMutator } from "swr";
 
+import { SessionPreview } from "./session-preview";
 import { useColumns } from "./sessions-table-columns";
 
 interface DataTableProps {
@@ -46,7 +46,6 @@ export function SessionsTable({
   sessions_ids,
 }: DataTableProps) {
   const project_id = navigationStateStore((state) => state.project_id);
-
   const sessionsSorting = navigationStateStore(
     (state) => state.sessionsSorting,
   );
@@ -64,17 +63,21 @@ export function SessionsTable({
   const dateRange = navigationStateStore((state) => state.dateRange);
 
   const { accessToken } = useUser();
-  const router = useRouter();
 
-  const [, setTableIsClickable] = React.useState<boolean>(true);
-  const [sheetOpen, setSheetOpen] = React.useState<boolean>(false);
-  const [sheetToOpen, setSheetToOpen] = React.useState<string | null>(null);
+  const [, setTableIsClickable] = useState<boolean>(true);
+  const [sheetOpen, setSheetOpen] = useState<boolean>(false);
+  const [sheetToOpen, setSheetToOpen] = useState<string | null>(null);
+  const [previewSessionId, setPreviewSessionId] = useState<string | null>(null);
   const [eventDefinition, setEventDefinition] =
-    React.useState<EventDefinition | null>(null);
+    useState<EventDefinition | null>(null);
 
-  let sessionsWithEvents: SessionWithEvents[] = [];
-
-  const { data: sessionsData, mutate: mutateSessions } = useSWR(
+  const {
+    data: sessionsWithEvents,
+    mutate: mutateSessions,
+  }: {
+    data: SessionWithEvents[] | undefined;
+    mutate: KeyedMutator<SessionWithEvents[]>;
+  } = useSWR(
     project_id
       ? [
           `/api/projects/${project_id}/sessions`,
@@ -96,14 +99,15 @@ export function SessionsTable({
           page_size: sessionPagination.pageSize,
         },
         sorting: sessionsSorting,
+      }).then((res) => {
+        if (res === undefined) return undefined;
+        if (!res?.sessions) return [];
+        return res.sessions;
       }),
     {
       keepPreviousData: true,
     },
   );
-  if (sessionsData?.sessions) {
-    sessionsWithEvents = sessionsData.sessions;
-  }
 
   const { data: totalNbSessionsData, isLoading: isTotalNbSessionsLoading } =
     useSWR(
@@ -139,7 +143,7 @@ export function SessionsTable({
   });
 
   const table = useReactTable({
-    data: sessionsWithEvents,
+    data: sessionsWithEvents ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSessionsSorting,
@@ -208,9 +212,9 @@ export function SessionsTable({
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
                     onClick={() => {
-                      router.push(
-                        `/org/transcripts/sessions/${encodeURIComponent(row.original.id)}`,
-                      );
+                      setSheetOpen(true);
+                      setSheetToOpen("preview");
+                      setPreviewSessionId(row.original.id);
                     }}
                     className="cursor-pointer"
                   >
@@ -276,6 +280,12 @@ export function SessionsTable({
             <RunEvent setOpen={setSheetOpen} eventToRun={eventDefinition} />
           )}
           {sheetToOpen === "edit" && <CreateEvent setOpen={setSheetOpen} />}
+          {sheetToOpen === "preview" && (
+            <SessionPreview
+              setOpen={setSheetOpen}
+              session_id={previewSessionId}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </div>

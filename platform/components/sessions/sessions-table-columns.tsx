@@ -32,7 +32,6 @@ import {
   ThumbsDown,
   ThumbsUp,
 } from "lucide-react";
-import Link from "next/link";
 import React from "react";
 import { KeyedMutator } from "swr";
 import useSWR from "swr";
@@ -403,13 +402,9 @@ export function useColumns({
         // Handle undefined edge case
         if (!session) return <></>;
         return (
-          <Link
-            href={`/org/transcripts/sessions/${encodeURIComponent(session.id)}`}
-          >
-            <Button variant="ghost" size="icon">
-              <ChevronRight />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon">
+            <ChevronRight />
+          </Button>
         );
       },
       size: 10,
