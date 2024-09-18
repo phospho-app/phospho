@@ -30,7 +30,6 @@ import {
 } from "@tanstack/react-table";
 import { Database } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useSWR, { KeyedMutator } from "swr";
 
@@ -64,7 +63,6 @@ export function SessionsTable({
   const dateRange = navigationStateStore((state) => state.dateRange);
 
   const { accessToken } = useUser();
-  const router = useRouter();
 
   const [, setTableIsClickable] = useState<boolean>(true);
   const [sheetOpen, setSheetOpen] = useState<boolean>(false);

@@ -26,7 +26,114 @@ import { CopyIcon } from "lucide-react";
 import React, { useState } from "react";
 import useSWR from "swr";
 
-const SessionOverview = ({ session_id }: { session_id: string }) => {
+const SessionStats = ({ session_id }: { session_id: string }) => {
+  const { accessToken } = useUser();
+
+  const { data: sessionData }: { data: SessionWithEvents | undefined } = useSWR(
+    [`/api/sessions/${session_id}`, accessToken],
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      revalidateIfStale: false,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      keepPreviousData: true,
+    },
+  );
+
+  const uniqueEvents = sessionData?.events?.filter(
+    (event: Event, index: number, self: Event[]) =>
+      index === self.findIndex((e: Event) => e.event_name === event.event_name),
+  );
+
+  return (
+    <Card className="mt-4">
+      <CardHeader>
+        <CardTitle className="text-xl font-bold tracking-tight">
+          <div className="flex justify-between">Session</div>
+        </CardTitle>
+        <CardDescription>
+          <div className="flex flex-col space-y-1">
+            <div>
+              <code className="bg-secondary p-1.5">{session_id}</code>
+              <Button
+                variant="outline"
+                className="m-1.5"
+                size="icon"
+                onClick={() => {
+                  navigator.clipboard.writeText(session_id);
+                }}
+              >
+                <CopyIcon className="w-3 h-3" />
+              </Button>
+            </div>
+            {uniqueEvents && (
+              <div className="flex">
+                <span className="font-bold mr-2">Events:</span>
+                <div className="space-x-2 flex items-center">
+                  <SuggestEvent
+                    sessionId={session_id}
+                    event={{} as EventDefinition}
+                  />
+                  {uniqueEvents?.map((event: Event) => (
+                    <Badge variant="outline" key={event.id}>
+                      {event.event_name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            <span>
+              <span className="font-bold">Created at: </span>
+              {sessionData &&
+                formatUnixTimestampToLiteralDatetime(sessionData.created_at)}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {sessionData?.metadata &&
+              Object.entries(sessionData.metadata)
+                .sort(([key1], [key2]) => {
+                  if (key1 < key2) return -1;
+                  if (key1 > key2) return 1;
+                  return 0;
+                })
+                .map(([key, value]) => {
+                  if (typeof value === "string" || typeof value === "number") {
+                    const shortValue =
+                      typeof value === "string" && value.length > 50
+                        ? value.substring(0, 50) + "..."
+                        : value;
+                    return (
+                      <Badge
+                        variant="outline"
+                        className="mx-2 text-xs font-normal"
+                        key={key}
+                      >
+                        <div>
+                          {key}: {shortValue}
+                        </div>
+                      </Badge>
+                    );
+                  }
+                  return null;
+                })}
+          </div>
+          <Collapsible>
+            <CollapsibleTrigger>
+              <Button variant="link">{">"}Raw Session Data</Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <pre className="whitespace-pre-wrap mx-2">
+                {JSON.stringify(sessionData, null, 2)}
+              </pre>
+            </CollapsibleContent>
+          </Collapsible>
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  );
+};
+
+const SessionTranscript = ({ session_id }: { session_id: string }) => {
   const { accessToken } = useUser();
   const [refresh, setRefresh] = useState(false);
 
@@ -43,6 +150,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
     [`/api/sessions/${session_id}/tasks`, accessToken],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "GET").then((res) => {
+        if (res === undefined) return undefined;
         const tasks = res.tasks as TaskWithEvents[];
         // If responsse_json tasks are not null, sort them
         if (tasks !== undefined && tasks !== null && tasks.length > 0) {
@@ -59,117 +167,14 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
     },
   );
 
-  const { data: sessionData }: { data: SessionWithEvents | undefined } = useSWR(
-    [`/api/sessions/${session_id}`, accessToken],
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      keepPreviousData: true,
-    },
-  );
-  const uniqueEvents = sessionData?.events?.filter(
-    (event: Event, index: number, self: Event[]) =>
-      index === self.findIndex((e: Event) => e.event_name === event.event_name),
-  );
-
   return (
     <>
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold tracking-tight">
-            <div className="flex justify-between">Session</div>
-          </CardTitle>
-          <CardDescription>
-            <div className="flex flex-col space-y-1">
-              <div>
-                <code className="bg-secondary p-1.5">{session_id}</code>
-                <Button
-                  variant="outline"
-                  className="m-1.5"
-                  size="icon"
-                  onClick={() => {
-                    navigator.clipboard.writeText(session_id);
-                  }}
-                >
-                  <CopyIcon className="w-3 h-3" />
-                </Button>
-              </div>
-              {uniqueEvents && (
-                <div className="flex">
-                  <span className="font-bold mr-2">Events:</span>
-                  <div className="space-x-2 flex items-center">
-                    <SuggestEvent
-                      sessionId={session_id}
-                      event={{} as EventDefinition}
-                    />
-                    {uniqueEvents?.map((event: Event) => (
-                      <Badge variant="outline" key={event.id}>
-                        {event.event_name}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <span>
-                <span className="font-bold">Created at: </span>
-                {sessionData &&
-                  formatUnixTimestampToLiteralDatetime(sessionData.created_at)}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {sessionData?.metadata &&
-                Object.entries(sessionData.metadata)
-                  .sort(([key1], [key2]) => {
-                    if (key1 < key2) return -1;
-                    if (key1 > key2) return 1;
-                    return 0;
-                  })
-                  .map(([key, value]) => {
-                    if (
-                      typeof value === "string" ||
-                      typeof value === "number"
-                    ) {
-                      const shortValue =
-                        typeof value === "string" && value.length > 50
-                          ? value.substring(0, 50) + "..."
-                          : value;
-                      return (
-                        <Badge
-                          variant="outline"
-                          className="mx-2 text-xs font-normal"
-                          key={key}
-                        >
-                          <p>
-                            {key}: {shortValue}
-                          </p>
-                        </Badge>
-                      );
-                    }
-                    return null;
-                  })}
-            </div>
-            <Collapsible>
-              <CollapsibleTrigger>
-                <Button variant="link">{">"}Raw Session Data</Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <pre className="whitespace-pre-wrap mx-2">
-                  {JSON.stringify(sessionData, null, 2)}
-                </pre>
-              </CollapsibleContent>
-            </Collapsible>
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
-      <Card className="mt-4">
+      <Card>
         <CardHeader>
           <CardTitle className="text-xl font-bold ">Transcript</CardTitle>
         </CardHeader>
         <CardContent>
-          {sessionData === undefined && <Spinner />}
+          {sessionTasksData === undefined && <Spinner />}
           {sessionTasksData?.map((task: TaskWithEvents, index) => (
             <TaskBox
               key={index}
@@ -194,12 +199,20 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
                 mutateSessionTasks(newTasks, false);
                 setRefresh(!refresh);
               }}
-            ></TaskBox>
+            />
           ))}
         </CardContent>
       </Card>
     </>
   );
 };
+const SessionOverview = ({ session_id }: { session_id: string }) => {
+  return (
+    <div className="flex flex-col space-y-4">
+      <SessionStats session_id={session_id} />
+      <SessionTranscript session_id={session_id} />
+    </div>
+  );
+};
 
-export default SessionOverview;
+export { SessionOverview, SessionStats, SessionTranscript };
