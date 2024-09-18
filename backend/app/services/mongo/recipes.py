@@ -107,7 +107,7 @@ async def run_recipe_on_tasks_batched(
 
 async def run_recipe_types_on_tasks(
     project_id: str,
-    recipe_types: List[Literal["event_detection", "sentiment_language", "clustering"]],
+    recipe_types: List[Literal["event_detection", "sentiment_language"]],
     org_id: str,
     filters: Optional[ProjectDataFilters],
 ) -> None:
@@ -162,8 +162,5 @@ async def run_recipe_types_on_tasks(
                 sample_rate=None,
                 filters=filters,
             )
-        elif recipe_type == "clustering":
-            # TODO: Implement clustering
-            logger.warning("Clustering not implemented yet. Skipping.")
         else:
             logger.warning(f"Recipe type {recipe_type} not found. Skipping.")

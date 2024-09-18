@@ -18,7 +18,6 @@ from phospho.utils import (
 RecipeType = Literal[
     "event_detection",
     "sentiment_language",
-    "session_info",
 ]
 
 

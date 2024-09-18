@@ -29,7 +29,6 @@ from phospho.models import (
     PipelineResults,
     Message,
 )
-from aiohttp import ClientSession
 import asyncio
 
 PHOSPHO_EVENT_MODEL_NAMES = ["phospho-6", "owner", "phospho-4"]
@@ -492,19 +491,37 @@ class MainPipeline:
             )
 
             sentiment_score = 0
+            sentiment_count = 0
             magnitude_score = 0
+            magnitude_count = 0
             preview = ""
 
             valid_tasks = [Task.model_validate(task) for task in tasks]
             for valid_task in valid_tasks:
                 if valid_task.metadata is not None:
-                    sentiment_score += valid_task.metadata.get("sentiment_score", 0)
-                    magnitude_score += valid_task.metadata.get("sentiment_magnitude", 0)
+                    if (
+                        "sentiment_score" in valid_task.metadata
+                        and valid_task.metadata.get("sentiment_score") is not None
+                    ):
+                        sentiment_score += valid_task.metadata.get("sentiment_score", 0)
+                        sentiment_count += 1
+                    if (
+                        "sentiment_magnitude" in valid_task.metadata
+                        and valid_task.metadata.get("sentiment_magnitude") is not None
+                    ):
+                        magnitude_score += valid_task.metadata.get(
+                            "sentiment_magnitude", 0
+                        )
+                        magnitude_count += 1
                 preview += valid_task.preview() + "\n"
 
                 session_task_info = SessionStats(
-                    avg_sentiment_score=sentiment_score / len(valid_tasks),
-                    avg_magnitude_score=magnitude_score / len(valid_tasks),
+                    avg_sentiment_score=sentiment_score / sentiment_count
+                    if sentiment_count == 0
+                    else 0,
+                    avg_magnitude_score=magnitude_score / magnitude_score
+                    if magnitude_count == 0
+                    else 0,
                     most_common_sentiment_label=get_most_common(
                         [
                             task.sentiment.label
@@ -691,9 +708,9 @@ class MainPipeline:
 
         if recipe.recipe_type == "event_detection":
             await self.run_events(recipe=recipe)
+            await self.compute_session_info_pipeline()
         elif recipe.recipe_type == "sentiment_language":
             await self.run_sentiment_and_language()
-        elif recipe.recipe_type == "session_info":
             await self.compute_session_info_pipeline()
         else:
             raise NotImplementedError(

@@ -4,7 +4,5 @@ from pydantic import BaseModel
 
 
 class RunRecipeRequest(BaseModel):
-    recipe_type_list: List[
-        Literal["event_detection", "sentiment_language", "clustering"]
-    ]
+    recipe_type_list: List[Literal["event_detection", "sentiment_language"]]
     filters: Optional[ProjectDataFilters] = None
