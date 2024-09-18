@@ -634,7 +634,7 @@ class MainPipeline:
                 sentiment_object = None
 
             # Update the task item
-            await mongo_db["tasks"].update_one(
+            mongo_db["tasks"].update_one(
                 {
                     "id": task.id,
                     "project_id": task.project_id,
