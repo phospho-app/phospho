@@ -18,8 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
-import { EventDefinition, Task, TaskWithEvents } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { EventDefinition, TaskWithEvents } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
   flexRender,
@@ -30,10 +30,10 @@ import {
 } from "@tanstack/react-table";
 import { Database } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React from "react";
-import useSWR from "swr";
+import React, { useState } from "react";
+import useSWR, { KeyedMutator } from "swr";
 
+import { TaskPreview } from "./task-preview";
 import { useColumns } from "./tasks-table-columns";
 
 interface DataTableProps {
@@ -42,9 +42,6 @@ interface DataTableProps {
 
 export function TasksTable({ tasks_ids }: DataTableProps) {
   const project_id = navigationStateStore((state) => state.project_id);
-  const setTasksWithoutHumanLabel = dataStateStore(
-    (state) => state.setTasksWithoutHumanLabel,
-  );
   const tasksSorting = navigationStateStore((state) => state.tasksSorting);
   const setTasksSorting = navigationStateStore(
     (state) => state.setTasksSorting,
@@ -57,17 +54,21 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
     (state) => state.setTasksPagination,
   );
   const { accessToken } = useUser();
-  const router = useRouter();
 
-  const [, setTableIsClickable] = React.useState<boolean>(true);
-  const [sheetOpen, setSheetOpen] = React.useState<boolean>(false);
-  const [sheetToOpen, setSheetToOpen] = React.useState<string | null>(null);
+  const [, setTableIsClickable] = useState<boolean>(true);
+  const [sheetOpen, setSheetOpen] = useState<boolean>(false);
+  const [sheetToOpen, setSheetToOpen] = useState<string | null>(null);
   const [eventDefinition, setEventDefinition] =
-    React.useState<EventDefinition | null>(null);
+    useState<EventDefinition | null>(null);
+  const [taskPreviewId, setTaskToPreviewId] = useState<string | null>(null);
 
-  let tasksWithEvents: TaskWithEvents[] = [];
-
-  const { data: tasksData, mutate: mutateTasks } = useSWR(
+  const {
+    data: tasksWithEvents,
+    mutate: mutateTasks,
+  }: {
+    data: TaskWithEvents[] | undefined;
+    mutate: KeyedMutator<TaskWithEvents[]>;
+  } = useSWR(
     project_id
       ? [
           `/api/projects/${project_id}/tasks`,
@@ -89,23 +90,15 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
           page_size: tasksPagination.pageSize,
         },
         sorting: tasksSorting,
+      }).then((res) => {
+        if (res === undefined) return undefined;
+
+        if (!res?.tasks) return [];
+
+        return res.tasks;
       }),
     { keepPreviousData: true },
   );
-
-  if (
-    project_id &&
-    tasksData &&
-    tasksData?.tasks !== undefined &&
-    tasksData?.tasks !== null
-  ) {
-    tasksWithEvents = tasksData.tasks;
-    setTasksWithoutHumanLabel(
-      tasksData.tasks?.filter((task: Task) => {
-        return task?.last_eval?.source !== "owner";
-      }),
-    );
-  }
 
   const { data: totalNbTasksData, isLoading: isTotalNbTasksLoading } = useSWR(
     [
@@ -142,7 +135,7 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
   });
 
   const table = useReactTable({
-    data: tasksWithEvents,
+    data: tasksWithEvents ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setTasksSorting,
@@ -207,9 +200,9 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
                     key={row.id}
                     // data-state={row.getIsSelected() && "selected"}
                     onClick={() => {
-                      router.push(
-                        `/org/transcripts/tasks/${encodeURIComponent(row.original.id)}`,
-                      );
+                      setTaskToPreviewId(row.original.id);
+                      setSheetToOpen("preview");
+                      setSheetOpen(true);
                     }}
                     className="cursor-pointer"
                   >
@@ -274,6 +267,7 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
             <RunEvent setOpen={setSheetOpen} eventToRun={eventDefinition} />
           )}
           {sheetToOpen === "edit" && <CreateEvent setOpen={setSheetOpen} />}
+          {sheetToOpen === "preview" && <TaskPreview task_id={taskPreviewId} />}
         </SheetContent>
       </Sheet>
     </div>
