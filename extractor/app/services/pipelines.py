@@ -670,7 +670,7 @@ class MainPipeline:
                         "input": task.input,
                     },
                 )
-                await mongo_db["job_results"].insert_one(jobresult.model_dump())
+                mongo_db["job_results"].insert_one(jobresult.model_dump())
                 logger.info(
                     f"Sentiment analysis for task {task.id} : {sentiment_object}"
                 )
