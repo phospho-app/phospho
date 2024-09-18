@@ -1,6 +1,7 @@
 "use client";
 
 import SuggestEvent from "@/components/events/suggest-event";
+import { Spinner } from "@/components/small-spinner";
 import TaskBox from "@/components/task-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,7 +59,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
     },
   );
 
-  const { data: sessionData }: { data: SessionWithEvents } = useSWR(
+  const { data: sessionData }: { data: SessionWithEvents | undefined } = useSWR(
     [`/api/sessions/${session_id}`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
@@ -68,15 +69,10 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
       keepPreviousData: true,
     },
   );
-  const session_with_events = sessionData;
-  const uniqueEvents = session_with_events?.events?.filter(
+  const uniqueEvents = sessionData?.events?.filter(
     (event: Event, index: number, self: Event[]) =>
       index === self.findIndex((e: Event) => e.event_name === event.event_name),
   );
-
-  if (session_with_events === null || session_with_events === undefined) {
-    return <></>;
-  }
 
   return (
     <>
@@ -118,14 +114,13 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
               )}
               <span>
                 <span className="font-bold">Created at: </span>
-                {formatUnixTimestampToLiteralDatetime(
-                  session_with_events.created_at,
-                )}
+                {sessionData &&
+                  formatUnixTimestampToLiteralDatetime(sessionData.created_at)}
               </span>
             </div>
             <div className="space-y-2">
-              {session_with_events?.metadata &&
-                Object.entries(session_with_events.metadata)
+              {sessionData?.metadata &&
+                Object.entries(sessionData.metadata)
                   .sort(([key1], [key2]) => {
                     if (key1 < key2) return -1;
                     if (key1 > key2) return 1;
@@ -161,7 +156,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <pre className="whitespace-pre-wrap mx-2">
-                  {JSON.stringify(session_with_events, null, 2)}
+                  {JSON.stringify(sessionData, null, 2)}
                 </pre>
               </CollapsibleContent>
             </Collapsible>
@@ -174,6 +169,7 @@ const SessionOverview = ({ session_id }: { session_id: string }) => {
           <CardTitle className="text-xl font-bold ">Transcript</CardTitle>
         </CardHeader>
         <CardContent>
+          {sessionData === undefined && <Spinner />}
           {sessionTasksData?.map((task: TaskWithEvents, index) => (
             <TaskBox
               key={index}

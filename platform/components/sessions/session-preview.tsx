@@ -1,8 +1,6 @@
-import { SheetOverlay } from "../ui/sheet";
 import SessionOverview from "./session";
 
 function SessionPreview({
-  setOpen,
   session_id,
 }: {
   setOpen: (open: boolean) => void;
