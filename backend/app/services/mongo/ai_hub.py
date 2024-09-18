@@ -177,7 +177,7 @@ class AIHubClient:
     async def run_clustering(
         self,
         clustering_request: ClusteringRequest,
-        scope: Literal["messages", "sessions"] = "messages",
+        scope: Literal["messages", "sessions", "users"] = "messages",
     ) -> None:
         """
         Call the clustering endpoint of the AI Hub
@@ -191,6 +191,12 @@ class AIHubClient:
         elif scope == "sessions":
             await self._post(
                 endpoint="generate_clustering_sessions_workflow",
+                data=clustering_request.model_dump(mode="json"),
+                hash_data_for_id=False,
+            )
+        elif scope == "users":
+            await self._post(
+                endpoint="generate_clustering_users_workflow",
                 data=clustering_request.model_dump(mode="json"),
                 hash_data_for_id=False,
             )

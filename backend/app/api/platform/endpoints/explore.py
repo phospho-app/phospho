@@ -515,7 +515,7 @@ async def post_detect_clusters(
     max_usage = usage_quota.max_usage
 
     clustering_billing = 0
-    if query.scope == "messages" or query.scope == "sessions":
+    if query.scope == "messages" or query.scope == "sessions" or query.scope == "users":
         total_nb_tasks = await get_total_nb_of_tasks(
             project_id=project_id, filters=query.filters
         )
