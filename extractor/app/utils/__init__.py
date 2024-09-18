@@ -4,6 +4,7 @@ import time
 import re
 import tiktoken
 import datetime
+from collections import Counter
 
 
 def generate_uuid() -> str:
@@ -15,6 +16,12 @@ def generate_timestamp() -> int:
     Returns the current UNIX timestamp in seconds
     """
     return int(time.time())
+
+
+def get_most_common(items):
+    if not items:
+        return None
+    return Counter(items).most_common(1)[0][0]
 
 
 def validate_project_name(project_name: str) -> bool:

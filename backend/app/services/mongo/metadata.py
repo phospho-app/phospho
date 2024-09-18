@@ -442,6 +442,7 @@ async def breakdown_by_sum_of_metadata_field(
     metric: str,
     metadata_field: Optional[str] = None,
     breakdown_by: Optional[str] = None,
+    scorer_id: Optional[str] = None,
     filters: Optional[ProjectDataFilters] = None,
 ):
     """
@@ -454,6 +455,7 @@ async def breakdown_by_sum_of_metadata_field(
     - "nb_sessions": Number of sessions
     - "tags_count": Number of detected tags
     - "tags_distribution": Distribution of detected tags
+    - "avg_scorer_value": Average scorer value
     - "avg_success_rate": Average success rate
     - "avg_session_length": Average session length
 
@@ -465,6 +467,8 @@ async def breakdown_by_sum_of_metadata_field(
     - "None"
     - "session_length"
 
+    scorer_id is only used when metric is "avg_scorer_value", it tells us which scorer to use.
+
     The output is a list of dictionaries, each containing:
     - breakdown_by: str
     - metric: float
@@ -472,6 +476,12 @@ async def breakdown_by_sum_of_metadata_field(
 
     The output stack can be used to create a stacked bar chart.
     """
+
+    if scorer_id and metric != "avg_scorer_value":
+        raise HTTPException(
+            status_code=400,
+            detail="A scorer_id can only be provided when the metric is 'avg_scorer_value'",
+        )
 
     metric = metric.lower()
     metadata_field = metadata_field.lower() if metadata_field is not None else None
@@ -483,6 +493,7 @@ async def breakdown_by_sum_of_metadata_field(
         "metric": metric,
         "metadata_field": metadata_field,
         "breakdown_by": breakdown_by,
+        "scorer": scorer_id,
         "filters": filters,
     }
     formatted_kwargs = "\n".join([f"{key}={value}" for key, value in kwargs.items()])
@@ -678,7 +689,7 @@ async def breakdown_by_sum_of_metadata_field(
             # Filter to only keep the scorer events
             {
                 "$match": {
-                    "events.event_definition.score_range_settings.score_type": "range",
+                    "events.event_definition.id": scorer_id,
                 }
             },
             {

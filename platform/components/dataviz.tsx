@@ -34,10 +34,12 @@ const DatavizGraph = ({
   metric,
   metadata_metric,
   breakdown_by,
+  scorer_id,
 }: {
   metric: string;
   metadata_metric?: string | null;
   breakdown_by: string;
+  scorer_id?: string;
 }) => {
   const { accessToken } = useUser();
   const { toast } = useToast();
@@ -85,6 +87,7 @@ const DatavizGraph = ({
       metric,
       metadata_metric,
       breakdown_by,
+      scorer_id,
       JSON.stringify(dataFilters),
     ],
     ([url, accessToken]) =>
@@ -93,6 +96,7 @@ const DatavizGraph = ({
         metric_metadata: metadata_metric?.toLowerCase(),
         breakdown_by:
           breakdown_by !== "None" ? breakdown_by.toLowerCase() : null,
+        scorer_id: scorer_id,
         filters: dataFilters,
       }).then((response) => {
         const pivotTable = response?.pivot_table;

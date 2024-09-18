@@ -62,7 +62,7 @@ async def bill_on_stripe(
         stripe.billing.MeterEvent.create(
             event_name=request.meter_event_name,
             payload={
-                "value": nb_credits_used,
+                "value": str(nb_credits_used),
                 "stripe_customer_id": request.customer_id,
             },
             timestamp=int(time.time()),

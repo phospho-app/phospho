@@ -1,6 +1,6 @@
 from app.services.mongo.recipes import run_recipe_types_on_tasks
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 
 from app.api.platform.models import RunRecipeRequest
 from app.security.authentification import (

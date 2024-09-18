@@ -3,9 +3,7 @@ Endpoint for analytics queries
 """
 
 import datetime
-from fastapi import APIRouter, Depends, HTTPException
-
-from app.core import config
+from fastapi import APIRouter, Depends
 from app.security import (
     authenticate_org_key,
     verify_propelauth_org_owns_project_id,

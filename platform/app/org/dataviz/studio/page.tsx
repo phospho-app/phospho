@@ -18,6 +18,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { DashboardTile, Project } from "@/models/models";
+import { EventDefinition, ScoreRangeType } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -62,6 +63,12 @@ const MetadataForm: React.FC = () => {
   const setSelectedGroupBy = navigationStateStore(
     (state) => state.setSelectedGroupBy,
   );
+  const [selectedScorerId, setselectedScorerId] = React.useState<
+    string | undefined
+  >(undefined);
+  const [selectedScorerName, setselectedScorerName] = React.useState<
+    string | undefined
+  >(undefined);
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -69,6 +76,13 @@ const MetadataForm: React.FC = () => {
     {
       keepPreviousData: true,
     },
+  );
+
+  const rangeEvents: EventDefinition[] = Object.values(
+    selectedProject?.settings?.events ?? {},
+  ).filter(
+    (event): event is EventDefinition =>
+      event.score_range_settings?.score_type === ScoreRangeType.range,
   );
 
   // Fetch metadata unique metadata fields from the API
@@ -92,6 +106,9 @@ const MetadataForm: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   Metric: {selectedMetric} {metadata_metric ?? ""}{" "}
+                  {selectedMetric === "avg_scorer_value" && selectedScorerName
+                    ? `(${selectedScorerName})`
+                    : ""}{" "}
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
@@ -132,15 +149,27 @@ const MetadataForm: React.FC = () => {
                   <TextSearch className="h-4 w-4 mr-2" />
                   Tags distribution
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedMetric("avg_scorer_value");
-                    setmetadata_metric(null);
-                  }}
-                >
-                  <TextSearch className="h-4 w-4 mr-2" />
-                  Scorer value
-                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <TextSearch className="h-4 w-4 mr-2" />
+                    Scorer value
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {rangeEvents.map((event) => (
+                      <DropdownMenuItem
+                        key={event.event_name}
+                        onClick={() => {
+                          setselectedScorerName(event.event_name);
+                          setselectedScorerId(event.id);
+                          setSelectedMetric("avg_scorer_value");
+                          setmetadata_metric(null);
+                        }}
+                      >
+                        {event.event_name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedMetric("avg_success_rate");
@@ -388,6 +417,7 @@ const MetadataForm: React.FC = () => {
           metric={selectedMetric}
           metadata_metric={metadata_metric}
           breakdown_by={breakdown_by}
+          scorer_id={selectedScorerId}
         />
       </div>
     </>
