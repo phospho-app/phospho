@@ -45,10 +45,7 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
-import {
-  QuestionMarkCircledIcon,
-  QuestionMarkIcon,
-} from "@radix-ui/react-icons";
+import { QuestionMarkIcon } from "@radix-ui/react-icons";
 import { TestTubeDiagonal } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
