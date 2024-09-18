@@ -100,8 +100,12 @@ export default function RunEvent({
     },
   });
 
+  const sampleSize = Math.floor(
+    (totalNbTasks ?? 0) * form.watch("sample_rate"),
+  );
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const sampleSize = Math.floor(totalNbTasks ?? 0 * values.sample_rate);
+    console.log("Running event detection on", sampleSize, "tasks");
     setStartrunLoading(true);
     try {
       fetch(`/api/events/${project_id}/run`, {
@@ -172,12 +176,14 @@ export default function RunEvent({
                     <Input
                       className="w-32"
                       placeholder="0.0 - 1.0"
-                      defaultValue={1}
                       min={0}
                       max={1}
                       step={0.01}
                       type="number"
                       {...field}
+                      onChange={(e) => {
+                        field.onChange(parseFloat(e.target.value));
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -209,8 +215,7 @@ export default function RunEvent({
                 <div className="flex flex-row space-x-1 items-center">
                   This will run event detection on:{" "}
                   <span className="font-semibold ml-1">
-                    {Math.floor(totalNbTasks * form.getValues("sample_rate"))}{" "}
-                    user messages.
+                    {sampleSize} user messages.
                   </span>
                   <HoverCard openDelay={0} closeDelay={0}>
                     <HoverCardTrigger>
