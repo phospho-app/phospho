@@ -32,9 +32,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { getColumns } from "./abtesting-columns";
 import { ABTestingDataviz } from "./abtesting-dataviz";
 
-interface DataTableProps {}
-
-export function ABTesting({}: DataTableProps) {
+export function ABTesting() {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const router = useRouter();
