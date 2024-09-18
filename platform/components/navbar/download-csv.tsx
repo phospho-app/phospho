@@ -7,8 +7,7 @@ import React from "react";
 
 import { DropdownMenuItem } from "../ui/dropdown-menu";
 
-interface DownloadButtonProps {}
-const ExportDataButton: React.FC<DownloadButtonProps> = () => {
+const ExportDataButton: React.FC = () => {
   // PropelAuth
   const project_id = navigationStateStore((state) => state.project_id);
 

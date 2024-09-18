@@ -63,7 +63,7 @@ const TasksDataviz: React.FC = () => {
 
   const [open, setOpen] = React.useState(false);
 
-  const { data: totalNbTasksData, isLoading: isTotalNbTasksLoading } = useSWR(
+  const { data: totalNbTasks } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -74,22 +74,21 @@ const TasksDataviz: React.FC = () => {
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
         filters: dataFilters,
+      }).then((data) => {
+        if (data === undefined) {
+          return undefined;
+        }
+        if (!data?.total_nb_tasks) {
+          return null;
+        }
+        return data?.total_nb_tasks;
       }),
     {
       keepPreviousData: true,
     },
   );
 
-  const totalNbTasks: number | null | undefined = isTotalNbTasksLoading
-    ? undefined
-    : totalNbTasksData
-      ? (totalNbTasksData.total_nb_tasks as number)
-      : null;
-
-  const {
-    data: mostDetectedEventData,
-    isLoading: isMostDetectedEventDataLoading,
-  } = useSWR(
+  const { data: mostDetectedEvent } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -100,17 +99,19 @@ const TasksDataviz: React.FC = () => {
       authFetcher(url, accessToken, "POST", {
         metrics: ["most_detected_event"],
         filters: dataFilters,
+      }).then((data) => {
+        if (data === undefined) {
+          return undefined;
+        }
+        if (!data?.most_detected_event) {
+          return null;
+        }
+        return data?.most_detected_event;
       }),
     {
       keepPreviousData: true,
     },
   );
-  const mostDetectedEvent: string | null | undefined =
-    isMostDetectedEventDataLoading
-      ? undefined
-      : mostDetectedEventData
-        ? mostDetectedEventData.most_detected_event
-        : null;
 
   const {
     data: lastClusteringComposition,
@@ -150,43 +151,34 @@ const TasksDataviz: React.FC = () => {
     },
   );
 
-  const {
-    data: dateLastClusteringData,
-    isLoading: isDateLastClusteringLoading,
-  } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/tasks`,
-      accessToken,
-      "date_last_clustering_timestamp",
-      JSON.stringify(dataFilters),
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["date_last_clustering_timestamp"],
-        filters: dataFilters,
-      }).then((data) => {
-        if (data === undefined) {
-          return undefined;
-        }
-        if (!data?.date_last_clustering_timestamp) {
-          return null;
-        }
-        const date_last_clustering = new Date(
-          data?.date_last_clustering_timestamp * 1000,
-        );
-        return date_last_clustering.toDateString();
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-
-  const dateLastClustering: string | null | undefined =
-    isDateLastClusteringLoading
-      ? undefined
-      : dateLastClusteringData
-        ? (dateLastClusteringData as string)
-        : null;
+  const { data: dateLastClustering }: { data: string | undefined | null } =
+    useSWR(
+      [
+        `/api/explore/${project_id}/aggregated/tasks`,
+        accessToken,
+        "date_last_clustering_timestamp",
+        JSON.stringify(dataFilters),
+      ],
+      ([url, accessToken]) =>
+        authFetcher(url, accessToken, "POST", {
+          metrics: ["date_last_clustering_timestamp"],
+          filters: dataFilters,
+        }).then((data) => {
+          if (data === undefined) {
+            return undefined;
+          }
+          if (!data?.date_last_clustering_timestamp) {
+            return null;
+          }
+          const date_last_clustering = new Date(
+            data?.date_last_clustering_timestamp * 1000,
+          );
+          return date_last_clustering.toDateString();
+        }),
+      {
+        keepPreviousData: true,
+      },
+    );
 
   const { data: nbDailyTasks }: { data: NbDailyTasks[] | null | undefined } =
     useSWR(
@@ -236,7 +228,7 @@ const TasksDataviz: React.FC = () => {
           if (data === undefined) {
             return undefined;
           }
-          if (!data?.events_rankin || data?.events_ranking.length === 0) {
+          if (!data?.events_ranking || data?.events_ranking.length === 0) {
             return null;
           }
           data?.events_ranking?.sort(
@@ -329,11 +321,11 @@ const TasksDataviz: React.FC = () => {
               <CardDescription>Total number of user messages</CardDescription>
             </CardHeader>
             <CardContent>
-              {(totalNbTasks === undefined && <p>...</p>) || (
-                <p className="text-xl">
-                  {totalNbTasks == null ? "No messages found" : totalNbTasks}
-                </p>
+              {totalNbTasks === undefined && <p className="text-xl">...</p>}
+              {totalNbTasks === null && (
+                <p className="text-xl">No messages found</p>
               )}
+              {totalNbTasks && <p className="text-xl">{totalNbTasks}</p>}
             </CardContent>
           </Card>
           <Card>
@@ -341,12 +333,14 @@ const TasksDataviz: React.FC = () => {
               <CardDescription>Date of last clustering</CardDescription>
             </CardHeader>
             <CardContent>
-              {(dateLastClustering === undefined && <p>...</p>) || (
-                <p className="text-xl">
-                  {dateLastClustering == null
-                    ? "No clustering found"
-                    : dateLastClustering}
-                </p>
+              {dateLastClustering === undefined && (
+                <p className="text-xl">...</p>
+              )}
+              {dateLastClustering === null && (
+                <p className="text-xl">No clustering found</p>
+              )}
+              {dateLastClustering && (
+                <p className="text-xl">{dateLastClustering}</p>
               )}
             </CardContent>
           </Card>
@@ -355,10 +349,14 @@ const TasksDataviz: React.FC = () => {
               <CardDescription>Most detected tagger</CardDescription>
             </CardHeader>
             <CardContent>
-              {(mostDetectedEvent === undefined && <p>...</p>) || (
-                <p className="text-xl">
-                  {mostDetectedEvent == null ? "No tags found" : totalNbTasks}
-                </p>
+              {mostDetectedEvent === undefined && (
+                <p className="text-xl">...</p>
+              )}
+              {mostDetectedEvent === null && (
+                <p className="text-xl">No tags found</p>
+              )}
+              {mostDetectedEvent && (
+                <p className="text-xl">{mostDetectedEvent}</p>
               )}
             </CardContent>
           </Card>

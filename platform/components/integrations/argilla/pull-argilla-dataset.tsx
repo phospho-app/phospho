@@ -24,8 +24,6 @@ import React from "react";
 import { useState } from "react";
 import useSWR from "swr";
 
-``;
-
 const PullDataset = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
