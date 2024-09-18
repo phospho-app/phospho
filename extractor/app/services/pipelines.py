@@ -490,38 +490,32 @@ class MainPipeline:
                 .to_list(length=None)
             )
 
-            sentiment_score = 0
-            sentiment_count = 0
-            magnitude_score = 0
-            magnitude_count = 0
+            sentiment_score: list = []
+            sentiment_magnitude: list = []
             preview = ""
 
             valid_tasks = [Task.model_validate(task) for task in tasks]
             for valid_task in valid_tasks:
-                if valid_task.metadata is not None:
-                    if (
-                        "sentiment_score" in valid_task.metadata
-                        and valid_task.metadata.get("sentiment_score") is not None
-                    ):
-                        sentiment_score += valid_task.metadata.get("sentiment_score", 0)
-                        sentiment_count += 1
-                    if (
-                        "sentiment_magnitude" in valid_task.metadata
-                        and valid_task.metadata.get("sentiment_magnitude") is not None
-                    ):
-                        magnitude_score += valid_task.metadata.get(
-                            "sentiment_magnitude", 0
-                        )
-                        magnitude_count += 1
+                if valid_task.sentiment is not None:
+                    if valid_task.sentiment.score is not None:
+                        sentiment_score.append(valid_task.sentiment.score)
+                    if valid_task.sentiment.magnitude is not None:
+                        sentiment_magnitude.append(valid_task.sentiment.magnitude)
                 preview += valid_task.preview() + "\n"
 
+            if len(valid_tasks) > 0:
+                avg_sentiment_score = None
+                if len(sentiment_score) > 0:
+                    avg_sentiment_score = sum(sentiment_score) / len(sentiment_score)
+                avg_magnitude_score = None
+                if len(sentiment_magnitude) > 0:
+                    avg_magnitude_score = sum(sentiment_magnitude) / len(
+                        sentiment_magnitude
+                    )
+
                 session_task_info = SessionStats(
-                    avg_sentiment_score=sentiment_score / sentiment_count
-                    if sentiment_count == 0
-                    else 0,
-                    avg_magnitude_score=magnitude_score / magnitude_score
-                    if magnitude_count == 0
-                    else 0,
+                    avg_sentiment_score=avg_sentiment_score,
+                    avg_magnitude_score=avg_magnitude_score,
                     most_common_sentiment_label=get_most_common(
                         [
                             task.sentiment.label
