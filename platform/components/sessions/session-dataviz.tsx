@@ -64,29 +64,30 @@ const SessionsDataviz: React.FC = () => {
 
   const [open, setOpen] = React.useState(false);
 
-  const { data: totalNbSessionsData, isLoading: isTotalNbSessionsLoading } =
-    useSWR(
-      [
-        `/api/explore/${project_id}/aggregated/sessions`,
-        accessToken,
-        "total_nb_sessions",
-        JSON.stringify(dataFilters),
-      ],
-      ([url, accessToken]) =>
-        authFetcher(url, accessToken, "POST", {
-          metrics: ["total_nb_sessions"],
-          filters: dataFilters,
-        }),
-      {
-        keepPreviousData: true,
-      },
-    );
-
-  const totalNbSessions: number | null | undefined = isTotalNbSessionsLoading
-    ? undefined
-    : totalNbSessionsData
-      ? ((totalNbSessionsData.total_nb_sessions as number) ?? null)
-      : null;
+  const { data: totalNbSessions } = useSWR(
+    [
+      `/api/explore/${project_id}/aggregated/sessions`,
+      accessToken,
+      "total_nb_sessions",
+      JSON.stringify(dataFilters),
+    ],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_sessions"],
+        filters: dataFilters,
+      }).then((data) => {
+        if (data === undefined) {
+          return undefined;
+        }
+        if (!data?.total_nb_sessions) {
+          return null;
+        }
+        return data.total_nb_sessions;
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const {
     data: nbSessionsPerDay,
@@ -159,10 +160,7 @@ const SessionsDataviz: React.FC = () => {
     },
   );
 
-  const {
-    data: dateLastClusteringData,
-    isLoading: isDateLastClusteringLoading,
-  } = useSWR(
+  const { data: dateLastClustering } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -190,17 +188,7 @@ const SessionsDataviz: React.FC = () => {
     },
   );
 
-  const dateLastClustering: string | null | undefined =
-    isDateLastClusteringLoading
-      ? undefined
-      : dateLastClusteringData
-        ? dateLastClusteringData
-        : null;
-
-  const {
-    data: mostDetectedEventData,
-    isLoading: isMostDetectedEventDataLoading,
-  } = useSWR(
+  const { data: mostDetectedEvent } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -211,17 +199,19 @@ const SessionsDataviz: React.FC = () => {
       authFetcher(url, accessToken, "POST", {
         metrics: ["most_detected_event"],
         filters: dataFilters,
+      }).then((data) => {
+        if (data === undefined) {
+          return undefined;
+        }
+        if (!data?.most_detected_event) {
+          return null;
+        }
+        return data?.most_detected_event;
       }),
     {
       keepPreviousData: true,
     },
   );
-  const mostDetectedEvent: string | null | undefined =
-    isMostDetectedEventDataLoading
-      ? undefined
-      : mostDetectedEventData
-        ? (mostDetectedEventData.most_detected_event as string)
-        : null;
 
   const { data: eventsRanking }: { data: EventsRanking[] | null | undefined } =
     useSWR(
