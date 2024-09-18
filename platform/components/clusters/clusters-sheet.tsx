@@ -45,7 +45,10 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
-import { QuestionMarkIcon } from "@radix-ui/react-icons";
+import {
+  QuestionMarkCircledIcon,
+  QuestionMarkIcon,
+} from "@radix-ui/react-icons";
 import { TestTubeDiagonal } from "lucide-react";
 import React from "react";
 import { useEffect, useState } from "react";
@@ -259,30 +262,6 @@ const RunClusteringSheet = ({
           <Separator className="my-8" />
           <div className="flex flex-wrap space-x-2 space-y-2 items-end">
             <DatePickerWithRange />
-            <FormField
-              control={form.control}
-              name="scope"
-              render={({ field }) => (
-                <Select
-                  onValueChange={(value) => {
-                    console.log("scope", value); // Debugging log
-                    field.onChange(value);
-                  }}
-                  value={field.value} // Ensure this is controlled
-                >
-                  <SelectTrigger className="max-w-[20rem]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="messages">Messages</SelectItem>
-                      <SelectItem value="sessions">Sessions</SelectItem>
-                      <SelectItem value="users">Unique Users</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            />
           </div>
           <div className="flex flex-col space-y-4">
             <FormField
@@ -380,6 +359,64 @@ const RunClusteringSheet = ({
             />
 
             <div className="flex flex-col space-y-2 bg-secondary p-2 rounded-lg">
+              <FormField
+                control={form.control}
+                name="scope"
+                render={({ field }) => (
+                  <>
+                    <FormLabel>
+                      <div className="flex space-x-2">
+                        <span>Granularity</span>
+                        <HoverCard openDelay={0} closeDelay={0}>
+                          <HoverCardTrigger>
+                            <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                          </HoverCardTrigger>
+                          <HoverCardContent>
+                            <div className="w-96 flex flex-col space-y-2 p-2">
+                              <div>
+                                Clustering groups similar entities together.
+                                Pick the granularity of the entities to cluster.
+                              </div>
+                              <div className="flex flex-col space-y-1">
+                                <span>
+                                  - User messages: a single interaction
+                                </span>
+                                <span>- User sessions: a whole discussion</span>
+                                <span>
+                                  - Active users: multiple discussions from the
+                                  same user
+                                </span>
+                              </div>
+                            </div>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </div>
+                    </FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        console.log("scope", value); // Debugging log
+                        field.onChange(value);
+                      }}
+                      value={field.value} // Ensure this is controlled
+                    >
+                      <SelectTrigger className="max-w-[20rem]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="messages">
+                            User messages
+                          </SelectItem>
+                          <SelectItem value="sessions">
+                            User sessions
+                          </SelectItem>
+                          <SelectItem value="users">Active users</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="detect_outliers"

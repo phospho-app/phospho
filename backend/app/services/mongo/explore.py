@@ -2788,13 +2788,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values.get(event_name, []):
@@ -2815,13 +2815,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2854,13 +2854,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[event_result["version_id"]] = (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] = event_result["count"]
                 else:
-                    divide_for_correct_average[event_result["version_id"]] += (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] += event_result["count"]
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (
@@ -3061,7 +3061,8 @@ async def get_total_nb_of_users(
     filters: Optional[ProjectDataFilters] = None,
 ) -> Optional[int]:
     """
-    Get the total number of users for a project.
+    Get the total number of unique users for a project.
+    This is the number of unique user_id in the tasks.
     """
 
     mongo_db = await get_mongo_db()
@@ -3070,12 +3071,10 @@ async def get_total_nb_of_users(
         project_id=project_id, filters=filters
     )
 
-    # I now have a first filter ; i need to count now the number of unique user_id
-
-    # the tasks may don't have a user_id, so I need to filter the case where the user_id is None
-
+    # We count the number of unique user_id
     pipeline = [
         {"$match": global_filters},
+        # Tasks may not have a user_id, so we filter this case
         {"$match": {"metadata.user_id": {"$exists": True, "$ne": None}}},
         {
             "$group": {
@@ -3101,7 +3100,9 @@ async def get_nb_users_messages(
     limit: Optional[int] = None,
 ) -> Optional[int]:
     """
-    Get the total number of users messages for a project.
+    Get the total number of messages sent by unique users for a project.
+
+    This is used to get all the messages sent by active users, according to the filters.
     """
 
     mongo_db = await get_mongo_db()
@@ -3110,8 +3111,7 @@ async def get_nb_users_messages(
         project_id=project_id, filters=filters
     )
 
-    # I want to have a list with all the user_id
-
+    # We fetch the list of active users ids first
     pipeline = [
         {"$match": global_filters},
         {"$match": {"metadata.user_id": {"$exists": True, "$ne": None}}},
@@ -3121,36 +3121,24 @@ async def get_nb_users_messages(
             }
         },
     ]
-
-    if limit is not None:
-        pipeline.append(
-            {"$limit": limit},
-        )
-
     query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=limit)
-
     if len(query_result) == 0:
         return None
+    active_user_ids: List[str] = [user["_id"] for user in query_result]
 
-    # Now i have to find the number of messages that have been sent by one of these users
-
-    user_ids: List[str] = [user["_id"] for user in query_result]
-
+    # Then, we find how many messages these users sent in total, during their whole existence
     pipeline = [
         {
             "$match": {
                 "project_id": project_id,
-                "metadata.user_id": {"$in": user_ids},
+                "metadata.user_id": {"$in": active_user_ids},
             }
         },
         {
             "$count": "nb_users_messages",
         },
     ]
-
     query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=1)
-
-    logger.info(f"Query result: {query_result}")
     if len(query_result) == 0:
         return None
 
