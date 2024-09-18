@@ -27,7 +27,10 @@ from phospho.models import (
     SessionStats,
     Project,
     PipelineResults,
+    Message,
 )
+from aiohttp import ClientSession
+import asyncio
 
 PHOSPHO_EVENT_MODEL_NAMES = ["phospho-6", "owner", "phospho-4"]
 PHOSPHO_EVAL_MODEL_NAMES = ["phospho", "phospho-4"]
@@ -602,23 +605,25 @@ class MainPipeline:
         logger.info(
             f"Running sentiment analysis pipeline for project {self.project_id} for {len(self.messages)} messages"
         )
-        # TODO : Parallelize the sentiment analysis
-        results_sentiment: Dict[str, Optional[SentimentObject]] = {}
-        results_language: Dict[str, Optional[str]] = {}
-        sentiment_object: Optional[SentimentObject] = None
-        for message in self.messages:
+
+        async def process_message(
+            message: Message,
+        ) -> Tuple[str, Optional[SentimentObject], Optional[str]]:
             task = Task.model_validate(message.metadata.get("task", None))
+            sentiment_object: Optional[SentimentObject] = None
             sentiment_object, language = await call_sentiment_and_language_api(
                 task.input, score_threshold, magnitude_threshold
             )
-
-            if not self.project.settings.run_language:
+            if not self.project or not self.project.settings:
                 language = None
-            if not self.project.settings.run_sentiment:
+                sentiment_object = None
+            elif not self.project.settings.run_language:
+                language = None
+            elif not self.project.settings.run_sentiment:
                 sentiment_object = None
 
-            # We update the task item
-            mongo_db["tasks"].update_one(
+            # Update the task item
+            await mongo_db["tasks"].update_one(
                 {
                     "id": task.id,
                     "project_id": task.project_id,
@@ -654,13 +659,21 @@ class MainPipeline:
                         "input": task.input,
                     },
                 )
-                mongo_db["job_results"].insert_one(jobresult.model_dump())
+                await mongo_db["job_results"].insert_one(jobresult.model_dump())
                 logger.info(
                     f"Sentiment analysis for task {task.id} : {sentiment_object}"
                 )
 
-            results_sentiment[task.id] = sentiment_object
-            results_language[task.id] = language
+            return task.id, sentiment_object, language
+
+        tasks = [process_message(message) for message in self.messages]
+        results = await asyncio.gather(*tasks)
+
+        results_sentiment: Dict[str, Optional[SentimentObject]] = {}
+        results_language: Dict[str, Optional[str]] = {}
+        for task_id, sentiment, language in results:
+            results_sentiment[task_id] = sentiment
+            results_language[task_id] = language
 
         return results_sentiment, results_language
 

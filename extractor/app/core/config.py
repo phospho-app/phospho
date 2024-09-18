@@ -8,7 +8,6 @@ from base64 import b64decode
 
 from dotenv import load_dotenv
 from google.cloud import language_v2
-from google.api_core.client_options import ClientOptions
 from google.oauth2 import service_account
 from loguru import logger
 
@@ -75,7 +74,7 @@ credentials_natural_language = os.getenv(
 # Used to route the Google API requests in an NGINX queue
 GCP_SENTIMENT_CLIENT_URL = os.getenv("GCP_SENTIMENT_CLIENT_URL")
 
-GCP_SENTIMENT_CLIENT = None
+GCP_ASYNC_SENTIMENT_CLIENT = None
 if credentials_natural_language is not None:
     credentials_dict = json.loads(
         b64decode(credentials_natural_language).decode("utf-8")
@@ -91,7 +90,9 @@ if credentials_natural_language is not None:
     #     )
     # else:
     logger.info("Using default GCP_SENTIMENT_CLIENT_URL")
-    GCP_SENTIMENT_CLIENT = language_v2.LanguageServiceClient(credentials=credentials)
+    GCP_ASYNC_SENTIMENT_CLIENT = language_v2.LanguageServiceAsyncClient(
+        credentials=credentials
+    )
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 SLACK_URL = os.getenv("SLACK_URL")
