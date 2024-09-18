@@ -1,12 +1,11 @@
 import time
 from collections import defaultdict
 import traceback
-from typing import Dict, List, Literal, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from app.utils import generate_uuid
 from loguru import logger
 
-from app.core import config
 from app.db.models import (
     Event,
     EventDefinition,
@@ -19,6 +18,7 @@ from app.services.data import fetch_previous_tasks
 from app.services.projects import get_project_by_id
 from app.services.sentiment_analysis import call_sentiment_and_language_api
 from app.services.webhook import trigger_webhook
+from app.utils import get_most_common
 from phospho import lab
 from phospho.models import (
     JobResult,
@@ -488,67 +488,37 @@ class MainPipeline:
                 .to_list(length=None)
             )
 
-            sentiment_score: list = []
-            sentiment_magnitude: list = []
-            sentiment_label_counter: Dict[str, int] = defaultdict(int)
-            language_counter: Dict[str, int] = defaultdict(int)
-            session_flag: Dict[str, int] = defaultdict(int)
+            sentiment_score = 0
+            magnitude_score = 0
             preview = ""
 
-            for task in tasks:
-                valid_task = Task.model_validate(task)
-                if (
-                    valid_task.sentiment is not None
-                    and valid_task.sentiment.score is not None
-                ):
-                    sentiment_score.append(valid_task.sentiment.score)
-                if (
-                    valid_task.sentiment is not None
-                    and valid_task.sentiment.magnitude is not None
-                ):
-                    sentiment_magnitude.append(valid_task.sentiment.magnitude)
-                if (
-                    valid_task.sentiment is not None
-                    and valid_task.sentiment.label is not None
-                ):
-                    sentiment_label_counter[valid_task.sentiment.label] += 1
-                if valid_task.language is not None:
-                    language_counter[valid_task.language] += 1
-                if valid_task.flag is not None:
-                    session_flag[valid_task.flag] += 1
+            valid_tasks = [Task.model_validate(task) for task in tasks]
+            for valid_task in valid_tasks:
+                if valid_task.metadata is not None:
+                    sentiment_score += valid_task.metadata.get("sentiment_score", 0)
+                    magnitude_score += valid_task.metadata.get("sentiment_magnitude", 0)
                 preview += valid_task.preview() + "\n"
 
-            if len(tasks) > 0:
-                most_common_language = (
-                    max(language_counter, key=language_counter.get)
-                    if language_counter
-                    else None
-                )
-                most_common_label = (
-                    max(sentiment_label_counter, key=sentiment_label_counter.get)
-                    if sentiment_label_counter
-                    else None
-                )
-                most_common_flag = (
-                    max(session_flag, key=session_flag.get) if session_flag else None
-                )
-
-                avg_sentiment_score = None
-                if len(sentiment_score) > 0:
-                    avg_sentiment_score = sum(sentiment_score) / len(sentiment_score)
-
-                avg_magnitude_score = None
-                if len(sentiment_magnitude) > 0:
-                    avg_magnitude_score = sum(sentiment_magnitude) / len(
-                        sentiment_magnitude
-                    )
-
                 session_task_info = SessionStats(
-                    avg_sentiment_score=avg_sentiment_score,
-                    avg_magnitude_score=avg_magnitude_score,
-                    most_common_sentiment_label=most_common_label,
-                    most_common_language=most_common_language,
-                    most_common_flag=most_common_flag,
+                    avg_sentiment_score=sentiment_score / len(valid_tasks),
+                    avg_magnitude_score=magnitude_score / len(valid_tasks),
+                    most_common_sentiment_label=get_most_common(
+                        [
+                            task.sentiment.label
+                            for task in valid_tasks
+                            if task.sentiment is not None
+                        ]
+                    ),
+                    most_common_language=get_most_common(
+                        [
+                            task.language
+                            for task in valid_tasks
+                            if task.language is not None
+                        ]
+                    ),
+                    most_common_flag=get_most_common(
+                        [task.flag for task in valid_tasks if task.flag is not None]
+                    ),
                 )
 
                 mongo_db["sessions"].update_one(
@@ -635,6 +605,7 @@ class MainPipeline:
         # TODO : Parallelize the sentiment analysis
         results_sentiment: Dict[str, Optional[SentimentObject]] = {}
         results_language: Dict[str, Optional[str]] = {}
+        sentiment_object: Optional[SentimentObject] = None
         for message in self.messages:
             task = Task.model_validate(message.metadata.get("task", None))
             sentiment_object, language = await call_sentiment_and_language_api(

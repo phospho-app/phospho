@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Literal
 from app.api.platform.models.explore import Pagination
 from app.db.mongo import get_mongo_db
 from app.services.mongo.events import get_event_definition_from_event_id
@@ -107,7 +107,7 @@ async def run_recipe_on_tasks_batched(
 
 async def run_recipe_types_on_tasks(
     project_id: str,
-    recipe_types: List[str],
+    recipe_types: List[Literal["event_detection", "sentiment_language", "clustering"]],
     org_id: str,
     filters: Optional[ProjectDataFilters],
 ) -> None:
@@ -127,13 +127,19 @@ async def run_recipe_types_on_tasks(
             project = await get_project_by_id(project_id)
             recipes = []
             for event_name, event_definition in project.settings.events.items():
-                try:
-                    recipe = await get_recipe_by_id(event_definition.recipe_id)
-                    recipes.append(recipe)
-                except HTTPException as e:
+                if event_definition.recipe_id is None:
                     logger.warning(
-                        f"Recipe for event {event_name} not found. Skipping.\nFull Error: {e}"
+                        f"Event {event_name} has no recipe_id for project {project_id}. Skipping."
                     )
+                    continue
+                else:
+                    try:
+                        recipe = await get_recipe_by_id(event_definition.recipe_id)
+                        recipes.append(recipe)
+                    except HTTPException as e:
+                        logger.warning(
+                            f"Recipe for event {event_name} not found. Skipping.\nFull Error: {e}"
+                        )
 
             for recipe in recipes:
                 await run_recipe_on_tasks_batched(

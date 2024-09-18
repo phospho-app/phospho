@@ -34,11 +34,6 @@ from app.services.mongo.organizations import create_project_by_org
 from app.services.mongo.extractor import ExtractorClient
 from app.api.v2.models.log import LogEvent
 from typing import cast
-from openai.types.chat import completion_create_params
-from openai.types.chat import (
-    ChatCompletionToolParam,
-    ChatCompletionToolChoiceOptionParam,
-)
 
 router = APIRouter(tags=["chat"])
 
@@ -97,9 +92,9 @@ class CreateRequest(pydantic.BaseModel):
     stream: Optional[bool] | None = None
     # stream_options: Optional[ChatCompletionStreamOptionsParam] | None = None
     temperature: Optional[float] | None = None
-    tool_choice: Union[
-        Literal["none", "auto", "required"], ChatCompletionToolParamModel
-    ] | None = None
+    tool_choice: (
+        Union[Literal["none", "auto", "required"], ChatCompletionToolParamModel] | None
+    ) = None
     tools: Iterable[ChatCompletionToolParamModel] | None = None
     top_logprobs: Optional[int] | None = None
     top_p: Optional[float] | None = None
@@ -115,6 +110,7 @@ async def log_to_project(
     project_id: str,
     create_request: CreateRequest,
     response: ChatCompletion,
+    model_name: Literal["gpt-4o", "gpt-4o-mini"],
 ):
     logging_project_id = project_id
     logger.info(f"Logging completion to project {logging_project_id}")
@@ -157,7 +153,7 @@ async def log_to_project(
                     input=input,
                     output=output,
                     metadata={
-                        "model": create_request.model,
+                        "model": model_name,
                         "frequency_penalty": create_request.frequency_penalty,
                         "max_tokens": create_request.max_tokens,
                         "seed": create_request.seed,
@@ -220,7 +216,7 @@ async def log_and_meter(
     create_request: CreateRequest,
     response: ChatCompletion,
     provider: str,
-    model_name: str,
+    model_name: Literal["gpt-4o", "gpt-4o-mini"],
 ) -> None:
     logger.debug(f"Response: {response.model_dump()}")
     if org_id != config.PHOSPHO_ORG_ID and config.ENVIRONMENT == "production":
@@ -236,6 +232,7 @@ async def log_and_meter(
         project_id=project_id,
         create_request=create_request,
         response=response,
+        model_name=model_name,
     )
 
 
@@ -305,11 +302,13 @@ async def create(
 
     provider, model_name = get_provider_and_model(create_request.model)
 
+    model_name = cast(Literal["gpt-4o", "gpt-4o-mini"], model_name)
+
     if org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d":  # We don't route Y to Azure
         provider = "azure"
-    openai_client = get_async_client(provider)
 
-    create_request.model = model_name
+    openai_client = get_async_client(cast(Literal["openai", "azure"], provider))
+
     query_inputs = create_request.model_dump()
 
     should_stream = query_inputs.get("stream", False)
