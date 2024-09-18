@@ -17,8 +17,8 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN yarn add sharp
-RUN yarn install --frozen-lockfile
+RUN npm add sharp
+RUN npm ci
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -48,10 +48,8 @@ ENV PROD_API_URL=${PROD_API_URL}
 ENV PROPELAUTH_API_KEY=${PROPELAUTH_API_KEY}
 ENV PROPELAUTH_VERIFIER_KEY=${PROPELAUTH_VERIFIER_KEY}
 
-RUN yarn build
-
 # If using npm comment out above and use below instead
-# RUN npm run build
+RUN npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner
