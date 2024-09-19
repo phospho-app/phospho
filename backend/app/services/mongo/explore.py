@@ -26,8 +26,6 @@ from app.utils import generate_timestamp, get_last_week_timestamps
 from fastapi import HTTPException
 from loguru import logger
 from pymongo import InsertOne, UpdateOne
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
 from sklearn.metrics import (
     f1_score,
     mean_squared_error,
@@ -671,10 +669,10 @@ async def get_daily_success_rate(
             filters.created_at_start = df["created_at"].min()
     else:
         if filters.created_at_start is None:
-            filters.created_at_start = datetime.datetime.now().timestamp()
+            filters.created_at_start = int(datetime.datetime.now().timestamp())
 
     if filters.created_at_end is None:
-        filters.created_at_end = datetime.datetime.now().timestamp()
+        filters.created_at_end = int(datetime.datetime.now().timestamp())
 
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
@@ -928,7 +926,7 @@ async def get_nb_tasks_in_sessions(
 async def get_global_average_session_length(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
-) -> float:
+) -> Optional[float]:
     """
     Get the global average session length of a project.
     """
@@ -965,7 +963,7 @@ async def get_global_average_session_length(
 async def get_last_message_success_rate(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
-) -> float:
+) -> Optional[float]:
     """
     Get the success rate of the last message of a project.
     """
@@ -1068,10 +1066,10 @@ async def get_nb_sessions_per_day(
             filters.created_at_start = df["created_at"].min()
     else:
         if filters.created_at_start is None:
-            filters.created_at_start = datetime.datetime.now().timestamp()
+            filters.created_at_end = int(datetime.datetime.now().timestamp())
 
     if filters.created_at_end is None:
-        filters.created_at_end = datetime.datetime.now().timestamp()
+        filters.created_at_end = int(datetime.datetime.now().timestamp())
 
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
@@ -1363,15 +1361,15 @@ async def fetch_all_clusterings(
                 },
                 {
                     "$project": {
-                        "pca": 0,
-                        "tsne": 0,
+                        "pca": str(0),
+                        "tsne": str(0),
                     }
                 },
             ]
         )
 
     pipeline += [
-        {"$sort": {"created_at": -1}},
+        {"$sort": {"created_at": str(-1)}},
     ]
     clusterings = (
         await mongo_db["private-clusterings"].aggregate(pipeline).to_list(length=limit)
@@ -2967,8 +2965,9 @@ async def compute_cloud_of_clusters(
             },
             {
                 "$project": {
-                    "task_id": 1,
-                    "session_id": 1,
+                    "task_id": str(1),
+                    "session_id": str(1),
+                    "user_id": str(1),
                 }
             },
         ]
@@ -2980,6 +2979,8 @@ async def compute_cloud_of_clusters(
             scope_ids = [scope_id["task_id"] for scope_id in scope_ids]
         elif clustering_model.scope == "sessions":
             scope_ids = [scope_id["session_id"] for scope_id in scope_ids]
+        elif clustering_model.scope == "users":
+            scope_ids = [scope_id["user_id"] for scope_id in scope_ids]
 
         # Get the clusters names from the clusters_ids in raw_results[0]["pca"]
         # I want a cluster name for each cluster_id
@@ -2991,7 +2992,7 @@ async def compute_cloud_of_clusters(
                     "id": {"$in": cloud_of_points["clusters_ids"]},
                 }
             },
-            {"$project": {"name": 1, "id": 1}},
+            {"$project": {"name": str(1), "id": str(1)}},
         ]
 
         clusters_ids_to_clusters_names = (
@@ -3038,9 +3039,9 @@ async def get_clustering_by_id(
         pipeline.append(
             {
                 "$project": {
-                    "_id": 0,
-                    "pca": 0,
-                    "tsne": 0,
+                    "_id": str(0),
+                    "pca": str(0),
+                    "tsne": str(0),
                 }
             }
         )

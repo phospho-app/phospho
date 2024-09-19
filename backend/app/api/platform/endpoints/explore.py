@@ -579,6 +579,7 @@ async def post_detect_clusters(
     background_tasks.add_task(
         ai_hub_client.run_clustering,
         clustering_request=clustering_request,
+        scope=query.scope,
     )
 
     # Return a dummy clustering object, used for the frontend

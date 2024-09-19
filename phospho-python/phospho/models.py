@@ -789,7 +789,7 @@ class Cluster(ProjectElementBaseModel):
     tasks_ids: Optional[List[str]] = None
     # reference to the sessions in the cluster
     sessions_ids: Optional[List[str]] = None
-    scope: Optional[Literal["messages", "sessions"]] = None
+    scope: Optional[Literal["messages", "sessions", "users"]] = None
     embeddings_ids: Optional[List[str]] = None
 
 
