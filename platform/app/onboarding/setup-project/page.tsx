@@ -373,7 +373,7 @@ const ExploreSampleProjectOnboarding: React.FC<
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="hover:bg-green-500 transition-colors"
+                  className="hover:bg-green-600 transition-colors bg-green-500 drop-shadow"
                   disabled={creatingProject || redirecting}
                 >
                   {redirecting && <Spinner className="mr-1" />}
