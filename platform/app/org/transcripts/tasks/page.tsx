@@ -18,7 +18,7 @@ export default function Page() {
     if (parsedDataFilters !== null) {
       setDataFilters(parsedDataFilters);
     }
-  }, [parsedDataFilters]);
+  }, [parsedDataFilters, setDataFilters]);
 
   return (
     <>

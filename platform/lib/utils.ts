@@ -239,7 +239,7 @@ export function searchParamsToProjectDataFilters({
   const clusters_ids = searchParams.getAll("clusters_ids");
   const session_ids = searchParams.getAll("session_ids");
 
-  let projectDataFilters = {
+  const projectDataFilters = {
     created_at_start: searchParams.get("created_at_start")
       ? Number(searchParams.get("created_at_start"))
       : undefined,
@@ -271,7 +271,7 @@ export function searchParamsToProjectDataFilters({
   // Remove undefined values
   const filteredProjectDataFilters = Object.fromEntries(
     Object.entries(projectDataFilters).filter(
-      ([_, value]) => value !== undefined,
+      ([_, value]) => value !== undefined, // eslint-disable-line @typescript-eslint/no-unused-vars
     ),
   );
 

@@ -81,7 +81,7 @@ export function UsersTable({
       console.log("parsedDataFilters", parsedDataFilters);
       table.getColumn("events")?.setFilterValue(parsedDataFilters.event_name);
     }
-  }, [parsedDataFilters]);
+  }, [parsedDataFilters, table]);
 
   return (
     <div>
