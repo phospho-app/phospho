@@ -54,7 +54,7 @@ class QuerySessionsTasksRequest(BaseModel):
 class DetectClustersRequest(BaseModel):
     limit: Optional[int] = None
     filters: Optional[ProjectDataFilters] = Field(default_factory=ProjectDataFilters)
-    scope: Literal["messages", "sessions"] = "messages"
+    scope: Literal["messages", "sessions", "users"] = "messages"
     instruction: Optional[str] = "user intent"
     nb_clusters: Optional[int] = None
     clustering_mode: Literal["agglomerative", "dbscan"] = "agglomerative"
@@ -72,6 +72,6 @@ class AggregatedSessionsRequest(BaseModel):
 
 
 class ClusteringCostRequest(BaseModel):
-    scope: Literal["messages", "sessions"] = "messages"
+    scope: Literal["messages", "sessions", "users"] = "messages"
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     limit: Optional[int] = None

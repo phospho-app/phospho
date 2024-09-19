@@ -1,6 +1,5 @@
 import { Blockwall } from "@/components/blockwall";
 import { DatePickerWithRange } from "@/components/date-range";
-import FilterComponent from "@/components/filters";
 import { Spinner } from "@/components/small-spinner";
 import {
   Accordion,
@@ -30,6 +29,7 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
   SheetContent,
@@ -60,6 +60,9 @@ interface ProjectStatics {
   nb_sessions_in_scope?: number;
   nb_elements: number;
   clustering_cost: number;
+  nb_users_messages?: number;
+  total_nb_users?: number;
+  nb_users_in_scope?: number;
 }
 
 const RunClusteringSheet = ({
@@ -81,7 +84,7 @@ const RunClusteringSheet = ({
   const hobby = orgMetadata?.plan === "hobby";
 
   const FormSchema = z.object({
-    scope: z.enum(["messages", "sessions"]),
+    scope: z.enum(["messages", "sessions", "users"]),
     instruction: z
       .string({
         required_error: "Please enter an instruction",
@@ -123,7 +126,7 @@ const RunClusteringSheet = ({
           `/api/explore/${project_id}/clustering-cost`,
           accessToken,
           JSON.stringify(dataFilters),
-          form.getValues("scope"),
+          form.watch("scope"),
           debouncedLimit,
         ]
       : null,
@@ -165,7 +168,15 @@ const RunClusteringSheet = ({
   ]);
 
   const canRunClusterAnalysis: boolean =
-    !!projectStatistics?.nb_elements && projectStatistics.nb_elements >= 5;
+    (form.watch("scope") === "messages" &&
+      !!projectStatistics?.nb_elements &&
+      projectStatistics.nb_elements >= 5) ||
+    (form.watch("scope") === "sessions" &&
+      !!projectStatistics?.nb_sessions_in_scope &&
+      projectStatistics.nb_sessions_in_scope >= 5) ||
+    (form.watch("scope") === "users" &&
+      !!projectStatistics?.nb_users_in_scope &&
+      projectStatistics.nb_users_in_scope >= 5);
   const defaultNbClusters = Math.max(
     Math.round((projectStatistics?.nb_elements ?? 0) / 100),
     5,
@@ -256,33 +267,6 @@ const RunClusteringSheet = ({
           <Separator className="my-8" />
           <div className="flex flex-wrap space-x-2 space-y-2 items-end">
             <DatePickerWithRange />
-            <FormField
-              control={form.control}
-              name="scope"
-              render={({ field }) => (
-                <Select
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                  }}
-                  defaultValue={field.value}
-                >
-                  <SelectTrigger className="max-w-[20rem]">
-                    {field.value === "messages" ? "Messages" : "Sessions"}
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="messages">Messages</SelectItem>
-                      <SelectItem value="sessions">Sessions</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            <FilterComponent
-              variant={
-                form.getValues("scope") === "sessions" ? "sessions" : "tasks"
-              }
-            />
           </div>
           <div className="flex flex-col space-y-4">
             <FormField
@@ -380,6 +364,64 @@ const RunClusteringSheet = ({
             />
 
             <div className="flex flex-col space-y-2 bg-secondary p-2 rounded-lg">
+              <FormField
+                control={form.control}
+                name="scope"
+                render={({ field }) => (
+                  <>
+                    <FormLabel>
+                      <div className="flex space-x-2">
+                        <span>Granularity</span>
+                        <HoverCard openDelay={0} closeDelay={0}>
+                          <HoverCardTrigger>
+                            <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                          </HoverCardTrigger>
+                          <HoverCardContent>
+                            <div className="w-96 flex flex-col space-y-2 p-2">
+                              <div>
+                                Clustering groups similar entities together.
+                                Pick the granularity of the entities to cluster.
+                              </div>
+                              <div className="flex flex-col space-y-1">
+                                <span>
+                                  - User messages: a single interaction
+                                </span>
+                                <span>- User sessions: a whole discussion</span>
+                                <span>
+                                  - Active users: multiple discussions from the
+                                  same user
+                                </span>
+                              </div>
+                            </div>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </div>
+                    </FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        console.log("scope", value); // Debugging log
+                        field.onChange(value);
+                      }}
+                      value={field.value} // Ensure this is controlled
+                    >
+                      <SelectTrigger className="max-w-[20rem]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="messages">
+                            User messages
+                          </SelectItem>
+                          <SelectItem value="sessions">
+                            User sessions
+                          </SelectItem>
+                          <SelectItem value="users">Active users</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="detect_outliers"
@@ -489,13 +531,16 @@ const RunClusteringSheet = ({
               <span>
                 We will cluster{" "}
                 {<>{projectStatistics?.nb_elements ?? 0} user messages</>}
-                {form.getValues("scope") === "sessions" && (
+                {(form.getValues("scope") === "sessions" && (
                   <>
                     {" "}
                     ({projectStatistics?.nb_sessions_in_scope ??
                       0} sessions){" "}
                   </>
-                )}{" "}
+                )) ||
+                  (form.getValues("scope") === "users" && (
+                    <> ({projectStatistics?.nb_users_in_scope ?? 0} users) </>
+                  ))}{" "}
                 for a total of {projectStatistics?.clustering_cost} credits.{" "}
               </span>
             )}
