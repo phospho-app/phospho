@@ -1,5 +1,6 @@
 import { Blockwall } from "@/components/blockwall";
 import { DatePickerWithRange } from "@/components/date-range";
+import FilterComponent from "@/components/filters";
 import { Spinner } from "@/components/small-spinner";
 import {
   Accordion,
@@ -52,8 +53,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import * as z from "zod";
-
-import FilterComponent from "../filters";
 
 interface ProjectStatics {
   total_nb_tasks?: number;
@@ -269,7 +268,7 @@ const RunClusteringSheet = ({
           <Separator className="my-8" />
           <div className="flex flex-wrap gap-x-2 gap-y-2 items-end">
             <DatePickerWithRange />
-            <FilterComponent variant="tasks" />
+            <FilterComponent variant={form.getValues("scope")} />
           </div>
           <div className="flex flex-col space-y-4">
             <FormField

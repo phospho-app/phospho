@@ -53,11 +53,15 @@ interface LanguageFilterOption {
 const FilterComponent = ({
   variant = "tasks",
 }: {
-  variant: "tasks" | "sessions" | "users";
+  variant: "tasks" | "sessions" | "users" | "messages";
 }) => {
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const { accessToken } = useUser();
+
+  if (variant === "messages") {
+    variant = "tasks";
+  }
 
   const project_id = navigationStateStore((state) => state.project_id);
   const setSessionsPagination = navigationStateStore(
@@ -148,7 +152,7 @@ const FilterComponent = ({
   }
 
   return (
-    <div className="flex flex-wrap gap-x-2 gap-y-2 items-end">
+    <div className="flex flex-wrap gap-x-2 items-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline">
@@ -644,69 +648,68 @@ const FilterComponent = ({
               </DropdownMenuPortal>
             </DropdownMenuSub>
           )}
-          {variant == "tasks" && (
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <Boxes className="h-4 w-4 mr-2" />
-                <span>Clusterings</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
-                  {clusterings && clusterings.length == 0 && (
-                    <DropdownMenuItem disabled>
-                      No clusterings available
-                    </DropdownMenuItem>
-                  )}
-                  {clusterings &&
-                    clusterings.map((clustering) => {
-                      return (
-                        <DropdownMenuSub key={clustering.id}>
-                          <DropdownMenuSubTrigger>
-                            {formatUnixTimestampToLiteralDatetime(
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Boxes className="h-4 w-4 mr-2" />
+              <span>Clusterings</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="overflow-y-auto max-h-[30rem]">
+                {clusterings && clusterings.length == 0 && (
+                  <DropdownMenuItem disabled>
+                    No clusterings available
+                  </DropdownMenuItem>
+                )}
+                {clusterings &&
+                  clusterings.map((clustering) => {
+                    return (
+                      <DropdownMenuSub key={clustering.id}>
+                        <DropdownMenuSubTrigger>
+                          {clustering?.name ??
+                            formatUnixTimestampToLiteralDatetime(
                               clustering.created_at,
                             )}
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuPortal>
-                            <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setDataFilters({
-                                    ...dataFilters,
-                                    clustering_id: clustering.id,
-                                    clusters_ids: null,
-                                  });
-                                  resetPagination();
-                                }}
-                              >
-                                <Boxes className="h-4 w-4 mr-2" />
-                                <span>All clusters</span>
-                              </DropdownMenuItem>
-                              {clustering.clusters?.map((cluster) => {
-                                return (
-                                  <DropdownMenuItem
-                                    key={cluster.id}
-                                    onClick={() => {
-                                      setDataFilters({
-                                        ...dataFilters,
-                                        clustering_id: clustering.id,
-                                        clusters_ids: [cluster.id],
-                                      });
-                                      resetPagination();
-                                    }}
-                                  >
-                                    {cluster.name}
-                                  </DropdownMenuItem>
-                                );
-                              })}
-                            </DropdownMenuSubContent>
-                          </DropdownMenuPortal>
-                        </DropdownMenuSub>
-                      );
-                    })}
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-          )}
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setDataFilters({
+                                  ...dataFilters,
+                                  clustering_id: clustering.id,
+                                  clusters_ids: null,
+                                });
+                                resetPagination();
+                              }}
+                            >
+                              <Boxes className="h-4 w-4 mr-2" />
+                              <span>All clusters</span>
+                            </DropdownMenuItem>
+                            {clustering.clusters?.map((cluster) => {
+                              return (
+                                <DropdownMenuItem
+                                  key={cluster.id}
+                                  onClick={() => {
+                                    setDataFilters({
+                                      ...dataFilters,
+                                      clustering_id: clustering.id,
+                                      clusters_ids: [cluster.id],
+                                    });
+                                    resetPagination();
+                                  }}
+                                >
+                                  {cluster.name}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    );
+                  })}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
