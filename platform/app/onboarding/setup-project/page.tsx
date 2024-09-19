@@ -416,15 +416,15 @@ export default function Page() {
             <CardTitle>Create your first phospho project</CardTitle>
             <CardDescription>Let&apos;s get you started.</CardDescription>
           </CardHeader>
+          <ExploreSampleProjectOnboarding
+            redirecting={redirecting}
+            creatingProject={creatingProject}
+          />
           <ImportDataOnboarding
             redirecting={redirecting}
             setRedirecting={setRedirecting}
             creatingProject={creatingProject}
             setCreatingProject={setCreatingProject}
-          />
-          <ExploreSampleProjectOnboarding
-            redirecting={redirecting}
-            creatingProject={creatingProject}
           />
           <div /> {/* Used to add a bit of space at the bottom */}
         </Card>
