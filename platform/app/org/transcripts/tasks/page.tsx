@@ -1,7 +1,15 @@
 "use client";
 
-import Tasks from "@/components/tasks/tasks";
+import { SendDataCallout } from "@/components/callouts/import-data";
+import TasksDataviz from "@/components/tasks/tasks-dataviz";
+import { TasksTable } from "@/components/tasks/tasks-table";
 
 export default function Page() {
-  return <Tasks />;
+  return (
+    <>
+      <SendDataCallout />
+      <TasksDataviz />
+      <TasksTable />
+    </>
+  );
 }
