@@ -182,8 +182,6 @@ const RunClusteringSheet = ({
     5,
   );
 
-  console.log("nb_elements", projectStatistics?.nb_elements);
-
   useEffect(() => {
     // Update the form default value for the number of clusters
     form.setValue("nb_clusters", defaultNbClusters);
