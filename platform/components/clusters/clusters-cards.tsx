@@ -33,12 +33,9 @@ function ClusterCard({
   const { accessToken } = useUser();
   const router = useRouter();
   const dataFilters = navigationStateStore((state) => state.dataFilters);
-  const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const setDateRangePreset = navigationStateStore(
-    (state) => state.setDateRangePreset,
-  );
+  const setDataFilters = navigationStateStore((state) => state.setDataFilters);
 
   const [sheetEventOpen, setSheetEventOpen] = useState(false);
 
@@ -133,14 +130,6 @@ function ClusterCard({
           size="sm"
           onClick={(mouseEvent) => {
             mouseEvent.stopPropagation();
-            setDataFilters({
-              ...dataFilters,
-              clustering_id: cluster.clustering_id,
-              clusters_ids: [cluster.id],
-              created_at_start: null,
-              created_at_end: null,
-            });
-            setDateRangePreset("all-time");
             router.push(
               `/org/insights/clusters/${encodeURIComponent(cluster.id)}`,
             );

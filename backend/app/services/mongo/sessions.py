@@ -477,6 +477,10 @@ async def session_filtering_pipeline_match(
         for key, value in filters.metadata.items():
             match[f"metadata.{key}"] = value
 
+    if filters.version_id is not None:
+        # TODO: Check if we need to filter on the version_id of the session or the version_id of the tasks
+        match["metadata.version_id"] = filters.version_id
+
     if filters.language is not None:
         match["stats.most_common_language"] = filters.language
 

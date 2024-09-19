@@ -266,6 +266,7 @@ export function searchParamsToProjectDataFilters({
       : undefined,
     session_ids:
       session_ids && session_ids.length > 0 ? session_ids : undefined,
+    version_id: searchParams.get("version_id") ?? undefined,
   };
 
   // Remove undefined values

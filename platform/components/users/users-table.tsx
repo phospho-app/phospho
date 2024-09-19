@@ -32,7 +32,7 @@ import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
 export function UsersTable({
-  parsedDataFilters,
+  parsedDataFilters: forcedDataFilters,
 }: {
   parsedDataFilters?: ProjectDataFilters | null;
 }) {
@@ -77,11 +77,11 @@ export function UsersTable({
   useEffect(() => {
     /* Set default filters based on parsedDataFilters from the searchParams.
     Note: Only the event filters are implemented for users filtering. */
-    if (parsedDataFilters?.event_name) {
-      console.log("parsedDataFilters", parsedDataFilters);
-      table.getColumn("events")?.setFilterValue(parsedDataFilters.event_name);
+    if (forcedDataFilters?.event_name) {
+      console.log("parsedDataFilters", forcedDataFilters);
+      table.getColumn("events")?.setFilterValue(forcedDataFilters.event_name);
     }
-  }, [parsedDataFilters, table]);
+  }, [forcedDataFilters, table]);
 
   return (
     <div>

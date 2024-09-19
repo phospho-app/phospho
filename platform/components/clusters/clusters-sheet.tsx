@@ -53,6 +53,8 @@ import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import * as z from "zod";
 
+import FilterComponent from "../filters";
+
 interface ProjectStatics {
   total_nb_tasks?: number;
   nb_tasks_in_sessions?: number;
@@ -265,8 +267,9 @@ const RunClusteringSheet = ({
             machine learning.
           </SheetDescription>
           <Separator className="my-8" />
-          <div className="flex flex-wrap space-x-2 space-y-2 items-end">
+          <div className="flex flex-wrap gap-x-2 gap-y-2 items-end">
             <DatePickerWithRange />
+            <FilterComponent variant="tasks" />
           </div>
           <div className="flex flex-col space-y-4">
             <FormField

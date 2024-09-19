@@ -18,7 +18,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
-import { EventDefinition, TaskWithEvents } from "@/models/models";
+import {
+  EventDefinition,
+  ProjectDataFilters,
+  TaskWithEvents,
+} from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -37,10 +41,10 @@ import { TaskPreview } from "./task-preview";
 import { useColumns } from "./tasks-table-columns";
 
 interface DataTableProps {
-  tasks_ids?: string[];
+  forcedDataFilters?: ProjectDataFilters;
 }
 
-export function TasksTable({ tasks_ids }: DataTableProps) {
+function TasksTable({ forcedDataFilters }: DataTableProps) {
   const project_id = navigationStateStore((state) => state.project_id);
   const tasksSorting = navigationStateStore((state) => state.tasksSorting);
   const setTasksSorting = navigationStateStore(
@@ -62,6 +66,12 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
     useState<EventDefinition | null>(null);
   const [taskPreviewId, setTaskToPreviewId] = useState<string | null>(null);
 
+  // Merge forcedDataFilters with dataFilters
+  const dataFiltersMerged = {
+    ...dataFilters,
+    ...forcedDataFilters,
+  };
+
   const {
     data: tasksWithEvents,
     mutate: mutateTasks,
@@ -74,17 +84,13 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
           `/api/projects/${project_id}/tasks`,
           accessToken,
           tasksPagination.pageIndex,
-          JSON.stringify(dataFilters),
+          JSON.stringify(dataFiltersMerged),
           JSON.stringify(tasksSorting),
-          JSON.stringify(tasks_ids),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        filters: {
-          ...dataFilters,
-          tasks_ids: tasks_ids,
-        },
+        filters: dataFiltersMerged,
         pagination: {
           page: tasksPagination.pageIndex,
           page_size: tasksPagination.pageSize,
@@ -104,16 +110,13 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
-      JSON.stringify(dataFilters),
+      JSON.stringify(dataFiltersMerged),
       "total_nb_tasks",
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        filters: {
-          ...dataFilters,
-          tasks_ids: tasks_ids,
-        },
+        filters: dataFiltersMerged,
       }),
     {
       keepPreviousData: true,
@@ -273,3 +276,5 @@ export function TasksTable({ tasks_ids }: DataTableProps) {
     </div>
   );
 }
+
+export { TasksTable };

@@ -1,7 +1,8 @@
 "use client";
 
-// Shadcn ui
-import { Button } from "@/components/ui/button";
+import { getColumns } from "@/components/abtesting/abtesting-columns";
+import { ABTestingDataviz } from "@/components/abtesting/abtesting-dataviz";
+import { TableNavigation } from "@/components/table-navigation";
 import {
   Table,
   TableBody,
@@ -22,17 +23,11 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
-import { TableNavigation } from "../table-navigation";
-import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { getColumns } from "./abtesting-columns";
-import { ABTestingDataviz } from "./abtesting-dataviz";
-
-export function ABTesting() {
+function ABTesting() {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const router = useRouter();
@@ -43,10 +38,12 @@ export function ABTesting() {
   }, []);
 
   // Fetch ABTests
-  const { data: abTests } = useSWR(
+  const { data: abTests }: { data: ABTest[] | null | undefined } = useSWR(
     project_id ? [`/api/explore/${project_id}/ab-tests`, accessToken] : null,
     ([url, accessToken]) =>
-      authFetcher(url, accessToken)?.then((res) => {
+      authFetcher(url, accessToken).then((res) => {
+        if (res === undefined) return undefined;
+        if (!res.abtests) return null;
         const abtests = res.abtests as ABTest[];
         // Round the score and score_std to 2 decimal places
         abtests.forEach((abtest) => {
@@ -82,32 +79,6 @@ export function ABTesting() {
 
   return (
     <>
-      {abTests && (abTests?.length ?? 0) <= 1 && (
-        <Card className="bg-secondary">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-                  Compare versions with AB Testing
-                </CardTitle>
-                <CardDescription>
-                  <div className="text-muted-foreground">
-                    When logging, add a <code>version_id</code> in{" "}
-                    <code>metadata</code> to compare their analytics
-                    distribution.
-                  </div>
-                </CardDescription>
-              </div>
-              <Link
-                href="https://docs.phospho.ai/guides/ab-test"
-                target="_blank"
-              >
-                <Button>Setup AB Testing</Button>
-              </Link>
-            </div>
-          </CardHeader>
-        </Card>
-      )}
       {abTests && abTests.length > 1 && (
         <h1 className="text-2xl font-bold">AB Testing</h1>
       )}
@@ -184,4 +155,4 @@ export function ABTesting() {
   );
 }
 
-export default ABTesting;
+export { ABTesting };

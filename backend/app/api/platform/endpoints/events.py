@@ -4,7 +4,6 @@ from app.services.mongo.recipes import (
 )
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
-from phospho.models import ProjectDataFilters
 from propelauth_fastapi import User
 
 from app.api.platform.models import (

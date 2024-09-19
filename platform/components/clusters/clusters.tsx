@@ -281,7 +281,7 @@ const Clusters: React.FC = () => {
             </SheetTrigger>
           </div>
           {selectedClustering && (
-            <div className="space-x-2 mb-2">
+            <div className="space-x-2 my-2">
               <Badge variant="secondary">
                 {`Instruction: ${selectedClustering?.instruction}` ??
                   "No instruction"}
