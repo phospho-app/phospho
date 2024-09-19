@@ -234,6 +234,11 @@ export function searchParamsToProjectDataFilters({
 }): ProjectDataFilters | null {
   /* Parse the search params to get the project data filters */
 
+  const event_name = searchParams.getAll("event_name");
+  const tasks_ids = searchParams.getAll("tasks_ids");
+  const clusters_ids = searchParams.getAll("clusters_ids");
+  const session_ids = searchParams.getAll("session_ids");
+
   let projectDataFilters = {
     created_at_start: searchParams.get("created_at_start")
       ? Number(searchParams.get("created_at_start"))
@@ -241,24 +246,26 @@ export function searchParamsToProjectDataFilters({
     created_at_end: searchParams.get("created_at_end")
       ? Number(searchParams.get("created_at_end"))
       : undefined,
-    event_name: searchParams.getAll("event_name"),
-    flag: searchParams.get("flag"),
+    event_name: event_name && event_name.length > 0 ? event_name : undefined,
+    flag: searchParams.get("flag") ?? undefined,
     // Metadata is a Record<string, any> but we don't have a way to parse it
     // We ignore it for now
-    user_id: searchParams.get("user_id"),
-    last_eval_source: searchParams.get("last_eval_source"),
-    sentiment: searchParams.get("sentiment"),
-    language: searchParams.get("language"),
+    user_id: searchParams.get("user_id") ?? undefined,
+    last_eval_source: searchParams.get("last_eval_source") ?? undefined,
+    sentiment: searchParams.get("sentiment") ?? undefined,
+    language: searchParams.get("language") ?? undefined,
     has_notes: searchParams.get("has_notes")
       ? searchParams.get("has_notes") === "true"
       : undefined,
-    tasks_ids: searchParams.getAll("tasks_ids"),
-    clustering_id: searchParams.get("clustering_id"),
-    clusters_ids: searchParams.getAll("clusters_ids"),
+    tasks_ids: tasks_ids && tasks_ids.length > 0 ? tasks_ids : undefined,
+    clustering_id: searchParams.get("clustering_id") ?? undefined,
+    clusters_ids:
+      clusters_ids && clusters_ids.length > 0 ? clusters_ids : undefined,
     is_last_task: searchParams.get("is_last_task")
       ? searchParams.get("is_last_task") === "true"
       : undefined,
-    session_ids: searchParams.getAll("session_ids"),
+    session_ids:
+      session_ids && session_ids.length > 0 ? session_ids : undefined,
   };
 
   // Remove undefined values

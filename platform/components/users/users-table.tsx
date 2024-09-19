@@ -78,15 +78,10 @@ export function UsersTable({
     /* Set default filters based on parsedDataFilters from the searchParams.
     Note: Only the event filters are implemented for users filtering. */
     if (parsedDataFilters?.event_name) {
-      table.setColumnFilters(() => {
-        return [{ id: "events", value: parsedDataFilters.event_name }];
-      });
+      console.log("parsedDataFilters", parsedDataFilters);
+      table.getColumn("events")?.setFilterValue(parsedDataFilters.event_name);
     }
   }, [parsedDataFilters]);
-
-  if (usersMetadata === undefined) {
-    return <></>;
-  }
 
   return (
     <div>
@@ -116,7 +111,7 @@ export function UsersTable({
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {table !== null &&
+            {usersMetadata &&
               table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
@@ -141,7 +136,7 @@ export function UsersTable({
               ))}
           </TableHeader>
           <TableBody>
-            {table !== null && table?.getRowModel()?.rows?.length ? (
+            {usersMetadata && table?.getRowModel()?.rows?.length ? (
               table?.getRowModel()?.rows?.map((row) => (
                 <TableRow
                   key={row.id}
