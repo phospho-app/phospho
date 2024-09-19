@@ -5,6 +5,8 @@ import CreateEvent from "@/components/events/create-event";
 import RunEvent from "@/components/events/run-event";
 import FilterComponent from "@/components/filters";
 import RunAnalysisInPast from "@/components/run-analysis-past";
+import { SessionPreview } from "@/components/sessions/session-preview";
+import { useColumns } from "@/components/sessions/sessions-table-columns";
 import { TableNavigation } from "@/components/table-navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -18,7 +20,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
-import { EventDefinition, SessionWithEvents } from "@/models/models";
+import {
+  EventDefinition,
+  ProjectDataFilters,
+  SessionWithEvents,
+} from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -33,18 +39,11 @@ import Link from "next/link";
 import React, { useState } from "react";
 import useSWR, { KeyedMutator } from "swr";
 
-import { SessionPreview } from "./session-preview";
-import { useColumns } from "./sessions-table-columns";
-
 interface DataTableProps {
-  userFilter?: string | null;
-  sessions_ids?: string[];
+  forcedDataFilters?: ProjectDataFilters;
 }
 
-export function SessionsTable({
-  userFilter = null,
-  sessions_ids,
-}: DataTableProps) {
+function SessionsTable({ forcedDataFilters }: DataTableProps) {
   const project_id = navigationStateStore((state) => state.project_id);
   const sessionsSorting = navigationStateStore(
     (state) => state.sessionsSorting,
@@ -53,6 +52,10 @@ export function SessionsTable({
     (state) => state.setSessionsSorting,
   );
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const dataFiltersMerged = {
+    ...dataFilters,
+    ...forcedDataFilters,
+  };
 
   const sessionPagination = navigationStateStore(
     (state) => state.sessionsPagination,
@@ -83,17 +86,13 @@ export function SessionsTable({
           `/api/projects/${project_id}/sessions`,
           accessToken,
           sessionPagination.pageIndex,
-          JSON.stringify(dataFilters),
+          JSON.stringify(dataFiltersMerged),
           JSON.stringify(sessionsSorting),
-          JSON.stringify(sessions_ids),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
-        filters: {
-          ...dataFilters,
-          tasks_ids: sessions_ids,
-        },
+        filters: dataFiltersMerged,
         pagination: {
           page: sessionPagination.pageIndex,
           page_size: sessionPagination.pageSize,
@@ -114,17 +113,13 @@ export function SessionsTable({
       [
         `/api/explore/${project_id}/aggregated/sessions`,
         accessToken,
-        JSON.stringify(userFilter),
         JSON.stringify(dateRange),
         "total_nb_sessions",
       ],
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["total_nb_sessions"],
-          filters: {
-            ...dataFilters,
-            sessions_ids: sessions_ids,
-          },
+          filters: dataFiltersMerged,
         }),
       {
         keepPreviousData: true,
@@ -291,3 +286,5 @@ export function SessionsTable({
     </div>
   );
 }
+
+export { SessionsTable };

@@ -11,7 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useColumns } from "@/components/users/users-table-columns";
 import { authFetcher } from "@/lib/fetcher";
+import { ProjectDataFilters, UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -26,34 +28,39 @@ import {
 } from "@tanstack/react-table";
 import { FilterX } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
-import { useColumns } from "./users-table-columns";
-
-export function UsersTable() {
+export function UsersTable({
+  parsedDataFilters: forcedDataFilters,
+}: {
+  parsedDataFilters?: ProjectDataFilters | null;
+}) {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
-
-  // Fetch all users
-  const { data: usersData } = useSWR(
-    project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-  const usersMetadata = usersData?.users;
-
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [filters, setFilters] = React.useState<ColumnFiltersState>([]);
-
   const router = useRouter();
 
-  const columns = useColumns();
+  // Fetch all users
+  const { data: usersMetadata }: { data: UserMetadata[] | null | undefined } =
+    useSWR(
+      project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
+      ([url, accessToken]) =>
+        authFetcher(url, accessToken, "GET").then(async (res) => {
+          if (res === undefined) return undefined;
+          if (!res?.users) return null;
+          return res.users;
+        }),
+      {
+        keepPreviousData: true,
+      },
+    );
 
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [filters, setFilters] = useState<ColumnFiltersState>([]);
+
+  const columns = useColumns();
   const table = useReactTable({
-    data: usersMetadata,
+    data: usersMetadata ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
@@ -67,13 +74,14 @@ export function UsersTable() {
     },
   });
 
-  if (!project_id) {
-    return <></>;
-  }
-
-  if (usersMetadata === undefined) {
-    return <></>;
-  }
+  useEffect(() => {
+    /* Set default filters based on parsedDataFilters from the searchParams.
+    Note: Only the event filters are implemented for users filtering. */
+    if (forcedDataFilters?.event_name) {
+      console.log("parsedDataFilters", forcedDataFilters);
+      table.getColumn("events")?.setFilterValue(forcedDataFilters.event_name);
+    }
+  }, [forcedDataFilters, table]);
 
   return (
     <div>
@@ -103,7 +111,7 @@ export function UsersTable() {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {table !== null &&
+            {usersMetadata &&
               table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
@@ -128,7 +136,7 @@ export function UsersTable() {
               ))}
           </TableHeader>
           <TableBody>
-            {table !== null && table?.getRowModel()?.rows?.length ? (
+            {usersMetadata && table?.getRowModel()?.rows?.length ? (
               table?.getRowModel()?.rows?.map((row) => (
                 <TableRow
                   key={row.id}

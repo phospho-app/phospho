@@ -55,12 +55,12 @@ const TaskOverview: React.FC<TaskProps> = ({
         <CardHeader>
           <CardTitle className="text-xl font-bold tracking-tight">
             <div className="flex justify-between">
-              Messages
+              Message
               <div className="flex flex-row space-x-2">
                 {showGoToTask && (
                   <Link href={`/org/transcripts/tasks/${task_id}`}>
                     <Button variant="secondary">
-                      Go to Messages
+                      Go to Message
                       <ChevronRight />
                     </Button>
                   </Link>

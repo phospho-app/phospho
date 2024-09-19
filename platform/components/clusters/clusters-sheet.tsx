@@ -1,5 +1,6 @@
 import { Blockwall } from "@/components/blockwall";
 import { DatePickerWithRange } from "@/components/date-range";
+import FilterComponent from "@/components/filters";
 import { Spinner } from "@/components/small-spinner";
 import {
   Accordion,
@@ -265,8 +266,9 @@ const RunClusteringSheet = ({
             machine learning.
           </SheetDescription>
           <Separator className="my-8" />
-          <div className="flex flex-wrap space-x-2 space-y-2 items-end">
+          <div className="flex flex-wrap gap-x-2 gap-y-2 items-end">
             <DatePickerWithRange />
+            <FilterComponent variant={form.getValues("scope")} />
           </div>
           <div className="flex flex-col space-y-4">
             <FormField

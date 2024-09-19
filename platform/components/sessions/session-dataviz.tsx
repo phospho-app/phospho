@@ -545,4 +545,4 @@ const SessionsDataviz: React.FC = () => {
   );
 };
 
-export default SessionsDataviz;
+export { SessionsDataviz };

@@ -1,7 +1,3 @@
-"use client";
-
-import { SendDataCallout } from "@/components/callouts/import-data";
-import SessionsDataviz from "@/components/sessions/session-dataviz";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,12 +9,9 @@ import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import Link from "next/link";
-import React from "react";
 import useSWR from "swr";
 
-import { SessionsTable } from "./sessions-table";
-
-const Sessions: React.FC = () => {
+function SetupSessionCallout() {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
 
@@ -39,13 +32,8 @@ const Sessions: React.FC = () => {
   );
   const hasTasks: boolean = hasTasksData?.has_tasks;
 
-  if (!project_id) {
-    return <></>;
-  }
-
   return (
     <>
-      <SendDataCallout />
       {hasTasks && !hasSessions && (
         <Card className="bg-secondary">
           <CardHeader>
@@ -69,10 +57,8 @@ const Sessions: React.FC = () => {
           </CardHeader>
         </Card>
       )}
-      <SessionsDataviz />
-      <SessionsTable />
     </>
   );
-};
+}
 
-export default Sessions;
+export { SetupSessionCallout };
