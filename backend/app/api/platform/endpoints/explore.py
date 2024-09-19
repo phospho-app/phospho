@@ -570,6 +570,7 @@ async def post_detect_clusters(
         clustering_name=clustering_name,
         clustering_mode=query.clustering_mode,
         user_email=user.email,
+        scope=query.scope,
     )
     logger.info(
         f"Clustering id {clustering_id} cluster name {clustering_name} for project {project_id} requested."
@@ -579,7 +580,6 @@ async def post_detect_clusters(
     background_tasks.add_task(
         ai_hub_client.run_clustering,
         clustering_request=clustering_request,
-        scope=query.scope,
     )
 
     # Return a dummy clustering object, used for the frontend

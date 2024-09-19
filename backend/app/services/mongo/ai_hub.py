@@ -2,10 +2,9 @@
 Interact with the AI Hub service
 """
 
-import os
 from fastapi import HTTPException
 import traceback
-from typing import Literal, Optional
+from typing import Optional
 import hashlib
 
 from app.services.slack import slack_notification
@@ -105,6 +104,10 @@ class AIHubClient:
         data["customer_id"] = await fetch_stripe_customer_id(self.org_id)
 
         try:
+            if config.TEMPORAL_HOST_URL is None:
+                raise ValueError("TEMPORAL_HOST_URL is not set")
+            if config.TEMPORAL_NAMESPACE is None:
+                raise ValueError("TEMPORAL_NAMESPACE is not set")
             if config.ENVIRONMENT in ["production", "staging"]:
                 client_cert = config.TEMPORAL_MTLS_TLS_CERT
                 client_key = config.TEMPORAL_MTLS_TLS_KEY
@@ -177,31 +180,15 @@ class AIHubClient:
     async def run_clustering(
         self,
         clustering_request: ClusteringRequest,
-        scope: Literal["messages", "sessions", "users"] = "messages",
     ) -> None:
         """
         Call the clustering endpoint of the AI Hub
         """
-        if scope == "messages":
-            await self._post(
-                endpoint="generate_clustering_messages_workflow",
-                data=clustering_request.model_dump(mode="json"),
-                hash_data_for_id=False,
-            )
-        elif scope == "sessions":
-            await self._post(
-                endpoint="generate_clustering_sessions_workflow",
-                data=clustering_request.model_dump(mode="json"),
-                hash_data_for_id=False,
-            )
-        elif scope == "users":
-            await self._post(
-                endpoint="generate_clustering_users_workflow",
-                data=clustering_request.model_dump(mode="json"),
-                hash_data_for_id=False,
-            )
-        else:
-            raise ValueError(f"Invalid value for messages_or_sessions: {scope}")
+        await self._post(
+            endpoint="generate_clustering_workflow",
+            data=clustering_request.model_dump(mode="json"),
+            hash_data_for_id=False,
+        )
 
     async def generate_embeddings(
         self, embedding_request: EmbeddingRequest

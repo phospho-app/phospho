@@ -527,10 +527,10 @@ async def get_nb_of_daily_tasks(
             filters.created_at_start = df["created_at"].min()
     else:
         if filters.created_at_start is None:
-            filters.created_at_start = datetime.datetime.now().timestamp()
+            filters.created_at_start = int(datetime.datetime.now().timestamp())
 
     if filters.created_at_end is None:
-        filters.created_at_end = datetime.datetime.now().timestamp()
+        filters.created_at_end = int(datetime.datetime.now().timestamp())
 
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
@@ -2786,13 +2786,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values.get(event_name, []):
@@ -2813,13 +2813,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2852,13 +2852,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] = event_result["count"]
+                    divide_for_correct_average[event_result["version_id"]] = (
+                        event_result["count"]
+                    )
                 else:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] += event_result["count"]
+                    divide_for_correct_average[event_result["version_id"]] += (
+                        event_result["count"]
+                    )
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (

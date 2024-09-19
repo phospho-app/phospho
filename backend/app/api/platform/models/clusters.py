@@ -30,3 +30,4 @@ class ClusteringRequest(BaseModel):
     clustering_id: Optional[str] = None
     clustering_name: Optional[str] = None
     user_email: Optional[str] = None
+    scope: Literal["messages", "sessions", "users"] = "messages"
