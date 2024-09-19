@@ -8,7 +8,7 @@ from base64 import b64decode
 
 from dotenv import load_dotenv
 from google.oauth2 import service_account
-from google.cloud.storage import Client
+from google.cloud.storage import Client  # type: ignore
 
 from loguru import logger
 

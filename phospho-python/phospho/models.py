@@ -788,7 +788,7 @@ class Cluster(ProjectElementBaseModel):
     tasks_ids: Optional[List[str]] = None
     # reference to the sessions in the cluster
     sessions_ids: Optional[List[str]] = None
-    scope: Optional[Literal["messages", "sessions"]] = None
+    scope: Optional[Literal["messages", "sessions", "users"]] = None
     embeddings_ids: Optional[List[str]] = None
 
 
@@ -800,7 +800,7 @@ class Clustering(ProjectElementBaseModel):
     status: Optional[Literal["started", "summaries", "completed"]] = None
     percent_of_completion: Optional[float] = None  # 0-100
     clusters: Optional[List[Cluster]] = None
-    scope: Optional[Literal["messages", "sessions"]] = None
+    scope: Optional[Literal["messages", "sessions", "users"]] = None
     clustering_mode: Literal["agglomerative", "dbscan"] = "agglomerative"
     name: Optional[str] = None
     instruction: Optional[str] = None

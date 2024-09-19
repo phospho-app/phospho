@@ -41,8 +41,8 @@ async def trigger_clustering(
                 limit=clustering.limit,
                 nb_credits_used=0,
                 user_email=None,  # This will NOT send an email
+                scope=clustering.scope,
             ),
-            scope=clustering.scope,
         )
         return {"status": "ok", "message": "Clustering triggered successfully"}
     except Exception as e:

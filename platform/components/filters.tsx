@@ -53,7 +53,7 @@ interface LanguageFilterOption {
 const FilterComponent = ({
   variant = "tasks",
 }: {
-  variant: "tasks" | "sessions";
+  variant: "tasks" | "sessions" | "users";
 }) => {
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
