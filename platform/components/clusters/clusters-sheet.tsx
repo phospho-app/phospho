@@ -168,7 +168,15 @@ const RunClusteringSheet = ({
   ]);
 
   const canRunClusterAnalysis: boolean =
-    !!projectStatistics?.nb_elements && projectStatistics.nb_elements >= 5;
+    (form.watch("scope") === "messages" &&
+      !!projectStatistics?.nb_elements &&
+      projectStatistics.nb_elements >= 5) ||
+    (form.watch("scope") === "sessions" &&
+      !!projectStatistics?.nb_sessions_in_scope &&
+      projectStatistics.nb_sessions_in_scope >= 5) ||
+    (form.watch("scope") === "users" &&
+      !!projectStatistics?.nb_users_in_scope &&
+      projectStatistics.nb_users_in_scope >= 5);
   const defaultNbClusters = Math.max(
     Math.round((projectStatistics?.nb_elements ?? 0) / 100),
     5,
