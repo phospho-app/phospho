@@ -373,7 +373,7 @@ const ExploreSampleProjectOnboarding: React.FC<
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="hover:bg-green-500 transition-colors"
+                  className="hover:bg-green-600 transition-colors bg-green-500 drop-shadow"
                   disabled={creatingProject || redirecting}
                 >
                   {redirecting && <Spinner className="mr-1" />}
@@ -416,15 +416,15 @@ export default function Page() {
             <CardTitle>Create your first phospho project</CardTitle>
             <CardDescription>Let&apos;s get you started.</CardDescription>
           </CardHeader>
+          <ExploreSampleProjectOnboarding
+            redirecting={redirecting}
+            creatingProject={creatingProject}
+          />
           <ImportDataOnboarding
             redirecting={redirecting}
             setRedirecting={setRedirecting}
             creatingProject={creatingProject}
             setCreatingProject={setCreatingProject}
-          />
-          <ExploreSampleProjectOnboarding
-            redirecting={redirecting}
-            creatingProject={creatingProject}
           />
           <div /> {/* Used to add a bit of space at the bottom */}
         </Card>

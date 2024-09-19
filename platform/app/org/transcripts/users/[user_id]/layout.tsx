@@ -21,10 +21,10 @@ export default function Page({
   params,
 }: {
   children: React.ReactNode;
-  params: { id: string };
+  params: { user_id: string };
 }) {
   const router = useRouter();
-  const user_id = decodeURIComponent(params.id);
+  const user_id = decodeURIComponent(params.user_id);
   const pathname = usePathname();
   let currentTabName = pathname.split("/").pop();
   if (currentTabName !== "messages" && currentTabName !== "sessions") {
@@ -50,12 +50,10 @@ export default function Page({
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Users
         </Button>
       </div>
-      <div className="flex flex-row space-x-2">
-        <div className="text-3xl font-bold tracking-tight mr-8">
-          User {user_id}
-        </div>
+      <div className="flex flex-col space-y-2">
+        <div className="text-2xl font-bold tracking-tight">User {user_id}</div>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild className="w-32 justify-between">
+          <DropdownMenuTrigger asChild className="w-[10rem] justify-between">
             <Button variant="secondary">
               {selected}
               <ChevronDown className="ml-2 h-4 w-4" />

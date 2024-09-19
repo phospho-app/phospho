@@ -344,6 +344,9 @@ async def task_filtering_pipeline_match(
         for key, value in filters.metadata.items():
             match[f"{prefix}metadata.{key}"] = value
 
+    if filters.version_id is not None:
+        match[f"{prefix}metadata.version_id"] = filters.version_id
+
     if filters.language is not None:
         match[f"{prefix}language"] = filters.language
 

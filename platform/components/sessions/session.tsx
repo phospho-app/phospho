@@ -55,7 +55,7 @@ const SessionStats = ({
   return (
     <Card className="mt-4">
       <CardHeader>
-        <CardTitle className="text-xl font-bold tracking-tight">
+        <CardTitle className="text-xl font-bold tracking-tight mb-2">
           <div className="flex justify-between">
             Session
             {showGoToSession && (
@@ -71,7 +71,7 @@ const SessionStats = ({
         <CardDescription>
           <div className="flex flex-col space-y-1">
             <div>
-              <code className="bg-secondary p-1.5">{session_id}</code>
+              <code className="bg-secondary p-1.5 text-xs">{session_id}</code>
               <Button
                 variant="outline"
                 className="m-1.5"
