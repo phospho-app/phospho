@@ -26,8 +26,6 @@ from app.utils import generate_timestamp, get_last_week_timestamps
 from fastapi import HTTPException
 from loguru import logger
 from pymongo import InsertOne, UpdateOne
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
 from sklearn.metrics import (
     f1_score,
     mean_squared_error,
@@ -529,10 +527,10 @@ async def get_nb_of_daily_tasks(
             filters.created_at_start = df["created_at"].min()
     else:
         if filters.created_at_start is None:
-            filters.created_at_start = datetime.datetime.now().timestamp()
+            filters.created_at_start = int(datetime.datetime.now().timestamp())
 
     if filters.created_at_end is None:
-        filters.created_at_end = datetime.datetime.now().timestamp()
+        filters.created_at_end = int(datetime.datetime.now().timestamp())
 
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
@@ -671,10 +669,10 @@ async def get_daily_success_rate(
             filters.created_at_start = df["created_at"].min()
     else:
         if filters.created_at_start is None:
-            filters.created_at_start = datetime.datetime.now().timestamp()
+            filters.created_at_start = int(datetime.datetime.now().timestamp())
 
     if filters.created_at_end is None:
-        filters.created_at_end = datetime.datetime.now().timestamp()
+        filters.created_at_end = int(datetime.datetime.now().timestamp())
 
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
@@ -928,7 +926,7 @@ async def get_nb_tasks_in_sessions(
 async def get_global_average_session_length(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
-) -> float:
+) -> Optional[float]:
     """
     Get the global average session length of a project.
     """
@@ -965,7 +963,7 @@ async def get_global_average_session_length(
 async def get_last_message_success_rate(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
-) -> float:
+) -> Optional[float]:
     """
     Get the success rate of the last message of a project.
     """
@@ -1068,10 +1066,10 @@ async def get_nb_sessions_per_day(
             filters.created_at_start = df["created_at"].min()
     else:
         if filters.created_at_start is None:
-            filters.created_at_start = datetime.datetime.now().timestamp()
+            filters.created_at_end = int(datetime.datetime.now().timestamp())
 
     if filters.created_at_end is None:
-        filters.created_at_end = datetime.datetime.now().timestamp()
+        filters.created_at_end = int(datetime.datetime.now().timestamp())
 
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
@@ -2788,13 +2786,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values.get(event_name, []):
@@ -2815,13 +2813,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
                     else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2854,13 +2852,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] = event_result["count"]
+                    divide_for_correct_average[event_result["version_id"]] = (
+                        event_result["count"]
+                    )
                 else:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] += event_result["count"]
+                    divide_for_correct_average[event_result["version_id"]] += (
+                        event_result["count"]
+                    )
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (
@@ -2969,6 +2967,7 @@ async def compute_cloud_of_clusters(
                 "$project": {
                     "task_id": 1,
                     "session_id": 1,
+                    "user_id": 1,
                 }
             },
         ]
@@ -2980,6 +2979,8 @@ async def compute_cloud_of_clusters(
             scope_ids = [scope_id["task_id"] for scope_id in scope_ids]
         elif clustering_model.scope == "sessions":
             scope_ids = [scope_id["session_id"] for scope_id in scope_ids]
+        elif clustering_model.scope == "users":
+            scope_ids = [scope_id["user_id"] for scope_id in scope_ids]
 
         # Get the clusters names from the clusters_ids in raw_results[0]["pca"]
         # I want a cluster name for each cluster_id
@@ -3054,3 +3055,94 @@ async def get_clustering_by_id(
 
     clustering_model = Clustering.model_validate(raw_results[0])
     return clustering_model
+
+
+async def get_total_nb_of_users(
+    project_id: str,
+    filters: Optional[ProjectDataFilters] = None,
+) -> Optional[int]:
+    """
+    Get the total number of unique users for a project.
+    This is the number of unique user_id in the tasks.
+    """
+
+    mongo_db = await get_mongo_db()
+
+    global_filters, collection = await task_filtering_pipeline_match(
+        project_id=project_id, filters=filters
+    )
+
+    # We count the number of unique user_id
+    pipeline = [
+        {"$match": global_filters},
+        # Tasks may not have a user_id, so we filter this case
+        {"$match": {"metadata.user_id": {"$exists": True, "$ne": None}}},
+        {
+            "$group": {
+                "_id": "$metadata.user_id",
+            }
+        },
+        {"$count": "total_users"},
+    ]
+
+    query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=1)
+
+    logger.info(f"Query result: {query_result}")
+    if len(query_result) == 0:
+        return None
+
+    total_nb_users = query_result[0]["total_users"]
+    return total_nb_users
+
+
+async def get_nb_users_messages(
+    project_id: str,
+    filters: Optional[ProjectDataFilters] = None,
+    limit: Optional[int] = None,
+) -> Optional[int]:
+    """
+    Get the total number of messages sent by unique users for a project.
+
+    This is used to get all the messages sent by active users, according to the filters.
+    """
+
+    mongo_db = await get_mongo_db()
+
+    global_filters, collection = await task_filtering_pipeline_match(
+        project_id=project_id, filters=filters
+    )
+
+    # We fetch the list of active users ids first
+    pipeline = [
+        {"$match": global_filters},
+        {"$match": {"metadata.user_id": {"$exists": True, "$ne": None}}},
+        {
+            "$group": {
+                "_id": "$metadata.user_id",
+            }
+        },
+    ]
+    query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=limit)
+    if len(query_result) == 0:
+        return None
+    active_user_ids: List[str] = [user["_id"] for user in query_result]
+
+    # Then, we find how many messages these users sent in total, during their whole existence
+    pipeline = [
+        {
+            "$match": {
+                "project_id": project_id,
+                "metadata.user_id": {"$in": active_user_ids},
+            }
+        },
+        {
+            "$count": "nb_users_messages",
+        },
+    ]
+    query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=1)
+    if len(query_result) == 0:
+        return None
+
+    total_nb_users_messages = query_result[0]["nb_users_messages"]
+
+    return total_nb_users_messages
