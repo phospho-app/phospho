@@ -524,7 +524,12 @@ const RunClusteringSheet = ({
               <span>
                 You need at least 5 {form.getValues("scope")} to run a cluster
                 analysis. There are currently{" "}
-                {projectStatistics?.nb_elements ?? 0} {form.getValues("scope")}.
+                {scope === "messages" && (projectStatistics?.nb_elements ?? 0)}
+                {scope === "sessions" &&
+                  (projectStatistics?.nb_sessions_in_scope ?? 0)}
+                {scope === "users" &&
+                  (projectStatistics?.nb_users_in_scope ?? 0)}{" "}
+                {form.getValues("scope")}.
               </span>
             )}
             {canRunClusterAnalysis && (
