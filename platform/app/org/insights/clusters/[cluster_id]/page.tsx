@@ -4,7 +4,7 @@ import { SessionsTable } from "@/components/sessions/sessions-table";
 import { TasksTable } from "@/components/tasks/tasks-table";
 import { Button } from "@/components/ui/button";
 import { authFetcher } from "@/lib/fetcher";
-import { Cluster, ProjectDataFilters } from "@/models/models";
+import { Cluster } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronLeft } from "lucide-react";
