@@ -40,14 +40,10 @@ import React, { useState } from "react";
 import useSWR, { KeyedMutator } from "swr";
 
 interface DataTableProps {
-  userFilter?: string | null;
   forcedDataFilters?: ProjectDataFilters;
 }
 
-function SessionsTable({
-  userFilter = null,
-  forcedDataFilters,
-}: DataTableProps) {
+function SessionsTable({ forcedDataFilters }: DataTableProps) {
   const project_id = navigationStateStore((state) => state.project_id);
   const sessionsSorting = navigationStateStore(
     (state) => state.sessionsSorting,
@@ -117,7 +113,6 @@ function SessionsTable({
       [
         `/api/explore/${project_id}/aggregated/sessions`,
         accessToken,
-        JSON.stringify(userFilter),
         JSON.stringify(dateRange),
         "total_nb_sessions",
       ],
