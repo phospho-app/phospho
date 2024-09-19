@@ -1361,15 +1361,15 @@ async def fetch_all_clusterings(
                 },
                 {
                     "$project": {
-                        "pca": str(0),
-                        "tsne": str(0),
+                        "pca": 0,
+                        "tsne": 0,
                     }
                 },
             ]
         )
 
     pipeline += [
-        {"$sort": {"created_at": str(-1)}},
+        {"$sort": {"created_at": -1}},
     ]
     clusterings = (
         await mongo_db["private-clusterings"].aggregate(pipeline).to_list(length=limit)
@@ -2965,9 +2965,9 @@ async def compute_cloud_of_clusters(
             },
             {
                 "$project": {
-                    "task_id": str(1),
-                    "session_id": str(1),
-                    "user_id": str(1),
+                    "task_id": 1,
+                    "session_id": 1,
+                    "user_id": 1,
                 }
             },
         ]
@@ -2992,7 +2992,7 @@ async def compute_cloud_of_clusters(
                     "id": {"$in": cloud_of_points["clusters_ids"]},
                 }
             },
-            {"$project": {"name": str(1), "id": str(1)}},
+            {"$project": {"name": 1, "id": 1}},
         ]
 
         clusters_ids_to_clusters_names = (
@@ -3039,9 +3039,9 @@ async def get_clustering_by_id(
         pipeline.append(
             {
                 "$project": {
-                    "_id": str(0),
-                    "pca": str(0),
-                    "tsne": str(0),
+                    "_id": 0,
+                    "pca": 0,
+                    "tsne": 0,
                 }
             }
         )
