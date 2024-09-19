@@ -1,4 +1,6 @@
+import { ProjectDataFilters } from "@/models/models";
 import { type ClassValue, clsx } from "clsx";
+import { ReadonlyURLSearchParams } from "next/navigation";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -223,4 +225,53 @@ export function generateSlug(addDate = true): string {
   // Add the date to the slug
   const date = getCompactDate();
   return `${date}-${color}-${fruit}`;
+}
+
+export function searchParamsToProjectDataFilters({
+  searchParams,
+}: {
+  searchParams: ReadonlyURLSearchParams;
+}): ProjectDataFilters | null {
+  /* Parse the search params to get the project data filters */
+
+  let projectDataFilters = {
+    created_at_start: searchParams.get("created_at_start")
+      ? Number(searchParams.get("created_at_start"))
+      : undefined,
+    created_at_end: searchParams.get("created_at_end")
+      ? Number(searchParams.get("created_at_end"))
+      : undefined,
+    event_name: searchParams.getAll("event_name"),
+    flag: searchParams.get("flag"),
+    // Metadata is a Record<string, any> but we don't have a way to parse it
+    // We ignore it for now
+    user_id: searchParams.get("user_id"),
+    last_eval_source: searchParams.get("last_eval_source"),
+    sentiment: searchParams.get("sentiment"),
+    language: searchParams.get("language"),
+    has_notes: searchParams.get("has_notes")
+      ? searchParams.get("has_notes") === "true"
+      : undefined,
+    tasks_ids: searchParams.getAll("tasks_ids"),
+    clustering_id: searchParams.get("clustering_id"),
+    clusters_ids: searchParams.getAll("clusters_ids"),
+    is_last_task: searchParams.get("is_last_task")
+      ? searchParams.get("is_last_task") === "true"
+      : undefined,
+    session_ids: searchParams.getAll("session_ids"),
+  };
+
+  // Remove undefined values
+  const filteredProjectDataFilters = Object.fromEntries(
+    Object.entries(projectDataFilters).filter(
+      ([_, value]) => value !== undefined,
+    ),
+  );
+
+  // If there are no filters, return null
+  if (Object.keys(filteredProjectDataFilters).length === 0) {
+    return null;
+  }
+
+  return filteredProjectDataFilters as ProjectDataFilters;
 }
