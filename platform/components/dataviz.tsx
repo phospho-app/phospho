@@ -7,6 +7,7 @@ import { graphColors } from "@/lib/utils";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import {
@@ -144,6 +145,17 @@ const DatavizGraph = ({
     return <Spinner className="my-40 mx-60" />;
   }
 
+  const supportedDeepDives = [
+    "language",
+    "tagger_name",
+    "scorer_name",
+    "flag",
+    "version_id",
+    "session_id",
+    "task_id",
+    "user_id",
+  ];
+
   const onChartClick = (nextState: CategoricalChartState) => {
     if (!nextState?.activeLabel) return;
     const formatedBreakdownBy = encodeURIComponent(nextState.activeLabel);
@@ -244,16 +256,25 @@ const DatavizGraph = ({
                           const color = graphColors[index % graphColors.length];
 
                           return (
-                            <div
-                              className="flex flex-row space-x-2 items-center"
-                              key={item.name}
-                            >
-                              <div
-                                className="w-4 h-4"
-                                style={{ backgroundColor: color }}
-                              ></div>
-                              <div className="text-secondary">
-                                {itemName}: {formatedValue}
+                            <div key={item.name}>
+                              <div className="flex flex-row space-x-2 items-center">
+                                {/* A small square with the color of the bar (legend)*/}
+                                <div
+                                  className="w-4 h-4"
+                                  style={{ backgroundColor: color }}
+                                ></div>
+                                {/* The name of the item and its value */}
+                                <div className="text-secondary">
+                                  {itemName}: {formatedValue}
+                                </div>
+                              </div>
+                              <div className="pt-4">
+                                {supportedDeepDives.includes(breakdown_by) && (
+                                  <div className="flex flex-row items-center text-xs text-secondary">
+                                    <ChevronRight className="h-4 w-4" />
+                                    Click to see all
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
