@@ -594,7 +594,7 @@ const RunClusteringSheet = ({
             {canRunClusterAnalysis && (
               <span>
                 We will cluster{" "}
-                {<>{projectStatistics?.nb_elements ?? 0} messages</>}
+                {<>{projectStatistics?.nb_elements ?? 0} user messages</>}
                 {(form.getValues("scope") === "sessions" && (
                   <>
                     {" "}
