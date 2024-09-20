@@ -90,7 +90,9 @@ const CreateProjectDialog = ({
       },
     );
     const responseBody = await creation_response.json();
-    if (responseBody.project_name === projectName) {
+    if (
+      responseBody.project_name.slice(0, projectName.length) === projectName
+    ) {
       // Change the selected project
       mutate(
         [`/api/organizations/${selectedOrgId}/projects`, accessToken],
@@ -105,6 +107,12 @@ const CreateProjectDialog = ({
       // Redirect to the new project
       router.push(`/org/transcripts`);
     } else {
+      console.log(
+        "project_name",
+        responseBody.project_name.slice(0, projectName.length),
+      );
+      console.log("project_name", responseBody.project_name);
+      console.log("project_name", projectName);
       setIsCreated(false);
       setIsCreating(false);
       toast({
