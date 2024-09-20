@@ -42,7 +42,7 @@ export function getColumns() {
               <HoverCardContent>
                 <div className="w-96">
                   The average success rate is (nb of &quot;success&quot; system
-                  responses)/(total nb of system responses).{" "}
+                  responses)/(total nb of assistant responses).{" "}
                 </div>
                 <div>Higher is better.</div>
               </HoverCardContent>
