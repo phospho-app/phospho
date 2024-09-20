@@ -406,9 +406,9 @@ const RunClusteringSheet = ({
                               <SelectItem value="user_persona">
                                 User persona
                               </SelectItem>
-                              {/* <SelectItem value="question_and_answer">
+                              <SelectItem value="question_and_answer">
                                 Question and answer
-                              </SelectItem> */}
+                              </SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
@@ -594,7 +594,7 @@ const RunClusteringSheet = ({
             {canRunClusterAnalysis && (
               <span>
                 We will cluster{" "}
-                {<>{projectStatistics?.nb_elements ?? 0} user messages</>}
+                {<>{projectStatistics?.nb_elements ?? 0} messages</>}
                 {(form.getValues("scope") === "sessions" && (
                   <>
                     {" "}
