@@ -256,10 +256,10 @@ def shorten_text(
     prompt: Optional[str],
     max_length: int,
     margin: int = 20,
-    how: Literal["left", "right"] = "left",
+    how: Literal["left", "right", "center"] = "left",
 ) -> str:
     """
-    Shorten the text to fit in the max_length by only keeping the beginning of the text
+    Shorten the prompt to fit in the max_length by only keeping some part of the text.
     """
     try:
         import tiktoken
@@ -278,7 +278,14 @@ def shorten_text(
     else:
         if how == "left":
             return encoding.decode(tokens[: max_length - margin])
-        if how == "right":
+        elif how == "right":
             return encoding.decode(tokens[-(max_length - margin) :])
+        elif how == "center":
+            # Keep the beginning and the end of the text, with [...] in the middle
+            return (
+                encoding.decode(tokens[: (max_length - margin) // 2])
+                + " [...] "
+                + encoding.decode(tokens[-(max_length - margin) // 2 :])
+            )
         else:
             raise ValueError(f"Unknown value for how: {how}")

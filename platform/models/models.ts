@@ -255,9 +255,10 @@ export interface Cluster {
   name: string;
   description: string;
   size: number;
+  scope: "messages" | "sessions" | "users";
   tasks_ids: string[] | null;
   sessions_ids: string[] | null;
-  scope: "messages" | "sessions";
+  users_ids: string[] | null;
 }
 
 export interface Clustering {
