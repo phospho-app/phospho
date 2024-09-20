@@ -45,38 +45,25 @@ export function SelectProjectButton() {
     },
   );
 
+  const selectedProjectId = project_id ?? "loading...";
   const selectedProjectName = selectedProject?.project_name ?? "loading...";
 
   if (projects === null || projects === undefined) {
     return <></>;
   }
 
-  const handleValueChange = (project_name: string) => {
-    // Match the selected project name with the project in the projects array
-    const selectedProjectInForm = projects.find(
-      (project) => project.project_name === project_name,
-    );
-
-    if (selectedProjectInForm) {
-      if (selectedProjectInForm.id != "project_id") {
-        setproject_id(selectedProjectInForm.id);
-      }
+  const handleValueChange = (selected_project_id: string) => {
+    if (selected_project_id != "project_id") {
+      setproject_id(selected_project_id);
     }
   };
 
-  if (!project_id) {
-    return <></>;
-  }
-
   return (
-    <Select
-      onValueChange={handleValueChange}
-      defaultValue={selectedProjectName}
-    >
+    <Select onValueChange={handleValueChange} value={selectedProjectId}>
       <SelectTrigger className="py-1 h-8">
         <span className="flex space-x-1">
           <div className="flex items-center">Project</div>
-          <SelectValue asChild={true} id={project_id}>
+          <SelectValue asChild={true} id={selectedProjectId}>
             <div>{selectedProjectName}</div>
           </SelectValue>
         </span>
@@ -95,7 +82,7 @@ export function SelectProjectButton() {
           {projects.map((project) => (
             <SelectItem
               key={project.id}
-              value={project.project_name}
+              value={project.id}
               // onSelect={() => handleProjectChange(project.id)}
               onClick={(mousEvent) => {
                 mousEvent.stopPropagation();
