@@ -71,6 +71,20 @@ async def create_project_by_org(
 
     mongo_db = await get_mongo_db()
 
+    # If the project name already exists for this org, add a suffix
+    project_name = project.project_name
+    suffix = 1
+    while (
+        await mongo_db["projects"].count_documents(
+            {"org_id": org_id, "project_name": project_name}
+        )
+        > 0
+    ) and suffix < 100:
+        project_name = f"{project.project_name} ({suffix})"
+        suffix += 1
+
+    project.project_name = project_name
+
     # If some events are created, first let's create the coresponding Jobs objects
     # Let's get the events in the settings
     if project.settings.events:
