@@ -235,17 +235,6 @@ export interface HasEnoughLabelledTasks {
   currently_labelled_tasks: number;
 }
 
-export interface Test {
-  id: string;
-  project_id: string;
-  created_by: string;
-  created_at: number;
-  last_updated_at: number;
-  terminated_at?: number;
-  status: string;
-  summary?: Record<string, any>;
-}
-
 export interface Cluster {
   id: string;
   clustering_id: string;

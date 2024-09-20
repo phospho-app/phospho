@@ -317,6 +317,19 @@ const RunClusteringSheet = ({
                         size="sm"
                         onClick={(mouseEvent) => {
                           mouseEvent.stopPropagation();
+                          form.setValue("instruction", "assistant reply");
+                          // Prevent the form from submitting
+                          mouseEvent.preventDefault();
+                        }}
+                      >
+                        assistant reply
+                      </Button>
+                      <Button
+                        className="text-xs"
+                        variant="outline"
+                        size="sm"
+                        onClick={(mouseEvent) => {
+                          mouseEvent.stopPropagation();
                           form.setValue(
                             "instruction",
                             "type of issue (refund, delivery, etc.)",
