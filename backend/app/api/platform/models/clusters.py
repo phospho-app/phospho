@@ -31,3 +31,6 @@ class ClusteringRequest(BaseModel):
     clustering_name: Optional[str] = None
     user_email: Optional[str] = None
     scope: Literal["messages", "sessions", "users"] = "messages"
+    output_format: Literal[
+        "title_description", "user_personna", "question_and_answer"
+    ] = "title_description"

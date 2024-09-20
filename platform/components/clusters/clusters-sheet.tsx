@@ -100,6 +100,11 @@ const RunClusteringSheet = ({
       .optional(),
     limit: z.number().min(0).optional(),
     detect_outliers: z.boolean(),
+    output_format: z.enum([
+      "title_description",
+      "user_personna",
+      "question_and_answer",
+    ]),
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -111,6 +116,7 @@ const RunClusteringSheet = ({
       // Note: don't set the nb_clusters default value here, since it's updated dynamically using an API call
       nb_clusters: undefined,
       limit: undefined,
+      output_format: "title_description",
     },
   });
 
@@ -210,6 +216,7 @@ const RunClusteringSheet = ({
             ? "dbscan"
             : "agglomerative",
           limit: formData.limit,
+          output_format: formData.output_format,
         }),
       }).then(async (response) => {
         if (response.ok) {
@@ -372,18 +379,54 @@ const RunClusteringSheet = ({
                     </FormControl>
                     <FormMessage />
                   </FormItem>
+                  <FormField
+                    control={form.control}
+                    name="output_format"
+                    render={({ field }) => (
+                      <>
+                        <FormLabel>
+                          <div className="flex space-x-2 mt-2">
+                            <span>Output format</span>
+                          </div>
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                          }}
+                          value={field.value} // Ensure this is controlled
+                        >
+                          <SelectTrigger className="max-w-[20rem]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="title_description">
+                                Title and description
+                              </SelectItem>
+                              <SelectItem value="user_personna">
+                                User persona
+                              </SelectItem>
+                              <SelectItem value="question_and_answer">
+                                Question and answer
+                              </SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
+                  />
                 </div>
               )}
             />
 
-            <div className="flex flex-col space-y-2 bg-secondary p-2 rounded-lg">
-              <FormField
-                control={form.control}
-                name="scope"
-                render={({ field }) => (
-                  <>
-                    <FormLabel>
-                      <div className="flex space-x-2">
+            <div className="flex flex-col gap-y-2 bg-secondary p-2 rounded-lg">
+              <div className="flex flex-row gap-x-2 w-full items-end">
+                <FormField
+                  control={form.control}
+                  name="scope"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel className="flex space-x-2">
                         <span>Granularity</span>
                         <HoverCard openDelay={0} closeDelay={0}>
                           <HoverCardTrigger>
@@ -408,64 +451,67 @@ const RunClusteringSheet = ({
                             </div>
                           </HoverCardContent>
                         </HoverCard>
-                      </div>
-                    </FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        console.log("scope", value); // Debugging log
-                        field.onChange(value);
-                      }}
-                      value={field.value} // Ensure this is controlled
-                    >
-                      <SelectTrigger className="max-w-[20rem]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="messages">
-                            User messages
-                          </SelectItem>
-                          <SelectItem value="sessions">
-                            User sessions
-                          </SelectItem>
-                          <SelectItem value="users">Active users</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="detect_outliers"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Clustering mode</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        field.onChange(value === "true");
-                      }}
-                      defaultValue={field.value ? "true" : "false"}
-                    >
-                      <SelectTrigger>
-                        {field.value
-                          ? "Detect outliers (beta)"
-                          : "Uniform groups (default)"}
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="false">
-                            Uniform groups (default)
-                          </SelectItem>
-                          <SelectItem value="true">
-                            Detect outliers (beta)
-                          </SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                        }}
+                        value={field.value} // Ensure this is controlled
+                      >
+                        <SelectTrigger className="max-w-[20rem]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="messages">
+                              User messages
+                            </SelectItem>
+                            <SelectItem value="sessions">
+                              User sessions
+                            </SelectItem>
+                            <SelectItem value="users">Active users</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="detect_outliers"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel className="flex space-x-2">
+                        Clustering mode
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value === "true");
+                        }}
+                        defaultValue={field.value ? "true" : "false"}
+                      >
+                        <SelectTrigger className="max-w-[20rem]">
+                          {field.value
+                            ? "Detect outliers (beta)"
+                            : "Uniform groups (default)"}
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="false">
+                              Uniform groups (default)
+                            </SelectItem>
+                            <SelectItem value="true">
+                              Detect outliers (beta)
+                            </SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               {!form.getValues("detect_outliers") && (
                 <div className="flex items-center space-x-2">
                   <FormLabel>Number of clusters:</FormLabel>
