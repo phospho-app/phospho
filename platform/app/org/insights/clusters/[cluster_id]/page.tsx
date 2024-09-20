@@ -1,5 +1,6 @@
 "use client";
 
+import ComingSoonAlert from "@/components/coming-soon";
 import { SessionsTable } from "@/components/sessions/sessions-table";
 import { TasksTable } from "@/components/tasks/tasks-table";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,8 @@ export default function Page({ params }: { params: { cluster_id: string } }) {
             <SessionsTable forcedDataFilters={{ clusters_ids: [cluster_id] }} />
           </div>
         )}
+        {/* TODO: User scope is not supported yet */}
+        {cluster?.scope === "users" && <ComingSoonAlert />}
         <div className="h-10"></div>
       </div>
     </>
