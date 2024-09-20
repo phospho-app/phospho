@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, field_serializer
 from phospho.utils import (
     generate_timestamp,
     generate_uuid,
+    shorten_text,
 )
 
 # Add other job types here
@@ -483,6 +484,8 @@ class Message(DatedBaseModel):
         with_previous_messages: bool = False,
         only_previous_messages: bool = False,
         max_previous_messages: Optional[int] = None,
+        message_content_max_len: Optional[int] = None,
+        message_content_shorten_how: Literal["left", "right", "center"] = "left",
     ) -> str:
         """
         Return a string representation of the message.
@@ -508,7 +511,15 @@ class Message(DatedBaseModel):
             if with_role:
                 transcript += f"{self.role}: {self.content}"
             else:
-                transcript += "\n" + self.content
+                if message_content_max_len is not None:
+                    content = shorten_text(
+                        prompt=self.content,
+                        max_length=message_content_max_len,
+                        how=message_content_shorten_how,
+                    )
+                else:
+                    content = self.content
+                transcript += "\n" + content
         return transcript
 
     def previous_messages_transcript(
