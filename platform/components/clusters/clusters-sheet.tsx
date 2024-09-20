@@ -293,80 +293,78 @@ const RunClusteringSheet = ({
                       </HoverCard>
                     </div>
                   </FormLabel>
-                  <div className="flex items-center justify-start space-x-4">
+                  <div className="flex items-center justify-start gap-x-1 gap-y-1 flex-wrap">
                     <h2 className="text-muted-foreground text-xs">
                       Templates:
                     </h2>
-                    <div className="flex space-x-2">
-                      <Button
-                        className="text-xs"
-                        variant="outline"
-                        size="sm"
-                        onClick={(mouseEvent) => {
-                          mouseEvent.stopPropagation();
-                          form.setValue("instruction", "user intent");
-                          // Prevent the form from submitting
-                          mouseEvent.preventDefault();
-                        }}
-                      >
-                        user intent
-                      </Button>
-                      <Button
-                        className="text-xs"
-                        variant="outline"
-                        size="sm"
-                        onClick={(mouseEvent) => {
-                          mouseEvent.stopPropagation();
-                          form.setValue("instruction", "assistant reply");
-                          // Prevent the form from submitting
-                          mouseEvent.preventDefault();
-                        }}
-                      >
-                        assistant reply
-                      </Button>
-                      <Button
-                        className="text-xs"
-                        variant="outline"
-                        size="sm"
-                        onClick={(mouseEvent) => {
-                          mouseEvent.stopPropagation();
-                          form.setValue(
-                            "instruction",
-                            "type of issue (refund, delivery, etc.)",
-                          );
-                          // Prevent the form from submitting
-                          mouseEvent.preventDefault();
-                        }}
-                      >
-                        support
-                      </Button>
-                      <Button
-                        className="text-xs"
-                        variant="outline"
-                        size="sm"
-                        onClick={(mouseEvent) => {
-                          mouseEvent.stopPropagation();
-                          form.setValue("instruction", "type of disease");
-                          // Prevent the form from submitting
-                          mouseEvent.preventDefault();
-                        }}
-                      >
-                        medical chatbot
-                      </Button>
-                      <Button
-                        className="text-xs"
-                        variant="outline"
-                        size="sm"
-                        onClick={(mouseEvent) => {
-                          mouseEvent.stopPropagation();
-                          form.setValue("instruction", "product mentioned");
-                          // Prevent the form from submitting
-                          mouseEvent.preventDefault();
-                        }}
-                      >
-                        sales assistant
-                      </Button>
-                    </div>
+                    <Button
+                      className="text-xs"
+                      variant="outline"
+                      size="sm"
+                      onClick={(mouseEvent) => {
+                        mouseEvent.stopPropagation();
+                        form.setValue("instruction", "user intent");
+                        // Prevent the form from submitting
+                        mouseEvent.preventDefault();
+                      }}
+                    >
+                      user intent
+                    </Button>
+                    <Button
+                      className="text-xs"
+                      variant="outline"
+                      size="sm"
+                      onClick={(mouseEvent) => {
+                        mouseEvent.stopPropagation();
+                        form.setValue("instruction", "assistant reply");
+                        // Prevent the form from submitting
+                        mouseEvent.preventDefault();
+                      }}
+                    >
+                      assistant reply
+                    </Button>
+                    <Button
+                      className="text-xs"
+                      variant="outline"
+                      size="sm"
+                      onClick={(mouseEvent) => {
+                        mouseEvent.stopPropagation();
+                        form.setValue(
+                          "instruction",
+                          "type of issue (refund, delivery, etc.)",
+                        );
+                        // Prevent the form from submitting
+                        mouseEvent.preventDefault();
+                      }}
+                    >
+                      support
+                    </Button>
+                    <Button
+                      className="text-xs"
+                      variant="outline"
+                      size="sm"
+                      onClick={(mouseEvent) => {
+                        mouseEvent.stopPropagation();
+                        form.setValue("instruction", "type of disease");
+                        // Prevent the form from submitting
+                        mouseEvent.preventDefault();
+                      }}
+                    >
+                      medical chatbot
+                    </Button>
+                    <Button
+                      className="text-xs"
+                      variant="outline"
+                      size="sm"
+                      onClick={(mouseEvent) => {
+                        mouseEvent.stopPropagation();
+                        form.setValue("instruction", "product mentioned");
+                        // Prevent the form from submitting
+                        mouseEvent.preventDefault();
+                      }}
+                    >
+                      sales assistant
+                    </Button>
                   </div>
                   <FormItem>
                     <FormControl>
