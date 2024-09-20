@@ -102,7 +102,7 @@ const RunClusteringSheet = ({
     detect_outliers: z.boolean(),
     output_format: z.enum([
       "title_description",
-      "user_personna",
+      "user_persona",
       "question_and_answer",
     ]),
   });
@@ -403,12 +403,12 @@ const RunClusteringSheet = ({
                               <SelectItem value="title_description">
                                 Title and description
                               </SelectItem>
-                              <SelectItem value="user_personna">
+                              <SelectItem value="user_persona">
                                 User persona
                               </SelectItem>
-                              <SelectItem value="question_and_answer">
+                              {/* <SelectItem value="question_and_answer">
                                 Question and answer
-                              </SelectItem>
+                              </SelectItem> */}
                             </SelectGroup>
                           </SelectContent>
                         </Select>

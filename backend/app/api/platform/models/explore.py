@@ -59,7 +59,7 @@ class DetectClustersRequest(BaseModel):
     nb_clusters: Optional[int] = None
     clustering_mode: Literal["agglomerative", "dbscan"] = "agglomerative"
     output_format: Literal[
-        "title_description", "user_personna", "question_and_answer"
+        "title_description", "user_persona", "question_and_answer"
     ] = "title_description"
 
 
