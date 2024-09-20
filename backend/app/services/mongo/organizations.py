@@ -73,7 +73,6 @@ async def create_project_by_org(
 
     # If the project name already exists for this org, add a suffix
     project_name = project.project_name
-    logger
     suffix = 1
     while (
         await mongo_db["projects"].count_documents(
