@@ -32,9 +32,9 @@ import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
 export function UsersTable({
-  parsedDataFilters: forcedDataFilters,
+  forcedDataFilters: forcedDataFilters,
 }: {
-  parsedDataFilters?: ProjectDataFilters | null;
+  forcedDataFilters?: ProjectDataFilters | null;
 }) {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();

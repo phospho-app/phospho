@@ -3,6 +3,8 @@
 import EventsLast7Days from "@/components/dashboard/events-last7days";
 import OverviewLast7Days from "@/components/dashboard/overview-last7days";
 import DatavizGraph from "@/components/dataviz";
+import { DatePickerWithRange } from "@/components/date-range";
+import FilterComponent from "@/components/filters";
 import { CenteredSpinner } from "@/components/small-spinner";
 import {
   AlertDialog,
@@ -21,7 +23,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { DashboardTile, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
@@ -42,11 +46,6 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import useSWR, { mutate } from "swr";
 import { z } from "zod";
-
-import { DatePickerWithRange } from "../date-range";
-import FilterComponent from "../filters";
-import { Form, FormField, FormItem, FormLabel } from "../ui/form";
-import { useToast } from "../ui/use-toast";
 
 interface RenameDashboardTileProps {
   tile: DashboardTile;

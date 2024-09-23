@@ -41,7 +41,7 @@ import { TaskPreview } from "./task-preview";
 import { useColumns } from "./tasks-table-columns";
 
 interface DataTableProps {
-  forcedDataFilters?: ProjectDataFilters;
+  forcedDataFilters?: ProjectDataFilters | null;
 }
 
 function TasksTable({ forcedDataFilters }: DataTableProps) {

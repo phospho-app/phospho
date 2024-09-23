@@ -2,12 +2,13 @@
 
 import { Spinner } from "@/components/small-spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React from "react";
 import {
   Bar,
@@ -18,6 +19,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CategoricalChartState } from "recharts/types/chart/types";
 import {
   NameType,
   ValueType,
@@ -42,9 +44,9 @@ const DatavizGraph = ({
   scorer_id?: string;
 }) => {
   const { accessToken } = useUser();
-  const { toast } = useToast();
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const router = useRouter();
 
   const { data: selectedProject }: { data: Project } = useSWRImmutable(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -143,6 +145,46 @@ const DatavizGraph = ({
     return <Spinner className="my-40 mx-60" />;
   }
 
+  const supportedDeepDives = [
+    "language",
+    "tagger_name",
+    "scorer_name",
+    "flag",
+    "version_id",
+    "session_id",
+    "task_id",
+    "user_id",
+  ];
+
+  const onChartClick = (nextState: CategoricalChartState) => {
+    if (!nextState?.activeLabel) return;
+    const formatedBreakdownBy = encodeURIComponent(nextState.activeLabel);
+    if (breakdown_by === "language") {
+      router.push(`/org/transcripts/tasks?language=${formatedBreakdownBy}`);
+    }
+    if (breakdown_by === "tagger_name") {
+      router.push(`/org/transcripts/tasks?event_name=${formatedBreakdownBy}`);
+    }
+    if (breakdown_by === "scorer_name") {
+      router.push(`/org/transcripts/tasks?event_name=${formatedBreakdownBy}`);
+    }
+    if (breakdown_by === "flag") {
+      router.push(`/org/transcripts/tasks?flag=${formatedBreakdownBy}`);
+    }
+    if (breakdown_by === "version_id") {
+      router.push(`/org/ab-testing/${formatedBreakdownBy}`);
+    }
+    if (breakdown_by === "session_id") {
+      router.push(`/org/transcripts/sessions/${formatedBreakdownBy}`);
+    }
+    if (breakdown_by === "task_id") {
+      router.push(`/org/transcripts/tasks/${formatedBreakdownBy}`);
+    }
+    if (breakdown_by === "user_id") {
+      router.push(`/org/transcripts/users/${formatedBreakdownBy}`);
+    }
+  };
+
   return (
     <>
       {(pivotData === null || pivotData?.length == 0) && <>No data</>}
@@ -176,6 +218,7 @@ const DatavizGraph = ({
               bottom: 0,
               left: 0,
             }}
+            onClick={onChartClick}
           >
             <CartesianGrid />
             <Tooltip
@@ -213,17 +256,25 @@ const DatavizGraph = ({
                           const color = graphColors[index % graphColors.length];
 
                           return (
-                            <div
-                              className="flex flex-row space-x-2 items-center"
-                              key={item.name}
-                            >
-                              <div
-                                className="w-4 h-4"
-                                style={{ backgroundColor: color }}
-                                key={item.name}
-                              ></div>
-                              <div key={item.name} className="text-secondary">
-                                {itemName}: {formatedValue}
+                            <div key={item.name}>
+                              <div className="flex flex-row space-x-2 items-center">
+                                {/* A small square with the color of the bar (legend)*/}
+                                <div
+                                  className="w-4 h-4"
+                                  style={{ backgroundColor: color }}
+                                ></div>
+                                {/* The name of the item and its value */}
+                                <div className="text-secondary">
+                                  {itemName}: {formatedValue}
+                                </div>
+                              </div>
+                              <div className="pt-4">
+                                {supportedDeepDives.includes(breakdown_by) && (
+                                  <div className="flex flex-row items-center text-xs text-secondary">
+                                    <ChevronRight className="h-4 w-4" />
+                                    Click to see all
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
@@ -265,14 +316,6 @@ const DatavizGraph = ({
                 fill="#22c55e"
                 stackId="a"
                 // radius={[0, 20, 20, 0]}
-                onClick={(data) => {
-                  // Copy the Y value to the clipboard
-                  navigator.clipboard.writeText(data["_id"]);
-                  toast({
-                    title: "Copied to clipboard",
-                    description: data["_id"],
-                  });
-                }}
               />
             )}
             {isStacked &&
@@ -286,14 +329,6 @@ const DatavizGraph = ({
                       fill={graphColors[index % graphColors.length]}
                       stackId="a"
                       // radius={[0, 20, 20, 0]}
-                      onClick={(data) => {
-                        // Copy the Y value to the clipboard
-                        navigator.clipboard.writeText(data["_id"]);
-                        toast({
-                          title: "Copied to clipboard",
-                          description: data["_id"],
-                        });
-                      }}
                     />
                   );
                 },

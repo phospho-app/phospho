@@ -15,6 +15,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
+import { ProjectDataFilters } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight } from "lucide-react";
@@ -42,7 +43,10 @@ interface Industry {
   fill?: string;
 }
 
-const UsersDataviz = () => {
+const UsersDataviz = ({}: {
+  forcedDataFilters?: ProjectDataFilters | null;
+}) => {
+  // TODO: Implement forcedDataFilters
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
