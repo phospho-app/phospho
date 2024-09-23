@@ -40,7 +40,7 @@ import React, { useState } from "react";
 import useSWR, { KeyedMutator } from "swr";
 
 interface DataTableProps {
-  forcedDataFilters?: ProjectDataFilters;
+  forcedDataFilters?: ProjectDataFilters | null;
 }
 
 function SessionsTable({ forcedDataFilters }: DataTableProps) {

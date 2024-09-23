@@ -58,6 +58,9 @@ class DetectClustersRequest(BaseModel):
     instruction: Optional[str] = "user intent"
     nb_clusters: Optional[int] = None
     clustering_mode: Literal["agglomerative", "dbscan"] = "agglomerative"
+    output_format: Literal[
+        "title_description", "user_persona", "question_and_answer"
+    ] = "title_description"
 
 
 class FetchClustersRequest(BaseModel):

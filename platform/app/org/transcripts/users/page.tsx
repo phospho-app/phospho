@@ -13,8 +13,8 @@ export default function Page() {
   return (
     <>
       <SetupUsersCallout />
-      <UsersDataviz />
-      <UsersTable parsedDataFilters={parsedDataFilters} />
+      <UsersDataviz forcedDataFilters={parsedDataFilters} />
+      <UsersTable forcedDataFilters={parsedDataFilters} />
     </>
   );
 }

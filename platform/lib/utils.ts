@@ -276,6 +276,15 @@ export function searchParamsToProjectDataFilters({
     ),
   );
 
+  // Decode the uri components
+  for (const key in filteredProjectDataFilters) {
+    if (typeof filteredProjectDataFilters[key] === "string") {
+      filteredProjectDataFilters[key] = decodeURIComponent(
+        filteredProjectDataFilters[key] as string,
+      );
+    }
+  }
+
   // If there are no filters, return null
   if (Object.keys(filteredProjectDataFilters).length === 0) {
     return null;

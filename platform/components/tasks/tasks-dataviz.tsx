@@ -14,6 +14,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
+import { ProjectDataFilters } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { AlertDialog } from "@radix-ui/react-alert-dialog";
@@ -55,11 +56,18 @@ interface EventsRanking {
 
 const chartConfig: ChartConfig = {};
 
-const TasksDataviz: React.FC = () => {
-  const { accessToken } = useUser();
+interface TasksDatavizProps {
+  forcedDataFilters?: ProjectDataFilters | null;
+}
 
-  const dataFilters = navigationStateStore((state) => state.dataFilters);
+const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
+  const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const mergedDataFilters = {
+    ...dataFilters,
+    ...forcedDataFilters,
+  };
 
   const [open, setOpen] = React.useState(false);
 
@@ -68,12 +76,12 @@ const TasksDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
       "total_nb_tasks",
-      JSON.stringify(dataFilters),
+      JSON.stringify(mergedDataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
-        filters: dataFilters,
+        filters: mergedDataFilters,
       }).then((data) => {
         if (data === undefined) {
           return undefined;
@@ -93,12 +101,12 @@ const TasksDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
       "most_detected_event",
-      JSON.stringify(dataFilters),
+      JSON.stringify(mergedDataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["most_detected_event"],
-        filters: dataFilters,
+        filters: mergedDataFilters,
       }).then((data) => {
         if (data === undefined) {
           return undefined;
@@ -122,12 +130,12 @@ const TasksDataviz: React.FC = () => {
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
       "last_clustering_composition",
-      JSON.stringify(dataFilters),
+      JSON.stringify(mergedDataFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["last_clustering_composition"],
-        filters: dataFilters,
+        filters: mergedDataFilters,
       }).then((data) => {
         if (data === undefined) {
           return undefined;
@@ -157,12 +165,12 @@ const TasksDataviz: React.FC = () => {
         `/api/explore/${project_id}/aggregated/tasks`,
         accessToken,
         "date_last_clustering_timestamp",
-        JSON.stringify(dataFilters),
+        JSON.stringify(mergedDataFilters),
       ],
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["date_last_clustering_timestamp"],
-          filters: dataFilters,
+          filters: mergedDataFilters,
         }).then((data) => {
           if (data === undefined) {
             return undefined;
@@ -187,12 +195,12 @@ const TasksDataviz: React.FC = () => {
         accessToken,
 
         "nb_daily_tasks",
-        JSON.stringify(dataFilters),
+        JSON.stringify(mergedDataFilters),
       ],
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["nb_daily_tasks"],
-          filters: dataFilters,
+          filters: mergedDataFilters,
         }).then((data) => {
           if (data === undefined) {
             return undefined;
@@ -218,12 +226,12 @@ const TasksDataviz: React.FC = () => {
         `/api/explore/${project_id}/aggregated/tasks`,
         accessToken,
         "events_ranking",
-        JSON.stringify(dataFilters),
+        JSON.stringify(mergedDataFilters),
       ],
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["events_ranking"],
-          filters: dataFilters,
+          filters: mergedDataFilters,
         }).then((data) => {
           if (data === undefined) {
             return undefined;

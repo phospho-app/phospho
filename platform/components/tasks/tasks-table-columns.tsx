@@ -168,7 +168,7 @@ export function useColumns({
       minSize: 100,
     },
     {
-      header: "System response",
+      header: "Assistant response",
       accessorKey: "output",
       cell: (row) => {
         const output = row.getValue() as string; // asserting the type as string
