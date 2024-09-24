@@ -2,10 +2,9 @@ from typing import Dict, List, Literal, Optional, Tuple, cast
 
 from app.db.models import Event, EventDefinition, Project, Session, Task
 from app.db.mongo import get_mongo_db
-from app.services.mongo.tasks import task_filtering_pipeline_match
+from app.services.mongo.query_builder import QueryBuilder
 from fastapi import HTTPException
 from loguru import logger
-import datetime
 
 from phospho.models import ProjectDataFilters, ScoreRange
 from phospho.utils import is_jsonable
@@ -49,15 +48,27 @@ async def get_session_by_id(session_id: str) -> Session:
     return session_model
 
 
-async def fetch_session_tasks(session_id: str, limit: int = 1000) -> List[Task]:
+async def fetch_session_tasks(
+    project_id: str, session_id: str, limit: int = 1000
+) -> List[Task]:
     """
     Fetch all tasks for a given session id.
     """
     mongo_db = await get_mongo_db()
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="tasks_with_events",
+        filters=ProjectDataFilters(sessions_ids=[session_id]),
+    )
+    pipeline = await query_builder.build()
     tasks = (
-        await mongo_db["tasks_with_events"]
-        .find({"session_id": session_id})
-        .sort("created_at", -1)
+        await mongo_db["tasks"]
+        .aggregate(
+            pipeline
+            + [
+                {"$sort": {"created_at": -1}},
+            ]
+        )
         .to_list(length=limit)
     )
     tasks = [Task.model_validate(data) for data in tasks]
@@ -73,7 +84,9 @@ async def format_session_transcript(session: Session) -> str:
     Assistant: Hi there!
     """
 
-    tasks = await fetch_session_tasks(session.id)
+    tasks = await fetch_session_tasks(
+        project_id=session.project_id, session_id=session.id
+    )
 
     transcript = ""
     for task in tasks:
@@ -154,32 +167,12 @@ async def compute_task_position(
     """
     mongo_db = await get_mongo_db()
 
-    if filters is None:
-        filters = ProjectDataFilters()
-
-    main_filter: Dict[str, object] = {"project_id": project_id}
-    if filters.created_at_start is not None:
-        main_filter["created_at"] = {"$gte": filters.created_at_start}
-    if filters.created_at_end is not None:
-        main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
-            "$lte": filters.created_at_end,
-        }
-
-    tasks_filter, task_collection = await task_filtering_pipeline_match(
-        project_id=project_id, filters=filters, collection="tasks", prefix="tasks"
+    query_filter = QueryBuilder(
+        project_id=project_id, filters=filters, fetch_objects="sessions_with_tasks"
     )
-    pipeline = [
-        {"$match": main_filter},
-        {
-            "$lookup": {
-                "from": task_collection,
-                "localField": "id",
-                "foreignField": "session_id",
-                "as": "tasks",
-            }
-        },
-        {"$match": tasks_filter},
+    pipeline = await query_filter.build()
+
+    pipeline += [
         {
             "$set": {
                 "tasks": {
@@ -441,109 +434,3 @@ async def human_eval_session(
     session_model.stats.human_eval = flag
 
     return session_model
-
-
-async def session_filtering_pipeline_match(
-    project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-    collection: str = "sessions",
-) -> Tuple[Dict[str, object], str]:
-    """
-    Builds the filtering pipeline for sessions.
-    """
-    if filters is None:
-        filters = ProjectDataFilters()
-
-    match: Dict[str, object] = {"project_id": project_id}
-
-    if filters.sessions_ids is not None:
-        match["id"] = {"$in": filters.sessions_ids}
-
-    if isinstance(filters.created_at_start, datetime.datetime):
-        filters.created_at_start = int(filters.created_at_start.timestamp())
-
-    if isinstance(filters.created_at_end, datetime.datetime):
-        filters.created_at_end = int(filters.created_at_end.timestamp())
-
-    if filters.created_at_start is not None:
-        match["created_at"] = {"$gte": filters.created_at_start}
-    if filters.created_at_end is not None:
-        match["created_at"] = {
-            **match.get("created_at", {}),
-            "$lte": filters.created_at_end,
-        }
-
-    if filters.metadata is not None:
-        for key, value in filters.metadata.items():
-            match[f"metadata.{key}"] = value
-
-    if filters.version_id is not None:
-        # TODO: Check if we need to filter on the version_id of the session or the version_id of the tasks
-        match["metadata.version_id"] = filters.version_id
-
-    if filters.language is not None:
-        match["stats.most_common_language"] = filters.language
-
-    if filters.sentiment is not None:
-        match["stats.most_common_sentiment_label"] = filters.sentiment
-
-    if filters.flag is not None:
-        match["stats.most_common_flag"] = filters.flag
-
-    if filters.event_name is not None:
-        collection = "sessions_with_events"
-        match["$and"] = [
-            {"events": {"$ne": []}},
-            {
-                "events": {
-                    "$elemMatch": {
-                        "event_name": {"$in": filters.event_name},
-                    }
-                }
-            },
-        ]
-
-    if filters.event_id is not None:
-        collection = "sessions_with_events"
-        match["$and"] = [
-            {"events": {"$ne": []}},
-            {
-                "events": {
-                    "$elemMatch": {
-                        "id": {"$in": filters.event_id},
-                    }
-                }
-            },
-        ]
-
-    if filters.clustering_id is not None and filters.clusters_ids is None:
-        # Fetch the clusterings
-        mongo_db = await get_mongo_db()
-        clustering = await mongo_db["private-clusterings"].find_one(
-            {"id": filters.clustering_id}
-        )
-        if clustering:
-            filters.clusters_ids = []
-            filters.clusters_ids.extend(clustering.get("clusters_ids", []))
-
-    if filters.clusters_ids is not None:
-        # Fetch the cluster
-        mongo_db = await get_mongo_db()
-        clusters = (
-            await mongo_db["private-clusters"]
-            .find({"id": {"$in": filters.clusters_ids}})
-            .to_list(length=None)
-        )
-        if clusters:
-            new_sessions_ids = []
-            for cluster in clusters:
-                new_sessions_ids.extend(cluster.get("sessions_ids", []))
-            current_sessions_ids = match.get("id", {"$in": []})["$in"]
-            if current_sessions_ids:
-                # Do the intersection of the current task ids and the new task ids
-                new_sessions_ids = list(
-                    set(current_sessions_ids).intersection(new_sessions_ids)
-                )
-            match["id"] = {"$in": new_sessions_ids}
-
-    return match, collection
