@@ -142,7 +142,7 @@ async def post_human_eval_task(
         )
 
     # The task may not exist yet, so we try to fetch it multiple times with exponential backoff
-    delay = 0.1
+    delay = 1
     for _ in range(5):
         try:
             task_model = await get_task_by_id(task_id)
