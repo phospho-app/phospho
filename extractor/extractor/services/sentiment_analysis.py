@@ -3,7 +3,7 @@ from typing import Optional
 from google.cloud import language_v2
 from loguru import logger
 
-from app.core.config import GCP_ASYNC_SENTIMENT_CLIENT
+from extractor.core.config import GCP_ASYNC_SENTIMENT_CLIENT
 from phospho.models import SentimentObject
 
 

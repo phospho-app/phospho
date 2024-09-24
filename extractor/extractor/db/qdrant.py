@@ -1,6 +1,6 @@
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
-from app.core import config
+from extractor.core import config
 from loguru import logger
 
 

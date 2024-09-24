@@ -26,28 +26,31 @@ with workflow.unsafe.imports_passed_through():
     import threading
     import sentry_sdk
     from loguru import logger
-    from app.core import config
-    from app.services.slack import slack_notification
-    from app.services.pipelines import MainPipeline
-    from app.services.connectors import (
+    from extractor.core import config
+    from extractor.services.slack import slack_notification
+    from extractor.services.pipelines import MainPipeline
+    from extractor.services.connectors import (
         LangsmithConnector,
         LangfuseConnector,
         OpenTelemetryConnector,
     )
-    from app.services.projects import get_project_by_id
-    from app.temporal.activities import (
+    from extractor.services.projects import get_project_by_id
+    from extractor.temporal.activities import (
         extract_langsmith_data,
         extract_langfuse_data,
         store_open_telemetry_data,
         run_recipe_on_task,
-        run_process_logs_for_messages,
-        run_process_logs_for_tasks,
+        run_process_tasks,
         run_main_pipeline_on_messages,
         bill_on_stripe,
+        run_process_logs_for_tasks,
     )
-    from app.models import (
+    from extractor.models.log import (
         LogProcessRequestForMessages,
+        TaskProcessRequest,
         LogProcessRequestForTasks,
+    )
+    from extractor.models.pipelines import (
         PipelineLangfuseRequest,
         PipelineLangsmithRequest,
         PipelineOpentelemetryRequest,
@@ -169,12 +172,13 @@ class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_process_logs_for_messages_workflow")
-class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
+@workflow.defn(name="run_process_tasks_workflow")
+class RunProcessTasksWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
-            activity_func=run_process_logs_for_messages,
-            request_class=LogProcessRequestForMessages,
+            activity_func=run_process_tasks,
+            request_class=TaskProcessRequest,
+            max_retries=2,
         )
 
     @workflow.run

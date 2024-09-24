@@ -1,24 +1,24 @@
 import time
 from collections import defaultdict
 import traceback
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 
-from app.utils import generate_uuid
+from extractor.utils import generate_uuid
 from loguru import logger
 
-from app.db.models import (
+from extractor.db.models import (
     Event,
     EventDefinition,
     LlmCall,
     Recipe,
     Task,
 )
-from app.db.mongo import get_mongo_db
-from app.services.data import fetch_previous_tasks
-from app.services.projects import get_project_by_id
-from app.services.sentiment_analysis import call_sentiment_and_language_api
-from app.services.webhook import trigger_webhook
-from app.utils import get_most_common
+from extractor.db.mongo import get_mongo_db
+from extractor.services.data import fetch_previous_tasks
+from extractor.services.projects import get_project_by_id
+from extractor.services.sentiment_analysis import call_sentiment_and_language_api
+from extractor.services.webhook import trigger_webhook
+from extractor.utils import get_most_common
 from phospho import lab
 from phospho.models import (
     JobResult,
@@ -63,6 +63,7 @@ class MainPipeline:
         """
 
         self.project = await get_project_by_id(self.project_id)
+        cast(Project, self.project)
         mongo_db = await get_mongo_db()
         llm_based_events = []
         for event_name, event in self.project.settings.events.items():

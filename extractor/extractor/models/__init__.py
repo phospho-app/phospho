@@ -1,7 +1,7 @@
 from .log import (
     LogEventForTasks,
-    LogProcessRequestForTasks,
-    MinimalLogEventForTasks,
+    LogRequest,
+    MinimalLogEvent,
     LogProcessRequestForMessages,
 )
 from .pipelines import (

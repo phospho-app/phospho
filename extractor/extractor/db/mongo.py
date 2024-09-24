@@ -1,7 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from loguru import logger
 
-from app.core.config import (
+from extractor.core.config import (
     MONGODB_URL,
     MONGODB_NAME,
     MONGODB_MAXPOOLSIZE,

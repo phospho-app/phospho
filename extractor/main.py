@@ -9,32 +9,32 @@ from temporalio.worker.workflow_sandbox import (
 )
 import sentry_sdk
 import aiohealthcheck  # type: ignore
-from app.sentry.interceptor import SentryInterceptor
+from extractor.sentry.interceptor import SentryInterceptor
 
 from loguru import logger
 
-from app.core import config
-from app.db.mongo import close_mongo_db, connect_and_init_db
-from app.temporal.workflows import (
+from extractor.core import config
+from extractor.db.mongo import close_mongo_db, connect_and_init_db
+from extractor.temporal.workflows import (
     ExtractLangSmithDataWorkflow,
     ExtractLangfuseDataWorkflow,
     StoreOpenTelemetryDataWorkflow,
     RunRecipeOnTaskWorkflow,
     RunMainPipelineOnMessagesWorkflow,
-    RunProcessLogsForMessagesWorkflow,
     RunProcessLogsForTasksWorkflow,
+    RunProcessTasksWorkflow,
 )
-from app.temporal.activities import (
+from extractor.temporal.activities import (
     extract_langsmith_data,
     extract_langfuse_data,
     store_open_telemetry_data,
     run_recipe_on_task,
-    run_process_logs_for_tasks,
     bill_on_stripe,
     run_main_pipeline_on_messages,
-    run_process_logs_for_messages,
+    run_process_tasks,
+    run_process_logs_for_tasks,
 )
-from app.temporal.pydantic_converter import pydantic_data_converter
+from extractor.temporal.pydantic_converter import pydantic_data_converter
 
 logger.info("Starting worker")
 
@@ -115,17 +115,17 @@ async def main() -> None:
             RunRecipeOnTaskWorkflow,
             RunProcessLogsForTasksWorkflow,
             RunMainPipelineOnMessagesWorkflow,
-            RunProcessLogsForMessagesWorkflow,
+            RunProcessTasksWorkflow,
         ],
         activities=[  # And the linked activities here
             extract_langsmith_data,
             extract_langfuse_data,
             store_open_telemetry_data,
             run_recipe_on_task,
-            run_process_logs_for_tasks,
             bill_on_stripe,
             run_main_pipeline_on_messages,
-            run_process_logs_for_messages,
+            run_process_tasks,
+            run_process_logs_for_tasks,
         ],
         workflow_runner=new_sandbox_runner(),
         interceptors=[SentryInterceptor()]

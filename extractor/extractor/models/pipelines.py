@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-from app.db.models import Task, Recipe
+from extractor.db.models import Task, Recipe
 from phospho.lab import Message
 from phospho.models import SentimentObject, PipelineResults  # noqa: F401
 

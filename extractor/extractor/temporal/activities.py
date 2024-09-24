@@ -2,17 +2,16 @@ import time
 from temporalio import activity
 
 import stripe
-from app.core import config
-from app.services.pipelines import MainPipeline
-from app.services.connectors import (
+from extractor.core import config
+from extractor.services.pipelines import MainPipeline
+from extractor.services.connectors import (
     LangsmithConnector,
     LangfuseConnector,
     OpenTelemetryConnector,
 )
-from app.services.log import process_logs_for_tasks, process_logs_for_messages
-from app.models import (
-    LogProcessRequestForMessages,
-    LogProcessRequestForTasks,
+from extractor.services.log.tasks import process_tasks_id
+from extractor.models.log import TaskProcessRequest
+from extractor.models import (
     PipelineLangfuseRequest,
     PipelineLangsmithRequest,
     PipelineOpentelemetryRequest,
@@ -22,9 +21,10 @@ from app.models import (
     RunRecipeOnTaskRequest,
     BillOnStripeRequest,
 )
-from app.services.projects import get_project_by_id
-
+from extractor.services.projects import get_project_by_id
+from extractor.models.log import LogProcessRequestForTasks
 from loguru import logger
+from extractor.services.log.tasks import process_logs_for_tasks
 
 
 @activity.defn(name="bill_on_stripe")
@@ -174,44 +174,18 @@ async def store_open_telemetry_data(
     )
 
 
-@activity.defn(name="run_process_logs_for_messages")
-async def run_process_logs_for_messages(
-    request_body: LogProcessRequestForMessages,
+@activity.defn(name="run_process_tasks")
+async def run_process_tasks(
+    request_body: TaskProcessRequest,
 ):
-    """
-    Not implemented
-    """
-    logger.info(
-        f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
-    )
-    await process_logs_for_messages(
+    await process_tasks_id(
         project_id=request_body.project_id,
         org_id=request_body.org_id,
-        logs_to_process=request_body.logs_to_process,
-        extra_logs_to_save=request_body.extra_logs_to_save,
+        tasks_id_to_process=request_body.tasks_id_to_process,
     )
     return {
         "status": "ok",
-        "nb_job_results": len(request_body.logs_to_process),
-    }
-
-
-@activity.defn(name="run_process_logs_for_tasks")
-async def run_process_logs_for_tasks(
-    request_body: LogProcessRequestForTasks,
-):
-    logger.info(
-        f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
-    )
-    await process_logs_for_tasks(
-        project_id=request_body.project_id,
-        org_id=request_body.org_id,
-        logs_to_process=request_body.logs_to_process,
-        extra_logs_to_save=request_body.extra_logs_to_save,
-    )
-    return {
-        "status": "ok",
-        "nb_job_results": len(request_body.logs_to_process),
+        "nb_job_results": len(request_body.tasks_id_to_process),
     }
 
 
@@ -257,3 +231,22 @@ async def post_main_pipeline_on_task(
     )
     pipeline_results = await main_pipeline.task_main_pipeline(task=request_body.task)
     return pipeline_results
+
+
+@activity.defn(name="run_process_logs_for_tasks")
+async def run_process_logs_for_tasks(
+    request_body: LogProcessRequestForTasks,
+):
+    logger.info(
+        f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
+    )
+    await process_logs_for_tasks(
+        project_id=request_body.project_id,
+        org_id=request_body.org_id,
+        logs_to_process=request_body.logs_to_process,
+        extra_logs_to_save=request_body.extra_logs_to_save,
+    )
+    return {
+        "status": "ok",
+        "nb_job_results": len(request_body.logs_to_process),
+    }
