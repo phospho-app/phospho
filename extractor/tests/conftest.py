@@ -3,9 +3,9 @@ import pytest
 import pymongo
 from loguru import logger
 
-import app.core.config as config
-from app.db.models import Project, Task
-from app.db.mongo import close_mongo_db, connect_and_init_db, get_mongo_db
+import extractor.core.config as config
+from extractor.db.models import Project, Task
+from extractor.db.mongo import close_mongo_db, connect_and_init_db, get_mongo_db
 
 from tests.utils import cleanup
 
@@ -46,11 +46,6 @@ def mongo_db():
         return mongo_db
     else:
         raise RuntimeError("You are trying to run the tests on the production database")
-
-
-@pytest.fixture(scope="session")
-def api_key() -> str:
-    return config.SECRET_KEY
 
 
 @pytest.fixture
