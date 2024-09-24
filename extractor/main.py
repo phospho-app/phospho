@@ -22,6 +22,7 @@ from extractor.temporal.workflows import (
     RunRecipeOnTaskWorkflow,
     RunMainPipelineOnMessagesWorkflow,
     RunProcessLogsForTasksWorkflow,
+    RunProcessTasksWorkflow,
 )
 from extractor.temporal.activities import (
     extract_langsmith_data,
@@ -31,6 +32,7 @@ from extractor.temporal.activities import (
     bill_on_stripe,
     run_main_pipeline_on_messages,
     run_process_tasks,
+    run_process_logs_for_tasks,
 )
 from extractor.temporal.pydantic_converter import pydantic_data_converter
 
@@ -113,6 +115,7 @@ async def main() -> None:
             RunRecipeOnTaskWorkflow,
             RunProcessLogsForTasksWorkflow,
             RunMainPipelineOnMessagesWorkflow,
+            RunProcessTasksWorkflow,
         ],
         activities=[  # And the linked activities here
             extract_langsmith_data,
@@ -122,6 +125,7 @@ async def main() -> None:
             bill_on_stripe,
             run_main_pipeline_on_messages,
             run_process_tasks,
+            run_process_logs_for_tasks,
         ],
         workflow_runner=new_sandbox_runner(),
         interceptors=[SentryInterceptor()]

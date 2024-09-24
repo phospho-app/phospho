@@ -82,3 +82,13 @@ class LogEventForTasks(MinimalLogEvent, extra="allow"):
     raw_output_type_name: Optional[str] = None
     # data
     environment: str = "default environment"
+
+
+class LogProcessRequestForTasks(BaseModel):
+    logs_to_process: List[LogEventForTasks]
+    extra_logs_to_save: List[LogEventForTasks]
+    project_id: str
+    org_id: str
+    customer_id: Optional[str] = None
+    current_usage: int = 0
+    max_usage: Optional[int] = None

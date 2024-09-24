@@ -43,8 +43,13 @@ with workflow.unsafe.imports_passed_through():
         run_process_tasks,
         run_main_pipeline_on_messages,
         bill_on_stripe,
+        run_process_logs_for_tasks,
     )
-    from extractor.models.log import LogProcessRequestForMessages, TaskProcessRequest
+    from extractor.models.log import (
+        LogProcessRequestForMessages,
+        TaskProcessRequest,
+        LogProcessRequestForTasks,
+    )
     from extractor.models.pipelines import (
         PipelineLangfuseRequest,
         PipelineLangsmithRequest,
@@ -168,11 +173,25 @@ class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
 
 
 @workflow.defn(name="run_process_tasks_workflow")
-class RunProcessLogsForTasksWorkflow(BaseWorkflow):
+class RunProcessTasksWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
             activity_func=run_process_tasks,
             request_class=TaskProcessRequest,
+            max_retries=2,
+        )
+
+    @workflow.run
+    async def run(self, request):
+        await super().run_activity(request)
+
+
+@workflow.defn(name="run_process_logs_for_tasks_workflow")
+class RunProcessLogsForTasksWorkflow(BaseWorkflow):
+    def __init__(self):
+        super().__init__(
+            activity_func=run_process_logs_for_tasks,
+            request_class=LogProcessRequestForTasks,
             max_retries=2,
         )
 
