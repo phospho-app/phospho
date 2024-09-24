@@ -35,6 +35,18 @@ class QueryBuilder:
         project_id: Optional[str] = None,
         filters: Optional[ProjectDataFilters] = None,
     ):
+        """
+        Create a new QueryBuilder instance.
+
+        Note: The filter "is_last_task" is not supported for sessions, sessions_with_events and sessions_with_tasks.
+            It's also very slow for tasks, as it requires a full scan of the tasks collection.
+            TODO: Fix this using the extractor.
+
+        Args:
+            fetch_objects (str): The object to fetch.
+            project_id (str): The project_id to filter on.
+            filters (ProjectDataFilters): The filters to apply to the query.
+        """
         self.pipeline = []
         self.project_id = project_id
         self.fetch_object = fetch_objects
@@ -175,7 +187,11 @@ class QueryBuilder:
             match[f"{prefix}sentiment.label"] = filters.sentiment
 
         if filters.flag is not None:
-            match[f"{prefix}flag"] = filters.flag
+            # match[f"{prefix}flag"] = filters.flag
+            match["$or"] = [
+                {f"{prefix}flag": filters.flag},
+                {f"{prefix}human_eval.flag": filters.flag},
+            ]
 
         if filters.has_notes is not None and filters.has_notes:
             match["$and"] = [
@@ -228,7 +244,10 @@ class QueryBuilder:
             match["stats.most_common_sentiment_label"] = filters.sentiment
 
         if filters.flag is not None:
-            match["stats.most_common_flag"] = filters.flag
+            match["$or"] = [
+                {"stats.human_eval": filters.flag},
+                {"stats.most_common_flag": filters.flag},
+            ]
 
         # if filters.has_notes is not None and filters.has_notes:
         #     match["$and"] = [
