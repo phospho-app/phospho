@@ -1,75 +1,38 @@
-from typing import Any, Dict, List, Optional, Tuple
-
-import openai
-from loguru import logger
-
-from app.models import LogEventForTasks
-from app.core import config
-from app.db.mongo import get_mongo_db
-from app.db.qdrant import get_qdrant, models
-from app.services.log.base import (
-    collect_metadata,
+from typing import List, Dict, Any, Tuple, Optional
+from extractor.services.pipelines import MainPipeline
+from extractor.models import LogEventForTasks
+from phospho.models import Task, Session
+from extractor.services.log.base import (
     convert_additional_data_to_dict,
     get_time_created_at,
+    collect_metadata,
 )
-from app.services.pipelines import MainPipeline
-from app.services.tasks import compute_task_position
-from app.utils import generate_uuid
-from phospho.models import Session, Task
+from loguru import logger
+from extractor.db.mongo import get_mongo_db
+from extractor.services.tasks import compute_task_position
+from extractor.utils import generate_uuid
 
 
-async def add_vectorized_tasks(tasks_id: List[str]):
+async def process_tasks_id(
+    project_id: str,
+    org_id: str,
+    tasks_id_to_process: List[str],
+) -> None:
     """
-    Compute the vector representation of the tasks and add them to Qdrant database
+    From tasks id, process the tasks
+    - Trigger the Tasks processing pipeline
     """
-    if config.ENVIRONMENT == "preview":
-        logger.info("Vectorization is disabled in preview")
-        return
 
-    logger.info(f"Vectorizing {len(tasks_id)} tasks and adding them to Qdrant")
-    mongo_db = await get_mongo_db()
-    qdrant_db = await get_qdrant()
-    if qdrant_db is None:
-        return
-    # Get tasks
-    tasks = await mongo_db["tasks"].find({"id": {"$in": tasks_id}}).to_list(length=None)
-    tasks = [Task.model_validate(task) for task in tasks]
+    main_pipeline = MainPipeline(
+        project_id=project_id,
+        org_id=org_id,
+    )
 
-    openai_client = openai.AsyncClient()
+    await main_pipeline.set_input(tasks_ids=tasks_id_to_process)
 
-    # Create tasks_text representations
-    tasks_text = [f"{task.input} {task.output}" for task in tasks]
-    try:
-        # TODO : count the number of token for each task_text and if it's too big, do something smart
-        embedding = await openai_client.embeddings.create(
-            input=tasks_text, model="text-embedding-3-small"
-        )
-    except openai.APIError as e:
-        logger.warning(f"Error while embedding the tasks: {e}")
-        return
+    await main_pipeline.run()
 
-    try:
-        await qdrant_db.upsert(
-            collection_name="tasks",
-            points=[
-                models.PointStruct(
-                    id=task.id,
-                    vector=embedding.embedding,
-                    payload={
-                        "task_id": task.id,
-                        "project_id": task.project_id,
-                        "session_id": task.session_id,
-                        "created_at": task.created_at,
-                        "org_id": task.org_id,
-                        "metadata": task.metadata,
-                    },
-                )
-                for task, embedding in zip(tasks, embedding.data)
-            ],
-        )
-    except Exception as e:
-        logger.warning(f"Error while adding the tasks to Qdrant: {e}")
-        return
+    return None
 
 
 def create_task_from_logevent(

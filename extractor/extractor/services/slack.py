@@ -1,7 +1,7 @@
 import aiohttp
 from loguru import logger
 
-from app.core import config
+from extractor.core import config
 
 
 async def slack_notification(message: str, send_only_in_prod: bool = True) -> None:

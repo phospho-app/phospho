@@ -1,11 +1,11 @@
-from app.utils import generate_timestamp
+from extractor.utils import generate_timestamp
 from phospho.models import Task
 from phospho.utils import filter_nonjsonable_keys, is_jsonable
 from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
 
-from app.models.log import LogEventForTasks
+from extractor.models.log import LogEventForTasks
 from loguru import logger
-from typing import Union, Optional, Any
+from typing import Union, Optional
 
 
 def convert_additional_data_to_dict(
@@ -84,7 +84,9 @@ def get_nb_tokens_prompt_tokens(
         if all(isinstance(x, dict) for x in log_event.raw_input):
             # Assume it's a list of messages
             return num_tokens_from_messages(
-                log_event.raw_input, model=model, tokenizer=tokenizer
+                log_event.raw_input,
+                model=model,
+                tokenizer=tokenizer,
             )
     # Encode the string input
     return len(tokenizer.encode(log_event.input))
