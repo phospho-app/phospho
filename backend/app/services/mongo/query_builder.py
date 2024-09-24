@@ -535,7 +535,7 @@ class QueryBuilder:
                 self.pipeline.append({"$match": main_doc_sessions})
             complex_filters_sessions = await self.session_complex_filters()
             if complex_filters_sessions:
-                self.pipeline.append({"$match": complex_filters})
+                self.pipeline.append({"$match": complex_filters_sessions})
             self.merge_tasks()
             main_doc = self.main_doc_filter_tasks()
             if main_doc:
