@@ -5,7 +5,7 @@ from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
 
 from extractor.models.log import LogEventForTasks
 from loguru import logger
-from typing import Union, Optional
+from typing import Union, Optional, cast, List
 
 
 def convert_additional_data_to_dict(
@@ -60,7 +60,7 @@ def get_nb_tokens_prompt_tokens(
         # Assume there is a key 'messages' (OpenAI-like input)
         try:
             if isinstance(log_event.raw_output, dict):
-                usage = log_event.raw_output.get("usage", {})
+                usage = cast(dict, log_event.raw_output.get("usage", {}))
                 if usage:
                     return usage.get("prompt_tokens", None)
             else:
@@ -80,11 +80,11 @@ def get_nb_tokens_prompt_tokens(
     if isinstance(log_event.raw_input, list):
         if all(isinstance(x, str) for x in log_event.raw_input):
             # Handle the case where the input is a list of strings
-            return sum(len(tokenizer.encode(x)) for x in log_event.raw_input)
+            return sum(len(tokenizer.encode(cast(str, x))) for x in log_event.raw_input)
         if all(isinstance(x, dict) for x in log_event.raw_input):
             # Assume it's a list of messages
             return num_tokens_from_messages(
-                log_event.raw_input,
+                cast(List[dict], log_event.raw_input),
                 model=model,
                 tokenizer=tokenizer,
             )
@@ -103,7 +103,7 @@ def get_nb_tokens_completion_tokens(
         if isinstance(log_event.raw_output, dict):
             # Assume there is a key 'choices' (OpenAI-like output)
             try:
-                usage = log_event.raw_output.get("usage", {})
+                usage = cast(dict, log_event.raw_output.get("usage", {}))
                 logger.debug(f"Usage: {usage}")
                 if usage:
                     return usage.get("total_tokens", None)
@@ -127,7 +127,9 @@ def get_nb_tokens_completion_tokens(
             # Assume it's a list of str
             if all(isinstance(x, str) for x in raw_output_nonull):
                 tokenizer = get_tokenizer(model)
-                return sum(len(tokenizer.encode(x)) for x in raw_output_nonull)
+                return sum(
+                    len(tokenizer.encode(cast(str, x))) for x in raw_output_nonull
+                )
             # If it's a list of dict, assume it's a list of streamed chunks
             if all(isinstance(x, dict) for x in raw_output_nonull):
                 return len(log_event.raw_output)
