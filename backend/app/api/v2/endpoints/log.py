@@ -17,9 +17,10 @@ from app.security import (
     get_quota,
 )
 from app.services.mongo.extractor import ExtractorClient
-
 from app.services.mongo.emails import send_quota_exceeded_email
 from app.core import config
+from app.services.log import create_task_and_process_logs
+
 
 router = APIRouter(tags=["Logs"])
 
@@ -57,17 +58,11 @@ async def store_batch_of_log_events(
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
 
-    extractor_client = ExtractorClient(
-        project_id=project_id,
-        org_id=org["org"].get("org_id"),
-    )
-
-    nbr_valid_logs = 0
-    nbr_extra_logs = 0
-
     logger.info(
         f"Project {project_id} received {len(log_request.batched_log_events)} logs"
     )
+    logs_to_process: List[LogEvent] = []
+    extra_logs_to_save: List[LogEvent] = []
 
     for log_event_model in log_request.batched_log_events:
         # We now validate the logs
@@ -97,19 +92,12 @@ async def store_batch_of_log_events(
                 max_usage is not None and current_usage < max_usage
             ):
                 current_usage += 1
-                nbr_valid_logs += 1
-                await extractor_client.run_process_log_for_tasks(
-                    logs_to_process=[valid_log_event],
-                )
+                logs_to_process.append(valid_log_event)
                 logged_events.append(valid_log_event)
             else:
                 logger.warning(f"Max usage quota reached for project: {project_id}")
                 background_tasks.add_task(send_quota_exceeded_email, project_id)
-                nbr_extra_logs += 1
-                await extractor_client.run_process_log_for_tasks(
-                    logs_to_process=[],
-                    extra_logs_to_save=[valid_log_event],
-                )
+                extra_logs_to_save.append(valid_log_event)
                 logged_events.append(
                     LogError(
                         error_in_log=f"Max usage quota reached for project {project_id}: {current_usage}/{max_usage} logs"
@@ -128,7 +116,15 @@ async def store_batch_of_log_events(
 
     log_reply = LogReply(logged_events=logged_events)
     logger.debug(
-        f"Project {project_id} replying to log request with {len(logged_events)}: {nbr_valid_logs} valid logs and {nbr_extra_logs} extra logs to save."
+        f"Project {project_id} replying to log request with {len(logged_events)}: {len(logs_to_process)} valid logs and {len(extra_logs_to_save)} extra logs to save."
+    )
+
+    background_tasks.add_task(
+        create_task_and_process_logs,
+        logs_to_process=logs_to_process,
+        extra_logs_to_save=extra_logs_to_save,
+        project_id=project_id,
+        org_id=org["org"].get("org_id"),
     )
 
     return log_reply

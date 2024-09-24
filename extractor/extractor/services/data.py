@@ -4,9 +4,9 @@ Data pipeline related code
 
 from typing import List
 
-from app.services.tasks import get_task_by_id
-from app.db.mongo import get_mongo_db
-from app.db.models import Task
+from extractor.services.tasks import get_task_by_id
+from extractor.db.mongo import get_mongo_db
+from phospho.models import Task
 
 
 async def fetch_previous_tasks(task_id: str) -> List[Task]:

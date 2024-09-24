@@ -2,8 +2,8 @@ from typing import Optional
 
 from loguru import logger
 
-from app.db.mongo import get_mongo_db
-from app.services.connectors.base import BaseConnector
+from extractor.db.mongo import get_mongo_db
+from extractor.services.connectors.base import BaseConnector
 
 
 class OpenTelemetryConnector(BaseConnector):
@@ -38,7 +38,7 @@ class OpenTelemetryConnector(BaseConnector):
 
             # Unpack attributes
             attributes = spans["attributes"]
-            unpacked_attributes = {}
+            unpacked_attributes: dict = {}
             for attr in attributes:
                 k = attr["key"]
 

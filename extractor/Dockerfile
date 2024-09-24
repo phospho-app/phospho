@@ -22,7 +22,7 @@ COPY ./phospho-python /phospho-python
 RUN poetry install --with dev --no-interaction --no-ansi
 
 # Copy source code
-COPY ./app /src/app
+COPY ./extractor /src/extractor
 COPY ./main.py /src/main.py
 
 EXPOSE 8080

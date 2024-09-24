@@ -1,4 +1,4 @@
-from app.utils import fits_in_context_window
+from extractor.utils import fits_in_context_window
 
 
 def test_fits_in_context_window():

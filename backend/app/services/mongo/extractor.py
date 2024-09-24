@@ -216,55 +216,21 @@ class ExtractorClient:
 
         return response
 
-    async def run_process_log_for_tasks(
-        self,
-        logs_to_process: List[LogEvent],
-        extra_logs_to_save: Optional[List[LogEvent]] = None,
-    ) -> None:
+    async def run_process_tasks(self, tasks_id_to_process: List[str]) -> None:
         """
-        Run the log procesing pipeline on a task asynchronously
+        Run the task procesing pipeline on a task asynchronously
         """
         logger.info(
-            f"Running process log for {len(logs_to_process)} tasks for project {self.project_id}"
+            f"Running process task for {len(tasks_id_to_process)} tasks for project {self.project_id}"
         )
-        if extra_logs_to_save is None:
-            extra_logs_to_save = []
-
-        # Ignore the intermediate_inputs of log_events because it's too big
-        # They are collected in the Langchain integration
-        # TODO: Fix this
-        for log_event in logs_to_process:
-            # Remove additional_inputs.intermediate_inputs from the log_event if it exists
-            if hasattr(log_event, "raw_input"):
-                if (
-                    isinstance(log_event.raw_input, dict)
-                    and "intermediate_inputs" in log_event.raw_input.keys()
-                ):
-                    logger.info(
-                        f"Removing intermediate_inputs from log_event project {self.project_id}"
-                    )
-                    del log_event.raw_input["intermediate_inputs"]
-            if hasattr(log_event, "raw_output"):
-                if (
-                    isinstance(log_event.raw_output, dict)
-                    and "intermediate_outputs" in log_event.raw_output.keys()
-                ):
-                    logger.info(
-                        f"Removing intermediate_outputs from log_event project {self.project_id}"
-                    )
-
-                    del log_event.raw_output["intermediate_outputs"]
+        if len(tasks_id_to_process) == 0:
+            logger.debug(f"No tasks to process for project {self.project_id}")
+            return
 
         await self._post(
-            "run_process_logs_for_tasks_workflow",
+            "run_process_tasks_workflow",
             {
-                "logs_to_process": [
-                    log_event.model_dump(mode="json") for log_event in logs_to_process
-                ],
-                "extra_logs_to_save": [
-                    log_event.model_dump(mode="json")
-                    for log_event in extra_logs_to_save
-                ],
+                "tasks_id_to_process": tasks_id_to_process,
             },
         )
 

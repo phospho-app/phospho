@@ -9,12 +9,12 @@ from langfuse import Langfuse  # type: ignore
 from langfuse.client import ObservationsViews  # type: ignore
 from loguru import logger
 
-from app.models import LogEventForTasks
-from app.core import config
-from app.db.mongo import get_mongo_db
-from app.services.connectors.base import BaseConnector
-from app.services.log import process_logs_for_tasks
-from app.services.projects import get_project_by_id
+from extractor.models import LogEventForTasks
+from extractor.core import config
+from extractor.db.mongo import get_mongo_db
+from extractor.services.connectors.base import BaseConnector
+from extractor.services.projects import get_project_by_id
+from extractor.services.log.tasks import process_logs_for_tasks
 
 
 class LangfuseConnector(BaseConnector):
@@ -250,7 +250,6 @@ class LangfuseConnector(BaseConnector):
                         "system_prompt": system_prompt,
                         "source": "langfuse",
                     },
-                    org_id=org_id,
                 )
 
                 if max_usage is None or (

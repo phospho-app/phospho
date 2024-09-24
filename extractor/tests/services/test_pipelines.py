@@ -1,10 +1,10 @@
 import pytest
 from loguru import logger
 
-from app.services.pipelines import MainPipeline
+from extractor.services.pipelines import MainPipeline
 
-from app.core import config
-from app.db.models import Task
+from extractor.core import config
+from extractor.db.models import Task
 
 from tests.utils import cleanup
 
