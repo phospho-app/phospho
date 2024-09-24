@@ -47,6 +47,8 @@ class QueryBuilder:
     ) -> None:
         """
         Merge the events in the pipeline.
+
+        Used for filtering on events and fetching them.
         """
         # if already merged, return the pipeline
         if not force and any(
@@ -71,6 +73,8 @@ class QueryBuilder:
     ) -> None:
         """
         Merge the tasks in the pipeline.
+
+        Used for complex filtering on sessions (e.g. filtering on the user_id of the tasks)
         """
         # if already merged, return the pipeline
         if not force and any(
@@ -91,6 +95,11 @@ class QueryBuilder:
             ]
 
     def _main_doc_filter(self, prefix: str = "") -> Dict[str, object]:
+        """
+        Implements:
+        - project_id
+        - created_at
+        """
         if prefix != "" and not prefix.endswith("."):
             # Add a dot at the end of the prefix if it is not already there
             prefix += "."
@@ -106,13 +115,6 @@ class QueryBuilder:
         ):
             match[f"{prefix}project_id"] = self.project_id
 
-        # if (
-        #     self.fetch_object == "tasks"
-        #     or self.fetch_object == "tasks_with_events"
-        #     or prefix == "tasks."
-        # ):
-        #     match[f"{prefix}test_id"] = None
-
         # Cast the created_at filters to int
         if isinstance(filters.created_at_start, datetime.datetime):
             filters.created_at_start = int(filters.created_at_start.timestamp())
@@ -127,15 +129,33 @@ class QueryBuilder:
                 "$lte": filters.created_at_end,
             }
 
-        if filters.metadata is not None:
-            for key, value in filters.metadata.items():
-                match[f"{prefix}metadata.{key}"] = value
-
         return match
 
     def main_doc_filter_tasks(self, prefix: str = "") -> Dict[str, object]:
+        """
+        Implements:
+        - project_id
+        - created_at
+        - last_eval_source
+        - version_id
+        - language
+        - sentiment
+        - flag
+        - has_notes
+        - sessions_ids
+        - tasks_ids
+        - metadata
+        - user_id
+        """
         filters = self.filters
         match: Dict[str, object] = self._main_doc_filter(prefix=prefix)
+
+        # if (
+        #     self.fetch_object == "tasks"
+        #     or self.fetch_object == "tasks_with_events"
+        #     or prefix == "tasks."
+        # ):
+        #     match[f"{prefix}test_id"] = None
 
         if filters.last_eval_source is not None:
             if filters.last_eval_source.startswith("phospho"):
@@ -170,12 +190,30 @@ class QueryBuilder:
         if filters.tasks_ids is not None:
             match[f"{prefix}id"] = {"$in": filters.tasks_ids}
 
+        if filters.metadata is not None:
+            for key, value in filters.metadata.items():
+                match[f"{prefix}metadata.{key}"] = value
+
         if filters.user_id is not None:
             match[f"{prefix}metadata.user_id"] = filters.user_id
 
         return match
 
     def main_doc_filter_sessions(self, prefix: str = "") -> Dict[str, object]:
+        """
+        Implements:
+        - project_id
+        - created_at
+        - version_id
+        - language
+        - sentiment
+        - flag
+        - sessions_ids
+        - tasks_ids
+
+        Not supported:
+        - has_notes
+        """
         filters = self.filters
         match: Dict[str, object] = self._main_doc_filter(prefix=prefix)
 
@@ -192,12 +230,12 @@ class QueryBuilder:
         if filters.flag is not None:
             match["stats.most_common_flag"] = filters.flag
 
-        if filters.has_notes is not None and filters.has_notes:
-            match["$and"] = [
-                {f"{prefix}notes": {"$exists": True}},
-                {f"{prefix}notes": {"$ne": None}},
-                {f"{prefix}notes": {"$ne": ""}},
-            ]
+        # if filters.has_notes is not None and filters.has_notes:
+        #     match["$and"] = [
+        #         {f"{prefix}notes": {"$exists": True}},
+        #         {f"{prefix}notes": {"$ne": None}},
+        #         {f"{prefix}notes": {"$ne": ""}},
+        #     ]
 
         if filters.sessions_ids is not None:
             match["id"] = {"$in": filters.sessions_ids}
@@ -209,7 +247,15 @@ class QueryBuilder:
 
     async def task_complex_filters(self, prefix: str = "") -> Dict[str, object]:
         """
-        Generate the match part of the aggregation pipeline for task filtering.
+        More complex filters for tasks that require fetching data from the database
+        or intermediate pipeline stages. This mutates the pipeline.
+
+        Implements:
+        - event_name
+        - event_id
+        - clustering_id
+        - clusters_ids
+        - is_last_task # TODO: Refacto so that a main_doc_filter can handle this
         """
 
         filters = self.filters
@@ -284,11 +330,19 @@ class QueryBuilder:
 
     async def session_complex_filters(self) -> Dict[str, object]:
         """
-        Builds the filtering pipeline for sessions.
+        More complex filters for sessions that require fetching data from the database
+        or intermediate pipeline stages. This mutates the pipeline.
 
-        This method is async since it may need to fetch data from the database.
+        Implements:
+        - event_name
+        - event_id
+        - clustering_id
+        - clusters_ids
+        - user_id
+        - metadata (filter on the Task's metadata)
 
-        It also mutates the pipeline attribute of the class through the merge_events method.
+        Not supported:
+        - is_last_task
         """
 
         filters = self.filters
