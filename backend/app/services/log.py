@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any, cast
+from typing import List, Optional, Dict, Any
 from app.db.mongo import get_mongo_db
 from loguru import logger
 from app.utils import generate_uuid, generate_timestamp
