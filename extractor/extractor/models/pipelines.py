@@ -17,6 +17,7 @@ class ExtractorBaseClass(BaseModel, extra="allow"):
 class BillOnStripeRequest(ExtractorBaseClass):
     nb_job_results: int
     meter_event_name: str = "phospho_usage_based_meter"
+    usage_per_log: Optional[int] = None
 
 
 class RunMainPipelineOnTaskRequest(ExtractorBaseClass):

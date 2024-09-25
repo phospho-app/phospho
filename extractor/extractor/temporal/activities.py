@@ -38,18 +38,19 @@ async def bill_on_stripe(
         logger.debug(f"No job results to bill for organization {request.org_id}")
         return
 
-    if config.ENVIRONMENT == "preview" or config.ENVIRONMENT == "test":
-        logger.debug("Preview environment, stripe billing disabled")
-        return
-
     if request.max_usage and request.current_usage < request.max_usage:
+        logger.debug(
+            f"Organization {request.org_id} has not reached max usage {request.max_usage}"
+        )
         return
 
-    stripe.api_key = config.STRIPE_SECRET_KEY
+    if request.usage_per_log is not None:
+        usage_per_log: int = request.usage_per_log
+    else:
+        usage_per_log: int = 0
 
-    if request.customer_id:
         project = await get_project_by_id(request.project_id)
-        usage_per_log = 0
+
         if project.settings.run_event_detection:
             usage_per_log += len(project.settings.events)
         if project.settings.run_sentiment:
@@ -57,7 +58,16 @@ async def bill_on_stripe(
         if project.settings.run_language:
             usage_per_log += 1
 
-        nb_credits_used = request.nb_job_results * usage_per_log
+    nb_credits_used = request.nb_job_results * usage_per_log
+
+    if config.ENVIRONMENT == "preview" or config.ENVIRONMENT == "test":
+        logger.debug(
+            f"Preview environment, stripe billing disabled, we would have billed {nb_credits_used} credits"
+        )
+        return
+
+    if request.customer_id:
+        stripe.api_key = config.STRIPE_SECRET_KEY
 
         stripe.billing.MeterEvent.create(
             event_name=request.meter_event_name,
@@ -67,6 +77,11 @@ async def bill_on_stripe(
             },
             timestamp=int(time.time()),
         )
+
+        logger.debug(
+            f"Billed {nb_credits_used} credits to organization {request.org_id}"
+        )
+
     elif request.org_id not in config.EXEMPTED_ORG_IDS:
         logger.error(f"Organization {request.org_id} has no stripe customer id")
 
@@ -112,7 +127,7 @@ async def extract_langfuse_data(
 @activity.defn(name="run_recipe_on_task")
 async def run_recipe_on_task(
     request: RunRecipeOnTaskRequest,
-):
+) -> dict:
     if request.tasks is None and request.tasks_ids is None:
         logger.debug("No tasks to process.")
         return {"status": "no tasks to process", "nb_job_results": 0}
@@ -155,7 +170,12 @@ async def run_recipe_on_task(
         total_len += len(request.tasks)
     if request.tasks_ids is not None:
         total_len += len(request.tasks_ids)
-    return {"status": "ok", "nb_job_results": total_len}
+
+    return {
+        "status": "ok",
+        "nb_job_results": total_len,
+        "usage_per_log": 2 if request.recipe.recipe_type == "sentiment_language" else 1,
+    }
 
 
 @activity.defn(name="store_opentelemetry_data")
