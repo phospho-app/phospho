@@ -186,15 +186,16 @@ async def process_log_with_session_id(
                 {
                     "$inc": {
                         "session_length": 1,
-                        "metadata.total_tokens": log_event_metadata.get(
-                            "total_tokens", 0
-                        ),
+                        "metadata.total_tokens": log_event_metadata.get("total_tokens")
+                        or 0,
                         "metadata.prompt_tokens": log_event_metadata.get(
-                            "prompt_tokens", 0
-                        ),
+                            "prompt_tokens"
+                        )
+                        or 0,
                         "metadata.completion_tokens": log_event_metadata.get(
-                            "completion_tokens", 0
-                        ),
+                            "completion_tokens"
+                        )
+                        or 0,
                     }
                 },
             )
