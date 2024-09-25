@@ -61,7 +61,9 @@ async def get_session_tasks(
 
     session = await get_session_by_id(session_id)
     await verify_if_propelauth_user_can_access_project(user, session.project_id)
-    tasks = await fetch_session_tasks(session_id=session_id, limit=limit)
+    tasks = await fetch_session_tasks(
+        project_id=session.project_id, session_id=session_id, limit=limit
+    )
     return Tasks(tasks=tasks)
 
 

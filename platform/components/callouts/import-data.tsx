@@ -219,11 +219,15 @@ export function UploadDataset({
   const { toast } = useToast();
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const setDateRangePreset = navigationStateStore(
+    (state) => state.setDateRangePreset,
+  );
 
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
 
   const onSubmit = () => {
+    setDateRangePreset("all-time");
     if (showModal) {
       setShowModal(false);
       setButtonPressed(true);
@@ -243,7 +247,6 @@ export function UploadDataset({
         method: "POST",
         headers: {
           Authorization: "Bearer " + accessToken,
-          // "Content-Type": "multipart/form-data",
         },
         body: formData,
       }).then(async (response) => {

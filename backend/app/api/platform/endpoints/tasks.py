@@ -27,7 +27,7 @@ router = APIRouter(tags=["Tasks"])
     description="Get a specific task",
 )
 async def get_task(task_id: str, user: User = Depends(propelauth.require_user)) -> Task:
-    task = await get_task_by_id(task_id)
+    task = await get_task_by_id(task_id=task_id)
     await verify_if_propelauth_user_can_access_project(user, task.project_id)
     return task
 

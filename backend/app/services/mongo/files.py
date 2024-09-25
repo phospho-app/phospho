@@ -7,10 +7,10 @@ import pandas as pd
 from app.api.v2.models.log import LogEvent
 from app.security.authorization import get_quota
 from app.services.mongo.emails import send_quota_exceeded_email
-from app.services.mongo.extractor import ExtractorClient
 from app.utils import generate_uuid
 from loguru import logger
 from pydantic import ValidationError
+from app.services.log import create_task_and_process_logs
 
 
 async def process_file_upload_into_log_events(
@@ -92,43 +92,46 @@ async def process_file_upload_into_log_events(
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
 
-    extractor_client = ExtractorClient(org_id=org_id, project_id=project_id)
-
-    batch_size = 64
+    # We process everything in one batch
+    batch_size = tasks_df.shape[0]
     for i in range(0, len(tasks_df), batch_size):
         rows = tasks_df.iloc[i : i + batch_size]
-        try:
-            rows_as_dict = [row.to_dict() for _, row in rows.iterrows()]
-            # Replace NaN values with None
-            rows_as_dict = [
-                {k: v if pd.notnull(v) else None for k, v in row_as_dict.items()}
-                for row_as_dict in rows_as_dict
-            ]
+        rows_as_dict = [row.to_dict() for _, row in rows.iterrows()]
+        valid_log_events: list[LogEvent] = []
+        # Replace NaN values with None
+        rows_as_dict = [
+            {k: v if pd.notnull(v) else None for k, v in row_as_dict.items()}
+            for row_as_dict in rows_as_dict
+        ]
 
-            valid_log_events = [
-                LogEvent(project_id=project_id, **row_as_dict)
-                for row_as_dict in rows_as_dict
-            ]
+        for row_as_dict in rows_as_dict:
+            try:
+                valid_log_events.append(LogEvent(project_id=project_id, **row_as_dict))
+            except ValidationError as e:
+                logger.error(f"Error when creating LogEvent: {e}")
 
-            if max_usage is None or (
-                max_usage is not None
-                and current_usage + len(valid_log_events) - 1 < max_usage
-            ):
-                current_usage += len(valid_log_events)
-                # Send tasks to the extractor
-                await extractor_client.run_process_log_for_tasks(
-                    logs_to_process=valid_log_events,
-                )
-            else:
-                offset = max(0, min(batch_size, max_usage - current_usage))
+        if max_usage is None or (
+            max_usage is not None
+            and current_usage + len(valid_log_events) - 1 < max_usage
+        ):
+            current_usage += len(valid_log_events)
+            # Send tasks to the extractor
+            await create_task_and_process_logs(
+                logs_to_process=valid_log_events,
+                extra_logs_to_save=[],
+                project_id=project_id,
+                org_id=org_id,
+            )
+        else:
+            offset = max(0, min(batch_size, max_usage - current_usage))
 
-                extra_logs_to_save = valid_log_events[offset:]
-                valid_log_events = valid_log_events[:offset]
-                logger.warning(f"Max usage quota reached for project: {project_id}")
-                await send_quota_exceeded_email(project_id)
-                await extractor_client.run_process_log_for_tasks(
-                    logs_to_process=valid_log_events,
-                    extra_logs_to_save=extra_logs_to_save,
-                )
-        except ValidationError as e:
-            logger.error(f"Error when uploading csv and LogEvent creation: {e}")
+            extra_logs_to_save = valid_log_events[offset:]
+            valid_log_events = valid_log_events[:offset]
+            logger.warning(f"Max usage quota reached for project: {project_id}")
+            await send_quota_exceeded_email(project_id)
+            await create_task_and_process_logs(
+                logs_to_process=valid_log_events,
+                extra_logs_to_save=extra_logs_to_save,
+                project_id=project_id,
+                org_id=org_id,
+            )

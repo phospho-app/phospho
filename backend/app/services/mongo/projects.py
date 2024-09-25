@@ -3,6 +3,7 @@ import io
 from typing import Dict, List, Literal, Optional
 
 from app.api.v2.models.embeddings import Embedding
+from app.services.mongo.query_builder import QueryBuilder
 import pandas as pd
 import resend
 from app.api.platform.models import Pagination, UserMetadata
@@ -34,7 +35,7 @@ from app.utils import (
 )
 from fastapi import HTTPException
 from loguru import logger
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 
 from phospho.models import Cluster, Clustering, Threshold, EventDefinition
 
@@ -440,9 +441,9 @@ async def email_project_tasks(
         params = {
             "from": "phospho <contact@phospho.ai>",
             "to": [user.get("email")],
-            "subject": "Your exported tasks are ready",
-            "html": f"""<p>Hello!<br><br>Here are attached your exported tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
-            <p><br>So, what do you think about phospho for now? Feel free to respond to this email address and share your toughts !</p>
+            "subject": "Your data is ready",
+            "html": f"""<p>Hello!<br><br>Please find your exported messages below for your project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
+            <p><br>Let us know your thoughts about phospho! You can directly respond to this email address !</p>
             <p>Enjoy,<br>
             The Phospho Team</p>
             """,
@@ -471,125 +472,13 @@ async def get_all_sessions(
     sessions_ids: Optional[List[str]] = None,
 ) -> List[Session]:
     mongo_db = await get_mongo_db()
-    collection_name = "sessions"
-    additional_sessions_filter: Dict[str, object] = {}
-    if filters is not None:
-        if filters.created_at_start is not None:
-            additional_sessions_filter["created_at"] = {
-                "$gte": cast_datetime_or_timestamp_to_timestamp(
-                    filters.created_at_start
-                )
-            }
-        if filters.created_at_end is not None:
-            additional_sessions_filter["created_at"] = {
-                **additional_sessions_filter.get("created_at", {}),
-                "$lte": filters.created_at_end,
-            }
 
-        if filters.flag is not None:
-            additional_sessions_filter["stats.most_common_flag"] = filters.flag
-
-        if filters.language is not None:
-            additional_sessions_filter["stats.most_common_language"] = filters.language
-
-        if filters.sentiment is not None:
-            additional_sessions_filter[
-                "stats.most_common_sentiment_label"
-            ] = filters.sentiment
-
-        if filters.metadata is not None:
-            for key, value in filters.metadata.items():
-                additional_sessions_filter[f"metadata.{key}"] = value
-
-        if filters.clustering_id is not None and filters.clusters_ids is None:
-            # Fetch the clusterings
-            mongo_db = await get_mongo_db()
-            clustering = await mongo_db["private-clusterings"].find_one(
-                {"id": filters.clustering_id}
-            )
-            if clustering:
-                filters.clusters_ids = []
-                filters.clusters_ids.extend(clustering.get("clusters_ids", []))
-
-        if filters.clusters_ids is not None:
-            # Fetch the cluster
-            mongo_db = await get_mongo_db()
-            clusters = (
-                await mongo_db["private-clusters"]
-                .find({"id": {"$in": filters.clusters_ids}})
-                .to_list(length=None)
-            )
-            if clusters:
-                new_sessions_ids = []
-                for cluster in clusters:
-                    new_sessions_ids.extend(cluster.get("sessions_ids", []))
-                current_sessions_ids = additional_sessions_filter.get(
-                    "id", {"$in": []}
-                )["$in"]
-                if current_sessions_ids:
-                    # Do the intersection of the current task ids and the new task ids
-                    new_sessions_ids = list(
-                        set(current_sessions_ids).intersection(new_sessions_ids)
-                    )
-                additional_sessions_filter["id"] = {"$in": new_sessions_ids}
-
-    pipeline: List[Dict[str, object]] = [
-        {
-            "$match": {
-                "project_id": project_id,
-                **additional_sessions_filter,
-            }
-        },
-    ]
-    if get_events or (filters is not None and filters.event_name is not None):
-        collection_name = "sessions_with_events"
-        if filters is not None and filters.event_name is not None:
-            pipeline.extend(
-                [
-                    {
-                        "$match": {
-                            "$and": [
-                                {"events": {"$ne": []}},
-                                {
-                                    "events": {
-                                        "$elemMatch": {
-                                            "event_name": {"$in": filters.event_name}
-                                        }
-                                    }
-                                },
-                            ]
-                        },
-                    },
-                ]
-            )
-
-    if get_tasks or (filters is not None and filters.user_id is not None):
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "tasks",
-                        "localField": "id",
-                        "foreignField": "session_id",
-                        "as": "tasks",
-                    }
-                },
-                # If tasks is None, set to empty list
-                {"$addFields": {"tasks": {"$ifNull": ["$tasks", []]}}},
-            ]
-        )
-        if filters is not None and filters.user_id is not None:
-            logger.debug(f"Filtering sessions by user_id: {filters.user_id}")
-            pipeline.extend(
-                [
-                    {
-                        "$match": {
-                            # Filter the sessions to keep the ones where a tasks.metadata.user_id matches the filter
-                            "tasks.metadata.user_id": filters.user_id
-                        }
-                    },
-                ]
-            )
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        filters=filters,
+        fetch_objects="sessions",
+    )
+    pipeline = await query_builder.build()
 
     # To avoid the sort to OOM on Serverless MongoDB executor, we restrain the pipeline to the necessary fields...
     if sorting is None:
@@ -633,7 +522,7 @@ async def get_all_sessions(
         [
             {
                 "$lookup": {
-                    "from": "sessions_with_events",
+                    "from": "sessions",
                     "localField": "id",
                     "foreignField": "id",
                     "as": "sessions",
@@ -645,8 +534,15 @@ async def get_all_sessions(
             {"$replaceRoot": {"newRoot": "$sessions"}},
         ]
     )
+    if get_events:
+        query_builder.merge_events(foreignField="session_id", force=True)
+        query_builder.deduplicate_sessions_events()
+    if get_tasks:
+        query_builder.merge_tasks(force=True)
 
-    sessions = await mongo_db[collection_name].aggregate(pipeline).to_list(length=limit)
+    logger.info(f"Sessions pipeline: {pipeline}")
+
+    sessions = await mongo_db["sessions"].aggregate(pipeline).to_list(length=limit)
 
     # Filter the _id field from the Sessions
     for session in sessions:
