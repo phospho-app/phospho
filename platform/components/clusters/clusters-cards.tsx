@@ -36,6 +36,9 @@ function ClusterCard({
   const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
+  const setDateRangePreset = navigationStateStore(
+    (state) => state.setDateRangePreset,
+  );
 
   const [sheetEventOpen, setSheetEventOpen] = useState(false);
 
@@ -130,6 +133,8 @@ function ClusterCard({
           size="sm"
           onClick={(mouseEvent) => {
             mouseEvent.stopPropagation();
+            setDateRangePreset("all-time");
+
             router.push(
               `/org/insights/clusters/${encodeURIComponent(cluster.id)}`,
             );
