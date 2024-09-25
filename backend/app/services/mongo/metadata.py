@@ -1,6 +1,6 @@
 from typing import Dict, List, Literal, Optional
 from app.api.v2.models.projects import UserMetadata
-from app.services.mongo.tasks import task_filtering_pipeline_match
+from app.services.mongo.query_builder import QueryBuilder
 from fastapi import HTTPException
 from loguru import logger
 from app.services.mongo.sessions import compute_task_position, compute_session_length
@@ -499,14 +499,14 @@ async def breakdown_by_sum_of_metadata_field(
     formatted_kwargs = "\n".join([f"{key}={value}" for key, value in kwargs.items()])
     logger.info(f"Running pivot with:\n{formatted_kwargs}")
 
-    if filters is None:
-        filters = ProjectDataFilters()
-
     mongo_db = await get_mongo_db()
 
-    main_filter, collection_name = await task_filtering_pipeline_match(
-        project_id=project_id, filters=filters, collection="tasks_with_events"
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="tasks",
+        filters=filters,
     )
+    pipeline = await query_builder.build()
 
     def _merge_sessions(pipeline: List[Dict[str, object]]) -> List[Dict[str, object]]:
         # if already merged, return the pipeline
@@ -542,9 +542,6 @@ async def breakdown_by_sum_of_metadata_field(
         ]
         return pipeline
 
-    pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
-    ]
     category_metadata_fields = constants.RESERVED_CATEGORY_METADATA_FIELDS
     number_metadata_fields = constants.RESERVED_NUMBER_METADATA_FIELDS
 
@@ -595,6 +592,7 @@ async def breakdown_by_sum_of_metadata_field(
     elif breakdown_by == "session_length":
         await compute_session_length(project_id=project_id)
         pipeline = _merge_sessions(pipeline)
+
         breakdown_by_col = "session_length"
     elif breakdown_by is None:
         breakdown_by_col = None
@@ -602,6 +600,7 @@ async def breakdown_by_sum_of_metadata_field(
         breakdown_by_col = breakdown_by
 
     if breakdown_by == "tagger_name":
+        query_builder.merge_events(foreignField="task_id")
         pipeline += [
             {"$unwind": "$events"},
             # Filter to only keep the tagger events
@@ -613,6 +612,7 @@ async def breakdown_by_sum_of_metadata_field(
         ]
         breakdown_by_col = "events.event_name"
     elif breakdown_by == "scorer_name":
+        query_builder.merge_events(foreignField="task_id")
         pipeline += [
             {"$unwind": "$events"},
             # Filter to only keep the scorer events
@@ -684,6 +684,7 @@ async def breakdown_by_sum_of_metadata_field(
         ]
 
     if metric == "avg_scorer_value":
+        query_builder.merge_events(foreignField="task_id")
         pipeline += [
             {"$unwind": "$events"},
             # Filter to only keep the scorer events
@@ -725,6 +726,7 @@ async def breakdown_by_sum_of_metadata_field(
 
     if metric == "tags_count" or metric == "tags_distribution":
         # Count the number of events for each event_name
+        query_builder.merge_events(foreignField="task_id")
         pipeline += [
             {"$unwind": "$events"},
             # Filter to only keep the tagger events
@@ -872,7 +874,7 @@ async def breakdown_by_sum_of_metadata_field(
     )
 
     logger.info(f"Running pipeline: {pipeline}")
-    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=200)
+    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=200)
     logger.info(f"Analytics query Result: {result}")
 
     return result
