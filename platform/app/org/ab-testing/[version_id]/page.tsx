@@ -2,12 +2,21 @@
 
 import { TasksTable } from "@/components/tasks/tasks-table";
 import { Button } from "@/components/ui/button";
+import { navigationStateStore } from "@/store/store";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Page({ params }: { params: { version_id: string } }) {
   const version_id = decodeURIComponent(params.version_id);
   const router = useRouter();
+  const setDateRangePreset = navigationStateStore(
+    (state) => state.setDateRangePreset,
+  );
+
+  useEffect(() => {
+    setDateRangePreset("all-time");
+  }, [setDateRangePreset]);
 
   return (
     <>

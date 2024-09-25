@@ -7,9 +7,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { navigationStateStore } from "@/store/store";
 import { ChevronDown, ChevronLeft } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function capitalizeFirstLetter(string?: string) {
   if (!string) return string;
@@ -26,6 +27,10 @@ export default function Page({
   const router = useRouter();
   const user_id = decodeURIComponent(params.user_id);
   const pathname = usePathname();
+  const setDateRangePreset = navigationStateStore(
+    (state) => state.setDateRangePreset,
+  );
+
   let currentTabName = pathname.split("/").pop();
   if (currentTabName !== "messages" && currentTabName !== "sessions") {
     currentTabName = "messages";
@@ -42,6 +47,10 @@ export default function Page({
       `/org/transcripts/users/${user_id}/${target.textContent.toLowerCase()}`,
     );
   };
+
+  useEffect(() => {
+    setDateRangePreset("all-time");
+  }, [setDateRangePreset]);
 
   return (
     <>
