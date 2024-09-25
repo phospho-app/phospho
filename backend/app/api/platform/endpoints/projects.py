@@ -3,9 +3,9 @@ from typing import List, Optional
 
 import pandas as pd
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
-from google.cloud.storage import Bucket
+from google.cloud.storage import Bucket  # type: ignore
 from loguru import logger
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 
 from app.api.platform.models import (
     AddEventsQuery,
@@ -50,6 +50,7 @@ from app.services.mongo.search import (
     search_tasks_in_project,
 )
 from app.services.mongo.tasks import get_all_tasks
+from langfuse import Langfuse  # type: ignore
 
 router = APIRouter(tags=["Projects"])
 
@@ -448,7 +449,7 @@ async def post_upload_tasks(
         file.file.seek(0)
 
     # Read file content -> into memory
-    file_params = {}
+    file_params: dict = {}
     logger.info(f"Reading file {file.filename} content.")
     tasks_df: pd.DataFrame
     try:
@@ -593,9 +594,6 @@ async def connect_langfuse(
     logger.debug(f"Connecting LangFuse to project {project_id}")
 
     try:
-        # This snippet is used to test the connection with Langsmith and verify the API key/project name
-        from langfuse import Langfuse
-
         langfuse = Langfuse(
             public_key=query.langfuse_public_key,
             secret_key=query.langfuse_secret_key,
