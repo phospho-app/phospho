@@ -487,7 +487,7 @@ async def post_upload_tasks(
     )
 
     # Verify if the required columns are present
-    required_columns = ["input", "output"]
+    required_columns = ["input"]
     missing_columns = set(required_columns) - set(list(tasks_df.columns))
     logger.debug(f"Missing columns: {missing_columns}")
     if missing_columns:
@@ -503,7 +503,7 @@ async def post_upload_tasks(
             status_code=400,
             # Display to the user the delayed processing
             # It is displayed in a toast message in the frontend
-            detail=f"Missing columns: {missing_columns}. The processing of your file will take up to 24 hours for manual verification.",
+            detail=f"Missing columns: {missing_columns}. We will process your file manually in the next 24 hours.",
         )
 
     # Drop rows with missing column "input"
