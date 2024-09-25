@@ -580,10 +580,9 @@ async def get_top_taggers_names_and_count(
     query_builder = QueryBuilder(
         project_id=project_id, fetch_objects="tasks", filters=filters
     )
-    pipeline.append({"$match": query_builder.main_doc_filter_tasks(prefix="tasks.")})
-    pipeline.append(
-        {"$match": (await query_builder.task_complex_filters(prefix="tasks."))}
-    )
+    query_builder.pipeline = pipeline
+    query_builder.main_doc_filter_tasks(prefix="tasks.")
+    await query_builder.task_complex_filters(prefix="tasks.")
 
     pipeline.extend(
         [
@@ -1694,13 +1693,8 @@ async def get_success_rate_by_event_name(
         project_id=project_id, fetch_objects="tasks", filters=filters
     )
     query_builder.pipeline = pipeline
-    main_doc_filter = query_builder.main_doc_filter_tasks(prefix="tasks.")
-    if main_doc_filter:
-        pipeline.append({"$match": main_doc_filter})
-
-    complex_filters = await query_builder.task_complex_filters(prefix="tasks.")
-    if complex_filters:
-        pipeline.append({"$match": complex_filters})
+    query_builder.main_doc_filter_tasks(prefix="tasks.")
+    await query_builder.task_complex_filters(prefix="tasks.")
 
     pipeline = [
         # Deduplicate based on event.event_name x task.id

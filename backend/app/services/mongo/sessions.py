@@ -26,13 +26,13 @@ async def get_session_by_id(session_id: str) -> Session:
     mongo_db = await get_mongo_db()
     # session = await mongo_db["sessions"].find_one({"id": session_id})
     # Merge events from the session
-    found_session = (
-        await mongo_db["sessions_with_events"]
-        .find(
-            {"id": session_id},
-        )
-        .to_list(length=1)
+    query_builder = QueryBuilder(
+        project_id=None,
+        fetch_objects="sessions_with_events",
+        filters=ProjectDataFilters(sessions_ids=[session_id]),
     )
+    pipeline = await query_builder.build()
+    found_session = await mongo_db["sessions"].aggregate(pipeline).to_list(length=1)
     session = found_session[0] if found_session else None
 
     if session is None:

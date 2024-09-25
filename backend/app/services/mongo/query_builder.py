@@ -201,10 +201,16 @@ class QueryBuilder:
             ]
 
         if filters.sessions_ids is not None:
-            match[f"{prefix}session_id"] = {"$in": filters.sessions_ids}
+            if len(filters.sessions_ids) == 1:
+                match[f"{prefix}session_id"] = filters.sessions_ids[0]
+            elif len(filters.sessions_ids) > 1:
+                match[f"{prefix}session_id"] = {"$in": filters.sessions_ids}
 
         if filters.tasks_ids is not None:
-            match[f"{prefix}id"] = {"$in": filters.tasks_ids}
+            if len(filters.tasks_ids) == 1:
+                match[f"{prefix}id"] = filters.tasks_ids[0]
+            elif len(filters.tasks_ids) > 1:
+                match[f"{prefix}id"] = {"$in": filters.tasks_ids}
 
         if filters.metadata is not None:
             for key, value in filters.metadata.items():
@@ -212,6 +218,9 @@ class QueryBuilder:
 
         if filters.user_id is not None:
             match[f"{prefix}metadata.user_id"] = filters.user_id
+
+        if match:
+            self.pipeline.append({"$match": match})
 
         return match
 
@@ -257,10 +266,19 @@ class QueryBuilder:
         #     ]
 
         if filters.sessions_ids is not None:
-            match["id"] = {"$in": filters.sessions_ids}
+            if len(filters.sessions_ids) == 1:
+                match["id"] = filters.sessions_ids[0]
+            elif len(filters.sessions_ids) > 1:
+                match["id"] = {"$in": filters.sessions_ids}
 
         if filters.tasks_ids is not None:
-            match["task_id"] = {"$in": filters.tasks_ids}
+            if len(filters.tasks_ids) == 1:
+                match["tasks.id"] = filters.tasks_ids[0]
+            elif len(filters.tasks_ids) > 1:
+                match["task_id"] = {"$in": filters.tasks_ids}
+
+        if match:
+            self.pipeline.append({"$match": match})
 
         return match
 
@@ -344,6 +362,9 @@ class QueryBuilder:
                     project_id=self.project_id, filters=filters_without_latest
                 )
             match[f"{prefix}is_last_task"] = filters.is_last_task
+
+        if match:
+            self.pipeline.append({"$match": match})
 
         return match
 
@@ -433,6 +454,9 @@ class QueryBuilder:
             self.merge_tasks()
             for key, value in filters.metadata.items():
                 match[f"metadata.{key}"] = value
+
+        if match:
+            self.pipeline.append({"$match": match})
 
         return match
 
@@ -567,69 +591,41 @@ class QueryBuilder:
         # This is done to be more efficient and avoid unnecessary operations
 
         if self.fetch_object == "tasks":
-            main_doc = self.main_doc_filter_tasks()
-            if main_doc:
-                self.pipeline.append({"$match": main_doc})
-            complex_filters = await self.task_complex_filters()
-            if complex_filters:
-                self.pipeline.append({"$match": complex_filters})
+            self.main_doc_filter_tasks()
+            await self.task_complex_filters()
 
         elif self.fetch_object == "tasks_with_events":
-            main_doc = self.main_doc_filter_tasks()
-            if main_doc:
-                self.pipeline.append({"$match": main_doc})
-            complex_filters = await self.task_complex_filters()
-            if complex_filters:
-                self.pipeline.append({"$match": complex_filters})
+            self.main_doc_filter_tasks()
+            await self.task_complex_filters()
             self.merge_events(foreignField="task_id")
             self.deduplicate_tasks_events()
 
         elif self.fetch_object == "sessions":
-            main_doc_sessions = self.main_doc_filter_sessions()
-            if main_doc_sessions:
-                self.pipeline.append({"$match": main_doc_sessions})
-            complex_filters_sessions = await self.session_complex_filters()
-            if complex_filters_sessions:
-                self.pipeline.append({"$match": complex_filters_sessions})
+            self.main_doc_filter_sessions()
+            await self.session_complex_filters()
 
         elif self.fetch_object == "sessions_with_events":
-            main_doc_sessions = self.main_doc_filter_sessions()
-            if main_doc_sessions:
-                self.pipeline.append({"$match": main_doc_sessions})
-            complex_filters_sessions = await self.session_complex_filters()
-            if complex_filters_sessions:
-                self.pipeline.append({"$match": complex_filters_sessions})
+            self.main_doc_filter_sessions()
+            await self.session_complex_filters()
             self.merge_events(foreignField="session_id")
             self.deduplicate_sessions_events()
 
         elif self.fetch_object == "sessions_with_tasks":
-            main_doc_sessions = self.main_doc_filter_sessions()
-            if main_doc_sessions:
-                self.pipeline.append({"$match": main_doc_sessions})
-            complex_filters_sessions = await self.session_complex_filters()
-            if complex_filters_sessions:
-                self.pipeline.append({"$match": complex_filters_sessions})
+            self.main_doc_filter_sessions()
+            await self.session_complex_filters()
             self.merge_tasks()
-            main_doc = self.main_doc_filter_tasks()
-            if main_doc:
-                self.pipeline.append({"$match": main_doc})
-            complex_filters = await self.task_complex_filters()
-            if complex_filters:
-                self.pipeline.append({"$match": complex_filters})
+            self.main_doc_filter_tasks()
+            await self.task_complex_filters()
 
         elif self.fetch_object == "sessions_with_events_and_tasks":
-            self.pipeline.append({"$match": self.main_doc_filter_sessions()})
-            self.pipeline.append({"$match": await self.session_complex_filters()})
+            self.main_doc_filter_sessions()
+            await self.session_complex_filters()
             self.merge_events(foreignField="session_id")
             self.deduplicate_sessions_events()
             # Note: we don't merge Tasks' events
             self.merge_tasks()
-            main_doc = self.main_doc_filter_tasks()
-            if main_doc:
-                self.pipeline.append({"$match": main_doc})
-            complex_filters = await self.task_complex_filters()
-            if complex_filters:
-                self.pipeline.append({"$match": complex_filters})
+            self.main_doc_filter_tasks()
+            await self.task_complex_filters()
 
         else:
             raise ValueError(f"Unsupported fetch_object: {self.fetch_object}")
