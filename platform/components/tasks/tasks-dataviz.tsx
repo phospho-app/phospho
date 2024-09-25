@@ -72,12 +72,14 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
   const [open, setOpen] = React.useState(false);
 
   const { data: totalNbTasks } = useSWR(
-    [
-      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
-      accessToken,
-      "total_nb_tasks",
-      JSON.stringify(mergedDataFilters),
-    ],
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/tasks`,
+          accessToken,
+          "total_nb_tasks",
+          JSON.stringify(mergedDataFilters),
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
@@ -97,12 +99,14 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
   );
 
   const { data: mostDetectedEvent } = useSWR(
-    [
-      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
-      accessToken,
-      "most_detected_event",
-      JSON.stringify(mergedDataFilters),
-    ],
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/tasks`,
+          accessToken,
+          "most_detected_event",
+          JSON.stringify(mergedDataFilters),
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["most_detected_event"],
@@ -126,12 +130,14 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
   }: {
     data: LastClusteringComposition[] | null | undefined;
   } = useSWR(
-    [
-      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
-      accessToken,
-      "last_clustering_composition",
-      JSON.stringify(mergedDataFilters),
-    ],
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/tasks`,
+          accessToken,
+          "last_clustering_composition",
+          JSON.stringify(mergedDataFilters),
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["last_clustering_composition"],
@@ -161,12 +167,14 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
 
   const { data: dateLastClustering }: { data: string | undefined | null } =
     useSWR(
-      [
-        project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
-        accessToken,
-        "date_last_clustering_timestamp",
-        JSON.stringify(mergedDataFilters),
-      ],
+      project_id
+        ? [
+            `/api/explore/${project_id}/aggregated/tasks`,
+            accessToken,
+            "date_last_clustering_timestamp",
+            JSON.stringify(mergedDataFilters),
+          ]
+        : null,
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["date_last_clustering_timestamp"],
@@ -190,13 +198,15 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
 
   const { data: nbDailyTasks }: { data: NbDailyTasks[] | null | undefined } =
     useSWR(
-      [
-        project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
-        accessToken,
+      project_id
+        ? [
+            `/api/explore/${project_id}/aggregated/tasks`,
+            accessToken,
 
-        "nb_daily_tasks",
-        JSON.stringify(mergedDataFilters),
-      ],
+            "nb_daily_tasks",
+            JSON.stringify(mergedDataFilters),
+          ]
+        : null,
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["nb_daily_tasks"],

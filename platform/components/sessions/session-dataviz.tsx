@@ -76,12 +76,14 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
   const [open, setOpen] = React.useState(false);
 
   const { data: totalNbSessions } = useSWR(
-    [
-      project_id ? `/api/explore/${project_id}/aggregated/sessions` : "",
-      accessToken,
-      "total_nb_sessions",
-      JSON.stringify(mergedDataFilters),
-    ],
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/sessions`,
+          accessToken,
+          "total_nb_sessions",
+          JSON.stringify(mergedDataFilters),
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_sessions"],
@@ -105,12 +107,14 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
   }: {
     data: NbSessions[] | undefined;
   } = useSWR(
-    [
-      project_id ? `/api/explore/${project_id}/aggregated/sessions` : "",
-      accessToken,
-      "nb_sessions_per_day",
-      JSON.stringify(mergedDataFilters),
-    ],
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/sessions`,
+          accessToken,
+          "nb_sessions_per_day",
+          JSON.stringify(mergedDataFilters),
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["nb_sessions_per_day"],
@@ -138,12 +142,14 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
   const {
     data: lastClusteringComposition,
   }: { data: LastClusteringComposition[] | null | undefined } = useSWR(
-    [
-      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
-      accessToken,
-      "last_clustering_composition",
-      JSON.stringify(mergedDataFilters),
-    ],
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/tasks`,
+          accessToken,
+          "last_clustering_composition",
+          JSON.stringify(mergedDataFilters),
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["last_clustering_composition"],
@@ -172,12 +178,14 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
   );
 
   const { data: dateLastClustering } = useSWR(
-    [
-      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
-      accessToken,
-      "date_last_clustering_timestamp",
-      JSON.stringify(mergedDataFilters),
-    ],
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/tasks`,
+          accessToken,
+          "date_last_clustering_timestamp",
+          JSON.stringify(mergedDataFilters),
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["date_last_clustering_timestamp"],
@@ -200,12 +208,14 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
   );
 
   const { data: mostDetectedEvent } = useSWR(
-    [
-      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
-      accessToken,
-      "most_detected_event",
-      JSON.stringify(mergedDataFilters),
-    ],
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/tasks`,
+          accessToken,
+          "most_detected_event",
+          JSON.stringify(mergedDataFilters),
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["most_detected_event"],
@@ -226,12 +236,14 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
 
   const { data: eventsRanking }: { data: EventsRanking[] | null | undefined } =
     useSWR(
-      [
-        project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
-        accessToken,
-        "events_ranking",
-        JSON.stringify(mergedDataFilters),
-      ],
+      project_id
+        ? [
+            `/api/explore/${project_id}/aggregated/tasks`,
+            accessToken,
+            "events_ranking",
+            JSON.stringify(mergedDataFilters),
+          ]
+        : null,
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["events_ranking"],
