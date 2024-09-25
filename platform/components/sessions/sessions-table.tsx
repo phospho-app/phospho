@@ -110,12 +110,14 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
 
   const { data: totalNbSessionsData, isLoading: isTotalNbSessionsLoading } =
     useSWR(
-      [
-        `/api/explore/${project_id}/aggregated/sessions`,
-        accessToken,
-        JSON.stringify(dateRange),
-        "total_nb_sessions",
-      ],
+      project_id
+        ? [
+            `/api/explore/${project_id}/aggregated/sessions`,
+            accessToken,
+            JSON.stringify(dateRange),
+            "total_nb_sessions",
+          ]
+        : null,
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["total_nb_sessions"],
