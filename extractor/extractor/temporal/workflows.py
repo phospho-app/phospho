@@ -99,6 +99,7 @@ class BaseWorkflow:
                     customer_id=request_model.customer_id,
                     current_usage=request_model.current_usage,
                     max_usage=request_model.max_usage,
+                    usage_per_log=response.get("usage_per_log", None),
                 ),
                 start_to_close_timeout=timedelta(minutes=1),
             )

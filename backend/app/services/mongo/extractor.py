@@ -27,10 +27,11 @@ async def bill_on_stripe(
     meter_event_name: str = "phospho_usage_based_meter",
 ) -> None:
     """
+    Used for chat and predictions endpoints
     Bill an organization on Stripe based on the consumption
 
     WARNING: This function doesn't implement usage quotas as it is used to bill the chat enpoints
-    The one in the extractor implements it
+    Use the one in extractor instead
     """
     if nb_credits_used == 0:
         logger.debug(f"No job results to bill for organization {org_id}")
