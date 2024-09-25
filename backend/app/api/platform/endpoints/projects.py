@@ -482,6 +482,7 @@ async def post_upload_tasks(
         columns={
             "task_input": "input",
             "task_output": "output",
+            "task_created_at": "created_at",
         },
         inplace=True,
     )
