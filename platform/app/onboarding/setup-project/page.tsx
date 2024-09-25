@@ -90,6 +90,9 @@ const ImportDataOnboarding: React.FC<ImportDataOnboardingProps> = ({
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
+  const setDateRangePreset = navigationStateStore(
+    (state) => state.setDateRangePreset,
+  );
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const { toast } = useToast();
@@ -118,6 +121,7 @@ const ImportDataOnboarding: React.FC<ImportDataOnboardingProps> = ({
   }, [selectedProject, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setDateRangePreset("all-time");
     if (creatingProject) {
       return;
     }
