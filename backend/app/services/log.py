@@ -268,9 +268,7 @@ async def process_log_with_session_id(
                 sessions_to_create_dump.append(session.model_dump())
 
         if len(sessions_to_create_dump) > 0:
-            logger.info(
-                f"Creating sessions: {' '.join([session_id for session_id in sessions_to_create.keys()])}"
-            )
+            logger.info(f"Creating {len(sessions_to_create_dump)} 'sessions")
             try:
                 insert_result = await mongo_db["sessions"].insert_many(
                     sessions_to_create_dump, ordered=False

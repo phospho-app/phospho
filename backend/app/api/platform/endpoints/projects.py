@@ -507,6 +507,15 @@ async def post_upload_tasks(
             detail=f"Missing columns: {missing_columns}. We will process your file manually in the next 24 hours.",
         )
 
+    # Check if 'task_id' column exists and contains unique values
+
+    if "task_id" in tasks_df.columns:
+        if tasks_df["task_id"].nunique() != len(tasks_df["task_id"]):
+            raise HTTPException(
+                status_code=400,
+                detail="Error: The 'task_id' column contains duplicate values. Each task_id must be unique.",
+            )
+
     # Drop rows with missing column "input"
     old_len = tasks_df.shape[0]
     tasks_df.dropna(subset=["input"], inplace=True)

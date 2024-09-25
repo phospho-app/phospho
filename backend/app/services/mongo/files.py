@@ -92,7 +92,8 @@ async def process_file_upload_into_log_events(
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
 
-    batch_size = 512
+    # We process everything in one batch
+    batch_size = tasks_df.shape[0]
     for i in range(0, len(tasks_df), batch_size):
         rows = tasks_df.iloc[i : i + batch_size]
         rows_as_dict = [row.to_dict() for _, row in rows.iterrows()]
