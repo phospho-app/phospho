@@ -134,7 +134,6 @@ function ClusterCard({
           onClick={(mouseEvent) => {
             mouseEvent.stopPropagation();
             setDateRangePreset("all-time");
-
             router.push(
               `/org/insights/clusters/${encodeURIComponent(cluster.id)}`,
             );
