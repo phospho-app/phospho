@@ -73,7 +73,7 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
 
   const { data: totalNbTasks } = useSWR(
     [
-      `/api/explore/${project_id}/aggregated/tasks`,
+      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
       accessToken,
       "total_nb_tasks",
       JSON.stringify(mergedDataFilters),
@@ -98,7 +98,7 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
 
   const { data: mostDetectedEvent } = useSWR(
     [
-      `/api/explore/${project_id}/aggregated/tasks`,
+      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
       accessToken,
       "most_detected_event",
       JSON.stringify(mergedDataFilters),
@@ -127,7 +127,7 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
     data: LastClusteringComposition[] | null | undefined;
   } = useSWR(
     [
-      `/api/explore/${project_id}/aggregated/tasks`,
+      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
       accessToken,
       "last_clustering_composition",
       JSON.stringify(mergedDataFilters),
@@ -162,7 +162,7 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
   const { data: dateLastClustering }: { data: string | undefined | null } =
     useSWR(
       [
-        `/api/explore/${project_id}/aggregated/tasks`,
+        project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
         accessToken,
         "date_last_clustering_timestamp",
         JSON.stringify(mergedDataFilters),
@@ -191,7 +191,7 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
   const { data: nbDailyTasks }: { data: NbDailyTasks[] | null | undefined } =
     useSWR(
       [
-        `/api/explore/${project_id}/aggregated/tasks`,
+        project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
         accessToken,
 
         "nb_daily_tasks",
@@ -223,7 +223,7 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
   const { data: eventsRanking }: { data: EventsRanking[] | null | undefined } =
     useSWR(
       [
-        `/api/explore/${project_id}/aggregated/tasks`,
+        project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
         accessToken,
         "events_ranking",
         JSON.stringify(mergedDataFilters),

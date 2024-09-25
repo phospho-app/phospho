@@ -77,7 +77,7 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
 
   const { data: totalNbSessions } = useSWR(
     [
-      `/api/explore/${project_id}/aggregated/sessions`,
+      project_id ? `/api/explore/${project_id}/aggregated/sessions` : "",
       accessToken,
       "total_nb_sessions",
       JSON.stringify(mergedDataFilters),
@@ -106,7 +106,7 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
     data: NbSessions[] | undefined;
   } = useSWR(
     [
-      `/api/explore/${project_id}/aggregated/sessions`,
+      project_id ? `/api/explore/${project_id}/aggregated/sessions` : "",
       accessToken,
       "nb_sessions_per_day",
       JSON.stringify(mergedDataFilters),
@@ -139,7 +139,7 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
     data: lastClusteringComposition,
   }: { data: LastClusteringComposition[] | null | undefined } = useSWR(
     [
-      `/api/explore/${project_id}/aggregated/tasks`,
+      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
       accessToken,
       "last_clustering_composition",
       JSON.stringify(mergedDataFilters),
@@ -173,7 +173,7 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
 
   const { data: dateLastClustering } = useSWR(
     [
-      `/api/explore/${project_id}/aggregated/tasks`,
+      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
       accessToken,
       "date_last_clustering_timestamp",
       JSON.stringify(mergedDataFilters),
@@ -201,7 +201,7 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
 
   const { data: mostDetectedEvent } = useSWR(
     [
-      `/api/explore/${project_id}/aggregated/tasks`,
+      project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
       accessToken,
       "most_detected_event",
       JSON.stringify(mergedDataFilters),
@@ -227,7 +227,7 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
   const { data: eventsRanking }: { data: EventsRanking[] | null | undefined } =
     useSWR(
       [
-        `/api/explore/${project_id}/aggregated/tasks`,
+        project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
         accessToken,
         "events_ranking",
         JSON.stringify(mergedDataFilters),
