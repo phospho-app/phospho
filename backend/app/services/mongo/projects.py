@@ -35,7 +35,7 @@ from app.utils import (
 )
 from fastapi import HTTPException
 from loguru import logger
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 
 from phospho.models import Cluster, Clustering, Threshold, EventDefinition
 
@@ -441,9 +441,9 @@ async def email_project_tasks(
         params = {
             "from": "phospho <contact@phospho.ai>",
             "to": [user.get("email")],
-            "subject": "Your exported tasks are ready",
-            "html": f"""<p>Hello!<br><br>Here are attached your exported tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
-            <p><br>So, what do you think about phospho for now? Feel free to respond to this email address and share your toughts !</p>
+            "subject": "Your data is ready",
+            "html": f"""<p>Hello!<br><br>Please find your exported messages below for your project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
+            <p><br>Let us know your thoughts about phospho! You can directly respond to this email address !</p>
             <p>Enjoy,<br>
             The Phospho Team</p>
             """,

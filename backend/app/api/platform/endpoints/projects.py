@@ -3,9 +3,9 @@ from typing import List, Optional
 
 import pandas as pd
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
-from google.cloud.storage import Bucket
+from google.cloud.storage import Bucket  # type: ignore
 from loguru import logger
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 
 from app.api.platform.models import (
     AddEventsQuery,
@@ -50,6 +50,7 @@ from app.services.mongo.search import (
     search_tasks_in_project,
 )
 from app.services.mongo.tasks import get_all_tasks
+from langfuse import Langfuse  # type: ignore
 
 router = APIRouter(tags=["Projects"])
 
@@ -448,7 +449,7 @@ async def post_upload_tasks(
         file.file.seek(0)
 
     # Read file content -> into memory
-    file_params = {}
+    file_params: dict = {}
     logger.info(f"Reading file {file.filename} content.")
     tasks_df: pd.DataFrame
     try:
@@ -481,12 +482,13 @@ async def post_upload_tasks(
         columns={
             "task_input": "input",
             "task_output": "output",
+            "task_created_at": "created_at",
         },
         inplace=True,
     )
 
     # Verify if the required columns are present
-    required_columns = ["input", "output"]
+    required_columns = ["input"]
     missing_columns = set(required_columns) - set(list(tasks_df.columns))
     logger.debug(f"Missing columns: {missing_columns}")
     if missing_columns:
@@ -502,8 +504,17 @@ async def post_upload_tasks(
             status_code=400,
             # Display to the user the delayed processing
             # It is displayed in a toast message in the frontend
-            detail=f"Missing columns: {missing_columns}. The processing of your file will take up to 24 hours for manual verification.",
+            detail=f"Missing columns: {missing_columns}. We will process your file manually in the next 24 hours.",
         )
+
+    # Check if 'task_id' column exists and contains unique values
+
+    if "task_id" in tasks_df.columns:
+        if tasks_df["task_id"].nunique() != len(tasks_df["task_id"]):
+            raise HTTPException(
+                status_code=400,
+                detail="Error: The 'task_id' column contains duplicate values. Each task_id must be unique.",
+            )
 
     # Drop rows with missing column "input"
     old_len = tasks_df.shape[0]
@@ -593,9 +604,6 @@ async def connect_langfuse(
     logger.debug(f"Connecting LangFuse to project {project_id}")
 
     try:
-        # This snippet is used to test the connection with Langsmith and verify the API key/project name
-        from langfuse import Langfuse
-
         langfuse = Langfuse(
             public_key=query.langfuse_public_key,
             secret_key=query.langfuse_secret_key,
