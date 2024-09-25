@@ -177,13 +177,13 @@ export function useColumns({
       header: "Human evaluation",
       accessorKey: "stats.human_eval",
       cell: (row) => {
-        const human_eval = row.getValue() as string; // asserting the type as string
+        const human_eval = row.getValue() as string | null; // asserting the type as string
         return (
           <div className="flex justify-center group">
-            {human_eval && human_eval == "success" && (
+            {human_eval && human_eval === "success" && (
               <ThumbsUp className="h-6 w-6 text-green-500" />
             )}{" "}
-            {human_eval && human_eval == "failure" && (
+            {human_eval && human_eval === "failure" && (
               <ThumbsDown className="h-6 w-6 text-red-500" />
             )}{" "}
             {!human_eval && (

@@ -1,6 +1,7 @@
 import datetime
 from typing import Dict, List, Literal, Optional, Tuple, cast
 from app.api.platform.models.explore import Pagination, Sorting
+from app.services.mongo.query_builder import QueryBuilder
 from phospho.models import ProjectDataFilters, ScoreRange, HumanEval
 from phospho.utils import filter_nonjsonable_keys
 
@@ -52,9 +53,17 @@ async def create_task(
 
 async def get_task_by_id(task_id: str) -> Task:
     mongo_db = await get_mongo_db()
-    task = await mongo_db["tasks_with_events"].find_one({"id": task_id})
-    if task is None:
+    query_builder = QueryBuilder(
+        project_id=None,
+        fetch_objects="tasks_with_events",
+        filters=ProjectDataFilters(tasks_ids=[task_id]),
+    )
+    pipeline = await query_builder.build()
+    fetched_tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=1)
+    if fetched_tasks is None or len(fetched_tasks) == 0:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+
+    task = fetched_tasks[0]
 
     # Account for schema discrepancies
     if "id" not in task.keys():
@@ -291,144 +300,6 @@ async def remove_event_from_task(task: Task, event_name: str) -> Task:
     return task
 
 
-async def task_filtering_pipeline_match(
-    project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-    prefix: str = "",
-    collection: str = "tasks",
-) -> Tuple[Dict[str, object], str]:
-    """
-    Generate the match part of the aggregation pipeline for task filtering.
-
-    Args:
-        project_id: The project ID.
-        filters: The filters to apply.
-        prefix: The prefix to use for the fields in the match query.
-    """
-
-    if filters is None:
-        filters = ProjectDataFilters()
-
-    if prefix != "" and not prefix.endswith("."):
-        # Add a dot at the end of the prefix if it is not already there
-        prefix += "."
-
-    match: Dict[str, object] = {f"{prefix}project_id": project_id}
-
-    if filters.tasks_ids is not None:
-        match[f"{prefix}id"] = {"$in": filters.tasks_ids}
-
-    # Cast the created_at filters to int
-    if isinstance(filters.created_at_start, datetime.datetime):
-        filters.created_at_start = int(filters.created_at_start.timestamp())
-    if isinstance(filters.created_at_end, datetime.datetime):
-        filters.created_at_end = int(filters.created_at_end.timestamp())
-
-    if filters.created_at_start is not None:
-        match[f"{prefix}created_at"] = {"$gte": filters.created_at_start}
-    if filters.created_at_end is not None:
-        match[f"{prefix}created_at"] = {
-            **match.get(f"{prefix}created_at", {}),
-            "$lte": filters.created_at_end,
-        }
-
-    if filters.last_eval_source is not None:
-        if filters.last_eval_source.startswith("phospho"):
-            # We want to filter on the source starting with "phospho"
-            match[f"{prefix}last_eval.source"] = {"$regex": "^phospho"}
-        else:
-            # We want to filter on the source not starting with "phospho"
-            match[f"{prefix}last_eval.source"] = {"$regex": "^(?!phospho).*"}
-
-    if filters.metadata is not None:
-        for key, value in filters.metadata.items():
-            match[f"{prefix}metadata.{key}"] = value
-
-    if filters.version_id is not None:
-        match[f"{prefix}metadata.version_id"] = filters.version_id
-
-    if filters.language is not None:
-        match[f"{prefix}language"] = filters.language
-
-    if filters.sentiment is not None:
-        match[f"{prefix}sentiment.label"] = filters.sentiment
-
-    if filters.flag is not None:
-        match[f"{prefix}flag"] = filters.flag
-
-    if filters.event_name is not None:
-        collection = "tasks_with_events"
-        match["$and"] = [
-            {f"{prefix}events": {"$ne": []}},
-            {
-                f"{prefix}events": {
-                    "$elemMatch": {"event_name": {"$in": filters.event_name}}
-                }
-            },
-        ]
-
-    if filters.event_id is not None:
-        collection = "tasks_with_events"
-        match["$and"] = [
-            {f"{prefix}events": {"$ne": []}},
-            {f"{prefix}events": {"$elemMatch": {"id": {"$in": filters.event_id}}}},
-        ]
-
-    if filters.clustering_id is not None and filters.clusters_ids is None:
-        # Fetch the clusterings
-        mongo_db = await get_mongo_db()
-        clustering = await mongo_db["private-clusterings"].find_one(
-            {"id": filters.clustering_id}
-        )
-        if clustering:
-            filters.clusters_ids = []
-            filters.clusters_ids.extend(clustering.get("clusters_ids", []))
-
-    if filters.clusters_ids is not None:
-        # Fetch the cluster
-        mongo_db = await get_mongo_db()
-        clusters = (
-            await mongo_db["private-clusters"]
-            .find({"id": {"$in": filters.clusters_ids}})
-            .to_list(length=None)
-        )
-        if clusters:
-            new_task_ids = []
-            for cluster in clusters:
-                new_task_ids.extend(cluster.get("tasks_ids", []))
-            current_task_ids = match.get(f"{prefix}id", {"$in": []})["$in"]
-            if current_task_ids:
-                # Do the intersection of the current task ids and the new task ids
-                new_task_ids = list(set(current_task_ids).intersection(new_task_ids))
-            match[f"{prefix}id"] = {"$in": new_task_ids}
-
-    if filters.has_notes is not None and filters.has_notes:
-        match["$and"] = [
-            {f"{prefix}notes": {"$exists": True}},
-            {f"{prefix}notes": {"$ne": None}},
-            {f"{prefix}notes": {"$ne": ""}},
-        ]
-
-    if filters.is_last_task is not None:
-        logger.debug("FILTER: is last task")
-        from app.services.mongo.sessions import compute_task_position
-        from copy import copy
-
-        filters_without_latest = copy(filters)
-        filters_without_latest.is_last_task = None
-
-        logger.debug("Computing task position...")
-        await compute_task_position(
-            project_id=project_id, filters=filters_without_latest
-        )
-        match[f"{prefix}is_last_task"] = filters.is_last_task
-
-    if filters.sessions_ids is not None:
-        match[f"{prefix}session_id"] = {"$in": filters.sessions_ids}
-
-    return match, collection
-
-
 async def get_total_nb_of_tasks(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
@@ -437,14 +308,17 @@ async def get_total_nb_of_tasks(
     Get the total number of tasks of a project.
     """
     mongo_db = await get_mongo_db()
-    global_filters, collection = await task_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+    query_builder = QueryBuilder(
+        project_id=project_id, filters=filters, fetch_objects="tasks"
     )
+    pipeline = await query_builder.build()
+    logger.info(f"Total number of tasks pipeline: {pipeline}")
+
     query_result = (
-        await mongo_db[collection]
+        await mongo_db["tasks"]
         .aggregate(
-            [
-                {"$match": global_filters},
+            pipeline
+            + [
                 {"$count": "nb_tasks"},
             ]
         )
@@ -526,7 +400,7 @@ async def get_all_tasks(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
     get_events: bool = True,
-    get_tests: bool = False,
+    get_tests: bool = False,  # Unused, always False
     validate_metadata: bool = False,
     limit: Optional[int] = None,
     pagination: Optional[Pagination] = None,
@@ -537,20 +411,13 @@ async def get_all_tasks(
     """
 
     mongo_db = await get_mongo_db()
-    collection = "tasks"
 
-    main_filter, collection = await task_filtering_pipeline_match(
-        filters=filters, project_id=project_id, collection=collection
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        filters=filters,
+        fetch_objects="tasks_with_events" if get_events else "tasks",
     )
-
-    logger.info(f"Get all tasks with filters: {main_filter}")
-
-    if not get_tests:
-        main_filter["test_id"] = None
-
-    pipeline: List[Dict[str, object]] = [
-        {"$match": main_filter},
-    ]
+    pipeline = await query_builder.build()
 
     # Get rid of the raw_input and raw_output fields
     pipeline.append(
@@ -561,9 +428,6 @@ async def get_all_tasks(
             }
         }
     )
-
-    if not get_events:
-        collection = "tasks"
 
     # To avoid the sort to OOM on Serverless MongoDB executor, we restrain the pipeline to the necessary fields...
     if sorting is None:
@@ -597,7 +461,7 @@ async def get_all_tasks(
         [
             {
                 "$lookup": {
-                    "from": "tasks_with_events",
+                    "from": "tasks",
                     "localField": "id",
                     "foreignField": "id",
                     "as": "tasks",
@@ -609,8 +473,11 @@ async def get_all_tasks(
             {"$replaceRoot": {"newRoot": "$tasks"}},
         ]
     )
+    if get_events:
+        query_builder.merge_events(foreignField="task_id", force=True)
+        query_builder.deduplicate_tasks_events()
 
-    tasks = await mongo_db[collection].aggregate(pipeline).to_list(length=limit)
+    tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
 
     # Cast to tasks
     valid_tasks = [Task.model_validate(data) for data in tasks]

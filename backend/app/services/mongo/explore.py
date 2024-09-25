@@ -7,20 +7,18 @@ import math
 from collections import defaultdict
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
+from app.services.mongo.query_builder import QueryBuilder
 import pandas as pd
 import pydantic
 
-# Models
 from app.api.platform.models import ABTest, Pagination, ProjectDataFilters
 from app.api.platform.models.explore import ClusteringEmbeddingCloud
 from app.db.models import Eval, FlattenedTask
 from app.db.mongo import get_mongo_db
 from app.services.mongo.events import get_all_events
-from app.services.mongo.sessions import session_filtering_pipeline_match
 from app.services.mongo.tasks import (
     get_all_tasks,
     get_total_nb_of_tasks,
-    task_filtering_pipeline_match,
 )
 from app.utils import generate_timestamp, get_last_week_timestamps
 from fastapi import HTTPException
@@ -224,35 +222,12 @@ async def get_success_rate_per_task_position(
     # Ignore the flag filter
     filters.flag = None
 
-    main_filter: Dict[str, object] = {"project_id": project_id}
-    if filters.created_at_start is not None:
-        main_filter["created_at"] = {"$gte": filters.created_at_start}
-    if filters.created_at_end is not None:
-        main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
-            "$lte": filters.created_at_end,
-        }
-
-    tasks_filter, task_collection = await task_filtering_pipeline_match(
-        project_id=project_id, filters=filters, collection="tasks", prefix="tasks"
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="sessions_with_tasks",
+        filters=filters,
     )
-
-    pipeline = [
-        {"$match": main_filter},
-    ]
-    pipeline.extend(
-        [
-            {
-                "$lookup": {
-                    "from": task_collection,
-                    "localField": "id",
-                    "foreignField": "session_id",
-                    "as": "tasks",
-                }
-            },
-            {"$match": tasks_filter},
-        ]
-    )
+    pipeline = await query_builder.build()
 
     result = (
         await mongo_db[collection_name]
@@ -350,15 +325,13 @@ async def get_total_success_rate(
     """
 
     mongo_db = await get_mongo_db()
-    collection = "tasks"
-    main_filter, collection = await task_filtering_pipeline_match(
-        project_id=project_id, filters=filters, collection=collection
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="tasks",
+        filters=filters,
     )
-    pipeline: List[Dict[str, object]] = [
-        {
-            "$match": main_filter,
-        },
-    ]
+    pipeline = await query_builder.build()
+
     # Add the success rate computation
     pipeline.extend(
         [
@@ -374,7 +347,7 @@ async def get_total_success_rate(
         ]
     )
     # Query
-    result = await mongo_db[collection].aggregate(pipeline).to_list(length=1)
+    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=1)
     if len(result) == 0:
         # No tasks = success rate is None
         return None
@@ -591,7 +564,7 @@ async def get_top_taggers_names_and_count(
             "$lte": filters.created_at_end,
         }
 
-    # Either the remove filed doesn't exist, either it's not True
+    # Either the removed filed doesn't exist, either it's not True
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
         {
@@ -604,10 +577,12 @@ async def get_top_taggers_names_and_count(
         },
     ]
     filters.event_name = None
-    task_filtering_pipeline, _ = await task_filtering_pipeline_match(
-        project_id=project_id, filters=filters, prefix="tasks"
+    query_builder = QueryBuilder(
+        project_id=project_id, fetch_objects="tasks", filters=filters
     )
-    pipeline.append({"$match": task_filtering_pipeline})
+    query_builder.pipeline = pipeline
+    query_builder.main_doc_filter_tasks(prefix="tasks.")
+    await query_builder.task_complex_filters(prefix="tasks.")
 
     pipeline.extend(
         [
@@ -643,12 +618,15 @@ async def get_daily_success_rate(
     """
     mongo_db = await get_mongo_db()
 
-    main_filter, collection = await task_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="tasks",
+        filters=filters,
     )
+    pipeline = await query_builder.build()
+
     # Add the success rate computation
-    pipeline = [
-        {"$match": main_filter},
+    pipeline += [
         {"$addFields": {"is_success": {"$eq": ["$flag", "success"]}}},
         {
             "$project": {
@@ -659,7 +637,7 @@ async def get_daily_success_rate(
         },
         {"$sort": {"date": 1}},
     ]
-    result = await mongo_db[collection].aggregate(pipeline).to_list(length=None)
+    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
 
     df = pd.DataFrame(result)
 
@@ -849,21 +827,20 @@ async def get_total_nb_of_sessions(
     """
     mongo_db = await get_mongo_db()
 
-    global_filters, collection = await session_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+    query_builder = QueryBuilder(
+        project_id=project_id, filters=filters, fetch_objects="sessions"
     )
-
+    pipeline = await query_builder.build()
     query_result = (
-        await mongo_db[collection]
+        await mongo_db["sessions"]
         .aggregate(
-            [
-                {"$match": global_filters},
+            pipeline
+            + [
                 {"$count": "nb_sessions"},
             ]
         )
         .to_list(length=1)
     )
-    logger.info(f"Query result: {query_result}")
     if len(query_result) == 0:
         return None
 
@@ -883,15 +860,14 @@ async def get_nb_tasks_in_sessions(
 
     logger.debug(f"Getting the number of tasks in sessions for project {project_id}")
     mongo_db = await get_mongo_db()
-    logger.debug(f"limit: {limit}")
 
-    global_filters, collection = await session_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="sessions",
+        filters=filters,
     )
+    pipeline = await query_builder.build()
 
-    pipeline: List[Dict[str, object]] = [
-        {"$match": global_filters},
-    ]
     if sorted:
         pipeline.append({"$sort": {"created_at": 1}})
 
@@ -913,7 +889,7 @@ async def get_nb_tasks_in_sessions(
         ]
     )
 
-    query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=1)
+    query_result = await mongo_db["sessions"].aggregate(pipeline).to_list(length=1)
 
     if len(query_result) == 0:
         return None
@@ -932,15 +908,18 @@ async def get_global_average_session_length(
     """
     mongo_db = await get_mongo_db()
 
-    global_filters, collection = await session_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="sessions_with_tasks",
+        filters=filters,
     )
+    pipeline = await query_builder.build()
 
     query_result = (
-        await mongo_db[collection]
+        await mongo_db["sessions"]
         .aggregate(
-            [
-                {"$match": global_filters},
+            pipeline
+            + [
                 {
                     "$group": {
                         "_id": None,
@@ -969,13 +948,12 @@ async def get_last_message_success_rate(
     """
     mongo_db = await get_mongo_db()
 
-    global_filters, collection_name = await session_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="sessions",
+        filters=filters,
     )
-
-    pipeline: List[Dict[str, object]] = [
-        {"$match": global_filters},
-    ]
+    pipeline = await query_builder.build()
 
     pipeline.extend(
         [
@@ -1021,7 +999,7 @@ async def get_last_message_success_rate(
         ]
     )
 
-    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
+    result = await mongo_db["sessions"].aggregate(pipeline).to_list(length=1)
 
     if len(result) == 0:
         return None
@@ -1039,16 +1017,15 @@ async def get_nb_sessions_per_day(
     """
     mongo_db = await get_mongo_db()
 
-    global_filter, collection_name = await session_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="sessions",
+        filters=filters,
     )
-
-    pipeline: List[Dict[str, object]] = [
-        {"$match": global_filter},
-    ]
+    pipeline = await query_builder.build()
 
     result = (
-        await mongo_db[collection_name]
+        await mongo_db["sessions"]
         .aggregate(
             pipeline
             + [
@@ -1124,16 +1101,15 @@ async def get_nb_sessions_histogram(
     """
     mongo_db = await get_mongo_db()
 
-    global_filter, collection_name = await session_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="sessions",
+        filters=filters,
     )
-
-    pipeline: List[Dict[str, object]] = [
-        {"$match": global_filter},
-    ]
+    pipeline = await query_builder.build()
 
     result = (
-        await mongo_db[collection_name]
+        await mongo_db["sessions"]
         .aggregate(
             pipeline
             + [
@@ -1700,22 +1676,27 @@ async def get_success_rate_by_event_name(
             "$lte": filters.created_at_end,
         }
 
-    tasks_filters, task_collection = await task_filtering_pipeline_match(
-        project_id=project_id, filters=filters, prefix="tasks"
-    )
-
-    pipeline = [
+    pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
         {
             "$lookup": {
-                "from": task_collection,
+                "from": "tasks",
                 "localField": "task_id",
                 "foreignField": "id",
                 "as": "tasks",
             }
         },
         {"$unwind": "$tasks"},
-        {"$match": tasks_filters},
+    ]
+
+    query_builder = QueryBuilder(
+        project_id=project_id, fetch_objects="tasks", filters=filters
+    )
+    query_builder.pipeline = pipeline
+    query_builder.main_doc_filter_tasks(prefix="tasks.")
+    await query_builder.task_complex_filters(prefix="tasks.")
+
+    pipeline = [
         # Deduplicate based on event.event_name x task.id
         {
             "$group": {
@@ -1790,7 +1771,6 @@ async def get_y_pred_y_true(
     main_filter["event_definition.id"] = {"$in": filters.event_id}
 
     query_result = await mongo_db["events"].find(main_filter).to_list(length=None)
-    logger.debug(f"Query result: {len(query_result)}")
     if query_result is None or len(query_result) == 0:
         logger.info("No events found")
         return None, None
@@ -2363,6 +2343,14 @@ async def fetch_flattened_tasks(
         if not with_removed_events:
             pipeline.extend(
                 [
+                    {
+                        "$lookup": {
+                            "from": "events",
+                            "localField": "id",
+                            "foreignField": "task_id",
+                            "as": "events",
+                        },
+                    },
                     # Deduplicate events based on event_name
                     {
                         "$set": {
@@ -2533,19 +2521,7 @@ async def fetch_flattened_tasks(
         )
 
     # Query Mongo
-    flattened_tasks = (
-        await mongo_db["tasks_with_events"].aggregate(pipeline).to_list(length=limit)
-    )
-    if with_events and with_removed_events:
-        flattened_tasks = (
-            await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
-        )
-    else:
-        flattened_tasks = (
-            await mongo_db["tasks_with_events"]
-            .aggregate(pipeline)
-            .to_list(length=limit)
-        )
+    flattened_tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
 
     new_flattened_tasks = []
     for task in flattened_tasks:
@@ -3081,13 +3057,13 @@ async def get_total_nb_of_users(
 
     mongo_db = await get_mongo_db()
 
-    global_filters, collection = await task_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+    query_builder = QueryBuilder(
+        project_id=project_id, filters=filters, fetch_objects="tasks"
     )
+    pipeline = await query_builder.build()
 
     # We count the number of unique user_id
-    pipeline = [
-        {"$match": global_filters},
+    pipeline += [
         # Tasks may not have a user_id, so we filter this case
         {"$match": {"metadata.user_id": {"$exists": True, "$ne": None}}},
         {
@@ -3098,9 +3074,8 @@ async def get_total_nb_of_users(
         {"$count": "total_users"},
     ]
 
-    query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=1)
+    query_result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=1)
 
-    logger.info(f"Query result: {query_result}")
     if len(query_result) == 0:
         return None
 
@@ -3121,13 +3096,13 @@ async def get_nb_users_messages(
 
     mongo_db = await get_mongo_db()
 
-    global_filters, collection = await task_filtering_pipeline_match(
-        project_id=project_id, filters=filters
+    query_builder = QueryBuilder(
+        project_id=project_id, filters=filters, fetch_objects="tasks"
     )
+    pipeline = await query_builder.build()
 
     # We fetch the list of active users ids first
-    pipeline = [
-        {"$match": global_filters},
+    pipeline += [
         {"$match": {"metadata.user_id": {"$exists": True, "$ne": None}}},
         {
             "$group": {
@@ -3135,7 +3110,7 @@ async def get_nb_users_messages(
             }
         },
     ]
-    query_result = await mongo_db[collection].aggregate(pipeline).to_list(length=limit)
+    query_result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
     if len(query_result) == 0:
         return None
     active_user_ids: List[str] = [user["_id"] for user in query_result]
