@@ -400,7 +400,7 @@ const ExploreSampleProjectOnboarding: React.FC<
 export default function Page() {
   const [creatingProject, setCreatingProject] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
-  const [importDataDialogOpen, setImportDataDialogOpen] = useState(true);
+  const [importDataDialogOpen, setImportDataDialogOpen] = useState(false);
 
   // const searchParams = useSearchParams();
   // const canCode = searchParams.get("code") === "yes";
