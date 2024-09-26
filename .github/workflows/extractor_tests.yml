@@ -40,6 +40,6 @@ jobs:
           for file in $changed_files; do
             if [[ $file == extractor/* ]]; then
               echo "Checking $file"
-              mypy "$file" --ignore-missing-imports --follow-imports=silent || exit 1
+              mypy "$file" --ignore-missing-imports || exit 1
             fi
           done
