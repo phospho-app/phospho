@@ -22,16 +22,9 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
       - name: Install mypy
         run: |
-          poetry add mypy
+          pip install mypy
 
       - name: Get changed Python files
         id: changed-files
@@ -44,4 +37,4 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           cd extractor
-          poetry run mypy ${{ steps.changed-files.outputs.all_changed_files }} --ignore-missing-imports
+          mypy ${{ steps.changed-files.outputs.all_changed_files }} --ignore-missing-imports
