@@ -22,9 +22,19 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install poetry
+        run: |
+          pip install poetry
+          poetry install
+      
+      - name: Install dependencies
+        run: |
+          poetry install
+
       - name: Install mypy
         run: |
-          pip install mypy pydantic[mypy] types-PyYAML types-cachetools types-protobuf types-pyOpenSSL types-pycurl types-requests
+          pip install mypy pydantic[mypy]
+          mypy --install-types
 
       - name: Get changed Python files
         id: changed-files
