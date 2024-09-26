@@ -38,7 +38,7 @@ jobs:
         run: |
           changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
           for file in $changed_files; do
-            if [[ $file == extractor/* ]]; then
+            if [[ $file == backend/* ]]; then
               echo "Checking $file"
               mypy "$file" --ignore-missing-imports --install-types || exit 1
             fi
@@ -51,7 +51,7 @@ jobs:
           files: |
             extractor/**/*.py
 
-      - name: Run mypy on changed files
+      - name: Run mypy on changed extractor files
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
