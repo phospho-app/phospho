@@ -44,27 +44,32 @@ function ClusteringLoading({
     setSelectedClustering,
   ]);
 
+  const statusToDescription: Record<string, string> = {
+    started: "Starting clustering",
+    summaries: "Summarizing data",
+    loading_existing_embeddings: "Loading existing embeddings",
+    generate_clusters: "Generating clusters",
+    generating_new_embeddings: "Generating new embeddings",
+    generate_clusters_description_and_title:
+      "Generating cluster descriptions and titles",
+    merging_similar_clusters: "Merging similar clusters",
+    saving_clusters: "Saving clusters",
+  };
+
   return (
     <div className="w-full flex flex-col items-center">
-      {(selectedClustering.status === "started" ||
-        selectedClustering.status === "summaries") && (
+      {selectedClustering.status !== "completed" && (
         <Progress
           value={Math.max(selectedClustering.percent_of_completion ?? 0, 1)}
           className="w-[100%] transition-all duration-500 ease-in-out mb-4 h-4"
         />
       )}
-      {selectedClustering.status === "started" && (
+      {
         <div className="flex flex-row items-center text-muted-foreground text-sm">
           <Spinner className="mr-1" />
-          Computing embeddings...
+          {statusToDescription[selectedClustering.status ?? "started"]}
         </div>
-      )}
-      {selectedClustering.status === "summaries" && (
-        <div className="flex flex-row items-center text-muted-foreground text-sm">
-          <Spinner className="mr-1" />
-          Generating summaries...
-        </div>
-      )}
+      }
       <div className="flex flex-col text-muted-foreground text-sm space-y-2 pt-8">
         <div>
           While this is running, why not invite your team to the project?
