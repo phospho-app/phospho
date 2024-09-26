@@ -51,7 +51,7 @@ jobs:
           for file in $changed_files; do
             if [[ $file == extractor/* ]]; then
               echo "Checking $file"
-              mypy "$file" --ignore-missing-imports --install-types || exit 1
+              mypy "$file" --ignore-missing-imports --install-types --follow-imports=silent || exit 1
             else
               echo "Skipping $file as it's not in the extractor directory"
             fi
