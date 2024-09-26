@@ -4,10 +4,10 @@ from phospho.models import ProjectDataFilters
 
 
 class AggregateMetricsRequest(BaseModel):
-    index: Optional[List[str]] = Field(default_factory=lambda: ["days"])
-    columns: Optional[List[str]] = Field(default_factory=list)
-    count_of: Optional[str] = "tasks"
-    timerange: Optional[str] = "last_7_days"
+    index: List[Literal["days", "minutes"]] = Field(default_factory=lambda: ["days"])
+    columns: List[Literal["event_name", "flag"]] = Field(default_factory=list)
+    count_of: Optional[Literal["tasks", "events"]] = "tasks"
+    timerange: Optional[Literal["last_7_days", "last_30_minutes"]] = "last_7_days"
     filters: Optional[ProjectDataFilters] = None
     limit: int = 1000
 
