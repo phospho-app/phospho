@@ -22,14 +22,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install poetry
+      - name: Install poetry and dependencies
         run: |
-          cd extractor
           pip install poetry
-          poetry install
-      
-      - name: Install dependencies
-        run: |
+          cd extractor
           poetry install
 
       - name: Install mypy
