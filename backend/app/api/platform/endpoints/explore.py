@@ -508,13 +508,14 @@ async def post_detect_clusters(
     org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
 
     logger.debug(f"clustering mode:{query.clustering_mode}")
+    logger.debug(f"scope:{query.scope}")
 
     usage_quota = await get_quota_for_org(org_id)
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
 
     total_nb_messages: int | None = None
-    if query.scope == "messages" or query.scope == "sessions" or query.scope == "users":
+    if query.scope == "messages":
         total_nb_messages = await get_total_nb_of_tasks(
             project_id=project_id, filters=query.filters
         )
@@ -524,7 +525,7 @@ async def post_detect_clusters(
         )
     elif query.scope == "users":
         total_nb_messages = await get_nb_users_messages(
-            project_id=project_id, filters=query.filters
+            project_id=project_id, filters=query.filters, limit=query.limit
         )
     else:
         raise HTTPException(
@@ -537,14 +538,12 @@ async def post_detect_clusters(
             status_code=404,
             detail="No tasks found in the project.",
         )
-    else:
-        if query.limit is None:
-            credits_to_bill = total_nb_messages * 2
-        else:
-            credits_to_bill = min(total_nb_messages, query.limit) * 2
-        logger.info(
-            f"We will bill {credits_to_bill} credits for project clustering {project_id}"
-        )
+
+    credits_to_bill = total_nb_messages * 2
+
+    logger.info(
+        f"We will bill {credits_to_bill} credits for project clustering {project_id}"
+    )
 
     # Ignore limits and metering in preview mode
     if config.ENVIRONMENT != "preview":
