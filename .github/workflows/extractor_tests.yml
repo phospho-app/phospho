@@ -22,22 +22,31 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install poetry and dependencies
-        run: |
-          pip install poetry
-          cd extractor
-          poetry install
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
-      - name: Install mypy
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "poetry"
+
+      - name: Install dependencies
         run: |
-          pip install mypy pydantic[mypy]
+          cd backend
+          poetry install --with dev --no-interaction --no-root
+          poetry add mypy pydantic[mypy]
 
       - name: Get changed Python files
         id: changed-files
         uses: tj-actions/changed-files@v41
         with:
           files: |
-            extractor/**/*.py
+            backend/**/*.py
 
       - name: Run mypy on changed files
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -49,3 +58,4 @@ jobs:
               mypy "$file" --ignore-missing-imports --install-types || exit 1
             fi
           done
+          

@@ -29,10 +29,17 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "poetry"
+
       - name: Install dependencies
         run: |
           cd backend
           poetry install --with dev --no-interaction --no-root
+          poetry add mypy pydantic[mypy]
 
       - name: Get changed Python files
         id: changed-files
@@ -44,8 +51,13 @@ jobs:
       - name: Run mypy on changed files
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd backend
-          poetry run mypy ${{ steps.changed-files.outputs.all_changed_files }} --ignore-missing-imports
+          changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
+          for file in $changed_files; do
+            if [[ $file == extractor/* ]]; then
+              echo "Checking $file"
+              mypy "$file" --ignore-missing-imports --install-types || exit 1
+            fi
+          done
 
   test_back:
     needs: type_check
@@ -62,24 +74,6 @@ jobs:
       - name: Start a local Temporal server
         shell: bash
         run: temporal server start-dev --headless &
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "poetry"
-
-      - name: Install dependencies
-        run: |
-          cd backend
-          poetry install --with dev --no-interaction --no-root
 
       - name: Test with pytest
         env:

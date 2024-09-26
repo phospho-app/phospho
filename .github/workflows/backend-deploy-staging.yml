@@ -34,8 +34,15 @@ jobs:
             backend/**/*.py
 
       - name: Run mypy on changed backend files
-        if: steps.changed-backend-files.outputs.any_changed == 'true'
-        run: mypy ${{ steps.changed-backend-files.outputs.all_changed_files }} --ignore-missing-imports
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
+          for file in $changed_files; do
+            if [[ $file == extractor/* ]]; then
+              echo "Checking $file"
+              mypy "$file" --ignore-missing-imports --install-types || exit 1
+            fi
+          done
 
       - name: Get changed Python files in extractor
         id: changed-extractor-files
@@ -44,9 +51,16 @@ jobs:
           files: |
             extractor/**/*.py
 
-      - name: Run mypy on changed extractor files
-        if: steps.changed-extractor-files.outputs.any_changed == 'true'
-        run: mypy ${{ steps.changed-extractor-files.outputs.all_changed_files }} --ignore-missing-imports
+      - name: Run mypy on changed files
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
+          for file in $changed_files; do
+            if [[ $file == extractor/* ]]; then
+              echo "Checking $file"
+              mypy "$file" --ignore-missing-imports --install-types || exit 1
+            fi
+          done
 
   deploy_extractor_staging:
     runs-on: ubuntu-latest
