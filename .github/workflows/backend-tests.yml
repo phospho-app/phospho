@@ -1,10 +1,11 @@
-name: Backend tests
+name: Backend and Extractor tests
 
 on:
   workflow_dispatch:
   pull_request:
     paths:
       - "backend/**"
+      - "extractor/**"
     branches:
       - dev
 
@@ -12,10 +13,47 @@ permissions:
   contents: read
 
 jobs:
+  type_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          poetry install --with dev --no-interaction --no-root
+
+      - name: Run mypy on backend
+        run: |
+          cd backend
+          poetry run mypy . --ignore-missing-imports
+
+      - name: Install extractor dependencies
+        run: |
+          cd extractor
+          poetry install --with dev --no-interaction --no-root
+
+      - name: Run mypy on extractor
+        run: |
+          cd extractor
+          poetry run mypy . --ignore-missing-imports
+
   test_back:
+    needs: type_check
     runs-on: ubuntu-latest
     environment: test
-    # This job will be canceled if it does not complete within 4 minutes
     timeout-minutes: 4
 
     steps:
@@ -41,7 +79,6 @@ jobs:
           python-version: "3.11"
           cache: "poetry"
 
-      # Install dependencies if cache does not exist
       - name: Install dependencies
         run: |
           cd backend
@@ -60,14 +97,13 @@ jobs:
           MONGODB_NAME: ${{ vars.MONGODB_NAME }}
           QDRANT_URL: ${{ secrets.QDRANT_URL }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
-          # Test API key for the phospho API
           PHOSPHO_API_KEY: ${{ secrets.PHOSPHO_API_KEY }}
           PHOSPHO_BACKEND_URL: ${{ vars.PHOSPHO_BACKEND_URL }}
           TEST_PROPELAUTH_ORG_ID: ${{ vars.TEST_PROPELAUTH_ORG_ID }}
           TEST_PROPELAUTH_USER_ID: ${{ vars.TEST_PROPELAUTH_USER_ID }}
           PHOSPHO_API_KEY_ONBOARDING: ${{ secrets.PHOSPHO_API_KEY_ONBOARDING }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }} # Note: this is a dummy variable in test environment
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           EXTRACTOR_URL: ${{ vars.EXTRACTOR_URL }}
           ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
           PHOSPHO_AI_HUB_URL: ${{ vars.PHOSPHO_AI_HUB_URL }}
@@ -78,8 +114,6 @@ jobs:
           AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
           TAK_SEARCH_URL: ${{ vars.TAK_SEARCH_URL }}
           TAK_APP_API_KEY: ${{ secrets.TAK_APP_API_KEY }}
-
-        # Specify here the tests you want to run after the -k flag
         run: |
           cd backend
           poetry run pytest tests/api/ -vvv

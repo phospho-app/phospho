@@ -10,7 +10,6 @@ on:
       - dev
 
 jobs:
-
   type_check:
     runs-on: ubuntu-latest
     steps:
