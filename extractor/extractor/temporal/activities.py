@@ -46,7 +46,6 @@ async def bill_on_stripe(
 
     usage_per_log: int = 0
     project = await get_project_by_id(request.project_id)
-
     if request.recipe_type is not None:
         if request.recipe_type == "event_detection":
             usage_per_log += 1 if project.settings.run_event_detection else 0
