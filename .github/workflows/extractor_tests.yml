@@ -24,6 +24,7 @@ jobs:
 
       - name: Install poetry
         run: |
+          cd extractor
           pip install poetry
           poetry install
       
