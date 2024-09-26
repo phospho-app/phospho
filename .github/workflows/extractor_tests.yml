@@ -1,0 +1,59 @@
+name: Extractor tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "extractor/**"
+    branches:
+      - dev
+
+permissions:
+  contents: read
+
+jobs:
+  type_check_extractor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Install dependencies
+        run: |
+          cd extractor
+          poetry install --with dev --no-interaction --no-root
+          pip install mypy pydantic[mypy]
+
+      - name: Get changed Python files
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            extractor/**/*.py
+
+      - name: Run mypy on changed files
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
+          changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
+          IFS=$'\n'
+          for file in $changed_files; do
+            if [[ $file == extractor/* ]]; then
+              echo "Checking $file"
+              mypy "$file" --ignore-missing-imports --install-types --follow-imports=silent || exit 1
+            else
+              echo "Skipping $file as it's not in the extractor directory"
+            fi
+          done
+          
