@@ -24,7 +24,7 @@ jobs:
 
       - name: Install mypy
         run: |
-          pip install mypy
+          pip install mypy pydantic[mypy]
 
       - name: Get changed Python files
         id: changed-files
@@ -37,10 +37,9 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
-          echo "Changed files: $changed_files"
           for file in $changed_files; do
             if [[ $file == extractor/* ]]; then
               echo "Checking $file"
-              mypy "$file" --ignore-missing-imports || exit 1
+              mypy "$file" --ignore-missing-imports --follow-imports=silent || exit 1
             fi
           done
