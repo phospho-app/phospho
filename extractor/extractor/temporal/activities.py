@@ -44,11 +44,10 @@ async def bill_on_stripe(
         )
         return
 
+    usage_per_log: int = 0
     if request.usage_per_log is not None:
-        usage_per_log: int = request.usage_per_log
+        usage_per_log = request.usage_per_log
     else:
-        usage_per_log: int = 0
-
         project = await get_project_by_id(request.project_id)
 
         if project.settings.run_event_detection:

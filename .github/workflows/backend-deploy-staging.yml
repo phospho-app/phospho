@@ -10,6 +10,45 @@ on:
       - dev
 
 jobs:
+
+  type_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mypy
+
+      - name: Get changed Python files in backend
+        id: changed-backend-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            backend/**/*.py
+
+      - name: Run mypy on changed backend files
+        if: steps.changed-backend-files.outputs.any_changed == 'true'
+        run: mypy ${{ steps.changed-backend-files.outputs.all_changed_files }} --ignore-missing-imports
+
+      - name: Get changed Python files in extractor
+        id: changed-extractor-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            extractor/**/*.py
+
+      - name: Run mypy on changed extractor files
+        if: steps.changed-extractor-files.outputs.any_changed == 'true'
+        run: mypy ${{ steps.changed-extractor-files.outputs.all_changed_files }} --ignore-missing-imports
+
   deploy_extractor_staging:
     runs-on: ubuntu-latest
     environment: staging
