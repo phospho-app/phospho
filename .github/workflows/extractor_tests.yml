@@ -31,7 +31,6 @@ jobs:
       - name: Install mypy
         run: |
           pip install mypy pydantic[mypy]
-          mypy --install-types
 
       - name: Get changed Python files
         id: changed-files
@@ -47,6 +46,6 @@ jobs:
           for file in $changed_files; do
             if [[ $file == extractor/* ]]; then
               echo "Checking $file"
-              mypy "$file" --ignore-missing-imports || exit 1
+              mypy "$file" --ignore-missing-imports --install-types || exit 1
             fi
           done
