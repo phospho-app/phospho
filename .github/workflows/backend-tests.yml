@@ -33,7 +33,7 @@ jobs:
         run: |
           cd backend
           poetry install --with dev --no-interaction --no-root
-          poetry add mypy pydantic[mypy]
+          pip install mypy pydantic[mypy]
 
       - name: Get changed Python files
         id: changed-files
