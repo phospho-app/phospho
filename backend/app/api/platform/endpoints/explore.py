@@ -1,9 +1,9 @@
 import datetime
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 
 from app.api.platform.models import (
     ABTests,
@@ -277,7 +277,6 @@ async def get_project_metrics(
             project_id=project_id,
             filters=filters,
             limit=limit,
-            sorted=True,
         )
         output["total_nb_sessions"] = total_nb_sessions
         if limit is not None and total_nb_sessions is not None:
@@ -315,7 +314,7 @@ async def get_project_metrics(
         nb_users_messages = await get_nb_users_messages(
             project_id=project_id,
             filters=filters,
-            limit=output["nb_users_in_scope"],
+            limit=cast(int | None, output["nb_users_in_scope"]),
         )
         output["nb_users_messages"] = nb_users_messages
         if nb_users_messages is not None:
@@ -509,41 +508,49 @@ async def post_detect_clusters(
     org_id = await verify_if_propelauth_user_can_access_project(user, project_id)
 
     logger.debug(f"clustering mode:{query.clustering_mode}")
+    logger.debug(f"scope:{query.scope}")
 
     usage_quota = await get_quota_for_org(org_id)
     current_usage = usage_quota.current_usage
     max_usage = usage_quota.max_usage
 
-    clustering_billing = 0
-    if query.scope == "messages" or query.scope == "sessions" or query.scope == "users":
-        total_nb_tasks = await get_total_nb_of_tasks(
+    total_nb_messages: int | None = None
+    if query.scope == "messages":
+        total_nb_messages = await get_total_nb_of_tasks(
             project_id=project_id, filters=query.filters
         )
-        if total_nb_tasks:
-            if query.limit is None:
-                clustering_billing = total_nb_tasks * 2
-            else:
-                clustering_billing = min(total_nb_tasks, query.limit) * 2
-        else:
-            raise HTTPException(
-                status_code=404,
-                detail="No tasks found in the project.",
-            )
+        if query.limit and total_nb_messages:
+            total_nb_messages = min(total_nb_messages, query.limit)
+    elif query.scope == "sessions":
+        total_nb_messages = await get_nb_tasks_in_sessions(
+            project_id=project_id, filters=query.filters, limit=query.limit
+        )
+    elif query.scope == "users":
+        total_nb_messages = await get_nb_users_messages(
+            project_id=project_id, filters=query.filters, limit=query.limit
+        )
     else:
         raise HTTPException(
             status_code=400,
-            detail="messages_or_sessions must be either 'messages' or 'sessions'.",
+            detail="Scope should be messages, sessions or users.",
         )
 
-    logger.info(f"Clustering billing for project_id {project_id}: {clustering_billing}")
+    if total_nb_messages is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No tasks found in the project.",
+        )
+
+    credits_to_bill = total_nb_messages * 2
+
+    logger.info(
+        f"We will bill {credits_to_bill} credits for project clustering {project_id}"
+    )
 
     # Ignore limits and metering in preview mode
     if config.ENVIRONMENT != "preview":
         if usage_quota.plan == "hobby" or usage_quota.plan is None:
-            if (
-                max_usage is not None
-                and current_usage + clustering_billing >= max_usage
-            ):
+            if max_usage is not None and current_usage + total_nb_messages >= max_usage:
                 raise HTTPException(
                     status_code=403,
                     detail="Payment details required to run the cluster detection algorithm.",
@@ -565,7 +572,7 @@ async def post_detect_clusters(
         nb_clusters=query.nb_clusters,
         # merge_clusters=query.merge_clusters, # Not implemented yet
         customer_id=usage_quota.customer_id,
-        nb_credits_used=clustering_billing,
+        nb_credits_used=credits_to_bill,
         clustering_id=clustering_id,
         clustering_name=clustering_name,
         clustering_mode=query.clustering_mode,

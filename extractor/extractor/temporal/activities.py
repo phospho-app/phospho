@@ -45,11 +45,14 @@ async def bill_on_stripe(
         return
 
     usage_per_log: int = 0
-    if request.usage_per_log is not None:
-        usage_per_log = request.usage_per_log
+    project = await get_project_by_id(request.project_id)
+    if request.recipe_type is not None:
+        if request.recipe_type == "event_detection":
+            usage_per_log += 1 if project.settings.run_event_detection else 0
+        elif request.recipe_type == "sentiment_language":
+            usage_per_log += 1 if project.settings.run_sentiment else 0
+            usage_per_log += 1 if project.settings.run_language else 0
     else:
-        project = await get_project_by_id(request.project_id)
-
         if project.settings.run_event_detection:
             usage_per_log += len(project.settings.events)
         if project.settings.run_sentiment:
@@ -173,7 +176,7 @@ async def run_recipe_on_task(
     return {
         "status": "ok",
         "nb_job_results": total_len,
-        "usage_per_log": 2 if request.recipe.recipe_type == "sentiment_language" else 1,
+        "recipe_type": request.recipe.recipe_type,
     }
 
 
