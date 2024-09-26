@@ -535,7 +535,9 @@ async def post_detect_clusters(
             detail="messages_or_sessions must be either 'messages' or 'sessions'.",
         )
 
-    logger.info(f"Clustering billing for project_id {project_id}: {clustering_billing}")
+    logger.info(
+        f"We will bill {clustering_billing} credits for project clustering {project_id}"
+    )
 
     # Ignore limits and metering in preview mode
     if config.ENVIRONMENT != "preview":
