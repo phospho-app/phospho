@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/select";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Clustering } from "@/models/models";
+import { useEffect } from "react";
 
 export function ClusteringDropDown({
   selectedClustering,
@@ -19,6 +20,10 @@ export function ClusteringDropDown({
   clusterings: Clustering[] | undefined;
   selectedClusteringName: string | undefined;
 }) {
+  // Redraw component when clusterings change
+  const nb_clusters = clusterings?.length;
+  useEffect(() => {}, [nb_clusters]);
+
   return (
     <div className="flex flex-row gap-x-2 items-center">
       <Select

@@ -16,10 +16,7 @@ function ClusteringLoading({
 }) {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
-  const selectedClusteringJSON = useMemo(
-    () => JSON.stringify(selectedClustering),
-    [selectedClustering],
-  );
+  const selectedClusteringJSON = JSON.stringify(selectedClustering);
 
   // Add a useEffect triggered every few seconds to update the clustering status
   useEffect(() => {

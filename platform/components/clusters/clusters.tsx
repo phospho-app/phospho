@@ -138,10 +138,7 @@ const Clusters: React.FC = () => {
     );
   }
 
-  const clusteringsJSON = useMemo(
-    () => JSON.stringify(clusterings),
-    [clusterings],
-  );
+  const clusteringsJSON = JSON.stringify(clusterings);
 
   useEffect(() => {
     if (clusterings === undefined) {
