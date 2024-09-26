@@ -36,5 +36,4 @@ jobs:
       - name: Run mypy on changed files
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          cd extractor
           mypy ${{ steps.changed-files.outputs.all_changed_files }} --ignore-missing-imports
