@@ -24,7 +24,7 @@ jobs:
 
       - name: Install mypy
         run: |
-          pip install mypy pydantic[mypy]
+          pip install mypy pydantic[mypy] types-PyYAML types-cachetools types-protobuf types-pyOpenSSL types-pycurl types-requests
 
       - name: Get changed Python files
         id: changed-files
