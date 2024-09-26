@@ -32,7 +32,7 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Boxes, Pencil, Plus, Settings } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
