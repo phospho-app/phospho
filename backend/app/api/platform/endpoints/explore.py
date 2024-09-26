@@ -519,6 +519,8 @@ async def post_detect_clusters(
         total_nb_messages = await get_total_nb_of_tasks(
             project_id=project_id, filters=query.filters
         )
+        if query.limit and total_nb_messages:
+            total_nb_messages = min(total_nb_messages, query.limit)
     elif query.scope == "sessions":
         total_nb_messages = await get_nb_tasks_in_sessions(
             project_id=project_id, filters=query.filters, limit=query.limit
