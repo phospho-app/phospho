@@ -44,6 +44,18 @@ function ClusteringLoading({
     setSelectedClustering,
   ]);
 
+  const statusToDescription: Record<string, string> = {
+    started: "Starting clustering",
+    summaries: "Summarizing data",
+    loading_existing_embeddings: "Loading existing embeddings",
+    generate_clusters: "Generating clusters",
+    generating_new_embeddings: "Generating new embeddings",
+    generate_clusters_description_and_title:
+      "Generating cluster descriptions and titles",
+    merging_similar_clusters: "Merging similar clusters",
+    saving_clusters: "Saving clusters",
+  };
+
   return (
     <div className="w-full flex flex-col items-center">
       {selectedClustering.status !== "completed" && (
@@ -55,7 +67,7 @@ function ClusteringLoading({
       {
         <div className="flex flex-row items-center text-muted-foreground text-sm">
           <Spinner className="mr-1" />
-          {selectedClustering.status} ...
+          {statusToDescription[selectedClustering.status ?? "started"]}
         </div>
       }
       <div className="flex flex-col text-muted-foreground text-sm space-y-2 pt-8">
