@@ -31,7 +31,6 @@ jobs:
 
       - name: Install mypy
         run: |
-          cd extractor
           poetry add mypy
 
       - name: Get changed Python files
