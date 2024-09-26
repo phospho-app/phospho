@@ -259,7 +259,7 @@ export interface Clustering {
   type?: string;
   nb_clusters?: number;
   clusters_ids: string[];
-  status?: "started" | "summaries" | "completed" | "loading existing embeddings" | "generating new embeddings" | "generate clusters description and title" | "merging similar clusters" | "saving clusters";
+  status?: "started" | "summaries" | "completed" | "loading_existing_embeddings" |"generate_clusters" | "generating_new_embeddings" | "generate_clusters_description_and_title" | "merging_similar_clusters" | "saving_clusters";
   percent_of_completion?: number;
   clusters?: Cluster[] | null;
   scope: "messages" | "sessions";

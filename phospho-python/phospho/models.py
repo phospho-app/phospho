@@ -812,11 +812,12 @@ class Clustering(ProjectElementBaseModel):
     status: Optional[
         Literal[
             "started",
-            "loading existing embeddings",
-            "generating new embeddings",
-            "generate clusters description and title",
-            "merging similar clusters",
-            "saving clusters",
+            "loading_existing_embeddings",
+            "generating_new_embeddings",
+            "generate_clusters",
+            "generate_clusters_description_and_title",
+            "merging_similar_clusters",
+            "saving_clusters",
             "summaries",
             "completed",
         ]
