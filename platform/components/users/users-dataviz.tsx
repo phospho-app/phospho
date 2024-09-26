@@ -20,7 +20,7 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import React, { useMemo } from "react";
 import { Label, Pie, PieChart } from "recharts";
 import { TooltipProps } from "recharts";
 import {
@@ -137,7 +137,7 @@ const UsersDataviz = ({}: {
       },
     );
 
-  const totalJobTitles = React.useMemo(() => {
+  const totalJobTitles = useMemo(() => {
     return userJobTitles?.reduce((acc) => acc + 1, 0) || 0;
   }, [userJobTitles]);
 
