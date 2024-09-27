@@ -33,6 +33,7 @@ import {
   ListFilter,
   Meh,
   PenSquare,
+  Plus,
   Smile,
   SmilePlus,
   TextSearch,
@@ -152,12 +153,13 @@ const FilterComponent = ({
   }
 
   return (
-    <div className="flex flex-wrap gap-x-2 items-end">
+    <div className="flex flex-wrap gap-x-2 gap-y-2 items-end">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">
+          <Button variant="outline" className="min-w-[12rem] justify-start">
             <ListFilter className="h-4 w-4 mr-1" />
-            Filters
+            <div className="flex-grow">Filters</div>
+            <Plus className="h-4 w-4 ml-1" />
           </Button>
         </DropdownMenuTrigger>
         {dataFilters.flag && (

@@ -184,9 +184,10 @@ const RunClusteringSheet = ({
     (form.watch("scope") === "users" &&
       !!projectStatistics?.nb_users_in_scope &&
       projectStatistics.nb_users_in_scope >= 5);
-  const defaultNbClusters = Math.max(
-    Math.round((projectStatistics?.nb_elements ?? 0) / 100),
-    5,
+  // Defautl number of clusters is clamped between 3 and 12
+  const defaultNbClusters = Math.min(
+    12,
+    Math.max(Math.round((projectStatistics?.nb_elements ?? 0) / 100), 3),
   );
 
   useEffect(() => {
@@ -273,7 +274,7 @@ const RunClusteringSheet = ({
             machine learning.
           </SheetDescription>
           <Separator className="my-8" />
-          <div className="flex flex-wrap gap-x-2 gap-y-2 items-end">
+          <div className="flex flex-col flex-wrap gap-x-2 gap-y-2 items-start">
             <DatePickerWithRange />
             <FilterComponent variant={form.getValues("scope")} />
           </div>
@@ -418,128 +419,6 @@ const RunClusteringSheet = ({
                 </div>
               )}
             />
-
-            <div className="flex flex-col gap-y-2 bg-secondary p-2 rounded-lg">
-              <div className="flex flex-row gap-x-2 w-full items-end">
-                <FormField
-                  control={form.control}
-                  name="scope"
-                  render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel className="flex space-x-2">
-                        <span>Granularity</span>
-                        <HoverCard openDelay={0} closeDelay={0}>
-                          <HoverCardTrigger>
-                            <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
-                          </HoverCardTrigger>
-                          <HoverCardContent>
-                            <div className="w-96 flex flex-col space-y-2 p-2">
-                              <div>
-                                Clustering groups similar entities together.
-                                Pick the granularity of the entities to cluster.
-                              </div>
-                              <div className="flex flex-col space-y-1">
-                                <span>
-                                  - User messages: a single interaction
-                                </span>
-                                <span>- User sessions: a whole discussion</span>
-                                <span>
-                                  - Active users: multiple discussions from the
-                                  same user
-                                </span>
-                              </div>
-                            </div>
-                          </HoverCardContent>
-                        </HoverCard>
-                      </FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                        }}
-                        value={field.value} // Ensure this is controlled
-                      >
-                        <SelectTrigger className="max-w-[20rem]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="messages">
-                              User messages
-                            </SelectItem>
-                            <SelectItem value="sessions">
-                              User sessions
-                            </SelectItem>
-                            <SelectItem value="users">Active users</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="detect_outliers"
-                  render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel className="flex space-x-2">
-                        Clustering mode
-                      </FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value === "true");
-                        }}
-                        defaultValue={field.value ? "true" : "false"}
-                      >
-                        <SelectTrigger className="max-w-[20rem]">
-                          {field.value
-                            ? "Detect outliers (beta)"
-                            : "Uniform groups (default)"}
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="false">
-                              Uniform groups (default)
-                            </SelectItem>
-                            <SelectItem value="true">
-                              Detect outliers (beta)
-                            </SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {!form.getValues("detect_outliers") && (
-                <div className="flex items-center space-x-2">
-                  <FormLabel>Number of clusters:</FormLabel>
-                  <FormField
-                    control={form.control}
-                    name="nb_clusters"
-                    render={({ field }) => (
-                      <FormItem className="flex-grow">
-                        <FormControl>
-                          <Input
-                            className="w-32"
-                            max={projectStatistics?.nb_elements ?? 0}
-                            min={0}
-                            step={1}
-                            type="number"
-                            {...field}
-                            onChange={(e) => {
-                              field.onChange(e.target.valueAsNumber);
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-            </div>
           </div>
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
@@ -550,6 +429,132 @@ const RunClusteringSheet = ({
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-2">
+                <div className="flex flex-col gap-y-2 bg-secondary p-2 rounded-lg">
+                  <div className="flex flex-row gap-x-2 w-full items-end">
+                    <FormField
+                      control={form.control}
+                      name="scope"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel className="flex space-x-2">
+                            <span>Granularity</span>
+                            <HoverCard openDelay={0} closeDelay={0}>
+                              <HoverCardTrigger>
+                                <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                              </HoverCardTrigger>
+                              <HoverCardContent>
+                                <div className="w-96 flex flex-col space-y-2 p-2">
+                                  <div>
+                                    Clustering groups similar entities together.
+                                    Pick the granularity of the entities to
+                                    cluster.
+                                  </div>
+                                  <div className="flex flex-col space-y-1">
+                                    <span>
+                                      - User messages: a single interaction
+                                    </span>
+                                    <span>
+                                      - User sessions: a whole discussion
+                                    </span>
+                                    <span>
+                                      - Active users: multiple discussions from
+                                      the same user
+                                    </span>
+                                  </div>
+                                </div>
+                              </HoverCardContent>
+                            </HoverCard>
+                          </FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                            }}
+                            value={field.value} // Ensure this is controlled
+                          >
+                            <SelectTrigger className="max-w-[20rem]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="messages">
+                                  User messages
+                                </SelectItem>
+                                <SelectItem value="sessions">
+                                  User sessions
+                                </SelectItem>
+                                <SelectItem value="users">
+                                  Active users
+                                </SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="detect_outliers"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel className="flex space-x-2">
+                            Clustering mode
+                          </FormLabel>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(value === "true");
+                            }}
+                            defaultValue={field.value ? "true" : "false"}
+                          >
+                            <SelectTrigger className="max-w-[20rem]">
+                              {field.value
+                                ? "Detect outliers (beta)"
+                                : "Uniform groups (default)"}
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="false">
+                                  Uniform groups (default)
+                                </SelectItem>
+                                <SelectItem value="true">
+                                  Detect outliers (beta)
+                                </SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {!form.getValues("detect_outliers") && (
+                    <div className="flex items-center space-x-2">
+                      <FormLabel>Number of clusters:</FormLabel>
+                      <FormField
+                        control={form.control}
+                        name="nb_clusters"
+                        render={({ field }) => (
+                          <FormItem className="flex-grow">
+                            <FormControl>
+                              <Input
+                                className="w-32"
+                                max={projectStatistics?.nb_elements ?? 0}
+                                min={0}
+                                step={1}
+                                type="number"
+                                {...field}
+                                onChange={(e) => {
+                                  field.onChange(e.target.valueAsNumber);
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+                </div>
                 <FormField
                   control={form.control}
                   name="limit"
