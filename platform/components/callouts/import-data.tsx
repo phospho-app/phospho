@@ -156,7 +156,10 @@ export function UploadDragAndDrop({
   };
   return (
     <>
-      <div className="relative  w-full h-40 mt-2 border-2 border-dashed rounded-3xl text-center">
+      <FileUploader handleChange={handleChange} name="file" types={fileTypes}>
+        <div className="absolute w-full h-40 flex flex-col items-center cursor-pointer opacity-100 z-10"></div>
+      </FileUploader>
+      <div className="relative  w-full h-40 border-2 border-dashed rounded-3xl text-center">
         <div className="absolute inset-x-1/4 inset-y-1/4 w-1/2 flex flex-col items-center">
           <div>
             <CloudUpload className="w-10 h-10" />
@@ -168,13 +171,6 @@ export function UploadDragAndDrop({
             Supported formats: .csv, .xlsx
           </div>
         </div>
-        <FileUploader
-          handleChange={handleChange}
-          name="file"
-          types={fileTypes}
-          className="absolute inset-x-1/4 inset-y-1/4 w-1/2 flex flex-col items-center bg-red-300 cursor-pointer -z-10"
-          style={{ opacity: 0 }}
-        ></FileUploader>
       </div>
     </>
   );
