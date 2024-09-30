@@ -60,7 +60,7 @@ import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
 
-const fileTypes = ["csv", "xlsx", "jsonl"];
+const fileTypes = ["csv", "xlsx", "jsonl", "parquet"];
 
 const PythonIcon = () => {
   return (
@@ -168,7 +168,7 @@ export function UploadDragAndDrop({
             {fileName ?? "Click box or drag here to select file"}
           </div>
           <div className="text-sm text-muted-foreground">
-            Supported formats: .csv, .xlsx, .jsonl
+            Supported formats: .csv, .xlsx, .jsonl, .parquet
           </div>
         </div>
       </div>
