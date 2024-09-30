@@ -60,7 +60,7 @@ import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
 
-const fileTypes = ["csv", "xlsx", "jsonl"];
+const fileTypes = ["csv", "xlsx", "jsonl", "parquet"];
 
 const PythonIcon = () => {
   return (
@@ -154,25 +154,31 @@ export function UploadDragAndDrop({
     setFile(file);
     setFileName(file.name);
   };
+
   return (
-    <>
-      <FileUploader handleChange={handleChange} name="file" types={fileTypes}>
-        <div className="absolute w-full h-40 flex flex-col items-center cursor-pointer opacity-100 z-10"></div>
-      </FileUploader>
-      <div className="relative  w-full h-40 border-2 border-dashed rounded-3xl text-center">
-        <div className="absolute inset-x-1/4 inset-y-1/4 w-1/2 flex flex-col items-center">
+    <div className="w-full h-full relative">
+      <div className="absolute top-0 w-full h-40 border-2 border-dashed rounded-3xl z-0 text-center flex justify-center items-center">
+        <div className="flex flex-col items-center">
           <div>
             <CloudUpload className="w-10 h-10" />
           </div>
           <div className="text-xl font-bold">
-            {fileName ?? "Click box to select file"}
+            {fileName ?? "Click box or drag here to select file"}
           </div>
           <div className="text-sm text-muted-foreground">
-            Supported formats: .csv, .xlsx, .jsonl
+            Supported formats: .csv, .xlsx, .jsonl, .parquet
           </div>
         </div>
       </div>
-    </>
+      <FileUploader
+        handleChange={handleChange}
+        name="file"
+        types={fileTypes}
+        hoverTitle=""
+      >
+        <div className="h-40 flex flex-col items-center cursor-pointer z-20"></div>
+      </FileUploader>
+    </div>
   );
 }
 

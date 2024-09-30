@@ -1,7 +1,7 @@
 import datetime
 from typing import List, Optional
 
-import pandas as pd
+import pandas as pd  # type: ignore
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
 from google.cloud.storage import Bucket  # type: ignore
 from loguru import logger
@@ -406,7 +406,7 @@ async def post_upload_tasks(
     """
     Upload a file with tasks to a project
 
-    Supported file formats: csv, xlsx
+    Supported file formats: csv, xlsx, parquet, jsonl
 
     The file should contain the following columns:
     - input: the input text
@@ -424,7 +424,12 @@ async def post_upload_tasks(
     if not file.filename:
         raise HTTPException(status_code=400, detail="Error: No file provided.")
 
-    SUPPORTED_EXTENSIONS = ["csv", "xlsx", "jsonl"]  # Add the supported extensions here
+    SUPPORTED_EXTENSIONS = [
+        "csv",
+        "xlsx",
+        "jsonl",
+        "parquet",
+    ]  # Add the supported extensions here
     file_extension = file.filename.split(".")[-1]
     if file_extension not in SUPPORTED_EXTENSIONS:
         # We send a slack notification to the phospho team
@@ -461,6 +466,9 @@ async def post_upload_tasks(
             tasks_df = pd.read_excel(file.file, **file_params)
         elif file_extension == "jsonl":
             tasks_df = pd.read_json(file.file, lines=True)
+        elif file_extension == "parquet":
+            tasks_df = pd.read_parquet(file.file)
+            logger.debug(f"tasks_df: {tasks_df}")
         else:
             # This only happens if you add a new extension and forget to update the supported extensions list
             raise NotImplementedError(
