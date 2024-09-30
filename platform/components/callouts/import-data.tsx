@@ -165,7 +165,7 @@ export function UploadDragAndDrop({
             <CloudUpload className="w-10 h-10" />
           </div>
           <div className="text-xl font-bold">
-            {fileName ?? "Click box to select file"}
+            {fileName ?? "Click box or drag here to select file"}
           </div>
           <div className="text-sm text-muted-foreground">
             Supported formats: .csv, .xlsx, .jsonl
