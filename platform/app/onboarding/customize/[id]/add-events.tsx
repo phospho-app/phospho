@@ -266,7 +266,7 @@ export default function AddEvents({
                 });
               });
             }}
-            disabled={loading || customEvents === null}
+            disabled={loading || sendEventsLoading}
           >
             {sendEventsLoading && <Spinner className="mr-1" />}
             Save and continue
