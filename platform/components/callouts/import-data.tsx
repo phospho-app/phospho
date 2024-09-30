@@ -156,7 +156,12 @@ export function UploadDragAndDrop({
   };
   return (
     <>
-      <FileUploader handleChange={handleChange} name="file" types={fileTypes}>
+      <FileUploader
+        handleChange={handleChange}
+        name="file"
+        types={fileTypes}
+        hoverTitle=" "
+      >
         <div className="absolute w-full h-40 flex flex-col items-center cursor-pointer opacity-100 z-10"></div>
       </FileUploader>
       <div className="relative  w-full h-40 border-2 border-dashed rounded-3xl text-center">
