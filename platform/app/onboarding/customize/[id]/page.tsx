@@ -1,5 +1,6 @@
 "use client";
 
+import OnboardingProgress from "@/components/OnboardingProgress";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -17,8 +18,32 @@ export default function Page({ params }: { params: { id: string } }) {
   const redirectTo =
     redirect == "events" ? "/org/insights/events" : "/onboarding/clustering";
 
+  const onboardingSteps = [
+    {
+      label: "Create an account",
+      isActive: true,
+      isCompleted: true,
+    },
+    {
+      label: "Create project",
+      isActive: true,
+      isCompleted: true,
+    },
+    {
+      label: "Customize",
+      isActive: true,
+      isCompleted: false,
+    },
+    {
+      label: "Deep dive",
+      isActive: false,
+      isCompleted: false,
+    },
+  ];
+
   return (
     <>
+      <OnboardingProgress steps={onboardingSteps} />
       <AddEvents
         project_id={params.id}
         phosphoTaskId={phosphoTaskId}

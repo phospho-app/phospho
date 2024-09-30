@@ -1,5 +1,6 @@
 "use client";
 
+import OnboardingProgress from "@/components/OnboardingProgress";
 import { DefaultProjects } from "@/components/callouts/default-projects";
 import {
   SendDataAlertDialog,
@@ -402,11 +403,32 @@ export default function Page() {
   const [redirecting, setRedirecting] = useState(false);
   const [importDataDialogOpen, setImportDataDialogOpen] = useState(false);
 
-  // const searchParams = useSearchParams();
-  // const canCode = searchParams.get("code") === "yes";
+  const onboardingSteps = [
+    {
+      label: "Create an account",
+      isActive: true,
+      isCompleted: true,
+    },
+    {
+      label: "Create project",
+      isActive: true,
+      isCompleted: false,
+    },
+    {
+      label: "Customize",
+      isActive: false,
+      isCompleted: false,
+    },
+    {
+      label: "Deep dive",
+      isActive: false,
+      isCompleted: false,
+    },
+  ];
 
   return (
     <>
+      <OnboardingProgress steps={onboardingSteps} />
       <AlertDialog
         onOpenChange={setImportDataDialogOpen}
         open={importDataDialogOpen}
@@ -430,7 +452,6 @@ export default function Page() {
             creatingProject={creatingProject}
             setCreatingProject={setCreatingProject}
           />
-          <div /> {/* Used to add a bit of space at the bottom */}
         </Card>
       </AlertDialog>
     </>
