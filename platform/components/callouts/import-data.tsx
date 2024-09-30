@@ -155,9 +155,6 @@ export function UploadDragAndDrop({
     setFileName(file.name);
   };
 
-  // Get the size of the parent element to set the size of the dropzone
-  const dropzoneSize = document;
-
   return (
     <div className="w-full h-full relative">
       <div className="absolute top-0 w-full h-40 border-2 border-dashed rounded-3xl z-0 text-center flex justify-center items-center">
