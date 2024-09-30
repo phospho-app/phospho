@@ -55,9 +55,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
+import { FileUploader } from "react-drag-drop-files";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
+
+const fileTypes = ["csv", "xlsx"];
 
 const PythonIcon = () => {
   return (
@@ -140,38 +143,32 @@ const APIKeyAndProjectId = () => {
   );
 };
 
-export function UploadDatasetButton({
+export function UploadDragAndDrop({
   setFile,
 }: {
   setFile: (file: File) => void;
 }) {
   const [fileName, setFileName] = React.useState<string | null>(null);
 
+  const handleChange = (file: File) => {
+    setFile(file);
+    setFileName(file.name);
+  };
   return (
     <div className="relative cursor-pointer w-full h-40 mt-2 border-2 border-dashed rounded-3xl text-center">
       <div className="absolute inset-x-1/4 inset-y-1/4 w-1/2 flex flex-col items-center">
-        <div>
-          <CloudUpload className="w-10 h-10" />
-        </div>
-        <div className="text-xl font-bold">
-          {fileName ?? "Click box to select file"}
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Supported formats: .csv, .xlsx
-        </div>
+        <FileUploader handleChange={handleChange} name="file" types={fileTypes}>
+          <div>
+            <CloudUpload className="w-10 h-10" />
+          </div>
+          <div className="text-xl font-bold">
+            {fileName ?? "Click box to select file"}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Supported formats: .csv, .xlsx
+          </div>
+        </FileUploader>
       </div>
-      <Input
-        className="w-full h-full opacity-0 cursor-pointer"
-        type="file"
-        accept=".csv,.xlsx"
-        placeholder="Pick file to upload"
-        onChange={(e) => {
-          if (e.target.files && e.target.files.length > 0) {
-            setFile(e.target.files[0]);
-            setFileName(e.target.files[0].name);
-          }
-        }}
-      />
     </div>
   );
 }
@@ -321,13 +318,14 @@ export function UploadDataset({
   return (
     <div className="flex flex-col space-y-2">
       <UploadDatasetInstructions />
-      <UploadDatasetButton setFile={setFile} />
+      <UploadDragAndDrop setFile={setFile} />
       {file !== null && !loading && (
         <Button onClick={onSubmit}>
           Send file
           <Upload className="ml-1 w-4 h-4" />
         </Button>
       )}
+
       {loading && (
         <Button disabled>
           Uploading...

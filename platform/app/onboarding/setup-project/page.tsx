@@ -3,8 +3,8 @@
 import { DefaultProjects } from "@/components/callouts/default-projects";
 import {
   SendDataAlertDialog,
-  UploadDatasetButton,
   UploadDatasetInstructions,
+  UploadDragAndDrop,
 } from "@/components/callouts/import-data";
 import { Spinner } from "@/components/small-spinner";
 import {
@@ -321,7 +321,7 @@ const ImportDataOnboarding: React.FC<ImportDataOnboardingProps> = ({
                 </HoverCardContent>
               </HoverCard>
             </FormLabel>
-            <UploadDatasetButton setFile={setFile} />
+            <UploadDragAndDrop setFile={setFile} />
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="instructions">
                 <AccordionTrigger>How to format the dataset?</AccordionTrigger>
