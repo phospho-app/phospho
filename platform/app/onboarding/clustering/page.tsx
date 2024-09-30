@@ -1,5 +1,6 @@
 "use client";
 
+import OnboardingProgress from "@/components/OnboardingProgress";
 import { CustomPlot } from "@/components/clusters/clusters-plot";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,14 +13,38 @@ import { BookOpenText, Boxes } from "lucide-react";
 import Link from "next/link";
 
 export default function Page() {
+  const onboardingSteps = [
+    {
+      label: "Create an account",
+      isActive: true,
+      isCompleted: true,
+    },
+    {
+      label: "Create project",
+      isActive: true,
+      isCompleted: true,
+    },
+    {
+      label: "Customize",
+      isActive: true,
+      isCompleted: true,
+    },
+    {
+      label: "Deep dive",
+      isActive: true,
+      isCompleted: false,
+    },
+  ];
+
   return (
     <>
+      <OnboardingProgress steps={onboardingSteps} />
       <Card className="flex flex-col items-center max-w-[100dvw] md:w-1/2 md:max-w-1/2">
         <CardHeader className="w-full flex flex-row">
           <Boxes className="mr-4 h-28 w-28 hover:text-green-500 transition-colors" />
           <div>
             <CardTitle className="mb-2">
-              Discover the{" "}
+              Discover{" "}
               <span className="text-green-500">phospho clustering</span> and
               uncover topics, user segments, and outliers in text data.
             </CardTitle>
@@ -38,7 +63,7 @@ export default function Page() {
             <Link href="/org">
               <Button variant="outline" className="w-full">
                 <BookOpenText className="w-4 h-4 mr-1" />
-                Explore transcripts
+                Explore my data
               </Button>
             </Link>
           </div>
@@ -46,7 +71,7 @@ export default function Page() {
             <Link href="/org/insights/clusters">
               <Button variant="default" className="w-full">
                 <Boxes className="w-4 h-4 mr-1" />
-                Run clustering
+                Go to clustering
               </Button>
             </Link>
           </div>

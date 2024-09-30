@@ -178,7 +178,7 @@ export default function AddEvents({
         <CardHeader>
           <CardTitle className="flex items-end">
             <TestTubeDiagonal className="w-8 h-8 mr-2 text-green-500" />
-            Select an analytics starter for the project{" "}
+            Here are some pre-defined analytics for your project{" "}
             {selectedProject?.project_name ?? ""}
           </CardTitle>
           <CardDescription>
