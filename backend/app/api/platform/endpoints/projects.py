@@ -424,7 +424,7 @@ async def post_upload_tasks(
     if not file.filename:
         raise HTTPException(status_code=400, detail="Error: No file provided.")
 
-    SUPPORTED_EXTENSIONS = ["csv", "xlsx"]  # Add the supported extensions here
+    SUPPORTED_EXTENSIONS = ["csv", "xlsx", "jsonl"]  # Add the supported extensions here
     file_extension = file.filename.split(".")[-1]
     if file_extension not in SUPPORTED_EXTENSIONS:
         # We send a slack notification to the phospho team
@@ -459,6 +459,8 @@ async def post_upload_tasks(
             )
         elif file_extension == "xlsx":
             tasks_df = pd.read_excel(file.file, **file_params)
+        elif file_extension == "jsonl":
+            tasks_df = pd.read_json(file.file, lines=True)
         else:
             # This only happens if you add a new extension and forget to update the supported extensions list
             raise NotImplementedError(
