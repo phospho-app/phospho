@@ -46,6 +46,7 @@ jobs:
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
           echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
+          cd extractor
           changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
           IFS=$'\n'
           for file in $changed_files; do
