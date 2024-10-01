@@ -44,17 +44,5 @@ jobs:
 
       - name: Run mypy on changed files
         if: steps.changed-files.outputs.any_changed == 'true'
-        run: |
-          echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
-          cd extractor
-          changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
-          IFS=$'\n'
-          for file in $changed_files; do
-            if [[ $file == extractor/* ]]; then
-              echo "Checking $file"
-              mypy "$file" --ignore-missing-imports --install-types --follow-imports=silent || exit 1
-            else
-              echo "Skipping $file as it's not in the extractor directory"
-            fi
-          done
+        run: mypy ${{ steps.changed-files.outputs.all_changed_files }} -- ignore-missing-imports --follow-imports=silent || exit 1
           
