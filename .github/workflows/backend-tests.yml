@@ -45,13 +45,14 @@ jobs:
       - name: Run mypy on changed files
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
+          echo "Working directory: $(pwd)"
           echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
           changed_files="${{ steps.changed-files.outputs.all_changed_files }}"
           IFS=$'\n'
           for file in $changed_files; do
             if [[ $file == backend/* ]]; then
               echo "Checking $file"
-              mypy "$file" --ignore-missing-imports --install-types --follow-imports=silent || exit 1
+              mypy "$file" --ignore-missing-imports --follow-imports=silent || exit 1
             else
               echo "Skipping $file as it's not in the backend directory"
             fi
