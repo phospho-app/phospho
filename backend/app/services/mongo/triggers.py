@@ -32,7 +32,7 @@ def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Se
 
     validated_sessions: List[Session] = []
     # Process each session
-    for sessions_id, session in sessions.items():
+    for _, session in sessions.items():
         if session.tasks is None:
             continue
         try:
@@ -100,13 +100,7 @@ def aggregate_tasks_into_sessions(tasks: List[Task], project_id: str) -> List[Se
                     ]
                 ),
                 human_eval=get_most_common(
-                    [
-                        task.metadata["human_eval"]
-                        for task in session.tasks
-                        if task.metadata is not None
-                        and "human_eval" in task.metadata
-                        and task.metadata["human_eval"] is not None
-                    ]
+                    [task.human_eval.flag for task in session.tasks if task.human_eval]
                 ),
             )
             session.tasks = []

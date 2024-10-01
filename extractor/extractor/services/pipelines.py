@@ -534,6 +534,13 @@ class MainPipeline:
                     most_common_flag=get_most_common(
                         [task.flag for task in valid_tasks if task.flag is not None]
                     ),
+                    human_eval=get_most_common(
+                        [
+                            task.human_eval.flag
+                            for task in valid_tasks
+                            if task.human_eval
+                        ]
+                    ),
                 )
 
                 mongo_db["sessions"].update_one(
