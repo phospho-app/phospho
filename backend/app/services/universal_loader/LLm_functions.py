@@ -1,14 +1,14 @@
 from app.services.universal_loader.models import (
-    OpenAI_Dataset_Format,
-    Phospho_Dataset_Format,
-    User_assistant,
+    OpenAIDatasetFormat,
+    PhosphoDatasetFormat,
+    UserAssistant,
 )
 import pandas as pd  # type: ignore
 from app.core import config
 from openai import AsyncOpenAI
 
 
-async def openai_converter(df: pd.DataFrame) -> OpenAI_Dataset_Format:
+async def openai_converter(df: pd.DataFrame) -> OpenAIDatasetFormat:
     columns_names = df.columns
     first_row = df.iloc[0]
     second_row = df.iloc[1]
@@ -45,13 +45,13 @@ async def openai_converter(df: pd.DataFrame) -> OpenAI_Dataset_Format:
             """,
             },
         ],
-        response_format=OpenAI_Dataset_Format,
+        response_format=OpenAIDatasetFormat,
     )
 
     mapping = completion.choices[0].message.parsed
 
     if mapping is None:
-        return OpenAI_Dataset_Format(
+        return OpenAIDatasetFormat(
             content=None,
             role=None,
             created_at=None,
@@ -61,7 +61,7 @@ async def openai_converter(df: pd.DataFrame) -> OpenAI_Dataset_Format:
     return mapping
 
 
-async def user_assistant_converter(df: pd.DataFrame) -> User_assistant:
+async def user_assistant_converter(df: pd.DataFrame) -> UserAssistant:
     column = df["role"][:10]
 
     openai_client = AsyncOpenAI(
@@ -89,13 +89,13 @@ async def user_assistant_converter(df: pd.DataFrame) -> User_assistant:
             """,
             },
         ],
-        response_format=User_assistant,
+        response_format=UserAssistant,
     )
 
     mapping = completion.choices[0].message.parsed
 
     if mapping is None:
-        return User_assistant(
+        return UserAssistant(
             assistant=None,
             user=None,
         )
@@ -103,7 +103,7 @@ async def user_assistant_converter(df: pd.DataFrame) -> User_assistant:
     return mapping
 
 
-async def phospho_converter(df: pd.DataFrame) -> Phospho_Dataset_Format:
+async def phospho_converter(df: pd.DataFrame) -> PhosphoDatasetFormat:
     columns_names = df.columns
     first_row = df.iloc[0]
     second_row = df.iloc[1]
@@ -141,13 +141,13 @@ async def phospho_converter(df: pd.DataFrame) -> Phospho_Dataset_Format:
             """,
             },
         ],
-        response_format=Phospho_Dataset_Format,
+        response_format=PhosphoDatasetFormat,
     )
 
     mapping = completion.choices[0].message.parsed
 
     if mapping is None:
-        return Phospho_Dataset_Format(
+        return PhosphoDatasetFormat(
             input=None,
             output=None,
             created_at=None,
