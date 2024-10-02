@@ -8,7 +8,7 @@ from loguru import logger
 import pandas as pd  # type: ignore
 
 
-def converter_OpenAI_phospho(df: pd.DataFrame) -> pd.DataFrame:
+def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
     tasks = []
     last_side = None
     last_session_id = None
@@ -67,7 +67,7 @@ def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
     logger.debug(f"Missing columns: {missing_columns_openai}")
 
     if not missing_columns_openai:
-        return converter_OpenAI_phospho(tasks_df)
+        return converter_openai_phospho(tasks_df)
 
     conversion_mapping = OpenAI_converter(tasks_df)
 
@@ -102,7 +102,7 @@ def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
                 user_assistant_mapping.user, "user"
             )
 
-            return converter_OpenAI_phospho(tasks_df)
+            return converter_openai_phospho(tasks_df)
 
     logger.debug("OpenAI format not recognized")
 
