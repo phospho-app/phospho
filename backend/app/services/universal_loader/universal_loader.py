@@ -9,6 +9,7 @@ import pandas as pd  # type: ignore
 
 
 def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.sort_values(by=["conversation_id", "created_at"], ascending=True)
     tasks = []
     last_side = None
     last_session_id = None
@@ -129,27 +130,27 @@ async def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
 
     phospho_mapping = await phospho_converter(tasks_df)
 
-    logger.debug(f"phospho conversion_mapping: {conversion_mapping}")
+    logger.debug(f"phospho conversion_mapping: {phospho_mapping}")
 
     if phospho_mapping.input is None:
         return None
 
-    columns_mapping = {
-        "input": phospho_mapping.input,
-    }
+    tasks_df.rename(columns={phospho_mapping.input: "input"}, inplace=True)
 
     if phospho_mapping.output is not None:
-        columns_mapping["output"] = phospho_mapping.output
+        tasks_df.rename(columns={phospho_mapping.output: "output"}, inplace=True)
 
     if phospho_mapping.created_at is not None:
-        columns_mapping["created_at"] = phospho_mapping.created_at
+        tasks_df.rename(
+            columns={phospho_mapping.created_at: "created_at"}, inplace=True
+        )
 
     if phospho_mapping.task_id is not None:
-        columns_mapping["task_id"] = phospho_mapping.task_id
+        tasks_df.rename(columns={phospho_mapping.task_id: "task_id"}, inplace=True)
 
     if phospho_mapping.session_id is not None:
-        columns_mapping["session_id"] = phospho_mapping.session_id
-
-    tasks_df.rename(columns=columns_mapping, inplace=True)
+        tasks_df.rename(
+            columns={phospho_mapping.session_id: "session_id"}, inplace=True
+        )
 
     return tasks_df

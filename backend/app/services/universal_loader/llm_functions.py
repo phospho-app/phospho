@@ -136,6 +136,7 @@ async def phospho_converter(df: pd.DataFrame) -> PhosphoDatasetFormat:
     - created_at: The timestamp when the task was created.
     - task_id: A unique identifier for the task.
     - session_id: A unique identifier for the session.
+    - user_id: A unique identifier for the user.
 
     Please determine if each of the required columns in Phospho_Dataset_Format can be mapped to the given CSV columns. If any of the required columns are missing from the CSV, indicate that as well. Provide the mapped column names and note any missing mappings.
             """,

@@ -15,6 +15,7 @@ class PhosphoDatasetFormat(BaseModel):
     created_at: Optional[str]
     task_id: Optional[str]
     session_id: Optional[str]
+    user_id: Optional[str]
 
 
 class UserAssistant(BaseModel):
