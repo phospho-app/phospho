@@ -46,7 +46,16 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
 
 async def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
     """
-    This function is a universal loader that takes a DataFrame as input and returns a Dataframe with the good format.
+    This function is a universal loader that takes a DataFrame as input and returns a Dataframe with the Phospho format.
+
+    The Phospho format is defined as follows:
+    - input: The input text. (required)
+    - output: The output text. (optional)
+    - created_at: The timestamp when the message was created. (optional)
+    - task_id: A unique identifier for the task. (optional)
+    - session_id: A unique identifier for the session. (optional)
+    - user_id: A unique identifier for the user. (optional)
+    - version_id: A unique identifier for the ChatBot version. (optional)
     """
 
     required_columns_phospho = ["input"]
