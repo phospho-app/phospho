@@ -12,7 +12,8 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
     tasks = []
     last_side = None
     last_session_id = None
-    for i, row in df.iterrows():
+    for i in range(df.shape[0]):
+        row = df.iloc[i]
         if last_session_id != row["conversationId"]:
             last_side = None
         if last_side is None and row["role"] == "assistant":
