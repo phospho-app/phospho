@@ -1,7 +1,7 @@
 from typing import Optional
 from app.services.universal_loader.llm_functions import (
-    OpenAI_converter,
-    Phospho_converter,
+    openai_converter,
+    phospho_converter,
     user_assistant_converter,
 )
 from loguru import logger
@@ -69,7 +69,7 @@ def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
     if not missing_columns_openai:
         return converter_openai_phospho(tasks_df)
 
-    conversion_mapping = OpenAI_converter(tasks_df)
+    conversion_mapping = openai_converter(tasks_df)
 
     if (
         conversion_mapping.content is not None
@@ -106,7 +106,7 @@ def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
 
     logger.debug("OpenAI format not recognized")
 
-    phospho_mapping = Phospho_converter(tasks_df)
+    phospho_mapping = phospho_converter(tasks_df)
 
     logger.debug(f"conversion_mapping: {conversion_mapping}")
 

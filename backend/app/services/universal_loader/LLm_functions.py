@@ -8,7 +8,7 @@ from app.core import config
 from openai import OpenAI
 
 
-def OpenAI_converter(df: pd.DataFrame) -> OpenAI_Dataset_Format:
+def openai_converter(df: pd.DataFrame) -> OpenAI_Dataset_Format:
     columns_names = df.columns
     first_row = df.iloc[0]
     second_row = df.iloc[1]
@@ -103,7 +103,7 @@ def user_assistant_converter(df: pd.DataFrame) -> User_assistant:
     return mapping
 
 
-def Phospho_converter(df: pd.DataFrame) -> Phospho_Dataset_Format:
+def phospho_converter(df: pd.DataFrame) -> Phospho_Dataset_Format:
     columns_names = df.columns
     first_row = df.iloc[0]
     second_row = df.iloc[1]
