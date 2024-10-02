@@ -1,10 +1,10 @@
 from typing import Any, Dict
 
 import stripe
-from customerio import analytics
+from customerio import analytics  # type: ignore
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from loguru import logger
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 
 from app.api.platform.models import (
     CreateCheckoutRequest,
