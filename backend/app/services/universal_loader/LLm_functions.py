@@ -38,8 +38,8 @@ def openai_converter(df: pd.DataFrame) -> OpenAI_Dataset_Format:
 
     - content: The main text or message content.
     - role: The role of the user (e.g., system, assistant, user).
-    - createdAt: The timestamp when the message was created.
-    - conversationId: A unique identifier for the conversation.
+    - created_at: The timestamp when the message was created.
+    - conversation_id: A unique identifier for the conversation.
 
     Please map the required columns (content, role, createdAt, conversationId) in OpenAI_Dataset_Format to the given CSV columns {columns_names}. If any of the required columns are missing from the CSV, indicate that as well. Provide the mapped column names and note any missing mappings.
             """,
@@ -54,8 +54,8 @@ def openai_converter(df: pd.DataFrame) -> OpenAI_Dataset_Format:
         return OpenAI_Dataset_Format(
             content=None,
             role=None,
-            createdAt=None,
-            conversationId=None,
+            created_at=None,
+            conversation_id=None,
         )
 
     return mapping

@@ -18,11 +18,11 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
         if last_side is None and row["role"] == "assistant":
             tasks.append(
                 {
-                    "session_id": row["conversationId"],
-                    "created_at": row["createdAt"],
+                    "session_id": row["conversation_id"],
+                    "created_at": row["created_at"],
                     "input": "(no input)",
                     "output": row["content"].strip(),
-                    "conversationId": row["conversationId"],
+                    "conversationId": row["conversation_id"],
                 }
             )
         # What if multiple humans or multiple successive AI ?
@@ -30,15 +30,14 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
             # Warning; Duplicate metadata
             tasks.append(
                 {
-                    "session_id": row["conversationId"],
-                    "created_at": row["createdAt"],
+                    "session_id": row["conversation_id"],
+                    "created_at": row["created_at"],
                     "input": df.iloc[i - 1]["content"],
                     "output": row["content"],
-                    "original_id": df.iloc[i - 1]["id"],
                 }
             )
         last_side = row["role"]
-        last_session_id = row["conversationId"]
+        last_session_id = row["conversation_id"]
     tasks_df = pd.DataFrame(tasks)
 
     return tasks_df

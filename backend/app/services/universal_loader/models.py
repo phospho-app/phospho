@@ -5,8 +5,8 @@ from pydantic import BaseModel
 class OpenAI_Dataset_Format(BaseModel):
     content: Optional[str]
     role: Optional[str]
-    createdAt: Optional[str]
-    conversationId: Optional[str]
+    created_at: Optional[str]
+    conversation_id: Optional[str]
 
 
 class Phospho_Dataset_Format(BaseModel):
