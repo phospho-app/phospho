@@ -61,7 +61,7 @@ async def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
     required_columns_phospho = ["input"]
 
     # required columns for the OpenAI format : content, role, createdAt, conversationId
-    required_columns_openai = ["content", "role", "createdAt", "conversationId"]
+    required_columns_openai = ["content", "role", "created_at", "conversation_id"]
 
     # Verify if the required columns are present
     missing_columns_phospho = set(required_columns_phospho) - set(
