@@ -14,7 +14,7 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
     last_session_id = None
     for i in range(df.shape[0]):
         row = df.iloc[i]
-        if last_session_id != row["conversationId"]:
+        if last_session_id != row["conversation_id"]:
             last_side = None
         if last_side is None and row["role"] == "assistant":
             tasks.append(
@@ -23,7 +23,7 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
                     "created_at": row["created_at"],
                     "input": "(no input)",
                     "output": row["content"].strip(),
-                    "conversationId": row["conversation_id"],
+                    "conversation_id": row["conversation_id"],
                 }
             )
         # What if multiple humans or multiple successive AI ?
@@ -60,7 +60,7 @@ async def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
 
     required_columns_phospho = ["input"]
 
-    # required columns for the OpenAI format : content, role, createdAt, conversationId
+    # required columns for the OpenAI format : content, role, created_at, conversation_id
     required_columns_openai = ["content", "role", "created_at", "conversation_id"]
 
     # Verify if the required columns are present
@@ -79,6 +79,7 @@ async def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
         return converter_openai_phospho(tasks_df)
 
     conversion_mapping = await openai_converter(tasks_df)
+    logger.debug(conversion_mapping)
 
     if (
         conversion_mapping.content is not None
@@ -90,34 +91,45 @@ async def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
             columns={
                 conversion_mapping.content: "content",
                 conversion_mapping.role: "role",
-                conversion_mapping.created_at: "createdAt",
-                conversion_mapping.conversation_id: "conversationId",
+                conversion_mapping.created_at: "created_at",
+                conversion_mapping.conversation_id: "conversation_id",
             },
             inplace=True,
         )
-        user_assistant_mapping = await user_assistant_converter(tasks_df)
-        logger.debug(user_assistant_mapping)
 
         if (
-            user_assistant_mapping.user is not None
-            and user_assistant_mapping.assistant is not None
+            "role" in tasks_df.columns
+            and not tasks_df["role"].empty
+            and "content" in tasks_df.columns
+            and not tasks_df["content"].empty
+            and "created_at" in tasks_df.columns
+            and not tasks_df["created_at"].empty
+            and "conversation_id" in tasks_df.columns
+            and not tasks_df["conversation_id"].empty
         ):
-            # In the column role, I want to rename the equivalent of assistant by assistant and the equivalent to user by user
+            user_assistant_mapping = await user_assistant_converter(tasks_df)
+            logger.debug(user_assistant_mapping)
 
-            tasks_df["role"] = tasks_df["role"].replace(
-                user_assistant_mapping.assistant, "assistant"
-            )
-            tasks_df["role"] = tasks_df["role"].replace(
-                user_assistant_mapping.user, "user"
-            )
+            if (
+                user_assistant_mapping.user is not None
+                and user_assistant_mapping.assistant is not None
+            ):
+                # In the column role, I want to rename the equivalent of assistant by assistant and the equivalent to user by user
 
-            return converter_openai_phospho(tasks_df)
+                tasks_df["role"] = tasks_df["role"].replace(
+                    user_assistant_mapping.assistant, "assistant"
+                )
+                tasks_df["role"] = tasks_df["role"].replace(
+                    user_assistant_mapping.user, "user"
+                )
+
+                return converter_openai_phospho(tasks_df)
 
     logger.debug("OpenAI format not recognized")
 
     phospho_mapping = await phospho_converter(tasks_df)
 
-    logger.debug(f"conversion_mapping: {conversion_mapping}")
+    logger.debug(f"phospho conversion_mapping: {conversion_mapping}")
 
     if phospho_mapping.input is None:
         return None

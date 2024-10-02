@@ -41,7 +41,7 @@ async def openai_converter(df: pd.DataFrame) -> OpenAIDatasetFormat:
     - created_at: The timestamp when the message was created.
     - conversation_id: A unique identifier for the conversation.
 
-    Please map the required columns (content, role, createdAt, conversationId) in OpenAI_Dataset_Format to the given CSV columns {columns_names}. If any of the required columns are missing from the CSV, indicate that as well. Provide the mapped column names and note any missing mappings.
+    Please map the required columns (content, role, created_at, conversation_id) in OpenAI_Dataset_Format to the given CSV columns {columns_names} with one word. If any of the required columns are missing from the CSV, indicate that as well. Provide the mapped column names and note any missing mappings.
             """,
             },
         ],
