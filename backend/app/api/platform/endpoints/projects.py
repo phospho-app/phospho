@@ -1,6 +1,7 @@
 import datetime
 from typing import List, Optional
 
+from app.services.universal_loader.universal_loader import universal_loader
 import pandas as pd  # type: ignore
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
 from google.cloud.storage import Bucket  # type: ignore
@@ -497,24 +498,22 @@ async def post_upload_tasks(
         inplace=True,
     )
 
-    # Verify if the required columns are present
-    required_columns = ["input"]
-    missing_columns = set(required_columns) - set(list(tasks_df.columns))
-    logger.debug(f"Missing columns: {missing_columns}")
-    if missing_columns:
+    tasks_df = await universal_loader(tasks_df)
+
+    if tasks_df is None:
         # The file has been uploaded but the columns are missing (wrong format)
         # We send a slack notification to the phospho team for manual verification
         if config.GCP_BUCKET_CLIENT:
             # Otherwise filepath is undefined, see above
             await slack_notification(
-                f"[ACTION REQUIRED] {user.email} project {project_id} uploaded a file with missing columns {missing_columns}. File path: {filepath}"
+                f"[ACTION REQUIRED] {user.email} project {project_id} uploaded a file with missing columns. File path: {filepath}"
             )
 
         raise HTTPException(
             status_code=400,
             # Display to the user the delayed processing
             # It is displayed in a toast message in the frontend
-            detail=f"Missing columns: {missing_columns}. We will process your file manually in the next 24 hours.",
+            detail="Missing columns. We will process your file manually in the next 24 hours.",
         )
 
     # Check if 'task_id' column exists and contains unique values
