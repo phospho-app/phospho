@@ -43,7 +43,7 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
     return tasks_df
 
 
-def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
+async def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
     """
     This function is a universal loader that takes a DataFrame as input and returns a Dataframe with the good format.
     """
@@ -68,24 +68,24 @@ def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
     if not missing_columns_openai:
         return converter_openai_phospho(tasks_df)
 
-    conversion_mapping = openai_converter(tasks_df)
+    conversion_mapping = await openai_converter(tasks_df)
 
     if (
         conversion_mapping.content is not None
         and conversion_mapping.role is not None
-        and conversion_mapping.createdAt is not None
-        and conversion_mapping.conversationId is not None
+        and conversion_mapping.created_at is not None
+        and conversion_mapping.conversation_id is not None
     ):
         tasks_df.rename(
             columns={
                 conversion_mapping.content: "content",
                 conversion_mapping.role: "role",
-                conversion_mapping.createdAt: "createdAt",
-                conversion_mapping.conversationId: "conversationId",
+                conversion_mapping.created_at: "createdAt",
+                conversion_mapping.conversation_id: "conversationId",
             },
             inplace=True,
         )
-        user_assistant_mapping = user_assistant_converter(tasks_df)
+        user_assistant_mapping = await user_assistant_converter(tasks_df)
         logger.debug(user_assistant_mapping)
 
         if (
@@ -105,7 +105,7 @@ def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
 
     logger.debug("OpenAI format not recognized")
 
-    phospho_mapping = phospho_converter(tasks_df)
+    phospho_mapping = await phospho_converter(tasks_df)
 
     logger.debug(f"conversion_mapping: {conversion_mapping}")
 

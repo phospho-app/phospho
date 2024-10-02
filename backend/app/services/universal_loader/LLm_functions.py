@@ -5,19 +5,19 @@ from app.services.universal_loader.models import (
 )
 import pandas as pd  # type: ignore
 from app.core import config
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 
-def openai_converter(df: pd.DataFrame) -> OpenAI_Dataset_Format:
+async def openai_converter(df: pd.DataFrame) -> OpenAI_Dataset_Format:
     columns_names = df.columns
     first_row = df.iloc[0]
     second_row = df.iloc[1]
 
-    openai_client = OpenAI(
+    openai_client = AsyncOpenAI(
         api_key=config.OPENAI_API_KEY,
     )
 
-    completion = openai_client.beta.chat.completions.parse(
+    completion = await openai_client.beta.chat.completions.parse(
         model="gpt-4o-2024-08-06",
         messages=[
             {
@@ -61,14 +61,14 @@ def openai_converter(df: pd.DataFrame) -> OpenAI_Dataset_Format:
     return mapping
 
 
-def user_assistant_converter(df: pd.DataFrame) -> User_assistant:
+async def user_assistant_converter(df: pd.DataFrame) -> User_assistant:
     column = df["role"][:10]
 
-    openai_client = OpenAI(
+    openai_client = AsyncOpenAI(
         api_key=config.OPENAI_API_KEY,
     )
 
-    completion = openai_client.beta.chat.completions.parse(
+    completion = await openai_client.beta.chat.completions.parse(
         model="gpt-4o-2024-08-06",
         messages=[
             {
@@ -103,16 +103,16 @@ def user_assistant_converter(df: pd.DataFrame) -> User_assistant:
     return mapping
 
 
-def phospho_converter(df: pd.DataFrame) -> Phospho_Dataset_Format:
+async def phospho_converter(df: pd.DataFrame) -> Phospho_Dataset_Format:
     columns_names = df.columns
     first_row = df.iloc[0]
     second_row = df.iloc[1]
 
-    openai_client = OpenAI(
+    openai_client = AsyncOpenAI(
         api_key=config.OPENAI_API_KEY,
     )
 
-    completion = openai_client.beta.chat.completions.parse(
+    completion = await openai_client.beta.chat.completions.parse(
         model="gpt-4o-2024-08-06",
         messages=[
             {

@@ -498,7 +498,7 @@ async def post_upload_tasks(
         inplace=True,
     )
 
-    tasks_df = universal_loader(tasks_df)
+    tasks_df = await universal_loader(tasks_df)
 
     if tasks_df is None:
         # The file has been uploaded but the columns are missing (wrong format)
