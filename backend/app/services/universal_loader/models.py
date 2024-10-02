@@ -7,6 +7,7 @@ class OpenAIDatasetFormat(BaseModel):
     role: Optional[str]
     created_at: Optional[str]
     conversation_id: Optional[str]
+    user_id: Optional[str]
 
 
 class PhosphoDatasetFormat(BaseModel):

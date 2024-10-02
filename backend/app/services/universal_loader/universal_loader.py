@@ -17,6 +17,10 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
         row = df.iloc[i]
         if last_session_id != row["conversation_id"]:
             last_side = None
+        if "user_id" in df.columns:
+            user_id = row["user_id"]
+        else:
+            user_id = None
         if last_side is None and row["role"] == "assistant":
             tasks.append(
                 {
@@ -25,6 +29,7 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
                     "input": "(no input)",
                     "output": row["content"].strip(),
                     "conversation_id": row["conversation_id"],
+                    "user_id": user_id,
                 }
             )
         # What if multiple humans or multiple successive AI ?
@@ -36,6 +41,7 @@ def converter_openai_phospho(df: pd.DataFrame) -> pd.DataFrame:
                     "created_at": row["created_at"],
                     "input": df.iloc[i - 1]["content"],
                     "output": row["content"],
+                    "user_id": user_id,
                 }
             )
         last_side = row["role"]
@@ -98,6 +104,11 @@ async def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
             inplace=True,
         )
 
+        if conversion_mapping.user_id is not None:
+            tasks_df.rename(
+                columns={conversion_mapping.user_id: "user_id"}, inplace=True
+            )
+
         if (
             "role" in tasks_df.columns
             and not tasks_df["role"].empty
@@ -152,5 +163,7 @@ async def universal_loader(tasks_df: pd.DataFrame) -> Optional[pd.DataFrame]:
         tasks_df.rename(
             columns={phospho_mapping.session_id: "session_id"}, inplace=True
         )
+    if phospho_mapping.user_id is not None:
+        tasks_df.rename(columns={phospho_mapping.user_id: "user_id"}, inplace=True)
 
     return tasks_df

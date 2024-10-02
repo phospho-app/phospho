@@ -40,8 +40,9 @@ async def openai_converter(df: pd.DataFrame) -> OpenAIDatasetFormat:
     - role: The role of the user (e.g., system, assistant, user).
     - created_at: The timestamp when the message was created.
     - conversation_id: A unique identifier for the conversation.
+    - user_id: A unique identifier for the user.
 
-    Please map the required columns (content, role, created_at, conversation_id) in OpenAI_Dataset_Format to the given CSV columns {columns_names} with one word. If any of the required columns are missing from the CSV, indicate that as well. Provide the mapped column names and note any missing mappings.
+    Please map the required columns (content, role, created_at, conversation_id, user_id) in OpenAI_Dataset_Format to the given CSV columns {columns_names} with one word. If any of the required columns are missing from the CSV, indicate that as well. Provide the mapped column names and note any missing mappings.
             """,
             },
         ],
@@ -56,6 +57,7 @@ async def openai_converter(df: pd.DataFrame) -> OpenAIDatasetFormat:
             role=None,
             created_at=None,
             conversation_id=None,
+            user_id=None,
         )
 
     return mapping
@@ -154,6 +156,7 @@ async def phospho_converter(df: pd.DataFrame) -> PhosphoDatasetFormat:
             created_at=None,
             task_id=None,
             session_id=None,
+            user_id=None,
         )
 
     return mapping
