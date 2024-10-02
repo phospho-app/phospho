@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 
 from app.api.platform.models import (
     Task,
