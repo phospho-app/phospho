@@ -138,7 +138,7 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
         pageIndex: 0,
       });
     }
-  }, [maxNbPages, setTasksPagination]);
+  }, [maxNbPages, setTasksPagination, tasksPagination]);
 
   const columns = useColumns({
     mutateTasks: mutateTasks,

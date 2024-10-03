@@ -1,12 +1,6 @@
 import { SendDataAlertDialog } from "@/components/callouts/import-data";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
-import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,

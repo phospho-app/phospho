@@ -141,7 +141,7 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
         pageIndex: 0,
       });
     }
-  }, [maxNbPages, setSessionsPagination]);
+  }, [maxNbPages, setSessionsPagination, sessionPagination]);
 
   const columns = useColumns({
     mutateSessions: mutateSessions,
