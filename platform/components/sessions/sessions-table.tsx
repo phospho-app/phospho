@@ -35,7 +35,7 @@ import {
 } from "@tanstack/react-table";
 import { Database } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useSWR, { KeyedMutator } from "swr";
 
 interface DataTableProps {
@@ -132,6 +132,16 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
   const maxNbPages = totalNbSessions
     ? Math.ceil(totalNbSessions / sessionPagination.pageSize)
     : 1;
+
+  useEffect(() => {
+    // Reset to first page
+    if (sessionPagination.pageIndex > maxNbPages) {
+      setSessionsPagination({
+        ...sessionPagination,
+        pageIndex: 0,
+      });
+    }
+  }, [maxNbPages, setSessionsPagination]);
 
   const columns = useColumns({
     mutateSessions: mutateSessions,

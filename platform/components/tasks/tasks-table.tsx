@@ -33,7 +33,7 @@ import {
 } from "@tanstack/react-table";
 import { Database } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useSWR, { KeyedMutator } from "swr";
 
 import { TaskPreview } from "./task-preview";
@@ -129,6 +129,16 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
   const maxNbPages = totalNbTasks
     ? Math.ceil(totalNbTasks / tasksPagination.pageSize)
     : 1;
+
+  useEffect(() => {
+    // Reset to first page
+    if (tasksPagination.pageIndex > maxNbPages) {
+      setTasksPagination({
+        ...tasksPagination,
+        pageIndex: 0,
+      });
+    }
+  }, [maxNbPages, setTasksPagination]);
 
   const columns = useColumns({
     mutateTasks: mutateTasks,
