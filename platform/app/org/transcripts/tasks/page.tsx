@@ -6,7 +6,6 @@ import TasksDataviz from "@/components/tasks/tasks-dataviz";
 import { TasksTable } from "@/components/tasks/tasks-table";
 import { searchParamsToProjectDataFilters } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
-import useSWR from "swr";
 
 export default function Page() {
   const searchParams = useSearchParams();
