@@ -85,7 +85,7 @@ const RunAnalysisInPast = () => {
         filters: dataFilters,
       }).then((res) => {
         if (res === undefined) return undefined;
-        console.log("res", res);
+        if (!res?.total_nb_tasks) return null;
         return res?.total_nb_tasks;
       }),
     {

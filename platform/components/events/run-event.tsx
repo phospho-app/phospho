@@ -73,7 +73,7 @@ export default function RunEvent({
         filters: dataFilters,
       }).then((res) => {
         if (res === undefined) return undefined;
-        console.log("res", res);
+        if (!res) return 0;
         return res?.total_nb_tasks;
       }),
     {

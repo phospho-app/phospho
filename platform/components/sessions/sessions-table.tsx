@@ -122,6 +122,7 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
         filters: dataFiltersMerged,
       }).then((res) => {
         if (res === undefined) return undefined;
+        if (!res?.total_nb_sessions) return null;
         return res?.total_nb_sessions;
       }),
     {

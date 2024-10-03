@@ -118,7 +118,7 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
         filters: dataFiltersMerged,
       }).then((res) => {
         if (res === undefined) return undefined;
-        console.log("res", res);
+        if (!res?.total_nb_tasks) return null;
         return res?.total_nb_tasks;
       }),
     {

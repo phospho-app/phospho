@@ -85,9 +85,7 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
         if (data === undefined) {
           return undefined;
         }
-        if (!data?.total_nb_tasks) {
-          return null;
-        }
+        if (!data?.total_nb_tasks) return null;
         return data?.total_nb_tasks;
       }),
     {
