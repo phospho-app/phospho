@@ -89,9 +89,7 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
         metrics: ["total_nb_sessions"],
         filters: mergedDataFilters,
       }).then((data) => {
-        if (data === undefined) {
-          return undefined;
-        }
+        if (data === undefined) return undefined;
         if (!data?.total_nb_sessions) {
           return null;
         }

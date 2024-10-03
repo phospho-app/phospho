@@ -24,10 +24,8 @@ import { Separator } from "./ui/separator";
 
 export function DatePickerWithRange({
   className,
-  nbrItems = undefined,
 }: {
   className?: React.HTMLAttributes<HTMLDivElement>;
-  nbrItems?: number | null;
 }) {
   const dateRangePreset = navigationStateStore(
     (state) => state.dateRangePreset,
@@ -44,13 +42,12 @@ export function DatePickerWithRange({
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
-    const showCondition =
-      !warningShown && nbrItems === null && dateRangePreset === "last-7-days";
+    const showCondition = !warningShown && dateRangePreset === "last-7-days";
     if (showCondition) {
       setShowWarning(true);
       setWarningShowed(true);
     }
-  }, [nbrItems, dateRangePreset, setWarningShowed, warningShown]);
+  }, [dateRangePreset, setWarningShowed, warningShown]);
 
   const closeWarning = () => {
     setShowWarning(false);
@@ -160,7 +157,7 @@ export function DatePickerWithRange({
           </div>
         </HoverCardTrigger>
         <HoverCardContent
-          side="top"
+          side="bottom"
           align="start"
           className="p-2 border rounded-lg shadow-lg m-0 text-xs text-background bg-foreground flex items-center cursor-pointer"
           onClick={closeWarning}

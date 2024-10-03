@@ -108,29 +108,31 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
     },
   );
 
-  const { data: totalNbSessionsData, isLoading: isTotalNbSessionsLoading } =
-    useSWR(
-      project_id
-        ? [
-            `/api/explore/${project_id}/aggregated/sessions`,
-            accessToken,
-            JSON.stringify(dateRange),
-            "total_nb_sessions",
-          ]
-        : null,
-      ([url, accessToken]) =>
-        authFetcher(url, accessToken, "POST", {
-          metrics: ["total_nb_sessions"],
-          filters: dataFiltersMerged,
-        }),
-      {
-        keepPreviousData: true,
-      },
-    );
+  const { data: totalNbSessions }: { data: number | null | undefined } = useSWR(
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/sessions`,
+          accessToken,
+          JSON.stringify(dateRange),
+          "total_nb_sessions",
+        ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_sessions"],
+        filters: dataFiltersMerged,
+      }).then((res) => {
+        if (res === undefined) return undefined;
+        return res?.total_nb_sessions;
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
 
-  const totalNbSessions: number | null | undefined = isTotalNbSessionsLoading
-    ? undefined
-    : (totalNbSessionsData?.total_nb_sessions ?? null);
+  const maxNbPages = totalNbSessions
+    ? Math.ceil(totalNbSessions / sessionPagination.pageSize)
+    : 1;
 
   const columns = useColumns({
     mutateSessions: mutateSessions,
@@ -152,9 +154,7 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
       sorting: sessionsSorting,
       pagination: sessionPagination,
     },
-    pageCount: totalNbSessions
-      ? Math.ceil(totalNbSessions / sessionPagination.pageSize)
-      : 1,
+    pageCount: maxNbPages,
     autoResetPageIndex: false,
     manualPagination: true,
     manualSorting: true,
@@ -169,7 +169,6 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className="mb-2 flex flex-col items-start justify-between gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2">
           <div className="flex flex-col items-start gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2 ">
-            <DatePickerWithRange nbrItems={totalNbSessions} />
             <FilterComponent variant="sessions" />
             <RunAnalysisInPast />
           </div>
@@ -238,6 +237,11 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
             </TableBody>
           </Table>
         </div>
+        {maxNbPages > 1 && (
+          <div className="flex justify-end mt-2">
+            <TableNavigation table={table} />
+          </div>
+        )}
         {table.getState().pagination.pageIndex + 1 > 5 && (
           <Alert className="mt-2 ">
             <div className="flex justify-between">

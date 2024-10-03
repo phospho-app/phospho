@@ -106,7 +106,7 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
     { keepPreviousData: true },
   );
 
-  const { data: totalNbTasksData, isLoading: isTotalNbTasksLoading } = useSWR(
+  const { data: totalNbTasks }: { data: number | null } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -117,14 +117,15 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
         filters: dataFiltersMerged,
+      }).then((res) => {
+        if (res === undefined) return undefined;
+        console.log("res", res);
+        return res?.total_nb_tasks;
       }),
     {
       keepPreviousData: true,
     },
   );
-  const totalNbTasks: number | null | undefined = isTotalNbTasksLoading
-    ? undefined
-    : (totalNbTasksData?.total_nb_tasks ?? null);
 
   const maxNbPages = totalNbTasks
     ? Math.ceil(totalNbTasks / tasksPagination.pageSize)
@@ -164,7 +165,6 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className="mb-2 flex flex-col items-start justify-between gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2">
           <div className="flex flex-col items-start gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2 ">
-            <DatePickerWithRange nbrItems={totalNbTasks} />
             <FilterComponent variant="tasks" />
             <RunAnalysisInPast />
           </div>
@@ -232,6 +232,11 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
             </TableBody>
           </Table>
         </div>
+        {maxNbPages > 1 && (
+          <div className="flex justify-end mt-2">
+            <TableNavigation table={table} />
+          </div>
+        )}
         {table.getState().pagination.pageIndex + 1 > 5 && (
           <Alert className="mt-2 ">
             <div className="flex justify-between">
