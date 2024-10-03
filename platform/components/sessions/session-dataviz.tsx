@@ -330,54 +330,23 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
       </AlertDialog>
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader>
-              <CardDescription>Total number of Sessions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {(totalNbSessions === undefined && <p>...</p>) || (
-                <p className="text-xl">
-                  {totalNbSessions == null
-                    ? "No sessions found"
-                    : totalNbSessions}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription>Date of last clustering</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {(dateLastClustering === undefined && <p>...</p>) || (
-                <p className="text-xl">
-                  {dateLastClustering == null
-                    ? "No clustering found"
-                    : dateLastClustering}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription>Most detected tagger</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {(mostDetectedEvent === undefined && <p>...</p>) || (
-                <p className="text-xl">
-                  {mostDetectedEvent == null
-                    ? "No tags found"
-                    : mostDetectedEvent}
-                </p>
-              )}
-            </CardContent>
-          </Card>
           <div className="flex-1">
-            <h3 className="text-muted-foreground mb-2">Number of sessions</h3>
+            <h3 className="text-muted-foreground mb-2">
+              {totalNbSessions === undefined && (
+                <span className="text-2xl font-bold">...</span>
+              )}
+              {totalNbSessions === null && (
+                <span className="text-2xl font-bold">0</span>
+              )}
+              {totalNbSessions && (
+                <span className="text-2xl font-bold">{totalNbSessions}</span>
+              )}
+              <span className="ml-2">sessions</span>
+            </h3>
             {nbSessionsPerDay === null && (
-              <div className="flex flex-col text-center items-center h-full">
-                <p className="text-muted-foreground mb-2 text-sm pt-6">
-                  Start sending data to get more insights
+              <div className="flex flex-col text-center items-center py-6">
+                <p className="text-muted-foreground mb-2 text-sm">
+                  Send data to get started
                 </p>
                 <Button variant="outline" onClick={() => setOpen(true)}>
                   Import data
@@ -414,13 +383,22 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
           </div>
           <div className="flex-1">
             <h3 className="text-muted-foreground mb-2">
-              Composition of last cluster
+              <span className="mr-2">Last clustering:</span>
+              {dateLastClustering === undefined && (
+                <span className="text-2xl font-bold">...</span>
+              )}
+              {dateLastClustering === null && (
+                <span className="text-2xl font-bold">Never</span>
+              )}
+              {dateLastClustering && (
+                <span className="text-2xl font-bold">{dateLastClustering}</span>
+              )}
             </h3>
             {lastClusteringComposition === null && (
               // Add a button in the center with a CTA "setup session tracking"
-              <div className="flex flex-col text-center items-center h-full">
-                <p className="text-muted-foreground mb-2 text-sm pt-6">
-                  Cluster your data to get more insights
+              <div className="flex flex-col text-center items-center py-6">
+                <p className="text-muted-foreground mb-2 text-sm">
+                  Run a clustering on your data
                 </p>
                 <Link href="/org/insights/clusters">
                   <Button variant="outline">
@@ -488,12 +466,23 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
             )}
           </div>
           <div className="flex-1">
-            <h3 className="text-muted-foreground mb-2">Top taggers</h3>
+            <h3 className="text-muted-foreground mb-2">
+              <span className="mr-2">Top tag:</span>
+              {mostDetectedEvent === undefined && (
+                <span className="text-2xl font-bold">...</span>
+              )}
+              {mostDetectedEvent === null && (
+                <span className="text-2xl font-bold">None</span>
+              )}
+              {mostDetectedEvent && (
+                <span className="text-2xl font-bold">{mostDetectedEvent}</span>
+              )}
+            </h3>
             {eventsRanking === null && (
               // Add a button in the center with a CTA "setup analytics"
-              <div className="flex flex-col text-center items-center h-full">
-                <p className="text-muted-foreground mb-2 text-sm pt-6">
-                  Setup analytics to get more insights
+              <div className="flex flex-col text-center items-center py-6">
+                <p className="text-muted-foreground mb-2 text-sm">
+                  Never miss an important conversation
                 </p>
                 <Link href="/org/insights/events">
                   <Button variant="outline">
