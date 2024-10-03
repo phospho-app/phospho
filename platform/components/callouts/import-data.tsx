@@ -955,6 +955,7 @@ phospho.log({input, output});`}
 export const SendDataCallout = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const [open, setOpen] = React.useState(false);
 
   const { data: hasTasksData } = useSWR(
     project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
@@ -962,8 +963,6 @@ export const SendDataCallout = () => {
     { keepPreviousData: true },
   );
   const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
-
-  const [open, setOpen] = React.useState(false);
 
   return (
     <>

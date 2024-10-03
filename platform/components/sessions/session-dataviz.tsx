@@ -64,6 +64,9 @@ interface SessionsDatavizProps {
 const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
   forcedDataFilters,
 }) => {
+  /*
+  Note: This is not displayed if there are no tasks in the project.
+   */
   const { accessToken } = useUser();
 
   const project_id = navigationStateStore((state) => state.project_id);
@@ -319,7 +322,18 @@ const SessionsDataviz: React.FC<SessionsDatavizProps> = ({
     return eventsRanking?.reduce((acc, curr) => acc + curr.nb_events, 0) ?? 0;
   }, [eventsRanking]);
 
+  const { data: hasTasksData } = useSWR(
+    project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
+    { keepPreviousData: true },
+  );
+  const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
+
   if (!project_id) {
+    return <></>;
+  }
+
+  if (hasTasks === false) {
     return <></>;
   }
 

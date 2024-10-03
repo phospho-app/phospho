@@ -160,15 +160,15 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
   }
 
   return (
-    <div>
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <div className="mb-2 flex flex-col items-start justify-between gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2">
-          <div className="flex flex-col items-start gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2 ">
-            <FilterComponent variant="tasks" />
-            <RunAnalysisInPast />
-          </div>
-          <TableNavigation table={table} />
+    <>
+      <div className="mb-2 flex flex-col items-start justify-between gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2">
+        <div className="flex flex-col items-start gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2 ">
+          <FilterComponent variant="tasks" />
+          <RunAnalysisInPast />
         </div>
+        <TableNavigation table={table} />
+      </div>
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -277,7 +277,7 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
           {sheetToOpen === "preview" && <TaskPreview task_id={taskPreviewId} />}
         </SheetContent>
       </Sheet>
-    </div>
+    </>
   );
 }
 
