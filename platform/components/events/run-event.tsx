@@ -60,7 +60,7 @@ export default function RunEvent({
     { keepPreviousData: true },
   );
   const hasTasks: boolean = hasTasksData?.has_tasks ?? false;
-  const { data: totalNbTasksData } = useSWR(
+  const { data: totalNbTasks }: { data: number | null } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -71,13 +71,15 @@ export default function RunEvent({
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
         filters: dataFilters,
+      }).then((res) => {
+        if (res === undefined) return undefined;
+        if (!res) return 0;
+        return res?.total_nb_tasks;
       }),
     {
       keepPreviousData: true,
     },
   );
-  const totalNbTasks: number | null | undefined =
-    totalNbTasksData?.total_nb_tasks;
 
   const formSchema = z.object({
     sample_rate: z.coerce.number().min(0).max(1),

@@ -15,7 +15,12 @@ import {
 import { cn } from "@/lib/utils";
 import { navigationStateStore } from "@/store/store";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, ChevronDown, X } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  ChevronDown,
+  ChevronLeft,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import * as React from "react";
 
@@ -24,10 +29,8 @@ import { Separator } from "./ui/separator";
 
 export function DatePickerWithRange({
   className,
-  nbrItems = undefined,
 }: {
   className?: React.HTMLAttributes<HTMLDivElement>;
-  nbrItems?: number | null;
 }) {
   const dateRangePreset = navigationStateStore(
     (state) => state.dateRangePreset,
@@ -44,13 +47,12 @@ export function DatePickerWithRange({
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
-    const showCondition =
-      !warningShown && nbrItems === null && dateRangePreset === "last-7-days";
+    const showCondition = !warningShown && dateRangePreset === "last-7-days";
     if (showCondition) {
       setShowWarning(true);
       setWarningShowed(true);
     }
-  }, [nbrItems, dateRangePreset, setWarningShowed, warningShown]);
+  }, [dateRangePreset, setWarningShowed, warningShown]);
 
   const closeWarning = () => {
     setShowWarning(false);
@@ -87,86 +89,84 @@ export function DatePickerWithRange({
   }
 
   return (
-    <div className={cn("grid gap-2 whitespace-nowrap", className)}>
+    <div className={cn("", className)}>
       <HoverCard open={showWarning}>
-        <HoverCardTrigger asChild>
-          <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  id="date"
-                  variant={"outline"}
-                  className={cn(
-                    "justify-between text-left flex min-w-[12rem]",
-                    !dateRange && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRangeLabel}
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[300px]" align="start">
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    onClick={() => setDateRangePreset("last-24-hours")}
-                  >
-                    Last 24 hours
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setDateRangePreset("last-7-days")}
-                  >
-                    Last 7 days
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setDateRangePreset("last-30-days")}
-                  >
-                    Last 30 days
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setDateRangePreset("all-time")}
-                  >
-                    All time
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <Separator />
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Custom</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <Calendar
-                      initialFocus
-                      mode="range"
-                      defaultMonth={dateRange?.from}
-                      selected={dateRange}
-                      onSelect={(selected) => {
-                        if (selected !== undefined) {
-                          // Set the time of the from date to 00:00:00
-                          if (selected.from) {
-                            selected.from.setHours(0, 0, 0, 0);
-                          }
-                          // Set the time of the to date to 23:59:59
-                          if (selected.to) {
-                            selected.to.setHours(23, 59, 59, 999);
-                          }
-                          setDateRange(selected);
-                        }
-                      }}
-                      numberOfMonths={2}
-                    />
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </HoverCardTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <HoverCardTrigger asChild>
+              <Button
+                id="date"
+                variant={"outline"}
+                className={cn(
+                  "justify-between text-left flex min-w-[12rem]",
+                  !dateRange && "text-muted-foreground",
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateRangeLabel}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </HoverCardTrigger>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[300px]" align="start">
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                onClick={() => setDateRangePreset("last-24-hours")}
+              >
+                Last 24 hours
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setDateRangePreset("last-7-days")}
+              >
+                Last 7 days
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setDateRangePreset("last-30-days")}
+              >
+                Last 30 days
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDateRangePreset("all-time")}>
+                All time
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <Separator />
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Custom</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={(selected) => {
+                    if (selected !== undefined) {
+                      // Set the time of the from date to 00:00:00
+                      if (selected.from) {
+                        selected.from.setHours(0, 0, 0, 0);
+                      }
+                      // Set the time of the to date to 23:59:59
+                      if (selected.to) {
+                        selected.to.setHours(23, 59, 59, 999);
+                      }
+                      setDateRange(selected);
+                    }
+                  }}
+                  numberOfMonths={2}
+                />
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <HoverCardContent
-          side="top"
-          align="start"
+          side="right"
+          align="center"
+          avoidCollisions={false}
           className="p-2 border rounded-lg shadow-lg m-0 text-xs text-background bg-foreground flex items-center cursor-pointer"
           onClick={closeWarning}
         >
-          Change the date range to see more data
-          <X className="ml-2 h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 ml-2" /> Data is filtered by date
+          range
+          <X className="ml-1 h-3 w-3" />
         </HoverCardContent>
       </HoverCard>
     </div>

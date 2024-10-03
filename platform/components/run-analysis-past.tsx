@@ -72,7 +72,7 @@ const RunAnalysisInPast = () => {
   const formatedEventList = eventList.join(", ");
   const nbrEvents = eventList.length;
 
-  const { data: totalNbTasksData } = useSWR(
+  const { data: totalNbTasks }: { data: number | null } = useSWR(
     [
       `/api/explore/${project_id}/aggregated/tasks`,
       accessToken,
@@ -83,13 +83,15 @@ const RunAnalysisInPast = () => {
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_tasks"],
         filters: dataFilters,
+      }).then((res) => {
+        if (res === undefined) return undefined;
+        if (!res?.total_nb_tasks) return null;
+        return res?.total_nb_tasks;
       }),
     {
       keepPreviousData: true,
     },
   );
-  const totalNbTasks: number | null | undefined =
-    totalNbTasksData?.total_nb_tasks;
 
   React.useEffect(() => {
     if (totalNbTasks) {

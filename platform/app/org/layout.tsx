@@ -54,7 +54,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
             <div className="min-w-[10rem] hidden md:block md:col-span-1">
               <Sidebar />
             </div>
-            <div className="space-y-4 px-4 col-span-8 md:col-span-7 overflow-y-auto py-4">
+            <div className="space-y-2 px-2 col-span-8 md:col-span-7 overflow-y-auto py-4">
               {children}
               <div className="h-20"></div>
             </div>

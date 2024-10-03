@@ -1,6 +1,5 @@
 "use client";
 
-import { DatePickerWithRange } from "@/components/date-range";
 import CreateEvent from "@/components/events/create-event";
 import RunEvent from "@/components/events/run-event";
 import FilterComponent from "@/components/filters";
@@ -36,7 +35,7 @@ import {
 } from "@tanstack/react-table";
 import { Database } from "lucide-react";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useSWR, { KeyedMutator } from "swr";
 
 interface DataTableProps {
@@ -108,29 +107,42 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
     },
   );
 
-  const { data: totalNbSessionsData, isLoading: isTotalNbSessionsLoading } =
-    useSWR(
-      project_id
-        ? [
-            `/api/explore/${project_id}/aggregated/sessions`,
-            accessToken,
-            JSON.stringify(dateRange),
-            "total_nb_sessions",
-          ]
-        : null,
-      ([url, accessToken]) =>
-        authFetcher(url, accessToken, "POST", {
-          metrics: ["total_nb_sessions"],
-          filters: dataFiltersMerged,
-        }),
-      {
-        keepPreviousData: true,
-      },
-    );
+  const { data: totalNbSessions }: { data: number | null | undefined } = useSWR(
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/sessions`,
+          accessToken,
+          JSON.stringify(dateRange),
+          "total_nb_sessions",
+        ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["total_nb_sessions"],
+        filters: dataFiltersMerged,
+      }).then((res) => {
+        if (res === undefined) return undefined;
+        if (!res?.total_nb_sessions) return null;
+        return res?.total_nb_sessions;
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
 
-  const totalNbSessions: number | null | undefined = isTotalNbSessionsLoading
-    ? undefined
-    : (totalNbSessionsData?.total_nb_sessions ?? null);
+  const maxNbPages = totalNbSessions
+    ? Math.ceil(totalNbSessions / sessionPagination.pageSize)
+    : 1;
+
+  useEffect(() => {
+    // Reset to first page
+    if (sessionPagination.pageIndex > maxNbPages) {
+      setSessionsPagination({
+        ...sessionPagination,
+        pageIndex: 0,
+      });
+    }
+  }, [maxNbPages, setSessionsPagination, sessionPagination]);
 
   const columns = useColumns({
     mutateSessions: mutateSessions,
@@ -152,9 +164,7 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
       sorting: sessionsSorting,
       pagination: sessionPagination,
     },
-    pageCount: totalNbSessions
-      ? Math.ceil(totalNbSessions / sessionPagination.pageSize)
-      : 1,
+    pageCount: maxNbPages,
     autoResetPageIndex: false,
     manualPagination: true,
     manualSorting: true,
@@ -165,17 +175,15 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
   }
 
   return (
-    <div>
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <div className="mb-2 flex flex-col items-start justify-between gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2">
-          <div className="flex flex-col items-start gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2 ">
-            <DatePickerWithRange nbrItems={totalNbSessions} />
-            <FilterComponent variant="sessions" />
-            <RunAnalysisInPast />
-          </div>
-          <TableNavigation table={table} />
+    <>
+      <div className="mb-2 flex flex-col items-start justify-between gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2">
+        <div className="flex flex-col items-start gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2 ">
+          <FilterComponent variant="sessions" />
+          <RunAnalysisInPast />
         </div>
-
+        <TableNavigation table={table} />
+      </div>
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -238,6 +246,11 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
             </TableBody>
           </Table>
         </div>
+        {maxNbPages > 1 && (
+          <div className="flex justify-end mt-2">
+            <TableNavigation table={table} />
+          </div>
+        )}
         {table.getState().pagination.pageIndex + 1 > 5 && (
           <Alert className="mt-2 ">
             <div className="flex justify-between">
@@ -285,7 +298,7 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
           )}
         </SheetContent>
       </Sheet>
-    </div>
+    </>
   );
 }
 
