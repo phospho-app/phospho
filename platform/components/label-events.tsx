@@ -487,7 +487,7 @@ export const AddEventDropdownForTasks = ({
                     </DropdownMenuSub>
                   )}
                 </HoverCardTrigger>
-                <HoverCardContent side="top" className="text-sm w-96 z-60">
+                <HoverCardContent side="left" className="text-sm w-96 z-60">
                   <h2 className="font-bold">{event_name}</h2>
                   <div>{event.description}</div>
                 </HoverCardContent>
@@ -895,7 +895,7 @@ export const AddEventDropdownForSessions = ({
                     </DropdownMenuSub>
                   )}
                 </HoverCardTrigger>
-                <HoverCardContent side="top" className="text-sm w-96 z-60">
+                <HoverCardContent side="left" className="text-sm w-96 z-60">
                   <h2 className="font-bold">{event_name}</h2>
                   <div>{event.description}</div>
                 </HoverCardContent>
