@@ -1,6 +1,6 @@
-from typing import Dict, List, Literal, Optional, Tuple, cast
+from typing import List, Literal, Optional, cast
 
-from app.db.models import Event, EventDefinition, Project, Session, Task
+from app.db.models import Event, EventDefinition, Session, Task
 from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
 from fastapi import HTTPException
@@ -8,6 +8,7 @@ from loguru import logger
 
 from phospho.models import ProjectDataFilters, ScoreRange
 from phospho.utils import is_jsonable
+from phospho.lab.language_models import get_provider_and_model, get_sync_client
 
 
 async def create_session(
@@ -214,33 +215,6 @@ async def compute_task_position(
     await mongo_db["sessions"].aggregate(pipeline).to_list(length=None)
 
 
-async def get_project_id_from_session(session_id: str) -> str:
-    """
-    Fetches the project_id from a session_id.
-    """
-    mongo_db = await get_mongo_db()
-    session = await mongo_db["sessions"].find_one({"id": session_id})
-    if session is None:
-        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
-    return session["project_id"]
-
-
-async def get_event_descriptions(project_id: str) -> List[str]:
-    """
-    Fetches the event descriptions for a given session.
-    """
-
-    mongo_db = await get_mongo_db()
-    project = await mongo_db["projects"].find_one({"id": project_id})
-    project_items = Project.model_validate(project)
-
-    event_descriptions = []
-    for _, event in project_items.settings.events.items():
-        event_descriptions.append(event.description)
-
-    return event_descriptions
-
-
 async def event_suggestion(
     session_id: str,
     model: str = "openai:gpt-4o",
@@ -251,51 +225,62 @@ async def event_suggestion(
     """
     from re import search
 
-    from phospho.lab.language_models import get_provider_and_model, get_sync_client
-    from phospho.utils import shorten_text
+    from app.services.mongo.projects import get_project_by_id
 
     session = await get_session_by_id(session_id)
+    project = await get_project_by_id(session.project_id)
+
+    formatted_tags_list = [
+        f"Tag name: {event_definition.event_name}\nDescription: {event_definition.description}"
+        for event_name, event_definition in project.settings.events.items()
+        if event_definition.score_range_settings.score_type == "confidence"
+    ]
+
     transcript = await format_session_transcript(session)
-    project_id = await get_project_id_from_session(session_id)
-    event_descriptions = await get_event_descriptions(project_id)
 
     provider, model_name = get_provider_and_model(model)
-    openai_client = get_sync_client(provider)
+    openai_client = get_sync_client(cast(Literal["openai"], provider))
 
     # We look at the full session
-    system_prompt = (
-        "Here is an exchange between a user and an assistant, your job is to suggest possible events in this exchange and to come up with a name for them, \
-        if you don't find anything answer like so: None, otherwise suggest a name and a description for a possible event to detect in this exchange like so: Name: The event name Possible event: Your suggestion here. \
-        The event name should be 2-3 words long and the description should be short, 10 to 15 words. \
-        \nHere are the existing events:\n- "
-        + "\n- ".join(event_descriptions)
-    )
-    messages = "DISCUSSION START\n" + transcript
+    existing_tags = "\n- ".join(formatted_tags_list)
+    system_prompt = f"""You are a professional annotator that suggests tags to label conversations. 
+Your reply follows the following format:
+---
+Name: The tag name, 1-3 words.
+Description: A short description of the tag, in 10-15 words, that explains what it represents.
+---
 
-    max_tokens_input_lenght = 128 * 1000 - 2000  # We remove 1k for safety
-    prompt = shorten_text(messages, max_tokens_input_lenght) + "DISCUSSION END"
+For reference, here are the existing tags in this project:
+<existing_tags>
+- {existing_tags}
+</existing_tags>
+"""
+    prompt = f"""Please suggest a new tag, if relevant, for the following conversation:
+<transcript>
+{transcript}
+</transcript>"""
 
-    logger.info(f"Event suggestion session: {system_prompt}")
-    logger.info(f"Event suggestion prompt: {prompt}")
+    logger.info(f"Tag suggestion system prompt: {system_prompt}")
+    logger.info(f"Tag suggestion prompt: {prompt}")
 
     try:
         response = openai_client.chat.completions.create(
             model=model_name,
             messages=[
                 {"role": "system", "content": system_prompt},
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
+                {"role": "user", "content": prompt},
             ],
-            max_tokens=50,
+            max_tokens=120,
         )
 
         llm_response = response.choices[0].message.content
-        logger.info(f"Event suggestion response: {llm_response}")
+        if llm_response is None:
+            return ["Error", "No response from the model."]
 
-        regexName = r"Name: (.*)(?=[ \n]Possible event:)"
-        regexDescription = r"Possible event: (.*)"
+        logger.info(f"Tag suggestion response: {llm_response}")
+
+        regexName = r"Name: (.*)(?=[ \n]Description:)"
+        regexDescription = r"Description: (.*)"
 
         name = search(regexName, llm_response)
         description = search(regexDescription, llm_response)
@@ -313,8 +298,7 @@ async def event_suggestion(
 
     except Exception as e:
         logger.error(f"event_detection call to OpenAI API failed : {e}")
-
-        return ["Error", "An error occured while trying to suggest an event."]
+        return ["Error", str(e)]
 
 
 async def add_event_to_session(
