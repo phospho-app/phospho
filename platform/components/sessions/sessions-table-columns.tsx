@@ -33,21 +33,24 @@ import {
   ThumbsUp,
 } from "lucide-react";
 import React from "react";
-import { KeyedMutator } from "swr";
+import { KeyedMutator, useSWRConfig } from "swr";
 import useSWR from "swr";
+import { ScopedMutator } from "swr/dist/_internal";
 
 async function flagSession({
   session_id,
   flag,
   accessToken,
   project_id,
-  mutateTasks,
+  mutateSessions,
+  mutate,
 }: {
   session_id: string;
   flag: string;
   accessToken?: string;
   project_id?: string | null;
-  mutateTasks: KeyedMutator<SessionWithEvents[]>;
+  mutateSessions: KeyedMutator<SessionWithEvents[]>;
+  mutate: ScopedMutator;
 }) {
   if (!accessToken) return;
   if (!project_id) return;
@@ -62,11 +65,11 @@ async function flagSession({
       human_eval: flag,
     }),
   });
-  mutateTasks((data: SessionWithEvents[] | undefined) => {
+  mutateSessions((data: SessionWithEvents[] | undefined) => {
     if (!data) {
       return data;
     }
-    // Edit the Task with the same task id
+    // Edit the Session with the same id
     data = data.map((session: SessionWithEvents) => {
       if (session.id === session_id) {
         session.stats.human_eval = flag;
@@ -75,6 +78,8 @@ async function flagSession({
     });
     return data;
   });
+  // Invalidate this session
+  mutate((key: string[]) => key[0] === `/api/sessions/${session_id}`);
 }
 
 export function useColumns({
@@ -92,6 +97,7 @@ export function useColumns({
 }): ColumnDef<SessionWithEvents>[] {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
+  const { mutate } = useSWRConfig();
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -197,7 +203,8 @@ export function useColumns({
                       flag: "success",
                       accessToken: accessToken,
                       project_id: project_id,
-                      mutateTasks: mutateSessions,
+                      mutateSessions: mutateSessions,
+                      mutate: mutate,
                     });
                   }}
                 />
@@ -210,7 +217,8 @@ export function useColumns({
                       flag: "failure",
                       accessToken: accessToken,
                       project_id: project_id,
-                      mutateTasks: mutateSessions,
+                      mutateSessions: mutateSessions,
+                      mutate: mutate,
                     });
                   }}
                 />
@@ -275,18 +283,24 @@ export function useColumns({
                   session={row.row.original as SessionWithEvents}
                   setSession={(session: SessionWithEvents) => {
                     // Update the session in the table
-                    mutateSessions((data: SessionWithEvents[] | undefined) => {
-                      if (!data) {
-                        return data;
-                      }
-                      data = data.map((existingSession: SessionWithEvents) => {
-                        if (existingSession.id === session.id) {
-                          return session;
-                        }
-                        return existingSession;
-                      });
-                      return data;
-                    });
+                    mutateSessions(
+                      (currentSessions: SessionWithEvents[] | undefined) => {
+                        if (!currentSessions) return currentSessions;
+                        currentSessions = currentSessions.map(
+                          (existingSession: SessionWithEvents) => {
+                            if (existingSession.id === session.id) {
+                              return session;
+                            }
+                            return existingSession;
+                          },
+                        );
+                        return currentSessions;
+                      },
+                    );
+                    // Invalidate this session
+                    mutate((key: string[]) =>
+                      key[0].includes(`/api/sessions/${session.id}`),
+                    );
                   }}
                 />
               );
@@ -296,17 +310,19 @@ export function useColumns({
               session={row.row.original as SessionWithEvents}
               setSession={(session: SessionWithEvents) => {
                 mutateSessions(
-                  (currentSession: SessionWithEvents[] | undefined) => {
-                    if (!currentSession) {
-                      return currentSession;
-                    }
-                    return currentSession.map((existingSession) => {
+                  (currentSessions: SessionWithEvents[] | undefined) => {
+                    if (!currentSessions) return currentSessions;
+                    return currentSessions.map((existingSession) => {
                       if (existingSession.id === session.id) {
                         return session;
                       }
                       return existingSession;
                     });
                   },
+                );
+                // Invalidate this session
+                mutate((key: string[]) =>
+                  key.includes(`/api/sessions/${session.id}`),
                 );
               }}
               setSheetOpen={setSheetOpen}
@@ -316,7 +332,6 @@ export function useColumns({
         </div>
       ),
     },
-
     // Sentiment
     {
       header: () => {
@@ -352,7 +367,7 @@ export function useColumns({
               </HoverCardTrigger>
               <HoverCardContent side="top" className="text-sm text-left w-50">
                 <h2 className="font-bold">Sentiment label</h2>
-                <p>Automatic sentiment analysis of the Task input</p>
+                <span>Automatic sentiment analysis of the Task input</span>
               </HoverCardContent>
             </HoverCard>
           </div>

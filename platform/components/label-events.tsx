@@ -90,19 +90,19 @@ export const EventBadge = ({ event }: { event: Event }) => {
 
   return (
     <Badge variant="outline" className={badgeStyle}>
-      {score_type === "confidence" && <p>{event.event_name}</p>}
+      {score_type === "confidence" && <span>{event.event_name}</span>}
       {score_type === "range" && (
-        <p>
+        <span>
           {event.event_name}{" "}
           {event?.score_range?.corrected_value ?? roundedScore}/
           {event.score_range?.max}
-        </p>
+        </span>
       )}
       {score_type === "category" && (
-        <p>
+        <span>
           {event.event_name}:{" "}
           {event?.score_range?.corrected_label ?? event.score_range?.label}
-        </p>
+        </span>
       )}
     </Badge>
   );
@@ -140,19 +140,19 @@ export const InteractiveEventBadgeForTasks = ({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <HoverCard openDelay={0} closeDelay={0}>
-          <HoverCardTrigger>
+      <HoverCard openDelay={0} closeDelay={0}>
+        <DropdownMenuTrigger asChild>
+          <HoverCardTrigger asChild>
             <EventBadge event={event} />
           </HoverCardTrigger>
-          <HoverCardContent className="text-sm text-left w-96" side="left">
+          <HoverCardContent className="text-sm text-left w-96 z-60" side="top">
             <EventDetectionDescription
               event={event}
               eventDefinition={eventDefinition}
             />
           </HoverCardContent>
-        </HoverCard>
-      </DropdownMenuTrigger>
+        </DropdownMenuTrigger>
+      </HoverCard>
       <DropdownMenuContent align="start">
         <DropdownMenuItem
           onClick={async (mouseEvent) => {
@@ -487,7 +487,7 @@ export const AddEventDropdownForTasks = ({
                     </DropdownMenuSub>
                   )}
                 </HoverCardTrigger>
-                <HoverCardContent side="left" className="text-sm w-96">
+                <HoverCardContent side="top" className="text-sm w-96 z-60">
                   <h2 className="font-bold">{event_name}</h2>
                   <div>{event.description}</div>
                 </HoverCardContent>
@@ -547,19 +547,19 @@ export const InteractiveEventBadgeForSessions = ({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <HoverCard openDelay={0} closeDelay={0}>
-          <HoverCardTrigger>
+      <HoverCard openDelay={0} closeDelay={0}>
+        <DropdownMenuTrigger asChild>
+          <HoverCardTrigger asChild>
             <EventBadge event={event} />
           </HoverCardTrigger>
-          <HoverCardContent className="text-sm text-left w-96" side="left">
-            <EventDetectionDescription
-              event={event}
-              eventDefinition={eventDefinition}
-            />
-          </HoverCardContent>
-        </HoverCard>
-      </DropdownMenuTrigger>
+        </DropdownMenuTrigger>
+        <HoverCardContent className="text-sm text-left w-96 z-60" side="top">
+          <EventDetectionDescription
+            event={event}
+            eventDefinition={eventDefinition}
+          />
+        </HoverCardContent>
+      </HoverCard>
       <DropdownMenuContent align="start">
         <DropdownMenuItem
           onClick={async (mouseEvent) => {
@@ -895,7 +895,7 @@ export const AddEventDropdownForSessions = ({
                     </DropdownMenuSub>
                   )}
                 </HoverCardTrigger>
-                <HoverCardContent side="left" className="text-sm w-96">
+                <HoverCardContent side="top" className="text-sm w-96 z-60">
                   <h2 className="font-bold">{event_name}</h2>
                   <div>{event.description}</div>
                 </HoverCardContent>

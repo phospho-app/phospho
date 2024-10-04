@@ -367,7 +367,7 @@ export function useColumns({
               </HoverCardTrigger>
               <HoverCardContent side="top" className="text-sm text-left w-50">
                 <h2 className="font-bold">Sentiment label</h2>
-                <p>Automatic sentiment analysis of the user message</p>
+                <span>Automatic sentiment analysis of the user message</span>
               </HoverCardContent>
             </HoverCard>
           </div>

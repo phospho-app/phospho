@@ -1,6 +1,10 @@
 "use client";
 
 import SuggestEvent from "@/components/events/suggest-event";
+import {
+  AddEventDropdownForSessions,
+  InteractiveEventBadgeForSessions,
+} from "@/components/label-events";
 import { Spinner } from "@/components/small-spinner";
 import TaskBox from "@/components/task-box";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +30,7 @@ import { ChevronRight, CopyIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
 import useSWR from "swr";
+import { useSWRConfig } from "swr";
 
 const SessionStats = ({
   session_id,
@@ -35,8 +40,15 @@ const SessionStats = ({
   showGoToSession?: boolean;
 }) => {
   const { accessToken } = useUser();
+  const { mutate } = useSWRConfig();
 
-  const { data: sessionData }: { data: SessionWithEvents | undefined } = useSWR(
+  const {
+    data: sessionData,
+    mutate: mutateSessionData,
+  }: {
+    data: SessionWithEvents | undefined;
+    mutate: (data: SessionWithEvents | undefined) => void;
+  } = useSWR(
     [`/api/sessions/${session_id}`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
@@ -85,17 +97,39 @@ const SessionStats = ({
             </div>
             {uniqueEvents && (
               <div className="flex">
-                <span className="font-bold mr-2">Events:</span>
                 <div className="space-x-2 flex items-center">
-                  <SuggestEvent
-                    sessionId={session_id}
-                    event={{} as EventDefinition}
-                  />
-                  {uniqueEvents?.map((event: Event) => (
-                    <Badge variant="outline" key={event.id}>
-                      {event.event_name}
-                    </Badge>
-                  ))}
+                  {sessionData &&
+                    uniqueEvents?.map((event: Event) => (
+                      <InteractiveEventBadgeForSessions
+                        key={event.id}
+                        event={event}
+                        session={sessionData}
+                        setSession={(session: SessionWithEvents) => {
+                          mutateSessionData(session);
+                          // Fetch the session list
+                          mutate((key: string[]) =>
+                            key.includes(
+                              `/api/projects/${sessionData.project_id}/sessions`,
+                            ),
+                          );
+                        }}
+                      />
+                    ))}
+                  {sessionData && (
+                    <AddEventDropdownForSessions
+                      session={sessionData}
+                      setSession={(session: SessionWithEvents) => {
+                        mutateSessionData(session);
+                        // Fetch the session list
+                        mutate((key: string[]) =>
+                          key.includes(
+                            `/api/projects/${sessionData.project_id}/sessions`,
+                          ),
+                        );
+                      }}
+                    />
+                  )}
+                  <SuggestEvent sessionId={session_id} />
                 </div>
               </div>
             )}

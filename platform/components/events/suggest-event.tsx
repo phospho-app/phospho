@@ -30,12 +30,17 @@ import { useForm } from "react-hook-form";
 import useSWR, { useSWRConfig } from "swr";
 import { z } from "zod";
 
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
+
 interface SuggestEventProps {
   sessionId: string;
-  event: EventDefinition;
 }
 
-const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
+const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId }) => {
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const generateEventSuggestion = () => {
@@ -117,8 +122,8 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      event_name: event?.event_name ?? "",
-      description: event?.description ?? "",
+      event_name: "",
+      description: "",
       webhook: "",
       webhook_auth_header: "",
       detection_engine: "llm_detection",
@@ -135,9 +140,6 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
     }
     if (!selectedProject.settings) {
       return;
-    }
-    if (event.event_name !== values.event_name) {
-      delete selectedProject.settings.events[event.event_name];
     }
 
     if (!selectedProject.settings.events) {
@@ -185,81 +187,79 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId, event }) => {
   }
 
   return (
-    <div>
-      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <PopoverTrigger asChild>
-          <button
-            className={`mr-1 hover:border-green-500 rounded-full p-1 border-2 `}
-            onClick={() => generateEventSuggestion()}
-          >
-            <Wand2 className="h-4 w-4" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-400">
-          <CardHeader>
-            <h2 className="text-lg font-semibold">Event suggestion</h2>
-            <p className="text-sm text-muted-foreground">
-              Based on the session&apos;s content, we recommend creating this
-              new event
-            </p>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="font-normal space-y-4"
-                key={`createEventForm${event.event_name}`}
-              >
-                <FormField
-                  control={form.control}
-                  name="event_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Event name*</FormLabel>
-                      <FormControl>
-                        <Input
-                          spellCheck
-                          placeholder="Thinking..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description*</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          id="description"
-                          placeholder="Thinking..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </form>
-            </Form>
-            <Button
-              type="submit"
-              className="hover:bg-green-600"
-              disabled={
-                loading ||
-                current_nb_events >= max_nb_events ||
-                !form.formState.isValid
-              }
-              onClick={() => form.handleSubmit(onSubmit)()}
+    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+      <HoverCard openDelay={0} closeDelay={0}>
+        <HoverCardTrigger asChild>
+          <PopoverTrigger asChild>
+            <div
+              className={`mr-1 hover:border-green-500 rounded-full p-1 border-2 cursor-pointer`}
+              onClick={() => generateEventSuggestion()}
             >
-              Save
-            </Button>
-          </CardHeader>
-        </PopoverContent>
-      </Popover>
-    </div>
+              <Wand2 className="h-4 w-4" />
+            </div>
+          </PopoverTrigger>
+        </HoverCardTrigger>
+        <HoverCardContent>
+          <div className="text-sm text-muted-foreground">
+            Suggest a tag based on the session&apos;s content
+          </div>
+        </HoverCardContent>
+      </HoverCard>
+      <PopoverContent className="min-w-[30rem] max-w-3/4">
+        <CardHeader>
+          <h2 className="font-semibold">Tag suggestion for this session</h2>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="font-normal space-y-4"
+            >
+              <FormField
+                control={form.control}
+                name="event_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Event name*</FormLabel>
+                    <FormControl>
+                      <Input spellCheck placeholder="Thinking..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description*</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        id="description"
+                        placeholder="Thinking..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
+          <Button
+            type="submit"
+            className="hover:bg-green-600"
+            disabled={
+              loading ||
+              current_nb_events >= max_nb_events ||
+              !form.formState.isValid
+            }
+            onClick={() => form.handleSubmit(onSubmit)()}
+          >
+            Save
+          </Button>
+        </CardHeader>
+      </PopoverContent>
+    </Popover>
   );
 };
 
