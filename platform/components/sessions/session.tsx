@@ -24,7 +24,6 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
-import { EventDefinition } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, CopyIcon } from "lucide-react";
 import Link from "next/link";
