@@ -142,16 +142,16 @@ export const InteractiveEventBadgeForTasks = ({
     <DropdownMenu>
       <HoverCard openDelay={0} closeDelay={0}>
         <DropdownMenuTrigger asChild>
-          <HoverCardTrigger asChild>
+          <HoverCardTrigger>
             <EventBadge event={event} />
           </HoverCardTrigger>
-          <HoverCardContent className="text-sm text-left w-96 z-60" side="top">
-            <EventDetectionDescription
-              event={event}
-              eventDefinition={eventDefinition}
-            />
-          </HoverCardContent>
         </DropdownMenuTrigger>
+        <HoverCardContent className="text-sm text-left w-96 z-60" side="top">
+          <EventDetectionDescription
+            event={event}
+            eventDefinition={eventDefinition}
+          />
+        </HoverCardContent>
       </HoverCard>
       <DropdownMenuContent align="start">
         <DropdownMenuItem
@@ -549,7 +549,7 @@ export const InteractiveEventBadgeForSessions = ({
     <DropdownMenu>
       <HoverCard openDelay={0} closeDelay={0}>
         <DropdownMenuTrigger asChild>
-          <HoverCardTrigger asChild>
+          <HoverCardTrigger>
             <EventBadge event={event} />
           </HoverCardTrigger>
         </DropdownMenuTrigger>
