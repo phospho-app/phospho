@@ -45,22 +45,13 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <section>
-      <div className="max-h-screen h-screen overflow-hidden">
-        <div className="h-full">
-          <FetchOrgProject />
-          <Navbar />
-          <div className="grid grid-cols-8 gap-2 w-full h-full">
-            <div className="min-w-[10rem] hidden md:block md:col-span-1">
-              <Sidebar />
-            </div>
-            <div className="space-y-2 px-2 col-span-8 md:col-span-7 overflow-y-auto py-4">
-              {children}
-              <div className="h-20"></div>
-            </div>
-          </div>
-        </div>
+    <div className="max-h-screen h-screen">
+      <FetchOrgProject />
+      <Navbar />
+      <Sidebar className="fixed top-12 w-[10rem] hidden md:block" />
+      <div className="pt-12 gap-2 w-full md:pl-[11rem] mx-2">
+        <div className="flex flex-col py-4">{children}</div>
       </div>
-    </section>
+    </div>
   );
 }

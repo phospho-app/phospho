@@ -406,19 +406,18 @@ const MetadataForm: React.FC = () => {
             Add to dashboard
           </Button>
         </div>
-
         <div className="flex flex-row space-x-2 items-end">
           <DatePickerWithRange />
           <FilterComponent variant="tasks" />
         </div>
-      </div>
-      <div className="h-3/4">
-        <DatavizGraph
-          metric={selectedMetric}
-          metadata_metric={metadata_metric}
-          breakdown_by={breakdown_by}
-          scorer_id={selectedScorerId}
-        />
+        <div className="h-3/4">
+          <DatavizGraph
+            metric={selectedMetric}
+            metadata_metric={metadata_metric}
+            breakdown_by={breakdown_by}
+            scorer_id={selectedScorerId}
+          />
+        </div>
       </div>
     </>
   );

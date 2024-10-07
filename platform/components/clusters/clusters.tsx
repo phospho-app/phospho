@@ -186,42 +186,42 @@ const Clusters: React.FC = () => {
   return (
     <>
       <Sheet open={sheetClusterOpen} onOpenChange={setSheetClusterOpen}>
-        <RunClusteringSheet
-          setSheetOpen={setSheetClusterOpen}
-          setSelectedClustering={setSelectedClustering}
-        />
-        {clusterings && clusterings.length <= 1 && (
-          <Card className="bg-secondary">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div className="flex">
-                  <Boxes className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
-                  <div>
-                    <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
-                      Automatic cluster detection
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                      Detect recurring topics, trends, and outliers using
-                      unsupervized machine learning.{" "}
-                      <a
-                        href="https://docs.phospho.ai/analytics/clustering"
-                        target="_blank"
-                        className="underline"
-                      >
-                        Learn more.
-                      </a>
-                    </CardDescription>
+        <div className="flex flex-col space-y-2">
+          <RunClusteringSheet
+            setSheetOpen={setSheetClusterOpen}
+            setSelectedClustering={setSelectedClustering}
+          />
+          {clusterings && clusterings.length <= 1 && (
+            <Card className="bg-secondary">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div className="flex">
+                    <Boxes className="mr-4 h-16 w-16 hover:text-green-500 transition-colors" />
+                    <div>
+                      <CardTitle className="flex flex-row text-2xl font-bold tracking-tight items-center">
+                        Automatic cluster detection
+                      </CardTitle>
+                      <CardDescription className="text-muted-foreground">
+                        Detect recurring topics, trends, and outliers using
+                        unsupervized machine learning.{" "}
+                        <a
+                          href="https://docs.phospho.ai/analytics/clustering"
+                          target="_blank"
+                          className="underline"
+                        >
+                          Learn more.
+                        </a>
+                      </CardDescription>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardHeader>
-          </Card>
-        )}
-        {clusterings && clusterings.length > 1 && (
-          <h1 className="text-2xl font-bold">Clusterings</h1>
-        )}
-        <div>
-          <div className="flex flex-row space-x-2 items-center">
+              </CardHeader>
+            </Card>
+          )}
+          {clusterings && clusterings.length > 1 && (
+            <h1 className="text-2xl font-bold">Clusterings</h1>
+          )}
+          <div className="flex flex-row gap-x-2 items-center">
             <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size={"icon"} onClick={toggleButton}>
@@ -324,7 +324,6 @@ const Clusters: React.FC = () => {
             />
           </div>
         </div>
-        <div className="h-10"></div>
       </Sheet>
     </>
   );

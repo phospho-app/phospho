@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import UpgradeButton from "@/components/upgrade-button";
+import { cn } from "@/lib/utils";
 import { dataStateStore, navigationStateStore } from "@/store/store";
 import { useRedirectFunctions } from "@propelauth/nextjs/client";
 import {
@@ -117,7 +118,7 @@ function WhiteSpaceSeparator() {
   return <div className="h-4" />;
 }
 
-export function Sidebar() {
+export function Sidebar({ className }: { className?: string }) {
   const selectedOrgMetadata = dataStateStore(
     (state) => state.selectedOrgMetadata,
   );
@@ -186,7 +187,12 @@ export function Sidebar() {
   };
 
   return (
-    <div className="overflow-y-auto max-h-[100dvh] md:max-h-full md:h-full">
+    <div
+      className={cn(
+        "overflow-y-auto max-h-[100dvh] md:max-h-full md:h-full",
+        className,
+      )}
+    >
       <div className="flex flex-col py-4 border-secondary h-full">
         <div>
           <SideBarElement
