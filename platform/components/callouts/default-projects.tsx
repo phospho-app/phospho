@@ -108,7 +108,7 @@ const DefaultProjects = ({
       <AlertDialogHeader>
         <div className="flex justify-between space-x-2">
           <Telescope className="h-16 w-16 hover:text-green-500 transition-colors" />
-          <div className="flex flex-col space-y-2 w-full">
+          <div className="flex flex-col gap-y-2 w-full">
             <AlertDialogTitle className="text-2xl font-bold">
               Explore a project with example data
             </AlertDialogTitle>

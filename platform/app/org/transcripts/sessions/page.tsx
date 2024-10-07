@@ -13,7 +13,7 @@ export default function Page() {
   const parsedDataFilters = searchParamsToProjectDataFilters({ searchParams });
 
   return (
-    <div className="flex flex-col space-y-2">
+    <div className="flex flex-col gap-y-2">
       <SendDataCallout />
       <SetupSessionCallout />
       <DatePickerWithRange />
