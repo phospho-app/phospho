@@ -15,6 +15,7 @@ export default function Page({ params }: { params: { id: string } }) {
         onClick={() => {
           router.back();
         }}
+        className="max-w-[10rem]"
       >
         <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
