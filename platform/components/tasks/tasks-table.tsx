@@ -259,7 +259,7 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
           </Table>
         </div>
         {maxNbPages > 1 && (
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-center mt-2">
             <TableNavigation table={table} />
           </div>
         )}
