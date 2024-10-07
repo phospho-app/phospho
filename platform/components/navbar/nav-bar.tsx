@@ -20,7 +20,7 @@ export function Navbar({
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="fixed top-0 left-0 right-0 w-full backdrop-blur-md h-12">
+    <div className="fixed top-0 left-0 right-0 w-full z-50 backdrop-blur-lg h-12">
       <nav
         className={cn("flex flex-row w-full md:justify-center", className)}
         {...props}
