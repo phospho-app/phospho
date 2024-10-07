@@ -12,11 +12,11 @@ export default function Page() {
   const parsedDataFilters = searchParamsToProjectDataFilters({ searchParams });
 
   return (
-    <>
+    <div className="flex flex-col space-y-2">
       <SendDataCallout />
       <DatePickerWithRange />
       <TasksDataviz forcedDataFilters={parsedDataFilters} />
       <TasksTable forcedDataFilters={parsedDataFilters} />
-    </>
+    </div>
   );
 }

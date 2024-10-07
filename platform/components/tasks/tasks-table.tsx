@@ -179,6 +179,23 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
         <TableNavigation table={table} />
       </div>
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent
+          className="md:w-1/2 overflow-auto"
+          onOpenAutoFocus={(mouseEvent) => {
+            mouseEvent.stopPropagation();
+            setTableIsClickable(false);
+          }}
+          onCloseAutoFocus={(mouseEvent) => {
+            mouseEvent.stopPropagation();
+            setTableIsClickable(true);
+          }}
+        >
+          {sheetToOpen === "run" && eventDefinition !== null && (
+            <RunEvent setOpen={setSheetOpen} eventToRun={eventDefinition} />
+          )}
+          {sheetToOpen === "edit" && <CreateEvent setOpen={setSheetOpen} />}
+          {sheetToOpen === "preview" && <TaskPreview task_id={taskPreviewId} />}
+        </SheetContent>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -269,23 +286,6 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
             </div>
           </Alert>
         )}
-        <SheetContent
-          className="md:w-1/2 overflow-auto"
-          onOpenAutoFocus={(mouseEvent) => {
-            mouseEvent.stopPropagation();
-            setTableIsClickable(false);
-          }}
-          onCloseAutoFocus={(mouseEvent) => {
-            mouseEvent.stopPropagation();
-            setTableIsClickable(true);
-          }}
-        >
-          {sheetToOpen === "run" && eventDefinition !== null && (
-            <RunEvent setOpen={setSheetOpen} eventToRun={eventDefinition} />
-          )}
-          {sheetToOpen === "edit" && <CreateEvent setOpen={setSheetOpen} />}
-          {sheetToOpen === "preview" && <TaskPreview task_id={taskPreviewId} />}
-        </SheetContent>
       </Sheet>
     </>
   );
