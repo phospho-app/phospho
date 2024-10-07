@@ -49,7 +49,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
       <FetchOrgProject />
       <Navbar />
       <Sidebar className="fixed top-12 w-[10rem] hidden md:block" />
-      <div className="pt-12 gap-2 w-full md:pl-[11rem] mx-2">
+      <div className="pt-12 gap-2 w-full px-2 md:pl-[11rem]">
         <div className="flex flex-col py-4">{children}</div>
       </div>
     </div>
