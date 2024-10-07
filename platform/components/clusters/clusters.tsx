@@ -186,7 +186,7 @@ const Clusters: React.FC = () => {
   return (
     <>
       <Sheet open={sheetClusterOpen} onOpenChange={setSheetClusterOpen}>
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col gap-y-2">
           <RunClusteringSheet
             setSheetOpen={setSheetClusterOpen}
             setSelectedClustering={setSelectedClustering}

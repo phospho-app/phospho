@@ -53,7 +53,7 @@ export default function Page({
   }, [setDateRangePreset]);
 
   return (
-    <div className="flex flex-col space-y-2">
+    <div className="flex flex-col gap-y-2">
       <div>
         <Button
           onClick={() => router.push("/org/transcripts/users")}

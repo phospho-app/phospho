@@ -11,7 +11,7 @@ function SessionPreview({
   }
 
   return (
-    <div className="flex flex-col space-y-2">
+    <div className="flex flex-col gap-y-2">
       <SessionStats session_id={session_id} showGoToSession={true} />
       <SessionTranscript session_id={session_id} />
     </div>

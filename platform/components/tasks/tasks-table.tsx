@@ -171,7 +171,7 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
 
   return (
     <>
-      <div className="mb-2 flex flex-col items-start justify-between gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2">
+      <div className="flex flex-col items-start justify-between gap-y-2 md:flex-row md:items-end md:gap-y-0 md:gap-x-2">
         <div className="flex flex-col items-start gap-y-2 md:flex-row md:items-center md:gap-y-0 md:gap-x-2 ">
           <FilterComponent variant="tasks" />
           <RunAnalysisInPast />
@@ -259,7 +259,7 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
           </Table>
         </div>
         {maxNbPages > 1 && (
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-center mt-2">
             <TableNavigation table={table} />
           </div>
         )}

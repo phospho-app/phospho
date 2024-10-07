@@ -98,7 +98,7 @@ const MetadataForm: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col space-y-2">
+      <div className="flex flex-col gap-y-2">
         <DatavizCallout />
         <div className="flex flex-row justify-between">
           <div className="flex flex-row space-x-2 items-center">

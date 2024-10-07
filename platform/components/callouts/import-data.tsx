@@ -325,7 +325,7 @@ export function UploadDataset({
   };
 
   return (
-    <div className="flex flex-col space-y-2">
+    <div className="flex flex-col gap-y-2">
       <UploadDatasetInstructions />
       <UploadDragAndDrop setFile={setFile} />
       {file !== null && !loading && (
