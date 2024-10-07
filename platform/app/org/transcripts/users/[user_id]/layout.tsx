@@ -53,33 +53,30 @@ export default function Page({
   }, [setDateRangePreset]);
 
   return (
-    <>
+    <div className="flex flex-col space-y-2">
       <div>
-        <Button onClick={() => router.push("/org/transcripts/users")}>
+        <Button
+          onClick={() => router.push("/org/transcripts/users")}
+          className="max-w-[10rem]"
+        >
           <ChevronLeft className="w-4 h-4 mr-1" /> Back to Users
         </Button>
       </div>
-      <div className="flex flex-col space-y-2">
-        <div className="text-2xl font-bold tracking-tight">User {user_id}</div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild className="w-[10rem] justify-between">
-            <Button variant="secondary">
-              {selected}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onSelect={handleSelect}>
-              Messages
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleSelect}>
-              Sessions
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-          <DropdownMenu />
-        </DropdownMenu>
-      </div>
+      <div className="text-2xl font-bold tracking-tight">User {user_id}</div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild className="w-[10rem] justify-between">
+          <Button variant="secondary">
+            {selected}
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onSelect={handleSelect}>Messages</DropdownMenuItem>
+          <DropdownMenuItem onSelect={handleSelect}>Sessions</DropdownMenuItem>
+        </DropdownMenuContent>
+        <DropdownMenu />
+      </DropdownMenu>
       {children}
-    </>
+    </div>
   );
 }

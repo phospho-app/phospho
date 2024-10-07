@@ -30,7 +30,7 @@ export default function Page({ params }: { params: { cluster_id: string } }) {
 
   return (
     <>
-      <Button onClick={() => router.back()}>
+      <Button onClick={() => router.back()} className="max-w-[10rem]">
         <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
       <div>
