@@ -20,7 +20,9 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { authFetcher } from "@/lib/fetcher";
+import { OrgMetadata } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useLogoutFunction, useUser } from "@propelauth/nextjs/client";
 import {
   BriefcaseBusiness,
@@ -34,14 +36,13 @@ import {
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import useSWR from "swr";
 
 export function NavBarSettings() {
   const { setTheme } = useTheme();
-  const { user } = useUser();
+  const { user, accessToken } = useUser();
   const router = useRouter();
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
-  );
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
 
   const logoutFn = useLogoutFunction();
   const setSelectedOrgId = navigationStateStore(
@@ -51,6 +52,16 @@ export function NavBarSettings() {
 
   const [open, setOpen] = React.useState(false);
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
+
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   return (
     <div className="flex items-center space-x-2">

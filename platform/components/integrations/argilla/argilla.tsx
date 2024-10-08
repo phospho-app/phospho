@@ -11,15 +11,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { dataStateStore } from "@/store/store";
+import { authFetcher } from "@/lib/fetcher";
+import { OrgMetadata } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { CircleAlert } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 const ArgillaIntegrations: React.FC = () => {
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const { accessToken } = useUser();
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
 
   // If the selectedOrgMetadata.argilla_worspace_id exists and is not null, then Argilla is set up

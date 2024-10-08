@@ -3,19 +3,29 @@
 import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
 import Navbar from "@/components/navbar/nav-bar";
 import { Sidebar } from "@/components/sidebar/sidebar";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { authFetcher } from "@/lib/fetcher";
+import { OrgMetadata } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import "@radix-ui/react-dropdown-menu";
 import { useRouter } from "next/navigation";
 import React from "react";
+import useSWR from "swr";
 
 export default function OrgLayout({ children }: { children: React.ReactNode }) {
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
-  );
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const { isLoggedIn, loading } = useUser();
+  const { accessToken, isLoggedIn, loading } = useUser();
   const router = useRouter();
+
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   if (
     selectedOrgMetadata?.plan === "hobby" &&

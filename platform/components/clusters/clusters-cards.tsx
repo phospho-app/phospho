@@ -10,9 +10,14 @@ import {
 } from "@/components/ui/hover-card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
-import { Cluster, Clustering, EventDefinition } from "@/models/models";
+import {
+  Cluster,
+  Clustering,
+  EventDefinition,
+  OrgMetadata,
+} from "@/models/models";
 import { Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, Pickaxe, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -33,7 +38,6 @@ function ClusterCard({
   const { accessToken } = useUser();
   const router = useRouter();
   const dataFilters = navigationStateStore((state) => state.dataFilters);
-  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const setDateRangePreset = navigationStateStore(
@@ -44,6 +48,15 @@ function ClusterCard({
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const { data: orgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,

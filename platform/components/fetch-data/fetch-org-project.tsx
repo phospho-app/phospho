@@ -1,10 +1,8 @@
 import { useToast } from "@/components/ui/use-toast";
-import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { navigationStateStore } from "@/store/store";
 import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
 
 export default function FetchOrgProject() {
   // This module fetch top-level settings for the org and the project
@@ -23,9 +21,6 @@ export default function FetchOrgProject() {
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
-  );
-  const setSelectOrgMetadata = dataStateStore(
-    (state) => state.setSelectOrgMetadata,
   );
 
   useEffect(() => {
@@ -79,6 +74,7 @@ export default function FetchOrgProject() {
             title: "Error initializing organization",
             description: init_response.statusText,
           });
+          setSelectedOrgId(null);
           return;
         }
         const responseBody = await init_response.json();
@@ -112,21 +108,8 @@ export default function FetchOrgProject() {
     redirecting,
     setSelectedOrgId,
     user,
+    redirectToCreateOrgPage,
   ]);
-
-  // Fetch the org metadata
-  const { data: fetchedOrgMetadata } = useSWR(
-    selectedOrgId
-      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-  if (fetchedOrgMetadata) {
-    setSelectOrgMetadata(fetchedOrgMetadata);
-  }
 
   return <></>;
 }

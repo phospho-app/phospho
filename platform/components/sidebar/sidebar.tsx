@@ -3,9 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import UpgradeButton from "@/components/upgrade-button";
+import { authFetcher } from "@/lib/fetcher";
 import { cn } from "@/lib/utils";
-import { dataStateStore, navigationStateStore } from "@/store/store";
-import { useRedirectFunctions } from "@propelauth/nextjs/client";
+import { OrgMetadata } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
+import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
 import {
   AreaChart,
   BarChartBig,
@@ -30,6 +32,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
+import useSWR from "swr";
 
 import { OnboardingProgress } from "./sidebar-progress";
 
@@ -119,13 +122,11 @@ function WhiteSpaceSeparator() {
 }
 
 export function Sidebar({ className }: { className?: string }) {
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
-  );
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
-  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const { redirectToOrgApiKeysPage } = useRedirectFunctions();
+  const { accessToken } = useUser();
 
   const sidebarState = navigationStateStore((state) => state.sidebarState);
   const setSidebarState = navigationStateStore(
@@ -136,6 +137,16 @@ export function Sidebar({ className }: { className?: string }) {
   const sideBarString = useMemo(
     () => JSON.stringify(sidebarState),
     [sidebarState],
+  );
+
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
 
   useEffect(() => {
