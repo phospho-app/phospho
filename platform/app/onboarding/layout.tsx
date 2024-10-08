@@ -1,6 +1,6 @@
 "use client";
 
-import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
+import InitializeOrganization from "@/components/fetch-data/fetch-org-project";
 import { Button } from "@/components/ui/button";
 import { navigationStateStore } from "@/store/store";
 import { useLogoutFunction } from "@propelauth/nextjs/client";
@@ -23,7 +23,7 @@ export default function OnboardingLayout({
 
   return (
     <>
-      <FetchOrgProject />
+      <InitializeOrganization />
       <section>
         <div className="flex flex-row justify-between items-bottom p-4">
           <div>

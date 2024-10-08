@@ -1,6 +1,6 @@
 "use client";
 
-import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
+import InitializeOrganization from "@/components/fetch-data/fetch-org-project";
 import FullPageLoader from "@/components/full-page-loader";
 import { useUser } from "@propelauth/nextjs/client";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,7 @@ const Page: React.FC = () => {
 
   return (
     <>
-      <FetchOrgProject />
+      <InitializeOrganization />
       <FullPageLoader />
     </>
   );

@@ -5,8 +5,8 @@ import TaskProgress from "@/components/settings/tasks-quota";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { UsageQuota } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { OrgMetadata, UsageQuota } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -31,13 +31,20 @@ const StripeIcon = () => {
 
 export default function Page() {
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
-  );
 
   const { accessToken, loading } = useUser();
   const toast = useToast();
   const router = useRouter();
+
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const plan = selectedOrgMetadata?.plan;
 

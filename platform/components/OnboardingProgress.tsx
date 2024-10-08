@@ -13,19 +13,19 @@ interface OnboardingProgressProps {
 const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ steps }) => {
   return (
     <div className="p-4 md:p-6 md:fixed md:left-0 md:top-12 md:h-full md:w-56 md:overflow-y-auto">
-      <h2 className="text-xl font-semibold mb-4 md:mb-8">
-        Onboarding Progress
+      <h2 className="text-xl font-semibold mb-4 md:mb-6">
+        Onboarding progress
       </h2>
-      <ol className="relative border-l border-gray-300 space-y-6 md:space-y-8 ml-6">
+      <ol className="relative border-l text-muted-foreground space-y-6 md:space-y-8 ml-6">
         {steps.map((step, index) => (
-          <li key={index} className="ml-6">
+          <li key={index} className="ml-6 flex items-center">
             <span
-              className={`absolute flex items-center justify-center w-8 h-8 rounded-full -left-4 ring-4 ring-white
-                ${step.isCompleted || step.isActive ? "bg-green-500" : "bg-gray-300"}`}
+              className={`absolute flex items-center justify-center w-8 h-8 rounded-full -left-4 ring-2 ring-secondary-foreground
+                ${step.isCompleted || step.isActive ? "bg-green-500" : "bg-secondary"}`}
             >
               {step.isCompleted ? (
                 <svg
-                  className="w-5 h-5 text-white"
+                  className="w-5 h-5 text-secondary-foreground"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -40,7 +40,7 @@ const OnboardingProgress: React.FC<OnboardingProgressProps> = ({ steps }) => {
               )}
             </span>
             <h3
-              className={`font-medium ${step.isActive ? "text-green-600" : "text-gray-900"}`}
+              className={`pl-1 ${step.isActive ? "font-semibold text-green-500" : "text-muted-foreground"}`}
             >
               {step.label}
             </h3>

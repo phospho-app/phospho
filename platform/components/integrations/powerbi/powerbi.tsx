@@ -8,23 +8,35 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { dataStateStore } from "@/store/store";
+import { authFetcher } from "@/lib/fetcher";
+import { OrgMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
+import { useUser } from "@propelauth/nextjs/client";
 import { CircleAlert } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 import CreatePowerBI from "./create-powerbi-connection";
 
 const PowerBIIntegrations: React.FC = () => {
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
-  );
   const project_id = navigationStateStore((state) => state.project_id);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const { accessToken } = useUser();
 
   // If the selectedOrgMetadata.argilla_worspace_id exists and is not null, then Argilla is set up
   const [isPowerBISetup, setIsPowerBISetup] = useState<boolean>(false);
+
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   useEffect(() => {
     if (selectedOrgMetadata?.power_bi) {
