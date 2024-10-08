@@ -132,7 +132,7 @@ def add_email_contact(email: str):
     """
     Add an email to the contact list in Resend
     """
-    if config.ENVIRONMENT != "preview" and config.ENVIRONMENT != "test":
+    if config.ENVIRONMENT == "production":
         try:
             logger.info(f"Adding {email} to the contact list")
             resend.Contacts.create(
@@ -150,7 +150,7 @@ def email_user_onboarding(email: str):
     Send an email to the user to onboard them
     Add them to the Resend contact list
     """
-    if config.ENVIRONMENT != "preview":
+    if config.ENVIRONMENT != "preview" and config.ENVIRONMENT != "test":
         send_welcome_email(email)
         add_email_contact(email)
         logger.debug(f"finished email onboarding for {email}")
