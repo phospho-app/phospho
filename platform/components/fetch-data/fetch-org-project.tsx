@@ -45,10 +45,6 @@ export default function InitializeOrganization() {
 
       if (user?.getOrgs().length === 0) {
         // User has no orgs. Redirect to create org page
-        toast({
-          title: "You have no organizations",
-          description: "Please create an organization to continue",
-        });
         setRedirecting(true);
         redirectToCreateOrgPage();
         return;
@@ -69,8 +65,10 @@ export default function InitializeOrganization() {
         }
       }
       if (!selectedOrgId) return;
+      if (!accessToken) return;
 
       try {
+        // Wait 0.5 seconds before initializing the organization
         const init_response = await fetch(
           `/api/organizations/${selectedOrgId}/init`,
           {
@@ -81,6 +79,11 @@ export default function InitializeOrganization() {
             },
           },
         );
+        if (init_response.status === 403) {
+          // Unauthorized. Wait for retry
+          console.log("Unauthorized. Waiting for retry");
+          return;
+        }
         if (init_response.status !== 200) {
           toast({
             title: `Error initializing organization ${selectedOrgId}`,
