@@ -4,8 +4,10 @@ import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function FetchOrgProject() {
-  // This module fetch top-level settings for the org and the project
+export default function InitializeOrganization() {
+  /* 
+  This component is responsible for initializing the organization and project
+  */
 
   const { user, loading, accessToken, isLoggedIn } = useUser();
   const { redirectToCreateOrgPage } = useRedirectFunctions();
@@ -24,10 +26,16 @@ export default function FetchOrgProject() {
   );
 
   useEffect(() => {
-    // Initialize the org if it has no projects
-    // Creates a project if it has no projects
-    // Otherwise, select the first project
     (async () => {
+      /*
+      This effect is responsible for initializing the organization and project.
+      1. If the user is not logged in, redirect to the authenticate page
+      2. If the user has no orgs, redirect to the create org page
+      3. If the user has orgs, select the first org
+      4. Call the init endpoint to initialize the organization and project. If everything is 
+        already initialized, this endpoint won't do anything.
+      5. If the user is on the home page, redirect to the page returned by the init endpoint
+      */
       if (loading) return;
       if (!isLoggedIn) {
         setRedirecting(true);
@@ -37,6 +45,10 @@ export default function FetchOrgProject() {
 
       if (user?.getOrgs().length === 0) {
         // User has no orgs. Redirect to create org page
+        toast({
+          title: "You have no organizations",
+          description: "Please create an organization to continue",
+        });
         setRedirecting(true);
         redirectToCreateOrgPage();
         return;
@@ -71,7 +83,7 @@ export default function FetchOrgProject() {
         );
         if (init_response.status !== 200) {
           toast({
-            title: "Error initializing organization",
+            title: `Error initializing organization ${selectedOrgId}`,
             description: init_response.statusText,
           });
           setSelectedOrgId(null);
@@ -92,7 +104,10 @@ export default function FetchOrgProject() {
           router.push(responseBody.redirect_url);
         }
       } catch (error) {
-        console.error("Error initializing organization:", error);
+        console.error(
+          `Error initializing organization: ${selectedOrgId}`,
+          error,
+        );
       }
     })();
   }, [

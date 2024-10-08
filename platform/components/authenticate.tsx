@@ -8,7 +8,6 @@ const Authenticate: React.FC = () => {
   const { redirectToSignupPage, redirectToLoginPage } = useRedirectFunctions();
   return (
     <>
-      <div className="hidden"></div>
       <div className="h-screen container relative flex-col items-center justify-center md:grid lg:max-w-screen lg:grid-cols-2 lg:px-0 lg:mx-0">
         <div className="relative hidden h-full flex-col bg-muted p-10 lg:border-r lg:flex">
           <div className="absolute inset-0 bg-gradient-to-r from from-transparent to-green-500" />
@@ -25,11 +24,14 @@ const Authenticate: React.FC = () => {
           </div>
         </div>
         <div className="lg:p-8 lg:col-span-1">
-          <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px] mt-24">
-            <div className="flex flex-col space-y-2 text-center">
+          <div className="h-[90vh] mx-auto flex flex-col justify-center space-y-6 sm:w-[350px] items-center">
+            <div className="flex flex-col space-y-2 text-center ">
+              <h1 className="text-3xl font-semibold mb-4">
+                Let's get started with phospho.
+              </h1>
               <Button
                 onClick={() => redirectToSignupPage()}
-                className="bg-green-500 text-white hover:bg-gray-50 hover:text-green-500 hover:border hover:border-green-500"
+                className="bg-green-500 text-white hover:bg-green-600 "
               >
                 Sign up
               </Button>

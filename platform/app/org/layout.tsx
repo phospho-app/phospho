@@ -1,6 +1,6 @@
 "use client";
 
-import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
+import InitializeOrganization from "@/components/fetch-data/fetch-org-project";
 import Navbar from "@/components/navbar/nav-bar";
 import { Sidebar } from "@/components/sidebar/sidebar";
 import { authFetcher } from "@/lib/fetcher";
@@ -56,7 +56,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="max-h-screen h-screen">
-      <FetchOrgProject />
+      <InitializeOrganization />
       <Navbar />
       <Sidebar className="fixed top-12 w-[10rem] hidden md:block" />
       <div className="pt-12 gap-2 w-full px-2 md:pl-[11rem]">
