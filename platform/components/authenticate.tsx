@@ -27,9 +27,6 @@ const Authenticate: React.FC = () => {
         <div className="lg:p-8 lg:col-span-1">
           <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px] mt-24">
             <div className="flex flex-col space-y-2 text-center">
-              <h1 className="text-2xl font-semibold tracking-tight text-green-500">
-                Let&apos;s get started with phospho.
-              </h1>
               <Button
                 onClick={() => redirectToSignupPage()}
                 className="bg-green-500 text-white hover:bg-gray-50 hover:text-green-500 hover:border hover:border-green-500"

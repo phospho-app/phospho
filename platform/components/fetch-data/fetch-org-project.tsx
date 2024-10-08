@@ -1,7 +1,7 @@
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { dataStateStore, navigationStateStore } from "@/store/store";
-import { useUser } from "@propelauth/nextjs/client";
+import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
@@ -10,9 +10,11 @@ export default function FetchOrgProject() {
   // This module fetch top-level settings for the org and the project
 
   const { user, loading, accessToken, isLoggedIn } = useUser();
+  const { redirectToCreateOrgPage } = useRedirectFunctions();
   const { toast } = useToast();
   const pathname = usePathname();
   const router = useRouter();
+
   const [redirecting, setRedirecting] = useState(false);
 
   const project_id = navigationStateStore((state) => state.project_id);
@@ -33,9 +35,32 @@ export default function FetchOrgProject() {
     (async () => {
       if (loading) return;
       if (!isLoggedIn) {
+        setRedirecting(true);
         router.push("/authenticate");
+        return;
       }
 
+      if (user?.getOrgs().length === 0) {
+        // User has no orgs. Redirect to create org page
+        setRedirecting(true);
+        redirectToCreateOrgPage();
+        return;
+      }
+
+      if (user?.orgIdToOrgMemberInfo !== undefined) {
+        const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
+        if (selectedOrgId === undefined || selectedOrgId === null) {
+          // Put the first org id in the state
+          // Get it from the user object, in the maping orgIdToOrgMemberInfo
+          const orgId = userOrgIds[0];
+          setSelectedOrgId(orgId);
+        }
+        // If currently selected org is not in the user's orgs, select the first org
+        else if (!userOrgIds.includes(selectedOrgId)) {
+          const orgId = userOrgIds[0];
+          setSelectedOrgId(orgId);
+        }
+      }
       if (!selectedOrgId) return;
 
       try {
@@ -85,22 +110,9 @@ export default function FetchOrgProject() {
     setproject_id,
     toast,
     redirecting,
+    setSelectedOrgId,
+    user,
   ]);
-
-  if (isLoggedIn && user.orgIdToOrgMemberInfo !== undefined) {
-    const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
-    if (selectedOrgId === undefined || selectedOrgId === null) {
-      // Put the first org id in the state
-      // Get it from the user object, in the maping orgIdToOrgMemberInfo
-      const orgId = userOrgIds[0];
-      setSelectedOrgId(orgId);
-    }
-    // If currently selected org is not in the user's orgs, select the first org
-    else if (!userOrgIds.includes(selectedOrgId)) {
-      const orgId = userOrgIds[0];
-      setSelectedOrgId(orgId);
-    }
-  }
 
   // Fetch the org metadata
   const { data: fetchedOrgMetadata } = useSWR(
