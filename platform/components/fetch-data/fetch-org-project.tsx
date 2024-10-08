@@ -42,15 +42,16 @@ export default function InitializeOrganization() {
         router.push("/authenticate");
         return;
       }
+      if (!user) return;
 
-      if (user?.getOrgs().length === 0) {
+      if (user.getOrgs().length === 0) {
         // User has no orgs. Redirect to create org page
         setRedirecting(true);
         redirectToCreateOrgPage();
         return;
       }
 
-      if (user?.orgIdToOrgMemberInfo !== undefined) {
+      if (user.orgIdToOrgMemberInfo !== undefined) {
         const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
         if (selectedOrgId === undefined || selectedOrgId === null) {
           // Put the first org id in the state
@@ -82,6 +83,7 @@ export default function InitializeOrganization() {
         if (init_response.status === 403) {
           // Unauthorized. Wait for retry
           console.log("Unauthorized. Waiting for retry");
+          setSelectedOrgId(null);
           return;
         }
         if (init_response.status !== 200) {

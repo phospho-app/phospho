@@ -134,7 +134,14 @@ async def post_init_org(
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     # Auth
-    propelauth.require_org_member(user, org_id)
+    try:
+        propelauth.require_org_member(user, org_id)
+    except Exception as e:
+        logger.error(f"Error initializing organization {org_id} : {e}")
+        return {
+            "status": "error",
+            "detail": str(e),
+        }
 
     output: Dict[str, Any] = {}
 
