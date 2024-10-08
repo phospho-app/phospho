@@ -40,8 +40,7 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import useDebounce from "@/lib/useDebounce";
-import { Clustering } from "@/models/models";
-import { dataStateStore } from "@/store/store";
+import { Clustering, OrgMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -73,14 +72,24 @@ const RunClusteringSheet = ({
   setSheetOpen: (value: boolean) => void;
   setSelectedClustering: (value: Clustering) => void;
 }) => {
-  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const project_id = navigationStateStore((state) => state.project_id);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
 
   const { accessToken } = useUser();
   const { mutate } = useSWRConfig();
 
   const [loading, setLoading] = useState(false);
+
+  const { data: orgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const hobby = orgMetadata?.plan === "hobby";
 

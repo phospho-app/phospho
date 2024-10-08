@@ -22,8 +22,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
-import { Project } from "@/models/models";
-import { dataStateStore } from "@/store/store";
+import { OrgMetadata, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
@@ -49,10 +48,20 @@ const FormSchema = z.object({
 const RunAnalysisInPast = () => {
   const router = useRouter();
   const { accessToken } = useUser();
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const [checkedEvent, setCheckedEvent] = useState(true);
   const [checkedLangSent, setCheckedLangSent] = useState(true);
   const [totalAnalytics, setTotalAnalytics] = useState(0);
-  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+
+  const { data: orgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
   const hobby = orgMetadata?.plan === "hobby";
 
   const [loading, setLoading] = React.useState(false);

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore } from "@/store/store";
+import { OrgMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Database, Download } from "lucide-react";
@@ -27,10 +27,20 @@ import useSWR from "swr";
 const PullDataset = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const [isPullingDataset, setIsPullingDataset] = useState(false);
-  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const [datasetName, setDatasetName] = useState("");
+
+  const { data: orgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const { data: datasets_names }: { data: string[] | undefined } = useSWR(
     project_id ? [`/api/argilla/datasets/names`, accessToken] : null,

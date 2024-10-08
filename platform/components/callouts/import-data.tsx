@@ -35,7 +35,8 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { OrgMetadata } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -361,8 +362,16 @@ export const SendDataAlertDialog = ({
   const router = useRouter();
 
   const project_id = navigationStateStore((state) => state.project_id);
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
   );
 
   const [showModal, setShowModal] = useState(true);

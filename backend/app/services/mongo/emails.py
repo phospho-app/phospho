@@ -58,10 +58,12 @@ def send_welcome_email(to_email: str):
         "html": message,
         "reply_to": "paul-louis@phospho.ai",
     }
-    if config.ENVIRONMENT != "preview":
-        resend.Emails.send(params)
-
-        logger.info(f"Sent welcome email to {to_email}")
+    if config.ENVIRONMENT != "preview" and config.ENVIRONMENT != "test":
+        logger.info(f"Sending welcome email to {to_email}")
+        try:
+            resend.Emails.send(params)
+        except Exception as e:
+            logger.error(f"Error sending welcome email to {to_email}: {e}")
 
 
 async def send_quota_exceeded_email(org_id: str):
@@ -130,14 +132,17 @@ def add_email_contact(email: str):
     """
     Add an email to the contact list in Resend
     """
-    if config.ENVIRONMENT != "preview":
-        resend.Contacts.create(
-            {
-                "email": email,
-                "audience_id": config.RESEND_AUDIENCE_ID,
-            }
-        )
-        logger.info(f"Added {email} to the contact list")
+    if config.ENVIRONMENT == "production":
+        try:
+            logger.info(f"Adding {email} to the contact list")
+            resend.Contacts.create(
+                {
+                    "email": email,
+                    "audience_id": config.RESEND_AUDIENCE_ID,
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error adding {email} to the contact list: {e}")
 
 
 def email_user_onboarding(email: str):
@@ -145,7 +150,7 @@ def email_user_onboarding(email: str):
     Send an email to the user to onboard them
     Add them to the Resend contact list
     """
-    if config.ENVIRONMENT != "preview":
+    if config.ENVIRONMENT != "preview" and config.ENVIRONMENT != "test":
         send_welcome_email(email)
         add_email_contact(email)
         logger.debug(f"finished email onboarding for {email}")

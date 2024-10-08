@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { PostgresCredentials } from "@/models/models";
-import { dataStateStore } from "@/store/store";
+import { OrgMetadata, PostgresCredentials } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
@@ -21,11 +20,21 @@ import useSWR from "swr";
 
 const CreatePowerBI = ({ project_id }: { project_id: string }) => {
   const { accessToken } = useUser();
-  const org_id = navigationStateStore((state) => state.selectedOrgId);
-  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const { data: orgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const { data: credentials }: { data: PostgresCredentials } = useSWR(
-    org_id ? [`/api/postgresql/creds/${org_id}`, accessToken] : null,
+    selectedOrgId
+      ? [`/api/postgresql/creds/${selectedOrgId}`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
@@ -68,7 +77,7 @@ const CreatePowerBI = ({ project_id }: { project_id: string }) => {
     }
   };
 
-  if (!org_id || !orgMetadata?.power_bi || !project_id || !credentials) {
+  if (!selectedOrgId || !orgMetadata?.power_bi || !project_id || !credentials) {
     return <></>;
   }
 

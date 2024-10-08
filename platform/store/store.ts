@@ -274,10 +274,8 @@ export const navigationStateStore = create(
 // The data state store share the data between the different components
 // Those data were fetched from the backend
 // Not persist when you reload
+// TODO : Remove in favor of the useSWR hook
 interface dataState {
-  selectedOrgMetadata: OrgMetadata | null;
-  setSelectOrgMetadata: (selectOrgMetadata: OrgMetadata) => void;
-
   hasLabelledTasks: HasEnoughLabelledTasks | null;
   setHasLabelledTasks: (
     hasLabelledTasks: HasEnoughLabelledTasks | null,
@@ -285,10 +283,6 @@ interface dataState {
 }
 
 export const dataStateStore = create<dataState>((set) => ({
-  selectedOrgMetadata: null,
-  setSelectOrgMetadata: (selectOrgMetadata: OrgMetadata) =>
-    set(() => ({ selectedOrgMetadata: selectOrgMetadata })),
-
   hasLabelledTasks: null,
   setHasLabelledTasks: (hasLabelledTasks: HasEnoughLabelledTasks | null) =>
     set(() => ({ hasLabelledTasks: hasLabelledTasks })),

@@ -1,18 +1,20 @@
 import { useToast } from "@/components/ui/use-toast";
-import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
-import { useUser } from "@propelauth/nextjs/client";
+import { navigationStateStore } from "@/store/store";
+import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
 
-export default function FetchOrgProject() {
-  // This module fetch top-level settings for the org and the project
+export default function InitializeOrganization() {
+  /* 
+  This component is responsible for initializing the organization and project
+  */
 
   const { user, loading, accessToken, isLoggedIn } = useUser();
+  const { redirectToCreateOrgPage } = useRedirectFunctions();
   const { toast } = useToast();
   const pathname = usePathname();
   const router = useRouter();
+
   const [redirecting, setRedirecting] = useState(false);
 
   const project_id = navigationStateStore((state) => state.project_id);
@@ -22,23 +24,52 @@ export default function FetchOrgProject() {
   const setSelectedOrgId = navigationStateStore(
     (state) => state.setSelectedOrgId,
   );
-  const setSelectOrgMetadata = dataStateStore(
-    (state) => state.setSelectOrgMetadata,
-  );
 
   useEffect(() => {
-    // Initialize the org if it has no projects
-    // Creates a project if it has no projects
-    // Otherwise, select the first project
     (async () => {
+      /*
+      This effect is responsible for initializing the organization and project.
+      1. If the user is not logged in, redirect to the authenticate page
+      2. If the user has no orgs, redirect to the create org page
+      3. If the user has orgs, select the first org
+      4. Call the init endpoint to initialize the organization and project. If everything is 
+        already initialized, this endpoint won't do anything.
+      5. If the user is on the home page, redirect to the page returned by the init endpoint
+      */
       if (loading) return;
       if (!isLoggedIn) {
+        setRedirecting(true);
         router.push("/authenticate");
+        return;
+      }
+      if (!user) return;
+
+      if (user.getOrgs().length === 0) {
+        // User has no orgs. Redirect to create org page
+        setRedirecting(true);
+        redirectToCreateOrgPage();
+        return;
       }
 
+      if (user.orgIdToOrgMemberInfo !== undefined) {
+        const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
+        if (selectedOrgId === undefined || selectedOrgId === null) {
+          // Put the first org id in the state
+          // Get it from the user object, in the maping orgIdToOrgMemberInfo
+          const orgId = userOrgIds[0];
+          setSelectedOrgId(orgId);
+        }
+        // If currently selected org is not in the user's orgs, select the first org
+        else if (!userOrgIds.includes(selectedOrgId)) {
+          const orgId = userOrgIds[0];
+          setSelectedOrgId(orgId);
+        }
+      }
       if (!selectedOrgId) return;
+      if (!accessToken) return;
 
       try {
+        // Wait 0.5 seconds before initializing the organization
         const init_response = await fetch(
           `/api/organizations/${selectedOrgId}/init`,
           {
@@ -49,11 +80,18 @@ export default function FetchOrgProject() {
             },
           },
         );
+        if (init_response.status === 403) {
+          // Unauthorized. Wait for retry
+          console.log("Unauthorized. Waiting for retry");
+          setSelectedOrgId(null);
+          return;
+        }
         if (init_response.status !== 200) {
           toast({
-            title: "Error initializing organization",
+            title: `Error initializing organization ${selectedOrgId}`,
             description: init_response.statusText,
           });
+          setSelectedOrgId(null);
           return;
         }
         const responseBody = await init_response.json();
@@ -71,7 +109,10 @@ export default function FetchOrgProject() {
           router.push(responseBody.redirect_url);
         }
       } catch (error) {
-        console.error("Error initializing organization:", error);
+        console.error(
+          `Error initializing organization: ${selectedOrgId}`,
+          error,
+        );
       }
     })();
   }, [
@@ -85,36 +126,10 @@ export default function FetchOrgProject() {
     setproject_id,
     toast,
     redirecting,
+    setSelectedOrgId,
+    user,
+    redirectToCreateOrgPage,
   ]);
-
-  if (isLoggedIn && user.orgIdToOrgMemberInfo !== undefined) {
-    const userOrgIds = Object.keys(user.orgIdToOrgMemberInfo);
-    if (selectedOrgId === undefined || selectedOrgId === null) {
-      // Put the first org id in the state
-      // Get it from the user object, in the maping orgIdToOrgMemberInfo
-      const orgId = userOrgIds[0];
-      setSelectedOrgId(orgId);
-    }
-    // If currently selected org is not in the user's orgs, select the first org
-    else if (!userOrgIds.includes(selectedOrgId)) {
-      const orgId = userOrgIds[0];
-      setSelectedOrgId(orgId);
-    }
-  }
-
-  // Fetch the org metadata
-  const { data: fetchedOrgMetadata } = useSWR(
-    selectedOrgId
-      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-  if (fetchedOrgMetadata) {
-    setSelectOrgMetadata(fetchedOrgMetadata);
-  }
 
   return <></>;
 }

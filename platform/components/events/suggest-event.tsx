@@ -19,8 +19,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { DetectionEngine, DetectionScope, Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import {
+  DetectionEngine,
+  DetectionScope,
+  OrgMetadata,
+  Project,
+} from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Wand2 } from "lucide-react";
@@ -77,7 +82,7 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId }) => {
   };
 
   const project_id = navigationStateStore((state) => state.project_id);
-  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const { mutate } = useSWRConfig();
   const { loading, accessToken } = useUser();
   const { toast } = useToast();
@@ -89,6 +94,16 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId }) => {
       keepPreviousData: true,
     },
   );
+  const { data: orgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+
   const currentEvents = selectedProject?.settings?.events || {};
   const max_nb_events = orgMetadata?.plan === "pro" ? 100 : 10;
   const current_nb_events = Object.keys(currentEvents).length;

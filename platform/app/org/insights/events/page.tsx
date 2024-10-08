@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
-import { Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { OrgMetadata, Project } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { AlertCircle, PlusIcon, TextSearch } from "lucide-react";
 import Link from "next/link";
@@ -70,10 +70,19 @@ export default function Page() {
   const { accessToken } = useUser();
 
   const project_id = navigationStateStore((state) => state.project_id);
-  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const { data: orgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,

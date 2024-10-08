@@ -11,8 +11,8 @@ import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { Project } from "@/models/models";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { OrgMetadata, Project } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { AlertDialog } from "@radix-ui/react-alert-dialog";
 import { Check, X } from "lucide-react";
@@ -29,14 +29,21 @@ export const OnboardingProgress = () => {
   const [open, setOpen] = React.useState(false);
 
   const project_id = navigationStateStore((state) => state.project_id);
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
-  );
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
 
   const { accessToken } = useUser();
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,

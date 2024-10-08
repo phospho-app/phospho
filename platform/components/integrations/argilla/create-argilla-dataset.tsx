@@ -10,25 +10,37 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/use-toast";
+import { authFetcher } from "@/lib/fetcher";
 import { generateSlug } from "@/lib/utils";
-import { dataStateStore } from "@/store/store";
+import { OrgMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import { ChevronRight } from "lucide-react";
 import React from "react";
 import { useState } from "react";
+import useSWR from "swr";
 
 const CreateDataset = () => {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-  const orgMetadata = dataStateStore((state) => state.selectedOrgMetadata);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const [isCreatingDataset, setIsCreatingDataset] = useState(false);
   // Params for the dataset creation
   const [limit, setLimit] = useState(400); // Limit on the dataset size
   const [useSmartSampling] = useState(false); // To know wich sampling_type send to the backend
   const [datasetName, setDatasetName] = useState(generateSlug());
+
+  const { data: orgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   // Hardcoded limit for the dataset size
   const MAX_LIMIT = 2000;

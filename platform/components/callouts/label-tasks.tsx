@@ -6,7 +6,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { OrgMetadata } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
@@ -14,11 +15,19 @@ import React from "react";
 import useSWR from "swr";
 
 export function LabelTasksCallout() {
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
-  );
   const project_id = navigationStateStore((state) => state.project_id);
+  const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
   const { accessToken } = useUser();
+
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const { data: hasLabelledTasks } = useSWR(
     project_id

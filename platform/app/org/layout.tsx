@@ -1,21 +1,31 @@
 "use client";
 
-import FetchOrgProject from "@/components/fetch-data/fetch-org-project";
+import InitializeOrganization from "@/components/fetch-data/fetch-org-project";
 import Navbar from "@/components/navbar/nav-bar";
 import { Sidebar } from "@/components/sidebar/sidebar";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { authFetcher } from "@/lib/fetcher";
+import { OrgMetadata } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import "@radix-ui/react-dropdown-menu";
 import { useRouter } from "next/navigation";
 import React from "react";
+import useSWR from "swr";
 
 export default function OrgLayout({ children }: { children: React.ReactNode }) {
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
-  );
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const { isLoggedIn, loading } = useUser();
+  const { accessToken, isLoggedIn, loading } = useUser();
   const router = useRouter();
+
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   if (
     selectedOrgMetadata?.plan === "hobby" &&
@@ -46,7 +56,7 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="max-h-screen h-screen">
-      <FetchOrgProject />
+      <InitializeOrganization />
       <Navbar />
       <Sidebar className="fixed top-12 w-[10rem] hidden md:block" />
       <div className="pt-12 gap-2 w-full px-2 md:pl-[11rem]">

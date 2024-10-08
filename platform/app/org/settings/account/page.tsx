@@ -8,21 +8,31 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { dataStateStore, navigationStateStore } from "@/store/store";
+import { authFetcher } from "@/lib/fetcher";
+import { OrgMetadata } from "@/models/models";
+import { navigationStateStore } from "@/store/store";
 import { useRedirectFunctions, useUser } from "@propelauth/nextjs/client";
 import { CircleUser, CopyIcon, ExternalLink, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import useSWR from "swr";
 
 export default function Page() {
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const selectedOrgMetadata = dataStateStore(
-    (state) => state.selectedOrgMetadata,
-  );
 
   const { redirectToAccountPage, redirectToOrgPage } = useRedirectFunctions();
-  const { loading, user } = useUser();
+  const { accessToken, loading, user } = useUser();
   const [copied, setCopied] = useState(false);
+
+  const { data: selectedOrgMetadata }: { data: OrgMetadata } = useSWR(
+    selectedOrgId
+      ? [`/api/organizations/${selectedOrgId}/metadata`, accessToken]
+      : null,
+    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const plan = selectedOrgMetadata?.plan ?? "hobby";
 
