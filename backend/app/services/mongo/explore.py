@@ -446,15 +446,23 @@ async def get_most_detected_tagger_name(
     return most_detected_event_name
 
 
-def extract_date_range(filters: dict) -> Tuple[datetime.datetime, datetime.datetime]:
+def extract_date_range(
+    filters: ProjectDataFilters
+) -> Tuple[Optional[datetime.datetime], Optional[datetime.datetime]]:
+    """ """
     start_date = end_date = None
-    if filters and "created_at" in filters:
-        if "$gte" in filters["created_at"]:
-            start_date = datetime.datetime.utcfromtimestamp(
-                filters["created_at"]["$gte"]
-            )
-        if "$lte" in filters["created_at"]:
-            end_date = datetime.datetime.utcfromtimestamp(filters["created_at"]["$lte"])
+    if filters.created_at_start and isinstance(filters.created_at_start, int):
+        start_date = datetime.datetime.fromtimestamp(filters.created_at_start)
+    if filters.created_at_end and isinstance(filters.created_at_end, int):
+        end_date = datetime.datetime.fromtimestamp(filters.created_at_end)
+
+    if filters.created_at_start and isinstance(
+        filters.created_at_start, datetime.datetime
+    ):
+        start_date = filters.created_at_start
+    if filters.created_at_end and isinstance(filters.created_at_end, datetime.datetime):
+        end_date = filters.created_at_end
+
     return start_date, end_date
 
 
@@ -491,50 +499,64 @@ async def get_nb_of_daily_tasks(
     """
     Get the number of daily tasks of a project.
     """
-    tasks = await get_all_tasks(project_id=project_id, limit=None, filters=filters)
-    df = pd.DataFrame([task.model_dump() for task in tasks])
+    # tasks = await get_all_tasks(project_id=project_id, limit=None, filters=filters)
 
-    if not df.empty:
-        # If start and end date are not provided, we take the first and last task date
-        if filters.created_at_start is None:
-            filters.created_at_start = df["created_at"].min()
-    else:
-        if filters.created_at_start is None:
-            filters.created_at_start = int(datetime.datetime.now().timestamp())
-
-    if filters.created_at_end is None:
-        filters.created_at_end = int(datetime.datetime.now().timestamp())
-
-    complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(
-            filters.created_at_start, datetime.timezone.utc
-        ),
-        datetime.datetime.fromtimestamp(filters.created_at_end, datetime.timezone.utc),
-        freq="D",
+    mongo_db = await get_mongo_db()
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="tasks",
+        filters=filters,
     )
+    pipeline = await query_builder.build()
+    # Group by date
+    pipeline.extend(
+        [
+            # Transform the created_at field to a date
+            {
+                "$addFields": {
+                    "date": {
+                        "$dateToString": {
+                            "format": "%Y-%m-%d",
+                            "date": {"$toDate": {"$multiply": ["$created_at", 1000]}},
+                        }
+                    }
+                }
+            },
+            {"$group": {"_id": "$date", "nb_tasks": {"$sum": 1}}},
+            {"$project": {"_id": 0, "date": "$_id", "nb_tasks": 1}},
+            {"$sort": {"date": 1}},
+        ]
+    )
+
+    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+    if len(result) == 0:
+        return []
+
+    # Add missing days in the date range
+    result_df = pd.DataFrame(result)
+    start_date_range, end_date_range = extract_date_range(filters)
+    if start_date_range is None:
+        if not result_df.empty:
+            start_date_range = result_df["date"].min()
+        else:
+            start_date_range = datetime.datetime.now()
+    if end_date_range is None:
+        end_date_range = datetime.datetime.now()
+
+    complete_date_range = pd.date_range(start_date_range, end_date_range, freq="D")
     complete_df = pd.DataFrame({"date": complete_date_range})
+    # Format date field to %Y-%m-%d format
+    complete_df["date"] = pd.to_datetime(complete_df["date"]).dt.date
 
-    if not df.empty:
-        df["date"] = pd.to_datetime(df["created_at"], unit="s", utc=True).dt.date
-        # Group by date and count
-        nb_tasks_per_day = (
-            df.groupby(["date"])
-            .count()
-            .reset_index()[["date", "id"]]
-            .rename(columns={"id": "nb_tasks"})
-        )
-
-        # Add missing days
-
-        complete_df["date"] = pd.to_datetime(complete_df["date"]).dt.date
-        nb_tasks_per_day = pd.merge(
-            complete_df, nb_tasks_per_day, on="date", how="left"
-        ).fillna(0)
+    # Merge based on the calendar date part
+    if not result_df.empty:
+        result_df["date"] = pd.to_datetime(result_df["date"]).dt.date
+        complete_df = pd.merge(complete_df, result_df, on="date", how="left")
+        complete_df = complete_df.fillna(0)
     else:
-        nb_tasks_per_day = complete_df
-        nb_tasks_per_day["nb_tasks"] = 0
+        complete_df["nb_tasks"] = 0
 
-    return nb_tasks_per_day[["date", "nb_tasks"]].to_dict(orient="records")
+    return complete_df[["date", "nb_tasks"]].to_dict(orient="records")
 
 
 async def get_top_taggers_names_and_count(
@@ -1023,73 +1045,49 @@ async def get_nb_sessions_per_day(
         filters=filters,
     )
     pipeline = await query_builder.build()
-
-    result = (
-        await mongo_db["sessions"]
-        .aggregate(
-            pipeline
-            + [
-                {"$project": {"_id": 0, "created_at": 1}},
-                {"$sort": {"date": 1}},
-            ]
-        )
-        .to_list(length=None)
+    pipeline.extend(
+        [
+            # Transform the created_at field to a date
+            {
+                "$addFields": {
+                    "date": {
+                        "$dateToString": {
+                            "format": "%Y-%m-%d",
+                            "date": {"$toDate": {"$multiply": ["$created_at", 1000]}},
+                        }
+                    }
+                }
+            },
+            {"$group": {"_id": "$date", "nb_sessions": {"$sum": 1}}},
+            {"$project": {"_id": 0, "date": "$_id", "nb_sessions": 1}},
+        ]
     )
-    df = pd.DataFrame(result)
 
-    start_date_range: datetime.datetime
-    end_date_range: datetime.datetime
+    result = await mongo_db["sessions"].aggregate(pipeline).to_list(length=None)
 
-    if filters.created_at_start is None:
-        if not df.empty:
-            start_date_range = datetime.datetime.fromtimestamp(
-                df["created_at"].min(), datetime.timezone.utc
-            )
+    # Add missing days in the date range
+    results_df = pd.DataFrame(result)
+    start_date_range, end_date_range = extract_date_range(filters)
+    if start_date_range is None:
+        if not results_df.empty:
+            start_date_range = results_df["date"].min()
         else:
-            start_date_range = datetime.datetime.fromtimestamp(0, datetime.timezone.utc)
-    elif isinstance(filters.created_at_start, int):
-        start_date_range = datetime.datetime.fromtimestamp(
-            filters.created_at_start, datetime.timezone.utc
-        )
-    else:
-        start_date_range = filters.created_at_start
+            start_date_range = datetime.datetime.now()
+    if end_date_range is None:
+        end_date_range = datetime.datetime.now()
 
-    if filters.created_at_end is None:
-        end_date_range = datetime.datetime.now(datetime.timezone.utc)
-    elif isinstance(filters.created_at_end, int):
-        end_date_range = datetime.datetime.fromtimestamp(
-            filters.created_at_end, datetime.timezone.utc
-        )
-    else:
-        end_date_range = filters.created_at_end
-
-    complete_date_range = pd.date_range(
-        start_date_range,
-        end_date_range,
-        freq="D",
-    )
+    complete_date_range = pd.date_range(start_date_range, end_date_range, freq="D")
     complete_df = pd.DataFrame({"date": complete_date_range})
     complete_df["date"] = pd.to_datetime(complete_df["date"]).dt.date
 
-    if not df.empty:
-        df["date"] = pd.to_datetime(df["created_at"], unit="s", utc=True).dt.date
-        # Group by date and count
-        nb_sessions_per_day = (
-            df.groupby(["date"])
-            .count()
-            .reset_index()[["date", "created_at"]]
-            .rename(columns={"created_at": "nb_sessions"})
-        )
-
-        # Add missing days
-        nb_sessions_per_day = pd.merge(
-            complete_df, nb_sessions_per_day, on="date", how="left"
-        ).fillna(0)
+    if not results_df.empty:
+        results_df["date"] = pd.to_datetime(results_df["date"]).dt.date
+        complete_df = pd.merge(complete_df, results_df, on="date", how="left")
+        complete_df = complete_df.fillna(0)
     else:
-        nb_sessions_per_day = complete_df
-        nb_sessions_per_day["nb_sessions"] = 0
+        complete_df["nb_sessions"] = 0
 
-    return nb_sessions_per_day[["date", "nb_sessions"]].to_dict(orient="records")
+    return complete_df[["date", "nb_sessions"]].to_dict(orient="records")
 
 
 async def get_nb_sessions_histogram(
@@ -2775,13 +2773,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values.get(event_name, []):
@@ -2802,13 +2800,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2841,13 +2839,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[event_result["version_id"]] = (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] = event_result["count"]
                 else:
-                    divide_for_correct_average[event_result["version_id"]] += (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] += event_result["count"]
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (

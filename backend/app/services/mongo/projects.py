@@ -540,8 +540,6 @@ async def get_all_sessions(
     if get_tasks:
         query_builder.merge_tasks(force=True)
 
-    logger.info(f"Sessions pipeline: {pipeline}")
-
     sessions = await mongo_db["sessions"].aggregate(pipeline).to_list(length=limit)
 
     # Filter the _id field from the Sessions
