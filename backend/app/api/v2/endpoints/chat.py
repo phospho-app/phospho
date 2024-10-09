@@ -255,6 +255,10 @@ async def log_and_meter(
     "/{project_id}/chat/completions",
     description="Create a chat completion",
 )
+@router.post(
+    "/{project_id}/v1/chat/completions",
+    description="Create a chat completion",
+)
 @rate_limiter(limit=500, seconds=60)
 async def create(
     project_id: str,
@@ -401,32 +405,3 @@ async def create(
             return response
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post(
-    "/{project_id}/v1/chat/completions",
-    description="Create a chat completion",
-)
-@rate_limiter(limit=500, seconds=60)
-async def complete(
-    project_id: str,
-    request: Request,
-    create_request: CreateRequest,
-    background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
-):
-    """
-    Generate a chat completion
-
-    The org identified by the API key must have access to the completion service.
-    This means that the metadata has_completion_access must be set to True in Propelauth.
-    """
-    response = await create(
-        project_id=project_id,
-        request=request,
-        create_request=create_request,
-        background_tasks=background_tasks,
-        org=org,
-    )
-
-    return response
