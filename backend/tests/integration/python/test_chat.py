@@ -2,7 +2,7 @@
 This agent is called by the CICD after deploying to staging.
 """
 
-import requests
+import requests  # type: ignore
 import openai
 
 
