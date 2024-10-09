@@ -405,7 +405,10 @@ class MainPipeline:
                 result.task_id = task_id
                 if result.job_metadata.get("recipe_id") is None:
                     logger.error(f"No recipe_id found for event {event_name}.")
-                job_results_to_push_to_db.append(result.model_dump())
+                result_as_dict = result.model_dump()
+                # Convert all keys to string
+                result_as_dict = {str(k): v for k, v in result_as_dict.items()}
+                job_results_to_push_to_db.append(result_as_dict)
 
         # Save the detected events and jobs results in the database
         mongo_db = await get_mongo_db()
