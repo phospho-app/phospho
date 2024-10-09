@@ -384,7 +384,7 @@ async def get_most_detected_tagger_name(
         main_filter["created_at"] = {"$gte": created_at_start}
     if created_at_end is not None:
         main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
+            **main_filter.get("created_at", {}),  # type: ignore
             "$lte": created_at_end,
         }
     # Event is not removed
@@ -400,7 +400,7 @@ async def get_most_detected_tagger_name(
             },
         },
     ]
-    tasks_filter = {}
+    tasks_filter: Dict[str, object] = {}
     # Filter on flag
     if flag is not None:
         tasks_filter["tasks.flag"] = flag
@@ -582,7 +582,7 @@ async def get_top_taggers_names_and_count(
         main_filter["created_at"] = {"$gte": filters.created_at_start}
     if filters.created_at_end is not None:
         main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
+            **main_filter.get("created_at", {}),  # type: ignore
             "$lte": filters.created_at_end,
         }
 
@@ -661,41 +661,34 @@ async def get_daily_success_rate(
     ]
     result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
 
-    df = pd.DataFrame(result)
+    result_df = pd.DataFrame(result)
 
-    # If start and end date are not provided, we take the first and last task date
-    if not df.empty:
-        if filters.created_at_start is None:
-            filters.created_at_start = df["created_at"].min()
-    else:
-        if filters.created_at_start is None:
-            filters.created_at_start = int(datetime.datetime.now().timestamp())
+    start_date_range, end_date_range = extract_date_range(filters)
+    if start_date_range is None:
+        if not result_df.empty:
+            start_date_range = result_df["created_at"].min()
+        else:
+            start_date_range = datetime.datetime.now()
+    if end_date_range is None:
+        end_date_range = datetime.datetime.now()
 
-    if filters.created_at_end is None:
-        filters.created_at_end = int(datetime.datetime.now().timestamp())
-
-    complete_date_range = pd.date_range(
-        datetime.datetime.fromtimestamp(
-            filters.created_at_start, datetime.timezone.utc
-        ),
-        datetime.datetime.fromtimestamp(filters.created_at_end, datetime.timezone.utc),
-        freq="D",
-    )
+    complete_date_range = pd.date_range(start_date_range, end_date_range, freq="D")
     complete_df = pd.DataFrame({"date": complete_date_range})
     complete_df["date"] = pd.to_datetime(complete_df["date"]).dt.date
 
-    if not df.empty:
-        df["date"] = pd.to_datetime(df["created_at"], unit="s", utc=True).dt.date
+    if not result_df.empty:
+        result_df["date"] = pd.to_datetime(
+            result_df["created_at"], unit="s", utc=True
+        ).dt.date
         # Group by date and count
         daily_success_rate = (
-            df.groupby(["date"])[["is_success"]]
+            result_df.groupby(["date"])[["is_success"]]
             .mean()
             .reset_index()[["date", "is_success"]]
             .rename(columns={"is_success": "success_rate"})
         )
 
         # Add missing days
-
         daily_success_rate = pd.merge(
             complete_df, daily_success_rate, on="date", how="left"
         ).fillna(0)
@@ -1332,7 +1325,7 @@ async def fetch_all_clusterings(
     """
     mongo_db = await get_mongo_db()
 
-    pipeline = [
+    pipeline: List[Dict[str, object]] = [
         {"$match": {"project_id": project_id}},
     ]
     if with_cluster_names:
@@ -1346,12 +1339,7 @@ async def fetch_all_clusterings(
                         "as": "clusters",
                     }
                 },
-                {
-                    "$project": {
-                        "pca": 0,
-                        "tsne": 0,
-                    }
-                },
+                {"$project": {"pca": 0, "tsne": 0}},
             ]
         )
 
@@ -1670,7 +1658,7 @@ async def get_success_rate_by_event_name(
         main_filter["created_at"] = {"$gte": filters.created_at_start}
     if filters.created_at_end is not None:
         main_filter["created_at"] = {
-            **main_filter.get("created_at", {}),
+            **main_filter.get("created_at", {}),  # type: ignore
             "$lte": filters.created_at_end,
         }
 
@@ -2907,7 +2895,7 @@ async def compute_cloud_of_clusters(
 
     mongo_db = await get_mongo_db()
     collection_name = "private-clusterings"
-    pipeline = [
+    pipeline: List[Dict[str, object]] = [
         {
             "$match": {
                 "project_id": project_id,
@@ -2950,13 +2938,7 @@ async def compute_cloud_of_clusters(
                     "id": {"$in": embeddings_ids},
                 }
             },
-            {
-                "$project": {
-                    "task_id": 1,
-                    "session_id": 1,
-                    "user_id": 1,
-                }
-            },
+            {"$project": {"task_id": 1, "session_id": 1, "user_id": 1}},
         ]
 
         scope_ids = (
@@ -3014,7 +2996,7 @@ async def get_clustering_by_id(
     """
     mongo_db = await get_mongo_db()
     collection_name = "private-clusterings"
-    pipeline = [
+    pipeline: List[Dict[str, object]] = [
         {
             "$match": {
                 "project_id": project_id,
@@ -3023,15 +3005,7 @@ async def get_clustering_by_id(
         },
     ]
     if not fetch_clouds:
-        pipeline.append(
-            {
-                "$project": {
-                    "_id": 0,
-                    "pca": 0,
-                    "tsne": 0,
-                }
-            }
-        )
+        pipeline.append({"$project": {"_id": 0, "pca": 0, "tsne": 0}})
 
     raw_results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=1)
     if raw_results is None or raw_results == []:
