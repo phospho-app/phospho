@@ -2,7 +2,7 @@
 This agent is called by the CICD after deploying to staging.
 """
 
-import requests
+import requests  # type: ignore
 import openai
 
 
@@ -31,6 +31,22 @@ def test_chat(backend_url, org_id, access_token, api_key):
     response = openai_client.chat.completions.create(
         messages=[{"role": "system", "content": "Answer yes"}],
         model="openai:gpt-4o-mini",
+        stream=True,
+    )
+    for message in response:
+        assert message is not None
+
+    # Sync call
+    response = openai_client.chat.completions.create(
+        messages=[{"role": "system", "content": "Answer yes"}],
+        model="mistral:mistral-small-latest",
+    )
+    assert response is not None
+
+    # Streaming call
+    response = openai_client.chat.completions.create(
+        messages=[{"role": "system", "content": "Answer yes"}],
+        model="mistral:mistral-small-latest",
         stream=True,
     )
     for message in response:
