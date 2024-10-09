@@ -558,7 +558,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                         min=1,
                         max=len(score_range_settings.categories),
                         label=stripped_llm_response,
-                        options_confidence={str(stripped_llm_response): 1},
+                        options_confidence={stripped_llm_response: 1},
                     )
                 elif stripped_llm_response == "none":
                     result_type = ResultType.literal
