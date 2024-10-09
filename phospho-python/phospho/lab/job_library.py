@@ -759,6 +759,7 @@ async def evaluate_task(
 
         llm_call = {
             "model": model_name,
+            "system_prompt": system_prompt,
             "prompt": prompt,
             "llm_output": llm_response,
             "api_call_time": api_call_time,
