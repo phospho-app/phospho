@@ -150,7 +150,7 @@ async def event_detection(
     event_description: str,
     score_range_settings: Optional[ScoreRangeSettings] = None,
     detection_scope: DetectionScope = "task",
-    model: str = "openai:gpt-4o",
+    model: str = "azure:gpt-4o",
     **kwargs,
 ) -> JobResult:
     """
@@ -709,7 +709,7 @@ async def evaluate_task(
     async def evaluation(
         system_prompt: str,
         prompt: str,
-        model_name: str = os.getenv("MODEL_ID", "gpt-4o"),
+        model_name: str = "gpt-4o",
     ) -> Optional[Literal["success", "failure"]]:
         """
         Call the LLM API to get a classification of a task
