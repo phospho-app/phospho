@@ -203,11 +203,13 @@ async def event_detection(
 
     #
     if detection_scope == "system_prompt":
-        system_prompt = "You are an impartial judge reading an assistant system prompt."
+        system_prompt = (
+            "You are an impartial judge reading an assistant system prompt. "
+        )
         during_interaction = "in the system prompt"
         the_interaction = "system prompt"
     else:
-        system_prompt = "You are an impartial judge reading a conversation between a user and an assistant."
+        system_prompt = "You are an impartial judge reading a conversation between a user and an assistant. "
         during_interaction = "during the interaction"
         the_interaction = "interaction"
 
@@ -232,14 +234,14 @@ You don't have a description for '{event_name}'. Base your evaluation on the con
 Here is an example of an interaction where the event '{event_name}' happened:
 [EVENT DETECTED EXAMPLE START]
 {successful_example['input']} -> {successful_example['output']}
-[EXAMPLE END]
+[EVENT DETECTED EXAMPLE EXAMPLE END]
 """
     if unsuccessful_example is not None:
         system_prompt += f"""
 Here is an example of an interaction where the event '{event_name}' did not happen:
 [EVENT NOT DETECTED EXAMPLE START]
 {unsuccessful_example['input']} -> {unsuccessful_example['output']}
-[EXAMPLE END]
+[EVENT NOT DETECTED EXAMPLE END]
 """
 
     if detection_scope != "system_prompt":
@@ -265,7 +267,7 @@ Here is the context of the conversation:
         prompt += f"""Label the following interaction with the event '{event_name}':
 [INTERACTION TO LABEL START]
 {message.latest_interaction()}
-[INTERACTION END]
+[INTERACTION TO LABEL END]
 """
     elif detection_scope == "task_input_only":
         message_list = message.as_list()
@@ -288,7 +290,7 @@ Here is the context of the conversation:
 Label the following user message with the event '{event_name}':
 [INTERACTION TO LABEL START]
 User: {truncated_context}
-[INTERACTION END]
+[INTERACTION TO LABEL END]
 """
     elif detection_scope == "task_output_only":
         message_list = message.as_list()
@@ -316,7 +318,7 @@ User: {truncated_context}
 Label the following assistant message with the event '{event_name}':
 [INTERACTION TO LABEL START]
 Assistant: {truncated_context}
-[INTERACTION END]
+[INTERACTION TO LABEL END]
 """
     elif detection_scope == "session":
         truncated_context = shorten_text(
@@ -329,7 +331,7 @@ Assistant: {truncated_context}
 Label the following interaction with the event '{event_name}':
 [INTERACTION TO LABEL START]
 {truncated_context}
-[INTERACTION END]
+[INTERACTION TO LABEL END]
 """
     elif detection_scope == "system_prompt":
         # Detection on the system_prompt metadata in the message
@@ -370,7 +372,7 @@ Label the following interaction with the event '{event_name}':
 Label the following system prompt with the event '{event_name}':
 [SYSTEM PROMPT TO LABEL START]
 {truncated_context}
-[INTERACTION END]
+[SYSTEM PROMPT TO LABEL END]
 """
     else:
         raise ValueError(
@@ -445,7 +447,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
             logs=[prompt, str(e)],
         )
     api_call_time = time.time() - start_time
-    llm_response = response.choices[0].message.content
+    llm_response: Optional[str] = response.choices[0].message.content
     # Metadata
     llm_call = {
         "model": model_name,
@@ -506,7 +508,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                     max=score_range_settings.max,
                     min=score_range_settings.min,
                     value=score,
-                    options_confidence={score: 1},
+                    options_confidence={str(score): 1},
                 )
         elif (
             score_range_settings.score_type == "category"
@@ -759,6 +761,7 @@ async def evaluate_task(
 
         llm_call = {
             "model": model_name,
+            "system_prompt": system_prompt,
             "prompt": prompt,
             "llm_output": llm_response,
             "api_call_time": api_call_time,

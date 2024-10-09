@@ -365,6 +365,7 @@ class MainPipeline:
                     llm_call_obj = LlmCall(
                         **llm_call,
                         org_id=self.org_id,
+                        project_id=self.project_id,
                         task_id=task_id,
                         recipe_id=result.job_metadata.get("recipe_id"),
                     )
