@@ -412,18 +412,36 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
             # Azure does not support the logprobs parameter
             # Despite the docs saying it does: https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#request-body-2
             # Issue: https://learn.microsoft.com/en-us/answers/questions/1692045/does-gpt-4-1106-preview-support-logprobs
-            response = await async_openai_client.chat.completions.create(
-                model=model_name,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": system_prompt,
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                max_tokens=5,
-                temperature=0,
-            )
+            try:
+                response = await async_openai_client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": system_prompt,
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=5,
+                    temperature=0,
+                )
+            except Exception as e:
+                logger.error(f"event_detection call to Azure API failed : {e}")
+                # Fallback to OpenAI API
+                response = await async_openai_client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": system_prompt,
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=5,
+                    temperature=0,
+                    logprobs=True,
+                    top_logprobs=20,
+                )
         else:
             response = await async_openai_client.chat.completions.create(
                 model=model_name,
