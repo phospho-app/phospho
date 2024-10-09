@@ -150,7 +150,7 @@ async def event_detection(
     event_description: str,
     score_range_settings: Optional[ScoreRangeSettings] = None,
     detection_scope: DetectionScope = "task",
-    model: str = "openai:gpt-4o",
+    model: str = "azure:gpt-4o",
     **kwargs,
 ) -> JobResult:
     """
@@ -418,7 +418,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
             max_tokens=5,
             temperature=0,
             logprobs=True,
-            top_logprobs=20,
+            top_logprobs=5,
         )
     except Exception as e:
         logger.error(f"event_detection call to OpenAI API failed : {e}")
