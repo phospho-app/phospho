@@ -499,7 +499,10 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                 result_type = ResultType.error
                 detected_event = None
         elif score_range_settings.score_type == "range":
-            if stripped_llm_response.isdigit():
+            first_char = (
+                stripped_llm_response[0] if len(stripped_llm_response) > 0 else ""
+            )
+            if first_char.isdigit():
                 result_type = ResultType.bool
                 detected_event = True
                 score = float(stripped_llm_response)
