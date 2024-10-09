@@ -1,40 +1,39 @@
-import os
 import asyncio
 import dataclasses
+import os
+
+import aiohealthcheck  # type: ignore
+import sentry_sdk
+from extractor.core import config
+from extractor.db.mongo import close_mongo_db, connect_and_init_db
+from extractor.sentry.interceptor import SentryInterceptor
+from extractor.temporal.activities import (
+    bill_on_stripe,
+    extract_langfuse_data,
+    extract_langsmith_data,
+    run_main_pipeline_on_messages,
+    run_process_logs_for_tasks,
+    run_process_tasks,
+    run_recipe_on_task,
+    store_open_telemetry_data,
+)
+from extractor.temporal.pydantic_converter import pydantic_data_converter
+from extractor.temporal.workflows import (
+    ExtractLangfuseDataWorkflow,
+    ExtractLangSmithDataWorkflow,
+    RunMainPipelineOnMessagesWorkflow,
+    RunProcessLogsForTasksWorkflow,
+    RunProcessTasksWorkflow,
+    RunRecipeOnTaskWorkflow,
+    StoreOpenTelemetryDataWorkflow,
+)
+from loguru import logger
 from temporalio.client import Client, TLSConfig
 from temporalio.worker import Worker
 from temporalio.worker.workflow_sandbox import (
     SandboxedWorkflowRunner,
     SandboxRestrictions,
 )
-import sentry_sdk
-import aiohealthcheck  # type: ignore
-from extractor.sentry.interceptor import SentryInterceptor
-
-from loguru import logger
-
-from extractor.core import config
-from extractor.db.mongo import close_mongo_db, connect_and_init_db
-from extractor.temporal.workflows import (
-    ExtractLangSmithDataWorkflow,
-    ExtractLangfuseDataWorkflow,
-    StoreOpenTelemetryDataWorkflow,
-    RunRecipeOnTaskWorkflow,
-    RunMainPipelineOnMessagesWorkflow,
-    RunProcessLogsForTasksWorkflow,
-    RunProcessTasksWorkflow,
-)
-from extractor.temporal.activities import (
-    extract_langsmith_data,
-    extract_langfuse_data,
-    store_open_telemetry_data,
-    run_recipe_on_task,
-    bill_on_stripe,
-    run_main_pipeline_on_messages,
-    run_process_tasks,
-    run_process_logs_for_tasks,
-)
-from extractor.temporal.pydantic_converter import pydantic_data_converter
 
 logger.info("Starting worker")
 
