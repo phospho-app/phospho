@@ -69,7 +69,9 @@ def get_async_client(
     ],
     api_key: Optional[str] = None,
 ) -> AsyncOpenAI:
-    # Raise an error if openai is imported
+    """
+    Return an async OpenAI client for the specified provider.
+    """
     try:
         from openai import AsyncOpenAI, AsyncAzureOpenAI
     except ImportError:
@@ -138,7 +140,9 @@ def get_sync_client(
     ],
     api_key: Optional[str] = None,
 ) -> OpenAI:
-    # Raise an error if openai is imported
+    """
+    Return a sync OpenAI client for the specified provider.
+    """
     try:
         from openai import OpenAI
     except ImportError:
