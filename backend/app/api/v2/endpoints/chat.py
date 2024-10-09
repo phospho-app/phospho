@@ -329,7 +329,10 @@ async def create(
         model_name,
     )
 
-    if org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d":  # We don't route Y to Azure
+    # Redirect openai to Azure
+    if (
+        provider == "openai" and org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d"
+    ):  # We don't route Y to Azure
         provider = "azure"
 
     client = get_async_client(
