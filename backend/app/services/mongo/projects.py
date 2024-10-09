@@ -451,7 +451,7 @@ async def email_project_tasks(
         }
 
         try:
-            resend.Emails.send(params)
+            resend.Emails.send(params)  # type: ignore
             logger.info(f"Successfully sent tasks by email to {user.get('email')}")
         except Exception as e:
             error_message = f"Error sending email to {user.get('email')} project_id {project_id}: {e}"
