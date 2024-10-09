@@ -77,7 +77,12 @@ class ChatCompletionToolParamModel(pydantic.BaseModel):
 
 class CreateRequest(pydantic.BaseModel):
     messages: List[ChatCompletionMessageParamModel]
-    model: Literal["openai:gpt-4o", "openai:gpt-4o-mini"]
+    model: Literal[
+        "openai:gpt-4o",
+        "openai:gpt-4o-mini",
+        "mistral:mistral-large-latest",
+        "mistral:mistral-small-latest",
+    ]
     frequency_penalty: Optional[float] | None = None
     # function_call: completion_create_params.FunctionCall | None = None
     # functions: Iterable[completion_create_params.Function] | None = None
@@ -110,7 +115,12 @@ async def log_to_project(
     project_id: str,
     create_request: CreateRequest,
     response: ChatCompletion,
-    model_name: Literal["gpt-4o", "gpt-4o-mini"],
+    model_name: Literal[
+        "gpt-4o",
+        "gpt-4o-mini",
+        "mistral-large-latest",
+        "mistral-small-latest",
+    ],
 ):
     logging_project_id = project_id
     logger.info(f"Logging completion to project {logging_project_id}")
@@ -216,15 +226,20 @@ async def log_and_meter(
     create_request: CreateRequest,
     response: ChatCompletion,
     provider: str,
-    model_name: Literal["gpt-4o", "gpt-4o-mini"],
+    model_name: Literal[
+        "gpt-4o",
+        "gpt-4o-mini",
+        "mistral-large-latest",
+        "mistral-small-latest",
+    ],
 ) -> None:
-    logger.debug(f"Response: {response.model_dump()}")
+    logger.debug(f"Response: {response.model_dump(exclude_none=True)}")
     if org_id != config.PHOSPHO_ORG_ID and config.ENVIRONMENT == "production":
         await metered_prediction(
             org_id=org_id,
             model_id=f"{provider}:{model_name}",
-            inputs=[create_request.model_dump()],
-            predictions=[response.model_dump()],
+            inputs=[create_request.model_dump(exclude_none=True)],
+            predictions=[response.model_dump(exclude_none=True)],
             project_id=project_id,
         )
     await log_to_project(
@@ -293,6 +308,8 @@ async def create(
     SUPPORTED_MODELS = [
         "openai:gpt-4o",
         "openai:gpt-4o-mini",
+        "mistral:mistral-large-latest",
+        "mistral:mistral-small-latest",
     ]
     if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
@@ -302,14 +319,31 @@ async def create(
 
     provider, model_name = get_provider_and_model(create_request.model)
 
-    model_name = cast(Literal["gpt-4o", "gpt-4o-mini"], model_name)
+    model_name = cast(
+        Literal[
+            "gpt-4o",
+            "gpt-4o-mini",
+            "mistral-large-latest",
+            "mistral-small-latest",
+        ],
+        model_name,
+    )
 
     if org_id != "818886b3-0ff7-4528-8bb9-845d5ecaa80d":  # We don't route Y to Azure
         provider = "azure"
 
-    openai_client = get_async_client(cast(Literal["openai", "azure"], provider))
+    client = get_async_client(
+        cast(
+            Literal[
+                "openai",
+                "azure",
+                "mistral",
+            ],
+            provider,
+        )
+    )
 
-    query_inputs = create_request.model_dump()
+    query_inputs = create_request.model_dump(exclude_none=True)
     # Update the model from provider:model_name to model_name (ex: openai:gpt-4o to gpt-4o)
     query_inputs["model"] = model_name
 
@@ -320,7 +354,7 @@ async def create(
         async def generate() -> AsyncIterator[str]:
             try:
                 async for chunk, full_response in stream_and_capture(
-                    openai_client, query_inputs
+                    client, query_inputs
                 ):
                     yield f"data: {chunk.model_dump_json()}\n\n"
 
@@ -347,10 +381,9 @@ async def create(
     else:
         # Non-streaming response
         try:
-            response: ChatCompletion = await openai_client.chat.completions.create(
+            response: ChatCompletion = await client.chat.completions.create(
                 **query_inputs
             )
-
             # Perform logging and metering tasks
             background_tasks.add_task(
                 log_and_meter,
