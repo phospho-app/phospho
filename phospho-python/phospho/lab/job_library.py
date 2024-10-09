@@ -505,7 +505,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
             if first_char.isdigit():
                 result_type = ResultType.bool
                 detected_event = True
-                score = float(stripped_llm_response)
+                score = float(first_char)
                 metadata["score_range"] = ScoreRange(
                     score_type="range",
                     max=score_range_settings.max,
@@ -522,7 +522,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                 stripped_llm_response[0] if len(stripped_llm_response) > 0 else ""
             )
             if first_char.isdigit():
-                llm_response_as_int = int(stripped_llm_response)
+                llm_response_as_int = int(first_char)
                 if llm_response_as_int >= 1 and llm_response_as_int <= len(
                     score_range_settings.categories
                 ):
