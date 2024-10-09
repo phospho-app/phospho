@@ -255,6 +255,10 @@ async def log_and_meter(
     "/{project_id}/chat/completions",
     description="Create a chat completion",
 )
+@router.post(
+    "/{project_id}/v1/chat/completions",
+    description="Create a chat completion",
+)
 @rate_limiter(limit=500, seconds=60)
 async def create(
     project_id: str,
