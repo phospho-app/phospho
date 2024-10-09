@@ -4,10 +4,21 @@ from typing import Literal, Optional, Tuple
 import phospho.config as config
 
 try:
-    from openai import AsyncOpenAI, OpenAI, AsyncAzureOpenAI
+    from openai import AsyncOpenAI, OpenAI, AsyncAzureOpenAI, AzureOpenAI
 
 except ImportError:
-    AsyncOpenAI = OpenAI = AsyncAzureOpenAI = object
+    # Define dummy classes to avoid import errors
+    class AsyncOpenAI:
+        pass
+
+    class OpenAI:
+        pass
+
+    class AsyncAzureOpenAI:
+        pass
+
+    class AzureOpenAI:
+        pass
 
 
 def get_provider_and_model(
@@ -58,6 +69,16 @@ def get_async_client(
     ],
     api_key: Optional[str] = None,
 ) -> AsyncOpenAI:
+    """
+    Return an async OpenAI client for the specified provider.
+    """
+    try:
+        from openai import AsyncOpenAI, AsyncAzureOpenAI
+    except ImportError:
+        raise ImportError(
+            "OpenAI is not installed. Please install it using `pip install openai`"
+        )
+
     if provider == "openai":
         return AsyncOpenAI()
     if provider == "mistral":
@@ -119,6 +140,16 @@ def get_sync_client(
     ],
     api_key: Optional[str] = None,
 ) -> OpenAI:
+    """
+    Return a sync OpenAI client for the specified provider.
+    """
+    try:
+        from openai import OpenAI
+    except ImportError:
+        raise ImportError(
+            "OpenAI is not installed. Please install it using `pip install openai`"
+        )
+
     if provider == "openai":
         return OpenAI()
     if provider == "mistral":
@@ -151,4 +182,18 @@ def get_sync_client(
             base_url="https://api.fireworks.ai/inference/v1/",
             api_key=api_key or os.getenv("FIREWORKS_API_KEY"),
         )
+    if provider == "azure":
+        if os.getenv("AZURE_OPENAI_KEY") is None:
+            raise ValueError("AZURE_OPENAI_KEY environment variable is not set.")
+        if os.getenv("AZURE_OPENAI_ENDPOINT") is None:
+            raise ValueError("AZURE_OPENAI_ENDPOINT environment variable is not set.")
+
+        return AzureOpenAI(
+            # https://learn.microsoft.com/azure/ai-services/openai/reference#rest-api-versioning
+            api_version="2023-03-15-preview",
+            # https://learn.microsoft.com/azure/cognitive-services/openai/how-to/create-resource?pivots=web-portal#create-a-resource
+            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", ""),
+            api_key=os.environ.get("AZURE_OPENAI_KEY"),
+        )
+
     raise NotImplementedError(f"Provider {provider} is not supported.")
