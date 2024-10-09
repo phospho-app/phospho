@@ -77,7 +77,7 @@ async def metered_prediction(
         nb_credits_used = (input_tokens + 3 * completion_tokens) * 250
         meter_event_name = "phospho_token_based_meter"
 
-    elif model_id == "azure:gpt-4o":
+    elif model_id == "openai:gpt-4o":
         # Any other orgs using requesting OpenAI completion will be routed through Azure OpenAI
         input_tokens = sum(
             [response["usage"]["prompt_tokens"] for response in predictions]
