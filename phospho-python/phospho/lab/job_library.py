@@ -427,6 +427,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                 )
             except Exception as e:
                 logger.error(f"event_detection call to Azure API failed : {e}")
+                async_openai_client = get_async_client("openai")
                 # Fallback to OpenAI API
                 response = await async_openai_client.chat.completions.create(
                     model=model_name,
