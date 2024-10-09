@@ -445,7 +445,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
             logs=[prompt, str(e)],
         )
     api_call_time = time.time() - start_time
-    llm_response = response.choices[0].message.content
+    llm_response: Optional[str] = response.choices[0].message.content
     # Metadata
     llm_call = {
         "model": model_name,
@@ -506,7 +506,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                     max=score_range_settings.max,
                     min=score_range_settings.min,
                     value=score,
-                    options_confidence={score: 1},
+                    options_confidence={str(score): 1},
                 )
         elif (
             score_range_settings.score_type == "category"
@@ -558,7 +558,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                         min=1,
                         max=len(score_range_settings.categories),
                         label=stripped_llm_response,
-                        options_confidence={stripped_llm_response: 1},
+                        options_confidence={str(stripped_llm_response): 1},
                     )
                 elif stripped_llm_response == "none":
                     result_type = ResultType.literal
