@@ -286,7 +286,7 @@ export function useColumns({
       accessorKey: "events",
       cell: (row) => (
         <div className="group flex items-center justify-between">
-          <div className="flex flex-wrap items-center justify-center">
+          <div className="flex flex-wrap items-center justify-center w-full">
             {(row.getValue() as Event[]).map((event: Event) => {
               return (
                 <InteractiveEventBadgeForTasks

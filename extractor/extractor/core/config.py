@@ -43,9 +43,6 @@ API_KEY_WAITING_TIME = 0.1  # in seconds
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 ### WATCHERS ###
-OPENAI_MODEL_ID = "gpt-4"  # "gpt-4"
-OPENAI_MODEL_ID_FOR_EVAL = "gpt-4"
-OPENAI_MODEL_ID_FOR_EVENTS = "gpt-3.5-turbo-16k"
 EVALUATION_SOURCE = "phospho-6"  # If phospho
 FEW_SHOT_MAX_NUMBER_OF_EXAMPLES = 10
 
