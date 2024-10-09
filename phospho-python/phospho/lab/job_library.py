@@ -499,7 +499,10 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                 result_type = ResultType.error
                 detected_event = None
         elif score_range_settings.score_type == "range":
-            if stripped_llm_response.isdigit():
+            first_char = (
+                stripped_llm_response[0] if len(stripped_llm_response) > 0 else ""
+            )
+            if first_char.isdigit():
                 result_type = ResultType.bool
                 detected_event = True
                 score = float(stripped_llm_response)
@@ -514,8 +517,11 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
             score_range_settings.score_type == "category"
             and score_range_settings.categories
         ):
-            # Check if the response is a number
-            if stripped_llm_response.isdigit():
+            # Check if the response is a number or starts with a number
+            first_char = (
+                stripped_llm_response[0] if len(stripped_llm_response) > 0 else ""
+            )
+            if first_char.isdigit():
                 llm_response_as_int = int(stripped_llm_response)
                 if llm_response_as_int >= 1 and llm_response_as_int <= len(
                     score_range_settings.categories
@@ -546,8 +552,8 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                 else:
                     result_type = ResultType.error
                     detected_event = None
-            # Check if the response is directly the label
             else:
+                # In this case, we check if the response is in the categories
                 if stripped_llm_response in score_range_settings.categories:
                     result_type = ResultType.literal
                     detected_event = True
