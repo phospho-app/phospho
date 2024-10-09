@@ -66,6 +66,8 @@ jobs:
           PHOSPHO_API_KEY: ${{ secrets.PHOSPHO_API_KEY }}
           PHOSPHO_PROJECT_ID: ${{ secrets.PHOSPHO_PROJECT_ID }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AZURE_OPENAI_KEY: ${{ secrets.AZURE_OPENAI_KEY }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
         run: |
           source .venv/bin/activate
           pytest -k test_lab
