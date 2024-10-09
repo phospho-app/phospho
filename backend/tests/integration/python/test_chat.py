@@ -36,6 +36,22 @@ def test_chat(backend_url, org_id, access_token, api_key):
     for message in response:
         assert message is not None
 
+    # Sync call
+    response = openai_client.chat.completions.create(
+        messages=[{"role": "system", "content": "Answer yes"}],
+        model="mistral:mistral-small-latest",
+    )
+    assert response is not None
+
+    # Streaming call
+    response = openai_client.chat.completions.create(
+        messages=[{"role": "system", "content": "Answer yes"}],
+        model="mistral:mistral-small-latest",
+        stream=True,
+    )
+    for message in response:
+        assert message is not None
+
     # Delete project
     delete_project = requests.delete(
         f"{backend_url}/api/projects/{project_id}/delete",
