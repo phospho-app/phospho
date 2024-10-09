@@ -150,7 +150,7 @@ async def event_detection(
     event_description: str,
     score_range_settings: Optional[ScoreRangeSettings] = None,
     detection_scope: DetectionScope = "task",
-    model: str = "azure:gpt-4o",
+    model: str = "openai:gpt-4o",
     **kwargs,
 ) -> JobResult:
     """
