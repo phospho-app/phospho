@@ -2304,6 +2304,7 @@ async def fetch_flattened_tasks(
         "task_eval_at": "$last_eval.created_at",
         "task_created_at": "$created_at",
         "session_id": "$session_id",
+        "task_position": "$task_position",
     }
 
     if with_sessions:
