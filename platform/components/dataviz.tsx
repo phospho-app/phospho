@@ -208,7 +208,7 @@ const DatavizGraph = ({
         </>
       )}
       {pivotData?.length > 1 && (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={pivotData.length * 50}>
           <BarChart
             data={pivotData}
             layout="vertical"

@@ -150,7 +150,7 @@ async def event_detection(
     event_description: str,
     score_range_settings: Optional[ScoreRangeSettings] = None,
     detection_scope: DetectionScope = "task",
-    model: str = "openai:gpt-4o",
+    model: str = "azure:gpt-4o",
     **kwargs,
 ) -> JobResult:
     """
@@ -203,11 +203,13 @@ async def event_detection(
 
     #
     if detection_scope == "system_prompt":
-        system_prompt = "You are an impartial judge reading an assistant system prompt."
+        system_prompt = (
+            "You are an impartial judge reading an assistant system prompt. "
+        )
         during_interaction = "in the system prompt"
         the_interaction = "system prompt"
     else:
-        system_prompt = "You are an impartial judge reading a conversation between a user and an assistant."
+        system_prompt = "You are an impartial judge reading a conversation between a user and an assistant. "
         during_interaction = "during the interaction"
         the_interaction = "interaction"
 
@@ -232,14 +234,14 @@ You don't have a description for '{event_name}'. Base your evaluation on the con
 Here is an example of an interaction where the event '{event_name}' happened:
 [EVENT DETECTED EXAMPLE START]
 {successful_example['input']} -> {successful_example['output']}
-[EXAMPLE END]
+[EVENT DETECTED EXAMPLE EXAMPLE END]
 """
     if unsuccessful_example is not None:
         system_prompt += f"""
 Here is an example of an interaction where the event '{event_name}' did not happen:
 [EVENT NOT DETECTED EXAMPLE START]
 {unsuccessful_example['input']} -> {unsuccessful_example['output']}
-[EXAMPLE END]
+[EVENT NOT DETECTED EXAMPLE END]
 """
 
     if detection_scope != "system_prompt":
@@ -265,7 +267,7 @@ Here is the context of the conversation:
         prompt += f"""Label the following interaction with the event '{event_name}':
 [INTERACTION TO LABEL START]
 {message.latest_interaction()}
-[INTERACTION END]
+[INTERACTION TO LABEL END]
 """
     elif detection_scope == "task_input_only":
         message_list = message.as_list()
@@ -288,7 +290,7 @@ Here is the context of the conversation:
 Label the following user message with the event '{event_name}':
 [INTERACTION TO LABEL START]
 User: {truncated_context}
-[INTERACTION END]
+[INTERACTION TO LABEL END]
 """
     elif detection_scope == "task_output_only":
         message_list = message.as_list()
@@ -316,7 +318,7 @@ User: {truncated_context}
 Label the following assistant message with the event '{event_name}':
 [INTERACTION TO LABEL START]
 Assistant: {truncated_context}
-[INTERACTION END]
+[INTERACTION TO LABEL END]
 """
     elif detection_scope == "session":
         truncated_context = shorten_text(
@@ -329,7 +331,7 @@ Assistant: {truncated_context}
 Label the following interaction with the event '{event_name}':
 [INTERACTION TO LABEL START]
 {truncated_context}
-[INTERACTION END]
+[INTERACTION TO LABEL END]
 """
     elif detection_scope == "system_prompt":
         # Detection on the system_prompt metadata in the message
@@ -370,7 +372,7 @@ Label the following interaction with the event '{event_name}':
 Label the following system prompt with the event '{event_name}':
 [SYSTEM PROMPT TO LABEL START]
 {truncated_context}
-[INTERACTION END]
+[SYSTEM PROMPT TO LABEL END]
 """
     else:
         raise ValueError(
@@ -406,20 +408,58 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
     # Call the API
     start_time = time.time()
     try:
-        response = await async_openai_client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens=5,
-            temperature=0,
-            logprobs=True,
-            top_logprobs=20,
-        )
+        if provider == "azure":
+            # Azure does not support the logprobs parameter
+            # Despite the docs saying it does: https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#request-body-2
+            # Issue: https://learn.microsoft.com/en-us/answers/questions/1692045/does-gpt-4-1106-preview-support-logprobs
+            try:
+                response = await async_openai_client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": system_prompt,
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=5,
+                    temperature=0,
+                )
+            except Exception as e:
+                logger.warning(
+                    f"event_detection call to Azure API failed: {e}. Falling back to OpenAI API."
+                )
+                async_openai_client = get_async_client("openai")
+                # Fallback to OpenAI API
+                response = await async_openai_client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": system_prompt,
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    max_tokens=5,
+                    temperature=0,
+                    logprobs=True,
+                    top_logprobs=20,
+                )
+        else:
+            response = await async_openai_client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system_prompt,
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=5,
+                temperature=0,
+                logprobs=True,
+                top_logprobs=20,
+            )
     except Exception as e:
         logger.error(f"event_detection call to OpenAI API failed : {e}")
         return JobResult(
@@ -428,7 +468,7 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
             logs=[prompt, str(e)],
         )
     api_call_time = time.time() - start_time
-    llm_response = response.choices[0].message.content
+    llm_response: Optional[str] = response.choices[0].message.content
     # Metadata
     llm_call = {
         "model": model_name,
@@ -480,24 +520,30 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                 result_type = ResultType.error
                 detected_event = None
         elif score_range_settings.score_type == "range":
-            if stripped_llm_response.isdigit():
+            first_char = (
+                stripped_llm_response[0] if len(stripped_llm_response) > 0 else ""
+            )
+            if first_char.isdigit():
                 result_type = ResultType.bool
                 detected_event = True
-                score = float(stripped_llm_response)
+                score = float(first_char)
                 metadata["score_range"] = ScoreRange(
                     score_type="range",
                     max=score_range_settings.max,
                     min=score_range_settings.min,
                     value=score,
-                    options_confidence={score: 1},
+                    options_confidence={str(score): 1},
                 )
         elif (
             score_range_settings.score_type == "category"
             and score_range_settings.categories
         ):
-            # Check if the response is a number
-            if stripped_llm_response.isdigit():
-                llm_response_as_int = int(stripped_llm_response)
+            # Check if the response is a number or starts with a number
+            first_char = (
+                stripped_llm_response[0] if len(stripped_llm_response) > 0 else ""
+            )
+            if first_char.isdigit():
+                llm_response_as_int = int(first_char)
                 if llm_response_as_int >= 1 and llm_response_as_int <= len(
                     score_range_settings.categories
                 ):
@@ -527,8 +573,8 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                 else:
                     result_type = ResultType.error
                     detected_event = None
-            # Check if the response is directly the label
             else:
+                # In this case, we check if the response is in the categories
                 if stripped_llm_response in score_range_settings.categories:
                     result_type = ResultType.literal
                     detected_event = True
@@ -742,6 +788,7 @@ async def evaluate_task(
 
         llm_call = {
             "model": model_name,
+            "system_prompt": system_prompt,
             "prompt": prompt,
             "llm_output": llm_response,
             "api_call_time": api_call_time,
