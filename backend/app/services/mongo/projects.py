@@ -451,7 +451,7 @@ async def email_project_tasks(
         }
 
         try:
-            resend.Emails.send(params)
+            resend.Emails.send(params)  # type: ignore
             logger.info(f"Successfully sent tasks by email to {user.get('email')}")
         except Exception as e:
             error_message = f"Error sending email to {user.get('email')} project_id {project_id}: {e}"
@@ -539,8 +539,6 @@ async def get_all_sessions(
         query_builder.deduplicate_sessions_events()
     if get_tasks:
         query_builder.merge_tasks(force=True)
-
-    logger.info(f"Sessions pipeline: {pipeline}")
 
     sessions = await mongo_db["sessions"].aggregate(pipeline).to_list(length=limit)
 
