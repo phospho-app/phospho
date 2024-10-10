@@ -325,7 +325,6 @@ async def get_total_nb_of_tasks(
         .to_list(length=1)
     )
 
-    logger.info(f"Query result: {query_result}")
     if len(query_result) == 0:
         return None
 
