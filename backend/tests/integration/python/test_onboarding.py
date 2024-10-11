@@ -86,7 +86,6 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         headers={
             "Authorization": f"Bearer {access_token}",
         },
-        json={"limit": 100},
     )
     assert tasks.status_code == 200, tasks.reason
     tasks_content = tasks.json()["tasks"]
