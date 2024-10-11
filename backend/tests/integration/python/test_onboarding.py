@@ -7,7 +7,7 @@ We check that the onboarding and logging flow works as expected.
 import os
 import time
 import phospho
-import requests
+import requests  # type: ignore
 import openai
 
 
