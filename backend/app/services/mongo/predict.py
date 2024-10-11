@@ -150,6 +150,9 @@ async def metered_prediction(
         logger.debug(
             f"Bill for org_id {org_id} with model_id {model_id} completed, {inputs_token_count} tokens billed"
         )
+    elif model_id == "phospho:tak-large":
+        # TODO: implement metered billing for tak-large
+        logger.error(f"Model {model_id} not supported for metered billing yet")
     else:
         logger.error(f"Model {model_id} not supported for metered billing")
 
