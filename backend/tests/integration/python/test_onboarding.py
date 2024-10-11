@@ -83,7 +83,10 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     # Check that the tasks was logged to phospho
     tasks = requests.get(
         f"{backend_url}/api/projects/{project_id}/tasks",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={
+            "Authorization": f"Bearer {access_token}",
+        },
+        json={"limit": 100},
     )
     assert tasks.status_code == 200, tasks.reason
     tasks_content = tasks.json()["tasks"]
