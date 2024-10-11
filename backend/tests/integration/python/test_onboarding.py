@@ -7,7 +7,7 @@ We check that the onboarding and logging flow works as expected.
 import os
 import time
 import phospho
-import requests
+import requests  # type: ignore
 import openai
 
 
@@ -83,7 +83,9 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     # Check that the tasks was logged to phospho
     tasks = requests.get(
         f"{backend_url}/api/projects/{project_id}/tasks",
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={
+            "Authorization": f"Bearer {access_token}",
+        },
     )
     assert tasks.status_code == 200, tasks.reason
     tasks_content = tasks.json()["tasks"]

@@ -60,3 +60,4 @@ class ComputeJobsRequest(BaseModel):
 
 class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
+    limit: Optional[int] = 1000
