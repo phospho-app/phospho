@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends
 from loguru import logger
@@ -21,6 +21,9 @@ from app.services.mongo.projects import (
     get_all_sessions,
 )
 from app.services.mongo.tasks import get_all_tasks
+
+from app.core import config
+import pandas as pd
 
 router = APIRouter(tags=["Projects"])
 
@@ -95,6 +98,104 @@ async def get_flattened_tasks(
         with_removed_events=flattened_tasks_request.with_removed_events,
     )
     return FlattenedTasks(flattened_tasks=flattened_tasks)
+
+
+@router.post(
+    "/projects/{project_id}/tasks/flat/tak-seo",
+    response_model=FlattenedTasks,
+    description="Get all the tasks of a project",
+)
+async def get_anonymous_chat_tasks_ids(
+    project_id: str,
+    flattened_tasks_request: FlattenedTasksRequest,
+    org: dict = Depends(authenticate_org_key),
+) -> List[str]:
+    """
+    Get all the tasks of a project in a flattened format.
+    """
+
+    if project_id != config.TAK_PROJECT_ID:
+        raise ValueError(f"Project {project_id} is not allowed")
+
+    await verify_propelauth_org_owns_project_id(org, project_id)
+
+    fetched_flattened_tasks = await fetch_flattened_tasks(
+        project_id=project_id,
+        limit=flattened_tasks_request.limit,
+        with_events=flattened_tasks_request.with_events,
+        with_sessions=flattened_tasks_request.with_sessions,
+        with_removed_events=flattened_tasks_request.with_removed_events,
+    )
+
+    flattened_tasks = pd.DataFrame(fetched_flattened_tasks)
+
+    flattened_tasks = flattened_tasks.drop(
+        columns=[
+            "task_output",
+            "task_input",
+            "task_metadata",
+            "task_eval_source",
+            "task_eval_at",
+            "task_created_at",
+            "session_id",
+            "session_length",
+            "event_created_at",
+            "event_removal_reason",
+            "event_removed",
+            "event_confirmed",
+            "event_score_range_label",
+            "event_score_range_min",
+            "event_score_range_max",
+            "event_score_range_score_type",
+            "event_source",
+            "event_categories",
+            "task_metadata.client_created_at",
+            "task_metadata.last_update",
+            "task_metadata.task_id",
+            "task_metadata.step_id",
+            "task_metadata.version_id",
+            "task_metadata.user_id",
+            "task_metadata.raw_input_type_name",
+            "task_metadata.raw_output_type_name",
+            "task_metadata.input_type",
+            "task_metadata.completion_tokens",
+            "task_metadata.total_tokens",
+            "task_metadata.language",
+            "task_metadata.sentiment_label",
+            "task_metadata.sentiment_magnitude",
+            "task_metadata.sentiment_score",
+        ]
+    )
+
+    flattened_tasks.drop(
+        flattened_tasks[flattened_tasks["task_metadata.user_email"].notna()].index,
+        inplace=True,
+    )
+    flattened_tasks.drop(columns=["task_metadata.user_email"], inplace=True)
+    flattened_tasks.drop(
+        flattened_tasks[~flattened_tasks["event_name"].isin(["sentiment"])].index,
+        inplace=True,
+    )
+    flattened_tasks.drop(columns=["event_name"], inplace=True)
+    flattened_tasks.drop(
+        flattened_tasks[~flattened_tasks["task_eval"].isin(["success"])].index,
+        inplace=True,
+    )
+    flattened_tasks.drop(columns=["task_eval"], inplace=True)
+    flattened_tasks.drop(
+        flattened_tasks[flattened_tasks["task_metadata.prompt_tokens"] > 100].index,
+        inplace=True,
+    )
+    flattened_tasks.drop(columns=["task_metadata.prompt_tokens"], inplace=True)
+    flattened_tasks.drop(
+        flattened_tasks[~flattened_tasks["task_position"].isin([1])].index, inplace=True
+    )
+    flattened_tasks.drop(columns=["task_position"], inplace=True)
+    flattened_tasks.reset_index(drop=True, inplace=True)
+
+    tasks_ids = flattened_tasks["task_id"].tolist()
+
+    return tasks_ids
 
 
 @router.post(

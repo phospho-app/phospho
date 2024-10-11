@@ -219,3 +219,6 @@ if TAK_APP_API_KEY is None:
 
 # Used for testing in staging or test
 TEST_PROPELAUTH_ORG_ID = os.getenv("TEST_PROPELAUTH_ORG_ID")
+
+# TAK project id (useful for seo)
+TAK_PROJECT_ID = os.getenv("TAK_PROJECT_ID")
