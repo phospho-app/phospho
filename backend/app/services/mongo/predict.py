@@ -150,9 +150,42 @@ async def metered_prediction(
         logger.debug(
             f"Bill for org_id {org_id} with model_id {model_id} completed, {inputs_token_count} tokens billed"
         )
+
     elif model_id == "phospho:tak-large":
-        # TODO: implement metered billing for tak-large
-        logger.error(f"Model {model_id} not supported for metered billing yet")
+        inputs_token_count = 0
+        for input in inputs:
+            for message in input.get("messages", []):
+                # System messages are ignored in the tak-large endpoint
+                if message["role"] != "system":
+                    inputs_token_count += len(encoding.encode(message["content"]))
+
+        # Compute token count of output texts
+        outputs_token_count = sum(
+            [
+                len(encoding.encode(prediction["choices"][0]["message"]["content"]))
+                for prediction in predictions
+            ]
+        )
+
+        if bill:
+            await bill_on_stripe(
+                org_id=org_id,
+                nb_credits_used=inputs_token_count,
+                meter_event_name="tak-large_input_tokens",
+            )
+            logger.debug(
+                f"Bill for org_id {org_id} with model_id {model_id} completed, {inputs_token_count} tokens billed"
+            )
+
+            await bill_on_stripe(
+                org_id=org_id,
+                nb_credits_used=outputs_token_count,
+                meter_event_name="tak-large_output_tokens",
+            )
+            logger.debug(
+                f"Bill for org_id {org_id} with model_id {model_id} completed, {outputs_token_count} tokens billed"
+            )
+
     else:
         logger.error(f"Model {model_id} not supported for metered billing")
 
