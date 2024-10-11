@@ -65,7 +65,7 @@ async def post_tasks(
 
     tasks = await get_all_tasks(
         project_id=project_id,
-        limit=None,
+        limit=query.limit,
         validate_metadata=True,
         filters=query.filters,
     )
