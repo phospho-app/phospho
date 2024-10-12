@@ -122,6 +122,7 @@ async def log_to_project(
         "gpt-4o-mini",
         "mistral-large-latest",
         "mistral-small-latest",
+        "tak-large",
     ],
 ):
     logging_project_id = project_id
