@@ -82,6 +82,8 @@ class CreateRequest(pydantic.BaseModel):
         "openai:gpt-4o-mini",
         "mistral:mistral-large-latest",
         "mistral:mistral-small-latest",
+        # Pointers for the tak service in API
+        "phospho:tak-large",
     ]
     frequency_penalty: Optional[float] | None = None
     # function_call: completion_create_params.FunctionCall | None = None
@@ -120,6 +122,7 @@ async def log_to_project(
         "gpt-4o-mini",
         "mistral-large-latest",
         "mistral-small-latest",
+        "tak-large",
     ],
 ):
     logging_project_id = project_id
@@ -231,6 +234,7 @@ async def log_and_meter(
         "gpt-4o-mini",
         "mistral-large-latest",
         "mistral-small-latest",
+        "tak-large",
     ],
 ) -> None:
     logger.debug(f"Response: {response.model_dump(exclude_none=True)}")
@@ -309,11 +313,14 @@ async def create(
             detail="You need to request access to this feature to the phospho team. Please contact us at contact@phospho.ai",
         )
 
+    # Now, the customer has access to the completion service
+
     SUPPORTED_MODELS = [
         "openai:gpt-4o",
         "openai:gpt-4o-mini",
         "mistral:mistral-large-latest",
         "mistral:mistral-small-latest",
+        "phospho:tak-large",
     ]
     if create_request.model not in SUPPORTED_MODELS:
         raise HTTPException(
@@ -329,6 +336,7 @@ async def create(
             "gpt-4o-mini",
             "mistral-large-latest",
             "mistral-small-latest",
+            "tak-large",
         ],
         model_name,
     )
@@ -341,11 +349,7 @@ async def create(
 
     client = get_async_client(
         cast(
-            Literal[
-                "openai",
-                "azure",
-                "mistral",
-            ],
+            Literal["openai", "azure", "mistral", "phospho"],
             provider,
         )
     )

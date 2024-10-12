@@ -66,6 +66,8 @@ def get_async_client(
         "anyscale",
         "fireworks",
         "azure",
+        # phospho means the Tak Search service for now (in private monorepo)
+        "phospho",
     ],
     api_key: Optional[str] = None,
 ) -> AsyncOpenAI:
@@ -123,6 +125,15 @@ def get_async_client(
             # https://learn.microsoft.com/azure/cognitive-services/openai/how-to/create-resource?pivots=web-portal#create-a-resource
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", ""),
             api_key=os.environ.get("AZURE_OPENAI_KEY"),
+        )
+    if provider == "phospho":
+        if os.getenv("TAK_SEARCH_URL") is None:
+            raise ValueError("TAK_SEARCH_URL environment variable is not set.")
+        if os.getenv("TAK_APP_API_KEY") is None:
+            raise ValueError("TAK_APP_API_KEY environment variable is not set.")
+        return AsyncOpenAI(
+            base_url=f"{os.getenv('TAK_SEARCH_URL')}/v1/",
+            api_key=os.getenv("TAK_APP_API_KEY"),
         )
 
     raise NotImplementedError(f"Provider {provider} is not supported.")
