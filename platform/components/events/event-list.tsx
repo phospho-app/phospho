@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { authFetcher } from "@/lib/fetcher";
-import { Project } from "@/models/models";
+import { Project, ScoreRangeType } from "@/models/models";
 import { EventDefinition } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
@@ -221,7 +221,7 @@ function EventRow({
   );
 }
 
-function EventsList({ event_type }: { event_type?: string }) {
+function EventsList({ event_type }: { event_type?: ScoreRangeType }) {
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const { accessToken } = useUser();

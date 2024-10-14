@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { authFetcher } from "@/lib/fetcher";
-import { OrgMetadata, Project } from "@/models/models";
+import { OrgMetadata, Project, ScoreRangeType } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { AlertCircle, PlusIcon, TextSearch } from "lucide-react";
@@ -26,14 +26,14 @@ function EventCategoryTitle({
   description,
   max_nb_events,
   current_nb_events,
-  defaultEventCategory,
+  defaultEventType: defaultEventCategory,
 }: {
   title: string;
   buttonLabel: string;
   description?: string;
   max_nb_events: number;
   current_nb_events: number;
-  defaultEventCategory?: string;
+  defaultEventType?: ScoreRangeType;
 }) {
   let isDisabled = max_nb_events && current_nb_events >= max_nb_events;
   if (isDisabled === 0) {
@@ -59,7 +59,7 @@ function EventCategoryTitle({
       <SheetContent className="md:w-1/2 overflow-auto">
         <CreateEvent
           setOpen={setOpen}
-          defaultEventCategory={defaultEventCategory}
+          defaultEventType={defaultEventCategory}
         />
       </SheetContent>
     </Sheet>
@@ -197,9 +197,9 @@ export default function Page() {
         description="Detect if a topic is present in the text."
         max_nb_events={max_nb_events}
         current_nb_events={current_nb_events}
-        defaultEventCategory="confidence"
+        defaultEventType={ScoreRangeType.confidence}
       />
-      <EventsList event_type="confidence" />
+      <EventsList event_type={ScoreRangeType.confidence} />
 
       <EventCategoryTitle
         title="Scorers"
@@ -207,9 +207,9 @@ export default function Page() {
         description="Score text on a numerical scale."
         max_nb_events={max_nb_events}
         current_nb_events={current_nb_events}
-        defaultEventCategory="range"
+        defaultEventType={ScoreRangeType.range}
       />
-      <EventsList event_type="range" />
+      <EventsList event_type={ScoreRangeType.range} />
 
       <EventCategoryTitle
         title="Classifiers"
@@ -217,9 +217,9 @@ export default function Page() {
         description="Classify text into categories."
         max_nb_events={max_nb_events}
         current_nb_events={current_nb_events}
-        defaultEventCategory="category"
+        defaultEventType={ScoreRangeType.category}
       />
-      <EventsList event_type="category" />
+      <EventsList event_type={ScoreRangeType.category} />
 
       <div className="flex justify-center text-muted-foreground">
         {

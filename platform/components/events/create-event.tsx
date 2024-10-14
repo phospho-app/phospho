@@ -55,13 +55,16 @@ import { z } from "zod";
 export default function CreateEvent({
   setOpen,
   eventToEdit,
-  defaultEventCategory,
+  defaultEventType,
 }: {
   setOpen: (open: boolean) => void;
   eventToEdit?: EventDefinition;
-  defaultEventCategory?: string;
+  defaultEventType?: ScoreRangeType;
 }) {
   /* Create a new event definition (analytics) or edit an existing event definition (analytics)
+
+  eventToEdit: EventDefinition. Used to edit existing events. 
+  defaultEventType: ScoreRangeType. Used to set the default output type when creating a new event.
    */
 
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
@@ -164,19 +167,12 @@ export default function CreateEvent({
     is_last_task: z.boolean(),
   });
 
-  let default_output_type =
-    eventToEdit?.score_range_settings?.score_type ?? ScoreRangeType.confidence;
+  const default_output_type =
+    defaultEventType ??
+    eventToEdit?.score_range_settings?.score_type ??
+    ScoreRangeType.confidence;
   const default_categories =
     eventToEdit?.score_range_settings?.categories ?? [];
-  if (defaultEventCategory === "range") {
-    default_output_type = ScoreRangeType.range;
-  }
-  if (defaultEventCategory === "category") {
-    default_output_type = ScoreRangeType.category;
-  }
-  if (defaultEventCategory === "confidence") {
-    default_output_type = ScoreRangeType.confidence;
-  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
