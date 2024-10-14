@@ -8,7 +8,7 @@
 <a href="https://pypi.org/project/phospho/" target="_blank"><img src="https://img.shields.io/pypi/dm/phospho"></a>
 </div>
 
-🧪 **phospho** is the backoffice for your LLM apps.
+🧪 **phospho** is the **backoffice for your LLM app.**
 
 Detect issues and extract insights from your users' text messages.
 
