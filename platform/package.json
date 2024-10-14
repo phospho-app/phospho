@@ -51,6 +51,7 @@
     "eslint-config-next": "^14.2.7",
     "gridstack": "^10.2.1",
     "lucide-react": "^0.378.0",
+    "moment": "^2.30.1",
     "next": "^14.2.7",
     "next-themes": "^0.2.1",
     "node-fetch": "^3.3.2",

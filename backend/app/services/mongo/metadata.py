@@ -210,6 +210,9 @@ async def fetch_user_metadata(
                 "tasks": {"$push": "$$ROOT"},
                 "total_tokens": {"$sum": "$metadata.total_tokens"},
                 "events": {"$push": "$events"},
+                # First and last message timestamp
+                "first_message_ts": {"$min": "$created_at"},
+                "last_message_ts": {"$max": "$created_at"},
             }
         },
         {
@@ -302,6 +305,8 @@ async def fetch_user_metadata(
                 "sessions": 1,
                 # "sessions_id": "$sessions.id",
                 "total_tokens": 1,
+                "first_message_ts": 1,
+                "last_message_ts": 1,
             }
         },
         # Sort by user_id

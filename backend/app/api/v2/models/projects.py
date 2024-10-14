@@ -40,6 +40,8 @@ class UserMetadata(BaseModel):
     events: Optional[List[Event]] = Field(default_factory=list)
     tasks_id: Optional[List[str]] = Field(default_factory=list)
     sessions: Optional[List[Session]] = Field(default_factory=list)
+    first_message_ts: float
+    last_message_ts: float
 
 
 class Users(BaseModel):

@@ -2,6 +2,7 @@
 
 import { ClusteringLoading } from "@/components/clusters/clusters-loading";
 import RunClusteringSheet from "@/components/clusters/clusters-sheet";
+import { InteractiveDatetime } from "@/components/interactive-datetime";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -280,16 +281,15 @@ const Clusters: React.FC = () => {
           {selectedClustering && (
             <div className="space-x-2 my-2">
               <Badge variant="secondary">
-                {`Instruction: ${selectedClustering?.instruction}` ??
-                  "No instruction"}
+                {`Instruction: ${selectedClustering?.instruction}`}
               </Badge>
               <Badge variant="secondary">
                 {selectedClustering?.nb_clusters ?? "No"} clusters
               </Badge>
               <Badge variant="secondary">
-                {formatUnixTimestampToLiteralDatetime(
-                  selectedClustering.created_at,
-                )}
+                <InteractiveDatetime
+                  timestamp={selectedClustering.created_at}
+                />
               </Badge>
               <Badge variant="secondary">
                 scope: {selectedClustering.scope}

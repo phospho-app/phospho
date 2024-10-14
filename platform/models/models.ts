@@ -99,6 +99,8 @@ export interface UserMetadata {
   events: Event[];
   tasks_id: string[];
   sessions: Session[];
+  first_message_ts: number;
+  last_message_ts: number;
 }
 
 export interface ScoreRange {

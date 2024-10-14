@@ -1,3 +1,4 @@
+import { InteractiveDatetime } from "@/components/interactive-datetime";
 import {
   EventBadge,
   EventDetectionDescription,
@@ -120,7 +121,7 @@ export function useColumns() {
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            avg_success_rate
+            Avg. success rate
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -138,7 +139,7 @@ export function useColumns() {
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            avg_session_length
+            Avg. session length
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -165,6 +166,44 @@ export function useColumns() {
       cell: (row) => {
         const output = row.getValue();
         return output;
+      },
+    },
+    {
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            First message
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      accessorKey: "first_message_ts",
+      cell: (row) => {
+        const value = row.getValue();
+        if (typeof value !== "number") return <></>;
+        return <InteractiveDatetime timestamp={value} />;
+      },
+    },
+    {
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Last message
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      accessorKey: "last_message_ts",
+      cell: (row) => {
+        const value = row.getValue();
+        if (typeof value !== "number") return <></>;
+        return <InteractiveDatetime timestamp={value} />;
       },
     },
     {
