@@ -33,7 +33,7 @@ function InteractiveDatetime({
           {timeAgo.humanize()} ago
         </div>
       </HoverCardTrigger>
-      <HoverCardContent>{longDate}</HoverCardContent>
+      <HoverCardContent className="text-xs">{longDate}</HoverCardContent>
     </HoverCard>
   );
 }

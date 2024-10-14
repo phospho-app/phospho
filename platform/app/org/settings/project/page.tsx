@@ -1,5 +1,6 @@
 "use client";
 
+import { InteractiveDatetime } from "@/components/interactive-datetime";
 import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
 import DisableAnalytics from "@/components/settings/disable-analytics";
@@ -67,6 +68,7 @@ export default function Page() {
             Your project id:{" "}
             <code className="bg-secondary p-1.5">{project_id}</code>
           </div>
+
           <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger>
               <Button
@@ -85,6 +87,12 @@ export default function Page() {
               {copied ? "Copied!" : "Copy"}
             </HoverCardContent>
           </HoverCard>
+        </div>
+        <div className="flex flex-row gap-x-4">
+          Creation date:{" "}
+          <div>
+            <InteractiveDatetime timestamp={selectedProject.created_at} />
+          </div>
         </div>
         <div>
           <AlertDialog open={open} onOpenChange={setOpen}>
