@@ -19,6 +19,7 @@ function InteractiveDatetime({
   timestamp: number | undefined | null;
 }) {
   if (!timestamp) return <></>;
+  if (typeof timestamp !== "number") return <></>;
 
   const date = moment(timestamp * 1000);
   const timeAgo = moment.duration(moment().diff(date));
