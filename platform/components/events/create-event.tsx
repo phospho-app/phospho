@@ -55,13 +55,16 @@ import { z } from "zod";
 export default function CreateEvent({
   setOpen,
   eventToEdit,
-  defaultEventCategory,
+  defaultEventType,
 }: {
   setOpen: (open: boolean) => void;
   eventToEdit?: EventDefinition;
-  defaultEventCategory?: string;
+  defaultEventType?: ScoreRangeType;
 }) {
   /* Create a new event definition (analytics) or edit an existing event definition (analytics)
+
+  eventToEdit: EventDefinition. Used to edit existing events. 
+  defaultEventType: ScoreRangeType. Used to set the default output type when creating a new event.
    */
 
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
@@ -116,111 +119,60 @@ export default function CreateEvent({
       .default("task"),
     keywords: z.string().optional(),
     regex_pattern: z.string().optional(),
-    score_range_settings: z
-      .object({
-        score_type: z.enum([
-          ScoreRangeType.category,
-          ScoreRangeType.confidence,
-          ScoreRangeType.range,
-        ]),
-        categories: z
-          .any()
-          .transform((value, ctx) => {
-            // If array of string, return it
-            if (Array.isArray(value)) {
-              value = value.filter((category) => category !== "");
-              return value;
-            }
-            // If not a string, raise an error
-            if (typeof value !== "string") {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Categories must be a string.",
-              });
-              return z.NEVER;
-            }
-            // Split the string into an array of categories
-            let categories = value
-              .split(",")
-              .map((category) => category.trim());
-            // Remove empty strings
-            categories = categories.filter((category) => category !== "");
-            return categories;
-          })
-          .optional(),
-      })
-      .transform((value, ctx) => {
-        // Raise an error if there are less than 1 category or more than 9
-        if (value.score_type === ScoreRangeType.confidence) {
-          return {
-            score_type: ScoreRangeType.confidence,
-            min: 0,
-            max: 1,
-            categories: [],
-          };
+    output_type: z.enum([
+      ScoreRangeType.category,
+      ScoreRangeType.confidence,
+      ScoreRangeType.range,
+    ]),
+    categories: z.any().transform((value, ctx) => {
+      // if output_type is not category, return an empty array
+      if (form.getValues("output_type") !== ScoreRangeType.category) {
+        return [];
+      }
+
+      // If array of string, return it
+      if (Array.isArray(value)) {
+        value = value.filter((category) => category !== "");
+        if (value.length < 2) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "You must have at least 2 categories. Ex: happy,sad",
+          });
+          return z.NEVER;
         }
-        if (value.score_type === ScoreRangeType.range) {
-          return {
-            score_type: ScoreRangeType.range,
-            min: 1,
-            max: 5,
-            categories: [],
-          };
-        }
-        if (value.score_type === ScoreRangeType.category) {
-          if (value.categories.length < 1 || value.categories.length > 9) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Categories must be between 1 and 9.",
-            });
-            return z.NEVER;
-          }
-          return {
-            score_type: ScoreRangeType.category,
-            min: 1,
-            max: value.categories.length,
-            categories: value.categories,
-          };
-        }
-      })
-      .optional(),
+        return value;
+      }
+      // If not a string, raise an error
+      if (typeof value !== "string") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Categories must be a string.",
+        });
+        return z.NEVER;
+      }
+      // Split the string into an array of categories
+      let categories = value.split(",").map((category) => category.trim());
+      // Remove empty strings
+      categories = categories.filter((category) => category !== "");
+      if (categories.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "You must have at least 2 categories. Ex: happy,sad",
+        });
+        return z.NEVER;
+      }
+
+      return categories;
+    }),
     is_last_task: z.boolean(),
   });
 
-  let defaultScoreRangeSettings = {
-    score_type: ScoreRangeType.confidence,
-    min: 0,
-    max: 1,
-    categories: [],
-  } as ScoreRangeSettings;
-  if (eventToEdit?.score_range_settings) {
-    defaultScoreRangeSettings = eventToEdit.score_range_settings;
-  } else {
-    if (defaultEventCategory === ScoreRangeType.confidence) {
-      defaultScoreRangeSettings = {
-        score_type: ScoreRangeType.confidence,
-        min: 0,
-        max: 1,
-        categories: [],
-      };
-    }
-    if (defaultEventCategory === ScoreRangeType.range) {
-      defaultScoreRangeSettings = {
-        score_type: ScoreRangeType.range,
-        min: 1,
-        max: 5,
-        categories: [],
-      };
-    }
-    if (defaultEventCategory === ScoreRangeType.category) {
-      defaultScoreRangeSettings = {
-        score_type: ScoreRangeType.category,
-        min: 1,
-        max: 1,
-        categories: [],
-      };
-    }
-  }
+  const default_output_type =
+    defaultEventType ??
+    eventToEdit?.score_range_settings?.score_type ??
+    ScoreRangeType.confidence;
+  const default_categories =
+    eventToEdit?.score_range_settings?.categories ?? [];
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -233,7 +185,8 @@ export default function CreateEvent({
       detection_scope: eventToEdit?.detection_scope ?? "task",
       keywords: eventToEdit?.keywords ?? "",
       regex_pattern: eventToEdit?.regex_pattern ?? "",
-      score_range_settings: defaultScoreRangeSettings,
+      output_type: default_output_type,
+      categories: default_categories,
       is_last_task: eventToEdit?.is_last_task ?? false,
     },
   });
@@ -254,6 +207,33 @@ export default function CreateEvent({
       delete selectedProject.settings.events[eventToEdit.event_name];
     }
 
+    // Create the score_range_settings object
+    let score_range_settings: ScoreRangeSettings | undefined = undefined;
+    if (values.output_type === ScoreRangeType.confidence) {
+      score_range_settings = {
+        score_type: ScoreRangeType.confidence,
+        min: 0,
+        max: 1,
+        categories: [],
+      };
+    }
+    if (values.output_type === ScoreRangeType.range) {
+      score_range_settings = {
+        score_type: ScoreRangeType.range,
+        min: 1,
+        max: 5,
+        categories: [],
+      };
+    }
+    if (values.output_type === ScoreRangeType.category) {
+      score_range_settings = {
+        score_type: ScoreRangeType.category,
+        min: 1,
+        max: values.categories.length,
+        categories: values.categories,
+      };
+    }
+
     // On purpose, we do not pass the job_id, so a new job object will be created for this event
     selectedProject.settings.events[values.event_name] = {
       project_id: selectedProject.id,
@@ -268,7 +248,7 @@ export default function CreateEvent({
       detection_scope: values.detection_scope as DetectionScope,
       keywords: values.keywords,
       regex_pattern: values.regex_pattern,
-      score_range_settings: values.score_range_settings,
+      score_range_settings: score_range_settings,
       is_last_task: values.is_last_task,
     };
 
@@ -294,15 +274,7 @@ export default function CreateEvent({
     }
   }
 
-  const scoreRangeSettings: ScoreRangeSettings | undefined = form.watch(
-    "score_range_settings",
-  );
-
-  const getDescriptionPlaceholder = (
-    settings: ScoreRangeSettings | undefined,
-  ): string => {
-    const scoreType = settings?.score_type;
-
+  const getDescriptionPlaceholder = (scoreType: ScoreRangeType): string => {
     switch (scoreType) {
       case ScoreRangeType.confidence:
         return "Describe when this event occurs. Use simple language. Refer to speakers as 'the user' and 'the assistant'.";
@@ -365,28 +337,29 @@ export default function CreateEvent({
                           eventDefinition.is_last_task ?? false,
                         );
 
+                        // Set the score_range_settings
                         if (eventDefinition.score_range_settings) {
-                          const scoreRangeSettings = {
-                            score_type:
-                              eventDefinition.score_range_settings.score_type ??
-                              (ScoreRangeType.confidence as ScoreRangeType),
-                            min: eventDefinition.score_range_settings.min ?? 0,
-                            max: eventDefinition.score_range_settings.max ?? 1,
-                            categories:
-                              eventDefinition.score_range_settings.categories ??
-                              [],
-                          };
                           form.setValue(
-                            "score_range_settings",
-                            scoreRangeSettings,
+                            "output_type",
+                            eventDefinition.score_range_settings.score_type,
                           );
+                          if (
+                            eventDefinition.score_range_settings.score_type ===
+                            ScoreRangeType.category
+                          ) {
+                            form.setValue(
+                              "categories",
+                              eventDefinition.score_range_settings.categories,
+                            );
+                          } else {
+                            form.setValue("categories", []);
+                          }
                         } else {
-                          form.setValue("score_range_settings", {
-                            score_type: ScoreRangeType.confidence,
-                            categories: [],
-                            min: 0,
-                            max: 1,
-                          });
+                          form.setValue(
+                            "output_type",
+                            ScoreRangeType.confidence,
+                          );
+                          form.setValue("categories", []);
                         }
 
                         // Prevent the form from submitting
@@ -477,7 +450,7 @@ export default function CreateEvent({
                     <Textarea
                       id="description"
                       placeholder={getDescriptionPlaceholder(
-                        scoreRangeSettings,
+                        form.watch("output_type"),
                       )}
                       {...field}
                     />
@@ -528,50 +501,22 @@ export default function CreateEvent({
                 // Let user pick the scoreRangeSettings.score_type. Then, prefill the min and max values based on the score_type
                 <FormField
                   control={form.control}
-                  name="score_range_settings"
+                  name="output_type"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Output type</FormLabel>
                       <FormControl>
                         <Select
-                          value={
-                            field.value?.score_type ?? ScoreRangeType.confidence
-                          }
+                          value={field.value}
+                          defaultValue={field.value}
                           onValueChange={(value) => {
-                            if (value === ScoreRangeType.confidence) {
-                              field.onChange({
-                                score_type: ScoreRangeType.confidence,
-                                min: 0,
-                                max: 1,
-                                categories: "",
-                              });
-                            } else if (value === ScoreRangeType.range) {
-                              field.onChange({
-                                score_type: "range",
-                                min: 1,
-                                max: 5,
-                                categories: "",
-                              });
-                            } else if (value === ScoreRangeType.category) {
-                              field.onChange({
-                                score_type: "category",
-                                min: 1,
-                                max: 1,
-                                categories:
-                                  form.getValues().score_range_settings
-                                    ?.categories ?? [],
-                              });
-                            }
+                            field.onChange(value);
                           }}
-                          defaultValue={
-                            field.value?.score_type ?? ScoreRangeType.confidence
-                          }
                         >
                           <SelectTrigger>
                             <SelectValue
                               defaultValue={
-                                field.value?.score_type ??
-                                ScoreRangeType.confidence
+                                field.value ?? ScoreRangeType.confidence
                               }
                             />
                           </SelectTrigger>
@@ -594,10 +539,10 @@ export default function CreateEvent({
               )
             }
             {form.watch("detection_engine") === "llm_detection" &&
-              form.watch("score_range_settings")?.score_type === "category" && (
+              form.watch("output_type") === "category" && (
                 <FormField
                   control={form.control}
-                  name="score_range_settings.categories"
+                  name="categories"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Categories</FormLabel>
@@ -607,11 +552,7 @@ export default function CreateEvent({
                           {...field}
                           onChange={(e) => {
                             const value = e.target.value;
-                            field.onChange({
-                              target: { value: value.split(",") },
-                            });
-                            // update the score_range_settings object
-                            form.resetField("score_range_settings.score_type");
+                            field.onChange(value.split(","));
                           }}
                         />
                       </FormControl>
