@@ -1,3 +1,4 @@
+import { InteractiveDatetime } from "@/components/interactive-datetime";
 import {
   AddEventDropdownForSessions,
   InteractiveEventBadgeForSessions,
@@ -17,7 +18,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { authFetcher } from "@/lib/fetcher";
-import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
 import { Event, EventDefinition, SessionWithEvents } from "@/models/models";
 import { Project } from "@/models/models";
@@ -137,13 +137,10 @@ export function useColumns({
         );
       },
       accessorKey: "created_at",
-      cell: ({ row }) => (
-        <span>
-          {formatUnixTimestampToLiteralDatetime(
-            Number(row.original.created_at),
-          )}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const created_at = row.original.created_at;
+        return <InteractiveDatetime timestamp={created_at} />;
+      },
     },
     // Preview
     {

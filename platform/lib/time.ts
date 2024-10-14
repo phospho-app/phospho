@@ -3,7 +3,7 @@ import { format } from "date-fns";
 // Utility function to format Unix timestamp to a short date format
 export function formatUnixTimestampToShortDate(timestamp: number): string {
   const date = new Date(timestamp * 1000); // Convert Unix timestamp to milliseconds
-  return format(date, "MM/dd/yyyy");
+  return format(date, "yyyy-MM-dd");
 }
 
 // Utility function to format Unix timestamp to "Mon dd yyyy" format

@@ -1,3 +1,4 @@
+import { InteractiveDatetime } from "@/components/interactive-datetime";
 import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
@@ -17,7 +18,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { authFetcher } from "@/lib/fetcher";
-import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
 import {
   Event,
@@ -131,13 +131,10 @@ export function useColumns({
         );
       },
       accessorKey: "created_at",
-      cell: ({ row }) => (
-        <div>
-          {formatUnixTimestampToLiteralDatetime(
-            Number(row.original.created_at),
-          )}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const value = row.original.created_at;
+        return <InteractiveDatetime timestamp={value} />;
+      },
     },
     // Input
     {
