@@ -83,8 +83,8 @@ export const EventBadge = ({ event }: { event: Event }) => {
     : null;
 
   const badgeStyle = event.confirmed
-    ? "border bg-green-500 hover:border-green-500 mb-1"
-    : "border hover:border-green-500 mb-1";
+    ? "border bg-green-500 hover:border-green-500"
+    : "border hover:border-green-500";
 
   const score_type = event.score_range?.score_type ?? "confidence";
 
@@ -397,7 +397,7 @@ export const AddEventDropdownForTasks = ({
       <DropdownMenuTrigger>
         <Badge
           variant="outline"
-          className={cn("hover:border-green-500 mb-1", className)}
+          className={cn("hover:border-green-500", className)}
         >
           +
         </Badge>
@@ -805,7 +805,7 @@ export const AddEventDropdownForSessions = ({
       <DropdownMenuTrigger>
         <Badge
           variant="outline"
-          className={cn(" hover:border-green-500 mb-1", className)}
+          className={cn(" hover:border-green-500", className)}
         >
           +
         </Badge>

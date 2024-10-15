@@ -3,6 +3,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { cn } from "@/lib/utils";
 import moment from "moment";
 
 /**
@@ -15,8 +16,10 @@ import moment from "moment";
  * **/
 function InteractiveDatetime({
   timestamp,
+  className,
 }: {
   timestamp: number | undefined | null;
+  className?: string;
 }) {
   if (!timestamp) return <></>;
   if (typeof timestamp !== "number") return <></>;
@@ -28,7 +31,7 @@ function InteractiveDatetime({
 
   return (
     <HoverCard openDelay={0} closeDelay={0}>
-      <HoverCardTrigger>
+      <HoverCardTrigger className={className}>
         <div>{shortDate}</div>
         <div className="text-xs text-muted-foreground">
           {timeAgo.humanize()} ago

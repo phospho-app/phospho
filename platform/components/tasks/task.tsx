@@ -1,19 +1,14 @@
 "use client";
 
+import { InteractiveDatetime } from "@/components/interactive-datetime";
 import { CenteredSpinner } from "@/components/small-spinner";
 import TaskBox from "@/components/task-box";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
-import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Task, TaskWithEvents } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, CopyIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
 import useSWR from "swr";
@@ -50,61 +45,73 @@ const TaskOverview: React.FC<TaskProps> = ({
   };
 
   return (
-    <div className="flex flex-col space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl font-bold tracking-tight">
-            <div className="flex justify-between">
-              Message
-              <div className="flex flex-row space-x-2">
-                {showGoToTask && (
-                  <Link href={`/org/transcripts/tasks/${task_id}`}>
-                    <Button variant="secondary">
-                      Go to Message
-                      <ChevronRight />
-                    </Button>
-                  </Link>
-                )}
-                {task.session_id && (
-                  <Link href={`/org/transcripts/sessions/${task.session_id}`}>
-                    <Button variant="secondary">Go to Session</Button>
-                  </Link>
-                )}
-              </div>
+    <>
+      <div className="flex justify-between items-center mt-4">
+        <span className="text-xl font-bold">Message</span>
+        <div className="flex flex-row space-x-2">
+          {showGoToTask && (
+            <Link href={`/org/transcripts/tasks/${task_id}`}>
+              <Button variant="secondary">
+                Go to Message
+                <ChevronRight />
+              </Button>
+            </Link>
+          )}
+          {task.session_id && (
+            <Link href={`/org/transcripts/sessions/${task.session_id}`}>
+              <Button variant="secondary">Go to Session</Button>
+            </Link>
+          )}
+        </div>
+      </div>
+      <Card className="flex flex-col sapce-y-1 p-2">
+        <div className="flex flex-row items-center">
+          <code className="bg-secondary p-1.5 text-xs">{task_id}</code>
+          <Button
+            variant="outline"
+            className="m-1.5"
+            size="icon"
+            onClick={() => {
+              navigator.clipboard.writeText(task_id);
+            }}
+          >
+            <CopyIcon className="w-3 h-3" />
+          </Button>
+        </div>
+        <div className="flex flex-row space-x-16">
+          <div className="text-xs max-w-48">
+            <span>Created at:</span>
+            <InteractiveDatetime timestamp={task.created_at} />
+          </div>
+          {task.task_position && (
+            <div className="flex flex-col">
+              <div className="text-xl font-bold">#{task.task_position}</div>
+              <span className="text-muted-foreground text-xs">position</span>
             </div>
-          </CardTitle>
-          <CardDescription>
-            <ul>
-              <li>
-                <span className="font-bold">Task ID:</span> {task.id}
-              </li>
-              <li>
-                <span className="font-bold">Created at:</span>{" "}
-                {formatUnixTimestampToLiteralDatetime(task.created_at)}
-              </li>
-              <li>
-                <span className="font-bold">Last eval source:</span>{" "}
-                {task?.last_eval?.source ?? "None"}
-              </li>
-              <li>
-                <span className="font-bold">Last eval date:</span>{" "}
-                {task?.last_eval?.created_at
-                  ? formatUnixTimestampToLiteralDatetime(
-                      task?.last_eval?.created_at,
-                    )
-                  : "Never"}
-              </li>
-              <li>
-                <span className="font-bold">Message position:</span>{" "}
-                {task.task_position}
-              </li>
-              <li>
-                <span className="font-bold">Is last message:</span>{" "}
-                {task.is_last_task ? "Yes" : "No"}
-              </li>
-            </ul>
-          </CardDescription>
-        </CardHeader>
+          )}
+          <div className="flex flex-col">
+            <div className="text-xl font-bold">
+              {task.is_last_task ? "Yes" : "No"}
+            </div>
+            <span className="text-muted-foreground text-xs">
+              Is last message?
+            </span>
+          </div>
+          {task?.last_eval?.source && (
+            <div className="flex flex-col">
+              <div className="text-xl font-bold">{task?.last_eval?.source}</div>
+              <span className="text-muted-foreground text-xs">
+                Last eval source
+              </span>
+            </div>
+          )}
+          {task?.last_eval?.created_at && (
+            <div className="text-xs max-w-48">
+              <span>Last eval date:</span>
+              <InteractiveDatetime timestamp={task?.last_eval?.created_at} />
+            </div>
+          )}
+        </div>
       </Card>
       <TaskBox
         task={task}
@@ -113,7 +120,7 @@ const TaskOverview: React.FC<TaskProps> = ({
         }}
         setFlag={setFlag}
       />
-    </div>
+    </>
   );
 };
 
