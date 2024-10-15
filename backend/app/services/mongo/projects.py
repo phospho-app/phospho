@@ -573,7 +573,10 @@ async def store_onboarding_survey(user: User, survey: dict):
     return
 
 
-async def get_all_users_metadata(project_id: str) -> List[UserMetadata]:
+async def get_all_users_metadata(
+    project_id: str,
+    filters: ProjectDataFilters,
+) -> List[UserMetadata]:
     """
     Get metadata about the end-users of a project
 
@@ -587,11 +590,17 @@ async def get_all_users_metadata(project_id: str) -> List[UserMetadata]:
         tasks: List[Task]
         sessions: List[Session]
     """
-    try:
-        users = await fetch_user_metadata(project_id=project_id, user_id=None)
-    except Exception as e:
-        logger.error(f"Error fetching users metadata: {e}")
-        users = []
+    # Override user_id filter to get all users
+    filters.user_id = None
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = cast_datetime_or_timestamp_to_timestamp(
+            filters.created_at_start
+        )
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = cast_datetime_or_timestamp_to_timestamp(
+            filters.created_at_end
+        )
+    users = await fetch_user_metadata(project_id=project_id, filters=filters)
     return users
 
 

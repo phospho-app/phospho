@@ -78,3 +78,9 @@ class ClusteringCostRequest(BaseModel):
     scope: Literal["messages", "sessions", "users"] = "messages"
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     limit: Optional[int] = None
+
+
+class QueryUserMetadataRequest(BaseModel):
+    filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
+    pagination: Optional[Pagination] = None
+    sorting: Optional[List[Sorting]] = None

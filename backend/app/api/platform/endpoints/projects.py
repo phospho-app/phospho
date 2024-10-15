@@ -3,7 +3,13 @@ from typing import List, Optional
 
 from app.services.universal_loader.universal_loader import universal_loader
 import pandas as pd  # type: ignore
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    UploadFile,
+)
 from google.cloud.storage import Bucket  # type: ignore
 from loguru import logger
 from propelauth_fastapi import User  # type: ignore
@@ -17,6 +23,7 @@ from app.api.platform.models import (
     ProjectDataFilters,
     ProjectUpdateRequest,
     QuerySessionsTasksRequest,
+    QueryUserMetadataRequest,
     SearchQuery,
     SearchResponse,
     Sessions,
@@ -353,20 +360,21 @@ async def add_events(
     return updated_project
 
 
-@router.get(
+@router.post(
     "/projects/{project_id}/users",
     response_model=Users,
     description="Get metadata about the end-users of a project",
 )
 async def get_users(
     project_id: str,
+    query: QueryUserMetadataRequest,
     user: User = Depends(propelauth.require_user),
 ) -> Users:
     """
     Get metadata about the end-users of a project
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    users = await get_all_users_metadata(project_id)
+    users = await get_all_users_metadata(project_id=project_id, filters=query.filters)
     return Users(users=users)
 
 

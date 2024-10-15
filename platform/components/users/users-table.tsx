@@ -1,5 +1,6 @@
 "use client";
 
+import { CenteredSpinner } from "@/components/small-spinner";
 import { TableNavigation } from "@/components/table-navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,19 +35,28 @@ import useSWR from "swr";
 import { UserPreview } from "./user-preview";
 
 export function UsersTable({
-  forcedDataFilters: forcedDataFilters,
+  forcedDataFilters,
 }: {
   forcedDataFilters?: ProjectDataFilters | null;
 }) {
-  const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
+  const project_id = navigationStateStore((state) => state.project_id);
+  // const dataFilters = navigationStateStore((state) => state.dataFilters);
+
+  // Merge forcedDataFilters with dataFilters
+  // const dataFiltersMerged = {
+  //   ...dataFilters,
+  //   ...forcedDataFilters,
+  // };
 
   // Fetch all users
   const { data: usersMetadata }: { data: UserMetadata[] | null | undefined } =
     useSWR(
       project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
       ([url, accessToken]) =>
-        authFetcher(url, accessToken, "GET").then(async (res) => {
+        authFetcher(url, accessToken, "POST", {
+          filters: {}, // TODO: Implement filters
+        }).then(async (res) => {
           if (res === undefined) return undefined;
           if (!res?.users) return null;
           return res.users;
@@ -112,68 +122,71 @@ export function UsersTable({
       </div>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              {usersMetadata &&
-                table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead
-                          key={header.id}
-                          colSpan={header.colSpan}
-                          style={{
-                            width: header.getSize(),
-                          }}
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                        </TableHead>
-                      );
-                    })}
+        {usersMetadata === undefined && <CenteredSpinner />}
+        {usersMetadata && (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                {usersMetadata &&
+                  table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        return (
+                          <TableHead
+                            key={header.id}
+                            colSpan={header.colSpan}
+                            style={{
+                              width: header.getSize(),
+                            }}
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                          </TableHead>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+              </TableHeader>
+              <TableBody>
+                {usersMetadata && table?.getRowModel()?.rows?.length ? (
+                  table?.getRowModel()?.rows?.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      onClick={() => {
+                        setSheetOpen(true);
+                        setPreviewUserId(row.original.user_id);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No users found.
+                    </TableCell>
                   </TableRow>
-                ))}
-            </TableHeader>
-            <TableBody>
-              {usersMetadata && table?.getRowModel()?.rows?.length ? (
-                table?.getRowModel()?.rows?.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    onClick={() => {
-                      setSheetOpen(true);
-                      setPreviewUserId(row.original.user_id);
-                    }}
-                    className="cursor-pointer"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No users found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
         {table.getPageCount() > 1 && (
           <div className="flex justify-center mt-2">
             <TableNavigation table={table} />
