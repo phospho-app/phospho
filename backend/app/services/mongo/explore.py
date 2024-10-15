@@ -449,7 +449,6 @@ async def get_most_detected_tagger_name(
 def extract_date_range(
     filters: ProjectDataFilters
 ) -> Tuple[Optional[datetime.datetime], Optional[datetime.datetime]]:
-    """ """
     start_date = end_date = None
     if filters.created_at_start and isinstance(filters.created_at_start, int):
         start_date = datetime.datetime.fromtimestamp(filters.created_at_start)
@@ -1962,8 +1961,6 @@ async def get_category_distribution(
             }
         },
     ]
-
-    logger.info(f"Pipeline: {pipeline}")
 
     result = await db["events"].aggregate(pipeline).to_list(length=None)
     if result is None or len(result) == 0:

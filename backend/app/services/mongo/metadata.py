@@ -152,7 +152,7 @@ async def calculate_bottom10_percent(
 
 async def fetch_user_metadata(
     project_id: str,
-    user_id: Optional[str] = None,
+    filters: ProjectDataFilters,
 ) -> List[UserMetadata]:
     """
     Get the user metadata for a specific user in a project
@@ -167,22 +167,19 @@ async def fetch_user_metadata(
         tasks_id: List[str]
         sessions: List[Session]
     """
+
     mongo_db = await get_mongo_db()
 
     match_pipeline: List[Dict[str, object]] = []
-    if user_id is not None:
-        match_pipeline = [
-            {"$match": {"project_id": project_id, "metadata.user_id": user_id}},
-        ]
+    main_filter: Dict[str, object] = {
+        "project_id": project_id,
+    }
+    if filters.user_id is not None:
+        main_filter["metadata.user_id"] = filters.user_id
     else:
-        match_pipeline = [
-            {
-                "$match": {
-                    "project_id": project_id,
-                    "metadata.user_id": {"$ne": None},
-                },
-            },
-        ]
+        main_filter["metadata.user_id"] = {"$ne": None}
+
+    match_pipeline += [{"$match": main_filter}]
 
     # First, we update the relevant sessions collection with the session_length
     # await compute_session_length(project_id)
@@ -215,6 +212,20 @@ async def fetch_user_metadata(
                 "last_message_ts": {"$max": "$created_at"},
             }
         },
+    ]
+
+    secondary_filter: Dict[str, object] = {}
+    if filters.created_at_start is not None:
+        secondary_filter["last_message_ts"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
+        secondary_filter["last_message_ts"] = {
+            **secondary_filter.get("last_message_ts", {}),  # type: ignore
+            "$lte": filters.created_at_end,
+        }
+    if secondary_filter:
+        metadata_pipeline += [{"$match": secondary_filter}]
+
+    metadata_pipeline += [
         {
             "$lookup": {
                 "from": "sessions",
@@ -314,7 +325,7 @@ async def fetch_user_metadata(
     ]
 
     users = await mongo_db["tasks"].aggregate(metadata_pipeline).to_list(length=None)
-    if users is None or (user_id is not None and len(users) == 0):
+    if users is None or (filters.user_id is not None and len(users) == 0):
         raise HTTPException(status_code=404, detail="No user found")
 
     users = [UserMetadata.model_validate(data) for data in users]
@@ -878,7 +889,6 @@ async def breakdown_by_sum_of_metadata_field(
         }
     )
 
-    logger.info(f"Running pipeline: {pipeline}")
     result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=200)
     logger.info(f"Analytics query Result: {result}")
 

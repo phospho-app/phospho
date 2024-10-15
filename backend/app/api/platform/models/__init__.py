@@ -37,6 +37,7 @@ from .explore import (
     ProjectDataFilters,
     QuerySessionsTasksRequest,
     AggregatedSessionsRequest,
+    QueryUserMetadataRequest,
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
 from .organizations import (

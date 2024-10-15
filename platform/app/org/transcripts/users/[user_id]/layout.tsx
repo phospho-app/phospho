@@ -1,5 +1,6 @@
 "use client";
 
+import { DatePickerWithRange } from "@/components/date-range";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -63,19 +64,26 @@ export default function Page({
         </Button>
       </div>
       <div className="text-2xl font-bold tracking-tight">User {user_id}</div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild className="w-[10rem] justify-between">
-          <Button variant="secondary">
-            {selected}
-            <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onSelect={handleSelect}>Messages</DropdownMenuItem>
-          <DropdownMenuItem onSelect={handleSelect}>Sessions</DropdownMenuItem>
-        </DropdownMenuContent>
-        <DropdownMenu />
-      </DropdownMenu>
+      <div className="flex flex-row gap-x-2">
+        <DatePickerWithRange />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild className="w-[10rem] justify-between">
+            <Button variant="secondary">
+              {selected}
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onSelect={handleSelect}>
+              Messages
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleSelect}>
+              Sessions
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+          <DropdownMenu />
+        </DropdownMenu>
+      </div>
       {children}
     </div>
   );

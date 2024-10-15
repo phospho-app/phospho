@@ -312,8 +312,6 @@ async def get_total_nb_of_tasks(
         project_id=project_id, filters=filters, fetch_objects="tasks"
     )
     pipeline = await query_builder.build()
-    logger.info(f"Total number of tasks pipeline: {pipeline}")
-
     query_result = (
         await mongo_db["tasks"]
         .aggregate(

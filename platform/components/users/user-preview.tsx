@@ -1,3 +1,4 @@
+import { DatePickerWithRange } from "@/components/date-range";
 import { SessionsTable } from "@/components/sessions/sessions-table";
 import { TasksTable } from "@/components/tasks/tasks-table";
 import { Button } from "@/components/ui/button";
@@ -26,23 +27,26 @@ function UserPreview({ user_id }: { user_id?: string }) {
           </Button>
         </Link>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild className="w-[10rem] justify-between">
-          <Button variant="secondary">
-            {selected}
-            <ChevronDown className="ml-2 h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onSelect={() => setSelected("Messages")}>
-            Messages
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setSelected("Sessions")}>
-            Sessions
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-        <DropdownMenu />
-      </DropdownMenu>
+      <div className="flex flex-row gap-x-2">
+        <DatePickerWithRange />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild className="w-[10rem] justify-between">
+            <Button variant="secondary">
+              {selected}
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onSelect={() => setSelected("Messages")}>
+              Messages
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setSelected("Sessions")}>
+              Sessions
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+          <DropdownMenu />
+        </DropdownMenu>
+      </div>
       {selected === "Messages" && (
         <TasksTable forcedDataFilters={{ user_id: user_id }} />
       )}
