@@ -28,7 +28,6 @@ import {
   FilterX,
   Sparkles,
 } from "lucide-react";
-import Link from "next/link";
 import useSWR from "swr";
 
 export function useColumns() {
@@ -291,11 +290,9 @@ export function useColumns() {
         // Handle undefined edge case
         if (!user_id) return <></>;
         return (
-          <Link href={`/org/transcripts/users/${encodeURIComponent(user_id)}`}>
-            <Button variant="ghost" size="icon">
-              <ChevronRight />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon">
+            <ChevronRight />
+          </Button>
         );
       },
       size: 10,
