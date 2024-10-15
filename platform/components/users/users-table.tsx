@@ -3,6 +3,7 @@
 import { TableNavigation } from "@/components/table-navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -27,9 +28,10 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { FilterX } from "lucide-react";
-import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
+
+import { UserPreview } from "./user-preview";
 
 export function UsersTable({
   forcedDataFilters: forcedDataFilters,
@@ -38,7 +40,6 @@ export function UsersTable({
 }) {
   const project_id = navigationStateStore((state) => state.project_id);
   const { accessToken } = useUser();
-  const router = useRouter();
 
   // Fetch all users
   const { data: usersMetadata }: { data: UserMetadata[] | null | undefined } =
@@ -57,6 +58,8 @@ export function UsersTable({
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [filters, setFilters] = useState<ColumnFiltersState>([]);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [previewUserId, setPreviewUserId] = useState<string | undefined>();
 
   const columns = useColumns();
   const table = useReactTable({
@@ -108,69 +111,78 @@ export function UsersTable({
         <TableNavigation table={table} />
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {usersMetadata &&
-              table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead
-                        key={header.id}
-                        colSpan={header.colSpan}
-                        style={{
-                          width: header.getSize(),
-                        }}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    );
-                  })}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {usersMetadata &&
+                table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead
+                          key={header.id}
+                          colSpan={header.colSpan}
+                          style={{
+                            width: header.getSize(),
+                          }}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+            </TableHeader>
+            <TableBody>
+              {usersMetadata && table?.getRowModel()?.rows?.length ? (
+                table?.getRowModel()?.rows?.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    onClick={() => {
+                      setSheetOpen(true);
+                      setPreviewUserId(row.original.user_id);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No users found.
+                  </TableCell>
                 </TableRow>
-              ))}
-          </TableHeader>
-          <TableBody>
-            {usersMetadata && table?.getRowModel()?.rows?.length ? (
-              table?.getRowModel()?.rows?.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  onClick={() => {
-                    router.push(
-                      `/org/transcripts/users/${encodeURIComponent(row.original.user_id)}`,
-                    );
-                  }}
-                  className="cursor-pointer"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No users found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        {table.getPageCount() > 1 && (
+          <div className="flex justify-center mt-2">
+            <TableNavigation table={table} />
+          </div>
+        )}
+        <SheetContent className="md:w-1/2 overflow-auto">
+          <UserPreview user_id={previewUserId} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
