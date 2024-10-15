@@ -1,0 +1,29 @@
+name: Auto Create PR
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+
+      - name: Check for existing PR
+        id: check_pr
+        run: |
+          PR=$(gh pr list --base main --head dev --json number --jq '.[0].number')
+          echo "::set-output name=pr_number::$PR"
+
+      - name: Create Pull Request
+        if: steps.check_pr.outputs.pr_number == ''
+        run: |
+          gh pr create --base main --head dev --title "Auto-merge dev into main" --body "This PR was automatically created by GitHub Actions."
