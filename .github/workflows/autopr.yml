@@ -19,18 +19,24 @@ jobs:
 
       - name: Get last merged PR number
         id: get_last_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           LAST_PR=$(git log -1 --pretty=format:"%s" | grep -oE '#[0-9]+' | tr -d '#')
           echo "::set-output name=last_pr_number::$LAST_PR"
 
       - name: Check for existing PR
         id: check_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           PR=$(gh pr list --base main --head dev --json number --jq '.[0].number')
           echo "::set-output name=pr_number::$PR"
 
       - name: Create Pull Request
         if: steps.check_pr.outputs.pr_number == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh pr create --base main --head dev \
             --title "🧪 AutoPR dev->main" \
