@@ -10,7 +10,7 @@ export default function Page({ params }: { params: { id: string } }) {
   const router = useRouter();
 
   return (
-    <>
+    <div className="flex flex-col space-y-4">
       <Button
         onClick={() => {
           router.back();
@@ -20,6 +20,6 @@ export default function Page({ params }: { params: { id: string } }) {
         <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
       <TaskOverview key={params.id} task_id={task_id}></TaskOverview>
-    </>
+    </div>
   );
 }

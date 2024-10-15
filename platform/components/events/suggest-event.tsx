@@ -206,7 +206,7 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId }) => {
         <HoverCardTrigger asChild>
           <PopoverTrigger asChild>
             <div
-              className={`mr-1 hover:border-green-500 rounded-full p-1 border-2 cursor-pointer`}
+              className="hover:border-green-500 rounded-full p-1.5 border-2 cursor-pointer"
               onClick={() => generateEventSuggestion()}
             >
               <Wand2 className="h-4 w-4" />
@@ -225,7 +225,7 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId }) => {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="font-normal space-y-4"
+              className="font-normal space-y-2"
             >
               <FormField
                 control={form.control}

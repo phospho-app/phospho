@@ -88,6 +88,7 @@ export interface SessionWithEvents extends Session {
   events: Event[];
   tasks: Task[];
   stats: Stats;
+  users: UserMetadata[];
 }
 
 export interface UserMetadata {

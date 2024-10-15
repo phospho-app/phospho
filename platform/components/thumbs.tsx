@@ -229,29 +229,29 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
   );
 
   return (
-    <div className="flex justify-end">
-      {flag === "success" && !task.last_eval && successByPhospho}
-      {flag === "failure" && !task.last_eval && failureByPhospho}
-      {flag === "success" &&
-        task.last_eval &&
-        task.last_eval.source.startsWith("phospho") &&
-        successByPhospho}
-      {flag === "failure" &&
-        task.last_eval &&
-        task.last_eval.source.startsWith("phospho") &&
-        failureByPhospho}
-      {flag === "success" &&
-        task.last_eval &&
-        !task.last_eval.source.startsWith("phospho") &&
-        successByUser}
-      {flag === "failure" &&
-        task.last_eval &&
-        !task.last_eval.source.startsWith("phospho") &&
-        failureByUser}
-      {(flag === null || flag === "undefined") && noEval}
+    <Popover key={key} open={popoverOpen} onOpenChange={setPopoverOpen}>
+      <div className="flex justify-end align-top">
+        {flag === "success" && !task.last_eval && successByPhospho}
+        {flag === "failure" && !task.last_eval && failureByPhospho}
+        {flag === "success" &&
+          task.last_eval &&
+          task.last_eval.source.startsWith("phospho") &&
+          successByPhospho}
+        {flag === "failure" &&
+          task.last_eval &&
+          task.last_eval.source.startsWith("phospho") &&
+          failureByPhospho}
+        {flag === "success" &&
+          task.last_eval &&
+          !task.last_eval.source.startsWith("phospho") &&
+          successByUser}
+        {flag === "failure" &&
+          task.last_eval &&
+          !task.last_eval.source.startsWith("phospho") &&
+          failureByUser}
+        {(flag === null || flag === "undefined") && noEval}
 
-      <Popover key={key} open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <PopoverTrigger>
+        <PopoverTrigger asChild>
           <Button
             variant="outline"
             size="icon"
@@ -260,23 +260,21 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
             <PenSquare className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-96 h-120">
-          <CardHeader>
-            <div>
-              <Textarea
-                id="description"
-                placeholder={`Write a custom note for this message.\nWhen your users give you feedback, you see it here.`}
-                value={currentNotes}
-                onChange={handleNoteEdit}
-              />
-            </div>
-            <Button className="hover:bg-green-600" onClick={handleSaveButton}>
-              Save
-            </Button>
-          </CardHeader>
-        </PopoverContent>
-      </Popover>
-    </div>
+      </div>
+      <PopoverContent align="end" className="w-96 h-120">
+        <CardHeader>
+          <Textarea
+            id="description"
+            placeholder={`Write a custom note for this message.\nWhen your users give you feedback, you see it here.`}
+            value={currentNotes}
+            onChange={handleNoteEdit}
+          />
+          <Button className="hover:bg-green-600" onClick={handleSaveButton}>
+            Save
+          </Button>
+        </CardHeader>
+      </PopoverContent>
+    </Popover>
   );
 };
 
