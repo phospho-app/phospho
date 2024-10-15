@@ -1,9 +1,11 @@
 name: Auto Create PR
 
 on:
-  push:
-    branches:
-      - dev
+  workflow_dispatch:
+# Uncomment the following lines to enable automatic PR creation
+#   push:
+#     branches:
+#       - dev
 
 jobs:
   create-pr:
