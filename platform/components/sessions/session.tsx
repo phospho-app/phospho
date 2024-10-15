@@ -25,13 +25,20 @@ import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
-import { ChevronRight, CopyIcon } from "lucide-react";
+import { ChevronDown, ChevronRight, CopyIcon } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useSWR from "swr";
 import { useSWRConfig } from "swr";
 
 import { InteractiveDatetime } from "../interactive-datetime";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 const SessionStats = ({
   session_id,
@@ -59,24 +66,86 @@ const SessionStats = ({
       keepPreviousData: true,
     },
   );
+  const {
+    data: sessionTasksData,
+    mutate: mutateSessionTasks,
+  }: {
+    data: TaskWithEvents[] | undefined;
+    mutate: (
+      data: TaskWithEvents[] | undefined,
+      shouldRevalidate?: boolean,
+    ) => void;
+  } = useSWR(
+    [`/api/sessions/${session_id}/tasks`, accessToken],
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "GET").then((res) => {
+        if (res === undefined) return undefined;
+        const tasks = res.tasks as TaskWithEvents[];
+        // If responsse_json tasks are not null, sort them
+        if (tasks !== undefined && tasks !== null && tasks.length > 0) {
+          // Sort the tasks by increasing created_at
+          tasks.sort((a: { created_at: number }, b: { created_at: number }) => {
+            return a.created_at - b.created_at;
+          });
+          return tasks;
+        }
+        return [];
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
 
   const uniqueEvents = sessionData?.events?.filter(
     (event: Event, index: number, self: Event[]) =>
       index === self.findIndex((e: Event) => e.event_name === event.event_name),
   );
+  // Deduplicate the user ids in task.metadata.user_id if they exist
+  const uniqueUsers = sessionTasksData
+    ?.map((task) => task.metadata?.user_id)
+    .filter((v, i, a) => a.indexOf(v) === i);
+
+  const router = useRouter();
 
   return (
     <>
       <div className="flex justify-between items-center">
         <span className="text-xl font-bold tracking-tight">Session</span>
-        {showGoToSession && (
-          <Link href={`/org/transcripts/sessions/${session_id}`}>
-            <Button variant="secondary">
-              Go to Session
-              <ChevronRight />
-            </Button>
-          </Link>
-        )}
+        <div className="flex flex-row gap-x-2">
+          {showGoToSession && (
+            <Link href={`/org/transcripts/sessions/${session_id}`}>
+              <Button variant="secondary">
+                Go to Session
+                <ChevronRight />
+              </Button>
+            </Link>
+          )}
+          {uniqueUsers && uniqueUsers.length === 1 && (
+            <Link href={`/org/transcripts/users/${uniqueUsers[0]}`}>
+              <Button variant="secondary">Go to User</Button>
+            </Link>
+          )}
+          {uniqueUsers && uniqueUsers?.length > 1 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary">
+                  Go to User... <ChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {uniqueUsers?.map((user_id) => (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      router.push(`/org/transcripts/users/${user_id}`)
+                    }
+                  >
+                    {user_id}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
       <Card className="flex flex-col space-y-1 p-2">
         <div className="flex flex-row items-center">
