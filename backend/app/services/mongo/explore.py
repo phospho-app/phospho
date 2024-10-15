@@ -1280,7 +1280,7 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
                         "last_task_ts": 1,
                     }
                 },
-                {"$sort": {"first_task_timestamp": -1}},
+                {"$sort": {"first_task_timestamp": 1}},
             ]
         )
         .to_list(length=limit)
