@@ -1,6 +1,7 @@
 "use client";
 
 import SuggestEvent from "@/components/events/suggest-event";
+import { InteractiveDatetime } from "@/components/interactive-datetime";
 import {
   AddEventDropdownForSessions,
   InteractiveEventBadgeForSessions,
@@ -9,20 +10,19 @@ import { Spinner } from "@/components/small-spinner";
 import TaskBox from "@/components/task-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { authFetcher } from "@/lib/fetcher";
-import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronDown, ChevronRight, CopyIcon } from "lucide-react";
@@ -31,14 +31,6 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useSWR from "swr";
 import { useSWRConfig } from "swr";
-
-import { InteractiveDatetime } from "../interactive-datetime";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
 
 const SessionStats = ({
   session_id,
@@ -68,13 +60,8 @@ const SessionStats = ({
   );
   const {
     data: sessionTasksData,
-    mutate: mutateSessionTasks,
   }: {
     data: TaskWithEvents[] | undefined;
-    mutate: (
-      data: TaskWithEvents[] | undefined,
-      shouldRevalidate?: boolean,
-    ) => void;
   } = useSWR(
     [`/api/sessions/${session_id}/tasks`, accessToken],
     ([url, accessToken]) =>
@@ -135,6 +122,7 @@ const SessionStats = ({
               <DropdownMenuContent>
                 {uniqueUsers?.map((user_id) => (
                   <DropdownMenuItem
+                    key={`${session_id}-${user_id}`}
                     onClick={() =>
                       router.push(`/org/transcripts/users/${user_id}`)
                     }
