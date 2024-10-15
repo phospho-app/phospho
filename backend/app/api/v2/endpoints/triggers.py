@@ -67,6 +67,12 @@ async def trigger_calculate_sessions(
     try:
         mongo_db = await get_mongo_db()
 
+        if project_id == "all_projects":
+            projects = await mongo_db["projects"].find({}, {"id": 1}).to_list(None)
+            for project in projects:
+                await trigger_calculate_sessions(project["id"], _, key)
+            return {"status": "ok", "message": "Sessions calculated for all projects"}
+
         tasks = await mongo_db["tasks"].find({"project_id": project_id}).to_list(None)
         for task in tasks:
             del task["_id"]
