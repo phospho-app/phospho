@@ -17,6 +17,12 @@ jobs:
         with:
           node-version: "14"
 
+      - name: Get last merged PR number
+        id: get_last_pr
+        run: |
+          LAST_PR=$(git log -1 --pretty=format:"%s" | grep -oE '#[0-9]+' | tr -d '#')
+          echo "::set-output name=last_pr_number::$LAST_PR"
+
       - name: Check for existing PR
         id: check_pr
         run: |
@@ -26,4 +32,6 @@ jobs:
       - name: Create Pull Request
         if: steps.check_pr.outputs.pr_number == ''
         run: |
-          gh pr create --base main --head dev --title "Auto-merge dev into main" --body "This PR was automatically created by GitHub Actions."
+          gh pr create --base main --head dev \
+            --title "🧪 AutoPR dev->main" \
+            --body "Automatically created after merging PR #${{ steps.get_last_pr.outputs.last_pr_number }}"
