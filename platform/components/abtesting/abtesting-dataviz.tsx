@@ -1,6 +1,7 @@
 // This component displays a bar chart showing the number of events detected in each task with the version number
 // Each event has 2 bars, one for each version
 import { SendDataAlertDialog } from "@/components/callouts/import-data";
+import { InteractiveDatetime } from "@/components/interactive-datetime";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
-import { Project } from "@/models/models";
+import { ABTest, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, ChevronDown, ChevronRight } from "lucide-react";
@@ -43,25 +44,55 @@ import useSWR from "swr";
 
 import CreateNewABTestButton from "./create-new-ab-test-button";
 
-export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
-  // In the URL, use the search params ?a=version_id&b=version_id to set the default versions in the dropdown
+export const ABTestingDataviz = () => {
+  /**
+   *  In the URL, use the search params ?a=version_id&b=version_id to set the default versions in the dropdown
+   */
 
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
+  // Fetch ABTests
+  const { data: abTests }: { data: ABTest[] | null | undefined } = useSWR(
+    project_id ? [`/api/explore/${project_id}/ab-tests`, accessToken] : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken).then((res) => {
+        if (res === undefined) return undefined;
+        if (!res.abtests) return null;
+        const abtests = res.abtests as ABTest[];
+        // Round the score and score_std to 2 decimal places
+        abtests.forEach((abtest) => {
+          abtest.score = Math.round(abtest.score * 10000) / 100;
+          if (abtest.score_std) {
+            abtest.score_std = Math.round(abtest?.score_std * 10000) / 100;
+          }
+        });
+        return abtests;
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+
   // Get the version IDs from the URL. If not present, use the first two version IDs
   const searchParams = useSearchParams();
+
+  const abTestJSON = JSON.stringify(abTests);
 
   const computeVersionsIds = useCallback(() => {
     let currVersionA = null;
     let currVersionB = null;
 
-    if (versionIDs.length === 1) {
-      currVersionA = versionIDs[0];
-      currVersionB = versionIDs[0];
-    } else if (versionIDs.length >= 2) {
-      currVersionA = versionIDs[1];
-      currVersionB = versionIDs[0];
+    if (!abTests) {
+      return { currVersionA, currVersionB };
+    }
+
+    if (abTests.length === 1) {
+      currVersionA = abTests[0].version_id;
+      currVersionB = abTests[0].version_id;
+    } else if (abTests.length >= 2) {
+      currVersionA = abTests[1].version_id;
+      currVersionB = abTests[0].version_id;
     }
 
     // Override the default versions if the URL has the search params
@@ -73,7 +104,7 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
     }
 
     return { currVersionA, currVersionB };
-  }, [versionIDs, searchParams]);
+  }, [abTests, abTestJSON, searchParams]);
 
   const [versionIDA, setVersionIDA] = useState<string | null>(null);
   const [versionIDB, setVersionIDB] = useState<string | null>(null);
@@ -124,10 +155,6 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
     },
   );
 
-  if (!project_id || !versionIDs) {
-    return <></>;
-  }
-
   return (
     <>
       <AlertDialog open={open}>
@@ -146,19 +173,24 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
               align="end"
               className="overflow-y-auto max-h-[40rem] "
             >
-              {versionIDs.map((versionID) => (
+              {abTests?.map((abTest) => (
                 <DropdownMenuItem
-                  className="min-w-[10rem]"
-                  key={`${versionID}_A`}
-                  onClick={() => setVersionIDA(versionID)}
+                  key={`${abTest.version_id}_A`}
+                  onClick={() => setVersionIDA(abTest.version_id)}
+                  asChild
                 >
-                  {versionID === versionIDA && (
-                    <Check className="h-4 w-4 mr-2 text-green-500" />
-                  )}
-                  {versionID}
+                  <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
+                    <div className="flex flex-row gap-x-2 items-center">
+                      {abTest.version_id === versionIDA && (
+                        <Check className="h-4 w-4 mr-2 text-green-500" />
+                      )}
+                      {abTest.version_id}
+                    </div>
+                    <InteractiveDatetime timestamp={abTest.first_task_ts} />
+                  </div>
                 </DropdownMenuItem>
               ))}
-              {versionIDs.length === 0 && (
+              {abTests?.length === 0 && (
                 <DropdownMenuItem disabled className="min-w-[10rem]">
                   <p>
                     No <code>version_id</code> found
@@ -180,18 +212,24 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
               align="end"
               className="overflow-y-auto max-h-[40rem]"
             >
-              {versionIDs.map((versionID) => (
+              {abTests?.map((abTest) => (
                 <DropdownMenuItem
-                  key={`${versionID}_B`}
-                  onClick={() => setVersionIDB(versionID)}
+                  key={`${abTest.version_id}_B`}
+                  onClick={() => setVersionIDB(abTest.version_id)}
+                  asChild
                 >
-                  {versionID === versionIDB && (
-                    <Check className="h-4 w-4 mr-2 text-green-500" />
-                  )}
-                  {versionID}
+                  <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
+                    <div className="flex flex-row gap-x-2 items-center">
+                      {abTest.version_id === versionIDB && (
+                        <Check className="h-4 w-4 mr-2 text-green-500" />
+                      )}
+                      {abTest.version_id}
+                    </div>
+                    <InteractiveDatetime timestamp={abTest.first_task_ts} />
+                  </div>
                 </DropdownMenuItem>
               ))}
-              {versionIDs.length === 0 && (
+              {abTests?.length === 0 && (
                 <DropdownMenuItem disabled>
                   <p>
                     No <code>version_id</code> found
@@ -206,49 +244,48 @@ export const ABTestingDataviz = ({ versionIDs }: { versionIDs: string[] }) => {
           {graphData === undefined && (
             <Skeleton className="w-[100%] h-[400px]" />
           )}
-          {graphData &&
-            (!versionIDA || !versionIDs || graphData.length == 0) && (
-              <div className="h-[400px] w-[100%] flex items-center justify-center">
-                <div className="flex space-x-40 text-center items-center">
-                  <div className="mb-20">
-                    <p className="text-muted-foreground mb-2 text-sm pt-6">
-                      1 - Start sending data
-                    </p>
-                    {!hasTasks && (
-                      <Button variant="outline" onClick={() => setOpen(true)}>
-                        Import data
+          {graphData && (!versionIDA || !abTests || graphData.length == 0) && (
+            <div className="h-[400px] w-[100%] flex items-center justify-center">
+              <div className="flex space-x-40 text-center items-center">
+                <div className="mb-20">
+                  <p className="text-muted-foreground mb-2 text-sm pt-6">
+                    1 - Start sending data
+                  </p>
+                  {!hasTasks && (
+                    <Button variant="outline" onClick={() => setOpen(true)}>
+                      Import data
+                      <ChevronRight className="ml-2" />
+                    </Button>
+                  )}
+                  {hasTasks && (
+                    <Button variant="outline" disabled>
+                      <Check className="mr-1" />
+                      Done
+                    </Button>
+                  )}
+                </div>
+                <div className="mb-20">
+                  <p className="text-muted-foreground mb-2 text-sm pt-6">
+                    2 - Setup analytics
+                  </p>
+                  {noEventDefinitions && (
+                    <Link href="/org/insights/events">
+                      <Button variant="outline">
+                        Setup analytics
                         <ChevronRight className="ml-2" />
                       </Button>
-                    )}
-                    {hasTasks && (
-                      <Button variant="outline" disabled>
-                        <Check className="mr-1" />
-                        Done
-                      </Button>
-                    )}
-                  </div>
-                  <div className="mb-20">
-                    <p className="text-muted-foreground mb-2 text-sm pt-6">
-                      2 - Setup analytics
-                    </p>
-                    {noEventDefinitions && (
-                      <Link href="/org/insights/events">
-                        <Button variant="outline">
-                          Setup analytics
-                          <ChevronRight className="ml-2" />
-                        </Button>
-                      </Link>
-                    )}
-                    {!noEventDefinitions && (
-                      <Button variant="outline" disabled>
-                        <Check className="mr-1" />
-                        Done
-                      </Button>
-                    )}
-                  </div>
+                    </Link>
+                  )}
+                  {!noEventDefinitions && (
+                    <Button variant="outline" disabled>
+                      <Check className="mr-1" />
+                      Done
+                    </Button>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
+          )}
           {graphData && versionIDA && versionIDB && graphData.length > 0 && (
             <ResponsiveContainer width={"100%"} height={400}>
               <BarChart data={graphData}>

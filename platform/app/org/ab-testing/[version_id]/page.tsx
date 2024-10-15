@@ -19,20 +19,14 @@ export default function Page({ params }: { params: { version_id: string } }) {
   }, [setDateRangePreset]);
 
   return (
-    <>
-      <Button onClick={() => router.back()}>
+    <div className="flex flex-col space-y-4">
+      <Button onClick={() => router.back()} className="max-w-[10rem]">
         <ChevronLeft className="w-4 h-4 mr-1" /> Back
       </Button>
-      <div>
-        <div className="pb-4">
-          <div className="text-2xl font-bold tracking-tight mr-8">
-            Messages of version &apos;{version_id}&apos;
-          </div>
-        </div>
-        <div className="hidden h-full flex-1 flex-col space-y-2 md:flex relative">
-          <TasksTable forcedDataFilters={{ version_id: version_id }} />
-        </div>
+      <div className="text-2xl font-bold tracking-tight">
+        Messages of version &apos;{version_id}&apos;
       </div>
-    </>
+      <TasksTable forcedDataFilters={{ version_id: version_id }} />
+    </div>
   );
 }
