@@ -3,13 +3,20 @@
 import ThumbsUpAndDown from "@/components/thumbs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { getLanguageLabel } from "@/lib/utils";
 import { Task, TaskWithEvents } from "@/models/models";
+import Link from "next/link";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -18,7 +25,6 @@ import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
 } from "./label-events";
-import { Card } from "./ui/card";
 
 const TaskBox = ({
   task,
@@ -72,7 +78,7 @@ const TaskBox = ({
           <div className="flex justify-start">
             <div className="flex flex-col">
               <div className="text-muted-foreground ml-4 text-xs">
-                System Prompt:
+                System Prompt
               </div>
               <div className="bg-primary text-secondary min-w-[200px] rounded-lg px-2 py-1 mx-2 whitespace-pre-wrap">
                 <ReactMarkdown className="m-1">
@@ -84,7 +90,25 @@ const TaskBox = ({
         )}
         <div className="flex justify-start">
           <div className="flex flex-col">
-            <div className="text-muted-foreground ml-4 text-xs">User:</div>
+            <div className="text-muted-foreground ml-4 text-xs">
+              {task.metadata?.user_id ? (
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <Link
+                      href={`/org/transcripts/users/${encodeURIComponent(task.metadata.user_id)}`}
+                      className="underline cursor-pointer"
+                    >
+                      User
+                    </Link>
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    See all messages from user
+                  </HoverCardContent>
+                </HoverCard>
+              ) : (
+                <>User</>
+              )}
+            </div>
             <div className="bg-green-500 text-secondary min-w-[200px] rounded-lg px-2 py-1 mx-2 whitespace-pre-wrap">
               {task.input && (
                 <ReactMarkdown className="m-1">{task.input}</ReactMarkdown>
@@ -96,7 +120,7 @@ const TaskBox = ({
           <div className="flex justify-start">
             <div className="flex flex-col">
               <div className="text-muted-foreground ml-4 text-xs">
-                Assistant:
+                Assistant
               </div>
               <div className="bg-secondary min-w-[200px] rounded-lg px-2 py-1 mx-2 whitespace-pre-wrap">
                 <ReactMarkdown className="m-1">{task.output}</ReactMarkdown>

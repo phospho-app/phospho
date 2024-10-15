@@ -58,8 +58,17 @@ const TaskOverview: React.FC<TaskProps> = ({
             </Link>
           )}
           {task.session_id && (
-            <Link href={`/org/transcripts/sessions/${task.session_id}`}>
+            <Link
+              href={`/org/transcripts/sessions/${encodeURIComponent(task.session_id)}`}
+            >
               <Button variant="secondary">Go to Session</Button>
+            </Link>
+          )}
+          {task.metadata?.user_id && (
+            <Link
+              href={`/org/transcripts/users/${encodeURIComponent(task.metadata?.user_id)}`}
+            >
+              <Button variant="secondary">Go to User</Button>
             </Link>
           )}
         </div>
