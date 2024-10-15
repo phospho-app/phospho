@@ -356,8 +356,13 @@ class MainPipeline:
                     self.workload.jobs[result.job_id].metadata
                 )
                 task = message.metadata.get("task", None)
-                task_id = task.id if task is not None else None
-                session_id = task.session_id if task is not None else None
+                try:
+                    valid_task = Task.model_validate(task)
+                except Exception as e:
+                    logger.error(f"Error validating task: {e}")
+                    continue
+                task_id = valid_task.id
+                session_id = valid_task.session_id
 
                 # Store the LLM call in the database
                 llm_call = result.metadata.get("llm_call", None)
@@ -383,7 +388,7 @@ class MainPipeline:
                     webhook=event_definition.webhook,
                     org_id=self.org_id,
                     event_definition=event_definition,
-                    task=task,
+                    task=valid_task,
                     score_range=result.metadata.get("score_range", None),
                 )
 
