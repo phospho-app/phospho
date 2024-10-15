@@ -146,8 +146,9 @@ export function useColumns() {
       },
       accessorKey: "avg_session_length",
       cell: (row) => {
-        const output = row.getValue();
-        return output;
+        const output = row.getValue() as number;
+        const roundedOutput = Math.round(output * 100) / 100;
+        return roundedOutput;
       },
     },
     {

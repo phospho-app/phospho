@@ -161,10 +161,7 @@ export const ABTestingDataviz = () => {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="overflow-y-auto max-h-[40rem] "
-            >
+            <DropdownMenuContent className="overflow-y-auto max-h-[40rem] ">
               {abTests?.map((abTest) => (
                 <DropdownMenuItem
                   key={`${abTest.version_id}_A`}
@@ -200,10 +197,7 @@ export const ABTestingDataviz = () => {
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="overflow-y-auto max-h-[40rem]"
-            >
+            <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
               {abTests?.map((abTest) => (
                 <DropdownMenuItem
                   key={`${abTest.version_id}_B`}
