@@ -60,13 +60,6 @@ export const ABTestingDataviz = () => {
         if (res === undefined) return undefined;
         if (!res.abtests) return null;
         const abtests = res.abtests as ABTest[];
-        // Round the score and score_std to 2 decimal places
-        abtests.forEach((abtest) => {
-          abtest.score = Math.round(abtest.score * 10000) / 100;
-          if (abtest.score_std) {
-            abtest.score_std = Math.round(abtest?.score_std * 10000) / 100;
-          }
-        });
         return abtests;
       }),
     {

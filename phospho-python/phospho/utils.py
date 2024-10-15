@@ -27,7 +27,7 @@ def generate_timestamp() -> int:
 
 def generate_uuid(prefix: str = "") -> str:
     """
-    Add a prefiw if needed to the uuid
+    Add a prefix if needed to the uuid
     Example: generate_uuid("file_") to have a file_id
     """
     value = uuid.uuid4().hex

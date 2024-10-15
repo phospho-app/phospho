@@ -356,8 +356,13 @@ class MainPipeline:
                     self.workload.jobs[result.job_id].metadata
                 )
                 task = message.metadata.get("task", None)
-                task_id = task.id if task is not None else None
-                session_id = task.session_id if task is not None else None
+                try:
+                    valid_task = Task.model_validate(task)
+                except Exception as e:
+                    logger.error(f"Error validating task: {e}")
+                    continue
+                task_id = valid_task.id
+                session_id = valid_task.session_id
 
                 # Store the LLM call in the database
                 llm_call = result.metadata.get("llm_call", None)
@@ -383,7 +388,7 @@ class MainPipeline:
                     webhook=event_definition.webhook,
                     org_id=self.org_id,
                     event_definition=event_definition,
-                    task=task,
+                    task=valid_task,
                     score_range=result.metadata.get("score_range", None),
                 )
 
@@ -468,6 +473,7 @@ class MainPipeline:
         - Most common sentiment label
         - Most common language
         - Most common flag
+        - Last message timestamp
         """
         outputs: Dict[str, SessionStats] = {}
 
@@ -495,6 +501,7 @@ class MainPipeline:
             sentiment_score: list = []
             sentiment_magnitude: list = []
             preview = ""
+            last_message_ts = None
 
             valid_tasks = [Task.model_validate(task) for task in tasks]
             for valid_task in valid_tasks:
@@ -504,6 +511,8 @@ class MainPipeline:
                     if valid_task.sentiment.magnitude is not None:
                         sentiment_magnitude.append(valid_task.sentiment.magnitude)
                 preview += valid_task.preview() + "\n"
+                if last_message_ts is None or valid_task.created_at > last_message_ts:
+                    last_message_ts = valid_task.created_at
 
             if len(valid_tasks) > 0:
                 avg_sentiment_score = None
@@ -550,6 +559,7 @@ class MainPipeline:
                         "$set": {
                             "stats": session_task_info.model_dump(),
                             "preview": preview if preview else None,
+                            "last_message_ts": last_message_ts,
                         }
                     },
                 )

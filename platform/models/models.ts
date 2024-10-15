@@ -74,6 +74,8 @@ export interface Session {
   environment?: string;
   notes?: string;
   session_length?: number;
+  stats: Stats;
+  last_message_ts?: number;
 }
 
 export interface Stats {
@@ -84,10 +86,10 @@ export interface Stats {
   most_common_flag: string;
   human_eval: string;
 }
+
 export interface SessionWithEvents extends Session {
   events: Event[];
   tasks: Task[];
-  stats: Stats;
   users: UserMetadata[];
 }
 
