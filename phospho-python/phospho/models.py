@@ -790,7 +790,6 @@ class ProjectDataFilters(BaseModel):
     sessions_ids: Optional[List[str]] = None
     version_id: Optional[str] = None
     task_position: Optional[int] = None
-    human_eval: Optional[HumanEval] = None
 
 
 class Cluster(ProjectElementBaseModel):

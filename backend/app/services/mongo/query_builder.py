@@ -159,7 +159,6 @@ class QueryBuilder:
         - metadata
         - user_id
         - task_position
-        - human_eval
         """
         filters = self.filters
         match: Dict[str, object] = self._main_doc_filter(prefix=prefix)
@@ -223,10 +222,6 @@ class QueryBuilder:
 
         if filters.task_position is not None:
             match[f"{prefix}task_position"] = filters.task_position
-
-        if filters.human_eval is not None:
-            if filters.human_eval.flag is not None:
-                match[f"{prefix}human_eval.flag"] = filters.human_eval.flag
 
         if match:
             self.pipeline.append({"$match": match})
