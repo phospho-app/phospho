@@ -83,9 +83,8 @@ export const ABTestingDataviz = () => {
     let currVersionA = null;
     let currVersionB = null;
 
-    if (!abTests) {
-      return { currVersionA, currVersionB };
-    }
+    if (!abTests) return { currVersionA, currVersionB };
+    if (!abTestJSON) return { currVersionA, currVersionB };
 
     if (abTests.length === 1) {
       currVersionA = abTests[0].version_id;

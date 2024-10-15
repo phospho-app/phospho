@@ -59,9 +59,6 @@ function ABTesting() {
     },
   );
 
-  // We create a list of all the version IDs
-  const versionIDs = abTests?.map((abtest) => abtest.version_id) ?? [];
-
   const columns = getColumns();
 
   const table = useReactTable({
