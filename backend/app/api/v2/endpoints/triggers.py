@@ -1,3 +1,4 @@
+import time
 from app.api.v2.models.triggers import TriggerClusteringRequest
 from app.core import config
 from fastapi import APIRouter, Header, Request
@@ -55,7 +56,7 @@ async def trigger_clustering(
     description="Recalculate sessions for a given project",
     response_model=dict,
 )
-@rate_limiter(limit=4, seconds=60)
+@rate_limiter(limit=60, seconds=60)
 async def trigger_calculate_sessions(
     project_id: str,
     _: Request,
@@ -71,6 +72,7 @@ async def trigger_calculate_sessions(
             projects = await mongo_db["projects"].find({}, {"id": 1}).to_list(None)
             for project in projects:
                 await trigger_calculate_sessions(project["id"], _, key)
+                time.sleep(2)
             return {"status": "ok", "message": "Sessions calculated for all projects"}
 
         tasks = await mongo_db["tasks"].find({"project_id": project_id}).to_list(None)
