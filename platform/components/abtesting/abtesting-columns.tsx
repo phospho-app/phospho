@@ -10,9 +10,25 @@ import { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
+import { InteractiveDatetime } from "../interactive-datetime";
+
 export function getColumns() {
   // Create the columns for the data table
   const columns: ColumnDef<ABTest>[] = [
+    {
+      header: "Start date",
+      accessorKey: "first_task_ts",
+      cell: ({ row }) => {
+        return <InteractiveDatetime timestamp={row.original.first_task_ts} />;
+      },
+    },
+    {
+      header: "Last update",
+      accessorKey: "last_task_ts",
+      cell: ({ row }) => {
+        return <InteractiveDatetime timestamp={row.original.last_task_ts} />;
+      },
+    },
     // version_id
     {
       header: "Version ID",
@@ -52,7 +68,8 @@ export function getColumns() {
       },
       accessorKey: "score",
       cell: ({ row }) => {
-        return <div>{row.original.score}%</div>;
+        const roundedScore = Number((row.original.score * 100).toFixed(2));
+        return <div>{roundedScore}%</div>;
       },
     },
     {
@@ -116,7 +133,8 @@ export function getColumns() {
         if (!row.original.score_std) {
           return <div>-</div>;
         }
-        return <div>{row.original.score_std}%</div>;
+        const roundedStd = Number((row.original.score_std * 100).toFixed(4));
+        return <div>{roundedStd}%</div>;
       },
     },
     {

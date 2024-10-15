@@ -1260,7 +1260,8 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
                             "$avg": {"$cond": [{"$eq": ["$flag", "success"]}, 1, 0]}
                         },
                         "nb_tasks": {"$sum": 1},
-                        "first_task_timestamp": {"$min": "$created_at"},
+                        "first_task_ts": {"$min": "$created_at"},
+                        "last_task_ts": {"$max": "$created_at"},
                         # "score_std": {
                         #     "$stdDevSamp": {
                         #         "$cond": [{"$eq": ["$flag", "success"]}, 1, 0]
@@ -1274,8 +1275,9 @@ async def create_ab_tests_table(project_id: str, limit: int = 1000) -> List[ABTe
                         "version_id": "$_id",
                         "score": 1,
                         "nb_tasks": 1,
-                        "first_task_timestamp": 1,
                         "score_std": 1,
+                        "first_task_ts": 1,
+                        "last_task_ts": 1,
                     }
                 },
                 {"$sort": {"first_task_timestamp": -1}},

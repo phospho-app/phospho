@@ -59,9 +59,6 @@ function ABTesting() {
     },
   );
 
-  // We create a list of all the version IDs
-  const versionIDs = abTests?.map((abtest) => abtest.version_id) ?? [];
-
   const columns = getColumns();
 
   const table = useReactTable({
@@ -83,7 +80,7 @@ function ABTesting() {
         <h1 className="text-2xl font-bold">AB Testing</h1>
       )}
       <div className="pb-10">
-        <ABTestingDataviz versionIDs={versionIDs} />
+        <ABTestingDataviz />
         <div className="flex flex-row items-center mb-2 justify-end">
           <TableNavigation table={table} />
         </div>

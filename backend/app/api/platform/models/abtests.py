@@ -3,11 +3,12 @@ from pydantic import BaseModel
 
 
 class ABTest(BaseModel):
+    first_task_ts: int
+    last_task_ts: int
     version_id: Optional[str] = "None"
     score: float
     score_std: Optional[float] = None
     nb_tasks: int
-    first_task_timestamp: int
     confidence_interval: Optional[List[float]] = None
 
 

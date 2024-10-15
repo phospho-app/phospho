@@ -178,7 +178,8 @@ export interface ABTest {
   score: number;
   score_std?: number;
   nb_tasks: number;
-  first_task_timestamp: number;
+  first_task_ts: number;
+  last_task_ts: number;
   confidence_interval?: number[];
 }
 

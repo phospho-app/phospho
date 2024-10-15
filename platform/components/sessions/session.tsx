@@ -96,7 +96,7 @@ const SessionStats = ({
 
   return (
     <>
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-end">
         <span className="text-xl font-bold tracking-tight">Session</span>
         <div className="flex flex-row gap-x-2">
           {showGoToSession && (
