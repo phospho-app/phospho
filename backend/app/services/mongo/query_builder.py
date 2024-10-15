@@ -122,7 +122,7 @@ class QueryBuilder:
 
         # if there is no match project_id in the pipeline
         if self.project_id and not any(
-            operator.get("$match", {}).get(f"{prefix}project_id") == self.project_id
+            operator.get("$match", {}).get(f"{prefix}project_id") == self.project_id  # type: ignore
             for operator in self.pipeline
         ):
             match[f"{prefix}project_id"] = self.project_id
@@ -137,7 +137,7 @@ class QueryBuilder:
             match[f"{prefix}created_at"] = {"$gte": filters.created_at_start}
         if filters.created_at_end is not None:
             match[f"{prefix}created_at"] = {
-                **match.get(f"{prefix}created_at", {}),
+                **match.get(f"{prefix}created_at", {}),  # type: ignore
                 "$lte": filters.created_at_end,
             }
 
@@ -347,7 +347,7 @@ class QueryBuilder:
                 new_task_ids = []
                 for cluster in clusters:
                     new_task_ids.extend(cluster.get("tasks_ids", []))
-                current_task_ids = match.get(f"{prefix}id", {"$in": []})["$in"]
+                current_task_ids = match.get(f"{prefix}id", {"$in": []})["$in"]  # type: ignore
                 if current_task_ids:
                     # Do the intersection of the current task ids and the new task ids
                     new_task_ids = list(
@@ -446,7 +446,7 @@ class QueryBuilder:
                 new_sessions_ids = []
                 for cluster in clusters:
                     new_sessions_ids.extend(cluster.get("sessions_ids", []))
-                current_sessions_ids = match.get("id", {"$in": []})["$in"]
+                current_sessions_ids = match.get("id", {"$in": []})["$in"]  # type: ignore
                 if current_sessions_ids:
                     # Do the intersection of the current task ids and the new task ids
                     new_sessions_ids = list(
