@@ -11,7 +11,7 @@ import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight, CopyIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
-import useSWR from "swr";
+import useSWR, { KeyedMutator } from "swr";
 
 interface TaskProps {
   task_id: string;
@@ -25,28 +25,32 @@ const TaskOverview: React.FC<TaskProps> = ({
   const { accessToken } = useUser();
   const [refresh, setRefresh] = useState(false);
 
-  const { data: taskData, mutate: mutateTask } = useSWR(
+  const {
+    data: task,
+    mutate: mutateTask,
+  }: {
+    data: TaskWithEvents | undefined;
+    mutate: KeyedMutator<TaskWithEvents | undefined>;
+  } = useSWR(
     [`/api/tasks/${task_id}`, accessToken],
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
       keepPreviousData: true,
     },
   );
-  const task = taskData as TaskWithEvents;
-
-  if (task === undefined) return <CenteredSpinner />;
 
   // To re-render the component when the flag is updated, we need to use a state
   // For the flag. This is because just having the task as a prop doesn't trigger
   // a re-render when the flag is updated (passage via reference)
   const setFlag = (flag: string) => {
+    if (!task) return;
     mutateTask({ ...task, flag: flag });
     setRefresh(!refresh);
   };
 
   return (
     <>
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex justify-between items-end mt-4">
         <span className="text-xl font-bold">Message</span>
         <div className="flex flex-row space-x-2">
           {showGoToTask && (
@@ -57,14 +61,14 @@ const TaskOverview: React.FC<TaskProps> = ({
               </Button>
             </Link>
           )}
-          {task.session_id && (
+          {task?.session_id && (
             <Link
               href={`/org/transcripts/sessions/${encodeURIComponent(task.session_id)}`}
             >
               <Button variant="secondary">Go to Session</Button>
             </Link>
           )}
-          {task.metadata?.user_id && (
+          {task?.metadata?.user_id && (
             <Link
               href={`/org/transcripts/users/${encodeURIComponent(task.metadata?.user_id)}`}
             >
@@ -90,9 +94,9 @@ const TaskOverview: React.FC<TaskProps> = ({
         <div className="flex flex-row space-x-16">
           <div className="text-xs max-w-48">
             <span>Created at:</span>
-            <InteractiveDatetime timestamp={task.created_at} />
+            <InteractiveDatetime timestamp={task?.created_at} />
           </div>
-          {task.task_position && (
+          {task?.task_position && (
             <div className="flex flex-col">
               <div className="text-xl font-bold">#{task.task_position}</div>
               <span className="text-muted-foreground text-xs">position</span>
@@ -100,7 +104,7 @@ const TaskOverview: React.FC<TaskProps> = ({
           )}
           <div className="flex flex-col">
             <div className="text-xl font-bold">
-              {task.is_last_task ? "Yes" : "No"}
+              {task?.is_last_task ? "Yes" : "No"}
             </div>
             <span className="text-muted-foreground text-xs">
               Is last message?
@@ -122,13 +126,16 @@ const TaskOverview: React.FC<TaskProps> = ({
           )}
         </div>
       </Card>
-      <TaskBox
-        task={task}
-        setTask={(task: Task | null) => {
-          mutateTask(task as TaskWithEvents);
-        }}
-        setFlag={setFlag}
-      />
+      {task === undefined && <CenteredSpinner />}
+      {task && (
+        <TaskBox
+          task={task}
+          setTask={(task: Task | null) => {
+            mutateTask(task as TaskWithEvents);
+          }}
+          setFlag={setFlag}
+        />
+      )}
     </>
   );
 };
