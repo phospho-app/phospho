@@ -32,7 +32,8 @@ import { ABTest, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
-import { Check, ChevronDown, ChevronRight } from "lucide-react";
+import { DropdownMenuLabel } from "@radix-ui/react-dropdown-menu";
+import { Check, ChevronDown, ChevronRight, GripVertical } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback } from "react";
@@ -184,137 +185,145 @@ export const ABTestingDataviz = () => {
     <>
       <AlertDialog open={open}>
         <SendDataAlertDialog setOpen={setOpen} key="ab_testing" />
-        <div className="flex z-0 space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <div className="flex flex-row items-center justify-between min-w-[10rem]">
-                  <span className="font-semibold mr-1">Reference A: </span>
-                  {versionIDA} <ChevronDown className="h-4 w-4 ml-2" />
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="overflow-y-auto max-h-[40rem] ">
-              {abTests?.map((abTest) => (
-                <DropdownMenuItem
-                  key={`${abTest.version_id}_A`}
-                  onClick={() => setVersionIDA(abTest.version_id)}
-                  asChild
-                >
-                  <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
-                    <div className="flex flex-row gap-x-2 items-center">
-                      {abTest.version_id === versionIDA && (
-                        <Check className="h-4 w-4 mr-2 text-green-500" />
-                      )}
-                      {abTest.version_id}
-                    </div>
-                    <InteractiveDatetime timestamp={abTest.first_task_ts} />
+        <div className="flex flex-row items-center z-0 space-x-2">
+          <div className="flex  space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <div className="flex flex-row items-center justify-between min-w-[10rem]">
+                    <span className="font-semibold mr-1">Reference A: </span>
+                    {versionIDA} <ChevronDown className="h-4 w-4 ml-2" />
                   </div>
-                </DropdownMenuItem>
-              ))}
-              {abTests?.length === 0 && (
-                <DropdownMenuItem disabled className="min-w-[10rem]">
-                  <p>
-                    No <code>version_id</code> found
-                  </p>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <div className="flex flex-row items-center justify-between min-w-[10rem]">
-                  <span className="font-semibold mr-1">Candidate B:</span>
-                  {versionIDB} <ChevronDown className="h-4 w-4 ml-2" />
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
-              {abTests?.map((abTest) => (
-                <DropdownMenuItem
-                  key={`${abTest.version_id}_B`}
-                  onClick={() => setVersionIDB(abTest.version_id)}
-                  asChild
-                >
-                  <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
-                    <div className="flex flex-row gap-x-2 items-center">
-                      {abTest.version_id === versionIDB && (
-                        <Check className="h-4 w-4 mr-2 text-green-500" />
-                      )}
-                      {abTest.version_id}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="overflow-y-auto max-h-[40rem] ">
+                {abTests?.map((abTest) => (
+                  <DropdownMenuItem
+                    key={`${abTest.version_id}_A`}
+                    onClick={() => setVersionIDA(abTest.version_id)}
+                    asChild
+                  >
+                    <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
+                      <div className="flex flex-row gap-x-2 items-center">
+                        {abTest.version_id === versionIDA && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                        {abTest.version_id}
+                      </div>
+                      <InteractiveDatetime timestamp={abTest.first_task_ts} />
                     </div>
-                    <InteractiveDatetime timestamp={abTest.first_task_ts} />
+                  </DropdownMenuItem>
+                ))}
+                {abTests?.length === 0 && (
+                  <DropdownMenuItem disabled className="min-w-[10rem]">
+                    <p>
+                      No <code>version_id</code> found
+                    </p>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <div className="flex flex-row items-center justify-between min-w-[10rem]">
+                    <span className="font-semibold mr-1">Candidate B:</span>
+                    {versionIDB} <ChevronDown className="h-4 w-4 ml-2" />
                   </div>
-                </DropdownMenuItem>
-              ))}
-              {abTests?.length === 0 && (
-                <DropdownMenuItem disabled>
-                  <p>
-                    No <code>version_id</code> found
-                  </p>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <CreateNewABTestButton />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <div className="flex flex-row items-center justify-between">
-                  <span className="font-semibold mr-1">Select events</span>{" "}
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
+                {abTests?.map((abTest) => (
+                  <DropdownMenuItem
+                    key={`${abTest.version_id}_B`}
+                    onClick={() => setVersionIDB(abTest.version_id)}
+                    asChild
+                  >
+                    <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
+                      <div className="flex flex-row gap-x-2 items-center">
+                        {abTest.version_id === versionIDB && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                        {abTest.version_id}
+                      </div>
+                      <InteractiveDatetime timestamp={abTest.first_task_ts} />
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                {abTests?.length === 0 && (
+                  <DropdownMenuItem disabled>
+                    <p>
+                      No <code>version_id</code> found
+                    </p>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <CreateNewABTestButton />
+          </div>
+          <div className="flex justify-end w-full">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost">
+                  <div className="flex flex-row items-center justify-between">
+                    <GripVertical />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
+                <div className="space-y-2 mr-2 ml-2">
+                  <DropdownMenuLabel className=" flex flex-row items-center mt-1 mb-3 ml-6 font-semibold">
+                    Displayed analytics
+                  </DropdownMenuLabel>
+                  {events && Object.keys(events).length > 0 ? (
+                    <Form {...form}>
+                      <form className="space-y-8">
+                        <FormField
+                          control={form.control}
+                          name="selectedEventsIds"
+                          render={({ field }) => (
+                            <FormItem>
+                              {Object.entries(events).map(([, event]) => {
+                                if (!event.id) return null; // Skip if id is undefined
+                                return (
+                                  <FormItem
+                                    key={event.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value.includes(event.id)}
+                                        onCheckedChange={(checked) => {
+                                          const updatedValue = checked
+                                            ? [...field.value, event.id]
+                                            : field.value.filter(
+                                                (value) => value !== event.id,
+                                              );
+                                          field.onChange(updatedValue);
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {event.event_name}
+                                    </FormLabel>
+                                  </FormItem>
+                                );
+                              })}
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </form>
+                    </Form>
+                  ) : (
+                    <DropdownMenuItem disabled>
+                      <p>No events found</p>
+                    </DropdownMenuItem>
+                  )}
                 </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
-              {events && Object.keys(events).length > 0 ? (
-                <Form {...form}>
-                  <form className="space-y-8">
-                    <FormField
-                      control={form.control}
-                      name="selectedEventsIds"
-                      render={({ field }) => (
-                        <FormItem>
-                          {Object.entries(events).map(([, event]) => {
-                            if (!event.id) return null; // Skip if id is undefined
-                            return (
-                              <FormItem
-                                key={event.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value.includes(event.id)}
-                                    onCheckedChange={(checked) => {
-                                      const updatedValue = checked
-                                        ? [...field.value, event.id]
-                                        : field.value.filter(
-                                            (value) => value !== event.id,
-                                          );
-                                      field.onChange(updatedValue);
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {event.event_name}
-                                </FormLabel>
-                              </FormItem>
-                            );
-                          })}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </form>
-                </Form>
-              ) : (
-                <DropdownMenuItem disabled>
-                  <p>No events found</p>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         <div className="flex flex-col items-center my-2">
           {graphData === undefined && (
