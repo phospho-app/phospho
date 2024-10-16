@@ -592,13 +592,13 @@ async def get_all_users_metadata(
         )
     if sorting is None:
         sorting = [
-            Sorting(id="last_timestamp_ts", desc=False),
-            Sorting(id="user_id", desc=False),
+            Sorting(id="last_message_ts", desc=True),
+            Sorting(id="user_id", desc=True),
         ]
     else:
         # Always resort by user_id to ensure the same order
         # when multiple users have the same last_timestamp_ts or values
-        sorting.append(Sorting(id="user_id", desc=False))
+        sorting.append(Sorting(id="user_id", desc=True))
     logger.info(f"get_all_users_metadata: pagination={pagination}, sorting={sorting}")
     users = await fetch_users_metadata(
         project_id=project_id,

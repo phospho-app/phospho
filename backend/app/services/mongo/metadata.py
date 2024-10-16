@@ -233,7 +233,7 @@ async def fetch_users_metadata(
         logger.info(f"Sorting by: {sorting}")
         sort_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
         # Rename the id user_id by _id
-        sort_dict["_id"] = sort_dict.pop("user_id", -1)
+        sort_dict["_id"] = sort_dict.pop("user_id", 1)
         pipeline += [{"$sort": sort_dict}]
     else:
         pipeline += [{"$sort": {"last_message_ts": 1, "_id": -1}}]
@@ -303,6 +303,18 @@ async def fetch_users_metadata(
             }
         },
     ]
+
+    # group made us lose the order. We need to sort again
+    if sorting:
+        logger.info(f"Sorting by: {sorting}")
+        sort_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+        # Rename the id user_id by _id
+        sort_dict["_id"] = sort_dict.pop("user_id", 1)
+        pipeline += [{"$sort": sort_dict}]
+    else:
+        pipeline += [{"$sort": {"last_message_ts": 1, "_id": -1}}]
+
+    logger.debug(f"User metadata pipeline: {pipeline}")
 
     users = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
     if users is None or (filters.user_id is not None and len(users) == 0):

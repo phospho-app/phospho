@@ -17,13 +17,11 @@ import { authFetcher } from "@/lib/fetcher";
 import { ProjectDataFilters, UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { setUser } from "@sentry/nextjs";
 import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import React, { useState } from "react";
