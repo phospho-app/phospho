@@ -3,7 +3,6 @@ import {
   Clustering,
   CustomDateRange,
   HasEnoughLabelledTasks,
-  OrgMetadata,
   ProjectDataFilters,
 } from "@/models/models";
 import { PaginationState, SortingState, Updater } from "@tanstack/react-table";
@@ -12,10 +11,12 @@ import { DateRange } from "react-day-picker";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-// The navigation store stores local state, that are based
-// on what buttons were clicked or selected
-// It's persisted to local storage
 interface navigationState {
+  /**
+   * The navigation store stores local state, that are based
+   * on what buttons were clicked or selected
+   * It is persisted to local storage
+   */
   selectedOrgId: string | null | undefined;
   setSelectedOrgId: (orgId: string | null) => void;
   project_id: string | null | undefined;
@@ -30,6 +31,11 @@ interface navigationState {
   setSessionsPagination: (sessionsPagination: Updater<PaginationState>) => void;
   sessionsSorting: SortingState;
   setSessionsSorting: (sessionsSorting: Updater<SortingState>) => void;
+
+  usersPagination: PaginationState;
+  setUsersPagination: (usersPagination: Updater<PaginationState>) => void;
+  usersSorting: SortingState;
+  setUsersSorting: (usersSorting: Updater<SortingState>) => void;
 
   dataFilters: ProjectDataFilters;
   setDataFilters: (tasksColumnsFilters: ProjectDataFilters) => void;
@@ -138,6 +144,41 @@ export const navigationStateStore = create(
           }
           return {
             sessionsSorting: updaterOrValue,
+          };
+        }),
+
+      usersPagination: {
+        pageSize: 10,
+        pageIndex: 0,
+      } as PaginationState,
+      setUsersPagination: (usersPagination: Updater<PaginationState>) =>
+        set((state) => {
+          if (typeof usersPagination === "function") {
+            const update = usersPagination(state.usersPagination);
+            return {
+              usersPagination: update,
+            };
+          }
+          return {
+            usersPagination: usersPagination,
+          };
+        }),
+      usersSorting: [
+        {
+          id: "created_at",
+          desc: false,
+        },
+      ],
+      setUsersSorting: (updaterOrValue: Updater<SortingState>) =>
+        set((state) => {
+          if (typeof updaterOrValue === "function") {
+            const update = updaterOrValue(state.usersSorting);
+            return {
+              usersSorting: update,
+            };
+          }
+          return {
+            usersSorting: updaterOrValue,
           };
         }),
 

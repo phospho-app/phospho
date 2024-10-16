@@ -43,31 +43,67 @@ interface Industry {
   fill?: string;
 }
 
-const UsersDataviz = ({}: {
+const UsersDataviz = ({
+  forcedDataFilters,
+}: {
   forcedDataFilters?: ProjectDataFilters | null;
 }) => {
   // TODO: Implement forcedDataFilters
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
+
+  const dataFiltersMerged = {
+    ...dataFilters,
+    ...forcedDataFilters,
+  };
 
   // Fetch graph data
-  const { data: userCountData } = useSWR(
-    [`/api/metadata/${project_id}/count/tasks/user_id`, accessToken],
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+  const { data: usersCount }: { data: number | undefined } = useSWR(
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/users`,
+          accessToken,
+          JSON.stringify(dataFiltersMerged),
+          "nb_users",
+        ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["nb_users"],
+        filters: dataFiltersMerged,
+      }).then((data) => {
+        if (data === undefined) return undefined;
+        return data.nb_users;
+      }),
     {
       keepPreviousData: true,
     },
   );
-  const userCount = userCountData?.value;
 
-  const { data: userAverageData } = useSWR(
-    [`/api/metadata/${project_id}/average/tasks/user_id`, accessToken],
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+  const { data: avgNbTasksPerUser } = useSWR(
+    project_id
+      ? [
+          `/api/explore/${project_id}/aggregated/users`,
+          accessToken,
+          JSON.stringify(dataFiltersMerged),
+          "avg_nb_tasks_per_user",
+        ]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["avg_nb_tasks_per_user"],
+        filters: dataFiltersMerged,
+      }).then((data) => {
+        if (data === undefined) return undefined;
+        if (!data?.avg_nb_tasks_per_user) return null;
+        const roundedOutput = Number(data?.avg_nb_tasks_per_user.toFixed(2));
+        return roundedOutput;
+      }),
     {
       keepPreviousData: true,
     },
   );
-  const userAverage = Math.round(userAverageData?.value * 100) / 100;
 
   const { data: userJobTitles }: { data: JobTitles[] | null | undefined } =
     useSWR(
@@ -166,23 +202,34 @@ const UsersDataviz = ({}: {
                 <CardDescription>Number of unique user_id</CardDescription>
               </CardHeader>
               <CardContent>
-                {((userCount === null || userCount === undefined) && (
-                  <p>...</p>
-                )) || <p className="text-2xl font-bold">{userCount}</p>}
+                {usersCount === undefined && (
+                  <p className="text-2xl font-bold">...</p>
+                )}
+                {usersCount === null && (
+                  <p className="text-2xl font-bold">None</p>
+                )}
+                {usersCount !== undefined && usersCount !== null && (
+                  <p className="text-2xl font-bold">{usersCount}</p>
+                )}
               </CardContent>
             </Card>
             <Card className="flex-grow">
               <CardHeader>
                 <CardDescription>
-                  Average number of messages sent per user
+                  Average number of messages per user
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {((userAverage === null || userAverage === undefined) && (
-                  <p>...</p>
-                )) || (
-                  <p className="text-2xl font-bold">{userAverage.toString()}</p>
+                {avgNbTasksPerUser === undefined && (
+                  <p className="text-2xl font-bold">...</p>
                 )}
+                {avgNbTasksPerUser === null && (
+                  <p className="text-2xl font-bold">None</p>
+                )}
+                {avgNbTasksPerUser !== undefined &&
+                  avgNbTasksPerUser !== null && (
+                    <p className="text-2xl font-bold">{avgNbTasksPerUser}</p>
+                  )}
               </CardContent>
             </Card>
           </div>
