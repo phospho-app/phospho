@@ -5,13 +5,6 @@ import {
 } from "@/components/label-events";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
@@ -21,18 +14,11 @@ import { Event, Project, UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ColumnDef } from "@tanstack/react-table";
-import {
-  ArrowUpDown,
-  ChevronDown,
-  ChevronRight,
-  FilterX,
-  Sparkles,
-} from "lucide-react";
+import { ArrowUpDown, ChevronRight, Sparkles } from "lucide-react";
 import useSWR from "swr";
 
 export function useColumns() {
   const { accessToken } = useUser();
-  let uniqueEventNamesInData: string[] = [];
   const project_id = navigationStateStore((state) => state.project_id);
 
   const { data: selectedProject }: { data: Project } = useSWR(
@@ -42,22 +28,6 @@ export function useColumns() {
       keepPreviousData: true,
     },
   );
-  const { data: uniqueEvents } = useSWR(
-    project_id
-      ? [`/api/projects/${project_id}/unique-events`, accessToken]
-      : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-  if (project_id && uniqueEvents?.events) {
-    uniqueEventNamesInData = Array.from(
-      new Set(
-        uniqueEvents.events.map((event: Event) => event.event_name as string),
-      ),
-    );
-  }
 
   // Create the columns for the data table
   const columns: ColumnDef<UserMetadata>[] = [
@@ -215,41 +185,12 @@ export function useColumns() {
           (event) => event.event_name === filterValue,
         );
       },
-      header: ({ column }) => {
+      header: () => {
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === "asc")
-                }
-              >
-                <Sparkles className="h-4 w-4 mr-1 text-green-500" />
-                Events
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {uniqueEventNamesInData.map((eventName) => (
-                <DropdownMenuItem
-                  key={eventName}
-                  onClick={() => column.setFilterValue(eventName)}
-                >
-                  {eventName}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                key="event_clear"
-                onClick={() => column.setFilterValue(null)}
-              >
-                <FilterX className="h-4 w-4 mr-1" />
-                Clear
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-            <DropdownMenu />
-          </DropdownMenu>
+          <div className="flex flex-row">
+            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+            Events
+          </div>
         );
       },
       accessorKey: "events",

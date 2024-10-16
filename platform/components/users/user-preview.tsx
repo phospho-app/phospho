@@ -28,7 +28,6 @@ function UserPreview({ user_id }: { user_id?: string }) {
         </Link>
       </div>
       <div className="flex flex-row gap-x-2">
-        <DatePickerWithRange />
         <DropdownMenu>
           <DropdownMenuTrigger asChild className="w-[10rem] justify-between">
             <Button variant="secondary">
@@ -46,6 +45,7 @@ function UserPreview({ user_id }: { user_id?: string }) {
           </DropdownMenuContent>
           <DropdownMenu />
         </DropdownMenu>
+        <DatePickerWithRange />
       </div>
       {selected === "Messages" && (
         <TasksTable forcedDataFilters={{ user_id: user_id }} />

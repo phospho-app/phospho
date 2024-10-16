@@ -113,12 +113,12 @@ export function UsersTable({
 
   return (
     <div>
-      <div className="flex flex-row gap-x-2 items-center justify-between mb-2">
-        <div className="flex flex-row gap-x-2 items-center">
-          <Input placeholder="Filter usernames" className="w-[20rem]" />
+      <div className="flex flex-col gap-y-2 mb-2">
+        <Input placeholder="Filter usernames" className="min-w-[20rem]" />
+        <div className="flex flex-row gap-x-2 items-end justify-between">
           <FilterComponent variant="users" />
+          <TableNavigation table={table} />
         </div>
-        <TableNavigation table={table} />
       </div>
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         {usersMetadata === undefined && <CenteredSpinner />}
