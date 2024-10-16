@@ -42,6 +42,9 @@ export function UsersTable({
   const usersPagination = navigationStateStore(
     (state) => state.usersPagination,
   );
+  const setUsersPagination = navigationStateStore(
+    (state) => state.setUsersPagination,
+  );
   const usersSorting = navigationStateStore((state) => state.usersSorting);
 
   // Merge forcedDataFilters with dataFilters
@@ -102,6 +105,7 @@ export function UsersTable({
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setUsersPagination,
     state: {
       sorting: usersSorting,
       pagination: usersPagination,
