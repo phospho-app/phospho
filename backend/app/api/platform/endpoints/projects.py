@@ -146,8 +146,6 @@ async def post_sessions(
     if isinstance(query.filters.created_at_end, datetime.datetime):
         query.filters.created_at_end = int(query.filters.created_at_end.timestamp())
 
-    logger.debug(query.sessions_ids)
-
     sessions = await get_all_sessions(
         project_id=project_id,
         get_events=True,
@@ -155,7 +153,6 @@ async def post_sessions(
         filters=query.filters,
         pagination=query.pagination,
         sorting=query.sorting,
-        sessions_ids=query.sessions_ids,
     )
     return Sessions(sessions=sessions)
 
@@ -363,7 +360,7 @@ async def add_events(
 @router.post(
     "/projects/{project_id}/users",
     response_model=Users,
-    description="Get metadata about the end-users of a project",
+    description="Get all the metadata about the end-users of a project",
 )
 async def get_users(
     project_id: str,
@@ -374,7 +371,12 @@ async def get_users(
     Get metadata about the end-users of a project
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    users = await get_all_users_metadata(project_id=project_id, filters=query.filters)
+    users = await get_all_users_metadata(
+        project_id=project_id,
+        filters=query.filters,
+        sorting=query.sorting,
+        pagination=query.pagination,
+    )
     return Users(users=users)
 
 

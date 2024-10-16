@@ -26,7 +26,7 @@ from loguru import logger
 from pymongo import InsertOne, UpdateOne
 from sklearn.metrics import (
     f1_score,
-    mean_squared_error,
+    root_mean_squared_error,
     precision_score,
     r2_score,
     recall_score,
@@ -1792,7 +1792,7 @@ async def get_events_aggregated_metrics(
         )
         if y_pred is not None and y_true is not None:
             if "mean_squared_error" in metrics:
-                output["mean_squared_error"] = mean_squared_error(y_true, y_pred)
+                output["mean_squared_error"] = root_mean_squared_error(y_true, y_pred)
             if "r_squared" in metrics:
                 output["r_squared"] = r2_score(y_true, y_pred)
             if "f1_score_binary" in metrics:
@@ -2928,6 +2928,13 @@ async def get_users_aggregated_metrics(
     if "avg_nb_tasks_per_user" in metrics:
         output["avg_nb_tasks_per_user"] = await get_average_nb_tasks_per_user(
             project_id=project_id, filters=filters
+        )
+
+    if "nb_users_messages" in metrics:
+        # Number of messages sent by users
+        output["nb_users_messages"] = await get_nb_users_messages(
+            project_id=project_id,
+            filters=filters,
         )
 
     return output

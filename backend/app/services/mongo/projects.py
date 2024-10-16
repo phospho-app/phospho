@@ -6,8 +6,7 @@ from app.api.v2.models.embeddings import Embedding
 from app.services.mongo.query_builder import QueryBuilder
 import pandas as pd
 import resend
-from app.api.platform.models import Pagination, UserMetadata
-from app.api.platform.models.explore import Sorting
+from app.api.platform.models import Sorting, Pagination, UserMetadata
 from app.core import config
 from app.db.models import (
     Project,
@@ -22,7 +21,7 @@ from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
 from app.services.mongo.explore import fetch_flattened_tasks
 from app.services.mongo.extractor import ExtractorClient
-from app.services.mongo.metadata import fetch_user_metadata
+from app.services.mongo.metadata import fetch_users_metadata
 from app.services.mongo.tasks import (
     get_all_tasks,
     label_sentiment_analysis,
@@ -469,7 +468,6 @@ async def get_all_sessions(
     get_tasks: bool = False,
     pagination: Optional[Pagination] = None,
     sorting: Optional[List[Sorting]] = None,
-    sessions_ids: Optional[List[str]] = None,
 ) -> List[Session]:
     mongo_db = await get_mongo_db()
 
@@ -503,17 +501,6 @@ async def get_all_sessions(
             [
                 {"$skip": pagination.page * pagination.per_page},
                 {"$limit": pagination.per_page},
-            ]
-        )
-
-    if sessions_ids is not None:
-        pipeline.extend(
-            [
-                {
-                    "$match": {
-                        "id": {"$in": sessions_ids},
-                    }
-                }
             ]
         )
 
@@ -576,6 +563,8 @@ async def store_onboarding_survey(user: User, survey: dict):
 async def get_all_users_metadata(
     project_id: str,
     filters: ProjectDataFilters,
+    sorting: Optional[List[Sorting]] = None,
+    pagination: Optional[Pagination] = None,
 ) -> List[UserMetadata]:
     """
     Get metadata about the end-users of a project
@@ -600,7 +589,9 @@ async def get_all_users_metadata(
         filters.created_at_end = cast_datetime_or_timestamp_to_timestamp(
             filters.created_at_end
         )
-    users = await fetch_user_metadata(project_id=project_id, filters=filters)
+    users = await fetch_users_metadata(
+        project_id=project_id, filters=filters, sorting=sorting, pagination=pagination
+    )
     return users
 
 

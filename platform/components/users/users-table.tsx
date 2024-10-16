@@ -54,7 +54,11 @@ export function UsersTable({
   };
 
   const { data: usersCount }: { data: number | null | undefined } = useSWR(
-    [`/api/explore/${project_id}/aggregated/users`, accessToken],
+    [
+      `/api/explore/${project_id}/aggregated/users`,
+      accessToken,
+      JSON.stringify(dataFiltersMerged),
+    ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["nb_users"],
@@ -75,11 +79,15 @@ export function UsersTable({
             `/api/projects/${project_id}/users`,
             accessToken,
             JSON.stringify(dataFiltersMerged),
+            JSON.stringify(usersPagination),
+            JSON.stringify(usersSorting),
           ]
         : null,
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
-          filters: dataFiltersMerged, // TODO: Implement filters
+          filters: dataFiltersMerged,
+          pagination: usersPagination,
+          sorting: usersSorting,
         }).then(async (res) => {
           if (res === undefined) return undefined;
           if (!res?.users) return null;

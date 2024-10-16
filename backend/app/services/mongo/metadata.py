@@ -1,12 +1,14 @@
 from typing import Dict, List, Literal, Optional
-from app.api.v2.models.projects import UserMetadata
-from app.services.mongo.query_builder import QueryBuilder
-from fastapi import HTTPException
-from loguru import logger
-from app.services.mongo.sessions import compute_task_position, compute_session_length
 
+from app.api.platform.models import Sorting, Pagination
+from app.api.v2.models.projects import UserMetadata
 from app.core import constants
 from app.db.mongo import get_mongo_db
+from app.services.mongo.query_builder import QueryBuilder
+from app.services.mongo.sessions import compute_session_length, compute_task_position
+from fastapi import HTTPException
+from loguru import logger
+
 from phospho.models import ProjectDataFilters
 
 
@@ -150,9 +152,11 @@ async def calculate_bottom10_percent(
         return 0
 
 
-async def fetch_user_metadata(
+async def fetch_users_metadata(
     project_id: str,
     filters: ProjectDataFilters,
+    sorting: Optional[List[Sorting]] = None,
+    pagination: Optional[Pagination] = None,
 ) -> List[UserMetadata]:
     """
     Get the user metadata for a specific user in a project
@@ -170,22 +174,27 @@ async def fetch_user_metadata(
 
     mongo_db = await get_mongo_db()
 
-    match_pipeline: List[Dict[str, object]] = []
-    main_filter: Dict[str, object] = {
-        "project_id": project_id,
-    }
-    if filters.user_id is not None:
-        main_filter["metadata.user_id"] = filters.user_id
-    else:
-        main_filter["metadata.user_id"] = {"$ne": None}
+    # Override the created_at filters to filter by last_message_ts
+    filter_last_message_ts_start = filters.created_at_start
+    filter_last_message_ts_end = filters.created_at_end
+    filters.created_at_start = None
+    filters.created_at_end = None
 
-    match_pipeline += [{"$match": main_filter}]
+    query_builder = QueryBuilder(
+        project_id=project_id, filters=filters, fetch_objects="tasks_with_events"
+    )
+    pipeline = await query_builder.build()
+    # Only fetch tasks with user_id
+    pipeline += [
+        {
+            "$match": {
+                "metadata.user_id": {"$exists": True},
+            }
+        }
+    ]
 
-    # First, we update the relevant sessions collection with the session_length
-    # await compute_session_length(project_id)
-
-    # Then, we fetch the user metadata
-    metadata_pipeline = match_pipeline + [
+    # Compute
+    pipeline += [
         {
             "$set": {
                 "is_success": {"$cond": [{"$eq": ["$flag", "success"]}, 1, 0]},
@@ -206,34 +215,14 @@ async def fetch_user_metadata(
                 "avg_success_rate": {"$avg": {"$toInt": "$is_success"}},
                 "tasks": {"$push": "$$ROOT"},
                 "total_tokens": {"$sum": "$metadata.total_tokens"},
-                "events": {"$push": "$events"},
+                "events": {"$push": "$events"},  # This results in a list of lists
                 # First and last message timestamp
                 "first_message_ts": {"$min": "$created_at"},
                 "last_message_ts": {"$max": "$created_at"},
             }
         },
-    ]
-
-    secondary_filter: Dict[str, object] = {}
-    if filters.created_at_start is not None:
-        secondary_filter["last_message_ts"] = {"$gte": filters.created_at_start}
-    if filters.created_at_end is not None:
-        secondary_filter["last_message_ts"] = {
-            **secondary_filter.get("last_message_ts", {}),  # type: ignore
-            "$lte": filters.created_at_end,
-        }
-    if secondary_filter:
-        metadata_pipeline += [{"$match": secondary_filter}]
-
-    metadata_pipeline += [
-        {
-            "$lookup": {
-                "from": "sessions",
-                "localField": "tasks.session_id",
-                "foreignField": "id",
-                "as": "sessions",
-            }
-        },
+        # Previously, using $push to group the events results in a list of lists: [[event1, event2], [event3, event4]]
+        # Flatten it into a single list of events
         {
             "$set": {
                 "events": {
@@ -245,39 +234,49 @@ async def fetch_user_metadata(
                 }
             }
         },
-        # If events or sessions are None, set to empty list
+    ]
+
+    # Filter by last_message_ts
+    secondary_filter: Dict[str, object] = {}
+    if filter_last_message_ts_start is not None:
+        secondary_filter["last_message_ts"] = {"$gte": filter_last_message_ts_start}
+    if filter_last_message_ts_end is not None:
+        secondary_filter["last_message_ts"] = {
+            **secondary_filter.get("last_message_ts", {}),  # type: ignore
+            "$lte": filter_last_message_ts_end,
+        }
+    if secondary_filter:
+        pipeline += [{"$match": secondary_filter}]
+
+    # Apply the sorting
+    if sorting:
+        sort_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+        pipeline += [{"$sort": sort_dict}]
+    else:
+        pipeline += [{"$sort": {"last_message_ts": 1, "user_id": 1}}]
+
+    # Adds the pagination
+    if pagination:
+        pipeline += [
+            {"$skip": (pagination.page - 1) * pagination.per_page},
+            {"$limit": pagination.per_page},
+        ]
+
+    pipeline += [
         {
-            "$addFields": {
-                "events": {"$ifNull": ["$events", []]},
-                "sessions": {"$ifNull": ["$sessions", []]},
+            "$lookup": {
+                "from": "sessions",
+                "localField": "tasks.session_id",
+                "foreignField": "id",
+                "as": "sessions",
             }
         },
-        # Deduplicate events names and sessions ids. We want the unique event_names of the session
+    ]
+    query_builder.deduplicate_tasks_events()
+    pipeline += [
+        # Deduplicate sessions ids
         {
             "$addFields": {
-                "events": {
-                    "$reduce": {
-                        "input": "$events",
-                        "initialValue": [],
-                        "in": {
-                            "$concatArrays": [
-                                "$$value",
-                                {
-                                    "$cond": [
-                                        {
-                                            "$in": [
-                                                "$$this.event_name",
-                                                "$$value.event_name",
-                                            ]
-                                        },
-                                        [],
-                                        ["$$this"],
-                                    ]
-                                },
-                            ]
-                        },
-                    }
-                },
                 "sessions": {
                     "$reduce": {
                         "input": "$sessions",
@@ -320,13 +319,11 @@ async def fetch_user_metadata(
                 "last_message_ts": 1,
             }
         },
-        # Sort by user_id
-        {"$sort": {"user_id": 1}},
     ]
 
-    users = await mongo_db["tasks"].aggregate(metadata_pipeline).to_list(length=None)
+    users = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
     if users is None or (filters.user_id is not None and len(users) == 0):
-        raise HTTPException(status_code=404, detail="No user found")
+        return []
 
     users = [UserMetadata.model_validate(data) for data in users]
     # logger.debug(f"User metadata: {users}")

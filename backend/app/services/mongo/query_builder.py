@@ -106,6 +106,32 @@ class QueryBuilder:
                 },
             ]
 
+    def merge_sessions(
+        self, foreignField: Literal["task_id"] = "task_id", force: bool = False
+    ) -> None:
+        """
+        Merge the sessions in the pipeline.
+
+        Used to compute KPIs on the sessions.
+        """
+        # if already merged, return the pipeline
+        if not force and any(
+            operator.get("$lookup", {}).get("from") == "sessions"  # type: ignore
+            for operator in self.pipeline
+        ):
+            return
+        else:
+            self.pipeline += [
+                {
+                    "$lookup": {
+                        "from": "sessions",
+                        "localField": "id",
+                        "foreignField": foreignField,
+                        "as": "sessions",
+                    },
+                },
+            ]
+
     def _main_doc_filter(self, prefix: str = "") -> Dict[str, object]:
         """
         Implements:
