@@ -11,22 +11,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { ABTest, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { Check, ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   Bar,
   BarChart,
@@ -41,6 +52,7 @@ import {
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
+import { z } from "zod";
 
 import CreateNewABTestButton from "./create-new-ab-test-button";
 
@@ -114,6 +126,25 @@ export const ABTestingDataviz = () => {
     selectedProject?.settings?.events === undefined ||
     Object.keys(selectedProject?.settings?.events).length === 0;
 
+  const events = selectedProject?.settings?.events;
+
+  const FormSchema = z.object({
+    selectedEventsIds: z
+      .array(z.string())
+      .refine((value) => value.some((item) => item), {
+        message: "You have to select at least one item.",
+      }),
+  });
+
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      selectedEventsIds: events
+        ? Object.keys(events).map((event) => events[event].id)
+        : [],
+    },
+  });
+
   // Used to mark the hint as "done" when the user has sent data
   const { data: hasTasksData } = useSWR(
     project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
@@ -135,12 +166,14 @@ export const ABTestingDataviz = () => {
           accessToken,
           versionIDA,
           versionIDB,
+          form.watch("selectedEventsIds"),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         versionA: versionIDA,
         versionB: versionIDB,
+        selected_events_ids: form.watch("selectedEventsIds"),
       }),
     {
       keepPreviousData: true,
@@ -225,6 +258,63 @@ export const ABTestingDataviz = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <CreateNewABTestButton />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <div className="flex flex-row items-center justify-between">
+                  <span className="font-semibold mr-1">Select events</span>{" "}
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
+              {events && Object.keys(events).length > 0 ? (
+                <Form {...form}>
+                  <form className="space-y-8">
+                    <FormField
+                      control={form.control}
+                      name="selectedEventsIds"
+                      render={({ field }) => (
+                        <FormItem>
+                          {Object.entries(events).map(([, event]) => {
+                            if (!event.id) return null; // Skip if id is undefined
+                            return (
+                              <FormItem
+                                key={event.id}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value.includes(event.id)}
+                                    onCheckedChange={(checked) => {
+                                      const updatedValue = checked
+                                        ? [...field.value, event.id]
+                                        : field.value.filter(
+                                            (value) => value !== event.id,
+                                          );
+                                      field.onChange(updatedValue);
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {event.event_name}
+                                </FormLabel>
+                              </FormItem>
+                            );
+                          })}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
+              ) : (
+                <DropdownMenuItem disabled>
+                  <p>No events found</p>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="flex flex-col items-center my-2">
           {graphData === undefined && (
