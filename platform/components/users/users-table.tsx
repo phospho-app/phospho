@@ -17,6 +17,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { ProjectDataFilters, UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { setUser } from "@sentry/nextjs";
 import {
   flexRender,
   getCoreRowModel,
@@ -46,6 +47,9 @@ export function UsersTable({
     (state) => state.setUsersPagination,
   );
   const usersSorting = navigationStateStore((state) => state.usersSorting);
+  const setUsersSorting = navigationStateStore(
+    (state) => state.setUsersSorting,
+  );
 
   // Merge forcedDataFilters with dataFilters
   const dataFiltersMerged = {
@@ -78,15 +82,18 @@ export function UsersTable({
         ? [
             `/api/projects/${project_id}/users`,
             accessToken,
+            usersPagination.pageIndex,
             JSON.stringify(dataFiltersMerged),
-            JSON.stringify(usersPagination),
             JSON.stringify(usersSorting),
           ]
         : null,
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           filters: dataFiltersMerged,
-          pagination: usersPagination,
+          pagination: {
+            page: usersPagination.pageIndex,
+            page_size: usersPagination.pageSize,
+          },
           sorting: usersSorting,
         }).then(async (res) => {
           if (res === undefined) return undefined;
@@ -110,7 +117,8 @@ export function UsersTable({
     data: usersMetadata ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setUsersSorting,
+    // getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: setUsersPagination,

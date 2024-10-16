@@ -497,6 +497,7 @@ async def get_all_sessions(
 
     # Add pagination
     if pagination:
+        logger.info(f"Adding pagination: {pagination}")
         pipeline.extend(
             [
                 {"$skip": pagination.page * pagination.per_page},
@@ -589,8 +590,21 @@ async def get_all_users_metadata(
         filters.created_at_end = cast_datetime_or_timestamp_to_timestamp(
             filters.created_at_end
         )
+    if sorting is None:
+        sorting = [
+            Sorting(id="last_timestamp_ts", desc=False),
+            Sorting(id="user_id", desc=False),
+        ]
+    else:
+        # Always resort by user_id to ensure the same order
+        # when multiple users have the same last_timestamp_ts or values
+        sorting.append(Sorting(id="user_id", desc=False))
+    logger.info(f"get_all_users_metadata: pagination={pagination}, sorting={sorting}")
     users = await fetch_users_metadata(
-        project_id=project_id, filters=filters, sorting=sorting, pagination=pagination
+        project_id=project_id,
+        filters=filters,
+        pagination=pagination,
+        sorting=sorting,
     )
     return users
 

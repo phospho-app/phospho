@@ -169,29 +169,20 @@ async def fetch_users_metadata(
         nb_tokens: int
         events: List[Event]
         tasks_id: List[str]
-        sessions: List[Session]
     """
 
     mongo_db = await get_mongo_db()
 
-    # Override the created_at filters to filter by last_message_ts
-    filter_last_message_ts_start = filters.created_at_start
-    filter_last_message_ts_end = filters.created_at_end
-    filters.created_at_start = None
-    filters.created_at_end = None
-
+    # Only fetch tasks with user_id
+    filters.metadata = {
+        "user_id": {"$exists": True},
+        **(filters.metadata or {}),
+    }
     query_builder = QueryBuilder(
         project_id=project_id, filters=filters, fetch_objects="tasks_with_events"
     )
+
     pipeline = await query_builder.build()
-    # Only fetch tasks with user_id
-    pipeline += [
-        {
-            "$match": {
-                "metadata.user_id": {"$exists": True},
-            }
-        }
-    ]
 
     # Compute
     pipeline += [
@@ -213,30 +204,19 @@ async def fetch_users_metadata(
                 "_id": "$metadata.user_id",
                 "nb_tasks": {"$sum": 1},
                 "avg_success_rate": {"$avg": {"$toInt": "$is_success"}},
-                "tasks": {"$push": "$$ROOT"},
                 "total_tokens": {"$sum": "$metadata.total_tokens"},
                 "events": {"$push": "$events"},  # This results in a list of lists
+                "session_ids": {"$addToSet": "$session_id"},
                 # First and last message timestamp
                 "first_message_ts": {"$min": "$created_at"},
                 "last_message_ts": {"$max": "$created_at"},
             }
         },
-        # Previously, using $push to group the events results in a list of lists: [[event1, event2], [event3, event4]]
-        # Flatten it into a single list of events
-        {
-            "$set": {
-                "events": {
-                    "$reduce": {
-                        "input": "$events",
-                        "initialValue": [],
-                        "in": {"$setUnion": ["$$value", "$$this"]},
-                    }
-                }
-            }
-        },
     ]
 
-    # Filter by last_message_ts
+    # Override the created_at filters to filter by last_message_ts
+    filter_last_message_ts_start = filters.created_at_start
+    filter_last_message_ts_end = filters.created_at_end
     secondary_filter: Dict[str, object] = {}
     if filter_last_message_ts_start is not None:
         secondary_filter["last_message_ts"] = {"$gte": filter_last_message_ts_start}
@@ -250,70 +230,73 @@ async def fetch_users_metadata(
 
     # Apply the sorting
     if sorting:
+        logger.info(f"Sorting by: {sorting}")
         sort_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+        # Rename the id user_id by _id
+        sort_dict["_id"] = sort_dict.pop("user_id", -1)
         pipeline += [{"$sort": sort_dict}]
     else:
-        pipeline += [{"$sort": {"last_message_ts": 1, "user_id": 1}}]
+        pipeline += [{"$sort": {"last_message_ts": 1, "_id": -1}}]
 
     # Adds the pagination
+    # TODO: Cache the results of this first pipeline using TTL
+    # https://www.mongodb.com/docs/manual/core/index-ttl/
     if pagination:
         pipeline += [
-            {"$skip": (pagination.page - 1) * pagination.per_page},
+            {"$skip": pagination.page * pagination.per_page},
             {"$limit": pagination.per_page},
         ]
 
     pipeline += [
+        # Previously, using $push to group the events results in a list of lists: [[event1, event2], [event3, event4]]
+        # Flatten it into a single list of events
         {
-            "$lookup": {
-                "from": "sessions",
-                "localField": "tasks.session_id",
-                "foreignField": "id",
-                "as": "sessions",
+            "$set": {
+                "events": {
+                    "$reduce": {
+                        "input": "$events",
+                        "initialValue": [],
+                        "in": {"$setUnion": ["$$value", "$$this"]},
+                    }
+                }
             }
-        },
+        }
     ]
     query_builder.deduplicate_tasks_events()
     pipeline += [
-        # Deduplicate sessions ids
         {
-            "$addFields": {
-                "sessions": {
-                    "$reduce": {
-                        "input": "$sessions",
-                        "initialValue": [],
-                        "in": {
-                            "$concatArrays": [
-                                "$$value",
-                                {
-                                    "$cond": [
-                                        {
-                                            "$in": [
-                                                "$$this.id",
-                                                "$$value.id",
-                                            ]
-                                        },
-                                        [],
-                                        ["$$this"],
-                                    ]
-                                },
-                            ]
-                        },
-                    }
-                },
+            "$unwind": "$session_ids",
+        },
+        {
+            "$lookup": {
+                "from": "sessions",
+                "localField": "session_ids",
+                "foreignField": "id",
+                "as": "session",
             }
         },
-        # Compute the average session length
+        # Compute the average session length and carry over the other fields
+        {
+            "$group": {
+                "_id": "$_id",
+                "avg_session_length": {"$avg": "$session.session_length"},
+                "nb_tasks": {"$first": "$nb_tasks"},
+                "avg_success_rate": {"$first": "$avg_success_rate"},
+                "total_tokens": {"$first": "$total_tokens"},
+                "events": {"$first": "$events"},
+                "tasks_id": {"$first": "$tasks_id"},
+                "first_message_ts": {"$first": "$first_message_ts"},
+                "last_message_ts": {"$first": "$last_message_ts"},
+            }
+        },
         {
             "$project": {
                 "user_id": "$_id",
                 "nb_tasks": 1,
                 "avg_success_rate": 1,
-                "avg_session_length": {"$avg": "$sessions.session_length"},
+                "avg_session_length": 1,
                 "events": 1,
-                # "tasks": 1,
-                "tasks_id": "$tasks.id",
-                "sessions": 1,
-                # "sessions_id": "$sessions.id",
+                "tasks_id": 1,
                 "total_tokens": 1,
                 "first_message_ts": 1,
                 "last_message_ts": 1,
@@ -326,7 +309,6 @@ async def fetch_users_metadata(
         return []
 
     users = [UserMetadata.model_validate(data) for data in users]
-    # logger.debug(f"User metadata: {users}")
 
     return users
 

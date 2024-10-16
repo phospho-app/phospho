@@ -165,7 +165,7 @@ export const navigationStateStore = create(
         }),
       usersSorting: [
         {
-          id: "created_at",
+          id: "last_message_ts",
           desc: false,
         },
       ],
