@@ -26,7 +26,7 @@ from loguru import logger
 from pymongo import InsertOne, UpdateOne
 from sklearn.metrics import (
     f1_score,
-    mean_squared_error,
+    root_mean_squared_error,
     precision_score,
     r2_score,
     recall_score,
@@ -1409,237 +1409,6 @@ async def fetch_single_cluster(project_id: str, cluster_id: str) -> Optional[Clu
     return valid_cluster
 
 
-async def nb_items_with_a_metadata_field(
-    project_id: str, collection_name: str, metadata_field: str
-) -> int:
-    """
-    Get the count of items in a collection that have a specific metadata field value.
-    """
-
-    mongo_db = await get_mongo_db()
-
-    try:
-        # Count the number of different user ids in the tasks metadata
-        nb_items = await mongo_db[collection_name].distinct(
-            f"metadata.{metadata_field}",
-            {"project_id": project_id, f"metadata.{metadata_field}": {"$ne": None}},
-        )
-
-        return len(nb_items)
-
-    except Exception as e:
-        logger.warning(
-            f"Failed to fetch the number of {metadata_field} in collection {collection_name} for project {project_id}: {e}",
-        )
-        return 0
-
-
-async def compute_successrate_metadata_quantiles(
-    project_id: str,
-    metadata_field: str,
-    collection_name: str = "tasks",
-    quantile_value: float = 0.1,
-) -> Tuple[float, float, float]:
-    """
-    Get the success rate of items in a collection that have a specific metadata field value.
-    """
-
-    mongo_db = await get_mongo_db()
-
-    pipeline = [
-        {
-            "$match": {
-                "flag": {"$in": ["success", "failure"]},
-                "project_id": project_id,
-                f"metadata.{metadata_field}": {"$exists": True},
-                "_id": f"$metadata.{metadata_field}",
-            }
-        },
-        {
-            "$set": {
-                "averageScore": {
-                    "$avg": {"$cond": [{"$eq": ["$flag", "success"]}, 1, 0]}
-                },
-            }
-        },
-        {
-            "$project": {
-                "bottomQuantile": {
-                    "$percentile": {
-                        "input": "$averageScore",
-                        "p": [quantile_value],
-                        "method": "approximate",
-                    }
-                },
-                "averageScore": {
-                    "$avg": "$averageScore",
-                },
-                "topQuantile": {
-                    "$percentile": {
-                        "input": "$averageScore",
-                        "p": [(1 - quantile_value)],
-                        "method": "approximate",
-                    }
-                },
-            }
-        },
-    ]
-
-    # Get the value of the top and bottom quantiles
-    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
-
-    # Add checks on the result length
-    if len(result) == 0:
-        logger.warning(
-            f"No {metadata_field} found in collection {collection_name} for project {project_id}"
-        )
-        return 0.0, 0.0, 0.0
-
-    bottom_quantile = result[0]["bottomQuantile"]
-    average = result[0]["averageScore"]
-    top_quantile = result[0]["topQuantile"]
-
-    if result:
-        return bottom_quantile, average, top_quantile
-    else:
-        return 0.0, 0.0, 0.0
-
-
-async def compute_nb_items_with_metadata_field(
-    project_id: str,
-    metadata_field: str,
-    collection_name: str,
-    quantile_value: float = 0.1,
-) -> Tuple[int, float, int]:
-    """
-    Get the number of items in a collection that have a specific metadata field value.
-    Returns a tupple of (bottom quantile, average, top quantile) count.
-    """
-
-    mongo_db = await get_mongo_db()
-
-    try:
-        pipeline = [
-            # Match on the project id and the existence of the metadata field
-            {
-                "$match": {
-                    "project_id": project_id,
-                    f"metadata.{metadata_field}": {"$exists": True, "$ne": None},
-                }
-            },
-            {
-                "$group": {
-                    "_id": "$user_id",  # Group by 'user_id'
-                    "count": {"$sum": 1},  # Count the documents in each group
-                }
-            },
-            {
-                "$sort": {"count": -1}  # Sort by 'count' in descending order
-            },
-        ]
-
-        # Execute the aggregation pipeline
-        results = []  # List to hold the results
-        async for group in mongo_db[collection_name].aggregate(pipeline):
-            results.append(group["count"])
-
-        logger.debug(
-            f"Results for {metadata_field} in collection {collection_name} for project {project_id}: {results}"
-        )
-
-        # If no results, return 0
-        if len(results) == 0:
-            return 0, 0.0, 0
-
-        # Get the average and the quantiles
-        average = sum(results) / len(results)
-        bottom_quantile = results[int(len(results) * quantile_value)]
-        top_quantile = results[int(len(results) * (1 - quantile_value))]
-
-        return bottom_quantile, average, top_quantile
-
-    except Exception as e:
-        logger.warning(
-            f"Failed to fetch the number of {metadata_field} in collection {collection_name} for project {project_id}: {e}",
-        )
-        return 0, 0.0, 0
-
-
-async def compute_session_length_per_metadata(
-    project_id: str,
-    metadata_field: str = "user_id",
-    quantile_value: float = 0.1,
-) -> Tuple[float, float, float]:
-    """
-    Get the quantiles and average length of sessions in number of tasks for a specific metadata field value.
-    Returns a tupple of (bottom quantile, average, top quantile) count.
-    """
-
-    mongo_db = await get_mongo_db()
-
-    try:
-        pipeline = [
-            # Match on the project id and the existence of the metadata field
-            {
-                "$match": {
-                    "project_id": project_id,
-                    "session_id": {"$exists": True, "$ne": None},
-                    f"metadata.{metadata_field}": {"$exists": True, "$ne": None},
-                }
-            },
-            {
-                "$group": {
-                    "_id": {
-                        "session_id": "$session_id",
-                        metadata_field: f"$metadata.{metadata_field}",
-                    },
-                    "taskCount": {"$sum": 1},
-                }
-            },
-            {
-                "$group": {
-                    "_id": f"$_id.{metadata_field}",
-                    "averageSessionLength": {"$avg": "$taskCount"},
-                }
-            },
-        ]
-
-        # Execute the aggregation pipeline
-        results = []  # List to hold the results
-        async for group in mongo_db["tasks"].aggregate(pipeline):
-            results.append(group["averageSessionLength"])
-
-        logger.debug(
-            f"Results for {metadata_field} in collection sessions for project {project_id}: {results}"
-        )
-
-        # If no results, return 0
-        if len(results) == 0:
-            return 0, 0.0, 0
-
-        # Get the average and the quantiles
-        average = sum(results) / len(results)
-
-        # Handle the cases where len(results) is 1 or 2
-        if len(results) == 1:
-            bottom_quantile = results[0]
-            top_quantile = results[0]
-        elif len(results) == 2:
-            bottom_quantile = results[0]
-            top_quantile = results[1]
-        else:
-            bottom_quantile = results[int(len(results) * quantile_value)]
-            top_quantile = results[int(len(results) * (1 - quantile_value))]
-
-        return bottom_quantile, average, top_quantile
-
-    except Exception as e:
-        logger.warning(
-            f"Failed to fetch the session length for {metadata_field} in collection sessions for project {project_id}: {e}",
-        )
-        return 0, 0.0, 0
-
-
 async def get_success_rate_by_event_name(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
@@ -1921,7 +1690,7 @@ async def get_category_distribution(
     Find the distribution of the categories.
     """
     db = await get_mongo_db()
-    logger.debug(f"Filters: {filters}")
+
     main_filter: Dict[str, object] = {
         "project_id": project_id,
         "removed": {"$ne": True},
@@ -2023,7 +1792,7 @@ async def get_events_aggregated_metrics(
         )
         if y_pred is not None and y_true is not None:
             if "mean_squared_error" in metrics:
-                output["mean_squared_error"] = mean_squared_error(y_true, y_pred)
+                output["mean_squared_error"] = root_mean_squared_error(y_true, y_pred)
             if "r_squared" in metrics:
                 output["r_squared"] = r2_score(y_true, y_pred)
             if "f1_score_binary" in metrics:
@@ -3122,3 +2891,66 @@ async def get_nb_users_messages(
     total_nb_users_messages = query_result[0]["nb_users_messages"]
 
     return total_nb_users_messages
+
+
+async def get_average_nb_tasks_per_user(
+    project_id: str,
+    filters: Optional[ProjectDataFilters] = None,
+) -> Optional[float]:
+    mongo_db = await get_mongo_db()
+
+    query_builder = QueryBuilder(
+        project_id=project_id, filters=filters, fetch_objects="tasks"
+    )
+    pipeline = await query_builder.build()
+
+    pipeline += [
+        {
+            "$match": {
+                "metadata.user_id": {"$exists": True},
+            }
+        },
+        {"$group": {"_id": "$metadata.user_id", "count": {"$sum": 1}}},
+        {"$group": {"_id": None, "average": {"$avg": "$count"}}},
+    ]
+
+    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+    if not result or "average" not in result[0]:
+        return None
+    average = result[0]["average"]
+    return average
+
+
+async def get_users_aggregated_metrics(
+    project_id: str,
+    metrics: Optional[List[str]] = None,
+    filters: Optional[ProjectDataFilters] = None,
+):
+    if metrics is None:
+        metrics = []
+
+    output: Dict[str, object] = {}
+    if "nb_users" in metrics:
+        total_nb_users = (
+            await get_total_nb_of_users(
+                project_id=project_id,
+                filters=filters,
+            )
+            # If None, set to 0
+            or 0
+        )
+        output["nb_users"] = total_nb_users
+
+    if "avg_nb_tasks_per_user" in metrics:
+        output["avg_nb_tasks_per_user"] = await get_average_nb_tasks_per_user(
+            project_id=project_id, filters=filters
+        )
+
+    if "nb_users_messages" in metrics:
+        # Number of messages sent by users
+        output["nb_users_messages"] = await get_nb_users_messages(
+            project_id=project_id,
+            filters=filters,
+        )
+
+    return output

@@ -16,18 +16,26 @@ function SetupUsersCallout() {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
-  const { data: userCountData } = useSWR(
-    [`/api/metadata/${project_id}/count/tasks/user_id`, accessToken],
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+  // Fetch graph data
+  const { data: usersCount }: { data: number | undefined } = useSWR(
+    project_id
+      ? [`/api/explore/${project_id}/aggregated/users`, accessToken, "nb_users"]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        metrics: ["nb_users"],
+      }).then((data) => {
+        if (data === undefined) return undefined;
+        return data.nb_users;
+      }),
     {
       keepPreviousData: true,
     },
   );
-  const userCount = userCountData?.value;
 
   return (
     <>
-      {userCount === 0 && (
+      {usersCount === 0 && (
         <Card className="bg-secondary">
           <CardHeader>
             <div className="flex">

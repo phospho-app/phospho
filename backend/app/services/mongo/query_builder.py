@@ -106,6 +106,32 @@ class QueryBuilder:
                 },
             ]
 
+    def merge_sessions(
+        self, foreignField: Literal["task_id"] = "task_id", force: bool = False
+    ) -> None:
+        """
+        Merge the sessions in the pipeline.
+
+        Used to compute KPIs on the sessions.
+        """
+        # if already merged, return the pipeline
+        if not force and any(
+            operator.get("$lookup", {}).get("from") == "sessions"  # type: ignore
+            for operator in self.pipeline
+        ):
+            return
+        else:
+            self.pipeline += [
+                {
+                    "$lookup": {
+                        "from": "sessions",
+                        "localField": "id",
+                        "foreignField": foreignField,
+                        "as": "sessions",
+                    },
+                },
+            ]
+
     def _main_doc_filter(self, prefix: str = "") -> Dict[str, object]:
         """
         Implements:
@@ -600,9 +626,9 @@ class QueryBuilder:
 
         elif self.fetch_object == "tasks_with_events":
             self.main_doc_filter_tasks()
-            await self.task_complex_filters()
             self.merge_events(foreignField="task_id")
             self.deduplicate_tasks_events()
+            await self.task_complex_filters()
 
         elif self.fetch_object == "sessions":
             self.main_doc_filter_sessions()
@@ -610,22 +636,22 @@ class QueryBuilder:
 
         elif self.fetch_object == "sessions_with_events":
             self.main_doc_filter_sessions()
-            await self.session_complex_filters()
             self.merge_events(foreignField="session_id")
             self.deduplicate_sessions_events()
+            await self.session_complex_filters()
 
         elif self.fetch_object == "sessions_with_tasks":
             self.main_doc_filter_sessions()
-            await self.session_complex_filters()
             self.merge_tasks()
             self.main_doc_filter_tasks()
+            await self.session_complex_filters()
             await self.task_complex_filters()
 
         elif self.fetch_object == "sessions_with_events_and_tasks":
             self.main_doc_filter_sessions()
-            await self.session_complex_filters()
             self.merge_events(foreignField="session_id")
             self.deduplicate_sessions_events()
+            await self.session_complex_filters()
             # Note: we don't merge Tasks' events
             self.merge_tasks()
             self.main_doc_filter_tasks()

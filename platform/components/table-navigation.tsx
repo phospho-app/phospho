@@ -9,7 +9,7 @@ import {
 
 export function TableNavigation<TData>({ table }: { table: Table<TData> }) {
   return (
-    <div className="flex space-x-1 items-center align-middle">
+    <div className="flex gap-x-1 items-center align-middle">
       <Button
         variant="outline"
         className="w-8 p-0"
@@ -30,7 +30,7 @@ export function TableNavigation<TData>({ table }: { table: Table<TData> }) {
         <span className="sr-only">Go to previous page</span>
         <ChevronLeftIcon className="h-4 w-4" />
       </Button>
-      <div className="">
+      <div className="flex min-w-8 justify-center">
         {table.getPageCount() !== -1
           ? `${table.getState().pagination.pageIndex + 1}/${table.getPageCount()}`
           : `${table.getState().pagination.pageIndex + 1}`}

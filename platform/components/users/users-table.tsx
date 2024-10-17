@@ -2,7 +2,6 @@
 
 import { CenteredSpinner } from "@/components/small-spinner";
 import { TableNavigation } from "@/components/table-navigation";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
@@ -19,8 +18,6 @@ import { ProjectDataFilters, UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
-  ColumnFiltersState,
-  SortingState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -28,10 +25,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { FilterX } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
 
+import FilterComponent from "../filters";
 import { UserPreview } from "./user-preview";
 
 export function UsersTable({
@@ -41,21 +38,39 @@ export function UsersTable({
 }) {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-  // const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const usersPagination = navigationStateStore(
+    (state) => state.usersPagination,
+  );
+  const setUsersPagination = navigationStateStore(
+    (state) => state.setUsersPagination,
+  );
+  const usersSorting = navigationStateStore((state) => state.usersSorting);
+  const setUsersSorting = navigationStateStore(
+    (state) => state.setUsersSorting,
+  );
+  const [userIdSearch, setUserIdSearch] = useState<string | undefined>();
 
   // Merge forcedDataFilters with dataFilters
-  // const dataFiltersMerged = {
-  //   ...dataFilters,
-  //   ...forcedDataFilters,
-  // };
+  const dataFiltersMerged = {
+    ...dataFilters,
+    ...forcedDataFilters,
+  };
 
-  // Fetch all users
   const { data: usersMetadata }: { data: UserMetadata[] | null | undefined } =
     useSWR(
-      project_id ? [`/api/projects/${project_id}/users`, accessToken] : null,
+      project_id
+        ? [
+            `/api/projects/${project_id}/users`,
+            accessToken,
+            JSON.stringify(dataFiltersMerged),
+            JSON.stringify(usersSorting),
+          ]
+        : null,
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
-          filters: {}, // TODO: Implement filters
+          filters: dataFiltersMerged,
+          sorting: usersSorting,
         }).then(async (res) => {
           if (res === undefined) return undefined;
           if (!res?.users) return null;
@@ -66,8 +81,6 @@ export function UsersTable({
       },
     );
 
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [filters, setFilters] = useState<ColumnFiltersState>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | undefined>();
 
@@ -76,51 +89,43 @@ export function UsersTable({
     data: usersMetadata ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: setUsersSorting,
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setUsersPagination,
     state: {
-      columnFilters: filters,
-      sorting,
+      sorting: usersSorting,
+      // Note: the pagination is done client side. This is because computing the
+      // users' metadata is slow : we need to crawl through all tasks to look for metadata.user_id
+      // This can be fastened by creating a dedicated users table and using server side pagination.
+      pagination: usersPagination,
     },
+    autoResetPageIndex: false,
   });
 
-  useEffect(() => {
-    /* Set default filters based on parsedDataFilters from the searchParams.
-    Note: Only the event filters are implemented for users filtering. */
-    if (forcedDataFilters?.event_name) {
-      console.log("parsedDataFilters", forcedDataFilters);
-      table.getColumn("events")?.setFilterValue(forcedDataFilters.event_name);
-    }
-  }, [forcedDataFilters, table]);
+  console.log("usersSorting", usersSorting);
 
   return (
     <div>
-      <div className="flex flex-row gap-x-2 items-center mb-2 justify-end">
+      <div className="flex flex-col gap-y-2 mb-2">
+        <div className="flex flex-row gap-x-2 items-end justify-between">
+          <FilterComponent variant="users" />
+          <TableNavigation table={table} />
+        </div>
         <Input
-          placeholder="Filter usernames"
-          value={(table.getColumn("user_id")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("user_id")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <Button
-          variant="secondary"
-          onClick={() => {
-            if (!table) return;
-            table.setColumnFilters([]);
+          placeholder="Search for user id"
+          className="min-w-[20rem]"
+          value={userIdSearch}
+          onChange={(e) => {
+            setUserIdSearch(e.target.value);
+            // Also filters client side, on the "user_id" column
+            table.getColumn("user_id")?.setFilterValue(e.target.value);
+            // reset pagination
+            setUsersPagination({ pageIndex: 0, pageSize: 10 });
           }}
-          disabled={filters?.length === 0}
-        >
-          <FilterX className="h-4 w-4 mr-1" />
-          Clear
-        </Button>
-        <TableNavigation table={table} />
+        />
       </div>
-
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         {usersMetadata === undefined && <CenteredSpinner />}
         {usersMetadata && (

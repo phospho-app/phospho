@@ -2,13 +2,7 @@ import pytest
 from loguru import logger
 
 # Function to test
-from app.services.mongo.explore import (
-    fetch_all_clusters,
-    nb_items_with_a_metadata_field,
-    compute_successrate_metadata_quantiles,
-    compute_nb_items_with_metadata_field,
-    compute_session_length_per_metadata,
-)
+from app.services.mongo.explore import fetch_all_clusters
 
 
 @pytest.mark.asyncio
@@ -21,18 +15,6 @@ async def test_main_pipeline(db, populated_project):
 
         logger.debug(f"Clusters: {clusters}")
 
-        count = await nb_items_with_a_metadata_field(
-            test_project_id, "tasks", "user_id"
-        )
-
-        assert count > 0
-
-        (
-            bottom_quantile,
-            average,
-            top_quantile,
-        ) = await compute_successrate_metadata_quantiles(test_project_id, "user_id")
-
         logger.debug(f"Bottom quantile: {bottom_quantile}")
         logger.debug(f"Top quantile: {top_quantile}")
 
@@ -44,19 +26,6 @@ async def test_main_pipeline(db, populated_project):
         test_collection_name = "tasks"
         test_quantile_value = 0.1
 
-        # Run the function
-        (
-            bottom_quantile,
-            average,
-            top_quantile,
-        ) = await compute_nb_items_with_metadata_field(
-            test_project_id,
-            test_metadata_field,
-            test_collection_name,
-            test_quantile_value,
-        )
-
-        logger.debug("run compute_nb_items_with_metadata_field")
         logger.debug(f"Bottom quantile: {bottom_quantile}")
         logger.debug(f"Average: {average}")
         logger.debug(f"Top quantile: {top_quantile}")
@@ -66,16 +35,6 @@ async def test_main_pipeline(db, populated_project):
         assert isinstance(top_quantile, int)
         # assert bottom_quantile <= average <= top_quantile
 
-        (
-            bottom_quantile,
-            average,
-            top_quantile,
-        ) = await compute_session_length_per_metadata(
-            test_project_id,
-            test_metadata_field,
-            test_quantile_value,
-        )
-        logger.debug("run compute_session_length_per_metadata")
         logger.debug(f"Bottom quantile: {bottom_quantile}")
         logger.debug(f"Average: {average}")
         logger.debug(f"Top quantile: {top_quantile}")
