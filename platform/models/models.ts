@@ -158,6 +158,7 @@ export interface ScoreRangeSettings {
 
 export interface EventDefinition {
   id?: string;
+  version_id?: number;
   created_at?: number;
   project_id: string;
   org_id: string;

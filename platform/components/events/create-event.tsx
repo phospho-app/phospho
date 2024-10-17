@@ -206,7 +206,6 @@ export default function CreateEvent({
       // This is in case the event name has changed
       delete selectedProject.settings.events[eventToEdit.event_name];
     }
-
     // Create the score_range_settings object
     let score_range_settings: ScoreRangeSettings | undefined = undefined;
     if (values.output_type === ScoreRangeType.confidence) {
@@ -233,9 +232,11 @@ export default function CreateEvent({
         categories: values.categories,
       };
     }
-
     // On purpose, we do not pass the job_id, so a new job object will be created for this event
     selectedProject.settings.events[values.event_name] = {
+      id: eventToEdit?.id ?? "",
+      version_id:
+        eventToEdit?.version_id !== undefined ? eventToEdit?.version_id + 1 : 1,
       project_id: selectedProject.id,
       org_id: selectedProject.org_id,
       event_name: values.event_name,
