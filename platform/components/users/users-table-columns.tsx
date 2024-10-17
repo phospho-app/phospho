@@ -51,7 +51,12 @@ export function useColumns() {
                 {row.original.user_id}
               </div>
             </HoverCardTrigger>
-            <HoverCardContent align="start">Copy</HoverCardContent>
+            <HoverCardContent
+              align="start"
+              className="text-xs text-muted-foreground"
+            >
+              Copy
+            </HoverCardContent>
           </HoverCard>
         );
       },

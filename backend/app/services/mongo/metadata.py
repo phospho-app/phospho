@@ -314,8 +314,6 @@ async def fetch_users_metadata(
     else:
         pipeline += [{"$sort": {"last_message_ts": 1, "_id": -1}}]
 
-    logger.debug(f"User metadata pipeline: {pipeline}")
-
     users = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
     if users is None or (filters.user_id is not None and len(users) == 0):
         return []

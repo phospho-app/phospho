@@ -22,6 +22,7 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import React, { useState } from "react";
@@ -112,7 +113,7 @@ export function UsersTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setUsersSorting,
-    // getSortedRowModel: getSortedRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onPaginationChange: setUsersPagination,
@@ -126,6 +127,8 @@ export function UsersTable({
     pageCount: maxNbPages,
     autoResetPageIndex: false,
   });
+
+  console.log("usersSorting", usersSorting);
 
   return (
     <div>
