@@ -6,8 +6,7 @@ from app.api.v2.models.embeddings import Embedding
 from app.services.mongo.query_builder import QueryBuilder
 import pandas as pd
 import resend
-from app.api.platform.models import Pagination, UserMetadata
-from app.api.platform.models.explore import Sorting
+from app.api.platform.models import Sorting, Pagination
 from app.core import config
 from app.db.models import (
     Project,
@@ -22,17 +21,12 @@ from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
 from app.services.mongo.explore import fetch_flattened_tasks
 from app.services.mongo.extractor import ExtractorClient
-from app.services.mongo.metadata import fetch_user_metadata
 from app.services.mongo.tasks import (
     get_all_tasks,
     label_sentiment_analysis,
 )
 from app.services.slack import slack_notification
-from app.utils import (
-    cast_datetime_or_timestamp_to_timestamp,
-    generate_timestamp,
-    generate_uuid,
-)
+from app.utils import generate_timestamp, generate_uuid
 from fastapi import HTTPException
 from loguru import logger
 from propelauth_fastapi import User  # type: ignore
@@ -469,7 +463,6 @@ async def get_all_sessions(
     get_tasks: bool = False,
     pagination: Optional[Pagination] = None,
     sorting: Optional[List[Sorting]] = None,
-    sessions_ids: Optional[List[str]] = None,
 ) -> List[Session]:
     mongo_db = await get_mongo_db()
 
@@ -499,21 +492,11 @@ async def get_all_sessions(
 
     # Add pagination
     if pagination:
+        logger.info(f"Adding pagination: {pagination}")
         pipeline.extend(
             [
                 {"$skip": pagination.page * pagination.per_page},
                 {"$limit": pagination.per_page},
-            ]
-        )
-
-    if sessions_ids is not None:
-        pipeline.extend(
-            [
-                {
-                    "$match": {
-                        "id": {"$in": sessions_ids},
-                    }
-                }
             ]
         )
 
@@ -571,37 +554,6 @@ async def store_onboarding_survey(user: User, survey: dict):
     mongo_db["onboarding_surveys"].insert_one(doc)
     await slack_notification(f"New onboarding survey from {user.email}: {survey}")
     return
-
-
-async def get_all_users_metadata(
-    project_id: str,
-    filters: ProjectDataFilters,
-) -> List[UserMetadata]:
-    """
-    Get metadata about the end-users of a project
-
-    Groups the tasks by user_id and return a list of UserMetadata.
-    Every UserMetadata contains:
-        user_id: str
-        nb_tasks: int
-        avg_success_rate: float
-        avg_session_length: float
-        events: List[Event]
-        tasks: List[Task]
-        sessions: List[Session]
-    """
-    # Override user_id filter to get all users
-    filters.user_id = None
-    if isinstance(filters.created_at_start, datetime.datetime):
-        filters.created_at_start = cast_datetime_or_timestamp_to_timestamp(
-            filters.created_at_start
-        )
-    if isinstance(filters.created_at_end, datetime.datetime):
-        filters.created_at_end = cast_datetime_or_timestamp_to_timestamp(
-            filters.created_at_end
-        )
-    users = await fetch_user_metadata(project_id=project_id, filters=filters)
-    return users
 
 
 async def backcompute_recipe(

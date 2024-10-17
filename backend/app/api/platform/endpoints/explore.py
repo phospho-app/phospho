@@ -30,9 +30,6 @@ from app.services.mongo.ai_hub import AIHubClient
 from app.services.mongo.events import get_all_events, get_event_definition_from_event_id
 from app.services.mongo.explore import (
     compute_cloud_of_clusters,
-    compute_nb_items_with_metadata_field,
-    compute_session_length_per_metadata,
-    compute_successrate_metadata_quantiles,
     create_ab_tests_table,
     deprecated_get_dashboard_aggregated_metrics,
     fetch_all_clusterings,
@@ -48,7 +45,7 @@ from app.services.mongo.explore import (
     get_tasks_aggregated_metrics,
     get_total_nb_of_sessions,
     get_total_nb_of_users,
-    nb_items_with_a_metadata_field,
+    get_users_aggregated_metrics,
     project_has_enough_labelled_tasks,
     project_has_sessions,
     project_has_tasks,
@@ -365,6 +362,36 @@ async def get_events_project_metrics(
 
 
 @router.post(
+    "/explore/{project_id}/aggregated/users",
+    description="Get aggregated metrics for the users of a project. Used for the Users dashboard.",
+)
+async def get_users_project_metrics(
+    project_id: str,
+    metrics: Optional[List[str]] = None,
+    filters: Optional[ProjectDataFilters] = None,
+    user: User = Depends(propelauth.require_user),
+):
+    """
+    Get aggregated metrics for the users of a project. Used for the Users dashboard.
+    """
+    await verify_if_propelauth_user_can_access_project(user, project_id)
+    # Convert to UNIX timestamp in seconds
+    if filters is None:
+        filters = ProjectDataFilters()
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = int(filters.created_at_start.timestamp())
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = int(filters.created_at_end.timestamp())
+
+    output = await get_users_aggregated_metrics(
+        project_id=project_id,
+        metrics=metrics,
+        filters=filters,
+    )
+    return output
+
+
+@router.post(
     "/explore/{project_id}/events",
     response_model=Events,
     description="Get the events of a project that match the filter",
@@ -605,118 +632,6 @@ async def post_detect_clusters(
     )
 
 
-@router.get(
-    "/explore/{project_id}/nb_items_with_a_metadata_field/{collection_name}/{metadata_field}",
-    description="Get the number of different metadata values in a project.",
-)
-async def get_nb_items_with_a_metadata_field(
-    project_id: str,
-    collection_name: str,
-    metadata_field: str,
-    user: User = Depends(propelauth.require_user),
-) -> dict:
-    await verify_if_propelauth_user_can_access_project(user, project_id)
-
-    count = await nb_items_with_a_metadata_field(
-        project_id=project_id,
-        collection_name=collection_name,
-        metadata_field=metadata_field,
-    )
-
-    return {"value": count}
-
-
-@router.get(
-    "/explore/{project_id}/compute_nb_items_with_metadata_field/{collection_name}/{metadata_field}",
-    description="Get the average number of metadata values in a project.",
-)
-async def get_compute_nb_items_with_metadata_field(
-    project_id: str,
-    collection_name: str,
-    metadata_field: str,
-    user: User = Depends(propelauth.require_user),
-) -> dict:
-    await verify_if_propelauth_user_can_access_project(user, project_id)
-
-    quantile_value = 0.1
-
-    (
-        bottom_quantile,
-        average,
-        top_quantile,
-    ) = await compute_nb_items_with_metadata_field(
-        project_id=project_id,
-        collection_name=collection_name,
-        metadata_field=metadata_field,
-        quantile_value=quantile_value,
-    )
-
-    return {
-        "bottom_quantile": bottom_quantile,
-        "average": average,
-        "top_quantile": top_quantile,
-        "quantile_value": quantile_value,
-    }
-
-
-@router.get(
-    "/explore/{project_id}/compute_session_length_per_metadata/{metadata_field}",
-    description="Get the average session length for a metadata field.",
-)
-async def get_compute_session_length_per_metadata(
-    project_id: str,
-    metadata_field: str,
-    user: User = Depends(propelauth.require_user),
-) -> dict:
-    await verify_if_propelauth_user_can_access_project(user, project_id)
-
-    quantile_value = 0.1
-
-    (
-        bottom_quantile,
-        average,
-        top_quantile,
-    ) = await compute_session_length_per_metadata(
-        project_id=project_id,
-        metadata_field=metadata_field,
-        quantile_value=quantile_value,
-    )
-
-    return {
-        "bottom_quantile": bottom_quantile,
-        "average": average,
-        "top_quantile": top_quantile,
-        "quantile_value": quantile_value,
-    }
-
-
-@router.get(
-    "/metadata/{project_id}/successrate-stats/{collection_name}/{metdata_field}",
-    description="Get the stats on success rate for a project's collection.",
-)
-async def get_successrate_stats(
-    project_id: str,
-    collection_name: str,
-    metadata_field: str,
-    user: User = Depends(propelauth.require_user),
-) -> dict:
-    await verify_if_propelauth_user_can_access_project(user, project_id)
-
-    (
-        bottom_quantile,
-        average,
-        top_quantile,
-    ) = await compute_successrate_metadata_quantiles(
-        project_id, metadata_field, collection_name=collection_name
-    )
-
-    return {
-        "bottom_quantile": bottom_quantile,
-        "average": average,
-        "top_quantile": top_quantile,
-    }
-
-
 @router.post(
     "/explore/{project_id}/dashboard",
     description="Get the different graphs for the dashboard tab",
@@ -793,6 +708,7 @@ async def get_ab_tests_comparison(
         project_id=project_id,
         versionA=versions.versionA,
         versionB=versions.versionB,
+        selected_events_ids=versions.selected_events_ids,
     )
     return output
 

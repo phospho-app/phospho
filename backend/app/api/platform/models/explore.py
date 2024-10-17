@@ -19,6 +19,7 @@ class EventsMetricsFilter(BaseModel):
 class ABTestVersions(BaseModel):
     versionA: Optional[str]
     versionB: Optional[str]
+    selected_events_ids: Optional[List[str]]
 
 
 class ClusteringEmbeddingCloud(BaseModel):
@@ -48,7 +49,13 @@ class QuerySessionsTasksRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     pagination: Optional[Pagination] = None
     sorting: Optional[List[Sorting]] = None
-    sessions_ids: Optional[List[str]] = None
+
+
+class QueryUserMetadataRequest(BaseModel):
+    filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
+    pagination: Optional[Pagination] = None
+    sorting: Optional[List[Sorting]] = None
+    user_id_search: Optional[str] = None
 
 
 class DetectClustersRequest(BaseModel):
@@ -78,9 +85,3 @@ class ClusteringCostRequest(BaseModel):
     scope: Literal["messages", "sessions", "users"] = "messages"
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     limit: Optional[int] = None
-
-
-class QueryUserMetadataRequest(BaseModel):
-    filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
-    pagination: Optional[Pagination] = None
-    sorting: Optional[List[Sorting]] = None

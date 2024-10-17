@@ -34,6 +34,7 @@ from .explore import (
     EventsMetricsFilter,
     FetchClustersRequest,
     Pagination,
+    Sorting,
     ProjectDataFilters,
     QuerySessionsTasksRequest,
     AggregatedSessionsRequest,

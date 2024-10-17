@@ -66,7 +66,7 @@ const CreateNewABTestButton = () => {
   return (
     <>
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <div className="flex">
+        <div className="flex min-w-[10rem]">
           <PopoverTrigger asChild>
             <Button>
               <PlusIcon className="h-4 w-4 mr-2" />
