@@ -2429,6 +2429,7 @@ async def get_ab_tests_versions(
             }
         },
         {"$unwind": "$task"},
+        # We look up the last version of the event_definition to have the information up to date
         {
             "$lookup": {
                 "from": "event_definitions",

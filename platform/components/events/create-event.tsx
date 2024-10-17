@@ -234,7 +234,7 @@ export default function CreateEvent({
     }
     // On purpose, we do not pass the job_id, so a new job object will be created for this event
     selectedProject.settings.events[values.event_name] = {
-      id: eventToEdit?.id ?? "",
+      id: eventToEdit?.id,
       version_id:
         eventToEdit?.version_id !== undefined ? eventToEdit?.version_id + 1 : 1,
       project_id: selectedProject.id,
