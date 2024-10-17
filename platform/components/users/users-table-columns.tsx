@@ -13,9 +13,38 @@ import { authFetcher } from "@/lib/fetcher";
 import { Event, Project, UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronRight, Sparkles } from "lucide-react";
+import { Column, ColumnDef } from "@tanstack/react-table";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronRight,
+  Sparkles,
+} from "lucide-react";
 import useSWR from "swr";
+
+function GenericHeader({
+  columnName,
+  column,
+}: {
+  columnName: string;
+  column: Column<UserMetadata, unknown>;
+}) {
+  return (
+    <div className="flex flex-row gap-x-2 items-center">
+      {columnName}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        {column.getIsSorted() === false && <ArrowUpDown className="size-4" />}
+        {column.getIsSorted() === "asc" && <ArrowUp className="size-4" />}
+        {column.getIsSorted() === "desc" && <ArrowDown className="size-4" />}
+      </Button>
+    </div>
+  );
+}
 
 export function useColumns() {
   const { accessToken } = useUser();
@@ -63,54 +92,32 @@ export function useColumns() {
       // enableHiding: true,
     },
     {
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Nb messages
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
       accessorKey: "nb_tasks",
+      header: ({ column }) => {
+        return <GenericHeader column={column} columnName="Nb tasks" />;
+      },
       cell: (row) => {
         const output = row.getValue();
         return output;
       },
     },
     {
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Avg. success rate
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
       accessorKey: "avg_success_rate",
+      header: ({ column }) => {
+        return <GenericHeader column={column} columnName="Avg. success rate" />;
+      },
       cell: (row) => {
         const output = Math.round((row.getValue() as number) * 100) / 100;
         return output;
       },
     },
     {
+      accessorKey: "avg_session_length",
       header: ({ column }) => {
         return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Avg. session length
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <GenericHeader column={column} columnName="Avg. session length" />
         );
       },
-      accessorKey: "avg_session_length",
       cell: (row) => {
         const output = row.getValue() as number;
         const roundedOutput = Math.round(output * 100) / 100;
@@ -118,55 +125,22 @@ export function useColumns() {
       },
     },
     {
+      accessorKey: "total_tokens",
       header: ({ column }) => {
         return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Nb Tokens
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <GenericHeader column={column} columnName="Total tokens earned" />
         );
       },
-      accessorKey: "total_tokens",
       cell: (row) => {
         const output = row.getValue();
         return output;
       },
     },
     {
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            First message
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
       accessorKey: "first_message_ts",
-      cell: (row) => {
-        const value = row.getValue();
-        if (typeof value !== "number") return <></>;
-        return <InteractiveDatetime timestamp={value} />;
-      },
-    },
-    {
       header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Last message
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
+        return <GenericHeader column={column} columnName="First message" />;
       },
-      accessorKey: "last_message_ts",
       cell: (row) => {
         const value = row.getValue();
         if (typeof value !== "number") return <></>;
@@ -174,23 +148,26 @@ export function useColumns() {
       },
     },
     {
-      filterFn: (row, id, filterValue) => {
-        if (filterValue === null) return true;
-        // If the filter value is not null, return whether
-        // the filterValue is in [event.event_name] array
-        return (row.original.events as Event[]).some(
-          (event) => event.event_name === filterValue,
-        );
+      accessorKey: "last_message_ts",
+      header: ({ column }) => {
+        return <GenericHeader column={column} columnName="Last message" />;
       },
+      cell: (row) => {
+        const value = row.getValue();
+        if (typeof value !== "number") return <></>;
+        return <InteractiveDatetime timestamp={value} />;
+      },
+    },
+    {
+      accessorKey: "events",
       header: () => {
         return (
-          <div className="flex flex-row">
-            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+          <div className="flex flex-row gap-x-2 items-center">
+            <Sparkles className="h-4 w-4 text-green-500" />
             Events
           </div>
         );
       },
-      accessorKey: "events",
       cell: (row) => {
         return (
           <>
