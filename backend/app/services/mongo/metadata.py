@@ -239,8 +239,8 @@ async def fetch_users_metadata(
         pipeline += [{"$sort": {"last_message_ts": 1, "_id": -1}}]
 
     # Adds the pagination
-    # TODO: Cache the results of this first pipeline using TTL
-    # https://www.mongodb.com/docs/manual/core/index-ttl/
+    # TODO: All the steps above are pretty slow. Server-side pagination does not work well with this approach.
+    # We should create a new collection to persist the user metadata and use it for pagination, like Sessions.
     if pagination:
         pipeline += [
             {"$skip": pagination.page * pagination.per_page},

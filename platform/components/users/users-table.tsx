@@ -88,10 +88,6 @@ export function UsersTable({
       ([url, accessToken]) =>
         authFetcher(url, accessToken, "POST", {
           filters: dataFiltersMerged,
-          pagination: {
-            page: usersPagination.pageIndex,
-            page_size: usersPagination.pageSize,
-          },
           sorting: usersSorting,
         }).then(async (res) => {
           if (res === undefined) return undefined;
@@ -122,11 +118,13 @@ export function UsersTable({
     onPaginationChange: setUsersPagination,
     state: {
       sorting: usersSorting,
+      // Note: the pagination is done client side. This is because computing the
+      // users' metadata is slow : we need to crawl through all tasks to look for metadata.user_id
+      // This can be fastened by creating a dedicated users table and using server side pagination.
       pagination: usersPagination,
     },
     pageCount: maxNbPages,
     autoResetPageIndex: false,
-    manualPagination: true,
   });
 
   return (
