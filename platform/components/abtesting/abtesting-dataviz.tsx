@@ -18,19 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { ABTest, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@propelauth/nextjs/client";
 import { DropdownMenuLabel } from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronDown, ChevronRight, GripVertical } from "lucide-react";
@@ -38,7 +30,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import {
   Bar,
   BarChart,
@@ -53,7 +44,6 @@ import {
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
-import { z } from "zod";
 
 import CreateNewABTestButton from "./create-new-ab-test-button";
 
@@ -129,22 +119,7 @@ export const ABTestingDataviz = () => {
 
   const events = selectedProject?.settings?.events;
 
-  const FormSchema = z.object({
-    selectedEventsIds: z
-      .array(z.string())
-      .refine((value) => value.some((item) => item), {
-        message: "You have to select at least one item.",
-      }),
-  });
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      selectedEventsIds: events
-        ? Object.keys(events).map((event) => events[event].id)
-        : [],
-    },
-  });
+  const [selectedEventsIds, setSelectedEventsIds] = useState<string[]>([]);
 
   // Used to mark the hint as "done" when the user has sent data
   const { data: hasTasksData } = useSWR(
@@ -167,19 +142,44 @@ export const ABTestingDataviz = () => {
           accessToken,
           versionIDA,
           versionIDB,
-          form.watch("selectedEventsIds"),
+          selectedEventsIds,
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         versionA: versionIDA,
         versionB: versionIDB,
-        selected_events_ids: form.watch("selectedEventsIds"),
+        selected_events_ids: selectedEventsIds,
       }),
     {
       keepPreviousData: true,
     },
   );
+
+  const toggleEventSelection = (eventId: string) => {
+    setSelectedEventsIds((prevIds) =>
+      prevIds.includes(eventId)
+        ? prevIds.filter((id) => id !== eventId)
+        : [...prevIds, eventId],
+    );
+  };
+
+  const toggleAllEvents = (checked: boolean) => {
+    if (checked && events) {
+      const allEventIds = Object.values(events)
+        .map((event) => event.id)
+        .filter((id): id is string => id !== undefined);
+      setSelectedEventsIds(allEventIds);
+    } else {
+      setSelectedEventsIds([]);
+    }
+  };
+
+  const allEventsSelected =
+    events &&
+    Object.values(events).every(
+      (event) => event.id && selectedEventsIds.includes(event.id),
+    );
 
   return (
     <>
@@ -272,49 +272,54 @@ export const ABTestingDataviz = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
                 <div className="space-y-2 mr-2 ml-2">
-                  <DropdownMenuLabel className=" flex flex-row items-center mt-1 mb-3 ml-6 font-semibold">
+                  <DropdownMenuLabel className="flex flex-row items-center mt-1 mb-1 ml-6 font-semibold">
                     Displayed analytics
                   </DropdownMenuLabel>
                   {events && Object.keys(events).length > 0 ? (
-                    <Form {...form}>
-                      <form className="space-y-8">
-                        <FormField
-                          control={form.control}
-                          name="selectedEventsIds"
-                          render={({ field }) => (
-                            <FormItem>
-                              {Object.entries(events).map(([, event]) => {
-                                if (!event.id) return null; // Skip if id is undefined
-                                return (
-                                  <FormItem
-                                    key={event.id}
-                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                  >
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value.includes(event.id)}
-                                        onCheckedChange={(checked) => {
-                                          const updatedValue = checked
-                                            ? [...field.value, event.id]
-                                            : field.value.filter(
-                                                (value) => value !== event.id,
-                                              );
-                                          field.onChange(updatedValue);
-                                        }}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                      {event.event_name}
-                                    </FormLabel>
-                                  </FormItem>
-                                );
-                              })}
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                    <>
+                      <Separator className="my-4" />
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Checkbox
+                          id="select-all"
+                          checked={allEventsSelected}
+                          onCheckedChange={(checked) =>
+                            toggleAllEvents(checked as boolean)
+                          }
                         />
-                      </form>
-                    </Form>
+                        <label
+                          htmlFor="select-all"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Select All
+                        </label>
+                      </div>
+                      <Separator className="my-4" />
+                      {Object.entries(events).map(([, event]) => {
+                        if (!event.id) return null;
+                        return (
+                          <div
+                            key={event.id}
+                            className="flex items-center space-x-2"
+                          >
+                            <Checkbox
+                              id={event.id}
+                              checked={selectedEventsIds.includes(event.id)}
+                              onCheckedChange={() => {
+                                if (event.id) {
+                                  toggleEventSelection(event.id);
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={event.id}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {event.event_name}
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </>
                   ) : (
                     <DropdownMenuItem disabled>
                       <p>No events found</p>
