@@ -2679,55 +2679,64 @@ async def get_ab_tests_versions(
             },
         },
         # Keep only the events that are in the selected_events_id list
-        {
-            "$match": {
-                "_id.event_definition_id": {"$in": selected_events_ids},
-            },
-        },
-        # For range type events, we need to average the score
-        # For confidence type events, we need to count the number of times the event was detected
-        # For categorical events, we need to count the number of times each label was detected$
-        {
-            "$project": {
-                "_id": 0,
-                "version_id": "$_id.version_id",
-                "event_name": "$_id.event_name",
-                "event_label": "$_id.event_label",
-                "event_type": "$_id.event_type",
-                "count": 1,
-                "score": 1,
-            },
-        },
-        # TODO : Remove this code and implement it in python instead
-        # For event_type == "category", concat by event_name and the label then group by event_name
-        # For event_type == "range", concat by event_name and average the score
-        # For event_type == "confidence", concat by event_name and count the number of times the event was detected
-        {
-            "$group": {
-                "_id": {
-                    "event_definition_id": "$_id.event_definition_id",
-                    "event_type": "$event_type",
-                    "event_name": "$event_name",
+    ]
+
+    if selected_events_ids is not None:
+        pipeline.append(
+            {
+                "$match": {
+                    "_id.event_definition_id": {"$in": selected_events_ids},
                 },
-                "results": {
-                    "$push": {
-                        "version_id": "$version_id",
-                        "event_label": "$event_label",
-                        "count": "$count",
-                        "score": "$score",
+            }
+        )
+
+    pipeline.extend(
+        [
+            # For range type events, we need to average the score
+            # For confidence type events, we need to count the number of times the event was detected
+            # For categorical events, we need to count the number of times each label was detected$
+            {
+                "$project": {
+                    "_id": 0,
+                    "version_id": "$_id.version_id",
+                    "event_name": "$_id.event_name",
+                    "event_label": "$_id.event_label",
+                    "event_type": "$_id.event_type",
+                    "count": 1,
+                    "score": 1,
+                },
+            },
+            # TODO : Remove this code and implement it in python instead
+            # For event_type == "category", concat by event_name and the label then group by event_name
+            # For event_type == "range", concat by event_name and average the score
+            # For event_type == "confidence", concat by event_name and count the number of times the event was detected
+            {
+                "$group": {
+                    "_id": {
+                        "event_definition_id": "$_id.event_definition_id",
+                        "event_type": "$event_type",
+                        "event_name": "$event_name",
+                    },
+                    "results": {
+                        "$push": {
+                            "version_id": "$version_id",
+                            "event_label": "$event_label",
+                            "count": "$count",
+                            "score": "$score",
+                        },
                     },
                 },
             },
-        },
-        {
-            "$project": {
-                "_id": 0,
-                "event_type": "$_id.event_type",
-                "event_name": "$_id.event_name",
-                "results": 1,
+            {
+                "$project": {
+                    "_id": 0,
+                    "event_type": "$_id.event_type",
+                    "event_name": "$_id.event_name",
+                    "results": 1,
+                },
             },
-        },
-    ]
+        ]
+    )
 
     results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
     if not results or len(results) == 0:
