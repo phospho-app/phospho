@@ -793,6 +793,7 @@ async def get_ab_tests_comparison(
         project_id=project_id,
         versionA=versions.versionA,
         versionB=versions.versionB,
+        selected_events_ids=versions.selected_events_ids,
     )
     return output
 

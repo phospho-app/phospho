@@ -11,18 +11,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
 import { ABTest, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { Check, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  EllipsisVertical,
+} from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback } from "react";
@@ -114,6 +122,12 @@ export const ABTestingDataviz = () => {
     selectedProject?.settings?.events === undefined ||
     Object.keys(selectedProject?.settings?.events).length === 0;
 
+  const events = selectedProject?.settings?.events;
+
+  const [selectedEventsIds, setSelectedEventsIds] = useState<string[] | null>(
+    null,
+  );
+
   // Used to mark the hint as "done" when the user has sent data
   const { data: hasTasksData } = useSWR(
     project_id ? [`/api/explore/${project_id}/has-tasks`, accessToken] : null,
@@ -135,96 +149,191 @@ export const ABTestingDataviz = () => {
           accessToken,
           versionIDA,
           versionIDB,
+          JSON.stringify(selectedEventsIds),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         versionA: versionIDA,
         versionB: versionIDB,
+        selected_events_ids: selectedEventsIds,
       }),
     {
       keepPreviousData: true,
     },
   );
 
+  const toggleEventSelection = (eventId: string) => {
+    if (selectedEventsIds === null) {
+      setSelectedEventsIds([eventId]);
+    } else {
+      setSelectedEventsIds(
+        selectedEventsIds.includes(eventId)
+          ? selectedEventsIds.filter((id) => id !== eventId)
+          : [...selectedEventsIds, eventId],
+      );
+    }
+  };
+
+  const toggleAllEvents = (checked: boolean) => {
+    if (checked && events) {
+      const allEventIds = Object.values(events)
+        .map((event) => event.id)
+        .filter((id): id is string => id !== undefined);
+      setSelectedEventsIds(allEventIds);
+    } else {
+      setSelectedEventsIds([]);
+    }
+  };
+
+  const allEventsSelected =
+    (selectedEventsIds !== null &&
+      events &&
+      Object.values(events).every(
+        (event) => event.id && selectedEventsIds.includes(event.id),
+      )) ||
+    selectedEventsIds === null;
+
   return (
     <>
       <AlertDialog open={open}>
         <SendDataAlertDialog setOpen={setOpen} key="ab_testing" />
-        <div className="flex z-0 space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <div className="flex flex-row items-center justify-between min-w-[10rem]">
-                  <span className="font-semibold mr-1">Reference A: </span>
-                  {versionIDA} <ChevronDown className="h-4 w-4 ml-2" />
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="overflow-y-auto max-h-[40rem] ">
-              {abTests?.map((abTest) => (
-                <DropdownMenuItem
-                  key={`${abTest.version_id}_A`}
-                  onClick={() => setVersionIDA(abTest.version_id)}
-                  asChild
-                >
-                  <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
-                    <div className="flex flex-row gap-x-2 items-center">
-                      {abTest.version_id === versionIDA && (
-                        <Check className="h-4 w-4 mr-2 text-green-500" />
-                      )}
-                      {abTest.version_id}
-                    </div>
-                    <InteractiveDatetime timestamp={abTest.first_task_ts} />
+        <div className="flex flex-row items-center z-0 space-x-2">
+          <div className="flex  space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="px-2">
+                  <EllipsisVertical className="size-6" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="overflow-y-auto max-h-[40rem]"
+              >
+                <DropdownMenuLabel className="flex flex-row items-center ">
+                  Displayed analytics
+                </DropdownMenuLabel>
+                {events && Object.keys(events).length > 0 ? (
+                  <>
+                    <Separator />
+                    <DropdownMenuItem
+                      className="flex items-center gap-x-2"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleAllEvents(!allEventsSelected);
+                      }}
+                    >
+                      <Checkbox id="select-all" checked={allEventsSelected} />
+                      <span>Select All</span>
+                    </DropdownMenuItem>
+                    <Separator />
+                    {Object.entries(events).map(([, event]) => {
+                      if (!event.id) return null;
+                      return (
+                        <DropdownMenuItem
+                          key={event.id}
+                          className="flex items-center gap-x-2"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (event.id) {
+                              toggleEventSelection(event.id);
+                            }
+                          }}
+                        >
+                          <Checkbox
+                            id={event.id}
+                            checked={
+                              selectedEventsIds !== null
+                                ? selectedEventsIds.includes(event.id)
+                                : true
+                            }
+                          />
+                          <span>{event.event_name}</span>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <DropdownMenuItem disabled>
+                    <p>No events found</p>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <div className="flex flex-row items-center justify-between min-w-[10rem]">
+                    <span className="font-semibold mr-1">Reference A: </span>
+                    {versionIDA} <ChevronDown className="h-4 w-4 ml-2" />
                   </div>
-                </DropdownMenuItem>
-              ))}
-              {abTests?.length === 0 && (
-                <DropdownMenuItem disabled className="min-w-[10rem]">
-                  <p>
-                    No <code>version_id</code> found
-                  </p>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <div className="flex flex-row items-center justify-between min-w-[10rem]">
-                  <span className="font-semibold mr-1">Candidate B:</span>
-                  {versionIDB} <ChevronDown className="h-4 w-4 ml-2" />
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
-              {abTests?.map((abTest) => (
-                <DropdownMenuItem
-                  key={`${abTest.version_id}_B`}
-                  onClick={() => setVersionIDB(abTest.version_id)}
-                  asChild
-                >
-                  <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
-                    <div className="flex flex-row gap-x-2 items-center">
-                      {abTest.version_id === versionIDB && (
-                        <Check className="h-4 w-4 mr-2 text-green-500" />
-                      )}
-                      {abTest.version_id}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="overflow-y-auto max-h-[40rem] ">
+                {abTests?.map((abTest) => (
+                  <DropdownMenuItem
+                    key={`${abTest.version_id}_A`}
+                    onClick={() => setVersionIDA(abTest.version_id)}
+                    asChild
+                  >
+                    <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
+                      <div className="flex flex-row gap-x-2 items-center">
+                        {abTest.version_id === versionIDA && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                        {abTest.version_id}
+                      </div>
+                      <InteractiveDatetime timestamp={abTest.first_task_ts} />
                     </div>
-                    <InteractiveDatetime timestamp={abTest.first_task_ts} />
+                  </DropdownMenuItem>
+                ))}
+                {abTests?.length === 0 && (
+                  <DropdownMenuItem disabled className="min-w-[10rem]">
+                    <p>
+                      No <code>version_id</code> found
+                    </p>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <div className="flex flex-row items-center justify-between min-w-[10rem]">
+                    <span className="font-semibold mr-1">Candidate B:</span>
+                    {versionIDB} <ChevronDown className="h-4 w-4 ml-2" />
                   </div>
-                </DropdownMenuItem>
-              ))}
-              {abTests?.length === 0 && (
-                <DropdownMenuItem disabled>
-                  <p>
-                    No <code>version_id</code> found
-                  </p>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <CreateNewABTestButton />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
+                {abTests?.map((abTest) => (
+                  <DropdownMenuItem
+                    key={`${abTest.version_id}_B`}
+                    onClick={() => setVersionIDB(abTest.version_id)}
+                    asChild
+                  >
+                    <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
+                      <div className="flex flex-row gap-x-2 items-center">
+                        {abTest.version_id === versionIDB && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                        {abTest.version_id}
+                      </div>
+                      <InteractiveDatetime timestamp={abTest.first_task_ts} />
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                {abTests?.length === 0 && (
+                  <DropdownMenuItem disabled>
+                    <p>
+                      No <code>version_id</code> found
+                    </p>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <CreateNewABTestButton />
+          </div>
         </div>
         <div className="flex flex-col items-center my-2">
           {graphData === undefined && (
