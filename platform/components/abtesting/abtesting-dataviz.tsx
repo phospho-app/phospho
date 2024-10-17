@@ -255,7 +255,7 @@ export const ABTestingDataviz = () => {
                   </>
                 ) : (
                   <DropdownMenuItem disabled>
-                    <p>No events found</p>
+                    <p>No analytics</p>
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
