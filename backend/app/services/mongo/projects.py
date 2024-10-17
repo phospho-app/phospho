@@ -6,7 +6,7 @@ from app.api.v2.models.embeddings import Embedding
 from app.services.mongo.query_builder import QueryBuilder
 import pandas as pd
 import resend
-from app.api.platform.models import Sorting, Pagination, UserMetadata
+from app.api.platform.models import Sorting, Pagination
 from app.core import config
 from app.db.models import (
     Project,
@@ -21,17 +21,12 @@ from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
 from app.services.mongo.explore import fetch_flattened_tasks
 from app.services.mongo.extractor import ExtractorClient
-from app.services.mongo.metadata import fetch_users_metadata
 from app.services.mongo.tasks import (
     get_all_tasks,
     label_sentiment_analysis,
 )
 from app.services.slack import slack_notification
-from app.utils import (
-    cast_datetime_or_timestamp_to_timestamp,
-    generate_timestamp,
-    generate_uuid,
-)
+from app.utils import generate_timestamp, generate_uuid
 from fastapi import HTTPException
 from loguru import logger
 from propelauth_fastapi import User  # type: ignore

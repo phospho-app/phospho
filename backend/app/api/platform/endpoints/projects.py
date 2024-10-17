@@ -1,10 +1,6 @@
 import datetime
 from typing import List, Optional
 
-from app.api.platform.models.explore import Sorting
-from app.services.mongo.metadata import fetch_users_metadata
-from app.services.universal_loader.universal_loader import universal_loader
-from app.utils import cast_datetime_or_timestamp_to_timestamp
 import pandas as pd  # type: ignore
 from fastapi import (
     APIRouter,
@@ -14,6 +10,7 @@ from fastapi import (
     UploadFile,
 )
 from google.cloud.storage import Bucket  # type: ignore
+from langfuse import Langfuse  # type: ignore
 from loguru import logger
 from propelauth_fastapi import User  # type: ignore
 
@@ -34,16 +31,17 @@ from app.api.platform.models import (
     Tests,
     Users,
 )
+from app.api.platform.models.explore import Sorting
 from app.core import config
 from app.security.authentification import (
     propelauth,
     verify_if_propelauth_user_can_access_project,
 )
 from app.security.authorization import get_quota
-from app.services.slack import slack_notification
 from app.services.mongo.events import get_all_events
 from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.files import process_file_upload_into_log_events
+from app.services.mongo.metadata import fetch_users_metadata
 from app.services.mongo.projects import (
     add_project_events,
     collect_languages,
@@ -52,7 +50,6 @@ from app.services.mongo.projects import (
     email_project_tasks,
     get_all_sessions,
     get_all_tests,
-    get_users_metadata,
     get_project_by_id,
     update_project,
 )
@@ -61,7 +58,9 @@ from app.services.mongo.search import (
     search_tasks_in_project,
 )
 from app.services.mongo.tasks import get_all_tasks
-from langfuse import Langfuse  # type: ignore
+from app.services.slack import slack_notification
+from app.services.universal_loader.universal_loader import universal_loader
+from app.utils import cast_datetime_or_timestamp_to_timestamp
 
 router = APIRouter(tags=["Projects"])
 
