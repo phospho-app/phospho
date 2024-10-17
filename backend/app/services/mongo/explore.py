@@ -2430,6 +2430,15 @@ async def get_ab_tests_versions(
         },
         {"$unwind": "$task"},
         {
+            "$lookup": {
+                "from": "event_definitions",
+                "localField": "event_definition.id",
+                "foreignField": "id",
+                "as": "event_def",
+            }
+        },
+        {"$unwind": "$event_def"},
+        {
             "$match": {
                 "task.metadata.version_id": {"$in": [versionA, versionB]},
             }
@@ -2438,10 +2447,10 @@ async def get_ab_tests_versions(
             "$group": {
                 "_id": {
                     "version_id": "$task.metadata.version_id",
-                    "event_definition_id": "$event_definition.id",
+                    "event_definition_id": "$event_def.id",
                     "event_label": "$score_range.label",
-                    "event_name": "$event_definition.event_name",
-                    "event_type": "$event_definition.score_range_settings.score_type",
+                    "event_name": "$event_def.event_name",
+                    "event_type": "$event_def.score_range_settings.score_type",
                 },
                 "count": {"$sum": 1},
                 "score": {"$avg": "$score_range.value"},
