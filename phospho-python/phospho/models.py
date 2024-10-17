@@ -94,6 +94,7 @@ class ScoreRangeSettings(BaseModel):
 class EventDefinition(DatedBaseModel):
     org_id: Optional[str] = None
     project_id: Optional[str] = None
+    event_version_id: Optional[int] = None
     event_name: str
     description: str
     webhook: Optional[str] = None
