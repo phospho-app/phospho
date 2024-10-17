@@ -182,10 +182,10 @@ async def fetch_users_metadata(
     mongo_db = await get_mongo_db()
 
     # Only fetch tasks with user_id
-    filters.metadata = {
-        "user_id": {"$exists": True},
-        **(filters.metadata or {}),
-    }
+    if filters.metadata is None:
+        filters.metadata = {}
+    if filters.user_id is None and filters.metadata.get("user_id") is None:
+        filters.metadata["user_id"] = {"$ne": None}
     if user_id_search:
         filters.metadata["user_id"] = {"$regex": user_id_search}
 
@@ -325,7 +325,11 @@ async def fetch_users_metadata(
     else:
         pipeline += [{"$sort": {"last_message_ts": 1, "_id": -1}}]
 
-    users = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+    users = (
+        await mongo_db["tasks"]
+        .aggregate(pipeline, allowDiskUse=True)
+        .to_list(length=None)
+    )
     if users is None or (filters.user_id is not None and len(users) == 0):
         return []
 
