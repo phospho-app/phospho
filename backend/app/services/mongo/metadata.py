@@ -204,7 +204,9 @@ async def fetch_users_metadata(
     pipeline += [
         {
             "$set": {
-                "is_success": {"$cond": [{"$eq": ["$flag", "success"]}, 1, 0]},
+                "is_success": {
+                    "$cond": [{"$eq": ["$human_eval.flag", "success"]}, 1, 0]
+                },
                 # If metadata.total_tokens is not present, set to 0
                 "metadata.total_tokens": {
                     "$cond": [
