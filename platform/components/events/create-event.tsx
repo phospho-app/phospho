@@ -206,7 +206,6 @@ export default function CreateEvent({
       // This is in case the event name has changed
       delete selectedProject.settings.events[eventToEdit.event_name];
     }
-
     // Create the score_range_settings object
     let score_range_settings: ScoreRangeSettings | undefined = undefined;
     if (values.output_type === ScoreRangeType.confidence) {
@@ -233,9 +232,13 @@ export default function CreateEvent({
         categories: values.categories,
       };
     }
-
     // On purpose, we do not pass the job_id, so a new job object will be created for this event
     selectedProject.settings.events[values.event_name] = {
+      id: eventToEdit?.id,
+      event_version_id:
+        eventToEdit?.event_version_id !== undefined
+          ? eventToEdit?.event_version_id + 1
+          : 1,
       project_id: selectedProject.id,
       org_id: selectedProject.org_id,
       event_name: values.event_name,
@@ -497,46 +500,47 @@ export default function CreateEvent({
             />
             {
               // specify the scoreRangeSettings for the LLM detection engine
-              form.watch("detection_engine") === "llm_detection" && (
-                // Let user pick the scoreRangeSettings.score_type. Then, prefill the min and max values based on the score_type
-                <FormField
-                  control={form.control}
-                  name="output_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Output type</FormLabel>
-                      <FormControl>
-                        <Select
-                          value={field.value}
-                          defaultValue={field.value}
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue
-                              defaultValue={
-                                field.value ?? ScoreRangeType.confidence
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent position="popper">
-                            <SelectItem value={ScoreRangeType.confidence}>
-                              Yes/No (boolean)
-                            </SelectItem>
-                            <SelectItem value={ScoreRangeType.range}>
-                              1-5 score (number)
-                            </SelectItem>
-                            <SelectItem value={ScoreRangeType.category}>
-                              Category (enum)
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              )
+              form.watch("detection_engine") === "llm_detection" &&
+                !eventToEdit && (
+                  // Let user pick the scoreRangeSettings.score_type. Then, prefill the min and max values based on the score_type
+                  <FormField
+                    control={form.control}
+                    name="output_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Output type</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            defaultValue={field.value}
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue
+                                defaultValue={
+                                  field.value ?? ScoreRangeType.confidence
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent position="popper">
+                              <SelectItem value={ScoreRangeType.confidence}>
+                                Yes/No (boolean)
+                              </SelectItem>
+                              <SelectItem value={ScoreRangeType.range}>
+                                1-5 score (number)
+                              </SelectItem>
+                              <SelectItem value={ScoreRangeType.category}>
+                                Category (enum)
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )
             }
             {form.watch("detection_engine") === "llm_detection" &&
               form.watch("output_type") === "category" && (
