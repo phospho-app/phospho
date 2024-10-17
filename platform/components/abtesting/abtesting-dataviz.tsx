@@ -16,6 +16,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
@@ -24,7 +25,6 @@ import { authFetcher } from "@/lib/fetcher";
 import { ABTest, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { DropdownMenuLabel } from "@radix-ui/react-dropdown-menu";
 import {
   Check,
   ChevronDown,
@@ -202,6 +202,66 @@ export const ABTestingDataviz = () => {
           <div className="flex  space-x-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="px-2">
+                  <EllipsisVertical className="size-6" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="overflow-y-auto max-h-[40rem]"
+              >
+                <DropdownMenuLabel className="flex flex-row items-center ">
+                  Displayed analytics
+                </DropdownMenuLabel>
+                {events && Object.keys(events).length > 0 ? (
+                  <>
+                    <Separator />
+                    <DropdownMenuItem
+                      className="flex items-center gap-x-2"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleAllEvents(!allEventsSelected);
+                      }}
+                    >
+                      <Checkbox id="select-all" checked={allEventsSelected} />
+                      <span>Select All</span>
+                    </DropdownMenuItem>
+                    <Separator />
+                    {Object.entries(events).map(([, event]) => {
+                      if (!event.id) return null;
+                      return (
+                        <DropdownMenuItem
+                          key={event.id}
+                          className="flex items-center gap-x-2"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (event.id) {
+                              toggleEventSelection(event.id);
+                            }
+                          }}
+                        >
+                          <Checkbox
+                            id={event.id}
+                            checked={
+                              selectedEventsIds !== null
+                                ? selectedEventsIds.includes(event.id)
+                                : true
+                            }
+                          />
+                          <span>{event.event_name}</span>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <DropdownMenuItem disabled>
+                    <p>No events found</p>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   <div className="flex flex-row items-center justify-between min-w-[10rem]">
                     <span className="font-semibold mr-1">Reference A: </span>
@@ -273,78 +333,6 @@ export const ABTestingDataviz = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             <CreateNewABTestButton />
-          </div>
-          <div className="flex justify-end w-full">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost">
-                  <div className="flex flex-row items-center justify-between">
-                    <EllipsisVertical />
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
-                <div className="space-y-2 mr-2 ml-2">
-                  <DropdownMenuLabel className="flex flex-row items-center mt-1 mb-1 ml-6 font-semibold">
-                    Displayed analytics
-                  </DropdownMenuLabel>
-                  {events && Object.keys(events).length > 0 ? (
-                    <>
-                      <Separator className="my-4" />
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Checkbox
-                          id="select-all"
-                          checked={allEventsSelected}
-                          onCheckedChange={(checked) =>
-                            toggleAllEvents(checked as boolean)
-                          }
-                        />
-                        <label
-                          htmlFor="select-all"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Select All
-                        </label>
-                      </div>
-                      <Separator className="my-4" />
-                      {Object.entries(events).map(([, event]) => {
-                        if (!event.id) return null;
-                        return (
-                          <div
-                            key={event.id}
-                            className="flex items-center space-x-2"
-                          >
-                            <Checkbox
-                              id={event.id}
-                              checked={
-                                selectedEventsIds !== null
-                                  ? selectedEventsIds.includes(event.id)
-                                  : true
-                              }
-                              onCheckedChange={() => {
-                                if (event.id) {
-                                  toggleEventSelection(event.id);
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor={event.id}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              {event.event_name}
-                            </label>
-                          </div>
-                        );
-                      })}
-                    </>
-                  ) : (
-                    <DropdownMenuItem disabled>
-                      <p>No events found</p>
-                    </DropdownMenuItem>
-                  )}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
         <div className="flex flex-col items-center my-2">
