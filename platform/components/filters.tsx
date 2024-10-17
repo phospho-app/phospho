@@ -422,7 +422,7 @@ const FilterComponent = ({
               <span>Tags</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
-              <DropdownMenuSubContent className="overflow-y-auto">
+              <DropdownMenuSubContent className="overflow-y-auto max-h-[20rem]">
                 {events &&
                   Object.entries(events).map(([event_name, event]) => {
                     return (

@@ -166,7 +166,7 @@ async def fetch_users_metadata(
     - filters: ProjectDataFilters
     - sorting: Optional[List[Sorting]]
     - pagination: Optional[Pagination]
-    - user_id_search: Optional[str] This is used to search for a specific user_id.
+    - user_id_search: Optional[str] Search for a specific user_id.
         It uses a regex to match the user_id, so it can be a partial match.
 
     The UserMetadata contains:
@@ -177,9 +177,14 @@ async def fetch_users_metadata(
         nb_tokens: int
         events: List[Event]
         tasks_id: List[str]
+        session_ids: List[str]
+        first_message_ts: datetime
+        last_message_ts: datetime
     """
 
     mongo_db = await get_mongo_db()
+    # To keep track of the fields that are computed and need to be carried over
+    all_computed_fields = []
 
     # Only fetch tasks with user_id
     if filters.metadata is None:
@@ -190,7 +195,7 @@ async def fetch_users_metadata(
         filters.metadata["user_id"] = {"$regex": user_id_search}
 
     query_builder = QueryBuilder(
-        project_id=project_id, filters=filters, fetch_objects="tasks_with_events"
+        project_id=project_id, filters=filters, fetch_objects="tasks"
     )
 
     pipeline = await query_builder.build()
@@ -216,7 +221,7 @@ async def fetch_users_metadata(
                 "nb_tasks": {"$sum": 1},
                 "avg_success_rate": {"$avg": {"$toInt": "$is_success"}},
                 "total_tokens": {"$sum": "$metadata.total_tokens"},
-                "events": {"$push": "$events"},  # This results in a list of lists
+                "task_ids": {"$addToSet": "$id"},
                 "session_ids": {"$addToSet": "$session_id"},
                 # First and last message timestamp
                 "first_message_ts": {"$min": "$created_at"},
@@ -224,6 +229,17 @@ async def fetch_users_metadata(
             }
         },
     ]
+    all_computed_fields.extend(
+        [
+            "nb_tasks",
+            "avg_success_rate",
+            "total_tokens",
+            "task_ids",
+            "session_ids",
+            "first_message_ts",
+            "last_message_ts",
+        ]
+    )
 
     # Override the created_at filters to filter by last_message_ts
     filter_last_message_ts_start = filters.created_at_start
@@ -258,22 +274,67 @@ async def fetch_users_metadata(
             {"$limit": pagination.per_page},
         ]
 
+    # Adds the list of unique detected events.
+    # This is a bit tricky because we need to deduplicate the events based on the event_definition.id
+    # For now, we only keep the first event with the same event_definition.id
     pipeline += [
-        # Previously, using $push to group the events results in a list of lists: [[event1, event2], [event3, event4]]
-        # Flatten it into a single list of events
+        {"$unwind": "$task_ids"},
+        {
+            "$lookup": {
+                "from": "events",
+                "localField": "task_ids",
+                "foreignField": "task_id",
+                "as": "events",
+            }
+        },
+        {
+            "$unwind": {
+                "path": "$events",
+                "preserveNullAndEmptyArrays": True,
+            }
+        },
+        # (Optional) Keep only tagger events
+        # {
+        #     "$match": {
+        #         "events.event_definition.score_range_settings.score_type": "confidence"
+        #     }
+        # },
+        # Deduplicate the events based on the event.event_definition.id
+        {
+            "$group": {
+                "_id": {
+                    "user_id": "$_id",
+                    "event_id": "$events.event_definition.id",
+                },
+                "events": {"$first": "$events"},
+                **{field: {"$first": f"${field}"} for field in all_computed_fields},
+            }
+        },
+        # Group by user_id
+        {
+            "$group": {
+                "_id": "$_id.user_id",
+                "events": {"$push": "$events"},
+                **{field: {"$first": f"${field}"} for field in all_computed_fields},
+            }
+        },
+        # Filter the events to only keep non-null values
         {
             "$set": {
                 "events": {
-                    "$reduce": {
+                    "$filter": {
                         "input": "$events",
-                        "initialValue": [],
-                        "in": {"$setUnion": ["$$value", "$$this"]},
+                        "as": "event",
+                        "cond": {"$ne": ["$$event", None]},
                     }
                 }
             }
-        }
+        },
     ]
     query_builder.deduplicate_tasks_events()
+    all_computed_fields.append("events")
+
+    # Compute the average session length
     pipeline += [
         {
             "$unwind": "$session_ids",
@@ -291,26 +352,18 @@ async def fetch_users_metadata(
             "$group": {
                 "_id": "$_id",
                 "avg_session_length": {"$avg": "$session.session_length"},
-                "nb_tasks": {"$first": "$nb_tasks"},
-                "avg_success_rate": {"$first": "$avg_success_rate"},
-                "total_tokens": {"$first": "$total_tokens"},
-                "events": {"$first": "$events"},
-                "tasks_id": {"$first": "$tasks_id"},
-                "first_message_ts": {"$first": "$first_message_ts"},
-                "last_message_ts": {"$first": "$last_message_ts"},
+                **{field: {"$first": f"${field}"} for field in all_computed_fields},
             }
         },
+    ]
+    all_computed_fields.append("avg_session_length")
+
+    # Project the fields we want to keep and rename the _id to user_id
+    pipeline += [
         {
             "$project": {
                 "user_id": "$_id",
-                "nb_tasks": 1,
-                "avg_success_rate": 1,
-                "avg_session_length": 1,
-                "events": 1,
-                "tasks_id": 1,
-                "total_tokens": 1,
-                "first_message_ts": 1,
-                "last_message_ts": 1,
+                **{field: 1 for field in all_computed_fields},
             }
         },
     ]
