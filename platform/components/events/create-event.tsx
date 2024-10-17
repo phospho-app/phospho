@@ -498,46 +498,47 @@ export default function CreateEvent({
             />
             {
               // specify the scoreRangeSettings for the LLM detection engine
-              form.watch("detection_engine") === "llm_detection" && (
-                // Let user pick the scoreRangeSettings.score_type. Then, prefill the min and max values based on the score_type
-                <FormField
-                  control={form.control}
-                  name="output_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Output type</FormLabel>
-                      <FormControl>
-                        <Select
-                          value={field.value}
-                          defaultValue={field.value}
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue
-                              defaultValue={
-                                field.value ?? ScoreRangeType.confidence
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent position="popper">
-                            <SelectItem value={ScoreRangeType.confidence}>
-                              Yes/No (boolean)
-                            </SelectItem>
-                            <SelectItem value={ScoreRangeType.range}>
-                              1-5 score (number)
-                            </SelectItem>
-                            <SelectItem value={ScoreRangeType.category}>
-                              Category (enum)
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              )
+              form.watch("detection_engine") === "llm_detection" &&
+                !eventToEdit && (
+                  // Let user pick the scoreRangeSettings.score_type. Then, prefill the min and max values based on the score_type
+                  <FormField
+                    control={form.control}
+                    name="output_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Output type</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            defaultValue={field.value}
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue
+                                defaultValue={
+                                  field.value ?? ScoreRangeType.confidence
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent position="popper">
+                              <SelectItem value={ScoreRangeType.confidence}>
+                                Yes/No (boolean)
+                              </SelectItem>
+                              <SelectItem value={ScoreRangeType.range}>
+                                1-5 score (number)
+                              </SelectItem>
+                              <SelectItem value={ScoreRangeType.category}>
+                                Category (enum)
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )
             }
             {form.watch("detection_engine") === "llm_detection" &&
               form.watch("output_type") === "category" && (
