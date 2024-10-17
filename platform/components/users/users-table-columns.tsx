@@ -31,7 +31,7 @@ function GenericHeader({
   column: Column<UserMetadata, unknown>;
 }) {
   return (
-    <div className="flex flex-row gap-x-2 items-center">
+    <div className="flex flex-row gap-x-2 items-center max-w-12">
       {columnName}
       <Button
         variant="ghost"
@@ -210,9 +210,6 @@ export function useColumns() {
           </Button>
         );
       },
-      size: 10,
-      minSize: 10,
-      maxSize: 10,
     },
   ];
 

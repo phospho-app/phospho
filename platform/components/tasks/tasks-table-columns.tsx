@@ -162,7 +162,6 @@ export function useColumns({
           </Popover>
         );
       },
-      minSize: 100,
     },
     {
       header: "Assistant response",
@@ -189,7 +188,6 @@ export function useColumns({
           </Popover>
         );
       },
-      minSize: 100,
     },
     // Human evaluation
     {
@@ -260,7 +258,6 @@ export function useColumns({
           </HoverCardContent>
         </HoverCard>
       ),
-      maxSize: 10,
     },
     // Events
     {
@@ -370,9 +367,7 @@ export function useColumns({
           </div>
         );
       },
-      maxSize: 10,
     },
-
     {
       header: "",
       accessorKey: "view",
@@ -387,9 +382,6 @@ export function useColumns({
           </Button>
         );
       },
-      size: 10,
-      minSize: 10,
-      maxSize: 10,
     },
   ];
   return columns;
