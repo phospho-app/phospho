@@ -237,9 +237,9 @@ async def fetch_users_metadata(
             "avg_success_rate",
             "total_tokens",
             "task_ids",
-            "session_ids",
             "first_message_ts",
             "last_message_ts",
+            "session_ids",
         ]
     )
 
@@ -349,6 +349,7 @@ async def fetch_users_metadata(
                 "as": "session",
             }
         },
+        {"$unwind": "$session"},
         # Compute the average session length and carry over the other fields
         {
             "$group": {
