@@ -25,7 +25,12 @@ import { ABTest, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { DropdownMenuLabel } from "@radix-ui/react-dropdown-menu";
-import { Check, ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronRight,
+  EllipsisVertical,
+} from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback } from "react";
@@ -119,7 +124,9 @@ export const ABTestingDataviz = () => {
 
   const events = selectedProject?.settings?.events;
 
-  const [selectedEventsIds, setSelectedEventsIds] = useState<string[]>([]);
+  const [selectedEventsIds, setSelectedEventsIds] = useState<string[] | null>(
+    null,
+  );
 
   // Used to mark the hint as "done" when the user has sent data
   const { data: hasTasksData } = useSWR(
@@ -142,7 +149,7 @@ export const ABTestingDataviz = () => {
           accessToken,
           versionIDA,
           versionIDB,
-          selectedEventsIds,
+          JSON.stringify(selectedEventsIds),
         ]
       : null,
     ([url, accessToken]) =>
@@ -157,11 +164,15 @@ export const ABTestingDataviz = () => {
   );
 
   const toggleEventSelection = (eventId: string) => {
-    setSelectedEventsIds((prevIds) =>
-      prevIds.includes(eventId)
-        ? prevIds.filter((id) => id !== eventId)
-        : [...prevIds, eventId],
-    );
+    if (selectedEventsIds === null) {
+      setSelectedEventsIds([eventId]);
+    } else {
+      setSelectedEventsIds(
+        selectedEventsIds.includes(eventId)
+          ? selectedEventsIds.filter((id) => id !== eventId)
+          : [...selectedEventsIds, eventId],
+      );
+    }
   };
 
   const toggleAllEvents = (checked: boolean) => {
@@ -176,10 +187,12 @@ export const ABTestingDataviz = () => {
   };
 
   const allEventsSelected =
-    events &&
-    Object.values(events).every(
-      (event) => event.id && selectedEventsIds.includes(event.id),
-    );
+    (selectedEventsIds !== null &&
+      events &&
+      Object.values(events).every(
+        (event) => event.id && selectedEventsIds.includes(event.id),
+      )) ||
+    selectedEventsIds === null;
 
   return (
     <>
@@ -266,7 +279,7 @@ export const ABTestingDataviz = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost">
                   <div className="flex flex-row items-center justify-between">
-                    <GripVertical />
+                    <EllipsisVertical />
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -303,7 +316,11 @@ export const ABTestingDataviz = () => {
                           >
                             <Checkbox
                               id={event.id}
-                              checked={selectedEventsIds.includes(event.id)}
+                              checked={
+                                selectedEventsIds !== null
+                                  ? selectedEventsIds.includes(event.id)
+                                  : true
+                              }
                               onCheckedChange={() => {
                                 if (event.id) {
                                   toggleEventSelection(event.id);
