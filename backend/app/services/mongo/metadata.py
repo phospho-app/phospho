@@ -157,9 +157,17 @@ async def fetch_users_metadata(
     filters: ProjectDataFilters,
     sorting: Optional[List[Sorting]] = None,
     pagination: Optional[Pagination] = None,
+    user_id_search: Optional[str] = None,
 ) -> List[UserMetadata]:
     """
-    Get the user metadata for a specific user in a project
+    Get the user metadata.
+
+    - project_id: str
+    - filters: ProjectDataFilters
+    - sorting: Optional[List[Sorting]]
+    - pagination: Optional[Pagination]
+    - user_id_search: Optional[str] This is used to search for a specific user_id.
+        It uses a regex to match the user_id, so it can be a partial match.
 
     The UserMetadata contains:
         user_id: str
@@ -178,6 +186,9 @@ async def fetch_users_metadata(
         "user_id": {"$exists": True},
         **(filters.metadata or {}),
     }
+    if user_id_search:
+        filters.metadata["user_id"] = {"$regex": user_id_search}
+
     query_builder = QueryBuilder(
         project_id=project_id, filters=filters, fetch_objects="tasks_with_events"
     )

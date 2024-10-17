@@ -49,6 +49,7 @@ export function UsersTable({
   const setUsersSorting = navigationStateStore(
     (state) => state.setUsersSorting,
   );
+  const [userIdSearch, setUserIdSearch] = useState<string | undefined>();
 
   // Merge forcedDataFilters with dataFilters
   const dataFiltersMerged = {
@@ -56,32 +57,12 @@ export function UsersTable({
     ...forcedDataFilters,
   };
 
-  const { data: usersCount }: { data: number | null | undefined } = useSWR(
-    [
-      `/api/explore/${project_id}/aggregated/users`,
-      accessToken,
-      JSON.stringify(dataFiltersMerged),
-    ],
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["nb_users"],
-        filters: dataFiltersMerged,
-      }).then((data) => {
-        if (data === undefined) return undefined;
-        return data.nb_users;
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
-
   const { data: usersMetadata }: { data: UserMetadata[] | null | undefined } =
     useSWR(
       project_id
         ? [
             `/api/projects/${project_id}/users`,
             accessToken,
-            usersPagination.pageIndex,
             JSON.stringify(dataFiltersMerged),
             JSON.stringify(usersSorting),
           ]
@@ -103,10 +84,6 @@ export function UsersTable({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | undefined>();
 
-  const maxNbPages = usersCount
-    ? Math.ceil(usersCount / usersPagination.pageSize)
-    : 1;
-
   const columns = useColumns();
   const table = useReactTable({
     data: usersMetadata ?? [],
@@ -124,7 +101,6 @@ export function UsersTable({
       // This can be fastened by creating a dedicated users table and using server side pagination.
       pagination: usersPagination,
     },
-    pageCount: maxNbPages,
     autoResetPageIndex: false,
   });
 
@@ -133,11 +109,22 @@ export function UsersTable({
   return (
     <div>
       <div className="flex flex-col gap-y-2 mb-2">
-        <Input placeholder="Filter usernames" className="min-w-[20rem]" />
         <div className="flex flex-row gap-x-2 items-end justify-between">
           <FilterComponent variant="users" />
           <TableNavigation table={table} />
         </div>
+        <Input
+          placeholder="Search for user id"
+          className="min-w-[20rem]"
+          value={userIdSearch}
+          onChange={(e) => {
+            setUserIdSearch(e.target.value);
+            // Also filters client side, on the "user_id" column
+            table.getColumn("user_id")?.setFilterValue(e.target.value);
+            // reset pagination
+            setUsersPagination({ pageIndex: 0, pageSize: 10 });
+          }}
+        />
       </div>
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         {usersMetadata === undefined && <CenteredSpinner />}

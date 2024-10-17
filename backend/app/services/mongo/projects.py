@@ -566,6 +566,7 @@ async def get_all_users_metadata(
     filters: ProjectDataFilters,
     sorting: Optional[List[Sorting]] = None,
     pagination: Optional[Pagination] = None,
+    user_id_search: Optional[str] = None,
 ) -> List[UserMetadata]:
     """
     Get metadata about the end-users of a project
@@ -582,6 +583,12 @@ async def get_all_users_metadata(
     """
     # Override user_id filter to get all users
     filters.user_id = None
+
+    # If user_id_search is provided, disable the date filters
+    if user_id_search:
+        filters.created_at_start = None
+        filters.created_at_end = None
+
     if isinstance(filters.created_at_start, datetime.datetime):
         filters.created_at_start = cast_datetime_or_timestamp_to_timestamp(
             filters.created_at_start
@@ -590,6 +597,7 @@ async def get_all_users_metadata(
         filters.created_at_end = cast_datetime_or_timestamp_to_timestamp(
             filters.created_at_end
         )
+
     if sorting is None:
         sorting = [
             Sorting(id="last_message_ts", desc=True),
@@ -599,12 +607,14 @@ async def get_all_users_metadata(
         # Always resort by user_id to ensure the same order
         # when multiple users have the same last_timestamp_ts or values
         sorting.append(Sorting(id="user_id", desc=True))
+
     logger.info(f"get_all_users_metadata: pagination={pagination}, sorting={sorting}")
     users = await fetch_users_metadata(
         project_id=project_id,
         filters=filters,
         pagination=pagination,
         sorting=sorting,
+        user_id_search=user_id_search,
     )
     return users
 

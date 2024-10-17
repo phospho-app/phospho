@@ -376,6 +376,7 @@ async def get_users(
         filters=query.filters,
         sorting=query.sorting,
         pagination=query.pagination,
+        user_id_search=query.user_id_search,
     )
     return Users(users=users)
 

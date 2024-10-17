@@ -54,6 +54,7 @@ class QueryUserMetadataRequest(BaseModel):
     filters: ProjectDataFilters = Field(default_factory=ProjectDataFilters)
     pagination: Optional[Pagination] = None
     sorting: Optional[List[Sorting]] = None
+    user_id_search: Optional[str] = None
 
 
 class DetectClustersRequest(BaseModel):
