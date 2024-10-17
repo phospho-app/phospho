@@ -1,7 +1,10 @@
 import datetime
 from typing import List, Optional
 
+from app.api.platform.models.explore import Sorting
+from app.services.mongo.metadata import fetch_users_metadata
 from app.services.universal_loader.universal_loader import universal_loader
+from app.utils import cast_datetime_or_timestamp_to_timestamp
 import pandas as pd  # type: ignore
 from fastapi import (
     APIRouter,
@@ -49,7 +52,7 @@ from app.services.mongo.projects import (
     email_project_tasks,
     get_all_sessions,
     get_all_tests,
-    get_all_users_metadata,
+    get_users_metadata,
     get_project_by_id,
     update_project,
 )
@@ -371,9 +374,30 @@ async def get_users(
     Get metadata about the end-users of a project
     """
     await verify_if_propelauth_user_can_access_project(user, project_id)
-    users = await get_all_users_metadata(
+
+    filters = query.filters
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = cast_datetime_or_timestamp_to_timestamp(
+            filters.created_at_start
+        )
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = cast_datetime_or_timestamp_to_timestamp(
+            filters.created_at_end
+        )
+
+    if query.sorting is None:
+        query.sorting = [
+            Sorting(id="last_message_ts", desc=True),
+            Sorting(id="user_id", desc=True),
+        ]
+    else:
+        # Always resort by user_id to ensure the same order
+        # when multiple users have the same last_timestamp_ts or values
+        query.sorting.append(Sorting(id="user_id", desc=True))
+
+    users = await fetch_users_metadata(
         project_id=project_id,
-        filters=query.filters,
+        filters=filters,
         sorting=query.sorting,
         pagination=query.pagination,
         user_id_search=query.user_id_search,

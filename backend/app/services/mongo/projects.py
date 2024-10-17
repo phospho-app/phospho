@@ -561,64 +561,6 @@ async def store_onboarding_survey(user: User, survey: dict):
     return
 
 
-async def get_all_users_metadata(
-    project_id: str,
-    filters: ProjectDataFilters,
-    sorting: Optional[List[Sorting]] = None,
-    pagination: Optional[Pagination] = None,
-    user_id_search: Optional[str] = None,
-) -> List[UserMetadata]:
-    """
-    Get metadata about the end-users of a project
-
-    Groups the tasks by user_id and return a list of UserMetadata.
-    Every UserMetadata contains:
-        user_id: str
-        nb_tasks: int
-        avg_success_rate: float
-        avg_session_length: float
-        events: List[Event]
-        tasks: List[Task]
-        sessions: List[Session]
-    """
-    # Override user_id filter to get all users
-    filters.user_id = None
-
-    # If user_id_search is provided, disable the date filters
-    if user_id_search:
-        filters.created_at_start = None
-        filters.created_at_end = None
-
-    if isinstance(filters.created_at_start, datetime.datetime):
-        filters.created_at_start = cast_datetime_or_timestamp_to_timestamp(
-            filters.created_at_start
-        )
-    if isinstance(filters.created_at_end, datetime.datetime):
-        filters.created_at_end = cast_datetime_or_timestamp_to_timestamp(
-            filters.created_at_end
-        )
-
-    if sorting is None:
-        sorting = [
-            Sorting(id="last_message_ts", desc=True),
-            Sorting(id="user_id", desc=True),
-        ]
-    else:
-        # Always resort by user_id to ensure the same order
-        # when multiple users have the same last_timestamp_ts or values
-        sorting.append(Sorting(id="user_id", desc=True))
-
-    logger.info(f"get_all_users_metadata: pagination={pagination}, sorting={sorting}")
-    users = await fetch_users_metadata(
-        project_id=project_id,
-        filters=filters,
-        pagination=pagination,
-        sorting=sorting,
-        user_id_search=user_id_search,
-    )
-    return users
-
-
 async def backcompute_recipe(
     job_id: str, tasks: List[Task], batch_size: int = 16
 ) -> None:
