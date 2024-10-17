@@ -140,6 +140,7 @@ export function UsersTable({
                           <TableHead
                             key={header.id}
                             colSpan={header.colSpan}
+                            className="w-20"
                             style={{
                               width: header.getSize(),
                             }}
@@ -169,7 +170,7 @@ export function UsersTable({
                       className="cursor-pointer"
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
+                        <TableCell key={cell.id} className="w-20">
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext(),
