@@ -330,3 +330,8 @@ export interface ProjectDataFilters {
   session_ids?: string[] | null;
   version_id?: string | null;
 }
+
+export interface DatavizSorting {
+  id: "breakdown_by" | "metric";
+  desc: boolean;
+}

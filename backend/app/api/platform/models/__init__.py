@@ -6,8 +6,6 @@ from app.api.v2.models import (
     ProjectCreationRequest,
     Projects,
     ProjectUpdateRequest,
-    SearchQuery,
-    SearchResponse,
     Session,
     Sessions,
     SessionUpdateRequest,
