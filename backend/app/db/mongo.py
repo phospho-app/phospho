@@ -52,7 +52,13 @@ async def connect_and_init_db():
                 [("created_at", pymongo.DESCENDING)], background=True
             )
             mongo_db[MONGODB_NAME]["sessions"].create_index(
+                [("last_message_ts", pymongo.DESCENDING)], background=True
+            )
+            mongo_db[MONGODB_NAME]["sessions"].create_index(
                 ["project_id", ("created_at", pymongo.DESCENDING)], background=True
+            )
+            mongo_db[MONGODB_NAME]["sessions"].create_index(
+                ["project_id", ("last_message_ts", pymongo.DESCENDING)], background=True
             )
 
             # Tasks
