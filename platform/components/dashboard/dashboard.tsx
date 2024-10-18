@@ -391,6 +391,7 @@ const Dashboard: React.FC = () => {
                 metric={tile.metric}
                 metadata_metric={tile.metadata_metric}
                 breakdown_by={tile.breakdown_by}
+                scorer_id={tile.scorer_id ?? null}
               />
             </DashboardTileCard>
           ))}

@@ -4,7 +4,7 @@ import { Spinner } from "@/components/small-spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
-import { Project } from "@/models/models";
+import { DatavizSorting, Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight } from "lucide-react";
@@ -28,7 +28,7 @@ import { Payload } from "recharts/types/component/DefaultTooltipContent";
 import useSWRImmutable from "swr/immutable";
 
 interface PivotTableElement {
-  breakdown_by: string | null;
+  breakdown_by: string;
   [key: string]: string | number | null;
 }
 
@@ -37,12 +37,21 @@ const DatavizGraph = ({
   metadata_metric,
   breakdown_by,
   scorer_id,
+  sorting,
 }: {
   metric: string;
   metadata_metric?: string | null;
   breakdown_by: string;
-  scorer_id?: string;
+  scorer_id: string | null;
+  sorting?: DatavizSorting;
 }) => {
+  if (sorting === undefined) {
+    sorting = {
+      id: "breakdown_by",
+      desc: false,
+    };
+  }
+
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
@@ -101,13 +110,17 @@ const DatavizGraph = ({
         scorer_id: scorer_id,
         filters: dataFilters,
       }).then((response) => {
-        const pivotTable = response?.pivot_table;
+        const pivotTable = response?.pivot_table as PivotTableElement[] | null;
+        if (!pivotTable) {
+          return [];
+        }
         // Replace "breakdown_by": null with "breakdown_by": "None"
         pivotTable.forEach((element: PivotTableElement) => {
-          if (element["breakdown_by"] === null) {
-            element["breakdown_by"] = "None";
+          if (element.breakdown_by === null) {
+            element.breakdown_by = "None";
           }
         });
+
         return pivotTable;
       }),
     {
@@ -121,7 +134,8 @@ const DatavizGraph = ({
     },
   );
 
-  const isStacked = pivotData?.length > 1 && "stack" in pivotData[0];
+  const isStacked =
+    pivotData && pivotData?.length > 1 && "stack" in pivotData[0];
 
   if (!numberMetadataFields || !categoryMetadataFields) {
     return <></>;
@@ -187,6 +201,32 @@ const DatavizGraph = ({
 
   const timeChart = ["day", "week", "month"].includes(breakdown_by);
 
+  // Sort the pivot table according to the sorting
+  if (pivotData) {
+    if (sorting !== undefined && sorting.id === "breakdown_by") {
+      pivotData.sort((a, b) => {
+        if (sorting === undefined) return -1;
+        if (sorting.desc) {
+          return a.breakdown_by > b.breakdown_by ? -1 : 1;
+        } else {
+          return a.breakdown_by < b.breakdown_by ? -1 : 1;
+        }
+      });
+    }
+    if (sorting !== undefined && sorting.id === "metric") {
+      pivotData.sort((a, b) => {
+        if (sorting === undefined) return -1;
+        if (a?.metric === null) return -1;
+        if (b?.metric === null) return -1;
+        if (sorting.desc) {
+          return a.metric > b.metric ? -1 : 1;
+        } else {
+          return a.metric < b.metric ? -1 : 1;
+        }
+      });
+    }
+  }
+
   return (
     <>
       {(pivotData === null || pivotData?.length == 0) && <>No data</>}
@@ -204,12 +244,14 @@ const DatavizGraph = ({
               </CardTitle>
             </CardHeader>
             <CardContent className="text-xl font-extrabold">
-              <p>{Math.round(pivotData[0].metric * 10000) / 10000}</p>
+              {typeof pivotData[0].metric === "number" && (
+                <span>{Math.round(pivotData[0].metric * 10000) / 10000}</span>
+              )}
             </CardContent>
           </Card>
         </>
       )}
-      {pivotData?.length > 1 && (
+      {pivotData && pivotData?.length > 1 && (
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={pivotData}

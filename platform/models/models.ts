@@ -196,6 +196,7 @@ export interface DashboardTile {
   metric: string;
   breakdown_by: string;
   metadata_metric?: string;
+  scorer_id?: string;
   x?: number;
   y?: number;
   w: number;
@@ -329,4 +330,9 @@ export interface ProjectDataFilters {
   is_last_task?: boolean | null;
   session_ids?: string[] | null;
   version_id?: string | null;
+}
+
+export interface DatavizSorting {
+  id: "breakdown_by" | "metric";
+  desc: boolean;
 }

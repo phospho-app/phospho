@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 from phospho.models import ProjectDataFilters
 
@@ -76,10 +76,12 @@ class MetadataPivotQuery(BaseModel):
         | None
     ) = Field(
         "day",
-        description="The field to break down the metric by. Can be a metadata field, a time field, tagger_name, scorer_name, task_position, None, session_length",
+        description="The field to break down the metric by. "
+        + "If the metric is a free string, it will be interpreted as a metadata field.",
     )
     scorer_id: str | None = Field(
         None,
-        description="When using the avg_scorer_value metric, this is the `EventDefinition.id` of the scorer. Check the id of the scorer in the Event page URL.",
+        description="When using the avg_scorer_value metric, this is the `EventDefinition.id` of the scorer. "
+        + "Check the id of the scorer in the Event page URL.",
     )
     filters: ProjectDataFilters | None = None
