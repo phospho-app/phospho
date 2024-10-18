@@ -69,7 +69,7 @@ async def collect_unique_metadata_fields(
                 "count": {"$sum": 1},
             },
         },
-        {"$sort": {"count": -1}},
+        {"$sort": {"count": -1, "metadata_keys": 1}},
     ]
 
     keys = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)

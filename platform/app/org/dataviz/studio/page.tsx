@@ -162,7 +162,7 @@ const MetadataForm: React.FC = () => {
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <TextSearch className="size-4 mr-2" />
-                    Scorer value
+                    Avg Scorer value
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     {rangeEvents.map((event) => (
@@ -187,7 +187,7 @@ const MetadataForm: React.FC = () => {
                   }}
                 >
                   <Flag className="size-4 mr-2" />
-                  Success rate
+                  Avg Success rate
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -196,8 +196,32 @@ const MetadataForm: React.FC = () => {
                   }}
                 >
                   <List className="size-4 mr-2" />
-                  Session length
+                  Avg Session length
                 </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Code className="size-4 mr-2" />
+                    Nb unique metadata
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {categoryMetadataFields?.length === 0 && (
+                      <DropdownMenuItem disabled>
+                        No categorical metadata found
+                      </DropdownMenuItem>
+                    )}
+                    {categoryMetadataFields?.map((field) => (
+                      <DropdownMenuItem
+                        key={field}
+                        onClick={() => {
+                          setSelectedMetric("count_unique");
+                          setmetadata_metric(field);
+                        }}
+                      >
+                        {field}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <Code className="size-4 mr-2" />
@@ -219,7 +243,7 @@ const MetadataForm: React.FC = () => {
                             setmetadata_metric(field);
                           }}
                         >
-                          {`${field}_avg`}
+                          {field}
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuSubContent>
@@ -244,7 +268,7 @@ const MetadataForm: React.FC = () => {
                             setSelectedMetric("Sum");
                             setmetadata_metric(field);
                           }}
-                          key={`${field}_sum`}
+                          key={field}
                         >
                           {field}
                         </DropdownMenuItem>
