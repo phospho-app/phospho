@@ -2447,7 +2447,6 @@ async def get_ab_tests_versions(
     if filtersA is not None and (
         filtersA.created_at_start is not None or filtersA.created_at_end is not None
     ):
-        versionA = "versionA"
         filteringA = []
         if filtersA.created_at_start is not None:
             filteringA.append({"$gte": ["$task.created_at", filtersA.created_at_start]})
@@ -2472,11 +2471,14 @@ async def get_ab_tests_versions(
     if filtersB is not None and (
         filtersB.created_at_start is not None or filtersB.created_at_end is not None
     ):
-        versionB = "versionB"
         filteringB = []
         if filtersB.created_at_start is not None:
+            if isinstance(filtersB.created_at_start, datetime.datetime):
+                filtersB.created_at_start = int(filtersB.created_at_start.timestamp())
             filteringB.append({"$gte": ["$task.created_at", filtersB.created_at_start]})
         if filtersB.created_at_end is not None:
+            if isinstance(filtersB.created_at_end, datetime.datetime):
+                filtersB.created_at_end = int(filtersB.created_at_end.timestamp())
             filteringB.append({"$lte": ["$task.created_at", filtersB.created_at_end]})
         pipeline.append(
             {
@@ -2575,6 +2577,8 @@ async def get_ab_tests_versions(
         ]
     )
 
+    logger.info(f"AB test pipeline: {pipeline}")
+
     results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
     if not results or len(results) == 0:
         logger.info("No results found")
@@ -2588,12 +2592,16 @@ async def get_ab_tests_versions(
         logger.info(f"No tasks found for version {versionA}")
         return []
 
-    total_tasks_with_B = await mongo_db["tasks"].count_documents(
-        {"project_id": project_id, "metadata.version_id": versionB}
+    total_tasks_with_B = await get_nb_tasks_version(
+        version=versionB,
+        project_id=project_id,
+        filters=filtersB,
     )
+
     if total_tasks_with_B == 0:
         logger.info(f"No tasks found for version {versionB}")
         return []
+    logger.info(f"Total tasks with version A: {total_tasks_with_B}")
 
     graph_values = {}
     graph_values_range = {}
@@ -2732,6 +2740,72 @@ async def get_ab_tests_versions(
     )
 
     return formatted_graph_values
+
+
+async def get_nb_tasks_version(
+    project_id: str,
+    version: Optional[str] = None,
+    filters: Optional[ProjectDataFilters] = None,
+) -> int:
+    """
+    Get the number of tasks with the version_id in the filters.
+    """
+    mongo_db = await get_mongo_db()
+
+    if filters is not None and (
+        filters.created_at_start is not None or filters.created_at_end is not None
+    ):
+        pipeline = [
+            {
+                "$match": {
+                    "project_id": project_id,
+                },
+            }
+        ]
+        if filters.created_at_start is not None:
+            if isinstance(filters.created_at_start, datetime.datetime):
+                filters.created_at_start = int(filters.created_at_start.timestamp())
+            pipeline.append(
+                {
+                    "$match": {
+                        "created_at": {"$gte": filters.created_at_start},
+                    }
+                }
+            )
+        if filters.created_at_end is not None:
+            if isinstance(filters.created_at_end, datetime.datetime):
+                filters.created_at_end = int(filters.created_at_end.timestamp())
+            pipeline.append(
+                {
+                    "$match": {
+                        "created_at": {"$lte": filters.created_at_end},
+                    }
+                }
+            )
+        pipeline.append(
+            {
+                "$count": "count",
+            }
+        )
+    else:
+        pipeline = [
+            {
+                "$match": {
+                    "project_id": project_id,
+                    "metadata.version_id": version,
+                }
+            },
+            {
+                "$count": "count",
+            },
+        ]
+
+    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+
+    if not result or len(result) == 0:
+        return 0
+
+    return result[0]["count"]
 
 
 async def compute_cloud_of_clusters(
