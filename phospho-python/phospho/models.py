@@ -260,6 +260,7 @@ class DashboardTile(BaseModel):
     metric: str
     breakdown_by: str
     metadata_metric: Optional[str] = None
+    scorer_id: Optional[str] = None
     # Position
     x: Optional[int] = None
     y: Optional[int] = None

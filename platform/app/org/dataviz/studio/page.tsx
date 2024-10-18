@@ -468,6 +468,7 @@ const MetadataForm: React.FC = () => {
                 metric: selectedMetric,
                 metadata_metric: metadata_metric,
                 breakdown_by: breakdown_by,
+                scorer_id: selectedScorerId,
               } as DashboardTile;
               selectedProject.settings.dashboard_tiles.push(newTile);
 
