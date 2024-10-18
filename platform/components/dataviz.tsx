@@ -203,8 +203,9 @@ const DatavizGraph = ({
 
   // Sort the pivot table according to the sorting
   if (pivotData) {
-    if (sorting.id === "breakdown_by") {
+    if (sorting !== undefined && sorting.id === "breakdown_by") {
       pivotData.sort((a, b) => {
+        if (sorting === undefined) return -1;
         if (sorting.desc) {
           return a.breakdown_by > b.breakdown_by ? -1 : 1;
         } else {
@@ -212,8 +213,9 @@ const DatavizGraph = ({
         }
       });
     }
-    if (sorting.id === "metric") {
+    if (sorting !== undefined && sorting.id === "metric") {
       pivotData.sort((a, b) => {
+        if (sorting === undefined) return -1;
         if (a?.metric === null) return -1;
         if (b?.metric === null) return -1;
         if (sorting.desc) {
