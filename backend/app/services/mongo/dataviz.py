@@ -241,11 +241,13 @@ async def breakdown_by_sum_of_metadata_field(
     if metadata_field is not None:
         # Beware, these lists contains duplicate values
         # This is ok for now
-        category_metadata_fields += await collect_unique_metadata_fields(
-            project_id=project_id, type="string"
+        category_metadata_fields = (
+            category_metadata_fields
+            + await collect_unique_metadata_fields(project_id=project_id, type="string")
         )
-        number_metadata_fields += await collect_unique_metadata_fields(
-            project_id=project_id, type="number"
+        number_metadata_fields = (
+            number_metadata_fields
+            + await collect_unique_metadata_fields(project_id=project_id, type="number")
         )
 
     logger.debug(f"Category metadata fields: {category_metadata_fields}")
@@ -594,6 +596,5 @@ async def breakdown_by_sum_of_metadata_field(
     )
 
     result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=200)
-    logger.info(f"Analytics query Result: {result}")
 
     return result

@@ -185,6 +185,8 @@ const DatavizGraph = ({
     }
   };
 
+  const timeChart = ["day", "week", "month"].includes(breakdown_by);
+
   return (
     <>
       {(pivotData === null || pivotData?.length == 0) && <>No data</>}
@@ -208,10 +210,10 @@ const DatavizGraph = ({
         </>
       )}
       {pivotData?.length > 1 && (
-        <ResponsiveContainer width="100%" height={pivotData.length * 50}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={pivotData}
-            layout="vertical"
+            layout={timeChart ? "horizontal" : "vertical"}
             margin={{
               top: 0,
               right: 0,
@@ -285,31 +287,56 @@ const DatavizGraph = ({
                 }
               }}
             />
-            <YAxis
-              dataKey={"breakdown_by"}
-              stroke="#888888"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              type="category"
-              tickFormatter={(value: string) => {
-                // if value is a string and is too long, truncate it
-                if (value.length > 30) {
-                  return value.slice(0, 30) + "...";
-                }
-                return value;
-              }}
-              width={100}
-            />
-            <XAxis
-              stroke="#888888"
-              fontSize={12}
-              type="number"
-              domain={[0, "dataMax + 1"]}
-              // tickLine={false}
-              // axisLine={false}
-              tickFormatter={(value) => `${Math.round(value * 100) / 100}`}
-            />
+            {!timeChart && (
+              <>
+                <YAxis
+                  dataKey={"breakdown_by"}
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  type="category"
+                  tickFormatter={(value: string) => {
+                    // if value is a string and is too long, truncate it
+                    if (value.length > 30) {
+                      return value.slice(0, 30) + "...";
+                    }
+                    return value;
+                  }}
+                  width={100}
+                />
+                <XAxis
+                  fontSize={12}
+                  type="number"
+                  domain={[0, "dataMax + 1"]}
+                  tickFormatter={(value) => `${Math.round(value * 100) / 100}`}
+                />
+              </>
+            )}
+            {timeChart && (
+              <>
+                <XAxis
+                  dataKey={"breakdown_by"}
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  type="category"
+                  tickFormatter={(value: string) => {
+                    // if value is a string and is too long, truncate it
+                    if (value.length > 30) {
+                      return value.slice(0, 30) + "...";
+                    }
+                    return value;
+                  }}
+                  width={100}
+                />
+                <YAxis
+                  fontSize={12}
+                  type="number"
+                  domain={[0, "dataMax + 1"]}
+                  tickFormatter={(value) => `${Math.round(value * 100) / 100}`}
+                />
+              </>
+            )}
             {!isStacked && (
               <Bar
                 dataKey={"metric"}
