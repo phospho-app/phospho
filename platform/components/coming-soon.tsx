@@ -7,7 +7,7 @@ function ComingSoonAlert({ customMessage }: { customMessage?: string }) {
       <>
         <Alert>
           <div className="flex flex-row items-center space-x-1">
-            <TrafficCone className="h-4 w-4 mr-1" />
+            <TrafficCone className="size-4 mr-1" />
             <span className="text-sm font-semibold">Coming soon!</span>
             <span className="text-sm">
               We&apos;ll be shipping this feature shortly.
@@ -25,7 +25,7 @@ function ComingSoonAlert({ customMessage }: { customMessage?: string }) {
     <>
       <Alert>
         <div className="flex flex-row items-center space-x-1">
-          <TrafficCone className="h-4 w-4 mr-1" />
+          <TrafficCone className="size-4 mr-1" />
           <span className="text-sm font-semibold">Work in progress!</span>
           <span className="text-sm">{customMessage}</span>
         </div>

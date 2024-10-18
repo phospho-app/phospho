@@ -138,7 +138,7 @@ const DefaultProjects = ({
                 className="flex justify-end mt-4"
                 onClick={() => createDefaultProject("animals")}
               >
-                Explore project <Microscope className="h-4 w-4 ml-2" />{" "}
+                Explore project <Microscope className="size-4 ml-2" />{" "}
               </Button>
             </div>
           </CardFooter>
@@ -159,7 +159,7 @@ const DefaultProjects = ({
                 className="flex justify-end mt-4"
                 onClick={() => createDefaultProject("history")}
               >
-                Explore project <BookMarked className="h-4 w-4 ml-2" />{" "}
+                Explore project <BookMarked className="size-4 ml-2" />{" "}
               </Button>
             </div>
           </CardFooter>
@@ -180,7 +180,7 @@ const DefaultProjects = ({
                 className="flex justify-end mt-4"
                 onClick={() => createDefaultProject("medical")}
               >
-                Explore project <Stethoscope className="h-4 w-4 ml-2" />{" "}
+                Explore project <Stethoscope className="size-4 ml-2" />{" "}
               </Button>
             </div>
           </CardFooter>

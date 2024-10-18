@@ -18,7 +18,7 @@ export function TableNavigation<TData>({ table }: { table: Table<TData> }) {
         disabled={!table.getCanPreviousPage()}
       >
         <span className="sr-only">Go to first page</span>
-        <ChevronFirstIcon className="h-4 w-4" />
+        <ChevronFirstIcon className="size-4" />
       </Button>
       <Button
         variant="outline"
@@ -28,7 +28,7 @@ export function TableNavigation<TData>({ table }: { table: Table<TData> }) {
         disabled={!table.getCanPreviousPage()}
       >
         <span className="sr-only">Go to previous page</span>
-        <ChevronLeftIcon className="h-4 w-4" />
+        <ChevronLeftIcon className="size-4" />
       </Button>
       <div className="flex min-w-8 justify-center">
         {table.getPageCount() !== -1
@@ -43,7 +43,7 @@ export function TableNavigation<TData>({ table }: { table: Table<TData> }) {
         disabled={!table.getCanNextPage()}
       >
         <span className="sr-only">Go to next page</span>
-        <ChevronRightIcon className="h-4 w-4" />
+        <ChevronRightIcon className="size-4" />
       </Button>
       <Button
         variant="outline"
@@ -53,7 +53,7 @@ export function TableNavigation<TData>({ table }: { table: Table<TData> }) {
         disabled={!table.getCanNextPage()}
       >
         <span className="sr-only">Go to last page</span>
-        <ChevronLastIcon className="h-4 w-4" />
+        <ChevronLastIcon className="size-4" />
       </Button>
     </div>
   );

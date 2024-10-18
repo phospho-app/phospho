@@ -298,7 +298,7 @@ const RunClusteringSheet = ({
                       <span>Clustering instruction</span>
                       <HoverCard openDelay={0} closeDelay={0}>
                         <HoverCardTrigger>
-                          <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                          <QuestionMarkIcon className="size-4 rounded-full bg-primary text-secondary p-0.5" />
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <div className="w-96">
@@ -449,7 +449,7 @@ const RunClusteringSheet = ({
                             <span>Granularity</span>
                             <HoverCard openDelay={0} closeDelay={0}>
                               <HoverCardTrigger>
-                                <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                                <QuestionMarkIcon className="size-4 rounded-full bg-primary text-secondary p-0.5" />
                               </HoverCardTrigger>
                               <HoverCardContent>
                                 <div className="w-96 flex flex-col space-y-2 p-2">

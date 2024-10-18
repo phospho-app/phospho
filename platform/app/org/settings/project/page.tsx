@@ -68,7 +68,7 @@ export default function Page() {
           <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="secondary">
-                <Pencil className="h-4 w-4 mr-2" />
+                <Pencil className="size-4 mr-2" />
                 Rename project
               </Button>
             </AlertDialogTrigger>

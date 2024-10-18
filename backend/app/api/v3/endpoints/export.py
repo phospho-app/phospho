@@ -8,7 +8,7 @@ from app.security import (
     authenticate_org_key,
     verify_propelauth_org_owns_project_id,
 )
-from app.services.mongo.metadata import breakdown_by_sum_of_metadata_field
+from app.services.mongo.dataviz import breakdown_by_sum_of_metadata_field
 
 from phospho.models import ProjectDataFilters
 from app.api.v3.models.analytics import AnalyticsQuery, AnalyticsResponse

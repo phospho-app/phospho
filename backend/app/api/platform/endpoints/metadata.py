@@ -8,7 +8,7 @@ from app.security.authentification import propelauth
 from app.security import verify_if_propelauth_user_can_access_project
 
 # Service
-from app.services.mongo.metadata import (
+from app.services.mongo.dataviz import (
     collect_unique_metadata_field_values,
     collect_unique_metadata_fields,
     breakdown_by_sum_of_metadata_field,

@@ -131,7 +131,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         onClick={() => flagTask("failure")}
         className="bg-secondary mr-1"
       >
-        <ThumbsDown className="h-4 w-4" />
+        <ThumbsDown className="size-4" />
       </Button>
       <Button
         variant="outline"
@@ -139,7 +139,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         onClick={() => flagTask("success")}
         className="bg-green-400 mr-1"
       >
-        <ThumbsUp className="h-4 w-4" fill="#4ade80" />
+        <ThumbsUp className="size-4" fill="#4ade80" />
       </Button>
     </>
   );
@@ -152,7 +152,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         onClick={() => flagTask("failure")}
         className="bg-red-500 mr-1"
       >
-        <ThumbsDown className="h-4 w-4" fill="red" />
+        <ThumbsDown className="size-4" fill="red" />
       </Button>
       <Button
         variant="outline"
@@ -160,7 +160,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         onClick={() => flagTask("success")}
         className="bg-secondary mr-1"
       >
-        <ThumbsUp className="h-4 w-4" />
+        <ThumbsUp className="size-4" />
       </Button>
     </>
   );
@@ -173,7 +173,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         onClick={() => flagTask("failure")}
         className="bg-secondary mr-1"
       >
-        <ThumbsDown className="h-4 w-4" />
+        <ThumbsDown className="size-4" />
       </Button>
       <Button
         variant="outline"
@@ -181,7 +181,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         onClick={() => flagTask("success")}
         className="bg-secondary mr-1"
       >
-        <ThumbsUp className="h-4 w-4" fill="#4ade80" />
+        <ThumbsUp className="size-4" fill="#4ade80" />
       </Button>
     </>
   );
@@ -194,7 +194,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         onClick={() => flagTask("failure")}
         className="bg-secondary mr-1"
       >
-        <ThumbsDown className="h-4 w-4" fill="red" />
+        <ThumbsDown className="size-4" fill="red" />
       </Button>
       <Button
         variant="outline"
@@ -202,7 +202,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         onClick={() => flagTask("success")}
         className="bg-secondary mr-1"
       >
-        <ThumbsUp className="h-4 w-4" />
+        <ThumbsUp className="size-4" />
       </Button>
     </>
   );
@@ -215,7 +215,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         onClick={() => flagTask("failure")}
         className="bg-secondary mr-1"
       >
-        <ThumbsDown className="h-4 w-4" />
+        <ThumbsDown className="size-4" />
       </Button>
       <Button
         variant="outline"
@@ -223,7 +223,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
         onClick={() => flagTask("success")}
         className="bg-secondary mr-1"
       >
-        <ThumbsUp className="h-4 w-4" />
+        <ThumbsUp className="size-4" />
       </Button>
     </>
   );
@@ -257,7 +257,7 @@ const ThumbsUpAndDown: React.FC<ThumbsUpAndDownProps> = ({
             size="icon"
             className={`mr-1 ${noteButtonColor}`}
           >
-            <PenSquare className="h-4 w-4" />
+            <PenSquare className="size-4" />
           </Button>
         </PopoverTrigger>
       </div>

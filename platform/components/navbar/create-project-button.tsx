@@ -20,7 +20,7 @@ export function CreateProjectButton() {
           <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger asChild>
               <Button variant="outline" size="icon" className="py-1 h-8 w-8">
-                <PlusIcon className="h-4 w-4" />
+                <PlusIcon className="size-4" />
               </Button>
             </HoverCardTrigger>
             <HoverCardContent

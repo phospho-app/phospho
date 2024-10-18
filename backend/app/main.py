@@ -1,11 +1,14 @@
 import logging
+from urllib.parse import urlparse
 
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from urllib.parse import urlparse
 
 import phospho
+from app.api.platform import endpoints as platform_endpoints
+from app.api.v2 import endpoints as v2_endpoints
+from app.api.v3 import endpoints as v3_endpoints
 from app.core import config
 from app.db.mongo import close_mongo_db, connect_and_init_db
 from app.services.integrations import check_health_argilla
@@ -55,7 +58,6 @@ else:
         api_key="NO_API_KEY",
     )
 
-# Check that the
 
 tags_metadata = [
     {
@@ -118,24 +120,6 @@ def check_health_backend():
 
 
 ### V2 API ###
-from app.api.v2.endpoints import (
-    embeddings,
-    evals,
-    health,
-    log,
-    me,
-    models,
-    projects,
-    sessions,
-    tasks,
-    tests,
-    events,
-    chat,
-    cron,
-    tak_search,
-    triggers,
-)
-
 api_v2 = FastAPI(
     title="phospho",
     summary="phospho http api v2",
@@ -148,21 +132,19 @@ api_v2 = FastAPI(
     },
 )
 
-api_v2.include_router(embeddings.router)
-api_v2.include_router(evals.router)
-api_v2.include_router(log.router)
-api_v2.include_router(me.router)
-api_v2.include_router(models.router)
-api_v2.include_router(tasks.router)
-api_v2.include_router(tests.router)
-api_v2.include_router(projects.router)
-api_v2.include_router(sessions.router)
-api_v2.include_router(health.router)
-api_v2.include_router(events.router)
-api_v2.include_router(chat.router)
-api_v2.include_router(cron.router)
-api_v2.include_router(tak_search.router)
-api_v2.include_router(triggers.router)
+api_v2.include_router(v2_endpoints.embeddings.router)
+api_v2.include_router(v2_endpoints.log.router)
+api_v2.include_router(v2_endpoints.me.router)
+api_v2.include_router(v2_endpoints.models.router)
+api_v2.include_router(v2_endpoints.tasks.router)
+api_v2.include_router(v2_endpoints.projects.router)
+api_v2.include_router(v2_endpoints.sessions.router)
+api_v2.include_router(v2_endpoints.health.router)
+api_v2.include_router(v2_endpoints.events.router)
+api_v2.include_router(v2_endpoints.chat.router)
+api_v2.include_router(v2_endpoints.cron.router)
+api_v2.include_router(v2_endpoints.tak_search.router)
+api_v2.include_router(v2_endpoints.triggers.router)
 
 
 # Mount the subapplication on the main app with the prefix /v2/
@@ -172,9 +154,6 @@ app.mount("/v0", api_v2)
 
 
 ### V3 API ###
-from app.api.v3.endpoints import run, log, export
-
-
 api_v3 = FastAPI(
     title="phospho",
     summary="phospho http api v3",
@@ -187,44 +166,29 @@ api_v3 = FastAPI(
     },
 )
 
-api_v3.include_router(health.router, include_in_schema=False)
-api_v3.include_router(log.router)
-api_v3.include_router(run.router)
-api_v3.include_router(export.router)
-
+api_v3.include_router(v2_endpoints.health.router, include_in_schema=False)
+api_v3.include_router(v3_endpoints.log.router)
+api_v3.include_router(v3_endpoints.run.router)
+api_v3.include_router(v3_endpoints.export.router)
 
 app.mount("/v3", api_v3)
 
 
 ### PLATEFORM ENDPOINTS ###
-from app.api.platform.endpoints import (
-    debug,
-    events,
-    explore,
-    integrations,
-    metadata,
-    organizations,
-    projects,
-    sessions,
-    tasks,
-    recipes,
-    onboarding,
-    clustering,
-)
 
 api_platform = FastAPI()
 
-api_platform.include_router(integrations.router)
-api_platform.include_router(debug.router)
-api_platform.include_router(organizations.router)
-api_platform.include_router(projects.router)
-api_platform.include_router(tasks.router)
-api_platform.include_router(sessions.router)
-api_platform.include_router(events.router)
-api_platform.include_router(explore.router)
-api_platform.include_router(metadata.router)
-api_platform.include_router(recipes.router)
-api_platform.include_router(onboarding.router)
-api_platform.include_router(clustering.router)
+api_platform.include_router(platform_endpoints.integrations.router)
+api_platform.include_router(platform_endpoints.debug.router)
+api_platform.include_router(platform_endpoints.organizations.router)
+api_platform.include_router(platform_endpoints.projects.router)
+api_platform.include_router(platform_endpoints.tasks.router)
+api_platform.include_router(platform_endpoints.sessions.router)
+api_platform.include_router(platform_endpoints.events.router)
+api_platform.include_router(platform_endpoints.explore.router)
+api_platform.include_router(platform_endpoints.metadata.router)
+api_platform.include_router(platform_endpoints.recipes.router)
+api_platform.include_router(platform_endpoints.onboarding.router)
+api_platform.include_router(platform_endpoints.clustering.router)
 
 app.mount("/api", api_platform)

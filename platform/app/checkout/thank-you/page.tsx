@@ -230,7 +230,7 @@ function RunAnalyticsForm({
             </HoverCardContent>
           </HoverCard>
           <Button type="submit" disabled={form.formState.isSubmitted}>
-            <PlayIcon className="h-4 w-4 mr-2 text-green-500" />
+            <PlayIcon className="size-4 mr-2 text-green-500" />
             Run now
           </Button>
         </div>

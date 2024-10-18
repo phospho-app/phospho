@@ -12,15 +12,15 @@ from app.api.v2.models import (
     Tasks,
 )
 from app.security import authenticate_org_key, verify_propelauth_org_owns_project_id
-from app.services.mongo.explore import (
-    fetch_flattened_tasks,
-    update_from_flattened_tasks,
-)
 from app.services.mongo.projects import (
     backcompute_recipes,
     get_all_sessions,
 )
-from app.services.mongo.tasks import get_all_tasks
+from app.services.mongo.tasks import (
+    fetch_flattened_tasks,
+    get_all_tasks,
+    update_from_flattened_tasks,
+)
 
 router = APIRouter(tags=["Projects"])
 

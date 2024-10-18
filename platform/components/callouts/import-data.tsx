@@ -103,7 +103,7 @@ const SidebarSendData = () => {
     <>
       <div className="flex flex-col col-span-1 justify-end">
         {/* <Button variant="link" className="flex" onClick={() => setOpen(false)}>
-          Skip and continue later <ArrowRight className="h-4 w-4 ml-1" />
+          Skip and continue later <ArrowRight className="size-4 ml-1" />
         </Button> */}
       </div>
     </>
@@ -907,7 +907,7 @@ phospho.log({input, output});`}
                 <AlertDescription className="flex flex-row items-center">
                   <Link href="https://www.youtube.com/watch?v=4QeNPa4xOc8">
                     <Button variant="ghost" className="text-xs">
-                      <MonitorPlay className="h-4 w-4 mr-2" />
+                      <MonitorPlay className="size-4 mr-2" />
                       Watch demo
                     </Button>
                   </Link>
@@ -916,7 +916,7 @@ phospho.log({input, output});`}
                     target="_blank"
                   >
                     <Button variant="ghost" className="text-xs">
-                      <NotebookText className="h-4 w-4 mr-2" />
+                      <NotebookText className="size-4 mr-2" />
                       Example Colab notebook
                     </Button>
                   </Link>
@@ -924,7 +924,7 @@ phospho.log({input, output});`}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" className="text-xs">
-                          <Telescope className="h-4 w-4 mr-2" /> Explore sample
+                          <Telescope className="size-4 mr-2" /> Explore sample
                           data
                         </Button>
                       </AlertDialogTrigger>
@@ -939,7 +939,7 @@ phospho.log({input, output});`}
                     className="text-xs"
                     onClick={() => router.push("mailto:paul-louis@phospho.ai")}
                   >
-                    <Mail className="h-4 w-4 mr-2" />
+                    <Mail className="size-4 mr-2" />
                     Contact us to create your LLM app
                   </Button>
                 </AlertDescription>

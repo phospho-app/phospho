@@ -235,7 +235,7 @@ const CreateProjectDialog = ({
             )}
             {isCreating && (
               <AlertDialogAction disabled>
-                <Icons.spinner className="mr-1 h-4 w-4 animate-spin" />
+                <Icons.spinner className="mr-1 size-4 animate-spin" />
                 Create project
               </AlertDialogAction>
             )}

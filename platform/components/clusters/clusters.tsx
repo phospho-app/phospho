@@ -226,7 +226,7 @@ const Clusters: React.FC = () => {
             <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size={"icon"} onClick={toggleButton}>
-                  <Settings className="h-4 w-4" />
+                  <Settings className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-full">

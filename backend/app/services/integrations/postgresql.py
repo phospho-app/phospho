@@ -4,8 +4,7 @@ import pandas as pd
 from app.api.platform.models import Pagination
 from app.core import config
 from app.db.mongo import get_mongo_db
-from app.services.mongo.explore import fetch_flattened_tasks
-from app.services.mongo.tasks import get_total_nb_of_tasks
+from app.services.mongo.tasks import fetch_flattened_tasks, get_total_nb_of_tasks
 from app.utils import generate_uuid, slugify_string
 from fastapi import HTTPException
 from loguru import logger

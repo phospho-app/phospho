@@ -2,26 +2,25 @@ import datetime
 import io
 from typing import Dict, List, Literal, Optional
 
-from app.api.v2.models.embeddings import Embedding
-from app.services.mongo.query_builder import QueryBuilder
 import pandas as pd
 import resend
-from app.api.platform.models import Sorting, Pagination
+from app.api.platform.models import Pagination, Sorting
+from app.api.v2.models.embeddings import Embedding
 from app.core import config
 from app.db.models import (
+    Event,
     Project,
     ProjectDataFilters,
     Recipe,
     Session,
     Task,
-    Test,
-    Event,
 )
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
-from app.services.mongo.explore import fetch_flattened_tasks
 from app.services.mongo.extractor import ExtractorClient
+from app.services.mongo.query_builder import QueryBuilder
 from app.services.mongo.tasks import (
+    fetch_flattened_tasks,
     get_all_tasks,
     label_sentiment_analysis,
 )
@@ -31,7 +30,7 @@ from fastapi import HTTPException
 from loguru import logger
 from propelauth_fastapi import User  # type: ignore
 
-from phospho.models import Cluster, Clustering, Threshold, EventDefinition
+from phospho.models import Cluster, Clustering, EventDefinition, Threshold
 
 
 async def get_project_by_id(project_id: str) -> Project:
@@ -530,18 +529,6 @@ async def get_all_sessions(
         session.pop("_id", None)
     sessions = [Session.model_validate(data) for data in sessions]
     return sessions
-
-
-async def get_all_tests(project_id: str, limit: int = 1000) -> List[Test]:
-    mongo_db = await get_mongo_db()
-    tests = (
-        await mongo_db["tests"]
-        .find({"project_id": project_id})
-        .sort("created_at", -1)
-        .to_list(length=limit)
-    )
-    tests = [Test.model_validate(data) for data in tests]
-    return tests
 
 
 async def store_onboarding_survey(user: User, survey: dict):

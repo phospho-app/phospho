@@ -274,7 +274,7 @@ const DatavizGraph = ({
                         <div className="pt-4">
                           {supportedDeepDives.includes(breakdown_by) && (
                             <div className="flex flex-row items-center text-xs text-secondary">
-                              <ChevronRight className="h-4 w-4" />
+                              <ChevronRight className="size-4" />
                               Click to see all
                             </div>
                           )}
