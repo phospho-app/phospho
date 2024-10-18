@@ -2407,6 +2407,8 @@ async def get_ab_tests_versions(
     mongo_db = await get_mongo_db()
     collection_name = "events"
 
+    logger.debug(f"versionA: {versionA}, versionB: {versionB}")
+    logger.debug(f"filtersA: {filtersA}, filtersB: {filtersB}")
     if versionA == "None":
         versionA = None
     if versionB == "None":

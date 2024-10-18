@@ -29,7 +29,6 @@ import { authFetcher } from "@/lib/fetcher";
 import { ABTest, Project, ProjectDataFilters } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { set, setDate } from "date-fns";
 import {
   Check,
   ChevronDown,
@@ -271,11 +270,19 @@ export const ABTestingDataviz = () => {
   const onClickVersionA = (version_id: string) => {
     setVersionIDA(version_id);
     setDateRangeA("Select a date range");
+    setFiltersA({
+      created_at_start: undefined,
+      created_at_end: undefined,
+    });
   };
 
   const onClickVersionB = (version_id: string) => {
     setVersionIDB(version_id);
     setDateRangeB("Select a date range");
+    setFiltersB({
+      created_at_start: undefined,
+      created_at_end: undefined,
+    });
   };
 
   return (
