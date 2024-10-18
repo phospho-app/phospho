@@ -36,7 +36,7 @@ function GenericHeader({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "desc")}
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         {column.getIsSorted() === false && <ArrowUpDown className="size-4" />}
         {column.getIsSorted() === "asc" && <ArrowUp className="size-4" />}
