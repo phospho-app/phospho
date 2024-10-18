@@ -1,4 +1,3 @@
-import { CopyButton } from "@/components/copy-button";
 import { InteractiveDatetime } from "@/components/interactive-datetime";
 import {
   EventBadge,
@@ -37,7 +36,7 @@ function GenericHeader({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        onClick={() => column.toggleSorting(column.getIsSorted() === "desc")}
       >
         {column.getIsSorted() === false && <ArrowUpDown className="size-4" />}
         {column.getIsSorted() === "asc" && <ArrowUp className="size-4" />}
@@ -68,7 +67,27 @@ export function useColumns() {
       },
       accessorKey: "user_id",
       cell: ({ row }) => {
-        return <CopyButton text={row.original.user_id} />;
+        return (
+          <HoverCard openDelay={0} closeDelay={0}>
+            <HoverCardTrigger asChild>
+              <div
+                className="h-10 flex items-center hover:text-green-500"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  navigator.clipboard.writeText(row.original.user_id);
+                }}
+              >
+                {row.original.user_id}
+              </div>
+            </HoverCardTrigger>
+            <HoverCardContent
+              align="start"
+              className="text-xs text-muted-foreground"
+            >
+              Copy
+            </HoverCardContent>
+          </HoverCard>
+        );
       },
       // enableHiding: true,
     },
