@@ -3,8 +3,6 @@ The db models are in the phospho module.
 """
 
 from phospho.models import (
-    Comparison,
-    ComparisonResults,
     Eval,
     Event,
     EventDefinition,
@@ -15,5 +13,4 @@ from phospho.models import (
     Project,
     Session,
     Task,
-    Test,
 )
