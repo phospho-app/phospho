@@ -372,35 +372,6 @@ class Project(DatedBaseModel):
         return cls(**project_data)
 
 
-class Test(ProjectElementBaseModel):
-    project_id: str
-    org_id: Optional[str] = None
-    created_by: str
-    last_updated_at: int
-    terminated_at: Optional[int] = None
-    status: Literal["started", "completed", "canceled"]
-    summary: dict = Field(default_factory=dict)
-
-
-ComparisonResults = Literal[
-    "Old output is better",
-    "New output is better",
-    "Same quality",
-    "Both are bad",
-    "Error",
-]
-
-
-class Comparison(ProjectElementBaseModel):
-    instructions: Optional[str] = None
-    context_input: str
-    old_output: str
-    new_output: str
-    comparison_result: ComparisonResults
-    source: str
-    test_id: Optional[str] = None
-
-
 class LlmCall(DatedBaseModel, extra="allow"):
     project_id: Optional[str] = None
     org_id: Optional[str] = None

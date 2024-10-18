@@ -1,4 +1,3 @@
-from .evals import Comparison, ComparisonQuery, Eval
 from .events import (
     DetectEventInMessagesRequest,
     DetectEventsInTaskRequest,
@@ -38,7 +37,6 @@ from .tasks import (
     TaskUpdateRequest,
     TaskHumanEvalRequest,
 )
-from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest
 from .embeddings import (
     Embedding,
     EmbeddingRequest,

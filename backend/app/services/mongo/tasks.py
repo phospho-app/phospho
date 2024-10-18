@@ -1,8 +1,8 @@
-import datetime
-from typing import Dict, List, Literal, Optional, Tuple, cast
+from collections import defaultdict
+from typing import Dict, List, Literal, Optional, cast
 from app.api.platform.models.explore import Pagination, Sorting
 from app.services.mongo.query_builder import QueryBuilder
-from phospho.models import ProjectDataFilters, ScoreRange, HumanEval
+from phospho.models import FlattenedTask, ProjectDataFilters, ScoreRange, HumanEval
 from phospho.utils import filter_nonjsonable_keys
 
 import pydantic
@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from app.utils import generate_uuid
 
 from loguru import logger
+from pymongo import InsertOne, UpdateOne
 
 
 async def create_task(
@@ -486,3 +487,360 @@ async def get_all_tasks(
                 task.metadata = filter_nonjsonable_keys(task.metadata)
 
     return valid_tasks
+
+
+async def fetch_flattened_tasks(
+    project_id: str,
+    limit: Optional[int] = 1000,
+    with_events: bool = True,
+    with_sessions: bool = True,
+    pagination: Optional[Pagination] = None,
+    with_removed_events: bool = False,
+) -> List[FlattenedTask]:
+    """
+    Get a flattened representation of the tasks of a project for analytics
+
+    The with_events parameter allows to include the events in the result.
+    The with_sessions parameter allows to include the session length in the result.
+    The with_removed_events parameter allows to include the removed events in the result ; if with_events is False, this parameter is ignored.
+    """
+
+    if not with_events and with_removed_events:
+        logger.warning(
+            "The with_removed_events parameter is ignored if with_events is False"
+        )
+
+    # Create an aggregated table
+    mongo_db = await get_mongo_db()
+
+    # Aggregation pipeline
+    pipeline: List[Dict[str, object]] = [
+        {"$match": {"project_id": project_id}},
+    ]
+    return_columns = {
+        "task_id": "$id",
+        "task_input": "$input",
+        "task_output": "$output",
+        "task_metadata": "$metadata",
+        "task_eval": "$flag",
+        "task_eval_source": "$last_eval.source",
+        "task_eval_at": "$last_eval.created_at",
+        "task_created_at": "$created_at",
+        "session_id": "$session_id",
+        "task_position": "$task_position",
+    }
+
+    if with_sessions:
+        pipeline.extend(
+            [
+                {
+                    "$lookup": {
+                        "from": "sessions",
+                        "localField": "session_id",
+                        "foreignField": "id",
+                        "as": "session",
+                    }
+                },
+                {"$unwind": {"path": "$session", "preserveNullAndEmptyArrays": True}},
+            ]
+        )
+        return_columns = {
+            **return_columns,
+            "session_length": "$session.session_length",
+        }
+
+    if with_events:
+        if not with_removed_events:
+            pipeline.extend(
+                [
+                    {
+                        "$lookup": {
+                            "from": "events",
+                            "localField": "id",
+                            "foreignField": "task_id",
+                            "as": "events",
+                        },
+                    },
+                    # Deduplicate events based on event_name
+                    {
+                        "$set": {
+                            "events": {
+                                "$reduce": {
+                                    "input": "$events",
+                                    "initialValue": [],
+                                    "in": {
+                                        "$concatArrays": [
+                                            "$$value",
+                                            {
+                                                "$cond": [
+                                                    {
+                                                        "$in": [
+                                                            "$$this.event_name",
+                                                            "$$value.event_name",
+                                                        ]
+                                                    },
+                                                    [],
+                                                    ["$$this"],
+                                                ]
+                                            },
+                                        ]
+                                    },
+                                }
+                            },
+                        }
+                    },
+                    {
+                        "$unwind": {
+                            "path": "$events",
+                            "preserveNullAndEmptyArrays": True,
+                        }
+                    },
+                ]
+            )
+
+        # Query Mongo
+        else:
+            pipeline.extend(
+                [
+                    {
+                        "$lookup": {
+                            "from": "events",
+                            "localField": "id",
+                            "foreignField": "task_id",
+                            "as": "events",
+                        },
+                    },
+                    {
+                        "$addFields": {
+                            "events": {
+                                "$filter": {
+                                    "input": "$events",
+                                    "as": "event",
+                                    "cond": {
+                                        "$or": [
+                                            # The field is present in the event definition and the task
+                                            {
+                                                "$and": [
+                                                    {
+                                                        "$eq": [
+                                                            "$$event.event_definition.is_last_task",
+                                                            True,
+                                                        ]
+                                                    },
+                                                    {
+                                                        "$eq": [
+                                                            "$is_last_task",
+                                                            True,
+                                                        ]
+                                                    },
+                                                ]
+                                            },
+                                            # the field is not present in the event definition
+                                            {
+                                                "$not": [
+                                                    "$$event.event_definition.is_last_task",
+                                                ]
+                                            },
+                                        ],
+                                    },
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "$set": {
+                            "events": {
+                                "$reduce": {
+                                    "input": "$events",
+                                    "initialValue": [],
+                                    "in": {
+                                        "$concatArrays": [
+                                            "$$value",
+                                            {
+                                                "$cond": [
+                                                    {
+                                                        "$in": [
+                                                            "$$this.event_definition.id",
+                                                            "$$value.event_definition.id",
+                                                        ]
+                                                    },
+                                                    [],
+                                                    ["$$this"],
+                                                ]
+                                            },
+                                        ]
+                                    },
+                                }
+                            },
+                        }
+                    },
+                    {
+                        "$unwind": {
+                            "path": "$events",
+                            "preserveNullAndEmptyArrays": True,
+                        }
+                    },
+                ]
+            )
+
+        return_columns = {
+            **return_columns,
+            "event_name": "$events.event_name",
+            "event_created_at": "$events.created_at",
+            "event_confirmed": "$events.confirmed",
+            "event_score_range_value": "$events.score_range.value",
+            "event_score_range_min": "$events.score_range.min",
+            "event_score_range_max": "$events.score_range.max",
+            "event_score_range_score_type": "$events.score_range.score_type",
+            "event_score_range_label": "$events.score_range.label",
+            "event_source": "$events.source",
+            "event_categories": "$events.event_definition.score_range_settings.categories",
+        }
+
+        if with_removed_events:
+            return_columns = {
+                **return_columns,
+                "event_removed": "$events.removed",
+                "event_removal_reason": "$events.removal_reason",
+            }
+
+    # Sort the pipeline
+    pipeline.extend(
+        [
+            {"$project": return_columns},
+            {"$sort": {"task_created_at": -1}},
+        ]
+    )
+
+    # Pagination
+
+    if pagination:
+        pipeline.extend(
+            [
+                {"$skip": pagination.page * pagination.per_page},
+                {"$limit": pagination.per_page},
+            ]
+        )
+
+    # Limit
+    else:
+        pipeline.extend(
+            [
+                {"$limit": limit},
+            ]
+        )
+
+    # Query Mongo
+    flattened_tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
+
+    new_flattened_tasks = []
+    for task in flattened_tasks:
+        # Remove the _id field
+        if "_id" in task.keys():
+            del task["_id"]
+
+        # Flatten the task_metadata field into multiple task_metadata.{key} fields
+        if "task_metadata" in task.keys():
+            for key, value in task["task_metadata"].items():
+                if not isinstance(value, dict) and not isinstance(value, list):
+                    task[f"task_metadata.{key}"] = value
+                else:
+                    # TODO: Handle nested fields. For now, cast to string
+                    task[f"task_metadata.{key}"] = str(value)
+            del task["task_metadata"]
+        # Convert to a FlattenedTask model
+        new_task = FlattenedTask.model_validate(task)
+        new_flattened_tasks.append(new_task)
+
+    return new_flattened_tasks
+
+
+async def update_from_flattened_tasks(
+    org_id: str,
+    project_id: str,
+    flattened_tasks: List[FlattenedTask],
+) -> bool:
+    """
+    Update the tasks of a project from a flattened representation.
+    Used in combination with get_flattened_tasks
+
+    Supported flat fields:
+
+    task_id
+    task_metadata
+    task_eval
+    task_eval_source
+    task_eval_at
+
+    TODO: Add support for updating the events
+    """
+
+    # Verify that all the task_id belong to the project_id
+    mongo_db = await get_mongo_db()
+    project_ids_in_db = (
+        await mongo_db["tasks"]
+        .aggregate(
+            [
+                {"$match": {"id": {"$in": [task.task_id for task in flattened_tasks]}}},
+                {"$project": {"project_id": 1}},
+            ]
+        )
+        .to_list(length=2)
+    )
+    # Compute the intersection of the project_ids
+    project_ids_in_db = set(
+        [project_id["project_id"] for project_id in project_ids_in_db]
+    )
+    # If the intersection is not empty, it means that the task_id belong to another project
+    if project_ids_in_db - {project_id} != set():
+        raise HTTPException(
+            status_code=403,
+            detail=f"Access denied to tasks not in project {project_id}",
+        )
+
+    # A single row is a combination of task x event x eval
+    # TODO : Infer the granularity from the available non-None columns
+
+    task_update: Dict[str, Dict[str, object]] = defaultdict(dict)
+    eval_create_statements = []
+    for task in flattened_tasks:
+        if task.task_metadata is not None:
+            task_update[task.task_id]["metadata"] = task.task_metadata
+        if task.task_eval is not None and task.task_eval in ["success", "failure"]:
+            task_update[task.task_id]["flag"] = task.task_eval
+            last_eval = Eval(
+                org_id=org_id,
+                project_id=project_id,
+                value=task.task_eval,
+                session_id=task.session_id,
+                task_id=task.task_id,
+                source="owner",
+            )
+            # Override source and created_at if provided
+            if task.task_eval_source is not None:
+                last_eval.source = task.task_eval_source
+            if task.task_eval_at is not None:
+                last_eval.created_at = task.task_eval_at
+            task_update[task.task_id]["last_eval"] = last_eval.model_dump()
+            eval_create_statements.append(
+                InsertOne(
+                    last_eval.model_dump(),
+                )
+            )
+
+    # Reformat the list into a list of UpdateOne or DeleteOne
+    tasks_update_statements = [
+        UpdateOne(
+            {"id": task_id, "project_id": project_id},
+            {"$set": values_to_update},
+        )
+        for task_id, values_to_update in task_update.items()
+    ]
+
+    # Execute the update
+    if tasks_update_statements:
+        tasks_results = await mongo_db["tasks"].bulk_write(tasks_update_statements)
+    if eval_create_statements:
+        eval_results = await mongo_db["evals"].bulk_write(eval_create_statements)
+
+    return tasks_results.modified_count > 0 or eval_results.inserted_count > 0

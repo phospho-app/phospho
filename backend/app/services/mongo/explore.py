@@ -629,75 +629,6 @@ async def get_top_taggers_names_and_count(
     return result
 
 
-async def get_daily_success_rate(
-    project_id: str,
-    filters: ProjectDataFilters,
-    **kwargs,
-) -> List[dict]:
-    """
-    Get the daily success rate of a project.
-    """
-    mongo_db = await get_mongo_db()
-
-    query_builder = QueryBuilder(
-        project_id=project_id,
-        fetch_objects="tasks",
-        filters=filters,
-    )
-    pipeline = await query_builder.build()
-
-    # Add the success rate computation
-    pipeline += [
-        {"$addFields": {"is_success": {"$eq": ["$flag", "success"]}}},
-        {
-            "$project": {
-                "_id": 0,
-                "created_at": 1,
-                "is_success": 1,
-            }
-        },
-        {"$sort": {"date": 1}},
-    ]
-    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
-
-    result_df = pd.DataFrame(result)
-
-    start_date_range, end_date_range = extract_date_range(filters)
-    if start_date_range is None:
-        if not result_df.empty:
-            start_date_range = result_df["created_at"].min()
-        else:
-            start_date_range = datetime.datetime.now()
-    if end_date_range is None:
-        end_date_range = datetime.datetime.now()
-
-    complete_date_range = pd.date_range(start_date_range, end_date_range, freq="D")
-    complete_df = pd.DataFrame({"date": complete_date_range})
-    complete_df["date"] = pd.to_datetime(complete_df["date"]).dt.date
-
-    if not result_df.empty:
-        result_df["date"] = pd.to_datetime(
-            result_df["created_at"], unit="s", utc=True
-        ).dt.date
-        # Group by date and count
-        daily_success_rate = (
-            result_df.groupby(["date"])[["is_success"]]
-            .mean()
-            .reset_index()[["date", "is_success"]]
-            .rename(columns={"is_success": "success_rate"})
-        )
-
-        # Add missing days
-        daily_success_rate = pd.merge(
-            complete_df, daily_success_rate, on="date", how="left"
-        ).fillna(0)
-    else:
-        daily_success_rate = complete_df
-        daily_success_rate["success_rate"] = 0
-
-    return daily_success_rate[["date", "success_rate"]].to_dict(orient="records")
-
-
 async def get_tasks_aggregated_metrics(
     project_id: str,
     metrics: Optional[List[str]] = None,
@@ -776,6 +707,75 @@ async def get_tasks_aggregated_metrics(
             project_id=project_id
         )
     return output
+
+
+async def get_daily_success_rate(
+    project_id: str,
+    filters: ProjectDataFilters,
+    **kwargs,
+) -> List[dict]:
+    """
+    Get the daily success rate of a project.
+    """
+    mongo_db = await get_mongo_db()
+
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        fetch_objects="tasks",
+        filters=filters,
+    )
+    pipeline = await query_builder.build()
+
+    # Add the success rate computation
+    pipeline += [
+        {"$addFields": {"is_success": {"$eq": ["$flag", "success"]}}},
+        {
+            "$project": {
+                "_id": 0,
+                "created_at": 1,
+                "is_success": 1,
+            }
+        },
+        {"$sort": {"date": 1}},
+    ]
+    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+
+    result_df = pd.DataFrame(result)
+
+    start_date_range, end_date_range = extract_date_range(filters)
+    if start_date_range is None:
+        if not result_df.empty:
+            start_date_range = result_df["created_at"].min()
+        else:
+            start_date_range = datetime.datetime.now()
+    if end_date_range is None:
+        end_date_range = datetime.datetime.now()
+
+    complete_date_range = pd.date_range(start_date_range, end_date_range, freq="D")
+    complete_df = pd.DataFrame({"date": complete_date_range})
+    complete_df["date"] = pd.to_datetime(complete_df["date"]).dt.date
+
+    if not result_df.empty:
+        result_df["date"] = pd.to_datetime(
+            result_df["created_at"], unit="s", utc=True
+        ).dt.date
+        # Group by date and count
+        daily_success_rate = (
+            result_df.groupby(["date"])[["is_success"]]
+            .mean()
+            .reset_index()[["date", "is_success"]]
+            .rename(columns={"is_success": "success_rate"})
+        )
+
+        # Add missing days
+        daily_success_rate = pd.merge(
+            complete_df, daily_success_rate, on="date", how="left"
+        ).fillna(0)
+    else:
+        daily_success_rate = complete_df
+        daily_success_rate["success_rate"] = 0
+
+    return daily_success_rate[["date", "success_rate"]].to_dict(orient="records")
 
 
 async def get_date_last_clustering_timestamp(
@@ -2034,363 +2034,6 @@ async def get_dashboard_aggregated_metrics(
     return output
 
 
-async def fetch_flattened_tasks(
-    project_id: str,
-    limit: Optional[int] = 1000,
-    with_events: bool = True,
-    with_sessions: bool = True,
-    pagination: Optional[Pagination] = None,
-    with_removed_events: bool = False,
-) -> List[FlattenedTask]:
-    """
-    Get a flattened representation of the tasks of a project for analytics
-
-    The with_events parameter allows to include the events in the result.
-    The with_sessions parameter allows to include the session length in the result.
-    The with_removed_events parameter allows to include the removed events in the result ; if with_events is False, this parameter is ignored.
-    """
-
-    if not with_events and with_removed_events:
-        logger.warning(
-            "The with_removed_events parameter is ignored if with_events is False"
-        )
-
-    # Create an aggregated table
-    mongo_db = await get_mongo_db()
-
-    # Aggregation pipeline
-    pipeline: List[Dict[str, object]] = [
-        {"$match": {"project_id": project_id}},
-    ]
-    return_columns = {
-        "task_id": "$id",
-        "task_input": "$input",
-        "task_output": "$output",
-        "task_metadata": "$metadata",
-        "task_eval": "$flag",
-        "task_eval_source": "$last_eval.source",
-        "task_eval_at": "$last_eval.created_at",
-        "task_created_at": "$created_at",
-        "session_id": "$session_id",
-        "task_position": "$task_position",
-    }
-
-    if with_sessions:
-        pipeline.extend(
-            [
-                {
-                    "$lookup": {
-                        "from": "sessions",
-                        "localField": "session_id",
-                        "foreignField": "id",
-                        "as": "session",
-                    }
-                },
-                {"$unwind": {"path": "$session", "preserveNullAndEmptyArrays": True}},
-            ]
-        )
-        return_columns = {
-            **return_columns,
-            "session_length": "$session.session_length",
-        }
-
-    if with_events:
-        if not with_removed_events:
-            pipeline.extend(
-                [
-                    {
-                        "$lookup": {
-                            "from": "events",
-                            "localField": "id",
-                            "foreignField": "task_id",
-                            "as": "events",
-                        },
-                    },
-                    # Deduplicate events based on event_name
-                    {
-                        "$set": {
-                            "events": {
-                                "$reduce": {
-                                    "input": "$events",
-                                    "initialValue": [],
-                                    "in": {
-                                        "$concatArrays": [
-                                            "$$value",
-                                            {
-                                                "$cond": [
-                                                    {
-                                                        "$in": [
-                                                            "$$this.event_name",
-                                                            "$$value.event_name",
-                                                        ]
-                                                    },
-                                                    [],
-                                                    ["$$this"],
-                                                ]
-                                            },
-                                        ]
-                                    },
-                                }
-                            },
-                        }
-                    },
-                    {
-                        "$unwind": {
-                            "path": "$events",
-                            "preserveNullAndEmptyArrays": True,
-                        }
-                    },
-                ]
-            )
-
-        # Query Mongo
-        else:
-            pipeline.extend(
-                [
-                    {
-                        "$lookup": {
-                            "from": "events",
-                            "localField": "id",
-                            "foreignField": "task_id",
-                            "as": "events",
-                        },
-                    },
-                    {
-                        "$addFields": {
-                            "events": {
-                                "$filter": {
-                                    "input": "$events",
-                                    "as": "event",
-                                    "cond": {
-                                        "$or": [
-                                            # The field is present in the event definition and the task
-                                            {
-                                                "$and": [
-                                                    {
-                                                        "$eq": [
-                                                            "$$event.event_definition.is_last_task",
-                                                            True,
-                                                        ]
-                                                    },
-                                                    {
-                                                        "$eq": [
-                                                            "$is_last_task",
-                                                            True,
-                                                        ]
-                                                    },
-                                                ]
-                                            },
-                                            # the field is not present in the event definition
-                                            {
-                                                "$not": [
-                                                    "$$event.event_definition.is_last_task",
-                                                ]
-                                            },
-                                        ],
-                                    },
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "$set": {
-                            "events": {
-                                "$reduce": {
-                                    "input": "$events",
-                                    "initialValue": [],
-                                    "in": {
-                                        "$concatArrays": [
-                                            "$$value",
-                                            {
-                                                "$cond": [
-                                                    {
-                                                        "$in": [
-                                                            "$$this.event_definition.id",
-                                                            "$$value.event_definition.id",
-                                                        ]
-                                                    },
-                                                    [],
-                                                    ["$$this"],
-                                                ]
-                                            },
-                                        ]
-                                    },
-                                }
-                            },
-                        }
-                    },
-                    {
-                        "$unwind": {
-                            "path": "$events",
-                            "preserveNullAndEmptyArrays": True,
-                        }
-                    },
-                ]
-            )
-
-        return_columns = {
-            **return_columns,
-            "event_name": "$events.event_name",
-            "event_created_at": "$events.created_at",
-            "event_confirmed": "$events.confirmed",
-            "event_score_range_value": "$events.score_range.value",
-            "event_score_range_min": "$events.score_range.min",
-            "event_score_range_max": "$events.score_range.max",
-            "event_score_range_score_type": "$events.score_range.score_type",
-            "event_score_range_label": "$events.score_range.label",
-            "event_source": "$events.source",
-            "event_categories": "$events.event_definition.score_range_settings.categories",
-        }
-
-        if with_removed_events:
-            return_columns = {
-                **return_columns,
-                "event_removed": "$events.removed",
-                "event_removal_reason": "$events.removal_reason",
-            }
-
-    # Sort the pipeline
-    pipeline.extend(
-        [
-            {"$project": return_columns},
-            {"$sort": {"task_created_at": -1}},
-        ]
-    )
-
-    # Pagination
-
-    if pagination:
-        pipeline.extend(
-            [
-                {"$skip": pagination.page * pagination.per_page},
-                {"$limit": pagination.per_page},
-            ]
-        )
-
-    # Limit
-    else:
-        pipeline.extend(
-            [
-                {"$limit": limit},
-            ]
-        )
-
-    # Query Mongo
-    flattened_tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
-
-    new_flattened_tasks = []
-    for task in flattened_tasks:
-        # Remove the _id field
-        if "_id" in task.keys():
-            del task["_id"]
-
-        # Flatten the task_metadata field into multiple task_metadata.{key} fields
-        if "task_metadata" in task.keys():
-            for key, value in task["task_metadata"].items():
-                if not isinstance(value, dict) and not isinstance(value, list):
-                    task[f"task_metadata.{key}"] = value
-                else:
-                    # TODO: Handle nested fields. For now, cast to string
-                    task[f"task_metadata.{key}"] = str(value)
-            del task["task_metadata"]
-        # Convert to a FlattenedTask model
-        new_task = FlattenedTask.model_validate(task)
-        new_flattened_tasks.append(new_task)
-
-    return new_flattened_tasks
-
-
-async def update_from_flattened_tasks(
-    org_id: str,
-    project_id: str,
-    flattened_tasks: List[FlattenedTask],
-) -> bool:
-    """
-    Update the tasks of a project from a flattened representation.
-    Used in combination with get_flattened_tasks
-
-    Supported flat fields:
-
-    task_id
-    task_metadata
-    task_eval
-    task_eval_source
-    task_eval_at
-
-    TODO: Add support for updating the events
-    """
-
-    # Verify that all the task_id belong to the project_id
-    mongo_db = await get_mongo_db()
-    project_ids_in_db = (
-        await mongo_db["tasks"]
-        .aggregate(
-            [
-                {"$match": {"id": {"$in": [task.task_id for task in flattened_tasks]}}},
-                {"$project": {"project_id": 1}},
-            ]
-        )
-        .to_list(length=2)
-    )
-    # Compute the intersection of the project_ids
-    project_ids_in_db = set(
-        [project_id["project_id"] for project_id in project_ids_in_db]
-    )
-    # If the intersection is not empty, it means that the task_id belong to another project
-    if project_ids_in_db - {project_id} != set():
-        raise HTTPException(
-            status_code=403,
-            detail=f"Access denied to tasks not in project {project_id}",
-        )
-
-    # A single row is a combination of task x event x eval
-    # TODO : Infer the granularity from the available non-None columns
-
-    task_update: Dict[str, Dict[str, object]] = defaultdict(dict)
-    eval_create_statements = []
-    for task in flattened_tasks:
-        if task.task_metadata is not None:
-            task_update[task.task_id]["metadata"] = task.task_metadata
-        if task.task_eval is not None and task.task_eval in ["success", "failure"]:
-            task_update[task.task_id]["flag"] = task.task_eval
-            last_eval = Eval(
-                org_id=org_id,
-                project_id=project_id,
-                value=task.task_eval,
-                session_id=task.session_id,
-                task_id=task.task_id,
-                source="owner",
-            )
-            # Override source and created_at if provided
-            if task.task_eval_source is not None:
-                last_eval.source = task.task_eval_source
-            if task.task_eval_at is not None:
-                last_eval.created_at = task.task_eval_at
-            task_update[task.task_id]["last_eval"] = last_eval.model_dump()
-            eval_create_statements.append(
-                InsertOne(
-                    last_eval.model_dump(),
-                )
-            )
-
-    # Reformat the list into a list of UpdateOne or DeleteOne
-    tasks_update_statements = [
-        UpdateOne(
-            {"id": task_id, "project_id": project_id},
-            {"$set": values_to_update},
-        )
-        for task_id, values_to_update in task_update.items()
-    ]
-
-    # Execute the update
-    if tasks_update_statements:
-        tasks_results = await mongo_db["tasks"].bulk_write(tasks_update_statements)
-    if eval_create_statements:
-        eval_results = await mongo_db["evals"].bulk_write(eval_create_statements)
-
-    return tasks_results.modified_count > 0 or eval_results.inserted_count > 0
-
-
 async def get_ab_tests_versions(
     project_id: str,
     versionA: Optional[str],
@@ -2556,13 +2199,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values.get(event_name, []):
@@ -2583,13 +2226,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2622,13 +2265,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[event_result["version_id"]] = (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] = event_result["count"]
                 else:
-                    divide_for_correct_average[event_result["version_id"]] += (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] += event_result["count"]
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (
@@ -2811,156 +2454,3 @@ async def get_clustering_by_id(
 
     clustering_model = Clustering.model_validate(raw_results[0])
     return clustering_model
-
-
-async def get_total_nb_of_users(
-    project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Optional[int]:
-    """
-    Get the total number of unique users for a project.
-    This is the number of unique user_id in the tasks.
-    """
-
-    mongo_db = await get_mongo_db()
-
-    query_builder = QueryBuilder(
-        project_id=project_id, filters=filters, fetch_objects="tasks"
-    )
-    pipeline = await query_builder.build()
-
-    # We count the number of unique user_id
-    pipeline += [
-        # Tasks may not have a user_id, so we filter this case
-        {"$match": {"metadata.user_id": {"$exists": True, "$ne": None}}},
-        {
-            "$group": {
-                "_id": "$metadata.user_id",
-            }
-        },
-        {"$count": "total_users"},
-    ]
-
-    query_result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=1)
-
-    if len(query_result) == 0:
-        return None
-
-    total_nb_users = query_result[0]["total_users"]
-    return total_nb_users
-
-
-async def get_nb_users_messages(
-    project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-    limit: Optional[int] = None,
-) -> Optional[int]:
-    """
-    Get the total number of messages sent by unique users for a project.
-
-    This is used to get all the messages sent by active users, according to the filters.
-    """
-
-    mongo_db = await get_mongo_db()
-
-    query_builder = QueryBuilder(
-        project_id=project_id, filters=filters, fetch_objects="tasks"
-    )
-    pipeline = await query_builder.build()
-
-    # We fetch the list of active users ids first
-    pipeline += [
-        {"$match": {"metadata.user_id": {"$exists": True, "$ne": None}}},
-        {
-            "$group": {
-                "_id": "$metadata.user_id",
-            }
-        },
-    ]
-    query_result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
-    if len(query_result) == 0:
-        return None
-    active_user_ids: List[str] = [user["_id"] for user in query_result]
-
-    # Then, we find how many messages these users sent in total, during their whole existence
-    pipeline = [
-        {
-            "$match": {
-                "project_id": project_id,
-                "metadata.user_id": {"$in": active_user_ids},
-            }
-        },
-        {
-            "$count": "nb_users_messages",
-        },
-    ]
-    query_result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=1)
-    if len(query_result) == 0:
-        return None
-
-    total_nb_users_messages = query_result[0]["nb_users_messages"]
-
-    return total_nb_users_messages
-
-
-async def get_average_nb_tasks_per_user(
-    project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
-) -> Optional[float]:
-    mongo_db = await get_mongo_db()
-
-    query_builder = QueryBuilder(
-        project_id=project_id, filters=filters, fetch_objects="tasks"
-    )
-    pipeline = await query_builder.build()
-
-    pipeline += [
-        {
-            "$match": {
-                "metadata.user_id": {"$exists": True},
-            }
-        },
-        {"$group": {"_id": "$metadata.user_id", "count": {"$sum": 1}}},
-        {"$group": {"_id": None, "average": {"$avg": "$count"}}},
-    ]
-
-    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
-    if not result or "average" not in result[0]:
-        return None
-    average = result[0]["average"]
-    return average
-
-
-async def get_users_aggregated_metrics(
-    project_id: str,
-    metrics: Optional[List[str]] = None,
-    filters: Optional[ProjectDataFilters] = None,
-):
-    if metrics is None:
-        metrics = []
-
-    output: Dict[str, object] = {}
-    if "nb_users" in metrics:
-        total_nb_users = (
-            await get_total_nb_of_users(
-                project_id=project_id,
-                filters=filters,
-            )
-            # If None, set to 0
-            or 0
-        )
-        output["nb_users"] = total_nb_users
-
-    if "avg_nb_tasks_per_user" in metrics:
-        output["avg_nb_tasks_per_user"] = await get_average_nb_tasks_per_user(
-            project_id=project_id, filters=filters
-        )
-
-    if "nb_users_messages" in metrics:
-        # Number of messages sent by users
-        output["nb_users_messages"] = await get_nb_users_messages(
-            project_id=project_id,
-            filters=filters,
-        )
-
-    return output
