@@ -85,7 +85,7 @@ const TaskOverview: React.FC<TaskProps> = ({
         </div>
         <div className="flex flex-row space-x-16">
           <div className="text-xs max-w-48">
-            <span>Created at:</span>
+            <span className="text-muted-foreground">Created at</span>
             <InteractiveDatetime timestamp={task?.created_at} />
           </div>
           {task?.task_position && (
@@ -112,7 +112,7 @@ const TaskOverview: React.FC<TaskProps> = ({
           )}
           {task?.last_eval?.created_at && (
             <div className="text-xs max-w-48">
-              <span>Last eval date:</span>
+              <span className="text-muted-foreground">Last eval date</span>
               <InteractiveDatetime timestamp={task?.last_eval?.created_at} />
             </div>
           )}
