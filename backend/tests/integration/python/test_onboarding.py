@@ -118,7 +118,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     # We have 2 tasks, so we should have 2 sessions (tasks without session_id are created)
     assert len(sessions_data) == 2, sessions.json()
     # Order the sessions by increasing last_message_ts
-    sessions_data = sorted(sessions_data, key=lambda x: x["last_message_ts"])
+    sessions_data = sorted(sessions_data, key=lambda x: x["created_at"])
     assert sessions_data[0]["id"] == task_1["session_id"], sessions_data
     assert sessions_data[1]["id"] == session_id, sessions_data
 
