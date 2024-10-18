@@ -29,6 +29,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { ABTest, Project, ProjectDataFilters } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { set, setDate } from "date-fns";
 import {
   Check,
   ChevronDown,
@@ -227,12 +228,14 @@ export const ABTestingDataviz = () => {
           created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
           created_at_end: undefined,
         });
+        setVersionIDA("This week");
       }
       if (newDateRange === "Last week") {
         setFiltersA({
           created_at_start: Date.now() / 1000 - 14 * 24 * 60 * 60,
           created_at_end: Date.now() / 1000 - 7 * 24 * 60 * 60,
         });
+        setVersionIDA("Last week");
       }
     }
   };
@@ -251,12 +254,14 @@ export const ABTestingDataviz = () => {
           created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
           created_at_end: undefined,
         });
+        setVersionIDB("This week");
       }
       if (newDateRange === "Last week") {
         setFiltersB({
           created_at_start: Date.now() / 1000 - 14 * 24 * 60 * 60,
           created_at_end: Date.now() / 1000 - 7 * 24 * 60 * 60,
         });
+        setVersionIDB("Last week");
       }
     }
   };

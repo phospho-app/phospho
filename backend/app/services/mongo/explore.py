@@ -2442,57 +2442,54 @@ async def get_ab_tests_versions(
 
     # I want to set the version_id of all task to versionA if the version_id is None and the task was created in the filterA
     # Check if the filters are not None or empty
-    if (
-        filtersA is not None
-        and filtersB is not None
-        and (
-            filtersA.created_at_start is not None
-            or filtersA.created_at_end is not None
-            or filtersB.created_at_start is not None
-            or filtersB.created_at_end is not None
-        )
+    if filtersA is not None and (
+        filtersA.created_at_start is not None or filtersA.created_at_end is not None
     ):
         versionA = "versionA"
-        versionB = "versionB"
         filteringA = []
-        filteringB = []
         if filtersA.created_at_start is not None:
             filteringA.append({"$gte": ["$task.created_at", filtersA.created_at_start]})
         if filtersA.created_at_end is not None:
             filteringA.append({"$lte": ["$task.created_at", filtersA.created_at_end]})
+        pipeline.append(
+            {
+                "$set": {
+                    "task.metadata.version_id": {
+                        "$cond": [
+                            {
+                                "$and": filteringA,
+                            },
+                            versionA,
+                            "$task.metadata.version_id",
+                        ]
+                    }
+                }
+            },
+        )
+
+    if filtersB is not None and (
+        filtersB.created_at_start is not None or filtersB.created_at_end is not None
+    ):
+        versionB = "versionB"
+        filteringB = []
         if filtersB.created_at_start is not None:
             filteringB.append({"$gte": ["$task.created_at", filtersB.created_at_start]})
         if filtersB.created_at_end is not None:
             filteringB.append({"$lte": ["$task.created_at", filtersB.created_at_end]})
-        pipeline.extend(
-            [
-                {
-                    "$set": {
-                        "task.metadata.version_id": {
-                            "$cond": [
-                                {
-                                    "$and": filteringA,
-                                },
-                                versionA,
-                                "$task.metadata.version_id",
-                            ]
-                        }
+        pipeline.append(
+            {
+                "$set": {
+                    "task.metadata.version_id": {
+                        "$cond": [
+                            {
+                                "$and": filteringB,
+                            },
+                            versionB,
+                            "$task.metadata.version_id",
+                        ]
                     }
-                },
-                {
-                    "$set": {
-                        "task.metadata.version_id": {
-                            "$cond": [
-                                {
-                                    "$and": filteringB,
-                                },
-                                versionB,
-                                "$task.metadata.version_id",
-                            ]
-                        }
-                    }
-                },
-            ]
+                }
+            },
         )
 
     pipeline.extend(
