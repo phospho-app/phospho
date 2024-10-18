@@ -114,9 +114,13 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert sessions.status_code == 200, sessions.reason
+    sessions_data = sessions.json()["sessions"]
     # We have 2 tasks, so we should have 2 sessions (tasks without session_id are created)
-    assert len(sessions.json()["sessions"]) == 2, sessions.json()
-    assert sessions.json()["sessions"][0]["id"] == session_id, sessions.json()
+    assert len(sessions_data) == 2, sessions.json()
+    # Order the sessions by increasing last_message_ts
+    sessions_data = sorted(sessions_data, key=lambda x: x["last_message_ts"])
+    assert sessions_data[0]["id"] == task_1["session_id"], sessions_data
+    assert sessions_data[1]["id"] == session_id, sessions_data
 
     # Call the dashboards
     # aggregated_metrics = requests.post(
