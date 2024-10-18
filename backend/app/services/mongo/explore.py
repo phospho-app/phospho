@@ -11,9 +11,8 @@ from app.services.mongo.query_builder import QueryBuilder
 import pandas as pd
 import pydantic
 
-from app.api.platform.models import ABTest, Pagination, ProjectDataFilters
+from app.api.platform.models import ABTest, ProjectDataFilters
 from app.api.platform.models.explore import ClusteringEmbeddingCloud
-from app.db.models import Eval, FlattenedTask
 from app.db.mongo import get_mongo_db
 from app.services.mongo.events import get_all_events
 from app.services.mongo.tasks import (
@@ -23,7 +22,6 @@ from app.services.mongo.tasks import (
 from app.utils import generate_timestamp, get_last_week_timestamps
 from fastapi import HTTPException
 from loguru import logger
-from pymongo import InsertOne, UpdateOne
 from sklearn.metrics import (
     f1_score,
     root_mean_squared_error,

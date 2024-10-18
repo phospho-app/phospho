@@ -1,7 +1,5 @@
 from typing import Dict, List, Literal, Optional
 
-from app.api.platform.models import Pagination, Sorting
-from app.api.v2.models.projects import UserMetadata
 from app.core import constants
 from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
