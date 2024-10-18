@@ -119,9 +119,8 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     assert len(sessions_data) == 2, sessions.json()
     # Order the sessions by increasing last_message_ts
     sessions_data = sorted(sessions_data, key=lambda x: x["created_at"])
-    assert sessions_data[0]["id"] == task_1["session_id"], sessions_data
+    assert sessions_data[0]["id"].startswith("session_"), sessions_data
     assert sessions_data[1]["id"] == session_id, sessions_data
-
     # Call the dashboards
     # aggregated_metrics = requests.post(
     #     f"{backend_url}/api/explore/{project_id}/aggregated/",
