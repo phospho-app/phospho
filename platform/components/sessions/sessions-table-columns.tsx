@@ -116,7 +116,7 @@ export function useColumns({
       header: ({ column }) => {
         return (
           <div className="flex flex-row items-center justify-between space-x-2">
-            Last message at
+            Last message
             <Button
               variant="ghost"
               size="icon"

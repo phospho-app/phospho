@@ -141,9 +141,21 @@ const SessionStats = ({
           <code className="bg-secondary p-1.5 text-xs">{session_id}</code>
           <CopyButton text="session_id" className="ml-2" />
         </div>
-        <div className="text-xs w-48">
-          Created at:
-          <InteractiveDatetime timestamp={sessionData?.created_at} />
+        <div className="flex flex-row space-x-16">
+          <div className="text-xs max-w-48">
+            <span className="text-muted-foreground">Last message</span>
+            <InteractiveDatetime timestamp={sessionData?.last_message_ts} />
+          </div>
+          <div className="text-xs max-w-48">
+            <span className="text-muted-foreground">First message</span>
+            <InteractiveDatetime timestamp={sessionData?.created_at} />
+          </div>
+          <div className="flex flex-col">
+            <div className="text-xl font-bold">
+              {sessionData?.session_length}
+            </div>
+            <span className="text-muted-foreground text-xs">Length</span>
+          </div>
         </div>
         <div className="flex">
           <div className="gap-x-0.5 gap-y-0.5 flex flex-wrap items-center">
