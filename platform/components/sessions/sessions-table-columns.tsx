@@ -116,7 +116,7 @@ export function useColumns({
       header: ({ column }) => {
         return (
           <div className="flex flex-row items-center justify-between space-x-2">
-            Date
+            Last message at
             <Button
               variant="ghost"
               size="icon"
@@ -136,10 +136,10 @@ export function useColumns({
           </div>
         );
       },
-      accessorKey: "created_at",
+      accessorKey: "last_message_ts",
       cell: ({ row }) => {
-        const created_at = row.original.created_at;
-        return <InteractiveDatetime timestamp={created_at} />;
+        const last_message_ts = row.original.last_message_ts;
+        return <InteractiveDatetime timestamp={last_message_ts} />;
       },
     },
     // Preview

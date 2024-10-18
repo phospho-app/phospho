@@ -4,7 +4,6 @@ from typing import Dict, List, Literal, Optional
 
 import pandas as pd
 import resend
-from app.api.platform.models import Pagination, Sorting
 from app.api.v2.models.embeddings import Embedding
 from app.core import config
 from app.db.models import (
@@ -18,12 +17,12 @@ from app.db.models import (
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
 from app.services.mongo.extractor import ExtractorClient
-from app.services.mongo.query_builder import QueryBuilder
 from app.services.mongo.tasks import (
     fetch_flattened_tasks,
     get_all_tasks,
     label_sentiment_analysis,
 )
+from app.services.mongo.sessions import get_all_sessions
 from app.services.slack import slack_notification
 from app.utils import generate_timestamp, generate_uuid
 from fastapi import HTTPException
@@ -36,7 +35,6 @@ from phospho.models import Cluster, Clustering, EventDefinition, Threshold
 async def get_project_by_id(project_id: str) -> Project:
     mongo_db = await get_mongo_db()
 
-    # project_data = await mongo_db["projects"].find_one({"id": project_id})
     project_data = (
         await mongo_db["projects"]
         .aggregate(
@@ -452,83 +450,6 @@ async def email_project_tasks(
             await slack_notification(error_message)
     else:
         logger.warning("Preview environment: emails disabled")
-
-
-async def get_all_sessions(
-    project_id: str,
-    limit: int = 1000,
-    filters: Optional[ProjectDataFilters] = None,
-    get_events: bool = True,
-    get_tasks: bool = False,
-    pagination: Optional[Pagination] = None,
-    sorting: Optional[List[Sorting]] = None,
-) -> List[Session]:
-    mongo_db = await get_mongo_db()
-
-    query_builder = QueryBuilder(
-        project_id=project_id,
-        filters=filters,
-        fetch_objects="sessions",
-    )
-    pipeline = await query_builder.build()
-
-    # To avoid the sort to OOM on Serverless MongoDB executor, we restrain the pipeline to the necessary fields...
-    if sorting is None:
-        sorting_dict = {"created_at": -1}
-    else:
-        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
-    pipeline.extend(
-        [
-            {
-                "$project": {
-                    "id": 1,
-                    **{sort_key: 1 for sort_key in sorting_dict.keys()},
-                }
-            },
-            {"$sort": sorting_dict},
-        ]
-    )
-
-    # Add pagination
-    if pagination:
-        logger.info(f"Adding pagination: {pagination}")
-        pipeline.extend(
-            [
-                {"$skip": pagination.page * pagination.per_page},
-                {"$limit": pagination.per_page},
-            ]
-        )
-
-    # ... and then we add the lookup and the deduplication
-    pipeline.extend(
-        [
-            {
-                "$lookup": {
-                    "from": "sessions",
-                    "localField": "id",
-                    "foreignField": "id",
-                    "as": "sessions",
-                }
-            },
-            # unwind the sessions array
-            {"$unwind": "$sessions"},
-            # Replace the root with the sessions
-            {"$replaceRoot": {"newRoot": "$sessions"}},
-        ]
-    )
-    if get_events:
-        query_builder.merge_events(foreignField="session_id", force=True)
-        query_builder.deduplicate_sessions_events()
-    if get_tasks:
-        query_builder.merge_tasks(force=True)
-
-    sessions = await mongo_db["sessions"].aggregate(pipeline).to_list(length=limit)
-
-    # Filter the _id field from the Sessions
-    for session in sessions:
-        session.pop("_id", None)
-    sessions = [Session.model_validate(data) for data in sessions]
-    return sessions
 
 
 async def store_onboarding_survey(user: User, survey: dict):

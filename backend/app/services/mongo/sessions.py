@@ -1,5 +1,6 @@
 from typing import List, Literal, Optional, cast
 
+from app.api.platform.models.explore import Pagination, Sorting
 from app.db.models import Event, EventDefinition, Session, Task
 from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
@@ -418,3 +419,83 @@ async def human_eval_session(
     session_model.stats.human_eval = flag
 
     return session_model
+
+
+async def get_all_sessions(
+    project_id: str,
+    limit: int = 1000,
+    filters: Optional[ProjectDataFilters] = None,
+    get_events: bool = True,
+    get_tasks: bool = False,
+    pagination: Optional[Pagination] = None,
+    sorting: Optional[List[Sorting]] = None,
+) -> List[Session]:
+    """
+    Fetch all the sessions of a project.
+    """
+    mongo_db = await get_mongo_db()
+
+    query_builder = QueryBuilder(
+        project_id=project_id,
+        filters=filters,
+        fetch_objects="sessions",
+    )
+    pipeline = await query_builder.build()
+
+    # To avoid the sort to OOM on Serverless MongoDB executor, we restrain the pipeline to the necessary fields...
+    if sorting is None:
+        sorting_dict = {"last_message_ts": -1}
+    else:
+        sorting_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
+    pipeline.extend(
+        [
+            {
+                "$project": {
+                    "id": 1,
+                    **{sort_key: 1 for sort_key in sorting_dict.keys()},
+                }
+            },
+            {"$sort": sorting_dict},
+        ]
+    )
+
+    # Add pagination
+    if pagination:
+        logger.info(f"Adding pagination: {pagination}")
+        pipeline.extend(
+            [
+                {"$skip": pagination.page * pagination.per_page},
+                {"$limit": pagination.per_page},
+            ]
+        )
+
+    # ... and then we add the lookup and the deduplication
+    pipeline.extend(
+        [
+            {
+                "$lookup": {
+                    "from": "sessions",
+                    "localField": "id",
+                    "foreignField": "id",
+                    "as": "sessions",
+                }
+            },
+            # unwind the sessions array
+            {"$unwind": "$sessions"},
+            # Replace the root with the sessions
+            {"$replaceRoot": {"newRoot": "$sessions"}},
+        ]
+    )
+    if get_events:
+        query_builder.merge_events(foreignField="session_id", force=True)
+        query_builder.deduplicate_sessions_events()
+    if get_tasks:
+        query_builder.merge_tasks(force=True)
+
+    sessions = await mongo_db["sessions"].aggregate(pipeline).to_list(length=limit)
+
+    # Filter the _id field from the Sessions
+    for session in sessions:
+        session.pop("_id", None)
+    sessions = [Session.model_validate(data) for data in sessions]
+    return sessions
