@@ -1,5 +1,6 @@
 "use client";
 
+import { CopyButton } from "@/components/copy-button";
 import { InteractiveDatetime } from "@/components/interactive-datetime";
 import { CenteredSpinner } from "@/components/small-spinner";
 import TaskBox from "@/components/task-box";
@@ -8,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
 import { Task, TaskWithEvents } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
-import { ChevronRight, CopyIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
 import useSWR, { KeyedMutator } from "swr";
@@ -80,16 +81,7 @@ const TaskOverview: React.FC<TaskProps> = ({
       <Card className="flex flex-col sapce-y-1 p-2">
         <div className="flex flex-row items-center">
           <code className="bg-secondary p-1.5 text-xs">{task_id}</code>
-          <Button
-            variant="outline"
-            className="m-1.5"
-            size="icon"
-            onClick={() => {
-              navigator.clipboard.writeText(task_id);
-            }}
-          >
-            <CopyIcon className="w-3 h-3" />
-          </Button>
+          <CopyButton text={task_id} className="ml-2" />
         </div>
         <div className="flex flex-row space-x-16">
           <div className="text-xs max-w-48">
