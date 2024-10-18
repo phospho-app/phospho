@@ -201,34 +201,6 @@ async def get_languages(
 
 
 @router.post(
-    "/projects/{project_id}/search/sessions",
-    response_model=SearchResponse,
-    description="Perform a semantic search in the project's sessions",
-)
-async def post_search_sessions(
-    project_id: str,
-    search_query: SearchQuery,
-    user: User = Depends(propelauth.require_user),
-):
-    """
-    Get the resulting session_ids of a semantic search in the project's sessions.
-    The search is based on embedding similarity of the text conversation to the query.
-    """
-
-    project = await get_project_by_id(project_id)
-    propelauth.require_org_member(user, project.org_id)
-    # Perform the semantic search
-    relevant_tasks, relevant_sessions = await search_sessions_in_project(
-        project_id=project_id,
-        search_query=search_query.query,
-    )
-    return SearchResponse(
-        task_ids=[task.id for task in relevant_tasks],
-        session_ids=[session.id for session in relevant_sessions],
-    )
-
-
-@router.post(
     "/projects/{project_id}/tasks",
     response_model=Tasks,
     description="Fetch all the tasks of a project",
