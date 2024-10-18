@@ -217,6 +217,7 @@ export const ABTestingDataviz = () => {
   const onClickFiltersA = (newDateRange: string) => {
     if (dateRangeA === newDateRange) {
       setDateRangeA("Select a date range");
+      setVersionIDA(null);
       setFiltersA({
         created_at_start: undefined,
         created_at_end: undefined,
@@ -243,6 +244,7 @@ export const ABTestingDataviz = () => {
   const onClickFiltersB = (newDateRange: string) => {
     if (dateRangeB === newDateRange) {
       setDateRangeB("Select a date range");
+      setVersionIDB(null);
       setFiltersB({
         created_at_start: undefined,
         created_at_end: undefined,
@@ -264,6 +266,16 @@ export const ABTestingDataviz = () => {
         setVersionIDB("Last week");
       }
     }
+  };
+
+  const onClickVersionA = (version_id: string) => {
+    setVersionIDA(version_id);
+    setDateRangeA("Select a date range");
+  };
+
+  const onClickVersionB = (version_id: string) => {
+    setVersionIDB(version_id);
+    setDateRangeB("Select a date range");
   };
 
   return (
@@ -395,7 +407,7 @@ export const ABTestingDataviz = () => {
                 {abTests?.map((abTest) => (
                   <DropdownMenuItem
                     key={`${abTest.version_id}_A`}
-                    onClick={() => setVersionIDA(abTest.version_id)}
+                    onClick={() => onClickVersionA(abTest.version_id)}
                     asChild
                   >
                     <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
@@ -484,7 +496,7 @@ export const ABTestingDataviz = () => {
                 {abTests?.map((abTest) => (
                   <DropdownMenuItem
                     key={`${abTest.version_id}_B`}
-                    onClick={() => setVersionIDB(abTest.version_id)}
+                    onClick={() => onClickVersionB(abTest.version_id)}
                     asChild
                   >
                     <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
