@@ -29,7 +29,6 @@ import { useUser } from "@propelauth/nextjs/client";
 import {
   ArrowDown,
   ArrowUp,
-  ArrowUpDown,
   BarChart,
   ChevronDown,
   Code,
