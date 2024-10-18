@@ -111,7 +111,7 @@ function ClusterCard({
         >
           <SheetTrigger asChild>
             <Button disabled={isDisabled} size="sm" variant="outline">
-              <PlusIcon className="h-4 w-4 mr-1" />
+              <PlusIcon className="size-4 mr-1" />
               Add tagger
             </Button>
           </SheetTrigger>

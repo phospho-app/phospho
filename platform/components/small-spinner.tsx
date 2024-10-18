@@ -8,7 +8,7 @@ export const Icons = {
 export function Spinner({ className }: { className?: string }) {
   return (
     <>
-      <Icons.spinner className={cn("h-4 w-4 animate-spin", className)} />
+      <Icons.spinner className={cn("size-4 animate-spin", className)} />
     </>
   );
 }

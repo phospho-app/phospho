@@ -265,7 +265,7 @@ export const ABTestingDataviz = () => {
                 <Button variant="outline">
                   <div className="flex flex-row items-center justify-between min-w-[10rem]">
                     <span className="font-semibold mr-1">Reference A: </span>
-                    {versionIDA} <ChevronDown className="h-4 w-4 ml-2" />
+                    {versionIDA} <ChevronDown className="size-4 ml-2" />
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -279,7 +279,7 @@ export const ABTestingDataviz = () => {
                     <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
                       <div className="flex flex-row gap-x-2 items-center">
                         {abTest.version_id === versionIDA && (
-                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                          <Check className="size-4 mr-2 text-green-500" />
                         )}
                         {abTest.version_id}
                       </div>
@@ -301,7 +301,7 @@ export const ABTestingDataviz = () => {
                 <Button variant="outline">
                   <div className="flex flex-row items-center justify-between min-w-[10rem]">
                     <span className="font-semibold mr-1">Candidate B:</span>
-                    {versionIDB} <ChevronDown className="h-4 w-4 ml-2" />
+                    {versionIDB} <ChevronDown className="size-4 ml-2" />
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -315,7 +315,7 @@ export const ABTestingDataviz = () => {
                     <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
                       <div className="flex flex-row gap-x-2 items-center">
                         {abTest.version_id === versionIDB && (
-                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                          <Check className="size-4 mr-2 text-green-500" />
                         )}
                         {abTest.version_id}
                       </div>

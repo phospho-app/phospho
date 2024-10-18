@@ -121,9 +121,9 @@ export function useColumns({
               {
                 // Show the sorting icon based on the current sorting state
                 column.getIsSorted() === "desc" ? (
-                  <ArrowUp className="h-4 w-4" />
+                  <ArrowUp className="size-4" />
                 ) : (
-                  <ArrowDown className="h-4 w-4" />
+                  <ArrowDown className="size-4" />
                 )
               }
             </Button>
@@ -242,7 +242,7 @@ export function useColumns({
       header: () => {
         return (
           <div className="flex items-center">
-            <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+            <Sparkles className="size-4 mr-1 text-green-500" />
             Language
           </div>
         );
@@ -265,7 +265,7 @@ export function useColumns({
         return (
           <div className="flex items-center space-x-2 justify-between">
             <div className="flex flex-row items-center space-x-1">
-              <Sparkles className="h-4 w-4 text-green-500" />
+              <Sparkles className="size-4 text-green-500" />
               <div>Events</div>
             </div>
             <RunEventsSettings
@@ -332,7 +332,7 @@ export function useColumns({
         return (
           <div className="flex justify-between items-center space-x-2">
             <div className="flex flex-row items-center">
-              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+              <Sparkles className="size-4 mr-1 text-green-500" />
               Sentiment
             </div>
             <SentimentSettings />

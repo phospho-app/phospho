@@ -102,9 +102,9 @@ export function DatePickerWithRange({
                   !dateRange && "text-muted-foreground",
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="mr-2 size-4" />
                 {dateRangeLabel}
-                <ChevronDown className="ml-2 h-4 w-4" />
+                <ChevronDown className="ml-2 size-4" />
               </Button>
             </HoverCardTrigger>
           </DropdownMenuTrigger>
@@ -164,8 +164,7 @@ export function DatePickerWithRange({
           className="p-2 border rounded-lg shadow-lg m-0 text-xs text-background bg-foreground flex items-center cursor-pointer"
           onClick={closeWarning}
         >
-          <ChevronLeft className="h-4 w-4 ml-2" /> Data is filtered by date
-          range
+          <ChevronLeft className="size-4 ml-2" /> Data is filtered by date range
           <X className="ml-1 h-3 w-3" />
         </HoverCardContent>
       </HoverCard>

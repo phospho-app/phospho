@@ -141,6 +141,7 @@ async def breakdown_by_sum_of_metadata_field(
     Get the sum of a metadata field, grouped by another metadata field if provided.
 
     The metric can be one of the following:
+    - "count_unique": Number of unique values of the metadata field
     - "sum": Sum of the metadata field
     - "avg": Average of the metadata field
     - "nb_messages": Number of tasks
@@ -552,6 +553,33 @@ async def breakdown_by_sum_of_metadata_field(
             raise HTTPException(
                 status_code=400,
                 detail="Metric 'avg' is only supported for number metadata fields",
+            )
+
+    if metric == "count_unique":
+        if metadata_field in category_metadata_fields:
+            pipeline += [
+                {
+                    "$group": {
+                        "_id": f"${breakdown_by_col}",
+                        "metric": {
+                            "$addToSet": f"$metadata.{metadata_field}",
+                        },
+                    },
+                },
+                {
+                    "$project": {
+                        "breakdown_by": "$_id",
+                        "metric": {"$size": "$metric"},
+                    }
+                },
+            ]
+        else:
+            logger.error(
+                f"Metric 'count_unique' is only supported for category metadata fields. Provided metadata field: {metadata_field}"
+            )
+            raise HTTPException(
+                status_code=400,
+                detail="Metric 'count_unique' is only supported for category metadata fields",
             )
 
     # Sort

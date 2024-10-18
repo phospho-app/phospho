@@ -176,9 +176,9 @@ const RunAnalysisInPast = () => {
     <Sheet>
       <SheetTrigger asChild>
         <Button variant={"outline"}>
-          <Sparkles className="text-green-500 h-4 w-4 mr-2" />
+          <Sparkles className="text-green-500 size-4 mr-2" />
           Detect
-          <ChevronRight className="h-4 w-4 ml-2" />
+          <ChevronRight className="size-4 ml-2" />
         </Button>
       </SheetTrigger>
       <SheetContent className="md:w-1/2 overflow-auto">
@@ -294,7 +294,7 @@ const RunAnalysisInPast = () => {
                 >
                   {loading && <Spinner className="mr-2" />}
                   {!loading && (
-                    <PlayIcon className="h-4 w-4 mr-2 text-green-500" />
+                    <PlayIcon className="size-4 mr-2 text-green-500" />
                   )}
                   Run now
                 </Button>
