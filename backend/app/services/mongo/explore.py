@@ -2396,6 +2396,8 @@ async def get_ab_tests_versions(
     versionA: Optional[str],
     versionB: Optional[str],
     selected_events_ids: Optional[List[str]] = None,
+    filtersA: Optional[ProjectDataFilters] = None,
+    filtersB: Optional[ProjectDataFilters] = None,
 ) -> List[Dict[str, Union[str, float, int]]]:
     """
     - For boolean events, gets the number of times the event was detected in each task with the two versions of the model.
@@ -2404,9 +2406,6 @@ async def get_ab_tests_versions(
     """
     mongo_db = await get_mongo_db()
     collection_name = "events"
-
-    logger.debug(f"Fetching AB tests for project {project_id}")
-    logger.debug(f"Versions: {versionA} and {versionB}")
 
     if versionA == "None":
         versionA = None
@@ -2439,27 +2438,87 @@ async def get_ab_tests_versions(
             }
         },
         {"$unwind": "$event_def"},
-        {
-            "$match": {
-                "task.metadata.version_id": {"$in": [versionA, versionB]},
-            }
-        },
-        {
-            "$group": {
-                "_id": {
-                    "version_id": "$task.metadata.version_id",
-                    "event_definition_id": "$event_def.id",
-                    "event_label": "$score_range.label",
-                    "event_name": "$event_def.event_name",
-                    "event_type": "$event_def.score_range_settings.score_type",
-                },
-                "count": {"$sum": 1},
-                "score": {"$avg": "$score_range.value"},
-            },
-        },
-        # Keep only the events that are in the selected_events_id list
     ]
 
+    # I want to set the version_id of all task to versionA if the version_id is None and the task was created in the filterA
+    # Check if the filters are not None or empty
+    if (
+        filtersA is not None
+        and filtersB is not None
+        and (
+            filtersA.created_at_start is not None
+            or filtersA.created_at_end is not None
+            or filtersB.created_at_start is not None
+            or filtersB.created_at_end is not None
+        )
+    ):
+        versionA = "versionA"
+        versionB = "versionB"
+        filteringA = []
+        filteringB = []
+        if filtersA.created_at_start is not None:
+            filteringA.append({"$gte": ["$task.created_at", filtersA.created_at_start]})
+        if filtersA.created_at_end is not None:
+            filteringA.append({"$lte": ["$task.created_at", filtersA.created_at_end]})
+        if filtersB.created_at_start is not None:
+            filteringB.append({"$gte": ["$task.created_at", filtersB.created_at_start]})
+        if filtersB.created_at_end is not None:
+            filteringB.append({"$lte": ["$task.created_at", filtersB.created_at_end]})
+        pipeline.extend(
+            [
+                {
+                    "$set": {
+                        "task.metadata.version_id": {
+                            "$cond": [
+                                {
+                                    "$and": filteringA,
+                                },
+                                versionA,
+                                "$task.metadata.version_id",
+                            ]
+                        }
+                    }
+                },
+                {
+                    "$set": {
+                        "task.metadata.version_id": {
+                            "$cond": [
+                                {
+                                    "$and": filteringB,
+                                },
+                                versionB,
+                                "$task.metadata.version_id",
+                            ]
+                        }
+                    }
+                },
+            ]
+        )
+
+    pipeline.extend(
+        [
+            {
+                "$match": {
+                    "task.metadata.version_id": {"$in": [versionA, versionB]},
+                }
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "version_id": "$task.metadata.version_id",
+                        "event_definition_id": "$event_def.id",
+                        "event_label": "$score_range.label",
+                        "event_name": "$event_def.event_name",
+                        "event_type": "$event_def.score_range_settings.score_type",
+                    },
+                    "count": {"$sum": 1},
+                    "score": {"$avg": "$score_range.value"},
+                },
+            },
+        ]
+    )
+
+    # Keep only the events that are in the selected_events_id list
     if selected_events_ids is not None:
         pipeline.append(
             {

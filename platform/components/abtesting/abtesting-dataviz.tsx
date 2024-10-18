@@ -17,12 +17,16 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
-import { ABTest, Project } from "@/models/models";
+import { ABTest, Project, ProjectDataFilters } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -59,6 +63,17 @@ export const ABTestingDataviz = () => {
 
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const [filtersA, setFiltersA] = useState<ProjectDataFilters>({
+    created_at_start: undefined,
+    created_at_end: undefined,
+  });
+  const [filtersB, setFiltersB] = useState<ProjectDataFilters>({
+    created_at_start: undefined,
+    created_at_end: undefined,
+  });
+
+  const [dateRangeA, setDateRangeA] = useState<string>("Select a date range");
+  const [dateRangeB, setDateRangeB] = useState<string>("Select a date range");
 
   // Fetch ABTests
   const { data: abTests }: { data: ABTest[] | null | undefined } = useSWR(
@@ -150,6 +165,8 @@ export const ABTestingDataviz = () => {
           versionIDA,
           versionIDB,
           JSON.stringify(selectedEventsIds),
+          JSON.stringify(filtersA),
+          JSON.stringify(filtersB),
         ]
       : null,
     ([url, accessToken]) =>
@@ -157,6 +174,8 @@ export const ABTestingDataviz = () => {
         versionA: versionIDA,
         versionB: versionIDB,
         selected_events_ids: selectedEventsIds,
+        filtersA: filtersA,
+        filtersB: filtersB,
       }),
     {
       keepPreviousData: true,
@@ -193,6 +212,54 @@ export const ABTestingDataviz = () => {
         (event) => event.id && selectedEventsIds.includes(event.id),
       )) ||
     selectedEventsIds === null;
+
+  const onClickFiltersA = (newDateRange: string) => {
+    if (dateRangeA === newDateRange) {
+      setDateRangeA("Select a date range");
+      setFiltersA({
+        created_at_start: undefined,
+        created_at_end: undefined,
+      });
+    } else {
+      setDateRangeA(newDateRange);
+      if (newDateRange === "This week") {
+        setFiltersA({
+          created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
+          created_at_end: undefined,
+        });
+      }
+      if (newDateRange === "Last week") {
+        setFiltersA({
+          created_at_start: Date.now() / 1000 - 14 * 24 * 60 * 60,
+          created_at_end: Date.now() / 1000 - 7 * 24 * 60 * 60,
+        });
+      }
+    }
+  };
+
+  const onClickFiltersB = (newDateRange: string) => {
+    if (dateRangeB === newDateRange) {
+      setDateRangeB("Select a date range");
+      setFiltersB({
+        created_at_start: undefined,
+        created_at_end: undefined,
+      });
+    } else {
+      setDateRangeB(newDateRange);
+      if (newDateRange === "This week") {
+        setFiltersB({
+          created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
+          created_at_end: undefined,
+        });
+      }
+      if (newDateRange === "Last week") {
+        setFiltersB({
+          created_at_start: Date.now() / 1000 - 14 * 24 * 60 * 60,
+          created_at_end: Date.now() / 1000 - 7 * 24 * 60 * 60,
+        });
+      }
+    }
+  };
 
   return (
     <>
@@ -270,6 +337,56 @@ export const ABTestingDataviz = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="overflow-y-auto max-h-[40rem] ">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>{dateRangeA}</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem
+                        onClick={() => onClickFiltersA("This week")}
+                      >
+                        This week
+                        {dateRangeA === "This week" && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onClickFiltersA("Last week")}
+                      >
+                        Last week
+                        {dateRangeA === "Last week" && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                      </DropdownMenuItem>
+                      <Separator />
+                      {/* <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Custom</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={dateRangeA?.from}
+                            selected={dateRangeA}
+                            onSelect={(selected) => {
+                              if (selected !== undefined) {
+                                // Set the time of the from date to 00:00:00
+                                if (selected.from) {
+                                  selected.from.setHours(0, 0, 0, 0);
+                                }
+                                // Set the time of the to date to 23:59:59
+                                if (selected.to) {
+                                  selected.to.setHours(23, 59, 59, 999);
+                                }
+                                setDateRangeA(selected);
+                              }
+                            }}
+                            numberOfMonths={2}
+                          />
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub> */}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <Separator />
                 {abTests?.map((abTest) => (
                   <DropdownMenuItem
                     key={`${abTest.version_id}_A`}
@@ -305,7 +422,60 @@ export const ABTestingDataviz = () => {
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
+              <DropdownMenuContent
+                className="w- 56 overflow-y-auto max-h-[40rem]"
+                align="start"
+              >
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>{dateRangeB}</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem
+                        onClick={() => onClickFiltersB("This week")}
+                      >
+                        This week{" "}
+                        {dateRangeB === "This week" && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onClickFiltersB("Last week")}
+                      >
+                        Last week{" "}
+                        {dateRangeB === "Last week" && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                      </DropdownMenuItem>
+                      <Separator />
+                      {/* <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Custom</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={dateRangeB?.from}
+                            selected={dateRangeB}
+                            onSelect={(selected) => {
+                              if (selected !== undefined) {
+                                // Set the time of the from date to 00:00:00
+                                if (selected.from) {
+                                  selected.from.setHours(0, 0, 0, 0);
+                                }
+                                // Set the time of the to date to 23:59:59
+                                if (selected.to) {
+                                  selected.to.setHours(23, 59, 59, 999);
+                                }
+                                setDateRangeB(selected);
+                              }
+                            }}
+                            numberOfMonths={2}
+                          />
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub> */}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <Separator />
                 {abTests?.map((abTest) => (
                   <DropdownMenuItem
                     key={`${abTest.version_id}_B`}
