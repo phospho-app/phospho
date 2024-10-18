@@ -26,7 +26,6 @@ from .projects import (
     ProjectDataFilters,
     QuerySessionsTasksRequest,
 )
-from .search import SearchQuery, SearchResponse
 from .sessions import Session, SessionCreationRequest, Sessions, SessionUpdateRequest
 from .tasks import (
     FlattenedTasks,

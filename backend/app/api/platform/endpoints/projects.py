@@ -24,8 +24,6 @@ from app.api.platform.models import (
     ProjectUpdateRequest,
     QuerySessionsTasksRequest,
     QueryUserMetadataRequest,
-    SearchQuery,
-    SearchResponse,
     Sessions,
     Tasks,
     Users,
@@ -456,9 +454,9 @@ async def post_upload_tasks(
         inplace=True,
     )
 
-    tasks_df = await universal_loader(tasks_df)
+    new_tasks_df = await universal_loader(tasks_df)
 
-    if tasks_df is None:
+    if new_tasks_df is None:
         # The file has been uploaded but the columns are missing (wrong format)
         # We send a slack notification to the phospho team for manual verification
         if config.GCP_BUCKET_CLIENT:
@@ -476,29 +474,29 @@ async def post_upload_tasks(
 
     # Check if 'task_id' column exists and contains unique values
 
-    if "task_id" in tasks_df.columns:
-        if tasks_df["task_id"].nunique() != len(tasks_df["task_id"]):
+    if "task_id" in new_tasks_df.columns:
+        if new_tasks_df["task_id"].nunique() != len(new_tasks_df["task_id"]):
             raise HTTPException(
                 status_code=400,
                 detail="Error: The 'task_id' column contains duplicate values. Each task_id must be unique.",
             )
 
     # Drop rows with missing column "input"
-    old_len = tasks_df.shape[0]
-    tasks_df.dropna(subset=["input"], inplace=True)
-    new_len = tasks_df.shape[0]
+    old_len = new_tasks_df.shape[0]
+    new_tasks_df.dropna(subset=["input"], inplace=True)
+    new_len = new_tasks_df.shape[0]
 
     # Process the csv file as a background task
     logger.info(f"File {file.filename} uploaded successfully. Processing tasks.")
     background_tasks.add_task(
         process_file_upload_into_log_events,
-        tasks_df=tasks_df,
+        tasks_df=new_tasks_df,
         project_id=project_id,
         org_id=project.org_id,
     )
     return {
         "status": "ok",
-        "nb_rows_processed": tasks_df.shape[0],
+        "nb_rows_processed": new_tasks_df.shape[0],
         "nb_rows_dropped": old_len - new_len,
     }
 

@@ -15,6 +15,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { DashboardTile, Project } from "@/models/models";
@@ -22,6 +27,10 @@ import { EventDefinition, ScoreRangeType } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  BarChart,
   ChevronDown,
   Code,
   Flag,
@@ -34,7 +43,7 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import useSWR, { mutate } from "swr";
 
 const MetadataForm: React.FC = () => {
@@ -64,10 +73,18 @@ const MetadataForm: React.FC = () => {
   const setSelectedGroupBy = navigationStateStore(
     (state) => state.setSelectedGroupBy,
   );
-  const [selectedScorerId, setselectedScorerId] = React.useState<
-    string | undefined
-  >(undefined);
-  const [selectedScorerName, setselectedScorerName] = React.useState<
+  const selectedScorerId = navigationStateStore(
+    (state) => state.selectedScorerId,
+  );
+  const setSelectedScorerId = navigationStateStore(
+    (state) => state.setSelectedScorerId,
+  );
+  const datavizSorting = navigationStateStore((state) => state.datavizSorting);
+  const setDatavizSorting = navigationStateStore(
+    (state) => state.setDatavizSorting,
+  );
+
+  const [selectedScorerName, setselectedScorerName] = useState<
     string | undefined
   >(undefined);
 
@@ -170,7 +187,7 @@ const MetadataForm: React.FC = () => {
                         key={event.event_name}
                         onClick={() => {
                           setselectedScorerName(event.event_name);
-                          setselectedScorerId(event.id);
+                          setSelectedScorerId(event.id ?? null);
                           setSelectedMetric("avg_scorer_value");
                           setmetadata_metric(null);
                         }}
@@ -389,6 +406,53 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuSub>
               </DropdownMenuContent>
             </DropdownMenu>
+            <HoverCard openDelay={0} closeDelay={0}>
+              <HoverCardTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    setDatavizSorting({
+                      ...datavizSorting,
+                      desc: !datavizSorting.desc,
+                    });
+                  }}
+                >
+                  {datavizSorting.desc && <ArrowDown className="size-4" />}
+                  {!datavizSorting.desc && <ArrowUp className="size-4" />}
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent className="text-xs">
+                Sorting: {datavizSorting.desc ? "Descending" : "Ascending"}
+              </HoverCardContent>
+            </HoverCard>
+            <HoverCard openDelay={0} closeDelay={0}>
+              <HoverCardTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    setDatavizSorting({
+                      ...datavizSorting,
+                      id:
+                        datavizSorting.id === "breakdown_by"
+                          ? "metric"
+                          : "breakdown_by",
+                    });
+                  }}
+                >
+                  {datavizSorting.id === "breakdown_by" && (
+                    <BarChart className="size-4 rotate-90" />
+                  )}
+                  {datavizSorting.id === "metric" && (
+                    <BarChart className="size-4 transform -rotate-90" />
+                  )}
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent className="text-xs">
+                Sorting by: {datavizSorting.id}
+              </HoverCardContent>
+            </HoverCard>
           </div>
           <Button
             onClick={async () => {
@@ -450,6 +514,7 @@ const MetadataForm: React.FC = () => {
             metadata_metric={metadata_metric}
             breakdown_by={breakdown_by}
             scorer_id={selectedScorerId}
+            sorting={datavizSorting}
           />
         </div>
       </div>
