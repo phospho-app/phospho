@@ -42,7 +42,6 @@ import { useUser } from "@propelauth/nextjs/client";
 import {
   BarChartBig,
   CloudUpload,
-  CopyIcon,
   Lock,
   Mail,
   MonitorPlay,
@@ -60,6 +59,8 @@ import { FileUploader } from "react-drag-drop-files";
 import { useForm } from "react-hook-form";
 import useSWR from "swr";
 import { z } from "zod";
+
+import { CopyButton } from "../copy-button";
 
 const fileTypes = ["csv", "xlsx", "jsonl", "parquet"];
 
@@ -129,16 +130,7 @@ const APIKeyAndProjectId = () => {
       <div className="flex items-center">
         <span className="w-32">Project id:</span>
         <Input value={project_id}></Input>
-        <Button
-          variant="outline"
-          className="ml-2 p-3"
-          size="icon"
-          onClick={() => {
-            navigator.clipboard.writeText(project_id);
-          }}
-        >
-          <CopyIcon size="14" />
-        </Button>
+        <CopyButton text={project_id} className="ml-2" />
       </div>
     </div>
   );
