@@ -51,7 +51,7 @@ function EventCategoryTitle({
         </div>
         <SheetTrigger asChild>
           <Button disabled={isDisabled}>
-            <PlusIcon className="h-4 w-4 mr-1" />
+            <PlusIcon className="size-4 mr-1" />
             {buttonLabel}
           </Button>
         </SheetTrigger>
@@ -149,7 +149,7 @@ export default function Page() {
             <Wand2 className="w-4 h-4 mr-1" /> Event suggestions
           </Button> */}
       {/* <Alert>
-        <Bell className="h-4 w-4" />
+        <Bell className="size-4" />
         <AlertTitle>
           Never miss what you're looking for. Track users' behaviours with
           events.

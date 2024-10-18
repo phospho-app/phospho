@@ -209,7 +209,7 @@ const SuggestEvent: React.FC<SuggestEventProps> = ({ sessionId }) => {
               className="hover:border-green-500 rounded-full p-1.5 border-2 cursor-pointer"
               onClick={() => generateEventSuggestion()}
             >
-              <Wand2 className="h-4 w-4" />
+              <Wand2 className="size-4" />
             </div>
           </PopoverTrigger>
         </HoverCardTrigger>

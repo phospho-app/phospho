@@ -1,7 +1,5 @@
 from typing import Dict, List, Literal, Optional
 
-from app.api.platform.models import Sorting, Pagination
-from app.api.v2.models.projects import UserMetadata
 from app.core import constants
 from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
@@ -10,388 +8,6 @@ from fastapi import HTTPException
 from loguru import logger
 
 from phospho.models import ProjectDataFilters
-
-
-async def fetch_count(
-    project_id: str, collection_name: str, metadata_field: str
-) -> int:
-    """
-    Fetch the number of users that are in a projects
-    """
-    mongo_db = await get_mongo_db()
-    nb_users = await mongo_db[collection_name].distinct(
-        key=f"metadata.{metadata_field}",
-        filter={
-            "project_id": project_id,
-            # Ignore null values
-            f"metadata.{metadata_field}": {"$ne": None},
-        },
-    )
-    return len(nb_users)
-
-
-async def calculate_average_for_metadata(
-    project_id: str, collection_name: str, metadata_field: str
-) -> Optional[float]:
-    mongo_db = await get_mongo_db()
-
-    pipeline = [
-        {
-            "$match": {
-                "project_id": project_id,
-                f"metadata.{metadata_field}": {"$exists": True},
-            }
-        },  # Filter for a specific project_id
-        {"$group": {"_id": f"$metadata.{metadata_field}", "count": {"$sum": 1}}},
-        {"$group": {"_id": None, "average": {"$avg": "$count"}}},
-    ]
-
-    result = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
-    if not result or "average" not in result[0]:
-        return None
-    average = result[0]["average"]
-    return average
-
-
-async def calculate_top10_percent(
-    project_id: str, collection_name: str, metadata_field: str
-) -> Optional[int]:
-    mongo_db = await get_mongo_db()
-
-    # Define the pipeline
-    pipeline = [
-        {"$match": {"project_id": project_id}},
-        {"$match": {f"metadata.{metadata_field}": {"$exists": True}}},
-        {
-            "$group": {
-                "_id": f"$metadata.{metadata_field}",
-                "metadataValueCount": {"$sum": 1},
-            }
-        },
-        {"$sort": {"metadataValueCount": -1}},
-        {
-            "$facet": {
-                "totalKeyCount": [{"$count": "count"}],
-                "sortedData": [{"$match": {}}],
-            }
-        },
-    ]
-
-    # Run the aggregation pipeline
-    result = await mongo_db[collection_name].aggregate(pipeline).to_list(None)
-    if not result or not result[0]["totalKeyCount"]:
-        return None
-
-    total_users = result[0]["totalKeyCount"][0]["count"]
-    ten_percent_index = max(
-        int(total_users * 0.1) - 1, 0
-    )  # Calculate the 10% index, ensure it's not negative
-
-    # Retrieve the task count of the user at the 10% threshold
-    # Ensure that the list is long enough
-    if ten_percent_index < len(result[0]["sortedData"]):
-        ten_percent_user_task_count = result[0]["sortedData"][ten_percent_index][
-            "metadataValueCount"
-        ]
-        logger.debug(
-            f"{metadata_field} count at the 10% threshold in {collection_name}: {ten_percent_user_task_count}"
-        )
-        return ten_percent_user_task_count
-
-    else:
-        logger.warning(
-            "The dataset does not have enough users to determine the 10% threshold."
-        )
-        return 0
-
-
-async def calculate_bottom10_percent(
-    project_id: str, collection_name: str, metadata_field: str
-) -> Optional[int]:
-    mongo_db = await get_mongo_db()
-
-    # Define the pipeline with ascending sort order
-    pipeline = [
-        {"$match": {"project_id": project_id}},
-        {"$match": {f"metadata.{metadata_field}": {"$exists": True}}},
-        {"$group": {"_id": "$metadata.user_id", "metadataValueCount": {"$sum": 1}}},
-        {"$sort": {"metadataValueCount": 1}},  # Sort in ascending order
-        {
-            "$facet": {
-                "totalMetadataKeyCount": [{"$count": "count"}],
-                "sortedData": [{"$match": {}}],
-            }
-        },
-    ]
-
-    # Run the aggregation pipeline
-    result = await mongo_db["tasks"].aggregate(pipeline).to_list(None)
-    if not result or not result[0]["totalMetadataKeyCount"]:
-        return None
-
-    total_users = result[0]["totalMetadataKeyCount"][0]["count"]
-    ten_percent_index = min(
-        int(total_users * 0.1), total_users - 1
-    )  # Calculate the bottom 10% index
-
-    # Retrieve the task count of the user at the bottom 10% threshold
-    # Ensure that the list is long enough
-    if ten_percent_index < len(result[0]["sortedData"]):
-        bottom_ten_percent_user_task_count = result[0]["sortedData"][ten_percent_index][
-            "metadataValueCount"
-        ]
-        logger.debug(
-            f"{metadata_field} count at the 10% bottom threshold in {collection_name}: {bottom_ten_percent_user_task_count}"
-        )
-        return bottom_ten_percent_user_task_count
-
-    else:
-        logger.warning(
-            "The dataset does not have enough users to determine the bottom 10% threshold."
-        )
-        return 0
-
-
-async def fetch_users_metadata(
-    project_id: str,
-    filters: ProjectDataFilters,
-    sorting: Optional[List[Sorting]] = None,
-    pagination: Optional[Pagination] = None,
-    user_id_search: Optional[str] = None,
-) -> List[UserMetadata]:
-    """
-    Get the user metadata.
-
-    - project_id: str
-    - filters: ProjectDataFilters
-    - sorting: Optional[List[Sorting]]
-    - pagination: Optional[Pagination]
-    - user_id_search: Optional[str] Search for a specific user_id.
-        It uses a regex to match the user_id, so it can be a partial match.
-
-    The UserMetadata contains:
-        user_id: str
-        nb_tasks: int
-        avg_success_rate: float
-        avg_session_length: float
-        nb_tokens: int
-        events: List[Event]
-        tasks_id: List[str]
-        session_ids: List[str]
-        first_message_ts: datetime
-        last_message_ts: datetime
-    """
-
-    mongo_db = await get_mongo_db()
-    # To keep track of the fields that are computed and need to be carried over
-    all_computed_fields = []
-
-    # Only fetch tasks with user_id
-    if filters.metadata is None:
-        filters.metadata = {}
-    if filters.user_id is None and filters.metadata.get("user_id") is None:
-        filters.metadata["user_id"] = {"$ne": None}
-    if user_id_search:
-        filters.metadata["user_id"] = {"$regex": user_id_search}
-
-    query_builder = QueryBuilder(
-        project_id=project_id, filters=filters, fetch_objects="tasks"
-    )
-
-    pipeline = await query_builder.build()
-
-    # Compute
-    pipeline += [
-        {
-            "$set": {
-                "is_success": {
-                    "$cond": [{"$eq": ["$human_eval.flag", "success"]}, 1, 0]
-                },
-                # If metadata.total_tokens is not present, set to 0
-                "metadata.total_tokens": {
-                    "$cond": [
-                        {"$eq": [{"$type": "$metadata.total_tokens"}, "missing"]},
-                        0,
-                        "$metadata.total_tokens",
-                    ]
-                },
-            }
-        },
-        {
-            "$group": {
-                "_id": "$metadata.user_id",
-                "nb_tasks": {"$sum": 1},
-                "avg_success_rate": {"$avg": {"$toInt": "$is_success"}},
-                "total_tokens": {"$sum": "$metadata.total_tokens"},
-                "task_ids": {"$addToSet": "$id"},
-                "session_ids": {"$addToSet": "$session_id"},
-                # First and last message timestamp
-                "first_message_ts": {"$min": "$created_at"},
-                "last_message_ts": {"$max": "$created_at"},
-            }
-        },
-    ]
-    all_computed_fields.extend(
-        [
-            "nb_tasks",
-            "avg_success_rate",
-            "total_tokens",
-            "task_ids",
-            "first_message_ts",
-            "last_message_ts",
-            "session_ids",
-        ]
-    )
-
-    # Override the created_at filters to filter by last_message_ts
-    filter_last_message_ts_start = filters.created_at_start
-    filter_last_message_ts_end = filters.created_at_end
-    secondary_filter: Dict[str, object] = {}
-    if filter_last_message_ts_start is not None:
-        secondary_filter["last_message_ts"] = {"$gte": filter_last_message_ts_start}
-    if filter_last_message_ts_end is not None:
-        secondary_filter["last_message_ts"] = {
-            **secondary_filter.get("last_message_ts", {}),  # type: ignore
-            "$lte": filter_last_message_ts_end,
-        }
-    if secondary_filter:
-        pipeline += [{"$match": secondary_filter}]
-
-    # Apply the sorting
-    if sorting:
-        logger.info(f"Sorting by: {sorting}")
-        sort_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
-        # Rename the id user_id by _id
-        sort_dict["_id"] = sort_dict.pop("user_id", 1)
-        pipeline += [{"$sort": sort_dict}]
-    else:
-        pipeline += [{"$sort": {"last_message_ts": 1, "_id": -1}}]
-
-    # Adds the pagination
-    # TODO: All the steps above are pretty slow. Server-side pagination does not work well with this approach.
-    # We should create a new collection to persist the user metadata and use it for pagination, like Sessions.
-    if pagination:
-        pipeline += [
-            {"$skip": pagination.page * pagination.per_page},
-            {"$limit": pagination.per_page},
-        ]
-
-    # Adds the list of unique detected events.
-    # This is a bit tricky because we need to deduplicate the events based on the event_definition.id
-    # For now, we only keep the first event with the same event_definition.id
-    pipeline += [
-        {"$unwind": "$task_ids"},
-        {
-            "$lookup": {
-                "from": "events",
-                "localField": "task_ids",
-                "foreignField": "task_id",
-                "as": "events",
-            }
-        },
-        {
-            "$unwind": {
-                "path": "$events",
-                "preserveNullAndEmptyArrays": True,
-            }
-        },
-        # (Optional) Keep only tagger events
-        # {
-        #     "$match": {
-        #         "events.event_definition.score_range_settings.score_type": "confidence"
-        #     }
-        # },
-        # Deduplicate the events based on the event.event_definition.id
-        {
-            "$group": {
-                "_id": {
-                    "user_id": "$_id",
-                    "event_id": "$events.event_definition.id",
-                },
-                "events": {"$first": "$events"},
-                **{field: {"$first": f"${field}"} for field in all_computed_fields},
-            }
-        },
-        # Group by user_id
-        {
-            "$group": {
-                "_id": "$_id.user_id",
-                "events": {"$push": "$events"},
-                **{field: {"$first": f"${field}"} for field in all_computed_fields},
-            }
-        },
-        # Filter the events to only keep non-null values
-        {
-            "$set": {
-                "events": {
-                    "$filter": {
-                        "input": "$events",
-                        "as": "event",
-                        "cond": {"$ne": ["$$event", None]},
-                    }
-                }
-            }
-        },
-    ]
-    query_builder.deduplicate_tasks_events()
-    all_computed_fields.append("events")
-
-    # Compute the average session length
-    pipeline += [
-        {
-            "$unwind": "$session_ids",
-        },
-        {
-            "$lookup": {
-                "from": "sessions",
-                "localField": "session_ids",
-                "foreignField": "id",
-                "as": "session",
-            }
-        },
-        {"$unwind": "$session"},
-        # Compute the average session length and carry over the other fields
-        {
-            "$group": {
-                "_id": "$_id",
-                "avg_session_length": {"$avg": "$session.session_length"},
-                **{field: {"$first": f"${field}"} for field in all_computed_fields},
-            }
-        },
-    ]
-    all_computed_fields.append("avg_session_length")
-
-    # Project the fields we want to keep and rename the _id to user_id
-    pipeline += [
-        {
-            "$project": {
-                "user_id": "$_id",
-                **{field: 1 for field in all_computed_fields},
-            }
-        },
-    ]
-
-    # group made us lose the order. We need to sort again
-    if sorting:
-        logger.info(f"Sorting by: {sorting}")
-        sort_dict = {sort.id: 1 if sort.desc else -1 for sort in sorting}
-        # Rename the id user_id by _id
-        sort_dict["_id"] = sort_dict.pop("user_id", 1)
-        pipeline += [{"$sort": sort_dict}]
-    else:
-        pipeline += [{"$sort": {"last_message_ts": 1, "_id": -1}}]
-
-    users = (
-        await mongo_db["tasks"]
-        .aggregate(pipeline, allowDiskUse=True)
-        .to_list(length=None)
-    )
-    if users is None or (filters.user_id is not None and len(users) == 0):
-        return []
-
-    users = [UserMetadata.model_validate(data) for data in users]
-
-    return users
 
 
 async def _build_unique_metadata_fields_pipeline(
@@ -453,7 +69,7 @@ async def collect_unique_metadata_fields(
                 "count": {"$sum": 1},
             },
         },
-        {"$sort": {"count": -1}},
+        {"$sort": {"count": -1, "metadata_keys": 1}},
     ]
 
     keys = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
@@ -525,6 +141,7 @@ async def breakdown_by_sum_of_metadata_field(
     Get the sum of a metadata field, grouped by another metadata field if provided.
 
     The metric can be one of the following:
+    - "count_unique": Number of unique values of the metadata field
     - "sum": Sum of the metadata field
     - "avg": Average of the metadata field
     - "nb_messages": Number of tasks
@@ -936,6 +553,33 @@ async def breakdown_by_sum_of_metadata_field(
             raise HTTPException(
                 status_code=400,
                 detail="Metric 'avg' is only supported for number metadata fields",
+            )
+
+    if metric == "count_unique":
+        if metadata_field in category_metadata_fields:
+            pipeline += [
+                {
+                    "$group": {
+                        "_id": f"${breakdown_by_col}",
+                        "metric": {
+                            "$addToSet": f"$metadata.{metadata_field}",
+                        },
+                    },
+                },
+                {
+                    "$project": {
+                        "breakdown_by": "$_id",
+                        "metric": {"$size": "$metric"},
+                    }
+                },
+            ]
+        else:
+            logger.error(
+                f"Metric 'count_unique' is only supported for category metadata fields. Provided metadata field: {metadata_field}"
+            )
+            raise HTTPException(
+                status_code=400,
+                detail="Metric 'count_unique' is only supported for category metadata fields",
             )
 
     # Sort

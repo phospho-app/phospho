@@ -1,6 +1,4 @@
-from pydantic import BaseModel
 from app.api.platform.models.metadata import (
-    MetadataValueResponse,
     MetadataPivotResponse,
     MetadataPivotQuery,
 )

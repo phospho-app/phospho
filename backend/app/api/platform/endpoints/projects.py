@@ -28,7 +28,6 @@ from app.api.platform.models import (
     SearchResponse,
     Sessions,
     Tasks,
-    Tests,
     Users,
 )
 from app.api.platform.models.explore import Sorting
@@ -41,7 +40,6 @@ from app.security.authorization import get_quota
 from app.services.mongo.events import get_all_events
 from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.files import process_file_upload_into_log_events
-from app.services.mongo.metadata import fetch_users_metadata
 from app.services.mongo.projects import (
     add_project_events,
     collect_languages,
@@ -49,7 +47,6 @@ from app.services.mongo.projects import (
     delete_project_related_resources,
     email_project_tasks,
     get_all_sessions,
-    get_all_tests,
     get_project_by_id,
     update_project,
 )
@@ -58,6 +55,7 @@ from app.services.mongo.search import (
     search_tasks_in_project,
 )
 from app.services.mongo.tasks import get_all_tasks
+from app.services.mongo.users import fetch_users_metadata
 from app.services.slack import slack_notification
 from app.services.universal_loader.universal_loader import universal_loader
 from app.utils import cast_datetime_or_timestamp_to_timestamp
@@ -308,8 +306,6 @@ async def get_tasks(
 async def email_tasks(
     project_id: str,
     background_tasks: BackgroundTasks,
-    environment: Optional[str] = None,
-    limit: int = 1000,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     project = await get_project_by_id(project_id)
@@ -320,22 +316,6 @@ async def email_tasks(
     )
     logger.info(f"Emailing tasks of project {project_id} to {user.email}")
     return {"status": "ok"}
-
-
-@router.get(
-    "/projects/{project_id}/tests",
-    response_model=Tests,
-    description="Get all the tests of a project",
-)
-async def get_tests(
-    project_id: str,
-    limit: int = 1000,
-    user: User = Depends(propelauth.require_user),
-) -> Tests:
-    project = await get_project_by_id(project_id)
-    propelauth.require_org_member(user, project.org_id)
-    tests = await get_all_tests(project_id=project_id, limit=limit)
-    return Tests(tests=tests)
 
 
 @router.post(

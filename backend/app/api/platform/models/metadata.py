@@ -23,14 +23,15 @@ class MetadataPivotResponse(BaseModel):
 class MetadataPivotQuery(BaseModel):
     """
     The metric can be one of the following:
-    - "sum": Sum of the metadata field
-    - "avg": Average of the metadata field
     - "nb_messages": Number of tasks
     - "nb_sessions": Number of sessions
     - "tags_count": Number of detected tags
     - "tags_distribution": Distribution of detected tags
     - "avg_success_rate": Average success rate
     - "avg_session_length": Average session length
+    - "count_unique": Number of unique values of the metadata field
+    - "sum": Sum of the metadata field
+    - "avg": Average of the metadata field
 
     The "breakdown_by" field can be one of the following:
     - A metadata field
@@ -45,6 +46,7 @@ class MetadataPivotQuery(BaseModel):
     metric: Literal[
         "sum",
         "avg",
+        "count_unique",
         "nb_messages",
         "nb_sessions",
         "tags_count",

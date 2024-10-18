@@ -157,9 +157,9 @@ const FilterComponent = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="min-w-[12rem] justify-start">
-            <ListFilter className="h-4 w-4 mr-1" />
+            <ListFilter className="size-4 mr-1" />
             <div className="flex-grow">Filters</div>
-            <Plus className="h-4 w-4 ml-1" />
+            <Plus className="size-4 ml-1" />
           </Button>
         </DropdownMenuTrigger>
         {dataFilters.flag && (
@@ -174,7 +174,7 @@ const FilterComponent = ({
             }}
           >
             {dataFilters.flag}
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </Button>
         )}
         {dataFilters.has_notes && (
@@ -189,7 +189,7 @@ const FilterComponent = ({
             }}
           >
             Has notes
-            <X className="h-4 w-4 ml-2" />
+            <X className="size-4 ml-2" />
           </Button>
         )}
         {dataFilters.event_name &&
@@ -204,7 +204,7 @@ const FilterComponent = ({
                 key={event_name}
               >
                 {dataFilters.event_name}
-                <X className="h-4 w-4 ml-2" />
+                <X className="size-4 ml-2" />
               </Button>
             );
           })}
@@ -220,7 +220,7 @@ const FilterComponent = ({
             }}
           >
             {getLanguageLabel(dataFilters.language)}
-            <X className="h-4 w-4 ml-2" />
+            <X className="size-4 ml-2" />
           </Button>
         )}
         {dataFilters.sentiment && (
@@ -235,7 +235,7 @@ const FilterComponent = ({
             }}
           >
             {dataFilters.sentiment}
-            <X className="h-4 w-4 ml-2" />
+            <X className="size-4 ml-2" />
           </Button>
         )}
         {dataFilters.metadata &&
@@ -258,7 +258,7 @@ const FilterComponent = ({
               >
                 {key}:{" "}
                 {value.length > 20 ? value.substring(0, 20) + "..." : value}
-                <X className="h-4 w-4 ml-2" />
+                <X className="size-4 ml-2" />
               </Button>
             );
           })}
@@ -280,7 +280,7 @@ const FilterComponent = ({
                 (clustering) => clustering.id === dataFilters.clustering_id,
               )?.created_at ?? 0,
             )}
-            <X className="h-4 w-4 ml-2" />
+            <X className="size-4 ml-2" />
           </Button>
         )}
         {dataFilters.clusters_ids &&
@@ -311,7 +311,7 @@ const FilterComponent = ({
                 {cluster?.name.length > 50
                   ? cluster?.name.substring(0, 50) + "..."
                   : cluster?.name}
-                <X className="h-4 w-4 ml-2" />
+                <X className="size-4 ml-2" />
               </Button>
             );
           })}
@@ -327,7 +327,7 @@ const FilterComponent = ({
             }}
           >
             Is last message
-            <X className="h-4 w-4 ml-2" />
+            <X className="size-4 ml-2" />
           </Button>
         )}
         {dataFilters && activeFilterCount > 0 && (
@@ -343,7 +343,7 @@ const FilterComponent = ({
                   resetPagination();
                 }}
               >
-                <FilterX className="h-4 w-4" />
+                <FilterX className="size-4" />
               </Button>
             </HoverCardTrigger>
             <HoverCardContent
@@ -360,7 +360,7 @@ const FilterComponent = ({
           {/* Flag */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Flag className="h-4 w-4 mr-2" />
+              <Flag className="size-4 mr-2" />
               <span>Human rating</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -377,7 +377,7 @@ const FilterComponent = ({
                     color: dataFilters.flag === "success" ? "green" : "inherit",
                   }}
                 >
-                  <ThumbsUp className="h-4 w-4 mr-2" />
+                  <ThumbsUp className="size-4 mr-2" />
                   <span>Success</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -392,7 +392,7 @@ const FilterComponent = ({
                     color: dataFilters.flag === "failure" ? "red" : "inherit",
                   }}
                 >
-                  <ThumbsDown className="h-4 w-4 mr-2" />
+                  <ThumbsDown className="size-4 mr-2" />
                   <span>Failure</span>
                 </DropdownMenuItem>
                 {variant === "tasks" && (
@@ -408,7 +408,7 @@ const FilterComponent = ({
                       color: dataFilters.has_notes ? "green" : "inherit",
                     }}
                   >
-                    <PenSquare className="h-4 w-4 mr-2" />
+                    <PenSquare className="size-4 mr-2" />
                     <span>Has notes </span>
                   </DropdownMenuItem>
                 )}
@@ -418,7 +418,7 @@ const FilterComponent = ({
           {/* Events */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <TextSearch className="h-4 w-4 mr-2" />
+              <TextSearch className="size-4 mr-2" />
               <span>Tags</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -453,7 +453,7 @@ const FilterComponent = ({
           {/* Language */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Languages className="h-4 w-4 mr-2" />
+              <Languages className="size-4 mr-2" />
               <span>Language</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -495,7 +495,7 @@ const FilterComponent = ({
           {/* Sentiment */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <SmilePlus className="h-4 w-4 mr-2" />
+              <SmilePlus className="size-4 mr-2" />
               <span>Sentiment</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -515,7 +515,7 @@ const FilterComponent = ({
                         : "inherit",
                   }}
                 >
-                  <Smile className="h-4 w-4 mr-2" />
+                  <Smile className="size-4 mr-2" />
                   <span>Positive</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -531,7 +531,7 @@ const FilterComponent = ({
                       dataFilters.sentiment === "neutral" ? "green" : "inherit",
                   }}
                 >
-                  <Meh className="h-4 w-4 mr-2" />
+                  <Meh className="size-4 mr-2" />
                   <span>Neutral</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -547,7 +547,7 @@ const FilterComponent = ({
                       dataFilters.sentiment === "mixed" ? "green" : "inherit",
                   }}
                 >
-                  <Annoyed className="h-4 w-4 mr-2" />
+                  <Annoyed className="size-4 mr-2" />
                   <span>Mixed</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -563,7 +563,7 @@ const FilterComponent = ({
                       dataFilters.sentiment === "negative" ? "red" : "inherit",
                   }}
                 >
-                  <Frown className="h-4 w-4 mr-2" />
+                  <Frown className="size-4 mr-2" />
                   <span>Negative</span>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
@@ -573,7 +573,7 @@ const FilterComponent = ({
             {variant === "tasks" && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                  <List className="h-4 w-4 mr-2" />
+                  <List className="size-4 mr-2" />
                   Message position
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
@@ -597,7 +597,7 @@ const FilterComponent = ({
           {variant == "tasks" && (
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <Code className="h-4 w-4 mr-2" />
+                <Code className="size-4 mr-2" />
                 <span>Metadata</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuPortal>
@@ -652,7 +652,7 @@ const FilterComponent = ({
           )}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Boxes className="h-4 w-4 mr-2" />
+              <Boxes className="size-4 mr-2" />
               <span>Clusterings</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -684,7 +684,7 @@ const FilterComponent = ({
                                 resetPagination();
                               }}
                             >
-                              <Boxes className="h-4 w-4 mr-2" />
+                              <Boxes className="size-4 mr-2" />
                               <span>All clusters</span>
                             </DropdownMenuItem>
                             {clustering.clusters?.map((cluster) => {

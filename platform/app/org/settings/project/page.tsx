@@ -1,5 +1,6 @@
 "use client";
 
+import { CopyButton } from "@/components/copy-button";
 import { InteractiveDatetime } from "@/components/interactive-datetime";
 import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
@@ -10,23 +11,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { BriefcaseBusiness, CopyIcon, Pencil } from "lucide-react";
+import { BriefcaseBusiness, Pencil } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
 
 export default function Page() {
   const { accessToken } = useUser();
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const project_id = navigationStateStore((state) => state.project_id);
   const { data: selectedProject }: { data: Project } = useSWR(
@@ -36,14 +31,6 @@ export default function Page() {
       keepPreviousData: true,
     },
   );
-
-  const handleCopy = () => {
-    if (project_id === null || project_id === undefined) {
-      return;
-    }
-    navigator.clipboard.writeText(project_id);
-    setCopied(true);
-  };
 
   if (project_id === null || project_id === undefined) {
     return <>No project selected</>;
@@ -69,26 +56,9 @@ export default function Page() {
             <code className="bg-secondary p-1.5">{project_id}</code>
           </div>
 
-          <HoverCard openDelay={0} closeDelay={0}>
-            <HoverCardTrigger>
-              <Button
-                variant="outline"
-                className="ml-2"
-                size="icon"
-                onClick={handleCopy}
-              >
-                <CopyIcon className="w-3 h-3" />
-              </Button>
-            </HoverCardTrigger>
-            <HoverCardContent
-              side="bottom"
-              className="text-sm text-center ml-2"
-            >
-              {copied ? "Copied!" : "Copy"}
-            </HoverCardContent>
-          </HoverCard>
+          <CopyButton text={project_id} className="ml-2" />
         </div>
-        <div className="flex flex-row gap-x-4">
+        <div className="flex flex-row gap-x-4 ml-2">
           Creation date:{" "}
           <div>
             <InteractiveDatetime timestamp={selectedProject.created_at} />
@@ -98,7 +68,7 @@ export default function Page() {
           <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="secondary">
-                <Pencil className="h-4 w-4 mr-2" />
+                <Pencil className="size-4 mr-2" />
                 Rename project
               </Button>
             </AlertDialogTrigger>

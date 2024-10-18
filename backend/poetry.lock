@@ -1424,13 +1424,13 @@ files = [
 
 [[package]]
 name = "langfuse"
-version = "2.52.0"
+version = "2.52.1"
 description = "A client library for accessing langfuse"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langfuse-2.52.0-py3-none-any.whl", hash = "sha256:f2497966bd31adedbb2d643fde3b15cf0387cfbcdac8ebc2db2b6df9413b888a"},
-    {file = "langfuse-2.52.0.tar.gz", hash = "sha256:3ceb8803cb5991dd1127167a2b1288c7c6edc43429547ded1d6dc9e064e6e5cd"},
+    {file = "langfuse-2.52.1-py3-none-any.whl", hash = "sha256:4eff0bffa10a1f92a100fe02fdbef13e2eb39ff38e27dad65e75ec4273782a8a"},
+    {file = "langfuse-2.52.1.tar.gz", hash = "sha256:4d6b73db0beee1add587f522745be1d01d54ae53a29dd7ad0ede4297b5765240"},
 ]
 
 [package.dependencies]
@@ -1465,13 +1465,13 @@ requests = ">=2,<3"
 
 [[package]]
 name = "langsmith"
-version = "0.1.135"
+version = "0.1.136"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.135-py3-none-any.whl", hash = "sha256:b1d1ca3bad483a4239745c57e9b9157b4d099fbf3149be21e3d112c94ede06ac"},
-    {file = "langsmith-0.1.135.tar.gz", hash = "sha256:7abed7e141386af99a2177f0b3600b124ae3ad1b482879ba0724ce92ef998a11"},
+    {file = "langsmith-0.1.136-py3-none-any.whl", hash = "sha256:cad2215eb7a754ee259878e19c558f4f8d3795aa1b699f087d4500e640f80d0a"},
+    {file = "langsmith-0.1.136.tar.gz", hash = "sha256:5c0de01a313db70dd9a85845c0f416a69b5b653b3e98ba413d7d41e8851315b1"},
 ]
 
 [package.dependencies]
@@ -1783,13 +1783,13 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.51.2"
+version = "1.52.0"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.51.2-py3-none-any.whl", hash = "sha256:5c5954711cba931423e471c37ff22ae0fd3892be9b083eee36459865fbbb83fa"},
-    {file = "openai-1.51.2.tar.gz", hash = "sha256:c6a51fac62a1ca9df85a522e462918f6bb6bc51a8897032217e453a0730123a6"},
+    {file = "openai-1.52.0-py3-none-any.whl", hash = "sha256:0c249f20920183b0a2ca4f7dba7b0452df3ecd0fa7985eb1d91ad884bc3ced9c"},
+    {file = "openai-1.52.0.tar.gz", hash = "sha256:95c65a5f77559641ab8f3e4c3a050804f7b51d278870e2ec1f7444080bfe565a"},
 ]
 
 [package.dependencies]

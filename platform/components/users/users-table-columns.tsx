@@ -1,3 +1,4 @@
+import { CopyButton } from "@/components/copy-button";
 import { InteractiveDatetime } from "@/components/interactive-datetime";
 import {
   EventBadge,
@@ -67,27 +68,7 @@ export function useColumns() {
       },
       accessorKey: "user_id",
       cell: ({ row }) => {
-        return (
-          <HoverCard openDelay={0} closeDelay={0}>
-            <HoverCardTrigger asChild>
-              <div
-                className="h-10 flex items-center hover:text-green-500"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  navigator.clipboard.writeText(row.original.user_id);
-                }}
-              >
-                {row.original.user_id}
-              </div>
-            </HoverCardTrigger>
-            <HoverCardContent
-              align="start"
-              className="text-xs text-muted-foreground"
-            >
-              Copy
-            </HoverCardContent>
-          </HoverCard>
-        );
+        return <CopyButton text={row.original.user_id} />;
       },
       // enableHiding: true,
     },
@@ -163,7 +144,7 @@ export function useColumns() {
       header: () => {
         return (
           <div className="flex flex-row gap-x-2 items-center">
-            <Sparkles className="h-4 w-4 text-green-500" />
+            <Sparkles className="size-4 text-green-500" />
             Events
           </div>
         );

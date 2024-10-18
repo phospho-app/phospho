@@ -69,7 +69,7 @@ const CreateNewABTestButton = () => {
         <div className="flex min-w-[10rem]">
           <PopoverTrigger asChild>
             <Button>
-              <PlusIcon className="h-4 w-4 mr-2" />
+              <PlusIcon className="size-4 mr-2" />
               New AB Test
             </Button>
           </PopoverTrigger>
