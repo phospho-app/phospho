@@ -129,7 +129,16 @@ const MetadataForm: React.FC = () => {
                   }}
                 >
                   <List className="h-4 w-4 mr-2" />
-                  Sessions count
+                  Nb sessions
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedMetric("nb_users");
+                    setmetadata_metric(null);
+                  }}
+                >
+                  <List className="h-4 w-4 mr-2" />
+                  Nb users
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -138,7 +147,7 @@ const MetadataForm: React.FC = () => {
                   }}
                 >
                   <TextSearch className="h-4 w-4 mr-2" />
-                  Number of tags
+                  Nb tags
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
