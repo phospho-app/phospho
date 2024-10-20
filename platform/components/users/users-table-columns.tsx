@@ -127,9 +127,7 @@ export function useColumns() {
     {
       accessorKey: "total_tokens",
       header: ({ column }) => {
-        return (
-          <GenericHeader column={column} columnName="Total tokens earned" />
-        );
+        return <GenericHeader column={column} columnName="Total tokens" />;
       },
       cell: (row) => {
         const output = row.getValue();
