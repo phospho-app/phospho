@@ -81,7 +81,7 @@ async def bill_on_stripe(
             timestamp=int(time.time()),
         )
 
-        log_billing(
+        await log_billing(
             credits_billed=nb_credits_used,
             org_id=request.org_id,
             project_id=request.project_id,
