@@ -71,8 +71,8 @@ export const ABTestingDataviz = () => {
     created_at_end: undefined,
   });
 
-  const [dateRangeA, setDateRangeA] = useState<string>("Select a date range");
-  const [dateRangeB, setDateRangeB] = useState<string>("Select a date range");
+  const [dateRangeA, setDateRangeA] = useState<string>("Date range");
+  const [dateRangeB, setDateRangeB] = useState<string>("Date range");
 
   // Fetch ABTests
   const { data: abTests }: { data: ABTest[] | null | undefined } = useSWR(
@@ -177,7 +177,7 @@ export const ABTestingDataviz = () => {
 
   const onClickFiltersA = (newDateRange: string) => {
     if (dateRangeA === newDateRange) {
-      setDateRangeA("Select a date range");
+      setDateRangeA("Date range");
       setVersionIDA(null);
       setFiltersA({
         created_at_start: undefined,
@@ -204,7 +204,7 @@ export const ABTestingDataviz = () => {
 
   const onClickFiltersB = (newDateRange: string) => {
     if (dateRangeB === newDateRange) {
-      setDateRangeB("Select a date range");
+      setDateRangeB("Date range");
       setVersionIDB(null);
       setFiltersB({
         created_at_start: undefined,
@@ -231,7 +231,7 @@ export const ABTestingDataviz = () => {
 
   const onClickVersionA = (version_id: string) => {
     setVersionIDA(version_id);
-    setDateRangeA("Select a date range");
+    setDateRangeA("Date range");
     setFiltersA({
       created_at_start: undefined,
       created_at_end: undefined,
@@ -240,7 +240,7 @@ export const ABTestingDataviz = () => {
 
   const onClickVersionB = (version_id: string) => {
     setVersionIDB(version_id);
-    setDateRangeB("Select a date range");
+    setDateRangeB("Date range");
     setFiltersB({
       created_at_start: undefined,
       created_at_end: undefined,
@@ -511,48 +511,52 @@ export const ABTestingDataviz = () => {
           {graphData === undefined && (
             <Skeleton className="w-[100%] h-[400px]" />
           )}
-          {graphData && (!versionIDA || !abTests || graphData.length == 0) && (
-            <div className="h-[400px] w-[100%] flex items-center justify-center">
-              <div className="flex space-x-40 text-center items-center">
-                <div className="mb-20">
-                  <p className="text-muted-foreground mb-2 text-sm pt-6">
-                    1 - Start sending data
-                  </p>
-                  {!hasTasks && (
-                    <Button variant="outline" onClick={() => setOpen(true)}>
-                      Import data
-                      <ChevronRight className="ml-2" />
-                    </Button>
-                  )}
-                  {hasTasks && (
-                    <Button variant="outline" disabled>
-                      <Check className="mr-1" />
-                      Done
-                    </Button>
-                  )}
-                </div>
-                <div className="mb-20">
-                  <p className="text-muted-foreground mb-2 text-sm pt-6">
-                    2 - Setup analytics
-                  </p>
-                  {noEventDefinitions && (
-                    <Link href="/org/insights/events">
-                      <Button variant="outline">
-                        Setup analytics
+          {graphData &&
+            (!versionIDA ||
+              !versionIDB ||
+              !abTests ||
+              graphData.length == 0) && (
+              <div className="h-[400px] w-[100%] flex items-center justify-center">
+                <div className="flex space-x-40 text-center items-center">
+                  <div className="mb-20">
+                    <p className="text-muted-foreground mb-2 text-sm pt-6">
+                      1 - Start sending data
+                    </p>
+                    {!hasTasks && (
+                      <Button variant="outline" onClick={() => setOpen(true)}>
+                        Import data
                         <ChevronRight className="ml-2" />
                       </Button>
-                    </Link>
-                  )}
-                  {!noEventDefinitions && (
-                    <Button variant="outline" disabled>
-                      <Check className="mr-1" />
-                      Done
-                    </Button>
-                  )}
+                    )}
+                    {hasTasks && (
+                      <Button variant="outline" disabled>
+                        <Check className="mr-1" />
+                        Done
+                      </Button>
+                    )}
+                  </div>
+                  <div className="mb-20">
+                    <p className="text-muted-foreground mb-2 text-sm pt-6">
+                      2 - Setup analytics
+                    </p>
+                    {noEventDefinitions && (
+                      <Link href="/org/insights/events">
+                        <Button variant="outline">
+                          Setup analytics
+                          <ChevronRight className="ml-2" />
+                        </Button>
+                      </Link>
+                    )}
+                    {!noEventDefinitions && (
+                      <Button variant="outline" disabled>
+                        <Check className="mr-1" />
+                        Done
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           {graphData && versionIDA && versionIDB && graphData.length > 0 && (
             <ResponsiveContainer width={"100%"} height={400}>
               <BarChart data={graphData}>
