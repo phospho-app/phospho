@@ -126,7 +126,7 @@ export function UsersTable({
           }}
         />
       </div>
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
         {usersMetadata === undefined && <CenteredSpinner />}
         {usersMetadata && (
           <div className="rounded-md border">
@@ -198,7 +198,7 @@ export function UsersTable({
             <TableNavigation table={table} />
           </div>
         )}
-        <SheetContent className="md:w-1/2 overflow-auto">
+        <SheetContent className="md:w-1/2 overflow-auto" overlay={false}>
           <UserPreview user_id={previewUserId} />
         </SheetContent>
       </Sheet>

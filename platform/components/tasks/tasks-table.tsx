@@ -59,7 +59,6 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
   );
   const { accessToken } = useUser();
 
-  const [, setTableIsClickable] = useState<boolean>(true);
   const [sheetOpen, setSheetOpen] = useState<boolean>(false);
   const [sheetToOpen, setSheetToOpen] = useState<string | null>(null);
   const [eventDefinition, setEventDefinition] =
@@ -179,18 +178,8 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
         </div>
         <TableNavigation table={table} />
       </div>
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent
-          className="md:w-1/2 overflow-auto"
-          onOpenAutoFocus={(mouseEvent) => {
-            mouseEvent.stopPropagation();
-            setTableIsClickable(false);
-          }}
-          onCloseAutoFocus={(mouseEvent) => {
-            mouseEvent.stopPropagation();
-            setTableIsClickable(true);
-          }}
-        >
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
+        <SheetContent className="md:w-1/2 overflow-auto" overlay={false}>
           {sheetToOpen === "run" && eventDefinition !== null && (
             <RunEvent setOpen={setSheetOpen} eventToRun={eventDefinition} />
           )}
