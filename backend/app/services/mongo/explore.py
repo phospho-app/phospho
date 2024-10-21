@@ -2085,15 +2085,14 @@ async def get_ab_tests_versions(
 
     results = results_A + results_B
 
+    logger.debug(f"Results: {results}")
+
     # This dict will have event_names as keys, and the values will be dictionnaries with the version_id as keys and the count as values
     total_tasks_with_A = await get_nb_tasks_version(
         version=versionA,
         project_id=project_id,
         filters=filtersA,
     )
-    if total_tasks_with_A == 0:
-        logger.info(f"No tasks found for version {versionA}")
-        return []
     logger.info(f"Total tasks with version A: {total_tasks_with_A}")
 
     total_tasks_with_B = await get_nb_tasks_version(
@@ -2102,11 +2101,10 @@ async def get_ab_tests_versions(
         filters=filtersB,
     )
 
-    if total_tasks_with_B == 0:
-        logger.info(f"No tasks found for version {versionB}")
-        return []
-
     logger.info(f"Total tasks with version B: {total_tasks_with_B}")
+
+    if total_tasks_with_B == 0 and total_tasks_with_A == 0:
+        return []
 
     graph_values = {}
     graph_values_range = {}
@@ -2222,8 +2220,12 @@ async def get_ab_tests_versions(
         formatted_graph_values.append(
             {
                 "event_name": event_name,
-                versionA: values.get(versionA, 0) / total_tasks_with_A,
-                versionB: values.get(versionB, 0) / total_tasks_with_B,
+                versionA: values.get(versionA, 0) / total_tasks_with_A
+                if total_tasks_with_A != 0
+                else 0,
+                versionB: values.get(versionB, 0) / total_tasks_with_B
+                if total_tasks_with_B != 0
+                else 0,
                 versionA + "_tooltip": values.get(versionA, 0),
                 versionB + "_tooltip": values.get(versionB, 0),
             }
@@ -2356,10 +2358,10 @@ async def get_number_of_events_version(
         if filters.created_at_start is not None:
             if isinstance(filters.created_at_start, datetime.datetime):
                 filters.created_at_start = int(filters.created_at_start.timestamp())
-            if isinstance(filters.created_at_start, int):
-                filters.created_at_start = filters.created_at_start
             filtering.append({"$gte": ["$task.created_at", filters.created_at_start]})
         if filters.created_at_end is not None:
+            if isinstance(filters.created_at_end, datetime.datetime):
+                filters.created_at_end = int(filters.created_at_end.timestamp())
             filtering.append({"$lte": ["$task.created_at", filters.created_at_end]})
         pipeline.append(
             {
