@@ -50,7 +50,7 @@ const ExportDataButton: React.FC = () => {
 
   return (
     <DropdownMenuItem onClick={handleButtonClick}>
-      <Download className="mr-1 h-4 w-4" />
+      <Download className="mr-1 size-4" />
       Export data
     </DropdownMenuItem>
   );

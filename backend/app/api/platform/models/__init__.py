@@ -1,5 +1,4 @@
 from app.api.v2.models import (
-    Eval,
     Event,
     EventDefinition,
     Events,
@@ -7,8 +6,6 @@ from app.api.v2.models import (
     ProjectCreationRequest,
     Projects,
     ProjectUpdateRequest,
-    SearchQuery,
-    SearchResponse,
     Session,
     Sessions,
     SessionUpdateRequest,
@@ -16,8 +13,6 @@ from app.api.v2.models import (
     TaskFlagRequest,
     Tasks,
     TaskUpdateRequest,
-    Test,
-    Tests,
     UserMetadata,
     Users,
     TaskHumanEvalRequest,

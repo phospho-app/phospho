@@ -10,10 +10,8 @@ import requests
 
 import phospho.config as config
 from phospho.models import (
-    Comparison,
     FlattenedTask,
     Project,
-    Test,
     Task,
     ProjectDataFilters,
 )
@@ -157,29 +155,6 @@ class Client:
         """Return a TaskCollection to interact with the tasks of the project"""
         return TaskCollection(client=self)
 
-    def compare(
-        self,
-        context_input: str,
-        old_output: str,
-        new_output: str,
-        test_id: Optional[str] = None,
-    ) -> Comparison:
-        """
-        Compare the old and new answers to the context_input with an LLM
-        """
-        comparison_result = self._post(
-            "/evals/compare",
-            payload={
-                "project_id": self._project_id(),
-                "context_input": context_input,
-                "old_output": old_output,
-                "new_output": new_output,
-                "test_id": test_id,
-            },
-        )
-
-        return Comparison.model_validate(comparison_result.json())
-
     def flag(
         self,
         task_id: str,
@@ -201,35 +176,6 @@ class Client:
             },
         )
         return TaskEntity(client=self, task_id=task_id, _content=response.json())
-
-    def create_test(self, summary: Optional[dict] = None) -> Test:
-        """
-        Start a test
-        """
-
-        response = self._post(
-            "/tests",
-            payload={
-                "project_id": self._project_id(),
-                "summary": summary,
-            },
-        )
-        return Test(**response.json())
-
-    def update_test(
-        self, test_id: str, status: Literal["completed", "canceled"]
-    ) -> Test:
-        """
-        Update a test
-        """
-
-        response = self._post(
-            f"/tests/{test_id}",
-            payload={
-                "status": status,
-            },
-        )
-        return Test(**response.json())
 
     def fetch_tasks(self, filters: Optional[ProjectDataFilters] = None) -> List[Task]:
         """

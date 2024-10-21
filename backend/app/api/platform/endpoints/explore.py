@@ -40,17 +40,19 @@ from app.services.mongo.explore import (
     get_dashboard_aggregated_metrics,
     get_events_aggregated_metrics,
     get_nb_tasks_in_sessions,
-    get_nb_users_messages,
     get_sessions_aggregated_metrics,
     get_tasks_aggregated_metrics,
     get_total_nb_of_sessions,
-    get_total_nb_of_users,
-    get_users_aggregated_metrics,
     project_has_enough_labelled_tasks,
     project_has_sessions,
     project_has_tasks,
 )
 from app.services.mongo.tasks import get_total_nb_of_tasks
+from app.services.mongo.users import (
+    get_nb_users_messages,
+    get_users_aggregated_metrics,
+    get_total_nb_of_users,
+)
 from app.utils import generate_uuid
 from phospho.utils import generate_version_id
 

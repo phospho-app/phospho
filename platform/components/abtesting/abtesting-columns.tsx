@@ -53,7 +53,7 @@ export function getColumns() {
             <div>Average Success Rate</div>
             <HoverCard openDelay={0} closeDelay={0}>
               <HoverCardTrigger>
-                <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                <QuestionMarkIcon className="size-4 rounded-full bg-primary text-secondary p-0.5" />
               </HoverCardTrigger>
               <HoverCardContent>
                 <div className="w-96">
@@ -79,7 +79,7 @@ export function getColumns() {
             <div>95% Confidence interval</div>
             <HoverCard openDelay={0} closeDelay={0}>
               <HoverCardTrigger>
-                <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                <QuestionMarkIcon className="size-4 rounded-full bg-primary text-secondary p-0.5" />
               </HoverCardTrigger>
               <HoverCardContent>
                 <div className="w-96">
@@ -116,7 +116,7 @@ export function getColumns() {
             <div>Succes Rate Std</div>
             <HoverCard openDelay={0} closeDelay={0}>
               <HoverCardTrigger>
-                <QuestionMarkIcon className="h-4 w-4 rounded-full bg-primary text-secondary p-0.5" />
+                <QuestionMarkIcon className="size-4 rounded-full bg-primary text-secondary p-0.5" />
               </HoverCardTrigger>
               <HoverCardContent>
                 <div className="w-96">

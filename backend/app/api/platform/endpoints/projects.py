@@ -24,11 +24,8 @@ from app.api.platform.models import (
     ProjectUpdateRequest,
     QuerySessionsTasksRequest,
     QueryUserMetadataRequest,
-    SearchQuery,
-    SearchResponse,
     Sessions,
     Tasks,
-    Tests,
     Users,
 )
 from app.api.platform.models.explore import Sorting
@@ -41,23 +38,19 @@ from app.security.authorization import get_quota
 from app.services.mongo.events import get_all_events
 from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.files import process_file_upload_into_log_events
-from app.services.mongo.metadata import fetch_users_metadata
 from app.services.mongo.projects import (
     add_project_events,
     collect_languages,
     delete_project_from_id,
     delete_project_related_resources,
     email_project_tasks,
-    get_all_sessions,
-    get_all_tests,
     get_project_by_id,
     update_project,
 )
-from app.services.mongo.search import (
-    search_sessions_in_project,
-    search_tasks_in_project,
-)
+
 from app.services.mongo.tasks import get_all_tasks
+from app.services.mongo.sessions import get_all_sessions
+from app.services.mongo.users import fetch_users_metadata
 from app.services.slack import slack_notification
 from app.services.universal_loader.universal_loader import universal_loader
 from app.utils import cast_datetime_or_timestamp_to_timestamp
@@ -187,31 +180,6 @@ async def get_events(
     return Events(events=events)
 
 
-@router.post(
-    "/projects/{project_id}/search/tasks",
-    response_model=SearchResponse,
-    description="Perform a semantic search in the project's sessions",
-)
-async def post_search_tasks(
-    project_id: str,
-    search_query: SearchQuery,
-    user: User = Depends(propelauth.require_user),
-):
-    """
-    Get the resulting session_ids of a semantic search in the project's sessions.
-    The search is based on embedding similarity of the text conversation to the query.
-    """
-
-    project = await get_project_by_id(project_id)
-    propelauth.require_org_member(user, project.org_id)
-    # Perform the semantic search
-    relevant_tasks = await search_tasks_in_project(
-        project_id=project_id,
-        search_query=search_query.query,
-    )
-    return SearchResponse(task_ids=[task.id for task in relevant_tasks])
-
-
 @router.get(
     "/projects/{project_id}/languages",
     description="Get the list of all unique languages detected in a project.",
@@ -228,34 +196,6 @@ async def get_languages(
     propelauth.require_org_member(user, project.org_id)
     languages = await collect_languages(project_id=project_id)
     return languages
-
-
-@router.post(
-    "/projects/{project_id}/search/sessions",
-    response_model=SearchResponse,
-    description="Perform a semantic search in the project's sessions",
-)
-async def post_search_sessions(
-    project_id: str,
-    search_query: SearchQuery,
-    user: User = Depends(propelauth.require_user),
-):
-    """
-    Get the resulting session_ids of a semantic search in the project's sessions.
-    The search is based on embedding similarity of the text conversation to the query.
-    """
-
-    project = await get_project_by_id(project_id)
-    propelauth.require_org_member(user, project.org_id)
-    # Perform the semantic search
-    relevant_tasks, relevant_sessions = await search_sessions_in_project(
-        project_id=project_id,
-        search_query=search_query.query,
-    )
-    return SearchResponse(
-        task_ids=[task.id for task in relevant_tasks],
-        session_ids=[session.id for session in relevant_sessions],
-    )
 
 
 @router.post(
@@ -308,8 +248,6 @@ async def get_tasks(
 async def email_tasks(
     project_id: str,
     background_tasks: BackgroundTasks,
-    environment: Optional[str] = None,
-    limit: int = 1000,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     project = await get_project_by_id(project_id)
@@ -320,22 +258,6 @@ async def email_tasks(
     )
     logger.info(f"Emailing tasks of project {project_id} to {user.email}")
     return {"status": "ok"}
-
-
-@router.get(
-    "/projects/{project_id}/tests",
-    response_model=Tests,
-    description="Get all the tests of a project",
-)
-async def get_tests(
-    project_id: str,
-    limit: int = 1000,
-    user: User = Depends(propelauth.require_user),
-) -> Tests:
-    project = await get_project_by_id(project_id)
-    propelauth.require_org_member(user, project.org_id)
-    tests = await get_all_tests(project_id=project_id, limit=limit)
-    return Tests(tests=tests)
 
 
 @router.post(
@@ -532,9 +454,9 @@ async def post_upload_tasks(
         inplace=True,
     )
 
-    tasks_df = await universal_loader(tasks_df)
+    new_tasks_df = await universal_loader(tasks_df)
 
-    if tasks_df is None:
+    if new_tasks_df is None:
         # The file has been uploaded but the columns are missing (wrong format)
         # We send a slack notification to the phospho team for manual verification
         if config.GCP_BUCKET_CLIENT:
@@ -552,29 +474,29 @@ async def post_upload_tasks(
 
     # Check if 'task_id' column exists and contains unique values
 
-    if "task_id" in tasks_df.columns:
-        if tasks_df["task_id"].nunique() != len(tasks_df["task_id"]):
+    if "task_id" in new_tasks_df.columns:
+        if new_tasks_df["task_id"].nunique() != len(new_tasks_df["task_id"]):
             raise HTTPException(
                 status_code=400,
                 detail="Error: The 'task_id' column contains duplicate values. Each task_id must be unique.",
             )
 
     # Drop rows with missing column "input"
-    old_len = tasks_df.shape[0]
-    tasks_df.dropna(subset=["input"], inplace=True)
-    new_len = tasks_df.shape[0]
+    old_len = new_tasks_df.shape[0]
+    new_tasks_df.dropna(subset=["input"], inplace=True)
+    new_len = new_tasks_df.shape[0]
 
     # Process the csv file as a background task
     logger.info(f"File {file.filename} uploaded successfully. Processing tasks.")
     background_tasks.add_task(
         process_file_upload_into_log_events,
-        tasks_df=tasks_df,
+        tasks_df=new_tasks_df,
         project_id=project_id,
         org_id=project.org_id,
     )
     return {
         "status": "ok",
-        "nb_rows_processed": tasks_df.shape[0],
+        "nb_rows_processed": new_tasks_df.shape[0],
         "nb_rows_dropped": old_len - new_len,
     }
 

@@ -1,4 +1,3 @@
-from .evals import Comparison, ComparisonQuery, Eval
 from .events import (
     DetectEventInMessagesRequest,
     DetectEventsInTaskRequest,
@@ -27,7 +26,6 @@ from .projects import (
     ProjectDataFilters,
     QuerySessionsTasksRequest,
 )
-from .search import SearchQuery, SearchResponse
 from .sessions import Session, SessionCreationRequest, Sessions, SessionUpdateRequest
 from .tasks import (
     FlattenedTasks,
@@ -38,7 +36,6 @@ from .tasks import (
     TaskUpdateRequest,
     TaskHumanEvalRequest,
 )
-from .tests import Test, TestCreationRequest, Tests, TestUpdateRequest
 from .embeddings import (
     Embedding,
     EmbeddingRequest,

@@ -2,6 +2,7 @@ import { SidebarState } from "@/components/sidebar/sidebar";
 import {
   Clustering,
   CustomDateRange,
+  DatavizSorting,
   HasEnoughLabelledTasks,
   ProjectDataFilters,
 } from "@/models/models";
@@ -53,6 +54,10 @@ interface navigationState {
   setmetadata_metric: (metadata: string | null) => void;
   selectedGroupBy: string;
   setSelectedGroupBy: (groupBy: string) => void;
+  selectedScorerId: string | null;
+  setSelectedScorerId: (scorerId: string | null) => void;
+  datavizSorting: DatavizSorting;
+  setDatavizSorting: (datavizSorting: DatavizSorting) => void;
 
   sidebarState: SidebarState | null;
   setSidebarState: (sidebarState: SidebarState) => void;
@@ -296,6 +301,15 @@ export const navigationStateStore = create(
       selectedGroupBy: "flag",
       setSelectedGroupBy: (groupBy: string) =>
         set(() => ({ selectedGroupBy: groupBy })),
+      selectedScorerId: null,
+      setSelectedScorerId: (scorerId: string | null) =>
+        set(() => ({ selectedScorerId: scorerId })),
+      datavizSorting: {
+        id: "breakdown_by",
+        desc: false,
+      },
+      setDatavizSorting: (datavizSorting: DatavizSorting) =>
+        set(() => ({ datavizSorting: datavizSorting })),
 
       sidebarState: null,
       setSidebarState: (sidebarState: SidebarState) =>

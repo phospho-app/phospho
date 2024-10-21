@@ -127,9 +127,7 @@ export function useColumns() {
     {
       accessorKey: "total_tokens",
       header: ({ column }) => {
-        return (
-          <GenericHeader column={column} columnName="Total tokens earned" />
-        );
+        return <GenericHeader column={column} columnName="Total tokens" />;
       },
       cell: (row) => {
         const output = row.getValue();
@@ -163,7 +161,7 @@ export function useColumns() {
       header: () => {
         return (
           <div className="flex flex-row gap-x-2 items-center">
-            <Sparkles className="h-4 w-4 text-green-500" />
+            <Sparkles className="size-4 text-green-500" />
             Events
           </div>
         );

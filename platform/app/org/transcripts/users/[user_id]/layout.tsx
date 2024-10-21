@@ -70,7 +70,7 @@ export default function Page({
           <DropdownMenuTrigger asChild className="w-[10rem] justify-between">
             <Button variant="secondary">
               {selected}
-              <ChevronDown className="ml-2 h-4 w-4" />
+              <ChevronDown className="ml-2 size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>

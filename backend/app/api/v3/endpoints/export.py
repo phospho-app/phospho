@@ -8,10 +8,18 @@ from app.security import (
     authenticate_org_key,
     verify_propelauth_org_owns_project_id,
 )
-from app.services.mongo.metadata import breakdown_by_sum_of_metadata_field
+from app.services.mongo.dataviz import breakdown_by_sum_of_metadata_field
 
 from phospho.models import ProjectDataFilters
-from app.api.v3.models.analytics import AnalyticsQuery, AnalyticsResponse
+from app.api.v3.models.analytics import (
+    AnalyticsQuery,
+    AnalyticsResponse,
+    Users,
+    QueryUserMetadataRequest,
+    Sorting,
+)
+from app.utils import cast_datetime_or_timestamp_to_timestamp
+from app.services.mongo.users import fetch_users_metadata
 
 router = APIRouter(tags=["Export"])
 
@@ -51,3 +59,48 @@ async def post_metadata_pivot(
     )
 
     return AnalyticsResponse(pivot_table=pivot_table)
+
+
+@router.post(
+    "/export/projects/{project_id}/users",
+    response_model=Users,
+    description="Get all the metadata about the end-users of a project",
+)
+async def get_users(
+    project_id: str,
+    query: QueryUserMetadataRequest,
+    org: dict = Depends(authenticate_org_key),
+) -> Users:
+    """
+    Get metadata about the end-users of a project
+    """
+    await verify_propelauth_org_owns_project_id(org, project_id)
+
+    filters = query.filters
+    if isinstance(filters.created_at_start, datetime.datetime):
+        filters.created_at_start = cast_datetime_or_timestamp_to_timestamp(
+            filters.created_at_start
+        )
+    if isinstance(filters.created_at_end, datetime.datetime):
+        filters.created_at_end = cast_datetime_or_timestamp_to_timestamp(
+            filters.created_at_end
+        )
+
+    if query.sorting is None:
+        query.sorting = [
+            Sorting(id="last_message_ts", desc=True),
+            Sorting(id="user_id", desc=True),
+        ]
+    else:
+        # Always resort by user_id to ensure the same order
+        # when multiple users have the same last_timestamp_ts or values
+        query.sorting.append(Sorting(id="user_id", desc=True))
+
+    users = await fetch_users_metadata(
+        project_id=project_id,
+        filters=filters,
+        sorting=query.sorting,
+        pagination=query.pagination,
+        user_id_search=query.user_id_search,
+    )
+    return Users(users=users)

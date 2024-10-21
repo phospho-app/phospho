@@ -1,5 +1,6 @@
 "use client";
 
+import { CopyButton } from "@/components/copy-button";
 import SuggestEvent from "@/components/events/suggest-event";
 import { InteractiveDatetime } from "@/components/interactive-datetime";
 import {
@@ -25,7 +26,7 @@ import {
 import { authFetcher } from "@/lib/fetcher";
 import { Event, SessionWithEvents, TaskWithEvents } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
-import { ChevronDown, ChevronRight, CopyIcon } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -138,20 +139,23 @@ const SessionStats = ({
       <Card className="flex flex-col space-y-1 p-2">
         <div className="flex flex-row items-center">
           <code className="bg-secondary p-1.5 text-xs">{session_id}</code>
-          <Button
-            variant="outline"
-            className="m-1.5"
-            size="icon"
-            onClick={() => {
-              navigator.clipboard.writeText(session_id);
-            }}
-          >
-            <CopyIcon className="w-3 h-3" />
-          </Button>
+          <CopyButton text="session_id" className="ml-2" />
         </div>
-        <div className="text-xs w-48">
-          Created at:
-          <InteractiveDatetime timestamp={sessionData?.created_at} />
+        <div className="flex flex-row space-x-16">
+          <div className="text-xs max-w-48">
+            <span className="text-muted-foreground">Last message</span>
+            <InteractiveDatetime timestamp={sessionData?.last_message_ts} />
+          </div>
+          <div className="text-xs max-w-48">
+            <span className="text-muted-foreground">First message</span>
+            <InteractiveDatetime timestamp={sessionData?.created_at} />
+          </div>
+          <div className="flex flex-col">
+            <div className="text-xl font-bold">
+              {sessionData?.session_length}
+            </div>
+            <span className="text-muted-foreground text-xs">Length</span>
+          </div>
         </div>
         <div className="flex">
           <div className="gap-x-0.5 gap-y-0.5 flex flex-wrap items-center">

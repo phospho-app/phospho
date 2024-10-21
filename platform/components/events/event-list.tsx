@@ -113,9 +113,9 @@ function EventRow({
                     setSheetToOpen("run");
                   }}
                 >
-                  <Sparkles className="text-green-500 h-4 w-4 mr-2" />
+                  <Sparkles className="text-green-500 size-4 mr-2" />
                   Detect
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                  <ChevronRight className="size-4 ml-2" />
                 </Button>
               </SheetTrigger>
               <DropdownMenu>

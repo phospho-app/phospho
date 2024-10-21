@@ -116,7 +116,7 @@ export function useColumns({
       header: ({ column }) => {
         return (
           <div className="flex flex-row items-center justify-between space-x-2">
-            Date
+            Last message
             <Button
               variant="ghost"
               size="icon"
@@ -127,19 +127,19 @@ export function useColumns({
               {
                 // Show the sorting icon based on the current sorting state
                 column.getIsSorted() === "desc" ? (
-                  <ArrowUp className="h-4 w-4" />
+                  <ArrowUp className="size-4" />
                 ) : (
-                  <ArrowDown className="h-4 w-4" />
+                  <ArrowDown className="size-4" />
                 )
               }
             </Button>
           </div>
         );
       },
-      accessorKey: "created_at",
+      accessorKey: "last_message_ts",
       cell: ({ row }) => {
-        const created_at = row.original.created_at;
-        return <InteractiveDatetime timestamp={created_at} />;
+        const last_message_ts = row.original.last_message_ts;
+        return <InteractiveDatetime timestamp={last_message_ts} />;
       },
     },
     // Preview
@@ -231,7 +231,7 @@ export function useColumns({
         return (
           <div className="flex items-center space-x-2 justify-between">
             <div className="flex items-center">
-              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+              <Sparkles className="size-4 mr-1 text-green-500" />
               Language
             </div>
           </div>
@@ -256,7 +256,7 @@ export function useColumns({
         return (
           <div className="flex items-center space-x-2 justify-between">
             <div className="flex flex-row items-center space-x-1">
-              <Sparkles className="h-4 w-4 text-green-500" />
+              <Sparkles className="size-4 text-green-500" />
               <div>Events</div>
             </div>
             <RunEventsSettings
@@ -335,7 +335,7 @@ export function useColumns({
         return (
           <div className="flex justify-between items-center space-x-2">
             <div className="flex flex-row items-center">
-              <Sparkles className="h-4 w-4 mr-1 text-green-500" />
+              <Sparkles className="size-4 mr-1 text-green-500" />
               Sentiment
             </div>
             <SentimentSettings />
@@ -388,9 +388,9 @@ export function useColumns({
               {
                 // Show the sorting icon based on the current sorting state
                 column.getIsSorted() === "desc" ? (
-                  <ArrowUp className="h-4 w-4" />
+                  <ArrowUp className="size-4" />
                 ) : (
-                  <ArrowDown className="h-4 w-4" />
+                  <ArrowDown className="size-4" />
                 )
               }
             </Button>

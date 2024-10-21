@@ -132,7 +132,9 @@ class QueryBuilder:
                 },
             ]
 
-    def _main_doc_filter(self, prefix: str = "") -> Dict[str, object]:
+    def _main_doc_filter(
+        self, prefix: str = "", created_at="created_at"
+    ) -> Dict[str, object]:
         """
         Implements:
         - project_id
@@ -160,10 +162,10 @@ class QueryBuilder:
             filters.created_at_end = int(filters.created_at_end.timestamp())
 
         if filters.created_at_start is not None:
-            match[f"{prefix}created_at"] = {"$gte": filters.created_at_start}
+            match[f"{prefix}{created_at}"] = {"$gte": filters.created_at_start}
         if filters.created_at_end is not None:
-            match[f"{prefix}created_at"] = {
-                **match.get(f"{prefix}created_at", {}),  # type: ignore
+            match[f"{prefix}{created_at}"] = {
+                **match.get(f"{prefix}{created_at}", {}),  # type: ignore
                 "$lte": filters.created_at_end,
             }
 
@@ -270,7 +272,11 @@ class QueryBuilder:
         - has_notes
         """
         filters = self.filters
-        match: Dict[str, object] = self._main_doc_filter(prefix=prefix)
+        match: Dict[str, object] = self._main_doc_filter(
+            prefix=prefix,
+            # Filter on the last message timestamp for sessions
+            created_at="last_message_ts",
+        )
 
         if filters.version_id is not None:
             # TODO: Check if we need to filter on the version_id of the session or the version_id of the tasks

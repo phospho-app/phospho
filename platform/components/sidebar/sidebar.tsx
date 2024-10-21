@@ -223,15 +223,15 @@ export function Sidebar({ className }: { className?: string }) {
           {(displayedSidebarState.transcriptOpen || isMobile) && (
             <div className="ml-6 text-muted-foreground">
               <SideBarElement href="/org/transcripts/sessions">
-                <List className="h-4 w-4 mr-2" />
+                <List className="size-4 mr-2" />
                 Sessions
               </SideBarElement>
               <SideBarElement href="/org/transcripts/tasks">
-                <MessagesSquare className="h-4 w-4 mr-2" />
+                <MessagesSquare className="size-4 mr-2" />
                 Messages
               </SideBarElement>
               <SideBarElement href="/org/transcripts/users">
-                <Users className="h-4 w-4 mr-2" />
+                <Users className="size-4 mr-2" />
                 Users
               </SideBarElement>
             </div>
@@ -257,7 +257,7 @@ export function Sidebar({ className }: { className?: string }) {
           </SideBarElement>
           <SideBarElement
             href="/org/dataviz/"
-            icon={<BarChartBig className="h-4 w-4 mr-2" />}
+            icon={<BarChartBig className="size-4 mr-2" />}
             collapsible={true}
             collapsibleState={displayedSidebarState.datavizOpen}
             setCollapsibleState={(state) =>
@@ -269,7 +269,7 @@ export function Sidebar({ className }: { className?: string }) {
           {(displayedSidebarState.datavizOpen || isMobile) && (
             <div className="ml-6 text-muted-foreground">
               <SideBarElement href="/org/dataviz/dashboard">
-                <LayoutDashboard className="h-4 w-4 mr-2" />
+                <LayoutDashboard className="size-4 mr-2" />
                 Dashboard
               </SideBarElement>
               <SideBarElement

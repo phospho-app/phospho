@@ -15,6 +15,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { DashboardTile, Project } from "@/models/models";
@@ -22,6 +27,9 @@ import { EventDefinition, ScoreRangeType } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
+  ArrowDown,
+  ArrowUp,
+  BarChart,
   ChevronDown,
   Code,
   Flag,
@@ -31,9 +39,10 @@ import {
   Plus,
   TextSearch,
   Timer,
+  Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import useSWR, { mutate } from "swr";
 
 const MetadataForm: React.FC = () => {
@@ -63,10 +72,18 @@ const MetadataForm: React.FC = () => {
   const setSelectedGroupBy = navigationStateStore(
     (state) => state.setSelectedGroupBy,
   );
-  const [selectedScorerId, setselectedScorerId] = React.useState<
-    string | undefined
-  >(undefined);
-  const [selectedScorerName, setselectedScorerName] = React.useState<
+  const selectedScorerId = navigationStateStore(
+    (state) => state.selectedScorerId,
+  );
+  const setSelectedScorerId = navigationStateStore(
+    (state) => state.setSelectedScorerId,
+  );
+  const datavizSorting = navigationStateStore((state) => state.datavizSorting);
+  const setDatavizSorting = navigationStateStore(
+    (state) => state.setDatavizSorting,
+  );
+
+  const [selectedScorerName, setselectedScorerName] = useState<
     string | undefined
   >(undefined);
 
@@ -109,7 +126,7 @@ const MetadataForm: React.FC = () => {
                   {selectedMetric === "avg_scorer_value" && selectedScorerName
                     ? `(${selectedScorerName})`
                     : ""}{" "}
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <ChevronDown className="size-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -119,7 +136,7 @@ const MetadataForm: React.FC = () => {
                     setmetadata_metric(null);
                   }}
                 >
-                  <MessagesSquare className="h-4 w-4 mr-2" />
+                  <MessagesSquare className="size-4 mr-2" />
                   Nb user messages
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -128,8 +145,17 @@ const MetadataForm: React.FC = () => {
                     setmetadata_metric(null);
                   }}
                 >
-                  <List className="h-4 w-4 mr-2" />
-                  Sessions count
+                  <List className="size-4 mr-2" />
+                  Nb sessions
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedMetric("count_unique");
+                    setmetadata_metric("user_id");
+                  }}
+                >
+                  <Users className="size-4 mr-2" />
+                  Nb users
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -137,8 +163,8 @@ const MetadataForm: React.FC = () => {
                     setmetadata_metric(null);
                   }}
                 >
-                  <TextSearch className="h-4 w-4 mr-2" />
-                  Number of tags
+                  <TextSearch className="size-4 mr-2" />
+                  Nb tags
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -146,13 +172,13 @@ const MetadataForm: React.FC = () => {
                     setmetadata_metric(null);
                   }}
                 >
-                  <TextSearch className="h-4 w-4 mr-2" />
+                  <TextSearch className="size-4 mr-2" />
                   Tags distribution
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <TextSearch className="h-4 w-4 mr-2" />
-                    Scorer value
+                    <TextSearch className="size-4 mr-2" />
+                    Avg Scorer value
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     {rangeEvents.map((event) => (
@@ -160,7 +186,7 @@ const MetadataForm: React.FC = () => {
                         key={event.event_name}
                         onClick={() => {
                           setselectedScorerName(event.event_name);
-                          setselectedScorerId(event.id);
+                          setSelectedScorerId(event.id ?? null);
                           setSelectedMetric("avg_scorer_value");
                           setmetadata_metric(null);
                         }}
@@ -176,8 +202,8 @@ const MetadataForm: React.FC = () => {
                     setmetadata_metric(null);
                   }}
                 >
-                  <Flag className="h-4 w-4 mr-2" />
-                  Success rate
+                  <Flag className="size-4 mr-2" />
+                  Avg Success rate
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -185,12 +211,36 @@ const MetadataForm: React.FC = () => {
                     setmetadata_metric(null);
                   }}
                 >
-                  <List className="h-4 w-4 mr-2" />
-                  Session length
+                  <List className="size-4 mr-2" />
+                  Avg Session length
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <Code className="h-4 w-4 mr-2" />
+                    <Code className="size-4 mr-2" />
+                    Nb unique metadata
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {categoryMetadataFields?.length === 0 && (
+                      <DropdownMenuItem disabled>
+                        No categorical metadata found
+                      </DropdownMenuItem>
+                    )}
+                    {categoryMetadataFields?.map((field) => (
+                      <DropdownMenuItem
+                        key={field}
+                        onClick={() => {
+                          setSelectedMetric("count_unique");
+                          setmetadata_metric(field);
+                        }}
+                      >
+                        {field}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <Code className="size-4 mr-2" />
                     Avg of metadata
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
@@ -209,7 +259,7 @@ const MetadataForm: React.FC = () => {
                             setmetadata_metric(field);
                           }}
                         >
-                          {`${field}_avg`}
+                          {field}
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuSubContent>
@@ -217,7 +267,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuSub>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <Code className="h-4 w-4 mr-2" />
+                    <Code className="size-4 mr-2" />
                     Sum of metadata
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
@@ -234,7 +284,7 @@ const MetadataForm: React.FC = () => {
                             setSelectedMetric("Sum");
                             setmetadata_metric(field);
                           }}
-                          key={`${field}_sum`}
+                          key={field}
                         >
                           {field}
                         </DropdownMenuItem>
@@ -248,7 +298,7 @@ const MetadataForm: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   Breakdown by: {breakdown_by}{" "}
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <ChevronDown className="size-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -264,7 +314,7 @@ const MetadataForm: React.FC = () => {
                     setSelectedGroupBy("tagger_name");
                   }}
                 >
-                  <TextSearch className="h-4 w-4 mr-2" />
+                  <TextSearch className="size-4 mr-2" />
                   Tagger name
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -272,7 +322,7 @@ const MetadataForm: React.FC = () => {
                     setSelectedGroupBy("scorer_name");
                   }}
                 >
-                  <TextSearch className="h-4 w-4 mr-2" />
+                  <TextSearch className="size-4 mr-2" />
                   Scorer name
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -280,7 +330,7 @@ const MetadataForm: React.FC = () => {
                     setSelectedGroupBy("flag");
                   }}
                 >
-                  <Flag className="h-4 w-4 mr-2" />
+                  <Flag className="size-4 mr-2" />
                   Human rating
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -288,7 +338,7 @@ const MetadataForm: React.FC = () => {
                     setSelectedGroupBy("task_position");
                   }}
                 >
-                  <List className="h-4 w-4 mr-2" />
+                  <List className="size-4 mr-2" />
                   Message position
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -296,12 +346,12 @@ const MetadataForm: React.FC = () => {
                     setSelectedGroupBy("session_length");
                   }}
                 >
-                  <List className="h-4 w-4 mr-2" />
+                  <List className="size-4 mr-2" />
                   Session length
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <Timer className="h-4 w-4 mr-2" />
+                    <Timer className="size-4 mr-2" />
                     Time
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
@@ -332,7 +382,7 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuSub>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <Code className="h-4 w-4 mr-2" />
+                    <Code className="size-4 mr-2" />
                     Metadata
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
@@ -355,6 +405,53 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuSub>
               </DropdownMenuContent>
             </DropdownMenu>
+            <HoverCard openDelay={0} closeDelay={0}>
+              <HoverCardTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    setDatavizSorting({
+                      ...datavizSorting,
+                      desc: !datavizSorting.desc,
+                    });
+                  }}
+                >
+                  {datavizSorting.desc && <ArrowDown className="size-4" />}
+                  {!datavizSorting.desc && <ArrowUp className="size-4" />}
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent className="text-xs">
+                Sorting: {datavizSorting.desc ? "Descending" : "Ascending"}
+              </HoverCardContent>
+            </HoverCard>
+            <HoverCard openDelay={0} closeDelay={0}>
+              <HoverCardTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    setDatavizSorting({
+                      ...datavizSorting,
+                      id:
+                        datavizSorting.id === "breakdown_by"
+                          ? "metric"
+                          : "breakdown_by",
+                    });
+                  }}
+                >
+                  {datavizSorting.id === "breakdown_by" && (
+                    <BarChart className="size-4 rotate-90" />
+                  )}
+                  {datavizSorting.id === "metric" && (
+                    <BarChart className="size-4 transform -rotate-90" />
+                  )}
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent className="text-xs">
+                Sorting by: {datavizSorting.id}
+              </HoverCardContent>
+            </HoverCard>
           </div>
           <Button
             onClick={async () => {
@@ -371,6 +468,7 @@ const MetadataForm: React.FC = () => {
                 metric: selectedMetric,
                 metadata_metric: metadata_metric,
                 breakdown_by: breakdown_by,
+                scorer_id: selectedScorerId,
               } as DashboardTile;
               selectedProject.settings.dashboard_tiles.push(newTile);
 
@@ -402,7 +500,7 @@ const MetadataForm: React.FC = () => {
             }}
           >
             <Plus className="h-3 w-3" />
-            <LayoutDashboard className="h-4 w-4 mr-2" />
+            <LayoutDashboard className="size-4 mr-2" />
             Add to dashboard
           </Button>
         </div>
@@ -410,12 +508,13 @@ const MetadataForm: React.FC = () => {
           <DatePickerWithRange />
           <FilterComponent variant="tasks" />
         </div>
-        <div className="h-3/4">
+        <div className="h-[80vh] overflow-y-auto">
           <DatavizGraph
             metric={selectedMetric}
             metadata_metric={metadata_metric}
             breakdown_by={breakdown_by}
             scorer_id={selectedScorerId}
+            sorting={datavizSorting}
           />
         </div>
       </div>
