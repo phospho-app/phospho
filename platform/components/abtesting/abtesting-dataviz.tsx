@@ -4,6 +4,7 @@ import { SendDataAlertDialog } from "@/components/callouts/import-data";
 import { InteractiveDatetime } from "@/components/interactive-datetime";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -36,9 +37,7 @@ import {
   EllipsisVertical,
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useCallback } from "react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Bar,
   BarChart,
@@ -332,45 +331,52 @@ export const ABTestingDataviz = () => {
                       <DropdownMenuItem
                         onClick={() => onClickFiltersA("This week")}
                       >
-                        This week
                         {dateRangeA === "This week" && (
                           <Check className="h-4 w-4 mr-2 text-green-500" />
                         )}
+                        This week
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onClickFiltersA("Last week")}
                       >
-                        Last week
                         {dateRangeA === "Last week" && (
                           <Check className="h-4 w-4 mr-2 text-green-500" />
                         )}
+                        Last week
                       </DropdownMenuItem>
                       <Separator />
-                      {/* <DropdownMenuSub>
+                      <DropdownMenuSub>
                         <DropdownMenuSubTrigger>Custom</DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <Calendar
                             initialFocus
                             mode="range"
-                            defaultMonth={dateRangeA?.from}
-                            selected={dateRangeA}
                             onSelect={(selected) => {
                               if (selected !== undefined) {
                                 // Set the time of the from date to 00:00:00
                                 if (selected.from) {
                                   selected.from.setHours(0, 0, 0, 0);
+                                  setFiltersA({
+                                    created_at_start:
+                                      selected.from.getTime() / 1000,
+                                  });
                                 }
                                 // Set the time of the to date to 23:59:59
                                 if (selected.to) {
                                   selected.to.setHours(23, 59, 59, 999);
+                                  setFiltersA({
+                                    created_at_end:
+                                      selected.to.getTime() / 1000,
+                                  });
                                 }
-                                setDateRangeA(selected);
+                                setDateRangeA("Custom");
+                                setVersionIDA("Custom");
                               }
                             }}
                             numberOfMonths={2}
                           />
                         </DropdownMenuSubContent>
-                      </DropdownMenuSub> */}
+                      </DropdownMenuSub>
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
@@ -422,45 +428,52 @@ export const ABTestingDataviz = () => {
                       <DropdownMenuItem
                         onClick={() => onClickFiltersB("This week")}
                       >
-                        This week{" "}
                         {dateRangeB === "This week" && (
                           <Check className="h-4 w-4 mr-2 text-green-500" />
                         )}
+                        This week
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => onClickFiltersB("Last week")}
                       >
-                        Last week{" "}
                         {dateRangeB === "Last week" && (
                           <Check className="h-4 w-4 mr-2 text-green-500" />
                         )}
+                        Last week
                       </DropdownMenuItem>
                       <Separator />
-                      {/* <DropdownMenuSub>
+                      <DropdownMenuSub>
                         <DropdownMenuSubTrigger>Custom</DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <Calendar
                             initialFocus
                             mode="range"
-                            defaultMonth={dateRangeB?.from}
-                            selected={dateRangeB}
                             onSelect={(selected) => {
                               if (selected !== undefined) {
                                 // Set the time of the from date to 00:00:00
                                 if (selected.from) {
                                   selected.from.setHours(0, 0, 0, 0);
+                                  setFiltersB({
+                                    created_at_start:
+                                      selected.from.getTime() / 1000,
+                                  });
                                 }
                                 // Set the time of the to date to 23:59:59
                                 if (selected.to) {
                                   selected.to.setHours(23, 59, 59, 999);
+                                  setFiltersB({
+                                    created_at_end:
+                                      selected.to.getTime() / 1000,
+                                  });
                                 }
-                                setDateRangeB(selected);
+                                setDateRangeB("Custom");
+                                setVersionIDB("Custom");
                               }
                             }}
                             numberOfMonths={2}
                           />
                         </DropdownMenuSubContent>
-                      </DropdownMenuSub> */}
+                      </DropdownMenuSub>
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
