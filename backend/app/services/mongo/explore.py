@@ -2037,6 +2037,8 @@ async def get_ab_tests_versions(
     versionA: Optional[str],
     versionB: Optional[str],
     selected_events_ids: Optional[List[str]] = None,
+    filtersA: Optional[ProjectDataFilters] = None,
+    filtersB: Optional[ProjectDataFilters] = None,
 ) -> List[Dict[str, Union[str, float, int]]]:
     """
     - For boolean events, gets the number of times the event was detected in each task with the two versions of the model.
@@ -2046,14 +2048,279 @@ async def get_ab_tests_versions(
     mongo_db = await get_mongo_db()
     collection_name = "events"
 
-    logger.debug(f"Fetching AB tests for project {project_id}")
-    logger.debug(f"Versions: {versionA} and {versionB}")
-
+    logger.debug(f"versionA: {versionA}, versionB: {versionB}")
+    logger.debug(f"filtersA: {filtersA}, filtersB: {filtersB}")
     if versionA == "None":
         versionA = None
     if versionB == "None":
         versionB = None
 
+    pipeline_A = await get_number_of_events_version(
+        project_id=project_id,
+        version=versionA,
+        filters=filtersA,
+        selected_events_ids=selected_events_ids,
+    )
+
+    results_A = (
+        await mongo_db[collection_name].aggregate(pipeline_A).to_list(length=None)
+    )
+
+    if not results_A or len(results_A) == 0:
+        logger.info("No results found for version A")
+
+    pipeline_B = await get_number_of_events_version(
+        project_id=project_id,
+        version=versionB,
+        filters=filtersB,
+        selected_events_ids=selected_events_ids,
+    )
+    results_B = (
+        await mongo_db[collection_name].aggregate(pipeline_B).to_list(length=None)
+    )
+    if not results_B or len(results_B) == 0:
+        logger.info("No results found for version B")
+        if not results_A or len(results_A) == 0:
+            return []
+
+    results = results_A + results_B
+
+    logger.debug(f"Results: {results}")
+
+    # This dict will have event_names as keys, and the values will be dictionnaries with the version_id as keys and the count as values
+    total_tasks_with_A = await get_nb_tasks_version(
+        version=versionA,
+        project_id=project_id,
+        filters=filtersA,
+    )
+    logger.info(f"Total tasks with version A: {total_tasks_with_A}")
+
+    total_tasks_with_B = await get_nb_tasks_version(
+        version=versionB,
+        project_id=project_id,
+        filters=filtersB,
+    )
+
+    logger.info(f"Total tasks with version B: {total_tasks_with_B}")
+
+    if total_tasks_with_B == 0 and total_tasks_with_A == 0:
+        return []
+
+    graph_values = {}
+    graph_values_range = {}
+    events_to_normalize = []
+    for result in results:
+        if "event_name" not in result:
+            continue
+        if (
+            "event_type" not in result or result["event_type"] == "confidence"
+        ):  # We sum up the count for each version
+            event_name = result["event_name"]
+            for event_result in result["results"]:
+                if "version_id" not in event_result:
+                    continue
+                if event_name not in graph_values:
+                    graph_values[event_name] = {
+                        event_result["version_id"]: event_result["count"]
+                    }
+                else:
+                    if event_result["version_id"] not in graph_values[event_name]:
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
+                    else:
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
+
+            # We normalize the count by the total number of tasks with each version to get the percentage
+            if versionA in graph_values.get(event_name, []):
+                graph_values[event_name][versionA] = graph_values[event_name][versionA]
+            if versionB in graph_values.get(event_name, []):
+                graph_values[event_name][versionB] = graph_values[event_name][versionB]
+
+        elif (
+            result["event_type"] == "category"
+        ):  # We sum up up the count for each label for each version
+            for event_result in result["results"]:
+                if "version_id" not in event_result:
+                    continue
+                event_name = result["event_name"] + "- " + event_result["event_label"]
+                if event_name not in graph_values:
+                    graph_values[event_name] = {
+                        event_result["version_id"]: event_result["count"]
+                    }
+                else:
+                    if event_result["version_id"] not in graph_values[event_name]:
+                        graph_values[event_name][event_result["version_id"]] = (
+                            event_result["count"]
+                        )
+                    else:
+                        graph_values[event_name][event_result["version_id"]] += (
+                            event_result["count"]
+                        )
+                # We normalize the count by the total number of tasks with each version
+                if event_result["version_id"] == versionA:
+                    graph_values[event_name][versionA] = graph_values[event_name][
+                        versionA
+                    ]
+                if event_result["version_id"] == versionB:
+                    graph_values[event_name][versionB] = graph_values[event_name][
+                        versionB
+                    ]
+
+        elif result["event_type"] == "range":  # We average the score for each version
+            divide_for_correct_average = {}
+            event_name = result["event_name"]
+            for event_result in result["results"]:
+                if "version_id" not in event_result:
+                    continue
+                if event_name not in graph_values_range:
+                    graph_values_range[event_name] = {
+                        event_result["version_id"]: event_result["score"]
+                        * event_result["count"]
+                    }
+                else:
+                    if event_result["version_id"] not in graph_values_range[event_name]:
+                        graph_values_range[event_name][event_result["version_id"]] = (
+                            event_result["score"] * event_result["count"]
+                        )
+                    else:
+                        graph_values_range[event_name][event_result["version_id"]] += (
+                            event_result["score"] * event_result["count"]
+                        )
+
+                if event_result["version_id"] not in divide_for_correct_average:
+                    divide_for_correct_average[event_result["version_id"]] = (
+                        event_result["count"]
+                    )
+                else:
+                    divide_for_correct_average[event_result["version_id"]] += (
+                        event_result["count"]
+                    )
+
+            for version in divide_for_correct_average:
+                graph_values_range[event_name][version] = (
+                    graph_values_range[event_name][version]
+                    / divide_for_correct_average[version]
+                )
+
+            events_to_normalize.append(event_name)
+
+        else:
+            logger.error(f"New event type is not handled: {result['event_type']}")
+
+    if versionA is None:
+        versionA = "None"
+    if versionB is None:
+        versionB = "None"
+
+    formatted_graph_values = []
+    for event_name, values in graph_values.items():
+        formatted_graph_values.append(
+            {
+                "event_name": event_name,
+                versionA: values.get(versionA, 0) / total_tasks_with_A
+                if total_tasks_with_A != 0
+                else 0,
+                versionB: values.get(versionB, 0) / total_tasks_with_B
+                if total_tasks_with_B != 0
+                else 0,
+                versionA + "_tooltip": values.get(versionA, 0),
+                versionB + "_tooltip": values.get(versionB, 0),
+            }
+        )
+    for event_name, values in graph_values_range.items():
+        formatted_graph_values.append(
+            {
+                "event_name": event_name,
+                versionA: values.get(versionA, 0) / 5,
+                versionB: values.get(versionB, 0) / 5,
+                versionA + "_tooltip": values.get(versionA, 0),
+                versionB + "_tooltip": values.get(versionB, 0),
+            }
+        )
+
+    # We sort to keep the order the same
+    formatted_graph_values = sorted(
+        formatted_graph_values, key=lambda x: x["event_name"]
+    )
+
+    return formatted_graph_values
+
+
+async def get_nb_tasks_version(
+    project_id: str,
+    version: Optional[str] = None,
+    filters: Optional[ProjectDataFilters] = None,
+) -> int:
+    """
+    Get the number of tasks with the version_id in the filters.
+    """
+    mongo_db = await get_mongo_db()
+
+    if filters is not None and (
+        filters.created_at_start is not None or filters.created_at_end is not None
+    ):
+        pipeline = [
+            {
+                "$match": {
+                    "project_id": project_id,
+                },
+            }
+        ]
+        if filters.created_at_start is not None:
+            if isinstance(filters.created_at_start, datetime.datetime):
+                filters.created_at_start = int(filters.created_at_start.timestamp())
+            pipeline.append(
+                {
+                    "$match": {
+                        "created_at": {"$gte": filters.created_at_start},  # type: ignore
+                    }
+                }
+            )
+        if filters.created_at_end is not None:
+            if isinstance(filters.created_at_end, datetime.datetime):
+                filters.created_at_end = int(filters.created_at_end.timestamp())
+            pipeline.append(
+                {
+                    "$match": {
+                        "created_at": {"$lte": filters.created_at_end},  # type: ignore
+                    }
+                }
+            )
+        pipeline.append(
+            {
+                "$count": "count",  # type: ignore
+            }
+        )
+    else:
+        pipeline = [
+            {
+                "$match": {
+                    "project_id": project_id,
+                    "metadata.version_id": version,  # type: ignore
+                }
+            },
+            {
+                "$count": "count",  # type: ignore
+            },
+        ]
+
+    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+
+    if not result or len(result) == 0:
+        return 0
+
+    return result[0]["count"]
+
+
+async def get_number_of_events_version(
+    project_id: str,
+    version: Optional[str] = None,
+    filters: Optional[ProjectDataFilters] = None,
+    selected_events_ids: Optional[List[str]] = None,
+) -> List:
     pipeline = [
         {
             "$match": {
@@ -2080,27 +2347,62 @@ async def get_ab_tests_versions(
             }
         },
         {"$unwind": "$event_def"},
-        {
-            "$match": {
-                "task.metadata.version_id": {"$in": [versionA, versionB]},
-            }
-        },
-        {
-            "$group": {
-                "_id": {
-                    "version_id": "$task.metadata.version_id",
-                    "event_definition_id": "$event_def.id",
-                    "event_label": "$score_range.label",
-                    "event_name": "$event_def.event_name",
-                    "event_type": "$event_def.score_range_settings.score_type",
-                },
-                "count": {"$sum": 1},
-                "score": {"$avg": "$score_range.value"},
-            },
-        },
-        # Keep only the events that are in the selected_events_id list
     ]
 
+    # I want to set the version_id of all task to versionA if the version_id is None and the task was created in the filterA
+    # Check if the filters are not None or empty
+    if filters is not None and (
+        filters.created_at_start is not None or filters.created_at_end is not None
+    ):
+        filtering = []
+        if filters.created_at_start is not None:
+            if isinstance(filters.created_at_start, datetime.datetime):
+                filters.created_at_start = int(filters.created_at_start.timestamp())
+            filtering.append({"$gte": ["$task.created_at", filters.created_at_start]})
+        if filters.created_at_end is not None:
+            if isinstance(filters.created_at_end, datetime.datetime):
+                filters.created_at_end = int(filters.created_at_end.timestamp())
+            filtering.append({"$lte": ["$task.created_at", filters.created_at_end]})
+        pipeline.append(
+            {
+                "$set": {
+                    "task.metadata.version_id": {
+                        "$cond": [
+                            {
+                                "$and": filtering,
+                            },
+                            version,
+                            "$task.metadata.version_id",
+                        ]
+                    }
+                }
+            },
+        )
+
+    pipeline.extend(
+        [
+            {
+                "$match": {
+                    "task.metadata.version_id": {"$in": [version]},
+                }
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "version_id": "$task.metadata.version_id",
+                        "event_definition_id": "$event_def.id",
+                        "event_label": "$score_range.label",
+                        "event_name": "$event_def.event_name",
+                        "event_type": "$event_def.score_range_settings.score_type",
+                    },
+                    "count": {"$sum": 1},
+                    "score": {"$avg": "$score_range.value"},
+                },
+            },
+        ]
+    )
+
+    # Keep only the events that are in the selected_events_id list
     if selected_events_ids is not None:
         pipeline.append(
             {
@@ -2158,163 +2460,7 @@ async def get_ab_tests_versions(
         ]
     )
 
-    results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
-    if not results or len(results) == 0:
-        logger.info("No results found")
-        return []
-
-    # This dict will have event_names as keys, and the values will be dictionnaries with the version_id as keys and the count as values
-    total_tasks_with_A = await mongo_db["tasks"].count_documents(
-        {"project_id": project_id, "metadata.version_id": versionA}
-    )
-    if total_tasks_with_A == 0:
-        logger.info(f"No tasks found for version {versionA}")
-        return []
-
-    total_tasks_with_B = await mongo_db["tasks"].count_documents(
-        {"project_id": project_id, "metadata.version_id": versionB}
-    )
-    if total_tasks_with_B == 0:
-        logger.info(f"No tasks found for version {versionB}")
-        return []
-
-    graph_values = {}
-    graph_values_range = {}
-    events_to_normalize = []
-    for result in results:
-        if "event_name" not in result:
-            continue
-        if (
-            "event_type" not in result or result["event_type"] == "confidence"
-        ):  # We sum up the count for each version
-            event_name = result["event_name"]
-            for event_result in result["results"]:
-                if "version_id" not in event_result:
-                    continue
-                if event_name not in graph_values:
-                    graph_values[event_name] = {
-                        event_result["version_id"]: event_result["count"]
-                    }
-                else:
-                    if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
-                    else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
-
-            # We normalize the count by the total number of tasks with each version to get the percentage
-            if versionA in graph_values.get(event_name, []):
-                graph_values[event_name][versionA] = graph_values[event_name][versionA]
-            if versionB in graph_values.get(event_name, []):
-                graph_values[event_name][versionB] = graph_values[event_name][versionB]
-
-        elif (
-            result["event_type"] == "category"
-        ):  # We sum up up the count for each label for each version
-            for event_result in result["results"]:
-                if "version_id" not in event_result:
-                    continue
-                event_name = result["event_name"] + "- " + event_result["event_label"]
-                if event_name not in graph_values:
-                    graph_values[event_name] = {
-                        event_result["version_id"]: event_result["count"]
-                    }
-                else:
-                    if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] = event_result["count"]
-                    else:
-                        graph_values[event_name][
-                            event_result["version_id"]
-                        ] += event_result["count"]
-                # We normalize the count by the total number of tasks with each version
-                if event_result["version_id"] == versionA:
-                    graph_values[event_name][versionA] = graph_values[event_name][
-                        versionA
-                    ]
-                if event_result["version_id"] == versionB:
-                    graph_values[event_name][versionB] = graph_values[event_name][
-                        versionB
-                    ]
-
-        elif result["event_type"] == "range":  # We average the score for each version
-            divide_for_correct_average = {}
-            event_name = result["event_name"]
-            for event_result in result["results"]:
-                if "version_id" not in event_result:
-                    continue
-                if event_name not in graph_values_range:
-                    graph_values_range[event_name] = {
-                        event_result["version_id"]: event_result["score"]
-                        * event_result["count"]
-                    }
-                else:
-                    if event_result["version_id"] not in graph_values_range[event_name]:
-                        graph_values_range[event_name][event_result["version_id"]] = (
-                            event_result["score"] * event_result["count"]
-                        )
-                    else:
-                        graph_values_range[event_name][event_result["version_id"]] += (
-                            event_result["score"] * event_result["count"]
-                        )
-
-                if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] = event_result["count"]
-                else:
-                    divide_for_correct_average[
-                        event_result["version_id"]
-                    ] += event_result["count"]
-
-            for version in divide_for_correct_average:
-                graph_values_range[event_name][version] = (
-                    graph_values_range[event_name][version]
-                    / divide_for_correct_average[version]
-                )
-
-            events_to_normalize.append(event_name)
-
-        else:
-            logger.error(f"New event type is not handled: {result['event_type']}")
-
-    if versionA is None:
-        versionA = "None"
-    if versionB is None:
-        versionB = "None"
-
-    formatted_graph_values = []
-    for event_name, values in graph_values.items():
-        formatted_graph_values.append(
-            {
-                "event_name": event_name,
-                versionA: values.get(versionA, 0) / total_tasks_with_A,
-                versionB: values.get(versionB, 0) / total_tasks_with_B,
-                versionA + "_tooltip": values.get(versionA, 0),
-                versionB + "_tooltip": values.get(versionB, 0),
-            }
-        )
-    for event_name, values in graph_values_range.items():
-        formatted_graph_values.append(
-            {
-                "event_name": event_name,
-                versionA: values.get(versionA, 0) / 5,
-                versionB: values.get(versionB, 0) / 5,
-                versionA + "_tooltip": values.get(versionA, 0),
-                versionB + "_tooltip": values.get(versionB, 0),
-            }
-        )
-
-    # We sort to keep the order the same
-    formatted_graph_values = sorted(
-        formatted_graph_values, key=lambda x: x["event_name"]
-    )
-
-    return formatted_graph_values
+    return pipeline
 
 
 async def compute_cloud_of_clusters(
