@@ -139,7 +139,7 @@ const SessionStats = ({
       <Card className="flex flex-col space-y-1 p-2">
         <div className="flex flex-row items-center">
           <code className="bg-secondary p-1.5 text-xs">{session_id}</code>
-          <CopyButton text="session_id" className="ml-2" />
+          <CopyButton text={session_id} className="ml-2" />
         </div>
         <div className="flex flex-row space-x-16">
           <div className="text-xs max-w-48">
