@@ -219,7 +219,9 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
                   table?.getRowModel()?.rows.map((row) => (
                     <TableRow
                       key={row.id}
-                      // data-state={row.getIsSelected() && "selected"}
+                      data-state={
+                        row.original.id === taskPreviewId && "selected"
+                      }
                       onClick={() => {
                         setTaskToPreviewId(row.original.id);
                         setSheetToOpen("preview");
