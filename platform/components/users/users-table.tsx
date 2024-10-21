@@ -162,7 +162,9 @@ export function UsersTable({
                   table?.getRowModel()?.rows?.map((row) => (
                     <TableRow
                       key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
+                      data-state={
+                        row.original.user_id === previewUserId && "selected"
+                      }
                       onClick={() => {
                         setSheetOpen(true);
                         setPreviewUserId(row.original.user_id);
