@@ -27,7 +27,12 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
-import { ABTest, Project, ProjectDataFilters } from "@/models/models";
+import {
+  ABTest,
+  CustomDateRange,
+  Project,
+  ProjectDataFilters,
+} from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -73,6 +78,13 @@ export const ABTestingDataviz = () => {
 
   const [dateRangeA, setDateRangeA] = useState<string>("Date range");
   const [dateRangeB, setDateRangeB] = useState<string>("Date range");
+
+  const [customDateRangeA, setCustomDateRangeA] = useState<
+    CustomDateRange | undefined
+  >(undefined);
+  const [customDateRangeB, setCustomDateRangeB] = useState<
+    CustomDateRange | undefined
+  >(undefined);
 
   // Fetch ABTests
   const { data: abTests }: { data: ABTest[] | null | undefined } = useSWR(
@@ -351,6 +363,7 @@ export const ABTestingDataviz = () => {
                           <Calendar
                             initialFocus
                             mode="range"
+                            selected={customDateRangeA}
                             onSelect={(selected) => {
                               if (selected !== undefined) {
                                 // Set the time of the from date to 00:00:00
@@ -369,8 +382,17 @@ export const ABTestingDataviz = () => {
                                       selected.to.getTime() / 1000,
                                   });
                                 }
-                                setDateRangeA("Custom");
-                                setVersionIDA("Custom");
+                                setDateRangeA("Custom A");
+                                setVersionIDA("Custom A");
+                                const dateRangeInfo: CustomDateRange = {
+                                  from: selected.from,
+                                  to: selected.to,
+                                  created_at_start:
+                                    filtersA.created_at_start || undefined,
+                                  created_at_end:
+                                    filtersA.created_at_end || undefined,
+                                };
+                                setCustomDateRangeA(dateRangeInfo);
                               }
                             }}
                             numberOfMonths={2}
@@ -448,6 +470,7 @@ export const ABTestingDataviz = () => {
                           <Calendar
                             initialFocus
                             mode="range"
+                            selected={customDateRangeB}
                             onSelect={(selected) => {
                               if (selected !== undefined) {
                                 // Set the time of the from date to 00:00:00
@@ -466,8 +489,17 @@ export const ABTestingDataviz = () => {
                                       selected.to.getTime() / 1000,
                                   });
                                 }
-                                setDateRangeB("Custom");
-                                setVersionIDB("Custom");
+                                setDateRangeB("Custom B");
+                                setVersionIDB("Custom B");
+                                const dateRangeInfo: CustomDateRange = {
+                                  from: selected.from,
+                                  to: selected.to,
+                                  created_at_start:
+                                    filtersB.created_at_start || undefined,
+                                  created_at_end:
+                                    filtersB.created_at_end || undefined,
+                                };
+                                setCustomDateRangeB(dateRangeInfo);
                               }
                             }}
                             numberOfMonths={2}
