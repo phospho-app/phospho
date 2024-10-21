@@ -2055,179 +2055,35 @@ async def get_ab_tests_versions(
     if versionB == "None":
         versionB = None
 
-    pipeline = [
-        {
-            "$match": {
-                "project_id": project_id,
-                "removed": {"$ne": ["$events.removed", True]},
-            }
-        },
-        {
-            "$lookup": {
-                "from": "tasks",
-                "localField": "task_id",
-                "foreignField": "id",
-                "as": "task",
-            }
-        },
-        {"$unwind": "$task"},
-        # We look up the last version of the event_definition to have the information up to date
-        {
-            "$lookup": {
-                "from": "event_definitions",
-                "localField": "event_definition.id",
-                "foreignField": "id",
-                "as": "event_def",
-            }
-        },
-        {"$unwind": "$event_def"},
-    ]
-
-    # I want to set the version_id of all task to versionA if the version_id is None and the task was created in the filterA
-    # Check if the filters are not None or empty
-    if filtersA is not None and (
-        filtersA.created_at_start is not None or filtersA.created_at_end is not None
-    ):
-        filteringA = []
-        if filtersA.created_at_start is not None:
-            if isinstance(filtersA.created_at_start, datetime.datetime):
-                filtersA.created_at_start = int(filtersA.created_at_start.timestamp())
-            if isinstance(filtersA.created_at_start, int):
-                filtersA.created_at_start = filtersA.created_at_start
-            filteringA.append({"$gte": ["$task.created_at", filtersA.created_at_start]})
-        if filtersA.created_at_end is not None:
-            filteringA.append({"$lte": ["$task.created_at", filtersA.created_at_end]})
-        pipeline.append(
-            {
-                "$set": {
-                    "task.metadata.version_id": {
-                        "$cond": [
-                            {
-                                "$and": filteringA,
-                            },
-                            versionA,
-                            "$task.metadata.version_id",
-                        ]
-                    }
-                }
-            },
-        )
-
-    if filtersB is not None and (
-        filtersB.created_at_start is not None or filtersB.created_at_end is not None
-    ):
-        filteringB = []
-        if filtersB.created_at_start is not None:
-            if isinstance(filtersB.created_at_start, datetime.datetime):
-                filtersB.created_at_start = int(filtersB.created_at_start.timestamp())
-            filteringB.append({"$gte": ["$task.created_at", filtersB.created_at_start]})
-        if filtersB.created_at_end is not None:
-            if isinstance(filtersB.created_at_end, datetime.datetime):
-                filtersB.created_at_end = int(filtersB.created_at_end.timestamp())
-            filteringB.append({"$lte": ["$task.created_at", filtersB.created_at_end]})
-        pipeline.append(
-            {
-                "$set": {
-                    "task.metadata.version_id": {
-                        "$cond": [
-                            {
-                                "$and": filteringB,
-                            },
-                            versionB,
-                            "$task.metadata.version_id",
-                        ]
-                    }
-                }
-            },
-        )
-
-    pipeline.extend(
-        [
-            {
-                "$match": {
-                    "task.metadata.version_id": {"$in": [versionA, versionB]},
-                }
-            },
-            {
-                "$group": {
-                    "_id": {
-                        "version_id": "$task.metadata.version_id",
-                        "event_definition_id": "$event_def.id",
-                        "event_label": "$score_range.label",
-                        "event_name": "$event_def.event_name",
-                        "event_type": "$event_def.score_range_settings.score_type",
-                    },
-                    "count": {"$sum": 1},
-                    "score": {"$avg": "$score_range.value"},
-                },
-            },
-        ]
+    pipeline_A = await get_number_of_events_version(
+        project_id=project_id,
+        version=versionA,
+        filters=filtersA,
+        selected_events_ids=selected_events_ids,
     )
 
-    # Keep only the events that are in the selected_events_id list
-    if selected_events_ids is not None:
-        pipeline.append(
-            {
-                "$match": {
-                    "_id.event_definition_id": {"$in": selected_events_ids},
-                },
-            }
-        )
-
-    pipeline.extend(
-        [
-            # For range type events, we need to average the score
-            # For confidence type events, we need to count the number of times the event was detected
-            # For categorical events, we need to count the number of times each label was detected$
-            {
-                "$project": {
-                    "_id": 0,
-                    "version_id": "$_id.version_id",
-                    "event_name": "$_id.event_name",
-                    "event_label": "$_id.event_label",
-                    "event_type": "$_id.event_type",
-                    "count": 1,
-                    "score": 1,
-                },
-            },
-            # TODO : Remove this code and implement it in python instead
-            # For event_type == "category", concat by event_name and the label then group by event_name
-            # For event_type == "range", concat by event_name and average the score
-            # For event_type == "confidence", concat by event_name and count the number of times the event was detected
-            {
-                "$group": {
-                    "_id": {
-                        "event_definition_id": "$_id.event_definition_id",
-                        "event_type": "$event_type",
-                        "event_name": "$event_name",
-                    },
-                    "results": {
-                        "$push": {
-                            "version_id": "$version_id",
-                            "event_label": "$event_label",
-                            "count": "$count",
-                            "score": "$score",
-                        },
-                    },
-                },
-            },
-            {
-                "$project": {
-                    "_id": 0,
-                    "event_type": "$_id.event_type",
-                    "event_name": "$_id.event_name",
-                    "results": 1,
-                },
-            },
-        ]
+    results_A = (
+        await mongo_db[collection_name].aggregate(pipeline_A).to_list(length=None)
     )
 
-    logger.info(f"AB test pipeline: {pipeline}")
+    if not results_A or len(results_A) == 0:
+        logger.info("No results found for version A")
 
-    results = await mongo_db[collection_name].aggregate(pipeline).to_list(length=None)
-    if not results or len(results) == 0:
-        logger.info("No results found")
-        return []
+    pipeline_B = await get_number_of_events_version(
+        project_id=project_id,
+        version=versionB,
+        filters=filtersB,
+        selected_events_ids=selected_events_ids,
+    )
+    results_B = (
+        await mongo_db[collection_name].aggregate(pipeline_B).to_list(length=None)
+    )
+    if not results_B or len(results_B) == 0:
+        logger.info("No results found for version B")
+        if not results_A or len(results_A) == 0:
+            return []
+
+    results = results_A + results_B
 
     # This dict will have event_names as keys, and the values will be dictionnaries with the version_id as keys and the count as values
     total_tasks_with_A = await get_nb_tasks_version(
@@ -2238,6 +2094,7 @@ async def get_ab_tests_versions(
     if total_tasks_with_A == 0:
         logger.info(f"No tasks found for version {versionA}")
         return []
+    logger.info(f"Total tasks with version A: {total_tasks_with_A}")
 
     total_tasks_with_B = await get_nb_tasks_version(
         version=versionB,
@@ -2248,7 +2105,8 @@ async def get_ab_tests_versions(
     if total_tasks_with_B == 0:
         logger.info(f"No tasks found for version {versionB}")
         return []
-    logger.info(f"Total tasks with version A: {total_tasks_with_B}")
+
+    logger.info(f"Total tasks with version B: {total_tasks_with_B}")
 
     graph_values = {}
     graph_values_range = {}
@@ -2453,6 +2311,154 @@ async def get_nb_tasks_version(
         return 0
 
     return result[0]["count"]
+
+
+async def get_number_of_events_version(
+    project_id: str,
+    version: Optional[str] = None,
+    filters: Optional[ProjectDataFilters] = None,
+    selected_events_ids: Optional[List[str]] = None,
+) -> List:
+    pipeline = [
+        {
+            "$match": {
+                "project_id": project_id,
+                "removed": {"$ne": ["$events.removed", True]},
+            }
+        },
+        {
+            "$lookup": {
+                "from": "tasks",
+                "localField": "task_id",
+                "foreignField": "id",
+                "as": "task",
+            }
+        },
+        {"$unwind": "$task"},
+        # We look up the last version of the event_definition to have the information up to date
+        {
+            "$lookup": {
+                "from": "event_definitions",
+                "localField": "event_definition.id",
+                "foreignField": "id",
+                "as": "event_def",
+            }
+        },
+        {"$unwind": "$event_def"},
+    ]
+
+    # I want to set the version_id of all task to versionA if the version_id is None and the task was created in the filterA
+    # Check if the filters are not None or empty
+    if filters is not None and (
+        filters.created_at_start is not None or filters.created_at_end is not None
+    ):
+        filtering = []
+        if filters.created_at_start is not None:
+            if isinstance(filters.created_at_start, datetime.datetime):
+                filters.created_at_start = int(filters.created_at_start.timestamp())
+            if isinstance(filters.created_at_start, int):
+                filters.created_at_start = filters.created_at_start
+            filtering.append({"$gte": ["$task.created_at", filters.created_at_start]})
+        if filters.created_at_end is not None:
+            filtering.append({"$lte": ["$task.created_at", filters.created_at_end]})
+        pipeline.append(
+            {
+                "$set": {
+                    "task.metadata.version_id": {
+                        "$cond": [
+                            {
+                                "$and": filtering,
+                            },
+                            version,
+                            "$task.metadata.version_id",
+                        ]
+                    }
+                }
+            },
+        )
+
+    pipeline.extend(
+        [
+            {
+                "$match": {
+                    "task.metadata.version_id": {"$in": [version]},
+                }
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "version_id": "$task.metadata.version_id",
+                        "event_definition_id": "$event_def.id",
+                        "event_label": "$score_range.label",
+                        "event_name": "$event_def.event_name",
+                        "event_type": "$event_def.score_range_settings.score_type",
+                    },
+                    "count": {"$sum": 1},
+                    "score": {"$avg": "$score_range.value"},
+                },
+            },
+        ]
+    )
+
+    # Keep only the events that are in the selected_events_id list
+    if selected_events_ids is not None:
+        pipeline.append(
+            {
+                "$match": {
+                    "_id.event_definition_id": {"$in": selected_events_ids},
+                },
+            }
+        )
+
+    pipeline.extend(
+        [
+            # For range type events, we need to average the score
+            # For confidence type events, we need to count the number of times the event was detected
+            # For categorical events, we need to count the number of times each label was detected$
+            {
+                "$project": {
+                    "_id": 0,
+                    "version_id": "$_id.version_id",
+                    "event_name": "$_id.event_name",
+                    "event_label": "$_id.event_label",
+                    "event_type": "$_id.event_type",
+                    "count": 1,
+                    "score": 1,
+                },
+            },
+            # TODO : Remove this code and implement it in python instead
+            # For event_type == "category", concat by event_name and the label then group by event_name
+            # For event_type == "range", concat by event_name and average the score
+            # For event_type == "confidence", concat by event_name and count the number of times the event was detected
+            {
+                "$group": {
+                    "_id": {
+                        "event_definition_id": "$_id.event_definition_id",
+                        "event_type": "$event_type",
+                        "event_name": "$event_name",
+                    },
+                    "results": {
+                        "$push": {
+                            "version_id": "$version_id",
+                            "event_label": "$event_label",
+                            "count": "$count",
+                            "score": "$score",
+                        },
+                    },
+                },
+            },
+            {
+                "$project": {
+                    "_id": 0,
+                    "event_type": "$_id.event_type",
+                    "event_name": "$_id.event_name",
+                    "results": 1,
+                },
+            },
+        ]
+    )
+
+    return pipeline
 
 
 async def compute_cloud_of_clusters(

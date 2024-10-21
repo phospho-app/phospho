@@ -90,37 +90,6 @@ export const ABTestingDataviz = () => {
     },
   );
 
-  // Get the version IDs from the URL. If not present, use the first two version IDs
-  const searchParams = useSearchParams();
-
-  const abTestJSON = JSON.stringify(abTests);
-
-  const computeVersionsIds = useCallback(() => {
-    let currVersionA = null;
-    let currVersionB = null;
-
-    if (!abTests) return { currVersionA, currVersionB };
-    if (!abTestJSON) return { currVersionA, currVersionB };
-
-    if (abTests.length === 1) {
-      currVersionA = abTests[0].version_id;
-      currVersionB = abTests[0].version_id;
-    } else if (abTests.length >= 2) {
-      currVersionA = abTests[1].version_id;
-      currVersionB = abTests[0].version_id;
-    }
-
-    // Override the default versions if the URL has the search params
-    if (searchParams.get("a")) {
-      currVersionA = searchParams.get("a");
-    }
-    if (searchParams.get("b")) {
-      currVersionB = searchParams.get("b");
-    }
-
-    return { currVersionA, currVersionB };
-  }, [abTests, abTestJSON, searchParams]);
-
   const [versionIDA, setVersionIDA] = useState<string | null>(null);
   const [versionIDB, setVersionIDB] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -150,12 +119,6 @@ export const ABTestingDataviz = () => {
     { keepPreviousData: true },
   );
   const hasTasks: boolean = hasTasksData?.has_tasks;
-
-  useEffect(() => {
-    const { currVersionA, currVersionB } = computeVersionsIds();
-    setVersionIDA(currVersionA);
-    setVersionIDB(currVersionB);
-  }, [computeVersionsIds]);
 
   const { data: graphData } = useSWR(
     project_id
@@ -356,7 +319,8 @@ export const ABTestingDataviz = () => {
                 <Button variant="outline">
                   <div className="flex flex-row items-center justify-between min-w-[10rem]">
                     <span className="font-semibold mr-1">Reference A: </span>
-                    {versionIDA} <ChevronDown className="size-4 ml-2" />
+                    {versionIDA || "Select version"}{" "}
+                    <ChevronDown className="size-4 ml-2" />
                   </div>
                 </Button>
               </DropdownMenuTrigger>
@@ -442,7 +406,8 @@ export const ABTestingDataviz = () => {
                 <Button variant="outline">
                   <div className="flex flex-row items-center justify-between min-w-[10rem]">
                     <span className="font-semibold mr-1">Candidate B:</span>
-                    {versionIDB} <ChevronDown className="size-4 ml-2" />
+                    {versionIDB || "Select version"}{" "}
+                    <ChevronDown className="size-4 ml-2" />
                   </div>
                 </Button>
               </DropdownMenuTrigger>
