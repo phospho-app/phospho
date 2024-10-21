@@ -2273,7 +2273,7 @@ async def get_nb_tasks_version(
             pipeline.append(
                 {
                     "$match": {
-                        "created_at": {"$gte": filters.created_at_start},
+                        "created_at": {"$gte": filters.created_at_start},  # type: ignore
                     }
                 }
             )
@@ -2283,13 +2283,13 @@ async def get_nb_tasks_version(
             pipeline.append(
                 {
                     "$match": {
-                        "created_at": {"$lte": filters.created_at_end},
+                        "created_at": {"$lte": filters.created_at_end},  # type: ignore
                     }
                 }
             )
         pipeline.append(
             {
-                "$count": "count",
+                "$count": "count",  # type: ignore
             }
         )
     else:
@@ -2297,11 +2297,11 @@ async def get_nb_tasks_version(
             {
                 "$match": {
                     "project_id": project_id,
-                    "metadata.version_id": version,
+                    "metadata.version_id": version,  # type: ignore
                 }
             },
             {
-                "$count": "count",
+                "$count": "count",  # type: ignore
             },
         ]
 
