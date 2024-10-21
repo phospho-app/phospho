@@ -1,5 +1,6 @@
+import datetime
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 from phospho.models import ProjectDataFilters
 
 
@@ -20,6 +21,8 @@ class ABTestVersions(BaseModel):
     versionA: Optional[str]
     versionB: Optional[str]
     selected_events_ids: Optional[List[str]]
+    filtersA: Optional[ProjectDataFilters]
+    filtersB: Optional[ProjectDataFilters]
 
 
 class ClusteringEmbeddingCloud(BaseModel):

@@ -4,6 +4,7 @@ import { SendDataAlertDialog } from "@/components/callouts/import-data";
 import { InteractiveDatetime } from "@/components/interactive-datetime";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -17,12 +18,21 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetcher } from "@/lib/fetcher";
-import { ABTest, Project } from "@/models/models";
+import {
+  ABTest,
+  CustomDateRange,
+  Project,
+  ProjectDataFilters,
+} from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
@@ -32,9 +42,7 @@ import {
   EllipsisVertical,
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useCallback } from "react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Bar,
   BarChart,
@@ -59,6 +67,24 @@ export const ABTestingDataviz = () => {
 
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
+  const [filtersA, setFiltersA] = useState<ProjectDataFilters>({
+    created_at_start: undefined,
+    created_at_end: undefined,
+  });
+  const [filtersB, setFiltersB] = useState<ProjectDataFilters>({
+    created_at_start: undefined,
+    created_at_end: undefined,
+  });
+
+  const [dateRangeA, setDateRangeA] = useState<string>("Date range");
+  const [dateRangeB, setDateRangeB] = useState<string>("Date range");
+
+  const [customDateRangeA, setCustomDateRangeA] = useState<
+    CustomDateRange | undefined
+  >(undefined);
+  const [customDateRangeB, setCustomDateRangeB] = useState<
+    CustomDateRange | undefined
+  >(undefined);
 
   // Fetch ABTests
   const { data: abTests }: { data: ABTest[] | null | undefined } = useSWR(
@@ -74,37 +100,6 @@ export const ABTestingDataviz = () => {
       keepPreviousData: true,
     },
   );
-
-  // Get the version IDs from the URL. If not present, use the first two version IDs
-  const searchParams = useSearchParams();
-
-  const abTestJSON = JSON.stringify(abTests);
-
-  const computeVersionsIds = useCallback(() => {
-    let currVersionA = null;
-    let currVersionB = null;
-
-    if (!abTests) return { currVersionA, currVersionB };
-    if (!abTestJSON) return { currVersionA, currVersionB };
-
-    if (abTests.length === 1) {
-      currVersionA = abTests[0].version_id;
-      currVersionB = abTests[0].version_id;
-    } else if (abTests.length >= 2) {
-      currVersionA = abTests[1].version_id;
-      currVersionB = abTests[0].version_id;
-    }
-
-    // Override the default versions if the URL has the search params
-    if (searchParams.get("a")) {
-      currVersionA = searchParams.get("a");
-    }
-    if (searchParams.get("b")) {
-      currVersionB = searchParams.get("b");
-    }
-
-    return { currVersionA, currVersionB };
-  }, [abTests, abTestJSON, searchParams]);
 
   const [versionIDA, setVersionIDA] = useState<string | null>(null);
   const [versionIDB, setVersionIDB] = useState<string | null>(null);
@@ -136,12 +131,6 @@ export const ABTestingDataviz = () => {
   );
   const hasTasks: boolean = hasTasksData?.has_tasks;
 
-  useEffect(() => {
-    const { currVersionA, currVersionB } = computeVersionsIds();
-    setVersionIDA(currVersionA);
-    setVersionIDB(currVersionB);
-  }, [computeVersionsIds]);
-
   const { data: graphData } = useSWR(
     project_id
       ? [
@@ -150,6 +139,8 @@ export const ABTestingDataviz = () => {
           versionIDA,
           versionIDB,
           JSON.stringify(selectedEventsIds),
+          JSON.stringify(filtersA),
+          JSON.stringify(filtersB),
         ]
       : null,
     ([url, accessToken]) =>
@@ -157,6 +148,8 @@ export const ABTestingDataviz = () => {
         versionA: versionIDA,
         versionB: versionIDB,
         selected_events_ids: selectedEventsIds,
+        filtersA: filtersA,
+        filtersB: filtersB,
       }),
     {
       keepPreviousData: true,
@@ -193,6 +186,78 @@ export const ABTestingDataviz = () => {
         (event) => event.id && selectedEventsIds.includes(event.id),
       )) ||
     selectedEventsIds === null;
+
+  const onClickFiltersA = (newDateRange: string) => {
+    if (dateRangeA === newDateRange) {
+      setDateRangeA("Date range");
+      setVersionIDA(null);
+      setFiltersA({
+        created_at_start: undefined,
+        created_at_end: undefined,
+      });
+    } else {
+      setDateRangeA(newDateRange);
+      if (newDateRange === "This week") {
+        setFiltersA({
+          created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
+          created_at_end: undefined,
+        });
+        setVersionIDA("This week");
+      }
+      if (newDateRange === "Last week") {
+        setFiltersA({
+          created_at_start: Date.now() / 1000 - 14 * 24 * 60 * 60,
+          created_at_end: Date.now() / 1000 - 7 * 24 * 60 * 60,
+        });
+        setVersionIDA("Last week");
+      }
+    }
+  };
+
+  const onClickFiltersB = (newDateRange: string) => {
+    if (dateRangeB === newDateRange) {
+      setDateRangeB("Date range");
+      setVersionIDB(null);
+      setFiltersB({
+        created_at_start: undefined,
+        created_at_end: undefined,
+      });
+    } else {
+      setDateRangeB(newDateRange);
+      if (newDateRange === "This week") {
+        setFiltersB({
+          created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
+          created_at_end: undefined,
+        });
+        setVersionIDB("This week");
+      }
+      if (newDateRange === "Last week") {
+        setFiltersB({
+          created_at_start: Date.now() / 1000 - 14 * 24 * 60 * 60,
+          created_at_end: Date.now() / 1000 - 7 * 24 * 60 * 60,
+        });
+        setVersionIDB("Last week");
+      }
+    }
+  };
+
+  const onClickVersionA = (version_id: string) => {
+    setVersionIDA(version_id);
+    setDateRangeA("Date range");
+    setFiltersA({
+      created_at_start: undefined,
+      created_at_end: undefined,
+    });
+  };
+
+  const onClickVersionB = (version_id: string) => {
+    setVersionIDB(version_id);
+    setDateRangeB("Date range");
+    setFiltersB({
+      created_at_start: undefined,
+      created_at_end: undefined,
+    });
+  };
 
   return (
     <>
@@ -265,15 +330,83 @@ export const ABTestingDataviz = () => {
                 <Button variant="outline">
                   <div className="flex flex-row items-center justify-between min-w-[10rem]">
                     <span className="font-semibold mr-1">Reference A: </span>
-                    {versionIDA} <ChevronDown className="size-4 ml-2" />
+                    {versionIDA || "Select version"}{" "}
+                    <ChevronDown className="size-4 ml-2" />
                   </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="overflow-y-auto max-h-[40rem] ">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>{dateRangeA}</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem
+                        onClick={() => onClickFiltersA("This week")}
+                      >
+                        {dateRangeA === "This week" && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                        This week
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onClickFiltersA("Last week")}
+                      >
+                        {dateRangeA === "Last week" && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                        Last week
+                      </DropdownMenuItem>
+                      <Separator />
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Custom</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          <Calendar
+                            initialFocus
+                            mode="range"
+                            selected={customDateRangeA}
+                            onSelect={(selected) => {
+                              if (selected !== undefined) {
+                                // Set the time of the from date to 00:00:00
+                                if (selected.from) {
+                                  selected.from.setHours(0, 0, 0, 0);
+                                  setFiltersA({
+                                    created_at_start:
+                                      selected.from.getTime() / 1000,
+                                  });
+                                }
+                                // Set the time of the to date to 23:59:59
+                                if (selected.to) {
+                                  selected.to.setHours(23, 59, 59, 999);
+                                  setFiltersA({
+                                    created_at_end:
+                                      selected.to.getTime() / 1000,
+                                  });
+                                }
+                                setDateRangeA("Custom A");
+                                setVersionIDA("Custom A");
+                                const dateRangeInfo: CustomDateRange = {
+                                  from: selected.from,
+                                  to: selected.to,
+                                  created_at_start:
+                                    filtersA.created_at_start || undefined,
+                                  created_at_end:
+                                    filtersA.created_at_end || undefined,
+                                };
+                                setCustomDateRangeA(dateRangeInfo);
+                              }
+                            }}
+                            numberOfMonths={2}
+                          />
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <Separator />
                 {abTests?.map((abTest) => (
                   <DropdownMenuItem
                     key={`${abTest.version_id}_A`}
-                    onClick={() => setVersionIDA(abTest.version_id)}
+                    onClick={() => onClickVersionA(abTest.version_id)}
                     asChild
                   >
                     <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
@@ -301,15 +434,86 @@ export const ABTestingDataviz = () => {
                 <Button variant="outline">
                   <div className="flex flex-row items-center justify-between min-w-[10rem]">
                     <span className="font-semibold mr-1">Candidate B:</span>
-                    {versionIDB} <ChevronDown className="size-4 ml-2" />
+                    {versionIDB || "Select version"}{" "}
+                    <ChevronDown className="size-4 ml-2" />
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="overflow-y-auto max-h-[40rem]">
+              <DropdownMenuContent
+                className="w- 56 overflow-y-auto max-h-[40rem]"
+                align="start"
+              >
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>{dateRangeB}</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem
+                        onClick={() => onClickFiltersB("This week")}
+                      >
+                        {dateRangeB === "This week" && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                        This week
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onClickFiltersB("Last week")}
+                      >
+                        {dateRangeB === "Last week" && (
+                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                        )}
+                        Last week
+                      </DropdownMenuItem>
+                      <Separator />
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Custom</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          <Calendar
+                            initialFocus
+                            mode="range"
+                            selected={customDateRangeB}
+                            onSelect={(selected) => {
+                              if (selected !== undefined) {
+                                // Set the time of the from date to 00:00:00
+                                if (selected.from) {
+                                  selected.from.setHours(0, 0, 0, 0);
+                                  setFiltersB({
+                                    created_at_start:
+                                      selected.from.getTime() / 1000,
+                                  });
+                                }
+                                // Set the time of the to date to 23:59:59
+                                if (selected.to) {
+                                  selected.to.setHours(23, 59, 59, 999);
+                                  setFiltersB({
+                                    created_at_end:
+                                      selected.to.getTime() / 1000,
+                                  });
+                                }
+                                setDateRangeB("Custom B");
+                                setVersionIDB("Custom B");
+                                const dateRangeInfo: CustomDateRange = {
+                                  from: selected.from,
+                                  to: selected.to,
+                                  created_at_start:
+                                    filtersB.created_at_start || undefined,
+                                  created_at_end:
+                                    filtersB.created_at_end || undefined,
+                                };
+                                setCustomDateRangeB(dateRangeInfo);
+                              }
+                            }}
+                            numberOfMonths={2}
+                          />
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <Separator />
                 {abTests?.map((abTest) => (
                   <DropdownMenuItem
                     key={`${abTest.version_id}_B`}
-                    onClick={() => setVersionIDB(abTest.version_id)}
+                    onClick={() => onClickVersionB(abTest.version_id)}
                     asChild
                   >
                     <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
@@ -339,48 +543,52 @@ export const ABTestingDataviz = () => {
           {graphData === undefined && (
             <Skeleton className="w-[100%] h-[400px]" />
           )}
-          {graphData && (!versionIDA || !abTests || graphData.length == 0) && (
-            <div className="h-[400px] w-[100%] flex items-center justify-center">
-              <div className="flex space-x-40 text-center items-center">
-                <div className="mb-20">
-                  <p className="text-muted-foreground mb-2 text-sm pt-6">
-                    1 - Start sending data
-                  </p>
-                  {!hasTasks && (
-                    <Button variant="outline" onClick={() => setOpen(true)}>
-                      Import data
-                      <ChevronRight className="ml-2" />
-                    </Button>
-                  )}
-                  {hasTasks && (
-                    <Button variant="outline" disabled>
-                      <Check className="mr-1" />
-                      Done
-                    </Button>
-                  )}
-                </div>
-                <div className="mb-20">
-                  <p className="text-muted-foreground mb-2 text-sm pt-6">
-                    2 - Setup analytics
-                  </p>
-                  {noEventDefinitions && (
-                    <Link href="/org/insights/events">
-                      <Button variant="outline">
-                        Setup analytics
+          {graphData &&
+            (!versionIDA ||
+              !versionIDB ||
+              !abTests ||
+              graphData.length == 0) && (
+              <div className="h-[400px] w-[100%] flex items-center justify-center">
+                <div className="flex space-x-40 text-center items-center">
+                  <div className="mb-20">
+                    <p className="text-muted-foreground mb-2 text-sm pt-6">
+                      1 - Start sending data
+                    </p>
+                    {!hasTasks && (
+                      <Button variant="outline" onClick={() => setOpen(true)}>
+                        Import data
                         <ChevronRight className="ml-2" />
                       </Button>
-                    </Link>
-                  )}
-                  {!noEventDefinitions && (
-                    <Button variant="outline" disabled>
-                      <Check className="mr-1" />
-                      Done
-                    </Button>
-                  )}
+                    )}
+                    {hasTasks && (
+                      <Button variant="outline" disabled>
+                        <Check className="mr-1" />
+                        Done
+                      </Button>
+                    )}
+                  </div>
+                  <div className="mb-20">
+                    <p className="text-muted-foreground mb-2 text-sm pt-6">
+                      2 - Setup analytics
+                    </p>
+                    {noEventDefinitions && (
+                      <Link href="/org/insights/events">
+                        <Button variant="outline">
+                          Setup analytics
+                          <ChevronRight className="ml-2" />
+                        </Button>
+                      </Link>
+                    )}
+                    {!noEventDefinitions && (
+                      <Button variant="outline" disabled>
+                        <Check className="mr-1" />
+                        Done
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           {graphData && versionIDA && versionIDB && graphData.length > 0 && (
             <ResponsiveContainer width={"100%"} height={400}>
               <BarChart data={graphData}>
