@@ -217,7 +217,9 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
                   table?.getRowModel()?.rows?.map((row) => (
                     <TableRow
                       key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
+                      data-state={
+                        row.original.id === previewSessionId && "selected"
+                      }
                       onClick={() => {
                         setSheetOpen(true);
                         setSheetToOpen("preview");
