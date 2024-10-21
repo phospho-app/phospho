@@ -61,3 +61,24 @@ def generate_task_transcript(
             transcript += f"{assistant_identifier} {task.output}\n"
 
     return transcript
+
+
+async def log_billing(
+    credits_billed: int,
+    org_id: str,
+    project_id: str,
+    action: str,
+) -> None:
+    """
+    This function logs every billing action in the "billing" collection
+    """
+    mongo_db = await get_mongo_db()
+    await mongo_db["billing"].insert_one(
+        {
+            "credits_billed": credits_billed,
+            "org_id": org_id,
+            "project_id": project_id,
+            "action": action,
+        }
+    )
+    return None

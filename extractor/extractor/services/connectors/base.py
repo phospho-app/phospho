@@ -65,4 +65,5 @@ class BaseConnector:
             "status": "ok",
             "message": "Synchronisation pipeline ran successfully",
             "nb_job_results": nb_job_results,
+            "action": "sync",
         }

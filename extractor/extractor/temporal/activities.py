@@ -25,6 +25,7 @@ from extractor.services.projects import get_project_by_id
 from extractor.models.log import LogProcessRequestForTasks
 from loguru import logger
 from extractor.services.log.tasks import process_logs_for_tasks
+from extractor.services.data import log_billing
 
 
 @activity.defn(name="bill_on_stripe")
@@ -78,6 +79,13 @@ async def bill_on_stripe(
                 "stripe_customer_id": request.customer_id,
             },
             timestamp=int(time.time()),
+        )
+
+        await log_billing(
+            credits_billed=nb_credits_used,
+            org_id=request.org_id,
+            project_id=request.project_id,
+            action=request.action,
         )
 
         logger.debug(
@@ -177,6 +185,7 @@ async def run_recipe_on_task(
         "status": "ok",
         "nb_job_results": total_len,
         "recipe_type": request.recipe.recipe_type,
+        "action": "run_recipe_on_task",
     }
 
 
@@ -208,6 +217,7 @@ async def run_process_tasks(
     return {
         "status": "ok",
         "nb_job_results": len(request_body.tasks_id_to_process),
+        "action": "run_process_tasks",
     }
 
 
@@ -216,7 +226,7 @@ async def run_process_tasks(
 @activity.defn(name="run_main_pipeline_on_messages")
 async def run_main_pipeline_on_messages(
     request: RunMainPipelineOnMessagesRequest,
-) -> PipelineResults:
+) -> dict:
     logger.info(f"Running main pipeline on {len(request.messages)} messages")
     main_pipeline = MainPipeline(
         project_id=request.project_id,
@@ -236,13 +246,15 @@ async def run_main_pipeline_on_messages(
 
     await main_pipeline.set_input(messages=request.messages)
     pipeline_results = await main_pipeline.run()
-    return pipeline_results
+    result = pipeline_results.model_dump()
+    result["action"] = "run_main_pipeline_on_messages"
+    return result
 
 
 @activity.defn(name="post_main_pipeline_on_task")
 async def post_main_pipeline_on_task(
     request_body: RunMainPipelineOnTaskRequest,
-) -> PipelineResults:
+) -> dict:
     logger.debug(f"task: {request_body.task}")
     if request_body.task.org_id is None:
         logger.error("Task.org_id is missing.")
@@ -252,7 +264,9 @@ async def post_main_pipeline_on_task(
         org_id=request_body.task.org_id,
     )
     pipeline_results = await main_pipeline.task_main_pipeline(task=request_body.task)
-    return pipeline_results
+    result = pipeline_results.model_dump()
+    result["action"] = "post_main_pipeline_on_task"
+    return result
 
 
 @activity.defn(name="run_process_logs_for_tasks")

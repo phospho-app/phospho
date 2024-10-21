@@ -100,6 +100,7 @@ class BaseWorkflow:
                     current_usage=request_model.current_usage,
                     max_usage=request_model.max_usage,
                     recipe_type=response.get("recipe_type", None),
+                    action=response.get("action", ""),
                 ),
                 start_to_close_timeout=timedelta(minutes=1),
             )

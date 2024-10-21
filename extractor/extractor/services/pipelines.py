@@ -790,9 +790,7 @@ class MainPipeline:
 
         return pipeline_results
 
-    async def messages_main_pipeline(
-        self, messages: List[lab.Message]
-    ) -> PipelineResults:
+    async def messages_main_pipeline(self, messages: List[lab.Message]) -> dict:
         """
         Main pipeline to run on a list of messages.
         We expect the messages to be in chronological order.
@@ -803,5 +801,6 @@ class MainPipeline:
         """
         await self.set_input(messages=messages)
         pipeline_results = await self.run()
-
-        return pipeline_results
+        result = pipeline_results.model_dump()
+        result["action"] = "messages_main_pipeline"
+        return result

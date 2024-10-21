@@ -18,6 +18,7 @@ class BillOnStripeRequest(ExtractorBaseClass):
     nb_job_results: int
     meter_event_name: str = "phospho_usage_based_meter"
     recipe_type: Optional[str] = None
+    action: str = ""
 
 
 class RunMainPipelineOnTaskRequest(ExtractorBaseClass):
