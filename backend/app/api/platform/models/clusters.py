@@ -26,7 +26,6 @@ class ClusteringRequest(BaseModel):
     clustering_mode: Literal["agglomerative", "dbscan"] = "agglomerative"
     merge_clusters: Optional[bool] = False
     customer_id: Optional[str] = None
-    nb_credits_used: int
     clustering_id: Optional[str] = None
     clustering_name: Optional[str] = None
     user_email: Optional[str] = None
@@ -34,3 +33,4 @@ class ClusteringRequest(BaseModel):
     output_format: Literal[
         "title_description", "user_persona", "question_and_answer"
     ] = "title_description"
+    nb_credits_used: int  # Used to bill the organization

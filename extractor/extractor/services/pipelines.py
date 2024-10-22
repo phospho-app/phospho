@@ -680,29 +680,29 @@ class MainPipeline:
             )
 
             if sentiment_object:
-                jobresult = JobResult(
+                job_result = JobResult(
                     org_id=task.org_id,
                     project_id=task.project_id,
-                    job_id="sentiment_analysis",
+                    job_id="sentiment",
                     value=sentiment_object.model_dump(),
                     result_type=ResultType.dict,
                     metadata={
                         "input": task.input,
                     },
                 )
-                job_results_to_push_to_db.append(jobresult.model_dump())
+                job_results_to_push_to_db.append(job_result.model_dump())
             if language:
-                jobresult = JobResult(
+                job_result = JobResult(
                     org_id=task.org_id,
                     project_id=task.project_id,
-                    job_id="language_detection",
+                    job_id="language",
                     value=language,
                     result_type=ResultType.string,
                     metadata={
                         "input": task.input,
                     },
                 )
-                job_results_to_push_to_db.append(jobresult.model_dump())
+                job_results_to_push_to_db.append(job_result.model_dump())
 
             return task.id, sentiment_object, language
 

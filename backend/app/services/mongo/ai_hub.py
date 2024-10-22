@@ -21,6 +21,7 @@ from app.utils import generate_uuid
 from loguru import logger
 from app.db.mongo import get_mongo_db
 from app.services.mongo.extractor import fetch_stripe_customer_id
+from phospho.models import JobResult, ResultType
 from temporalio.client import Client, TLSConfig
 from temporalio.exceptions import WorkflowAlreadyStartedError
 from app.temporal.pydantic_converter import pydantic_data_converter
@@ -189,6 +190,16 @@ class AIHubClient:
             data=clustering_request.model_dump(mode="json"),
             hash_data_for_id=False,
         )
+        # Create a JobResult
+        job_result = JobResult(
+            org_id=self.org_id,
+            project_id=self.project_id,
+            job_id="generate_clustering",
+            value=clustering_request.model_dump(),
+            result_type=ResultType.dict,
+        )
+        mongo_db = await get_mongo_db()
+        await mongo_db["job_results"].insert_one(job_result.model_dump())
 
     async def generate_embeddings(
         self, embedding_request: EmbeddingRequest
