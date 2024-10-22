@@ -26,6 +26,9 @@ async def call_sentiment_and_language_api(
         logger.warning("No client available for sentiment analysis")
         return SentimentObject(), None
 
+    # crop the text to 512 characters (approx the limit of 512 tokens)
+    text = text[:512]
+
     try:
         # Available types: PLAIN_TEXT, HTML
         document_type_in_plain_text = language_v2.Document.Type.PLAIN_TEXT
