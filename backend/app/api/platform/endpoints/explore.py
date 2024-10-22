@@ -28,15 +28,17 @@ from app.security.authentification import propelauth
 from app.security.authorization import get_quota_for_org
 from app.services.mongo.ai_hub import AIHubClient
 from app.services.mongo.events import get_all_events, get_event_definition_from_event_id
-from app.services.mongo.explore import (
-    compute_cloud_of_clusters,
-    create_ab_tests_table,
-    deprecated_get_dashboard_aggregated_metrics,
+from app.services.mongo.clustering import (
     fetch_all_clusterings,
     fetch_all_clusters,
-    fetch_single_cluster,
-    get_ab_tests_versions,
     get_clustering_by_id,
+    fetch_single_cluster,
+    compute_cloud_of_clusters,
+)
+from app.services.mongo.explore import (
+    create_ab_tests_table,
+    deprecated_get_dashboard_aggregated_metrics,
+    get_ab_tests_versions,
     get_dashboard_aggregated_metrics,
     get_events_aggregated_metrics,
     get_nb_tasks_in_sessions,

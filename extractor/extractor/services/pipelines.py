@@ -635,6 +635,7 @@ class MainPipeline:
         logger.info(
             f"Running sentiment analysis pipeline for project {self.project_id} for {len(self.messages)} messages"
         )
+        job_results_to_push_to_db: List[dict] = []
 
         async def process_message(
             message: Message,
@@ -689,10 +690,19 @@ class MainPipeline:
                         "input": task.input,
                     },
                 )
-                mongo_db["job_results"].insert_one(jobresult.model_dump())
-                logger.info(
-                    f"Sentiment analysis for task {task.id} : {sentiment_object}"
+                job_results_to_push_to_db.append(jobresult.model_dump())
+            if language:
+                jobresult = JobResult(
+                    org_id=task.org_id,
+                    project_id=task.project_id,
+                    job_id="language_detection",
+                    value=language,
+                    result_type=ResultType.string,
+                    metadata={
+                        "input": task.input,
+                    },
                 )
+                job_results_to_push_to_db.append(jobresult.model_dump())
 
             return task.id, sentiment_object, language
 
@@ -704,6 +714,13 @@ class MainPipeline:
         for task_id, sentiment, language in results:
             results_sentiment[task_id] = sentiment
             results_language[task_id] = language
+
+        # Save the job results in the database
+        if len(job_results_to_push_to_db) > 0:
+            try:
+                await mongo_db["job_results"].insert_many(job_results_to_push_to_db)
+            except Exception as e:
+                logger.error(f"Error saving job results to the database: {e}")
 
         return results_sentiment, results_language
 
