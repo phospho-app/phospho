@@ -339,14 +339,21 @@ async def daily_billing_stats(
     logger.info(f"Running pipeline : {pipeline}")
 
     result = await mongo_db["job_results"].aggregate(pipeline).to_list(length=None)
+
     logger.info(f"Result for {usage_type} billing stats: {result}")
 
     # Fill the missing days
     min_date = datetime.datetime.now() - datetime.timedelta(days=30)
     max_date = datetime.datetime.now()
     date_range = pd.date_range(min_date, max_date)
-    df_results = pd.DataFrame(result)
     df_date = pd.DataFrame({"date": date_range.strftime("%Y-%m-%d")})
-    df = pd.merge(df_date, df_results, on="date", how="left")
 
-    return df.to_dict(orient="records")
+    if not result:
+        # Return the empty dataframe
+        df_date["usage"] = 0
+        return df_date.to_dict(orient="records")
+    else:
+        df_results = pd.DataFrame(result)
+        df = pd.merge(df_date, df_results, on="date", how="left")
+        df.fillna(0, inplace=True)
+        return df.to_dict(orient="records")
