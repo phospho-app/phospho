@@ -1,35 +1,33 @@
+import asyncio
 import time
-from collections import defaultdict
 import traceback
+from collections import defaultdict
 from typing import Dict, List, Optional, Tuple, cast
 
-from extractor.utils import generate_uuid
 from loguru import logger
 
-from extractor.db.models import (
-    Event,
-    EventDefinition,
-    LlmCall,
-    Recipe,
-    Task,
-)
 from extractor.db.mongo import get_mongo_db
+from extractor.models import RoleContentMessage
 from extractor.services.data import fetch_previous_tasks
 from extractor.services.projects import get_project_by_id
 from extractor.services.sentiment_analysis import call_sentiment_and_language_api
 from extractor.services.webhook import trigger_webhook
-from extractor.utils import get_most_common
+from extractor.utils import generate_uuid, get_most_common
 from phospho import lab
 from phospho.models import (
+    Event,
+    EventDefinition,
     JobResult,
+    LlmCall,
+    Message,
+    PipelineResults,
+    Project,
+    Recipe,
     ResultType,
     SentimentObject,
     SessionStats,
-    Project,
-    PipelineResults,
-    Message,
+    Task,
 )
-import asyncio
 
 PHOSPHO_EVENT_MODEL_NAMES = ["phospho-6", "owner", "phospho-4"]
 PHOSPHO_EVAL_MODEL_NAMES = ["phospho", "phospho-4"]
@@ -56,7 +54,7 @@ class MainPipeline:
         task: Optional[Task] = None,
         tasks: Optional[List[Task]] = None,
         tasks_ids: Optional[List[str]] = None,
-        messages: Optional[List[lab.Message]] = None,
+        messages: Optional[List[RoleContentMessage]] = None,
     ) -> None:
         """
         Set the input for the pipeline.
@@ -290,15 +288,23 @@ class MainPipeline:
                     )
                 )
         if messages:
-            last_message = messages[-1]
+            last_message = lab.Message(
+                role=messages[-1].role, content=messages[-1].content
+            )
             if len(messages) > 1:
-                context = messages[:-1]
+                # context = messages[:-1]
+                # Cast into lab.Message
+                context = [
+                    lab.Message(
+                        role=message.role,
+                        content=message.content,
+                    )
+                    for message in messages[:-1]
+                ]
             else:
                 context = []
             self.messages.append(
                 lab.Message(
-                    id=last_message.id,
-                    created_at=last_message.created_at,
                     role=last_message.role,
                     content=last_message.content,
                     previous_messages=context,
@@ -804,21 +810,5 @@ class MainPipeline:
         logger.info(
             f"Main pipeline completed in {time.time() - self.start_time:.2f} seconds for task {task.id}"
         )
-
-        return pipeline_results
-
-    async def messages_main_pipeline(
-        self, messages: List[lab.Message]
-    ) -> PipelineResults:
-        """
-        Main pipeline to run on a list of messages.
-        We expect the messages to be in chronological order.
-        Only the last message will be used for the event detection.
-        The previous messages will be used as context.
-
-        - Event detection
-        """
-        await self.set_input(messages=messages)
-        pipeline_results = await self.run()
 
         return pipeline_results

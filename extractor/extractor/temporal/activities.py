@@ -217,7 +217,9 @@ async def run_process_tasks(
 async def run_main_pipeline_on_messages(
     request: RunMainPipelineOnMessagesRequest,
 ) -> PipelineResults | None:
-    logger.info(f"Running main pipeline on {len(request.messages)} messages")
+    logger.info(
+        f"Running main pipeline on a converation of {len(request.messages)} messages"
+    )
     main_pipeline = MainPipeline(
         project_id=request.project_id,
         org_id=request.org_id,

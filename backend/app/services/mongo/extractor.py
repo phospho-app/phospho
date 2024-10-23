@@ -17,8 +17,8 @@ from loguru import logger
 from temporalio.client import Client, TLSConfig
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
-from phospho.lab import Message
 from phospho.models import PipelineResults, Recipe, Task
+from app.api.v3.models.run import RoleContentMessage
 
 
 async def bill_on_stripe(
@@ -335,10 +335,16 @@ class ExtractorClient:
 
     async def run_main_pipeline_on_messages(
         self,
-        messages: List[Message],
+        messages: List[RoleContentMessage],
     ) -> PipelineResults:
         """
-        Run the log procesing pipeline on messages asynchronously
+        Run the log procesing pipeline on a list of messages asynchronously.
+
+        messages is a list of RoleContentMessage. It's a simple Message with a role and a content.
+        This means that messages is treated as a conversation, a list of continuous messages.
+        It's not meant to be used as a parallel processing of independent messages.
+
+        It's different from the phospho.models.Message that has more fields.
         """
 
         if len(messages) == 0:
