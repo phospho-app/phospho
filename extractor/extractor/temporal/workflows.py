@@ -170,6 +170,7 @@ class RunProcessTasksWorkflow(BaseWorkflow):
 
     @workflow.run
     async def run(self, request):
+        logger.info(f"Running run_process_tasks_workflow with request: {request}")
         await super().run_activity(request)
 
 
@@ -184,6 +185,9 @@ class RunProcessLogsForTasksWorkflow(BaseWorkflow):
 
     @workflow.run
     async def run(self, request):
+        logger.info(
+            f"Running run_process_logs_for_tasks_workflow with request: {request}"
+        )
         await super().run_activity(request)
 
 
