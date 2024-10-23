@@ -2,6 +2,7 @@
 
 import Pricing from "@/components/settings/pricing";
 import TaskProgress from "@/components/settings/tasks-quota";
+import { UsageGraph } from "@/components/settings/usage-graph";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
@@ -138,6 +139,9 @@ export default function Page() {
             </Button>
           </div>
         )}
+      </div>
+      <div>
+        <UsageGraph />
       </div>
       <div className="space-y-2 mb-8 pt-8">
         {plan === "hobby" && (

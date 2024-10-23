@@ -1,5 +1,6 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
+from app.api.platform.models.organizations import BillingStatsRequest
 import stripe
 from customerio import analytics  # type: ignore
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
@@ -20,6 +21,7 @@ from app.services.mongo.emails import email_user_onboarding, send_payment_issue_
 from app.services.mongo.organizations import (
     change_organization_plan,
     create_project_by_org,
+    daily_billing_stats,
     get_projects_from_org_id,
     get_usage_quota,
 )
@@ -609,3 +611,19 @@ async def get_org_number_users(
     org_metadata = org.get("metadata", {})
     org_plan = org_metadata.get("plan", "hobby")
     return {"total_users": total_users, "plan": org_plan}
+
+
+@router.post(
+    "/organizations/{org_id}/billing-stats",
+    description="Get the billing stats for the organization (daily usage)",
+)
+async def post_billing_stats(
+    org_id: str,
+    query: BillingStatsRequest,
+    user: User = Depends(propelauth.require_user),
+) -> List[dict]:
+    propelauth.require_org_member(user, org_id)
+    return await daily_billing_stats(
+        org_id=org_id,
+        usage_type=query.usage_type,
+    )
