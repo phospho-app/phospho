@@ -1,4 +1,3 @@
-from fastapi import HTTPException
 from loguru import logger
 from extractor.db.mongo import get_mongo_db
 from extractor.db.models import Project, Recipe
@@ -68,7 +67,8 @@ async def get_project_by_id(project_id: str) -> Project:
     )
 
     if project_data is None or len(project_data) == 0:
-        raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
+        raise ValueError(f"Project {project_id} not found")
+
     project_data = project_data[0]
     if "_id" in project_data:
         del project_data["_id"]
@@ -92,11 +92,8 @@ async def get_project_by_id(project_id: str) -> Project:
         del project_data["settings"]["events"]
 
     except Exception as e:
-        logger.warning(
+        raise ValueError(
             f"Error validating model of project {project_data.get('id', None)}: {e}"
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Error validating project model: {e}"
         )
 
     return project
