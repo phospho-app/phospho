@@ -4,9 +4,11 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
-class Message(BaseModel, extra="allow"):
+class RoleContentMessage(BaseModel, extra="allow"):
     """
-    Extras fields are ignored.
+    A message with a role and content.
+
+    Extras fields are allowed, but ignored.
     """
 
     role: str = Field(..., examples=["user", "assistant", "system"])
@@ -14,8 +16,12 @@ class Message(BaseModel, extra="allow"):
 
 
 class RunPipelineOnMessagesRequest(BaseModel):
+    """
+    Process a conversation of messages.
+    """
+
     project_id: str = Field(..., description="The phospho project_id")
-    messages: List[Message] = Field(
+    messages: List[RoleContentMessage] = Field(
         default_factory=list,
         description="Ordered and continuous messages in a single session. Similar to the OpenAI api.",
     )

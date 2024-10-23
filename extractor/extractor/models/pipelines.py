@@ -2,8 +2,12 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 from extractor.db.models import Task, Recipe
-from phospho.lab import Message
 from phospho.models import SentimentObject, PipelineResults  # noqa: F401
+
+
+class RoleContentMessage(BaseModel):
+    role: str
+    content: str
 
 
 class ExtractorBaseClass(BaseModel, extra="allow"):
@@ -25,7 +29,7 @@ class RunMainPipelineOnTaskRequest(ExtractorBaseClass):
 
 
 class RunMainPipelineOnMessagesRequest(ExtractorBaseClass):
-    messages: List[Message]
+    messages: List[RoleContentMessage]
 
 
 class RunRecipeOnTaskRequest(ExtractorBaseClass):

@@ -1,35 +1,33 @@
+import asyncio
 import time
-from collections import defaultdict
 import traceback
+from collections import defaultdict
 from typing import Dict, List, Optional, Tuple, cast
 
-from extractor.utils import generate_uuid
 from loguru import logger
 
-from extractor.db.models import (
-    Event,
-    EventDefinition,
-    LlmCall,
-    Recipe,
-    Task,
-)
 from extractor.db.mongo import get_mongo_db
+from extractor.models import RoleContentMessage
 from extractor.services.data import fetch_previous_tasks
 from extractor.services.projects import get_project_by_id
 from extractor.services.sentiment_analysis import call_sentiment_and_language_api
 from extractor.services.webhook import trigger_webhook
-from extractor.utils import get_most_common
+from extractor.utils import generate_uuid, get_most_common
 from phospho import lab
 from phospho.models import (
+    Event,
+    EventDefinition,
     JobResult,
+    LlmCall,
+    Message,
+    PipelineResults,
+    Project,
+    Recipe,
     ResultType,
     SentimentObject,
     SessionStats,
-    Project,
-    PipelineResults,
-    Message,
+    Task,
 )
-import asyncio
 
 PHOSPHO_EVENT_MODEL_NAMES = ["phospho-6", "owner", "phospho-4"]
 PHOSPHO_EVAL_MODEL_NAMES = ["phospho", "phospho-4"]
@@ -56,7 +54,7 @@ class MainPipeline:
         task: Optional[Task] = None,
         tasks: Optional[List[Task]] = None,
         tasks_ids: Optional[List[str]] = None,
-        messages: Optional[List[lab.Message]] = None,
+        messages: Optional[List[RoleContentMessage]] = None,
     ) -> None:
         """
         Set the input for the pipeline.
@@ -290,15 +288,23 @@ class MainPipeline:
                     )
                 )
         if messages:
-            last_message = messages[-1]
+            last_message = lab.Message(
+                role=messages[-1].role, content=messages[-1].content
+            )
             if len(messages) > 1:
-                context = messages[:-1]
+                # context = messages[:-1]
+                # Cast into lab.Message
+                context = [
+                    lab.Message(
+                        role=message.role,
+                        content=message.content,
+                    )
+                    for message in messages[:-1]
+                ]
             else:
                 context = []
             self.messages.append(
                 lab.Message(
-                    id=last_message.id,
-                    created_at=last_message.created_at,
                     role=last_message.role,
                     content=last_message.content,
                     previous_messages=context,
@@ -358,11 +364,13 @@ class MainPipeline:
                 task = message.metadata.get("task", None)
                 try:
                     valid_task = Task.model_validate(task)
+                    task_id = valid_task.id
+                    session_id = valid_task.session_id
                 except Exception as e:
-                    logger.error(f"Error validating task: {e}")
-                    continue
-                task_id = valid_task.id
-                session_id = valid_task.session_id
+                    logger.warning(f"Error validating task: {e}")
+                    valid_task = None
+                    task_id = None
+                    session_id = None
 
                 # Store the LLM call in the database
                 llm_call = result.metadata.get("llm_call", None)
@@ -406,7 +414,7 @@ class MainPipeline:
                         )
                     events_to_push_to_db.append(detected_event_data.model_dump())
 
-                events_per_task_to_return[task_id].append(detected_event_data)
+                events_per_task_to_return[message.id].append(detected_event_data)
                 # Save the prediction
                 result.task_id = task_id
                 if result.job_metadata.get("recipe_id") is None:
@@ -479,6 +487,9 @@ class MainPipeline:
 
         session_ids: List[str] = []
         for message in self.messages:
+            if "task" not in message.metadata:
+                continue  # Skip messages without task metadata
+
             task = Task.model_validate(message.metadata.get("task", None))
             if task.session_id is not None:
                 session_ids.append(task.session_id)
@@ -640,10 +651,17 @@ class MainPipeline:
         async def process_message(
             message: Message,
         ) -> Tuple[str, Optional[SentimentObject], Optional[str]]:
-            task = Task.model_validate(message.metadata.get("task", None))
+            if "task" in message.metadata:
+                # Run the sentiment analysis on the task input
+                task = Task.model_validate(message.metadata.get("task", None))
+                text = task.input
+            else:
+                # Run the sentiment analysis on the message content
+                text = message.content
+
             sentiment_object: Optional[SentimentObject] = None
             sentiment_object, language = await call_sentiment_and_language_api(
-                task.input, score_threshold, magnitude_threshold
+                text, score_threshold, magnitude_threshold
             )
             if not self.project or not self.project.settings:
                 language = None
@@ -653,31 +671,32 @@ class MainPipeline:
             elif not self.project.settings.run_sentiment:
                 sentiment_object = None
 
-            # Update the task item
-            mongo_db["tasks"].update_one(
-                {
-                    "id": task.id,
-                    "project_id": task.project_id,
-                },
-                {
-                    "$set": {
-                        "sentiment": sentiment_object.model_dump()
-                        if sentiment_object
-                        else None,
-                        "language": language,
-                        "metadata.sentiment_score": sentiment_object.score
-                        if sentiment_object
-                        else None,
-                        "metadata.sentiment_magnitude": sentiment_object.magnitude
-                        if sentiment_object
-                        else None,
-                        "metadata.sentiment_label": sentiment_object.label
-                        if sentiment_object
-                        else None,
-                        "metadata.language": language,
-                    }
-                },
-            )
+            if "task" in message.metadata:
+                # Update the task item
+                mongo_db["tasks"].update_one(
+                    {
+                        "id": task.id,
+                        "project_id": task.project_id,
+                    },
+                    {
+                        "$set": {
+                            "sentiment": sentiment_object.model_dump()
+                            if sentiment_object
+                            else None,
+                            "language": language,
+                            "metadata.sentiment_score": sentiment_object.score
+                            if sentiment_object
+                            else None,
+                            "metadata.sentiment_magnitude": sentiment_object.magnitude
+                            if sentiment_object
+                            else None,
+                            "metadata.sentiment_label": sentiment_object.label
+                            if sentiment_object
+                            else None,
+                            "metadata.language": language,
+                        }
+                    },
+                )
 
             if sentiment_object:
                 job_result = JobResult(
@@ -704,16 +723,16 @@ class MainPipeline:
                 )
                 job_results_to_push_to_db.append(job_result.model_dump())
 
-            return task.id, sentiment_object, language
+            return message.id, sentiment_object, language
 
         tasks = [process_message(message) for message in self.messages]
         results = await asyncio.gather(*tasks)
 
         results_sentiment: Dict[str, Optional[SentimentObject]] = {}
         results_language: Dict[str, Optional[str]] = {}
-        for task_id, sentiment, language in results:
-            results_sentiment[task_id] = sentiment
-            results_language[task_id] = language
+        for message_id, sentiment, language in results:
+            results_sentiment[message_id] = sentiment
+            results_language[message_id] = language
 
         # Save the job results in the database
         if len(job_results_to_push_to_db) > 0:
@@ -804,21 +823,5 @@ class MainPipeline:
         logger.info(
             f"Main pipeline completed in {time.time() - self.start_time:.2f} seconds for task {task.id}"
         )
-
-        return pipeline_results
-
-    async def messages_main_pipeline(
-        self, messages: List[lab.Message]
-    ) -> PipelineResults:
-        """
-        Main pipeline to run on a list of messages.
-        We expect the messages to be in chronological order.
-        Only the last message will be used for the event detection.
-        The previous messages will be used as context.
-
-        - Event detection
-        """
-        await self.set_input(messages=messages)
-        pipeline_results = await self.run()
 
         return pipeline_results

@@ -44,6 +44,9 @@ async def bill_on_stripe(
         )
         return
 
+    logger.info(
+        f"Billing organization {request.org_id} for {request.nb_job_results} jobs, project_id {request.project_id}"
+    )
     usage_per_log: int = 0
     project = await get_project_by_id(request.project_id)
     if request.recipe_type is not None:
@@ -217,7 +220,9 @@ async def run_process_tasks(
 async def run_main_pipeline_on_messages(
     request: RunMainPipelineOnMessagesRequest,
 ) -> PipelineResults | None:
-    logger.info(f"Running main pipeline on {len(request.messages)} messages")
+    logger.info(
+        f"Running main pipeline on a converation of {len(request.messages)} messages"
+    )
     main_pipeline = MainPipeline(
         project_id=request.project_id,
         org_id=request.org_id,

@@ -14,4 +14,5 @@ from .pipelines import (
     PipelineLangfuseRequest,
     BillOnStripeRequest,
     ExtractorBaseClass,
+    RoleContentMessage,
 )
