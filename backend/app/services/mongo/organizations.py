@@ -1,5 +1,7 @@
-from typing import List, Optional
+import datetime
+from typing import List, Literal, Optional
 
+import pandas as pd
 import pydantic
 import stripe
 from app.core import config
@@ -245,3 +247,105 @@ def change_organization_plan(
     except Exception as e:
         logger.error(f"Error upgrading organization {org_id} to pro plan: {e}")
         return None
+
+
+async def daily_billing_stats(
+    org_id: str,
+    usage_type: Literal[
+        "event_detection",
+        "clustering",
+        "sentiment",
+        "language",
+    ],
+) -> List[dict]:
+    """
+    Query the job_results table and returns billing stats
+    """
+
+    pipeline = []
+    mongo_db = await get_mongo_db()
+    last_30days_ts = (datetime.datetime.now() - datetime.timedelta(days=30)).timestamp()
+
+    set_date = {
+        "$set": {
+            "date": {
+                "$dateToString": {
+                    "format": "%Y-%m-%d",
+                    "date": {"$toDate": {"$multiply": ["$created_at", 1000]}},
+                }
+            }
+        }
+    }
+
+    if usage_type == "sentiment" or usage_type == "language":
+        pipeline = [
+            {
+                "$match": {
+                    "org_id": org_id,
+                    "job_id": usage_type,
+                    "created_at": {"$gte": last_30days_ts},
+                }
+            },
+            set_date,
+            {
+                "$group": {
+                    "_id": "$date",
+                    "usage": {"$sum": 1},
+                }
+            },
+            {"$project": {"_id": 0, "date": "$_id", "usage": 1}},
+        ]
+    elif usage_type == "clustering":
+        pipeline = [
+            {
+                "$match": {
+                    "org_id": org_id,
+                    "job_id": "generate_clustering",
+                    "created_at": {"$gte": last_30days_ts},
+                }
+            },
+            set_date,
+            {
+                "$group": {
+                    "_id": "$date",
+                    "usage": {"$sum": "$value.nb_credits_used"},
+                }
+            },
+            {"$project": {"_id": 0, "date": "$_id", "usage": 1}},
+        ]
+
+    elif usage_type == "event_detection":
+        pipeline = [
+            {
+                "$match": {
+                    "org_id": org_id,
+                    "created_at": {"$gte": last_30days_ts},
+                    "job_metadata.recipe_type": "event_detection",
+                }
+            },
+            set_date,
+            {
+                "$group": {
+                    "_id": "$date",
+                    "usage": {"$sum": 1},
+                }
+            },
+            {"$project": {"_id": 0, "date": "$_id", "usage": 1}},
+        ]
+    else:
+        raise NotImplementedError(f"Usage type {usage_type} not implemented")
+
+    logger.info(f"Running pipeline : {pipeline}")
+
+    result = await mongo_db["job_results"].aggregate(pipeline).to_list(length=None)
+    logger.info(f"Result for {usage_type} billing stats: {result}")
+
+    # Fill the missing days
+    min_date = datetime.datetime.now() - datetime.timedelta(days=30)
+    max_date = datetime.datetime.now()
+    date_range = pd.date_range(min_date, max_date)
+    df_results = pd.DataFrame(result)
+    df_date = pd.DataFrame({"date": date_range.strftime("%Y-%m-%d")})
+    df = pd.merge(df_date, df_results, on="date", how="left")
+
+    return df.to_dict(orient="records")
