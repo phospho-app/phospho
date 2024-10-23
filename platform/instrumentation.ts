@@ -7,7 +7,7 @@ export function register() {
       dsn: "https://bda6e96e12236ac5c62183100155a483@o4506399435325440.ingest.sentry.io/4506400006078464",
 
       // Adjust this value in production, or use tracesSampler for greater control
-      tracesSampleRate: 0.5,
+      tracesSampleRate: 0.1,
 
       // Setting this option to true will print useful information to the console while you're setting up Sentry.
       debug: false,
@@ -20,7 +20,7 @@ export function register() {
       dsn: "https://bda6e96e12236ac5c62183100155a483@o4506399435325440.ingest.sentry.io/4506400006078464",
 
       // Adjust this value in production, or use tracesSampler for greater control
-      tracesSampleRate: 0.5,
+      tracesSampleRate: 0.1,
 
       // Setting this option to true will print useful information to the console while you're setting up Sentry.
       debug: false,
