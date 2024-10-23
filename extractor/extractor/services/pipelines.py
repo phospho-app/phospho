@@ -646,10 +646,17 @@ class MainPipeline:
         async def process_message(
             message: Message,
         ) -> Tuple[str, Optional[SentimentObject], Optional[str]]:
-            task = Task.model_validate(message.metadata.get("task", None))
+            if "task" in message.metadata:
+                # Run the sentiment analysis on the task input
+                task = Task.model_validate(message.metadata.get("task", None))
+                text = task.input
+            else:
+                # Run the sentiment analysis on the message content
+                text = message.content
+
             sentiment_object: Optional[SentimentObject] = None
             sentiment_object, language = await call_sentiment_and_language_api(
-                task.input, score_threshold, magnitude_threshold
+                text, score_threshold, magnitude_threshold
             )
             if not self.project or not self.project.settings:
                 language = None
@@ -659,31 +666,32 @@ class MainPipeline:
             elif not self.project.settings.run_sentiment:
                 sentiment_object = None
 
-            # Update the task item
-            mongo_db["tasks"].update_one(
-                {
-                    "id": task.id,
-                    "project_id": task.project_id,
-                },
-                {
-                    "$set": {
-                        "sentiment": sentiment_object.model_dump()
-                        if sentiment_object
-                        else None,
-                        "language": language,
-                        "metadata.sentiment_score": sentiment_object.score
-                        if sentiment_object
-                        else None,
-                        "metadata.sentiment_magnitude": sentiment_object.magnitude
-                        if sentiment_object
-                        else None,
-                        "metadata.sentiment_label": sentiment_object.label
-                        if sentiment_object
-                        else None,
-                        "metadata.language": language,
-                    }
-                },
-            )
+            if "task" in message.metadata:
+                # Update the task item
+                mongo_db["tasks"].update_one(
+                    {
+                        "id": task.id,
+                        "project_id": task.project_id,
+                    },
+                    {
+                        "$set": {
+                            "sentiment": sentiment_object.model_dump()
+                            if sentiment_object
+                            else None,
+                            "language": language,
+                            "metadata.sentiment_score": sentiment_object.score
+                            if sentiment_object
+                            else None,
+                            "metadata.sentiment_magnitude": sentiment_object.magnitude
+                            if sentiment_object
+                            else None,
+                            "metadata.sentiment_label": sentiment_object.label
+                            if sentiment_object
+                            else None,
+                            "metadata.language": language,
+                        }
+                    },
+                )
 
             if sentiment_object:
                 job_result = JobResult(
@@ -710,16 +718,16 @@ class MainPipeline:
                 )
                 job_results_to_push_to_db.append(job_result.model_dump())
 
-            return task.id, sentiment_object, language
+            return message.id, sentiment_object, language
 
         tasks = [process_message(message) for message in self.messages]
         results = await asyncio.gather(*tasks)
 
         results_sentiment: Dict[str, Optional[SentimentObject]] = {}
         results_language: Dict[str, Optional[str]] = {}
-        for task_id, sentiment, language in results:
-            results_sentiment[task_id] = sentiment
-            results_language[task_id] = language
+        for message_id, sentiment, language in results:
+            results_sentiment[message_id] = sentiment
+            results_language[message_id] = language
 
         # Save the job results in the database
         if len(job_results_to_push_to_db) > 0:
