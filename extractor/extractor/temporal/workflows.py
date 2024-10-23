@@ -42,6 +42,7 @@ with workflow.unsafe.imports_passed_through():
         run_recipe_on_task,
         run_process_tasks,
         run_main_pipeline_on_messages,
+        run_main_pipeline_on_task,
         bill_on_stripe,
         run_process_logs_for_tasks,
     )
@@ -158,21 +159,6 @@ class RunRecipeOnTaskWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-# This workflow does not check the usage quota
-# Make sure to implement it in the endpoint calling this workflow
-@workflow.defn(name="run_main_pipeline_on_messages_workflow")
-class RunMainPipelineOnMessagesWorkflow(BaseWorkflow):
-    def __init__(self):
-        super().__init__(
-            activity_func=run_main_pipeline_on_messages,
-            request_class=RunMainPipelineOnMessagesRequest,
-        )
-
-    @workflow.run
-    async def run(self, request):
-        await super().run_activity(request)
-
-
 @workflow.defn(name="run_process_tasks_workflow")
 class RunProcessTasksWorkflow(BaseWorkflow):
     def __init__(self):
@@ -199,3 +185,73 @@ class RunProcessLogsForTasksWorkflow(BaseWorkflow):
     @workflow.run
     async def run(self, request):
         await super().run_activity(request)
+
+
+@workflow.defn(name="run_main_pipeline_on_messages_workflow")
+class RunMainPipelineOnMessagesWorkflow:
+    def __init__(self):
+        self.retry_policy = RetryPolicy(
+            maximum_attempts=2,
+            maximum_interval=timedelta(minutes=5),
+            non_retryable_error_types=["ValueError"],
+        )
+
+    @workflow.run
+    async def run(
+        self, request: RunMainPipelineOnMessagesRequest
+    ) -> PipelineResults | None:
+        response = await workflow.execute_activity(
+            run_main_pipeline_on_messages,
+            request,
+            start_to_close_timeout=timedelta(minutes=15),
+            retry_policy=self.retry_policy,
+        )
+        await workflow.execute_activity(
+            bill_on_stripe,
+            BillOnStripeRequest(
+                org_id=request.org_id,
+                project_id=request.project_id,
+                nb_job_results=len(request.messages) if response is not None else 0,
+                customer_id=request.customer_id,
+                current_usage=request.current_usage,
+                max_usage=request.max_usage,
+                recipe_type=None,
+            ),
+            start_to_close_timeout=timedelta(minutes=1),
+        )
+        return response
+
+
+@workflow.defn(name="run_main_pipeline_on_task_workflow")
+class RunMainPipelineOnTaskWorkflow:
+    def __init__(self):
+        self.retry_policy = RetryPolicy(
+            maximum_attempts=2,
+            maximum_interval=timedelta(minutes=5),
+            non_retryable_error_types=["ValueError"],
+        )
+
+    @workflow.run
+    async def run(
+        self, request: RunMainPipelineOnTaskRequest
+    ) -> PipelineResults | None:
+        response = await workflow.execute_activity(
+            run_main_pipeline_on_task,
+            request,
+            start_to_close_timeout=timedelta(minutes=15),
+            retry_policy=self.retry_policy,
+        )
+        await workflow.execute_activity(
+            bill_on_stripe,
+            BillOnStripeRequest(
+                org_id=request.org_id,
+                project_id=request.project_id,
+                nb_job_results=1 if response is not None else 0,
+                customer_id=request.customer_id,
+                current_usage=request.current_usage,
+                max_usage=request.max_usage,
+                recipe_type=None,
+            ),
+            start_to_close_timeout=timedelta(minutes=1),
+        )
+        return response
