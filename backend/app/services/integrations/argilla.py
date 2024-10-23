@@ -7,8 +7,8 @@ from app.services.mongo.events import (
     get_last_event_for_task,
     remove_event,
 )
-import argilla as rg
-import pandas as pd
+import argilla as rg  # type: ignore
+import pandas as pd  # type: ignore
 from app.api.platform.models.integrations import (
     DatasetCreationRequest,
     DatasetPullRequest,

@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM python:3.12
 
 # Steps are cached with Kaniko in GCP Artifcat registry
 # The cache is kept 72 hours (see cloudbuild.yaml)
