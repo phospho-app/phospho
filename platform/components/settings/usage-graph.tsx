@@ -124,6 +124,9 @@ function UsageGraph() {
           <Skeleton className="w-full h-[14rem] max-w-[40rem]" />
         </ChartContainer>
       )}
+      <div className="text-muted-foreground text-xs">
+        Note: there may be a delay in usage data being updated.
+      </div>
     </>
   );
 }
