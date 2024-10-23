@@ -308,6 +308,7 @@ async def daily_billing_stats(
             {
                 "$group": {
                     "_id": "$date",
+                    # The number of credits already accounts for 2*nb tasks
                     "usage": {"$sum": "$value.nb_credits_used"},
                 }
             },
