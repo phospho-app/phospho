@@ -20,7 +20,6 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { TestTubeDiagonal } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { sendUserFeedback } from "phospho";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
@@ -58,11 +57,9 @@ const dummyEventDefinitions: EventDefinition[] = [];
 
 export default function AddEvents({
   project_id,
-  phosphoTaskId,
   redirectTo = "/onboarding/plan",
 }: {
   project_id: string;
-  phosphoTaskId: string | null;
   redirectTo?: string;
 }) {
   const router = useRouter();
@@ -146,26 +143,6 @@ export default function AddEvents({
         events: selectedEventDefinitions,
       }),
     });
-    if (phosphoTaskId !== null) {
-      try {
-        sendUserFeedback({
-          taskId: phosphoTaskId,
-          projectId: "b20659d0932d4edbb2b9682d3e6a0ccb",
-          flag:
-            (selectedEventDefinitions?.length ?? 0) > 0 ? "success" : "failure",
-          source: "user",
-          notes: `Selected ${
-            selectedEventDefinitions?.length ?? 0
-          } events: ${selectedEventDefinitions
-            ?.map((event) => event.event_name)
-            .join(", ")}`,
-        });
-      } catch (e) {
-        console.error("Error sending feedback to Phospho", e);
-      }
-    } else {
-      console.error("Phospho task_id is null");
-    }
   };
 
   if (!selectedOrgId) {

@@ -2,13 +2,10 @@
 
 import OnboardingProgress from "@/components/OnboardingProgress";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 import AddEvents from "./add-events";
 
 export default function Page({ params }: { params: { id: string } }) {
-  const [phosphoTaskId] = useState<string | null>(null);
-
   // This page is called during onboarding, but also when the users clicks the
   // "Add suggested events" in the dashboard. In the latter case, there is
   // a redirect parameter in the query string. We use it to redirect the user
@@ -44,11 +41,7 @@ export default function Page({ params }: { params: { id: string } }) {
   return (
     <>
       <OnboardingProgress steps={onboardingSteps} />
-      <AddEvents
-        project_id={params.id}
-        phosphoTaskId={phosphoTaskId}
-        redirectTo={redirectTo}
-      />
+      <AddEvents project_id={params.id} redirectTo={redirectTo} />
     </>
   );
 }

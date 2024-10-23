@@ -40,6 +40,7 @@ from .organizations import (
     CreateCheckoutRequest,
     UserCreatedEventWebhook,
     CreateDefaultProjectRequest,
+    BillingStatsRequest,
 )
 from .projects import (
     AddEventsQuery,

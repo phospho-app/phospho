@@ -20,3 +20,12 @@ class UserCreatedEventWebhook(BaseModel, extra="allow"):
 class CreateDefaultProjectRequest(BaseModel):
     project_id: Optional[str] = None
     template_name: Literal["history", "animals", "medical"]
+
+
+class BillingStatsRequest(BaseModel):
+    usage_type: Literal[
+        "event_detection",
+        "clustering",
+        "sentiment",
+        "language",
+    ]

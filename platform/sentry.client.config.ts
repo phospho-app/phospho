@@ -7,7 +7,7 @@ Sentry.init({
   dsn: "https://bda6e96e12236ac5c62183100155a483@o4506399435325440.ingest.sentry.io/4506400006078464",
 
   // Adjust this value in production, or use tracesSampler for greater control
-  tracesSampleRate: 0.5,
+  tracesSampleRate: 0.1,
 
   ignoreErrors: [
     process.env.NEXT_PUBLIC_INTERCOM_APP_ID || "intercom-app-id-not-set",

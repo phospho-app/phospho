@@ -94,7 +94,7 @@ export function useColumns() {
     {
       accessorKey: "nb_tasks",
       header: ({ column }) => {
-        return <GenericHeader column={column} columnName="Nb tasks" />;
+        return <GenericHeader column={column} columnName="Nb messages" />;
       },
       cell: (row) => {
         const output = row.getValue();
