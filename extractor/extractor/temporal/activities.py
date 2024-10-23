@@ -216,7 +216,7 @@ async def run_process_tasks(
 @activity.defn(name="run_main_pipeline_on_messages")
 async def run_main_pipeline_on_messages(
     request: RunMainPipelineOnMessagesRequest,
-) -> PipelineResults:
+) -> PipelineResults | None:
     logger.info(f"Running main pipeline on {len(request.messages)} messages")
     main_pipeline = MainPipeline(
         project_id=request.project_id,
@@ -227,12 +227,12 @@ async def run_main_pipeline_on_messages(
             logger.warning(
                 f"Org {request.org_id} has reached max usage {request.max_usage}"
             )
-            return {"status": "error", "nb_job_results": 0}
+            return None
         elif request.current_usage + len(request.messages) > request.max_usage:
             logger.warning(
                 f"Org {request.org_id} will reach max usage {request.max_usage} with this job"
             )
-            return {"status": "error", "nb_job_results": 0}
+            return None
 
     await main_pipeline.set_input(messages=request.messages)
     pipeline_results = await main_pipeline.run()
@@ -240,18 +240,31 @@ async def run_main_pipeline_on_messages(
 
 
 @activity.defn(name="post_main_pipeline_on_task")
-async def post_main_pipeline_on_task(
-    request_body: RunMainPipelineOnTaskRequest,
-) -> PipelineResults:
-    logger.debug(f"task: {request_body.task}")
-    if request_body.task.org_id is None:
+async def run_main_pipeline_on_task(
+    request: RunMainPipelineOnTaskRequest,
+) -> PipelineResults | None:
+    logger.debug(f"task: {request.task}")
+    if request.task.org_id is None:
         logger.error("Task.org_id is missing.")
-        return {"status": "error", "nb_job_results": 0}
+        return None
+    if request.max_usage:
+        if request.current_usage > request.max_usage:
+            logger.warning(
+                f"Org {request.org_id} has reached max usage {request.max_usage}"
+            )
+            return None
+        # Only processing 1 task at a time, hence +1
+        elif request.current_usage + 1 > request.max_usage:
+            logger.warning(
+                f"Org {request.org_id} will reach max usage {request.max_usage} with this job"
+            )
+            return None
+
     main_pipeline = MainPipeline(
-        project_id=request_body.task.project_id,
-        org_id=request_body.task.org_id,
+        project_id=request.task.project_id,
+        org_id=request.task.org_id,
     )
-    pipeline_results = await main_pipeline.task_main_pipeline(task=request_body.task)
+    pipeline_results = await main_pipeline.task_main_pipeline(task=request.task)
     return pipeline_results
 
 
