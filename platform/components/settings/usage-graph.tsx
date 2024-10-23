@@ -125,7 +125,7 @@ function UsageGraph() {
         </ChartContainer>
       )}
       <div className="text-muted-foreground text-xs">
-        Note: there may be a delay in usage data being updated.
+        Note: there may be a delay when updating usage data.
       </div>
     </>
   );
