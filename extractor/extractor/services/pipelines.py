@@ -364,11 +364,12 @@ class MainPipeline:
                 task = message.metadata.get("task", None)
                 try:
                     valid_task = Task.model_validate(task)
+                    task_id = valid_task.id
+                    session_id = valid_task.session_id
                 except Exception as e:
-                    logger.error(f"Error validating task: {e}")
-                    continue
-                task_id = valid_task.id
-                session_id = valid_task.session_id
+                    logger.warning(f"Error validating task: {e}")
+                    task_id = None
+                    session_id = None
 
                 # Store the LLM call in the database
                 llm_call = result.metadata.get("llm_call", None)
@@ -412,7 +413,7 @@ class MainPipeline:
                         )
                     events_to_push_to_db.append(detected_event_data.model_dump())
 
-                events_per_task_to_return[task_id].append(detected_event_data)
+                events_per_task_to_return[message.id].append(detected_event_data)
                 # Save the prediction
                 result.task_id = task_id
                 if result.job_metadata.get("recipe_id") is None:
@@ -485,6 +486,9 @@ class MainPipeline:
 
         session_ids: List[str] = []
         for message in self.messages:
+            if "task" not in message.metadata:
+                continue  # Skip messages without task metadata
+
             task = Task.model_validate(message.metadata.get("task", None))
             if task.session_id is not None:
                 session_ids.append(task.session_id)
