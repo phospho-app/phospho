@@ -368,6 +368,7 @@ class MainPipeline:
                     session_id = valid_task.session_id
                 except Exception as e:
                     logger.warning(f"Error validating task: {e}")
+                    valid_task = None
                     task_id = None
                     session_id = None
 

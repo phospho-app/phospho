@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from loguru import logger
 from extractor.db.mongo import get_mongo_db
 from extractor.db.models import Project, Recipe
@@ -6,7 +7,6 @@ from extractor.db.models import Project, Recipe
 async def get_project_by_id(project_id: str) -> Project:
     mongo_db = await get_mongo_db()
 
-    # project_data = await mongo_db["projects"].find_one({"id": project_id})
     project_data = (
         await mongo_db["projects"]
         .aggregate(
@@ -20,7 +20,7 @@ async def get_project_by_id(project_id: str) -> Project:
                         "as": "settings.events",
                     }
                 },
-                # Filter the EventDefinitions that are not removed
+                # Filter the EventDefinitions mapping to keep only the ones that are not removed
                 {
                     "$addFields": {
                         "settings.events": {
@@ -68,9 +68,10 @@ async def get_project_by_id(project_id: str) -> Project:
     )
 
     if project_data is None or len(project_data) == 0:
-        raise ValueError(f"Project {project_id} not found")
-
+        raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
     project_data = project_data[0]
+    if "_id" in project_data:
+        del project_data["_id"]
 
     try:
         project = Project.from_previous(project_data)
@@ -86,16 +87,16 @@ async def get_project_by_id(project_id: str) -> Project:
                 project.settings.events[event_name].recipe_id = recipe.id
 
         # If the project dict is different from project_data, update the project_data
-        if project.model_dump() != project_data:
-            mongo_db["projects"].update_one(
-                {"_id": project_data["_id"]}, {"$set": project.model_dump()}
-            )
+        project_dump = project.model_dump()
+        del project_dump["settings"]["events"]
+        del project_data["settings"]["events"]
+
     except Exception as e:
         logger.warning(
             f"Error validating model of project {project_data.get('id', None)}: {e}"
         )
-        raise ValueError(
-            f"Error validating model of project {project_data.get('id', None)}"
+        raise HTTPException(
+            status_code=500, detail=f"Error validating project model: {e}"
         )
 
     return project
