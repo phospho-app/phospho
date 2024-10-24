@@ -211,6 +211,8 @@ export interface ProjectSettings {
   run_language?: boolean;
   run_event_detection?: boolean;
   dashboard_tiles: DashboardTile[];
+  analytics_threshold_enabled?: boolean;
+  analytics_threshold?: number;
 }
 
 export interface Project {
