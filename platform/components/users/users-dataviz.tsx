@@ -7,12 +7,8 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-} from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PieChartSection } from "@/components/users/user-dataviz-pies";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
 import { ProjectDataFilters } from "@/models/models";
@@ -20,16 +16,16 @@ import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import React, { useMemo } from "react";
-import { Label, Pie, PieChart } from "recharts";
-import { TooltipProps } from "recharts";
+import React, { useMemo, useState } from "react";
 import {
-  NameType,
-  ValueType,
-} from "recharts/types/component/DefaultTooltipContent";
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import useSWR from "swr";
-
-const chartConfig: ChartConfig = {};
 
 interface JobTitles {
   category: string;
@@ -43,6 +39,12 @@ interface Industry {
   fill?: string;
 }
 
+interface RetentionData {
+  day?: number;
+  week?: number;
+  retention: number;
+}
+
 const UsersDataviz = ({
   forcedDataFilters,
 }: {
@@ -52,6 +54,9 @@ const UsersDataviz = ({
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const [selectedMetric, setSelectedMetric] = useState<
+    "jobTitles" | "industry"
+  >("jobTitles");
 
   const dataFiltersMerged = {
     ...dataFilters,
@@ -104,6 +109,34 @@ const UsersDataviz = ({
       keepPreviousData: true,
     },
   );
+
+  const { data: userRetention }: { data: RetentionData[] | null | undefined } =
+    useSWR(
+      project_id
+        ? [
+            `/api/explore/${project_id}/aggregated/users`,
+            accessToken,
+            JSON.stringify(dataFiltersMerged),
+            "user_retention",
+          ]
+        : null,
+      ([url, accessToken]) =>
+        authFetcher(url, accessToken, "POST", {
+          metrics: ["user_retention"],
+          filters: dataFiltersMerged,
+        }).then((data) => {
+          if (data === undefined) {
+            return undefined;
+          }
+          if (!data?.user_retention) {
+            return null;
+          }
+          return data.user_retention;
+        }),
+      {
+        keepPreviousData: true,
+      },
+    );
 
   const { data: userJobTitles }: { data: JobTitles[] | null | undefined } =
     useSWR(
@@ -177,26 +210,34 @@ const UsersDataviz = ({
     return userJobTitles?.reduce((acc) => acc + 1, 0) || 0;
   }, [userJobTitles]);
 
-  const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
-    active,
-    payload,
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-primary shadow-md p-2 rounded-md">
-          <p className="text-secondary font-semibold">{payload[0].name}</p>
-          <p className="text-secondary">{payload[0].value} messages</p>
-        </div>
-      );
+  const isDaily = useMemo(() => {
+    if (!userRetention?.length) return false;
+    return "day" in userRetention[0];
+  }, [userRetention]);
+
+  const formatPeriod = (value: number) => {
+    if (userRetention?.length === undefined) return "";
+    if (isDaily) {
+      if (value === userRetention?.length) return "Today";
+      if (value === userRetention?.length - 1) return "Yesterday";
+      return `${userRetention?.length - value} days ago`;
+    } else {
+      if (value === userRetention?.length) return "This week";
+      if (value === userRetention?.length - 1) return "Last week";
+      return `${userRetention?.length - value} weeks ago`;
     }
-    return null;
   };
+
+  const getXAxisKey = () => (isDaily ? "day" : "week");
 
   return (
     <div>
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex flex-col justify-between space-y-4">
+            {/* First card - User Stats */}
+
+            {/* Top card */}
             <Card className="flex-grow">
               <CardHeader>
                 <CardDescription>Number of unique user_id</CardDescription>
@@ -213,6 +254,8 @@ const UsersDataviz = ({
                 )}
               </CardContent>
             </Card>
+
+            {/* Bottom card */}
             <Card className="flex-grow">
               <CardHeader>
                 <CardDescription>
@@ -233,146 +276,71 @@ const UsersDataviz = ({
               </CardContent>
             </Card>
           </div>
+
+          {/* Second card - Combined Pie Charts */}
+
+          <PieChartSection
+            selectedMetric={selectedMetric}
+            setSelectedMetric={setSelectedMetric}
+            data={selectedMetric === "jobTitles" ? userJobTitles : userIndustry}
+            totalCount={totalJobTitles}
+          />
+
+          {/* Third card - Retention Chart */}
+
           <Card>
             <CardHeader>
-              <CardDescription>User job title distribution</CardDescription>
+              <CardDescription>
+                {isDaily ? "Daily" : "Weekly"} User Retention
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              {userJobTitles && (
-                <ChartContainer
-                  config={chartConfig}
-                  className="w-[100%] h-[10rem]"
-                >
-                  <PieChart className="w-[100%] h-[10rem]">
-                    <ChartTooltip content={CustomTooltip} />
-                    <Pie
-                      data={userJobTitles}
-                      dataKey="count"
-                      nameKey="category"
-                      labelLine={false}
-                      innerRadius={60}
-                      outerRadius={70}
-                    >
-                      <Label
-                        content={({ viewBox }) => {
-                          if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                            return (
-                              <text
-                                x={viewBox.cx}
-                                y={viewBox.cy}
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                              >
-                                <tspan
-                                  x={viewBox.cx}
-                                  y={(viewBox.cy || 0) + 5}
-                                  className="fill-foreground text-3xl font-bold"
-                                >
-                                  {totalJobTitles.toLocaleString()}
-                                </tspan>
-                                <tspan
-                                  x={viewBox.cx}
-                                  y={(viewBox.cy || 0) + 25}
-                                  className="fill-muted-foreground"
-                                >
-                                  job titles
-                                </tspan>
-                              </text>
-                            );
-                          }
-                        }}
-                      />
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
-              )}
-              {userJobTitles === undefined && (
+              {userRetention === undefined && (
                 <Skeleton className="w-[100%] h-[10rem]" />
               )}
-              {userJobTitles === null && (
-                <div className="flex flex-col text-center items-center h-full">
-                  <p className="text-muted-foreground mb-2 text-sm pt-6">
-                    Add a classifier named <code>User job title</code>
-                    <br /> to get started
-                  </p>
-                  <Link href="/org/insights/events">
-                    <Button variant="outline">
-                      Setup analytics
-                      <ChevronRight className="ml-2" />
+              {userRetention === null && (
+                <div className="flex flex-col text-center items-center h-[10rem] justify-center">
+                  <Link href="https://docs.phospho.ai/analytics/sessions-and-users">
+                    <Button variant="outline" size="sm">
+                      Start tracking retention
+                      <ChevronRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
               )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription>User industry distribution</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {userIndustry && (
-                <ChartContainer
-                  config={chartConfig}
-                  className="w-[100%] h-[10rem]"
-                >
-                  <PieChart className="w-[100%] h-[10rem]">
-                    <ChartTooltip content={CustomTooltip} />
-                    <Pie
-                      data={userIndustry}
-                      dataKey="count"
-                      nameKey="category"
-                      labelLine={false}
-                      innerRadius={60}
-                      outerRadius={70}
-                    >
-                      <Label
-                        content={({ viewBox }) => {
-                          if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                            return (
-                              <text
-                                x={viewBox.cx}
-                                y={viewBox.cy}
-                                textAnchor="middle"
-                                dominantBaseline="middle"
-                              >
-                                <tspan
-                                  x={viewBox.cx}
-                                  y={(viewBox.cy || 0) + 5}
-                                  className="fill-foreground text-3xl font-bold"
-                                >
-                                  {totalJobTitles.toLocaleString()}
-                                </tspan>
-                                <tspan
-                                  x={viewBox.cx}
-                                  y={(viewBox.cy || 0) + 25}
-                                  className="fill-muted-foreground"
-                                >
-                                  industries
-                                </tspan>
-                              </text>
-                            );
-                          }
-                        }}
-                      />
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
+              {userRetention && userRetention.length > 1 && (
+                <ResponsiveContainer width="100%" height={160}>
+                  <LineChart data={userRetention}>
+                    <XAxis
+                      dataKey={getXAxisKey()}
+                      tickFormatter={formatPeriod}
+                      fontSize={12}
+                    />
+                    <YAxis
+                      tickFormatter={(value) => `${value}%`}
+                      domain={[0, 100]}
+                      fontSize={12}
+                    />
+                    <Tooltip
+                      formatter={(value) => [`${value}%`, "Retention"]}
+                      labelFormatter={formatPeriod}
+                    />
+                    <Line
+                      type="linear"
+                      dataKey="retention"
+                      stroke="#72C464"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               )}
-              {userIndustry === undefined && (
-                <Skeleton className="w-[100%] h-[10rem]" />
-              )}
-              {userIndustry === null && (
-                <div className="flex flex-col text-center items-center h-full">
-                  <p className="text-muted-foreground mb-2 text-sm pt-6">
-                    Add a classifier named <code>User industry</code>
-                    <br /> to get started
+              {userRetention && userRetention.length < 2 && (
+                <div className="flex flex-col text-center items-center h-[10rem] justify-center">
+                  <p className="text-lg font-bold">Not enough data</p>
+                  <p className="text-sm text-gray-500">
+                    Need at least 2 data points
                   </p>
-                  <Link href="/org/insights/events">
-                    <Button variant="outline">
-                      Setup analytics
-                      <ChevronRight className="ml-2" />
-                    </Button>
-                  </Link>
                 </div>
               )}
             </CardContent>
