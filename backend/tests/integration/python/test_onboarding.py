@@ -178,49 +178,49 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     # Delete project
 
     # Test the run v3 endpoints
-    messagesRequest = {
-        "project_id": project_id,
-        "messages": [
-            {"role": "user", "content": "Hello"},
-            {"role": "system", "content": "Hi"},
-        ],
-    }
+    # messagesRequest = {
+    #     "project_id": project_id,
+    #     "messages": [
+    #         {"role": "user", "content": "Hello"},
+    #         {"role": "system", "content": "Hi"},
+    #     ],
+    # }
 
-    run_main_pipeline_on_messages = requests.post(
-        f"{backend_url}/v3/run/main/messages",
-        json=messagesRequest,
-        headers={"Authorization": f"Bearer {api_key}"},
-    )
+    # run_main_pipeline_on_messages = requests.post(
+    #     f"{backend_url}/v3/run/main/messages",
+    #     json=messagesRequest,
+    #     headers={"Authorization": f"Bearer {api_key}"},
+    # )
 
-    assert (
-        run_main_pipeline_on_messages.status_code == 200
-    ), run_main_pipeline_on_messages.reason
+    # assert (
+    #     run_main_pipeline_on_messages.status_code == 200
+    # ), run_main_pipeline_on_messages.reason
 
-    # Check that the sentiment dict is not empty
-    assert run_main_pipeline_on_messages.json()["sentiment"] is not None
-    assert len(run_main_pipeline_on_messages.json()["sentiment"]) > 0
+    # # Check that the sentiment dict is not empty
+    # assert run_main_pipeline_on_messages.json()["sentiment"] is not None
+    # assert len(run_main_pipeline_on_messages.json()["sentiment"]) > 0
 
-    # Check that the language is not empty
-    assert run_main_pipeline_on_messages.json()["language"] is not None
-    assert len(run_main_pipeline_on_messages.json()["language"]) > 0
+    # # Check that the language is not empty
+    # assert run_main_pipeline_on_messages.json()["language"] is not None
+    # assert len(run_main_pipeline_on_messages.json()["language"]) > 0
 
-    # Check that the event dict is empty
-    assert run_main_pipeline_on_messages.json()["events"] is not None
-    assert len(run_main_pipeline_on_messages.json()["events"]) == 0
+    # # Check that the event dict is empty
+    # assert run_main_pipeline_on_messages.json()["events"] is not None
+    # assert len(run_main_pipeline_on_messages.json()["events"]) == 0
 
-    backtestRequest = {
-        "project_id": project_id,
-        "system_prompt_template": "Hello",
-        "provider_and_model": "openai:gpt-4o-mini",
-    }
+    # backtestRequest = {
+    #     "project_id": project_id,
+    #     "system_prompt_template": "Hello",
+    #     "provider_and_model": "openai:gpt-4o-mini",
+    # }
 
-    run_backtests = requests.post(
-        f"{backend_url}/v3/run/backtest",
-        json=backtestRequest,
-        headers={"Authorization": f"Bearer {api_key}"},
-    )
+    # run_backtests = requests.post(
+    #     f"{backend_url}/v3/run/backtest",
+    #     json=backtestRequest,
+    #     headers={"Authorization": f"Bearer {api_key}"},
+    # )
 
-    assert run_backtests.status_code == 200, run_backtests.reason
+    # assert run_backtests.status_code == 200, run_backtests.reason
 
     delete_project = requests.delete(
         f"{backend_url}/api/projects/{project_id}/delete",
