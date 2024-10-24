@@ -104,6 +104,12 @@ or
 docker build --file <./filename> -t <name ie frontend, backend, etc...> .
 ```
 
+## Running temporal locally
+
+```bash
+temporal server start-dev --db-filename your_temporal.db --ui-port 8080
+```
+
 ## Pull Requests
 
 In github, create a Pull Request targeting the `dev` branch.
