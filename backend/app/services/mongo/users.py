@@ -5,6 +5,7 @@ from app.api.v2.models.projects import UserMetadata
 from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
 import datetime as dt
+from typing import cast
 from loguru import logger
 
 from phospho.models import ProjectDataFilters
@@ -345,7 +346,7 @@ async def get_nb_users_messages(
 async def get_user_retention(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
-) -> Optional[Dict[str, int]]:
+) -> Optional[List[Dict[str, object]]]:
     mongo_db = await get_mongo_db()
 
     if filters is None:
@@ -356,9 +357,19 @@ async def get_user_retention(
         filters.created_at_end = int(dt.datetime.now().timestamp())
     if filters.created_at_start is None:
         # Set created_at_start to 12 weeks before created_at_end
-        filters.created_at_start = filters.created_at_end - 12 * 7 * 86400
+        if isinstance(filters.created_at_end, int):
+            filters.created_at_start = filters.created_at_end - 12 * 7 * 86400
+        elif isinstance(filters.created_at_end, dt.datetime):
+            filters.created_at_start = filters.created_at_end - dt.timedelta(weeks=12)
+        else:
+            raise ValueError("created_at_end should be an int or a datetime")
 
-    time_diff = filters.created_at_end - filters.created_at_start
+    if isinstance(filters.created_at_start, dt.datetime):
+        filters.created_at_start = int(filters.created_at_start.timestamp())
+    if isinstance(filters.created_at_end, dt.datetime):
+        filters.created_at_end = int(filters.created_at_end.timestamp())
+
+    time_diff = cast(int, filters.created_at_end) - cast(int, filters.created_at_start)
     number_of_weeks = int(time_diff / (7 * 86400))
 
     use_daily = (
