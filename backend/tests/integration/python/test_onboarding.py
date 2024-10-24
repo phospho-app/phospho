@@ -9,6 +9,7 @@ import time
 import phospho
 import requests  # type: ignore
 import openai
+from loguru import logger
 
 
 def test_onboarding(backend_url, org_id, access_token, api_key):
@@ -45,40 +46,39 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         metadata={"text": "metadata", "number": 333},
     )
 
-    # # Call the export analytics API
-    # response = requests.post(
-    #     f"{backend_url}/v3/export/analytics",
-    #     json={
-    #         "pivot_query": {
-    #             "project_id": project_id,
-    #             "metric": "nb_messages",
-    #             "metric_metadata": "text",
-    #             "breakdown_by": "number",
-    #         }
-    #     },
-    #     headers={"Authorization": f"Bearer {access_token}"},
-    # )
-    # assert response.status_code == 200, response.reason
-    # assert response.json()["pivot_table"] is not None
+    pivot_query = {
+        "project_id": project_id,
+        "metric": "nb_messages",
+        "breakdown_by": "day",
+    }
+    # Call the export analytics API
+    response = requests.post(
+        f"{backend_url}/v3/export/analytics",
+        json=pivot_query,
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
 
-    # query = {
-    #     "filters": {
-    #         "created_at_start": "2024-01-01T00:00:00Z",
-    #     },
-    #     "pagination": {"page": 1, "per_page": 10},
-    #     "sorting": [
-    #         {"id": "user_id", "desc": True},
-    #     ],
-    # }
+    assert response.status_code == 200, response.reason
+    assert response.json()["pivot_table"] is not None
+
+    query = {
+        "filters": {
+            "created_at_start": "2024-01-01T00:00:00Z",
+        },
+        "pagination": {"page": 1, "per_page": 10},
+        "sorting": [
+            {"id": "user_id", "desc": True},
+        ],
+    }
 
     # Call the export users API
-    # response = requests.post(
-    #     f"{backend_url}/v3/export/projects/{project_id}/users",
-    #     json=query,
-    #     headers={"Authorization": f"Bearer {api_key}"},
-    # )
-    # assert response.status_code == 200, response.reason
-    # assert response.json() is not None
+    response = requests.post(
+        f"{backend_url}/v3/export/projects/{project_id}/users",
+        json=query,
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
+    assert response.status_code == 200, response.reason
+    assert response.json() is not None
 
     time.sleep(1)
 
@@ -158,24 +158,6 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     sessions_data = sorted(sessions_data, key=lambda x: x["created_at"])
     assert sessions_data[0]["id"].startswith("session_"), sessions_data
     assert sessions_data[1]["id"] == session_id, sessions_data
-    # Call the dashboards
-    # aggregated_metrics = requests.post(
-    #     f"{backend_url}/api/explore/{project_id}/aggregated/",
-    #     headers={"Authorization": f"Bearer {access_token}"},
-    # )
-    # assert aggregated_metrics.status_code == 200, aggregated_metrics.reason
-    # aggregated_tasks = requests.post(
-    #     f"{backend_url}/api/explore/{project_id}/aggregated/tasks",
-    #     headers={"Authorization": f"Bearer {access_token}"},
-    # )
-    # assert aggregated_tasks.status_code == 200, aggregated_tasks.reason
-    # aggregated_sessions = requests.post(
-    #     f"{backend_url}/api/explore/{project_id}/aggregated/sessions",
-    #     headers={"Authorization": f"Bearer {access_token}"},
-    # )
-    # assert aggregated_sessions.status_code == 200, aggregated_sessions.reason
-
-    # Delete project
 
     # Test the run v3 endpoints
     # messagesRequest = {
@@ -196,15 +178,15 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     #     run_main_pipeline_on_messages.status_code == 200
     # ), run_main_pipeline_on_messages.reason
 
-    # # Check that the sentiment dict is not empty
+    # # # Check that the sentiment dict is not empty
     # assert run_main_pipeline_on_messages.json()["sentiment"] is not None
     # assert len(run_main_pipeline_on_messages.json()["sentiment"]) > 0
 
-    # # Check that the language is not empty
+    # # # Check that the language is not empty
     # assert run_main_pipeline_on_messages.json()["language"] is not None
     # assert len(run_main_pipeline_on_messages.json()["language"]) > 0
 
-    # # Check that the event dict is empty
+    # # # Check that the event dict is empty
     # assert run_main_pipeline_on_messages.json()["events"] is not None
     # assert len(run_main_pipeline_on_messages.json()["events"]) == 0
 
