@@ -871,7 +871,7 @@ async def project_check_automatic_analytics_monthly_limit(project_id: str) -> bo
     )
     mongo_db = await get_mongo_db()
     # Count the number of analytics run this month: sentiment, language, event detection
-    nb_analytics = mongo_db["job_results"].count_documents(
+    nb_analytics = await mongo_db["job_results"].count_documents(
         {
             "project_id": project_id,
             "created_at": {
