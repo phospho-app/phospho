@@ -47,7 +47,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
 
     # # Call the export analytics API
     # response = requests.post(
-    #     f"{backend_url}/api/v3/export/analytics",
+    #     f"{backend_url}/v3/export/analytics",
     #     json={
     #         "pivot_query": {
     #             "project_id": project_id,
@@ -63,7 +63,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
 
     # Call the export users API
     response = requests.post(
-        f"{backend_url}/api/v3/export/projects/{project_id}/users",
+        f"{backend_url}/v3/export/projects/{project_id}/users",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 200, response.reason
@@ -176,7 +176,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     }
 
     run_main_pipeline_on_messages = requests.post(
-        f"{backend_url}/api/run/main/messages",
+        f"{backend_url}/v3/run/main/messages",
         json=messagesRequest,
         headers={"Authorization": f"Bearer {api_key}"},
     )
@@ -204,7 +204,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     }
 
     run_backtests = requests.post(
-        f"{backend_url}/api/run/backtest",
+        f"{backend_url}/v3/run/backtest",
         json=backtestRequest,
         headers={"Authorization": f"Bearer {api_key}"},
     )
