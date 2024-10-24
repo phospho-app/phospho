@@ -344,7 +344,7 @@ async def get_nb_users_messages(
 
 async def get_user_retention(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = None,
+    filters: Optional[ProjectDataFilters] = ProjectDataFilters(),
 ) -> Optional[Dict[str, int]]:
     mongo_db = await get_mongo_db()
 
