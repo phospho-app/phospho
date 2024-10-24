@@ -6,6 +6,7 @@ from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
 import datetime as dt
 from typing import cast
+from collections import defaultdict
 from loguru import logger
 
 from phospho.models import ProjectDataFilters
@@ -392,8 +393,9 @@ async def get_user_retention(
     # We then want to determine the users present in the first period
     # And the percentage of them still present at subsequent periods until the end
     pipeline += [
+        # Find all tasks with user IDs
         {"$match": {"metadata.user_id": {"$exists": True, "$ne": None}}},
-        # Group by user to get their first and last interaction timestamps
+        # Group by user to get their timestamps
         {
             "$group": {
                 "_id": "$metadata.user_id",
@@ -401,72 +403,72 @@ async def get_user_retention(
                 "last_seen": {"$max": "$created_at"},
             }
         },
-        # Calculate period number for first and last seen
-        {
-            "$addFields": {
-                "first_message_period": {
-                    "$floor": {
-                        "$divide": [
-                            {
-                                "$subtract": ["$first_seen", "$first_seen"]
-                            },  # This will start from period 0
-                            period_seconds,
-                        ]
-                    }
-                },
-                "last_message_period": {
-                    "$floor": {
-                        "$divide": [
-                            {"$subtract": ["$last_seen", "$first_seen"]},
-                            period_seconds,
-                        ]
-                    }
-                },
-            }
-        },
-        # Group all users by their first period, this gives us the cohorts
-        {
-            "$group": {
-                "_id": {
-                    "first_message_period": "$first_message_period",
-                    "last_message_period": "$last_message_period",
-                },
-                "total_users_per_period": {"$sum": 1},
-            }
-        },
-        # Only consider the first cohort (period 0)
-        {"$match": {"_id.first_message_period": 0}},
-        # Count the number of users still present at each period
-        {
-            "$project": {
-                "_id": 0,
-                "period": "$_id.last_message_period",
-                "total_users_per_period": 1,
-            }
-        },
-        # Sort by period
-        {"$sort": {"period": 1}},
     ]
 
-    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+    user_activities = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
 
-    if not result or not result[0]["total_users_per_period"]:
+    if not user_activities:
         return None
 
+    return calculate_retention(
+        user_activities=user_activities,
+        period_length=period_length,
+        period_seconds=period_seconds,
+        period_name=period_name,
+    )
+
+
+def calculate_retention(
+    user_activities: List[Dict[str, int]],
+    period_length: int,
+    period_seconds: int,
+    period_name: str,
+) -> List[Dict[str, object]]:
+    """
+    Calculate retention metrics from raw user activity data.
+
+    Args:
+        user_activities: List of dicts containing first_seen and last_seen timestamps for each user
+        period_length: Maximum number of periods to analyze
+        period_seconds: Number of seconds in each period (daily or weekly)
+        period_name: Name of the period type ("day" or "week")
+    """
+    if not user_activities:
+        return []
+
+    # Find the start of our analysis period
+    min_timestamp = min(user["first_seen"] for user in user_activities)
+    max_timestamp = max(user["last_seen"] for user in user_activities)
+
+    # Calculate actual number of periods in our data
+    actual_periods = min(
+        period_length, int((max_timestamp - min_timestamp) / period_seconds)
+    )
+
+    # Count users active in each period
+    total_users = len(user_activities)
+    period_dropoffs = defaultdict(int)
+
+    # Calculate which period each user dropped off
+    for user in user_activities:
+        periods_active = int((user["last_seen"] - user["first_seen"]) / period_seconds)
+        period_dropoffs[periods_active] += 1
+
+    # Calculate retention for each period
     retention = []
-    total_nb_users = sum([period["total_users_per_period"] for period in result])
-    cumulative_nb_users = total_nb_users
-    period_name = "day" if use_daily else "week"
-    for i, period in enumerate(result):
-        if i == 0:
-            continue
+    active_users = total_users
+
+    for period in range(actual_periods + 1):
         retention.append(
             {
-                period_name: period["period"],
-                "retention": round(cumulative_nb_users / total_nb_users * 100, 0),
+                period_name: period,
+                "retention": round((active_users / total_users) * 100, 1),
             }
         )
-        cumulative_nb_users -= period["total_users_per_period"]
+
+        # Subtract users who didn't continue to next period
+        if period in period_dropoffs:
+            active_users -= period_dropoffs[period]
 
     return retention
 
