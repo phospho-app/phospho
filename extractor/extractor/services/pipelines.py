@@ -2,7 +2,7 @@ import asyncio
 import time
 import traceback
 from collections import defaultdict
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, List, Optional, Tuple
 
 from loguru import logger
 
@@ -61,7 +61,7 @@ class MainPipeline:
         """
 
         self.project = await get_project_by_id(self.project_id)
-        cast(Project, self.project)
+
         mongo_db = await get_mongo_db()
         llm_based_events = []
         for event_name, event in self.project.settings.events.items():

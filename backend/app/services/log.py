@@ -1,13 +1,15 @@
-from typing import List, Optional, Dict, Any
-from app.db.mongo import get_mongo_db
-from loguru import logger
-from app.utils import generate_uuid, generate_timestamp
-from phospho.models import Task, Session
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 from app.api.v2.models import LogEvent
+from app.db.mongo import get_mongo_db
 from app.services.mongo.extractor import ExtractorClient
-from typing import Tuple, Union
-from phospho.utils import is_jsonable, filter_nonjsonable_keys
+from app.services.mongo.projects import project_check_automatic_analytics_monthly_limit
+from app.utils import generate_timestamp, generate_uuid
+from loguru import logger
+
 from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
+from phospho.models import Session, Task
+from phospho.utils import filter_nonjsonable_keys, is_jsonable
 
 
 async def create_task_and_process_logs(
@@ -287,16 +289,16 @@ async def process_log_with_session_id(
     )
 
     if trigger_pipeline:
-        logger.info(f"Triggering pipeline for {len(tasks_id_to_process)} tasks")
+        if not await project_check_automatic_analytics_monthly_limit(project_id):
+            logger.info(f"Triggering pipeline for {len(tasks_id_to_process)} tasks")
 
-        extractor_client = ExtractorClient(
-            project_id=project_id,
-            org_id=org_id,
-        )
-
-        await extractor_client.run_process_tasks(
-            tasks_id_to_process=tasks_id_to_process
-        )
+            extractor_client = ExtractorClient(
+                project_id=project_id,
+                org_id=org_id,
+            )
+            await extractor_client.run_process_tasks(
+                tasks_id_to_process=tasks_id_to_process
+            )
 
 
 def collect_metadata(log_event: LogEvent) -> dict:

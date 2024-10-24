@@ -4,7 +4,7 @@ import { CopyButton } from "@/components/copy-button";
 import { InteractiveDatetime } from "@/components/interactive-datetime";
 import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
-import DisableAnalytics from "@/components/settings/disable-analytics";
+import AnalyticsSettings from "@/components/settings/disable-analytics";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -80,7 +80,7 @@ export default function Page() {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-        <DisableAnalytics />
+        <AnalyticsSettings />
         <div>
           <h2 className="text-2xl font-bold tracking-tight mb-4">
             Danger zone
