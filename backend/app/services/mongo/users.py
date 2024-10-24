@@ -5,7 +5,7 @@ from app.api.v2.models.projects import UserMetadata
 from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
 import datetime as dt
-from typing import cast
+from typing import cast, Union
 from collections import defaultdict
 from loguru import logger
 
@@ -347,7 +347,7 @@ async def get_nb_users_messages(
 async def get_user_retention(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
-) -> Optional[List[Dict[str, object]]]:
+) -> Optional[List[Dict[str, Union[str, float]]]]:
     mongo_db = await get_mongo_db()
 
     if filters is None:
@@ -423,7 +423,7 @@ def calculate_retention(
     period_length: int,
     period_seconds: int,
     period_name: str,
-) -> List[Dict[str, object]]:
+) -> List[dict]:
     """
     Calculate retention metrics from raw user activity data.
 
@@ -447,7 +447,7 @@ def calculate_retention(
 
     # Count users active in each period
     total_users = len(user_activities)
-    period_dropoffs = defaultdict(int)
+    period_dropoffs: Dict[int, int] = defaultdict(int)
 
     # Calculate which period each user dropped off
     for user in user_activities:
