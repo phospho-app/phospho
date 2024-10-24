@@ -219,7 +219,9 @@ class ExtractorClient:
 
     async def run_process_tasks(self, tasks_id_to_process: List[str]) -> None:
         """
-        Run the task procesing pipeline on a task asynchronously
+        Run the task procesing pipeline on a task asynchronously.
+
+        This is based solely on the tasks_ids.
         """
         logger.info(
             f"Running process task for {len(tasks_id_to_process)} tasks for project {self.project_id}"
@@ -267,7 +269,9 @@ class ExtractorClient:
         extra_logs_to_save: Optional[List[LogEvent]] = None,
     ) -> None:
         """
-        Run the log procesing pipeline on a task asynchronously
+        Run the log procesing pipeline on a task asynchronously.
+
+        You have to pass the content of the tasks.
         """
         logger.info(
             f"Running process log for {len(logs_to_process)} tasks for project {self.project_id}"

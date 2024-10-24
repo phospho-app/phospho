@@ -11,6 +11,7 @@ import { Project, ProjectSettings } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
+import { useState } from "react";
 import useSWR from "swr";
 
 function DisableAnalyticsCheckbox({
@@ -60,7 +61,6 @@ export default function AnalyticsSettings() {
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "GET").then((res) => {
-        console.log("res", res);
         return res;
       }),
     {
@@ -114,11 +114,20 @@ export default function AnalyticsSettings() {
     });
   };
 
+  const [thresholdValue, setThresholdValue] = useState<number>(
+    selectedProject?.settings?.analytics_threshold_value || 100000,
+  );
+
   return (
     <>
+      <div className="mb-4">
+        <h2 className="text-2xl font-bold tracking-tight mb-1">
+          Edit analytics settings
+        </h2>
+      </div>
       <div>
         <div className="mb-4">
-          <h2 className="text-2xl font-bold tracking-tight mb-1">
+          <h2 className="text-xl font-semibold tracking-tight mb-1">
             Automatic analytics
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -172,54 +181,68 @@ export default function AnalyticsSettings() {
         </div>
       </div>
       <div className="mb-4">
-        <h2 className="text-2xl font-bold tracking-tight mb-1">
+        <h2 className="text-xl font-semibold tracking-tight mb-1">
           Monthly analytics threshold
         </h2>
         <p className="text-sm text-muted-foreground">
-          If enabled, this stops analytics when more than the specified number
-          of messages are processed in a month. The counter resets on the first
-          day of each month.
+          If enabled, this stops automatic analytics when more than the
+          specified number have run. The counter resets on the first of each
+          month.
         </p>
       </div>
       <div className="space-y-1.5">
         <div className="flex flex-row items-center space-x-2">
           <Checkbox
-            checked={selectedProject?.settings?.tasks_threshold_enabled}
+            checked={selectedProject?.settings?.analytics_threshold_enabled}
             onCheckedChange={() => {
+              console.log("selectedProject", selectedProject);
               if (
-                selectedProject?.settings?.tasks_threshold_enabled === undefined
+                selectedProject?.settings?.analytics_threshold_enabled ===
+                undefined
               )
                 return;
-              const updatedSettings = {
-                ...selectedProject?.settings,
-                tasks_threshold_enabled:
-                  !selectedProject.settings.tasks_threshold_enabled,
-              };
-              handleChecked(updatedSettings);
+
+              const newEnabled =
+                !selectedProject.settings.analytics_threshold_enabled;
+              if (newEnabled) {
+                const updatedSettings = {
+                  ...selectedProject?.settings,
+                  analytics_threshold_enabled: newEnabled,
+                  tasks_threshold_value: 100000, // Initial value
+                };
+                handleChecked(updatedSettings);
+              } else {
+                const updatedSettings = {
+                  ...selectedProject?.settings,
+                  analytics_threshold_enabled: newEnabled,
+                };
+                handleChecked(updatedSettings);
+              }
             }}
           />
-          <span>Enable monthly analytics threshold</span>
+          <span>Enable monthly automatic analytics threshold</span>
         </div>
-        {selectedProject?.settings?.tasks_threshold_enabled && (
+        {selectedProject?.settings?.analytics_threshold_enabled && (
           <div className="flex flex-row items-center space-x-2">
             <span>Max: </span>
             <Input
               className="max-w-[10rem]"
               type="number"
-              value={selectedProject?.settings?.tasks_threshold_value}
+              value={thresholdValue}
               min={0}
               onChange={(e) => {
                 if (selectedProject?.settings === undefined) return;
                 if (!e.target.value) return;
-                const thresholdValue = parseInt(e.target.value);
+                const readThreshold = parseInt(e.target.value);
+                setThresholdValue(readThreshold);
                 const updatedSettings = {
                   ...selectedProject?.settings,
-                  tasks_threshold_value: thresholdValue,
+                  analytics_threshold_value: readThreshold,
                 };
                 handleChecked(updatedSettings);
               }}
             />
-            <span>processed user messages per month</span>
+            <span>automatic analytics per month</span>
           </div>
         )}
       </div>

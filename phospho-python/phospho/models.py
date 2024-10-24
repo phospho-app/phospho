@@ -303,8 +303,8 @@ class ProjectSettings(BaseModel):
             ),
         ]
     )
-    task_threshold_enabled: bool = False
-    task_threshold: int = 100_000
+    analytics_threshold_enabled: bool = False
+    analytics_threshold: int = 100_000
 
 
 class Project(DatedBaseModel):

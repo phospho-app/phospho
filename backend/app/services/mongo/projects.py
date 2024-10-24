@@ -844,3 +844,47 @@ async def copy_template_project_to_new(
         f"Populated project {project_id} with event definitions {event_definition_pairs}"
     )
     return None
+
+
+async def project_check_automatic_analytics_monthly_limit(project_id: str) -> bool:
+    """
+    Check if the project reached its monthly limit for automatic analytics.
+
+    The user can setup a monthly limit for the number of automatic analytics run on a project.
+    This limits resets at the beginning of each month.
+    This function checks if this limits is reached.
+
+    returns: True if the project reached its monthly limit, False otherwise
+    """
+    project = await get_project_by_id(project_id)
+    if (
+        not project.settings.analytics_threshold_enabled
+        or not project.settings.analytics_threshold
+    ):
+        # Skipping: threshold is not enabled
+        return False
+
+    start_of_this_month = (
+        datetime.datetime.now()
+        .replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        .timestamp()
+    )
+    mongo_db = await get_mongo_db()
+    # Count the number of analytics run this month: sentiment, language, event detection
+    nb_analytics = mongo_db["job_results"].count_documents(
+        {
+            "project_id": project_id,
+            "created_at": {
+                "$gte": start_of_this_month,
+            },
+            "$or": [
+                {"job_id": {"$in": ["sentiment", "language"]}},
+                {"job_metadata.recipe_type": "event_detection"},
+            ],
+        }
+    )
+    if nb_analytics >= project.settings.analytics_threshold:
+        logger.info(f"Project {project_id} reached its monthly limit")
+        return True
+
+    return False
