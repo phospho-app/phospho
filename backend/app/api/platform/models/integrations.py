@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from phospho.models import ProjectDataFilters
-from typing import Literal
+from typing import Literal, Optional
 
 
 class DatasetSamplingParameters(BaseModel):
@@ -28,5 +28,5 @@ class DatasetCreationRequest(BaseModel):
 class DatasetPullRequest(BaseModel):
     project_id: str
     workspace_id: str  # Argilla workspace id
-    dataset_name: str  # Must be present in the workspace
     filters: ProjectDataFilters
+    dataset_name: Optional[str] = None  # Must be present in the workspace
