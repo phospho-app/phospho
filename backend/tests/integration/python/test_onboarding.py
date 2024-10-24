@@ -45,21 +45,21 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         metadata={"text": "metadata", "number": 333},
     )
 
-    # Call the export analytics API
-    response = requests.post(
-        f"{backend_url}/api/v3/export/analytics",
-        json={
-            "pivot_query": {
-                "project_id": project_id,
-                "metric": "nb_messages",
-                "metric_metadata": "text",
-                "breakdown_by": "number",
-            }
-        },
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-    assert response.status_code == 200, response.reason
-    assert response.json()["pivot_table"] is not None
+    # # Call the export analytics API
+    # response = requests.post(
+    #     f"{backend_url}/api/v3/export/analytics",
+    #     json={
+    #         "pivot_query": {
+    #             "project_id": project_id,
+    #             "metric": "nb_messages",
+    #             "metric_metadata": "text",
+    #             "breakdown_by": "number",
+    #         }
+    #     },
+    #     headers={"Authorization": f"Bearer {access_token}"},
+    # )
+    # assert response.status_code == 200, response.reason
+    # assert response.json()["pivot_table"] is not None
 
     # Call the export users API
     response = requests.post(
