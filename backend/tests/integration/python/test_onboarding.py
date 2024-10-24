@@ -200,7 +200,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     backtestRequest = {
         "project_id": project_id,
         "system_prompt_template": "Hello",
-        "provider_and_model": "openai:gpt-3.5-turbo",
+        "provider_and_model": "openai:gpt-4o-mini",
     }
 
     run_backtests = requests.post(
