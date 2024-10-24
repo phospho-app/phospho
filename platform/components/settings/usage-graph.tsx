@@ -58,7 +58,7 @@ function UsageGraph() {
     payload,
     label,
   }) => {
-    if (active && payload && payload.length) {
+    if (active && payload && payload.length > 0) {
       return (
         <div className="bg-primary shadow-md p-2 rounded-md">
           <p className="text-secondary font-semibold">{label}</p>
