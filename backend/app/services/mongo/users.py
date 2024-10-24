@@ -344,9 +344,12 @@ async def get_nb_users_messages(
 
 async def get_user_retention(
     project_id: str,
-    filters: Optional[ProjectDataFilters] = ProjectDataFilters(),
+    filters: Optional[ProjectDataFilters] = None,
 ) -> Optional[Dict[str, int]]:
     mongo_db = await get_mongo_db()
+
+    if filters is None:
+        filters = ProjectDataFilters()
 
     if filters.created_at_end is None:
         # Set created_at_end to the current time
