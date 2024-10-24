@@ -9,7 +9,7 @@ import openai
 import requests  # type: ignore
 
 
-def test_export_analytics(backend_url, org_id, access_token, api_key):
+def test_export(backend_url, org_id, access_token, api_key):
     # Create a new project
     project = requests.post(
         f"{backend_url}/api/organizations/{org_id}/projects",
@@ -38,6 +38,7 @@ def test_export_analytics(backend_url, org_id, access_token, api_key):
     phospho.log(
         input="Hello !",
         output=response.choices[0].message,
+        user_id="Nico_le_plus_beau",
         metadata={"greetings": "Hello", "user message": "Hello"},
     )
 
@@ -56,6 +57,14 @@ def test_export_analytics(backend_url, org_id, access_token, api_key):
     )
     assert response.status_code == 200, response.reason
     assert response.json()["pivot_table"] is not None
+
+    # Call the export users API
+    response = requests.post(
+        f"{backend_url}/api/v3/export/projects/{project_id}/users",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    assert response.status_code == 200, response.reason
+    assert response.json() is not None
 
     # Delete project
     delete_project = requests.delete(
