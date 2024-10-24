@@ -176,7 +176,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     }
 
     run_main_pipeline_on_messages = requests.post(
-        f"{backend_url}/api/run/main/messages",
+        f"{backend_url}/v3/run/main/messages",
         json=messagesRequest,
         headers={"Authorization": f"Bearer {api_key}"},
     )
@@ -204,7 +204,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     }
 
     run_backtests = requests.post(
-        f"{backend_url}/api/run/backtest",
+        f"{backend_url}/v3/run/backtest",
         json=backtestRequest,
         headers={"Authorization": f"Bearer {api_key}"},
     )
