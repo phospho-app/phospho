@@ -41,8 +41,34 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     task_1 = phospho.log(
         input="Thank you!",
         output="You're welcome.",
+        user_id="Nico le plus beau",
         metadata={"text": "metadata", "number": 333},
     )
+
+    # Call the export analytics API
+    response = requests.post(
+        f"{backend_url}/api/v3/export/analytics",
+        json={
+            "pivot_query": {
+                "project_id": project_id,
+                "metric": "nb_messages",
+                "metric_metadata": "text",
+                "breakdown_by": "number",
+            }
+        },
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    assert response.status_code == 200, response.reason
+    assert response.json()["pivot_table"] is not None
+
+    # Call the export users API
+    response = requests.post(
+        f"{backend_url}/api/v3/export/projects/{project_id}/users",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    assert response.status_code == 200, response.reason
+    assert response.json() is not None
+
     time.sleep(1)
 
     class OpenAIAgent:
@@ -139,6 +165,52 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     # assert aggregated_sessions.status_code == 200, aggregated_sessions.reason
 
     # Delete project
+
+    # Test the run v3 endpoints
+    messagesRequest = {
+        "project_id": project_id,
+        "messages": [
+            {"role": "user", "content": "Hello"},
+            {"role": "system", "content": "Hi"},
+        ],
+    }
+
+    run_main_pipeline_on_messages = requests.post(
+        f"{backend_url}/api/run/main/messages",
+        json=messagesRequest,
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
+
+    assert (
+        run_main_pipeline_on_messages.status_code == 200
+    ), run_main_pipeline_on_messages.reason
+
+    # Check that the sentiment dict is not empty
+    assert run_main_pipeline_on_messages.json()["sentiment"] is not None
+    assert len(run_main_pipeline_on_messages.json()["sentiment"]) > 0
+
+    # Check that the language is not empty
+    assert run_main_pipeline_on_messages.json()["language"] is not None
+    assert len(run_main_pipeline_on_messages.json()["language"]) > 0
+
+    # Check that the event dict is empty
+    assert run_main_pipeline_on_messages.json()["events"] is not None
+    assert len(run_main_pipeline_on_messages.json()["events"]) == 0
+
+    backtestRequest = {
+        "project_id": project_id,
+        "system_prompt_template": "Hello",
+        "provider_and_model": "openai:gpt-4o-mini",
+    }
+
+    run_backtests = requests.post(
+        f"{backend_url}/api/run/backtest",
+        json=backtestRequest,
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
+
+    assert run_backtests.status_code == 200, run_backtests.reason
+
     delete_project = requests.delete(
         f"{backend_url}/api/projects/{project_id}/delete",
         headers={"Authorization": f"Bearer {access_token}"},
