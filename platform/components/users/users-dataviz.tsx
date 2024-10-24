@@ -218,12 +218,12 @@ const UsersDataviz = ({
   const formatPeriod = (value: number) => {
     if (userRetention?.length === undefined) return "";
     if (isDaily) {
-      if (value === userRetention?.length) return "Today";
-      if (value === userRetention?.length - 1) return "Yesterday";
+      if (value === userRetention?.length - 1) return "Today";
+      if (value === userRetention?.length - 2) return "Yesterday";
       return `${userRetention?.length - value} days ago`;
     } else {
-      if (value === userRetention?.length) return "This week";
-      if (value === userRetention?.length - 1) return "Last week";
+      if (value === userRetention?.length - 1) return "This week";
+      if (value === userRetention?.length - 2) return "Last week";
       return `${userRetention?.length - value} weeks ago`;
     }
   };
