@@ -35,6 +35,8 @@ async def post_metadata_pivot(
 ) -> AnalyticsResponse:
     """
     Create a pivot table for metadata in a project.
+
+    TODO: This endpoint is not implemented yet (missing fields in the AnalyticsQuery model)
     """
     await verify_propelauth_org_owns_project_id(org, pivot_query.project_id)
 
