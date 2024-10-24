@@ -4,6 +4,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
 import { Project, ProjectSettings } from "@/models/models";
@@ -43,7 +44,7 @@ function DisableAnalyticsCheckbox({
   );
 }
 
-export default function DisableAnalytics() {
+export default function AnalyticsSettings() {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
 
@@ -114,58 +115,114 @@ export default function DisableAnalytics() {
   };
 
   return (
-    <div>
+    <>
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold tracking-tight mb-1">
+            Automatic analytics
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            The following analytics are automatically computed on logged
+            content.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <DisableAnalyticsCheckbox
+            label="Event detection"
+            description={`Detect if the setup events are present: ${formatedEventList}. ${nbrEvents} credits per user message, 1 per event.`}
+            checked={selectedProject?.settings?.run_event_detection}
+            onCheckedChange={() => {
+              if (selectedProject?.settings?.run_event_detection === undefined)
+                return;
+              const updatedSettings = {
+                ...selectedProject?.settings,
+                run_event_detection:
+                  !selectedProject.settings.run_event_detection,
+              };
+              handleChecked(updatedSettings);
+            }}
+          />
+          <DisableAnalyticsCheckbox
+            label="Sentiment"
+            description="Recognize the sentiment (positive, negative) of the user message. 1 credit per user message."
+            checked={selectedProject?.settings?.run_sentiment}
+            onCheckedChange={() => {
+              if (selectedProject?.settings?.run_sentiment === undefined)
+                return;
+              const updatedSettings = {
+                ...selectedProject?.settings,
+                run_sentiment: !selectedProject.settings.run_sentiment,
+              };
+              handleChecked(updatedSettings);
+            }}
+          />
+          <DisableAnalyticsCheckbox
+            label="Language"
+            description="Detect the language of the user message. 1 credit per user message."
+            checked={selectedProject?.settings?.run_language}
+            onCheckedChange={() => {
+              if (selectedProject?.settings?.run_language === undefined) return;
+              const updatedSettings = {
+                ...selectedProject?.settings,
+                run_language: !selectedProject.settings.run_language,
+              };
+              handleChecked(updatedSettings);
+            }}
+          />
+        </div>
+      </div>
       <div className="mb-4">
         <h2 className="text-2xl font-bold tracking-tight mb-1">
-          Automatic analytics
+          Monthly analytics threshold
         </h2>
         <p className="text-sm text-muted-foreground">
-          The following analytics are automatically computed on logged content.
+          If enabled, this stops analytics when more than the specified number
+          of messages are processed in a month. The counter resets on the first
+          day of each month.
         </p>
       </div>
       <div className="space-y-1.5">
-        <DisableAnalyticsCheckbox
-          label="Event detection"
-          description={`Detect if the setup events are present: ${formatedEventList}. ${nbrEvents} credits per user message, 1 per event.`}
-          checked={selectedProject?.settings?.run_event_detection}
-          onCheckedChange={() => {
-            if (selectedProject?.settings?.run_event_detection === undefined)
-              return;
-            const updatedSettings = {
-              ...selectedProject?.settings,
-              run_event_detection:
-                !selectedProject.settings.run_event_detection,
-            };
-            handleChecked(updatedSettings);
-          }}
-        />
-        <DisableAnalyticsCheckbox
-          label="Sentiment"
-          description="Recognize the sentiment (positive, negative) of the user message. 1 credit per user message."
-          checked={selectedProject?.settings?.run_sentiment}
-          onCheckedChange={() => {
-            if (selectedProject?.settings?.run_sentiment === undefined) return;
-            const updatedSettings = {
-              ...selectedProject?.settings,
-              run_sentiment: !selectedProject.settings.run_sentiment,
-            };
-            handleChecked(updatedSettings);
-          }}
-        />
-        <DisableAnalyticsCheckbox
-          label="Language"
-          description="Detect the language of the user message. 1 credit per user message."
-          checked={selectedProject?.settings?.run_language}
-          onCheckedChange={() => {
-            if (selectedProject?.settings?.run_language === undefined) return;
-            const updatedSettings = {
-              ...selectedProject?.settings,
-              run_language: !selectedProject.settings.run_language,
-            };
-            handleChecked(updatedSettings);
-          }}
-        />
+        <div className="flex flex-row items-center space-x-2">
+          <Checkbox
+            checked={selectedProject?.settings?.tasks_threshold_enabled}
+            onCheckedChange={() => {
+              if (
+                selectedProject?.settings?.tasks_threshold_enabled === undefined
+              )
+                return;
+              const updatedSettings = {
+                ...selectedProject?.settings,
+                tasks_threshold_enabled:
+                  !selectedProject.settings.tasks_threshold_enabled,
+              };
+              handleChecked(updatedSettings);
+            }}
+          />
+          <span>Enable monthly analytics threshold</span>
+        </div>
+        {selectedProject?.settings?.tasks_threshold_enabled && (
+          <div className="flex flex-row items-center space-x-2">
+            <span>Max: </span>
+            <Input
+              className="max-w-[10rem]"
+              type="number"
+              value={selectedProject?.settings?.tasks_threshold_value}
+              min={0}
+              onChange={(e) => {
+                if (selectedProject?.settings === undefined) return;
+                if (!e.target.value) return;
+                const thresholdValue = parseInt(e.target.value);
+                const updatedSettings = {
+                  ...selectedProject?.settings,
+                  tasks_threshold_value: thresholdValue,
+                };
+                handleChecked(updatedSettings);
+              }}
+            />
+            <span>processed user messages per month</span>
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }
