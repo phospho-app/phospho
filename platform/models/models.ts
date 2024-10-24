@@ -212,7 +212,7 @@ export interface ProjectSettings {
   run_event_detection?: boolean;
   dashboard_tiles: DashboardTile[];
   analytics_threshold_enabled?: boolean;
-  analytics_threshold_value?: number;
+  analytics_threshold?: number;
 }
 
 export interface Project {

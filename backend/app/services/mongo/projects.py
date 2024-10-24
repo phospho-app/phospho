@@ -871,20 +871,25 @@ async def project_check_automatic_analytics_monthly_limit(project_id: str) -> bo
     )
     mongo_db = await get_mongo_db()
     # Count the number of analytics run this month: sentiment, language, event detection
-    nb_analytics = await mongo_db["job_results"].count_documents(
-        {
-            "project_id": project_id,
-            "created_at": {
-                "$gte": start_of_this_month,
+    filter = {
+        "$and": [
+            {"project_id": project_id},
+            {
+                "created_at": {
+                    "$gte": start_of_this_month,
+                }
             },
-            "$or": [
-                {"job_id": {"$in": ["sentiment", "language"]}},
-                {"job_metadata.recipe_type": "event_detection"},
-            ],
-        }
-    )
+            {
+                "$or": [
+                    {"job_id": {"$in": ["sentiment", "language"]}},
+                    {"job_metadata.recipe_type": "event_detection"},
+                ]
+            },
+        ]
+    }
+    nb_analytics = await mongo_db["job_results"].count_documents(filter)
     if nb_analytics >= project.settings.analytics_threshold:
-        logger.info(f"Project {project_id} reached its monthly limit")
+        logger.warning(f"Project {project_id} reached its monthly limit")
         return True
 
     return False

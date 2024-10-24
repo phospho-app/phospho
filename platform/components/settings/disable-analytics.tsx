@@ -11,8 +11,10 @@ import { Project, ProjectSettings } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
+
+import { Button } from "../ui/button";
 
 function DisableAnalyticsCheckbox({
   checked,
@@ -114,9 +116,15 @@ export default function AnalyticsSettings() {
     });
   };
 
-  const [thresholdValue, setThresholdValue] = useState<number>(
-    selectedProject?.settings?.analytics_threshold_value || 100000,
-  );
+  const [thresholdValue, setThresholdValue] = useState<number | null>(null);
+
+  useEffect(() => {
+    console.log(
+      "selectedProject?.settings?.analytics_threshold",
+      selectedProject?.settings?.analytics_threshold,
+    );
+    setThresholdValue(selectedProject?.settings?.analytics_threshold || 0);
+  }, [selectedProject?.settings?.analytics_threshold]);
 
   return (
     <>
@@ -228,21 +236,29 @@ export default function AnalyticsSettings() {
             <Input
               className="max-w-[10rem]"
               type="number"
-              value={thresholdValue}
+              defaultValue={thresholdValue ?? ""}
+              value={thresholdValue || ""}
               min={0}
               onChange={(e) => {
-                if (selectedProject?.settings === undefined) return;
                 if (!e.target.value) return;
                 const readThreshold = parseInt(e.target.value);
                 setThresholdValue(readThreshold);
-                const updatedSettings = {
-                  ...selectedProject?.settings,
-                  analytics_threshold_value: readThreshold,
-                };
-                handleChecked(updatedSettings);
               }}
             />
             <span>automatic analytics per month</span>
+            <Button
+              onClick={() => {
+                if (selectedProject?.settings === undefined) return;
+                if (thresholdValue === null) return;
+                const updatedSettings = {
+                  ...selectedProject?.settings,
+                  analytics_threshold: thresholdValue,
+                };
+                handleChecked(updatedSettings);
+              }}
+            >
+              Save limit
+            </Button>
           </div>
         )}
       </div>

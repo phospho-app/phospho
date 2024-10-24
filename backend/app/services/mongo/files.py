@@ -62,8 +62,8 @@ async def process_file_upload_into_log_events(
             )
             tasks_df["created_at"] = tasks_df["created_at"].astype(int) // 10**9
             # Fill NaN values with current timestamp
-            tasks_df["created_at"].fillna(
-                int(pd.Timestamp.now().timestamp()), inplace=True
+            tasks_df["created_at"] = tasks_df["created_at"].fillna(
+                int(pd.Timestamp.now().timestamp())
             )
         except Exception as e:
             logger.error(f"Error converting created_at to timestamp: {e}")
