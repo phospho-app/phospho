@@ -4,6 +4,7 @@ from app.api.platform.models import Pagination, Sorting
 from app.api.v2.models.projects import UserMetadata
 from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
+import datetime as dt
 from loguru import logger
 
 from phospho.models import ProjectDataFilters
@@ -341,6 +342,136 @@ async def get_nb_users_messages(
     return total_nb_users_messages
 
 
+async def get_user_retention(
+    project_id: str,
+    filters: Optional[ProjectDataFilters] = None,
+) -> Optional[Dict[str, int]]:
+    mongo_db = await get_mongo_db()
+
+    if filters.created_at_end is None:
+        # Set created_at_end to the current time
+        filters.created_at_end = int(dt.datetime.now().timestamp())
+    if filters.created_at_start is None:
+        # Set created_at_start to 12 weeks before created_at_end
+        filters.created_at_start = filters.created_at_end - 12 * 7 * 86400
+
+    time_diff = filters.created_at_end - filters.created_at_start
+    number_of_weeks = int(time_diff / (7 * 86400))
+
+    use_daily = (
+        number_of_weeks < 2
+    )  # If the period is less than 2 weeks, we use daily retention
+
+    period_length = int(time_diff / 86400) if use_daily else number_of_weeks
+    period_seconds = (
+        86400 if use_daily else 86400 * 7
+    )  # 86400 seconds in a day, 86400 * 7 seconds in a week
+    period_name = "day" if use_daily else "week"
+
+    query_builder = QueryBuilder(
+        project_id=project_id, filters=filters, fetch_objects="tasks"
+    )
+    # The query builder will fetch the tasks with the correct project_id and filters
+    pipeline = await query_builder.build()
+
+    # We need to filter tasks with metadata.user_id
+    # We then want to determine the users present in the first period
+    # And the percentage of them still present at subsequent periods until the end
+    pipeline += [
+        {"$match": {"metadata.user_id": {"$exists": True, "$ne": None}}},
+        # Group by user to get their first and last interaction timestamps
+        {
+            "$group": {
+                "_id": "$metadata.user_id",
+                "first_seen": {"$min": "$created_at"},
+                "last_seen": {"$max": "$created_at"},
+            }
+        },
+        # Calculate period number for first and last seen
+        {
+            "$addFields": {
+                "first_period": {
+                    "$floor": {
+                        "$divide": [
+                            {
+                                "$subtract": ["$first_seen", "$first_seen"]
+                            },  # This will start from period 0
+                            period_seconds,
+                        ]
+                    }
+                },
+                "last_period": {
+                    "$floor": {
+                        "$divide": [
+                            {"$subtract": ["$last_seen", "$first_seen"]},
+                            period_seconds,
+                        ]
+                    }
+                },
+            }
+        },
+        # Group all users by their first period, this gives us the cohorts
+        {
+            "$group": {
+                "_id": "$first_period",
+                "total_users": {"$sum": 1},
+                "users_by_last_period": {"$push": "$last_period"},
+            }
+        },
+        # Only consider the first cohort (period 0)
+        {"$match": {"_id": 0}},
+        # Unwind the last period array to count users present in each period
+        {
+            "$project": {
+                "total_users": 1,
+                "retention_by_period": {
+                    "$map": {
+                        "input": {
+                            "$range": [
+                                0,
+                                period_length + 1,
+                            ]
+                        },
+                        "as": "period",
+                        "in": {
+                            "period": "$$period",
+                            "count": {
+                                "$size": {
+                                    "$filter": {
+                                        "input": "$users_by_last_period",
+                                        "as": "last_period",
+                                        "cond": {"$gte": ["$$last_period", "$$period"]},
+                                    }
+                                }
+                            },
+                        },
+                    }
+                },
+            }
+        },
+    ]
+
+    result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+
+    if not result or not result[0]["total_users"]:
+        return None
+
+    # Calculate retention percentages
+    first_cohort = result[0]
+    total_users = first_cohort["total_users"]
+
+    retention = []
+    for period_data in first_cohort["retention_by_period"]:
+        retention.append(
+            {
+                period_name: period_data["period"],
+                "retention": round((period_data["count"] / total_users) * 100, 1),
+            }
+        )
+
+    return retention
+
+
 async def get_average_nb_tasks_per_user(
     project_id: str,
     filters: Optional[ProjectDataFilters] = None,
@@ -397,6 +528,13 @@ async def get_users_aggregated_metrics(
     if "nb_users_messages" in metrics:
         # Number of messages sent by users
         output["nb_users_messages"] = await get_nb_users_messages(
+            project_id=project_id,
+            filters=filters,
+        )
+
+    if "user_retention" in metrics:
+        # User retention
+        output["user_retention"] = await get_user_retention(
             project_id=project_id,
             filters=filters,
         )

@@ -39,6 +39,12 @@ interface Industry {
   fill?: string;
 }
 
+interface RetentionData {
+  day?: number;
+  week?: number;
+  retention: number;
+}
+
 const UsersDataviz = ({
   forcedDataFilters,
 }: {
@@ -104,32 +110,33 @@ const UsersDataviz = ({
     },
   );
 
-  const { data: userRetention }: { data: number[] | null | undefined } = useSWR(
-    project_id
-      ? [
-          `/api/explore/${project_id}/aggregated/users`,
-          accessToken,
-          JSON.stringify(dataFiltersMerged),
-          "retention",
-        ]
-      : null,
-    ([url, accessToken]) =>
-      authFetcher(url, accessToken, "POST", {
-        metrics: ["retention"],
-        filters: dataFiltersMerged,
-      }).then((data) => {
-        if (data === undefined) {
-          return undefined;
-        }
-        if (!data?.retention) {
-          return null;
-        }
-        return data.retention;
-      }),
-    {
-      keepPreviousData: true,
-    },
-  );
+  const { data: userRetention }: { data: RetentionData[] | null | undefined } =
+    useSWR(
+      project_id
+        ? [
+            `/api/explore/${project_id}/aggregated/users`,
+            accessToken,
+            JSON.stringify(dataFiltersMerged),
+            "user_retention",
+          ]
+        : null,
+      ([url, accessToken]) =>
+        authFetcher(url, accessToken, "POST", {
+          metrics: ["user_retention"],
+          filters: dataFiltersMerged,
+        }).then((data) => {
+          if (data === undefined) {
+            return undefined;
+          }
+          if (!data?.user_retention) {
+            return null;
+          }
+          return data.user_retention;
+        }),
+      {
+        keepPreviousData: true,
+      },
+    );
 
   const { data: userJobTitles }: { data: JobTitles[] | null | undefined } =
     useSWR(
@@ -203,7 +210,25 @@ const UsersDataviz = ({
     return userJobTitles?.reduce((acc) => acc + 1, 0) || 0;
   }, [userJobTitles]);
 
-  const formatDate = (weekNum: number) => `Week ${weekNum}`;
+  const isDaily = useMemo(() => {
+    if (!userRetention?.length) return false;
+    return "day" in userRetention[0];
+  }, [userRetention]);
+
+  const formatPeriod = (value: number) => {
+    if (userRetention?.length === undefined) return "";
+    if (isDaily) {
+      if (value === userRetention?.length - 1) return "Today";
+      if (value === userRetention?.length - 2) return "Yesterday";
+      return `${userRetention?.length - value} days ago`;
+    } else {
+      if (value === userRetention?.length - 1) return "This week";
+      if (value === userRetention?.length - 2) return "Last week";
+      return `${userRetention?.length - value} weeks ago`;
+    }
+  };
+
+  const getXAxisKey = () => (isDaily ? "day" : "week");
 
   return (
     <div>
@@ -265,7 +290,9 @@ const UsersDataviz = ({
 
           <Card>
             <CardHeader>
-              <CardDescription>Weekly User Retention</CardDescription>
+              <CardDescription>
+                {isDaily ? "Daily" : "Weekly"} User Retention
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {userRetention === undefined && (
@@ -285,8 +312,8 @@ const UsersDataviz = ({
                 <ResponsiveContainer width="100%" height={160}>
                   <LineChart data={userRetention}>
                     <XAxis
-                      dataKey="week"
-                      tickFormatter={formatDate}
+                      dataKey={getXAxisKey()}
+                      tickFormatter={formatPeriod}
                       fontSize={12}
                     />
                     <YAxis
@@ -296,10 +323,10 @@ const UsersDataviz = ({
                     />
                     <Tooltip
                       formatter={(value) => [`${value}%`, "Retention"]}
-                      labelFormatter={formatDate}
+                      labelFormatter={formatPeriod}
                     />
                     <Line
-                      type="monotone"
+                      type="linear"
                       dataKey="retention"
                       stroke="#72C464"
                       strokeWidth={2}
