@@ -404,7 +404,7 @@ async def get_user_retention(
         # Calculate period number for first and last seen
         {
             "$addFields": {
-                "first_period": {
+                "first_message_period": {
                     "$floor": {
                         "$divide": [
                             {
@@ -414,7 +414,7 @@ async def get_user_retention(
                         ]
                     }
                 },
-                "last_period": {
+                "last_message_period": {
                     "$floor": {
                         "$divide": [
                             {"$subtract": ["$last_seen", "$first_seen"]},
@@ -427,9 +427,9 @@ async def get_user_retention(
         # Group all users by their first period, this gives us the cohorts
         {
             "$group": {
-                "_id": "$first_period",
+                "_id": "$first_message_period",
                 "total_users": {"$sum": 1},
-                "users_by_last_period": {"$push": "$last_period"},
+                "users_by_last_message_period": {"$push": "$last_message_period"},
             }
         },
         # Only consider the first cohort (period 0)
@@ -452,9 +452,14 @@ async def get_user_retention(
                             "count": {
                                 "$size": {
                                     "$filter": {
-                                        "input": "$users_by_last_period",
-                                        "as": "last_period",
-                                        "cond": {"$gte": ["$$last_period", "$$period"]},
+                                        "input": "$users_by_last_message_period",
+                                        "as": "last_message_period",
+                                        "cond": {
+                                            "$gte": [
+                                                "$$last_message_period",
+                                                "$$period",
+                                            ]
+                                        },
                                     }
                                 }
                             },
