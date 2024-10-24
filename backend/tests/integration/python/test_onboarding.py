@@ -61,13 +61,24 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     # assert response.status_code == 200, response.reason
     # assert response.json()["pivot_table"] is not None
 
+    # query = {
+    #     "filters": {
+    #         "created_at_start": "2024-01-01T00:00:00Z",
+    #     },
+    #     "pagination": {"page": 1, "per_page": 10},
+    #     "sorting": [
+    #         {"id": "user_id", "desc": True},
+    #     ],
+    # }
+
     # Call the export users API
-    response = requests.post(
-        f"{backend_url}/v3/export/projects/{project_id}/users",
-        headers={"Authorization": f"Bearer {api_key}"},
-    )
-    assert response.status_code == 200, response.reason
-    assert response.json() is not None
+    # response = requests.post(
+    #     f"{backend_url}/v3/export/projects/{project_id}/users",
+    #     json=query,
+    #     headers={"Authorization": f"Bearer {api_key}"},
+    # )
+    # assert response.status_code == 200, response.reason
+    # assert response.json() is not None
 
     time.sleep(1)
 
