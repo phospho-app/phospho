@@ -427,66 +427,46 @@ async def get_user_retention(
         # Group all users by their first period, this gives us the cohorts
         {
             "$group": {
-                "_id": "$first_message_period",
-                "total_users": {"$sum": 1},
-                "users_by_last_message_period": {"$push": "$last_message_period"},
+                "_id": {
+                    "first_message_period": "$first_message_period",
+                    "last_message_period": "$last_message_period",
+                },
+                "total_users_per_period": {"$sum": 1},
             }
         },
         # Only consider the first cohort (period 0)
-        {"$match": {"_id": 0}},
-        # Unwind the last period array to count users present in each period
+        {"$match": {"_id.first_message_period": 0}},
+        # Count the number of users still present at each period
         {
             "$project": {
-                "total_users": 1,
-                "retention_by_period": {
-                    "$map": {
-                        "input": {
-                            "$range": [
-                                0,
-                                period_length + 1,
-                            ]
-                        },
-                        "as": "period",
-                        "in": {
-                            "period": "$$period",
-                            "count": {
-                                "$size": {
-                                    "$filter": {
-                                        "input": "$users_by_last_message_period",
-                                        "as": "last_message_period",
-                                        "cond": {
-                                            "$gte": [
-                                                "$$last_message_period",
-                                                "$$period",
-                                            ]
-                                        },
-                                    }
-                                }
-                            },
-                        },
-                    }
-                },
+                "_id": 0,
+                "period": "$_id.last_message_period",
+                "total_users_per_period": 1,
             }
         },
+        # Sort by period
+        {"$sort": {"period": 1}},
     ]
 
     result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
 
-    if not result or not result[0]["total_users"]:
+    if not result or not result[0]["total_users_per_period"]:
         return None
 
-    # Calculate retention percentages
-    first_cohort = result[0]
-    total_users = first_cohort["total_users"]
-
     retention = []
-    for period_data in first_cohort["retention_by_period"]:
+    total_nb_users = sum([period["total_users_per_period"] for period in result])
+    cumulative_nb_users = total_nb_users
+    period_name = "day" if use_daily else "week"
+    for i, period in enumerate(result):
+        if i == 0:
+            continue
         retention.append(
             {
-                period_name: period_data["period"],
-                "retention": round((period_data["count"] / total_users) * 100, 1),
+                period_name: period["period"],
+                "retention": round(cumulative_nb_users / total_nb_users * 100, 0),
             }
         )
+        cumulative_nb_users -= period["total_users_per_period"]
 
     return retention
 

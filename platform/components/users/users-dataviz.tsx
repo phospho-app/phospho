@@ -218,12 +218,12 @@ const UsersDataviz = ({
   const formatPeriod = (value: number) => {
     if (userRetention?.length === undefined) return "";
     if (isDaily) {
-      if (value === userRetention?.length - 1) return "Today";
-      if (value === userRetention?.length - 2) return "Yesterday";
+      if (value === userRetention?.length) return "Today";
+      if (value === userRetention?.length - 1) return "Yesterday";
       return `${userRetention?.length - value} days ago`;
     } else {
-      if (value === userRetention?.length - 1) return "This week";
-      if (value === userRetention?.length - 2) return "Last week";
+      if (value === userRetention?.length) return "This week";
+      if (value === userRetention?.length - 1) return "Last week";
       return `${userRetention?.length - value} weeks ago`;
     }
   };
@@ -308,7 +308,7 @@ const UsersDataviz = ({
                   </Link>
                 </div>
               )}
-              {userRetention && (
+              {userRetention && userRetention.length > 1 && (
                 <ResponsiveContainer width="100%" height={160}>
                   <LineChart data={userRetention}>
                     <XAxis
@@ -334,6 +334,14 @@ const UsersDataviz = ({
                     />
                   </LineChart>
                 </ResponsiveContainer>
+              )}
+              {userRetention && userRetention.length < 2 && (
+                <div className="flex flex-col text-center items-center h-[10rem] justify-center">
+                  <p className="text-lg font-bold">Not enough data</p>
+                  <p className="text-sm text-gray-500">
+                    Need at least 2 data points
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>
