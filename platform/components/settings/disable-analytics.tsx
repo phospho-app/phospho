@@ -6,35 +6,65 @@ import {
 } from "@/components/ui/hover-card";
 import { toast } from "@/components/ui/use-toast";
 import { authFetcher } from "@/lib/fetcher";
-import { Project } from "@/models/models";
+import { Project, ProjectSettings } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { QuestionMarkIcon } from "@radix-ui/react-icons";
-import { useState } from "react";
-import useSWR, { useSWRConfig } from "swr";
+import useSWR from "swr";
+
+function DisableAnalyticsCheckbox({
+  checked,
+  onCheckedChange,
+  label,
+  description,
+}: {
+  checked?: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  label: string;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-row items-center space-x-2">
+      {checked !== undefined && (
+        <Checkbox checked={checked} onCheckedChange={onCheckedChange} />
+      )}
+      <HoverCard openDelay={0} closeDelay={0}>
+        <div>{label}</div>
+        <div>
+          <HoverCardTrigger>
+            <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5" />
+          </HoverCardTrigger>
+        </div>
+        <HoverCardContent className="w-80" side="right">
+          {description}
+        </HoverCardContent>
+      </HoverCard>
+    </div>
+  );
+}
 
 export default function DisableAnalytics() {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-  const { mutate } = useSWRConfig();
 
-  const { data: selectedProject }: { data: Project } = useSWR(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
+  const {
+    data: selectedProject,
+    mutate: mutateSelectedProject,
+  }: {
+    data: Project;
+    mutate: (data: Project, options?: { revalidate: boolean }) => void;
+  } = useSWR(
+    project_id
+      ? [`/api/projects/${project_id}`, accessToken, "update_settings"]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "GET").then((res) => {
+        console.log("res", res);
+        return res;
+      }),
     {
       keepPreviousData: true,
     },
-  );
-
-  const [checkedEvent, setCheckedEvent] = useState(
-    selectedProject.settings?.run_event_detection,
-  );
-  const [checkedLanguage, setCheckedLanguage] = useState(
-    selectedProject.settings?.run_language,
-  );
-
-  const [checkedSentiment, setCheckedSentiment] = useState(
-    selectedProject.settings?.run_sentiment,
   );
 
   const eventList: string[] = Object.keys(
@@ -43,72 +73,45 @@ export default function DisableAnalytics() {
   const formatedEventList = eventList.join(", ");
   const nbrEvents = eventList.length;
 
-  const handleChecked = (id: string) => {
+  const handleChecked = async (updatedSettings?: ProjectSettings) => {
     if (!accessToken) return;
     if (!project_id) return;
-    if (checkedEvent === undefined) return;
-    if (checkedLanguage === undefined) return;
-    if (checkedSentiment === undefined) return;
-    const updateSettings = async () => {
-      await fetch(`/api/projects/${project_id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          settings: {
-            run_event_detection:
-              id === "event_detection" ? !checkedEvent : checkedEvent,
-            run_language:
-              id === "language" ? !checkedLanguage : checkedLanguage,
-            run_sentiment:
-              id === "sentiment" ? !checkedSentiment : checkedSentiment,
-          },
-        }),
-      }).then(async (response) => {
-        if (!response.ok) {
-          toast({
-            title: "Error",
-            description: "An error occurred while updating the settings.",
-          });
-          return;
-        }
-        const updatedProject = (await response.json()) as Project;
-        mutate([`/api/projects/${project_id}`, accessToken], updatedProject);
+    if (!selectedProject) return;
+    if (!updatedSettings) return;
+    mutateSelectedProject(
+      {
+        ...selectedProject,
+        settings: updatedSettings,
+      },
+      {
+        revalidate: false,
+      },
+    );
+    fetch(`/api/projects/${project_id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        settings: updatedSettings,
+      }),
+    }).then(async (response) => {
+      if (!response.ok) {
         toast({
-          title: "Settings updated",
-          description: "Your next logs will be updated with the new settings.",
+          title: "Error",
+          description: "An error occurred while updating the settings.",
         });
+        return;
+      }
+      const updatedProject = (await response.json()) as Project;
+      mutateSelectedProject(updatedProject);
+      toast({
+        title: "Settings updated",
+        description: "Your next logs will be updated with the new settings.",
       });
-    };
-    updateSettings();
+    });
   };
-
-  const analytics = [
-    {
-      id: "event_detection",
-      label: "Event detection",
-      description:
-        "Detect if the setup events are present: " +
-        formatedEventList +
-        ". " +
-        nbrEvents +
-        " credits per user message, 1 per event.",
-    },
-    {
-      id: "sentiment",
-      label: "Sentiment",
-      description:
-        "Recognize the sentiment (positive, negative) of the user message. 1 credit per user message.",
-    },
-    {
-      id: "language",
-      label: "Language",
-      description:
-        "Detect the language of the user message. 1 credit per user message.",
-    },
-  ] as const;
 
   return (
     <div>
@@ -121,54 +124,47 @@ export default function DisableAnalytics() {
         </p>
       </div>
       <div className="space-y-1.5">
-        {analytics.map((item) => (
-          <div key={item.id} className="flex flex-row items-center space-x-2">
-            <Checkbox
-              checked={
-                item.id === "event_detection"
-                  ? checkedEvent
-                  : item.id === "sentiment"
-                    ? checkedSentiment
-                    : checkedLanguage
-              }
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  if (item.id === "event_detection") {
-                    setCheckedEvent(true);
-                  }
-                  if (item.id === "sentiment") {
-                    setCheckedSentiment(true);
-                  }
-                  if (item.id === "language") {
-                    setCheckedLanguage(true);
-                  }
-                } else {
-                  if (item.id === "event_detection") {
-                    setCheckedEvent(false);
-                  }
-                  if (item.id === "sentiment") {
-                    setCheckedSentiment(false);
-                  }
-                  if (item.id === "language") {
-                    setCheckedLanguage(false);
-                  }
-                }
-                handleChecked(item.id);
-              }}
-            />
-            <HoverCard openDelay={0} closeDelay={0}>
-              <div>{item.label}</div>
-              <div>
-                <HoverCardTrigger>
-                  <QuestionMarkIcon className="rounded-full bg-primary text-secondary p-0.5" />
-                </HoverCardTrigger>
-              </div>
-              <HoverCardContent className="w-80">
-                {item.description}
-              </HoverCardContent>
-            </HoverCard>
-          </div>
-        ))}
+        <DisableAnalyticsCheckbox
+          label="Event detection"
+          description={`Detect if the setup events are present: ${formatedEventList}. ${nbrEvents} credits per user message, 1 per event.`}
+          checked={selectedProject?.settings?.run_event_detection}
+          onCheckedChange={() => {
+            if (selectedProject?.settings?.run_event_detection === undefined)
+              return;
+            const updatedSettings = {
+              ...selectedProject?.settings,
+              run_event_detection:
+                !selectedProject.settings.run_event_detection,
+            };
+            handleChecked(updatedSettings);
+          }}
+        />
+        <DisableAnalyticsCheckbox
+          label="Sentiment"
+          description="Recognize the sentiment (positive, negative) of the user message. 1 credit per user message."
+          checked={selectedProject?.settings?.run_sentiment}
+          onCheckedChange={() => {
+            if (selectedProject?.settings?.run_sentiment === undefined) return;
+            const updatedSettings = {
+              ...selectedProject?.settings,
+              run_sentiment: !selectedProject.settings.run_sentiment,
+            };
+            handleChecked(updatedSettings);
+          }}
+        />
+        <DisableAnalyticsCheckbox
+          label="Language"
+          description="Detect the language of the user message. 1 credit per user message."
+          checked={selectedProject?.settings?.run_language}
+          onCheckedChange={() => {
+            if (selectedProject?.settings?.run_language === undefined) return;
+            const updatedSettings = {
+              ...selectedProject?.settings,
+              run_language: !selectedProject.settings.run_language,
+            };
+            handleChecked(updatedSettings);
+          }}
+        />
       </div>
     </div>
   );
