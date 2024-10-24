@@ -185,6 +185,18 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
         run_main_pipeline_on_messages.status_code == 200
     ), run_main_pipeline_on_messages.reason
 
+    # Check that the sentiment dict is not empty
+    assert run_main_pipeline_on_messages.json()["sentiment"] is not None
+    assert len(run_main_pipeline_on_messages.json()["sentiment"]) > 0
+
+    # Check that the language is not empty
+    assert run_main_pipeline_on_messages.json()["language"] is not None
+    assert len(run_main_pipeline_on_messages.json()["language"]) > 0
+
+    # Check that the event dict is empty
+    assert run_main_pipeline_on_messages.json()["events"] is not None
+    assert len(run_main_pipeline_on_messages.json()["events"]) == 0
+
     backtestRequest = {
         "project_id": project_id,
         "system_prompt_template": "Hello",
