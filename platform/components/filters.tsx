@@ -38,6 +38,7 @@ import {
   Scale,
   Smile,
   SmilePlus,
+  Tag,
   TextSearch,
   ThumbsDown,
   ThumbsUp,
@@ -83,10 +84,25 @@ const FilterComponent = ({
     },
   );
   const events = selectedProject?.settings?.events;
+  const tagger_events: Record<string, EventDefinition> = events
+    ? Object.fromEntries(
+        Object.entries(events).filter(
+          ([, event]) =>
+            event.score_range_settings?.score_type === "confidence",
+        ),
+      )
+    : {};
   const scorer_events: Record<string, EventDefinition> = events
     ? Object.fromEntries(
         Object.entries(events).filter(
           ([, event]) => event.score_range_settings?.score_type === "range",
+        ),
+      )
+    : {};
+  const category_events: Record<string, EventDefinition> = events
+    ? Object.fromEntries(
+        Object.entries(events).filter(
+          ([, event]) => event.score_range_settings?.score_type === "category",
         ),
       )
     : {};
@@ -242,7 +258,33 @@ const FilterComponent = ({
               </Button>
             );
           })}
+        {dataFilters.classifier_value &&
+          Object.entries(dataFilters.classifier_value).map(
+            ([event_id, value]) => {
+              const event_name = Object.entries(category_events).find(
+                ([, e]) => e.id === event_id,
+              )?.[0];
 
+              if (!event_name) return null;
+
+              return (
+                <Button
+                  key={event_id}
+                  variant="outline"
+                  onClick={() => {
+                    setDataFilters({
+                      ...dataFilters,
+                      classifier_value: null,
+                    });
+                    resetPagination();
+                  }}
+                >
+                  {event_name}: {value}
+                  <X className="size-4 ml-2" />
+                </Button>
+              );
+            },
+          )}
         {dataFilters.language && (
           <Button
             variant="outline"
@@ -450,7 +492,7 @@ const FilterComponent = ({
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
-          {/* Events */}
+          {/* Tagger events */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <TextSearch className="size-4 mr-2" />
@@ -458,8 +500,8 @@ const FilterComponent = ({
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent className="overflow-y-auto max-h-[20rem]">
-                {events &&
-                  Object.entries(events).map(([event_name, event]) => {
+                {tagger_events &&
+                  Object.entries(tagger_events).map(([event_name, event]) => {
                     return (
                       <DropdownMenuItem
                         key={event.id}
@@ -534,6 +576,56 @@ const FilterComponent = ({
                                 </DropdownMenuItem>
                               );
                             })}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    );
+                  })}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          {/* Category */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Tag className="size-4 mr-2" />
+              <span>Category value</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                {category_events &&
+                  Object.entries(category_events).map(([event_name, event]) => {
+                    if (!event.id || !event.score_range_settings?.categories) {
+                      return null;
+                    }
+
+                    return (
+                      <DropdownMenuSub key={"category_value_" + event.id}>
+                        <DropdownMenuSubTrigger>
+                          <span>{event_name}</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                            {event.score_range_settings.categories.map(
+                              (category) => {
+                                const eventId = event.id as string;
+                                return (
+                                  <DropdownMenuItem
+                                    key={category}
+                                    onClick={() => {
+                                      setDataFilters({
+                                        ...dataFilters,
+                                        classifier_value: {
+                                          [eventId]: category,
+                                        },
+                                      });
+                                      resetPagination();
+                                    }}
+                                  >
+                                    {category}
+                                  </DropdownMenuItem>
+                                );
+                              },
+                            )}
                           </DropdownMenuSubContent>
                         </DropdownMenuPortal>
                       </DropdownMenuSub>
