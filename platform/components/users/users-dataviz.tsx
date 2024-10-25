@@ -22,9 +22,14 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 interface JobTitles {
@@ -206,6 +211,24 @@ const UsersDataviz = ({
       },
     );
 
+  const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+  }) => {
+    if (active && payload && payload.length) {
+      console.log("Payload: ", payload);
+      return (
+        <div className="bg-primary shadow-md p-2 rounded-md">
+          <p className="text-secondary font-semibold">
+            {formatPeriod(payload[0].payload?.day)}
+          </p>
+          <p className="text-green-500">Retention: {payload[0].value}%</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const totalJobTitles = useMemo(() => {
     return userJobTitles?.reduce((acc) => acc + 1, 0) || 0;
   }, [userJobTitles]);
@@ -321,10 +344,7 @@ const UsersDataviz = ({
                       domain={[0, 100]}
                       fontSize={12}
                     />
-                    <Tooltip
-                      formatter={(value) => [`${value}%`, "Retention"]}
-                      labelFormatter={formatPeriod}
-                    />
+                    <Tooltip content={CustomTooltip} />
                     <Line
                       type="linear"
                       dataKey="retention"
