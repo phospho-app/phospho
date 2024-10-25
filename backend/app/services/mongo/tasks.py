@@ -493,8 +493,6 @@ async def get_all_tasks(
         query_builder.merge_events(foreignField="task_id", force=True)
         query_builder.deduplicate_tasks_events()
 
-    logger.debug(f"Pipeline: {pipeline}")
-
     tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
 
     # Cast to tasks

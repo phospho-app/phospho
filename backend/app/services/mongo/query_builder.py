@@ -367,7 +367,6 @@ class QueryBuilder:
 
         if filters.classifier_value is not None:
             key = list(filters.classifier_value.keys())[0]
-            logger.debug
             self.merge_events(foreignField="task_id")
             match["$and"] = [
                 {f"{prefix}events": {"$ne": []}},
