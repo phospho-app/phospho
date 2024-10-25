@@ -188,69 +188,70 @@ def test_wrap():
     time.sleep(0.1)
 
 
-def test_list_of_messages():
+def test_log_list_of_messages():
     """
     Log a list of RoleContentMessages (OpenAI format)
     """
     phospho.init(tick=0.05, raise_error_on_fail_to_send=True)
 
+    conversation = [
+        {
+            "role": "system",
+            "content": "Answer yes",
+        },
+        {
+            "role": "user",
+            "content": "Say hi !",
+        },
+        {
+            "role": "assistant",
+            "content": "Hello",
+        },
+    ]
     log = phospho.log(
-        [
-            {
-                "role": "system",
-                "content": "Answer yes",
-            },
-            {
-                "role": "user",
-                "content": "Say hi !",
-            },
-            {
-                "role": "assistant",
-                "content": "Hello",
-            },
-        ]
+        input=conversation,
+        output=conversation,
     )
-    # Verify that the system prompt was detect
     assert log["input"] == "Say hi !"
     assert log["output"] == "Hello"
-    assert log["metadata"]["system_prompt"] == "Answer yes"
+    assert log["system_prompt"] == "Answer yes"
 
     # Multiple system prompts
+    conversation = [
+        {
+            "role": "system",
+            "content": "Answer yes",
+        },
+        {
+            "role": "system",
+            "content": "Never say hi",
+        },
+        {
+            "role": "user",
+            "content": "Say hi !",
+        },
+        {
+            "role": "assistant",
+            "content": "Good morning",
+        },
+    ]
     log = phospho.log(
-        input=[
-            {
-                "role": "system",
-                "content": "Answer yes",
-            },
-            {
-                "role": "system",
-                "content": "Never say hi",
-            },
-            {
-                "role": "user",
-                "content": "Say hi !",
-            },
-            {
-                "role": "assistant",
-                "content": "Good morning",
-            },
-        ]
+        input=conversation,
+        output=conversation,
     )
-    # Verify that the system prompt was detect
     assert log["input"] == "Say hi !"
     assert log["output"] == "Good morning"
-    assert (
-        log["metadata"]["system_prompt"] == "Answer yes\nNever say hi"
-    )  # Multiple system prompts are concatenated
+    # Multiple system prompts are concatenated
+    assert log["system_prompt"] == "Answer yes\nNever say hi"
 
     # Succession of multiple assistant messages
     conversation = [
         {
-            "role": "user",
+            "role": "assistant",
             "content": "Hello",
         },
         {
-            "role": "assistant",
+            "role": "user",
             "content": "Hi",
         },
         {

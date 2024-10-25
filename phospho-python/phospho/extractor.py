@@ -63,7 +63,9 @@ def detect_str_from_input(input: RawDataType) -> str:
             if message.get("role", None) == "user":
                 user_messages.append(message.get("content", None))
             else:
-                break
+                if len(user_messages) > 0:
+                    break
+
         if len(user_messages) > 0:
             return "\n".join(user_messages[::-1])
 
@@ -158,7 +160,8 @@ def detect_str_from_output(output: RawDataType) -> str:
             if message.get("role", None) == "assistant":
                 assistant_messages.append(message.get("content", None))
             else:
-                break
+                if len(assistant_messages) > 0:
+                    break
         if len(assistant_messages) > 0:
             return "\n".join(assistant_messages[::-1])
 
@@ -212,14 +215,12 @@ def detect_system_prompt_from_input_output(input: Any, output: Any) -> Optional[
         for message in input
     ):
         # Detect the system prompt from the list of messages
-        system_prompt = None
+        system_prompts = []
         for message in input:
             if message.get("role", None) == "system":
-                if system_prompt is None:
-                    system_prompt = message.get("content", None)
-                else:
-                    # Support multiple system prompts
-                    system_prompt += "\n" + message.get("content", None)
+                system_prompts.append(message.get("content", None))
+        if len(system_prompts) > 0:
+            system_prompt = "\n".join(system_prompts)
 
     return system_prompt
 
@@ -390,6 +391,6 @@ def extract_metadata_from_input_output(
 
     system_prompt = detect_system_prompt_from_input_output(input, output)
     if system_prompt is not None:
-        metadata.update({"evaluation_prompt": system_prompt})
+        metadata.update({"system_prompt": system_prompt})
 
     return metadata
