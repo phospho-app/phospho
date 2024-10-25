@@ -1,6 +1,5 @@
-import datetime
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional
 from phospho.models import ProjectDataFilters
 
 
