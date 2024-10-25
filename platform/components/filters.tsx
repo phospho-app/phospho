@@ -34,6 +34,7 @@ import {
   Meh,
   PenSquare,
   Plus,
+  Scale,
   Smile,
   SmilePlus,
   TextSearch,
@@ -208,6 +209,22 @@ const FilterComponent = ({
               </Button>
             );
           })}
+        {dataFilters.scorer_value && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                scorer_value: null,
+              });
+              resetPagination();
+            }}
+            key={dataFilters.scorer_value}
+          >
+            {dataFilters.scorer_value}
+            <X className="size-4 ml-2" />
+          </Button>
+        )}
         {dataFilters.language && (
           <Button
             variant="outline"
@@ -447,6 +464,39 @@ const FilterComponent = ({
                       </DropdownMenuItem>
                     );
                   })}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          {/* Scorer */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Scale className="size-4 mr-2" />
+              <span>Scorer value</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                {[1, 2, 3, 4, 5].map((value) => {
+                  return (
+                    <DropdownMenuItem
+                      key={value}
+                      onClick={() => {
+                        setDataFilters({
+                          ...dataFilters,
+                          scorer_value: value,
+                        });
+                        resetPagination();
+                      }}
+                      style={{
+                        color:
+                          dataFilters.scorer_value === value
+                            ? "green"
+                            : "inherit",
+                      }}
+                    >
+                      {value}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>

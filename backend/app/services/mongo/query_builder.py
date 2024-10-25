@@ -325,6 +325,7 @@ class QueryBuilder:
 
         Implements:
         - event_name
+        - scorer_value
         - event_id
         - clustering_id
         - clusters_ids
@@ -341,6 +342,23 @@ class QueryBuilder:
                 {
                     f"{prefix}events": {
                         "$elemMatch": {"event_name": {"$in": filters.event_name}}
+                    }
+                },
+            ]
+
+        if filters.scorer_value is not None:
+            self.merge_events(foreignField="task_id")
+            match["$and"] = [
+                {f"{prefix}events": {"$ne": []}},
+                {
+                    f"{prefix}events": {
+                        "$elemMatch": {
+                            "score_range.score_type": "range",
+                            "score_range.value": {
+                                "$gte": filters.scorer_value - 0.5,
+                                "$lte": filters.scorer_value + 0.5,
+                            },
+                        }
                     }
                 },
             ]
@@ -433,6 +451,23 @@ class QueryBuilder:
                     "events": {
                         "$elemMatch": {
                             "event_name": {"$in": filters.event_name},
+                        }
+                    }
+                },
+            ]
+
+        if filters.scorer_value is not None:
+            self.merge_events(foreignField="session_id")
+            match["$and"] = [
+                {"events": {"$ne": []}},
+                {
+                    "events": {
+                        "$elemMatch": {
+                            "score_range.score_type": "range",
+                            "score_range.value": {
+                                "$gte": filters.scorer_value - 0.5,
+                                "$lte": filters.scorer_value + 0.5,
+                            },
                         }
                     }
                 },

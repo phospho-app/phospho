@@ -169,13 +169,14 @@ class Task(ProjectElementBaseModel):
     # Events are stored in a subcollection of the task document
     events: Optional[List[Event]] = Field(default_factory=list)
     # The environment is a label
-    environment: str = Field(default="default environment", deprecated=True)
+    # Deprecated
+    environment: str = Field(default="default environment")
     # Notes are a free text field that can be edited
     notes: Optional[str] = None
     # Testing
     test_id: Optional[str] = None
-    # Deprecated (topics)
-    topics: Optional[List[str]] = Field(default=None, deprecated=True)
+    # Deprecated
+    topics: Optional[List[str]] = Field(default=None)
     # Position of the task in the session
     task_position: Optional[int] = None
     is_last_task: Optional[bool] = None
@@ -330,17 +331,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "event_name"
-                        ] = event_name
+                        project_data["settings"]["events"][event_name]["event_name"] = (
+                            event_name
+                        )
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "org_id"
-                        ] = project_data["org_id"]
+                        project_data["settings"]["events"][event_name]["org_id"] = (
+                            project_data["org_id"]
+                        )
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name][
-                            "project_id"
-                        ] = project_data["id"]
+                        project_data["settings"]["events"][event_name]["project_id"] = (
+                            project_data["id"]
+                        )
 
             # Transition dashboard_tiles to lowercase and new fields
             if "dashboard_tiles" in project_data["settings"].keys():
@@ -572,7 +573,7 @@ class Message(DatedBaseModel):
         :return: A list of Message objects
         """
         try:
-            import pandas as pd
+            import pandas as pd  # type: ignore
         except ImportError:
             raise ImportError("Pandas is required to use the from_df method")
 
@@ -753,6 +754,7 @@ class ProjectDataFilters(BaseModel):
     event_name: Optional[List[str]] = None
     event_id: Optional[List[str]] = None
     flag: Optional[str] = None
+    scorer_value: Optional[int] = None
     metadata: Optional[dict] = None
     user_id: Optional[str] = None
     last_eval_source: Optional[str] = None
@@ -833,10 +835,10 @@ class PipelineResults(BaseModel):
     events: Dict[str, List[Event]] = Field(
         default_factory=dict, description="Events detected in the messages"
     )
+    # Deprecated
     flag: Optional[Dict[str, Literal["success", "failure"]]] = Field(
         default_factory=dict,
         description="Flag of the task: success or failure.",
-        deprecated=True,
     )
     language: Dict[str, Optional[str]] = Field(
         default_factory=dict, description="Language detected in the messages."
