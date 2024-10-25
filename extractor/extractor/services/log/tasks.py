@@ -1,4 +1,6 @@
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any, Literal, Tuple, Optional
+from extractor.models.log import MinimalLogEventForMessages
+from extractor.models.pipelines import RoleContentMessage
 from extractor.services.pipelines import MainPipeline
 from extractor.models import LogEventForTasks
 from phospho.models import Task, Session
@@ -474,3 +476,131 @@ async def process_logs_for_tasks(
         )
 
     return None
+
+
+async def process_logs_for_messages(
+    project_id: str,
+    org_id: str,
+    logs_to_process: List[MinimalLogEventForMessages],
+    extra_logs_to_save: List[MinimalLogEventForMessages],
+) -> None:
+    """
+    Convert MinimalLogEventForMessages to LogEventForTasks and process them using process_logs_for_tasks
+    """
+
+    logs_to_process_for_tasks = []
+    extra_logs_to_save_for_tasks = []
+
+    for log_event in logs_to_process:
+        extra_args = log_event.model_dump()
+        extra_args = {
+            key: value
+            for key, value in extra_args.items()
+            if key not in ["messages", "merge_mode", "metadata", "session_id"]
+        }
+        logs_events_for_tasks = await convert_messages_to_tasks(
+            project_id=project_id,
+            session_id=log_event.session_id,
+            messages=log_event.messages,
+            merge_mode=log_event.merge_mode,
+            metadata=log_event.metadata,
+            **extra_args,
+        )
+        logs_to_process_for_tasks.extend(logs_events_for_tasks)
+
+    for log_event in extra_logs_to_save:
+        extra_args = log_event.model_dump()
+        extra_args = {
+            key: value
+            for key, value in extra_args.items()
+            if key not in ["messages", "merge_mode", "metadata", "session_id"]
+        }
+        logs_events_for_tasks = await convert_messages_to_tasks(
+            project_id=project_id,
+            session_id=log_event.session_id,
+            messages=log_event.messages,
+            merge_mode=log_event.merge_mode,
+            metadata=log_event.metadata,
+            **extra_args,
+        )
+        extra_logs_to_save_for_tasks.extend(logs_events_for_tasks)
+
+    return await process_logs_for_tasks(
+        project_id=project_id,
+        org_id=org_id,
+        logs_to_process=logs_to_process_for_tasks,
+        extra_logs_to_save=extra_logs_to_save_for_tasks,
+    )
+
+
+async def convert_messages_to_tasks(
+    project_id: str,
+    session_id: str,
+    messages: List[RoleContentMessage],
+    merge_mode: Literal["resolve", "append", "replace"] = "replace",
+    metadata: Optional[Dict[str, Any]] = None,
+    **kwargs,
+) -> List[LogEventForTasks]:
+    """
+    Convert messages to LogEventForTasks
+    """
+
+    if merge_mode != "replace":
+        raise ValueError(
+            "Only merge_mode 'replace' is supported in convert_messages_to_tasks"
+        )
+    log_events = []
+    last_role = None
+    input_list: List[str] = []
+    output_list: List[str] = []
+    for message in messages:
+        role = message.role
+        if role not in ["system", "assistant", "user"]:
+            continue
+        # We put the first correct role in the last_role
+        if last_role is None and role in ["assistant", "user"]:
+            last_role = role
+        # if the last_role was "assistant" and the role is "user", we create a new log event
+        if last_role == "assistant" and role == "user":
+            log_event = LogEventForTasks(
+                project_id=project_id,
+                session_id=session_id,
+                input="\n".join(input_list),
+                output="\n".join(output_list),
+                metadata=metadata,
+                **kwargs,
+            )
+            log_events.append(log_event)
+            input_list = []
+            output_list = []
+        # We put the system prompt in the metadata
+        if role == "system":
+            if metadata is not None:
+                if metadata.get("system_prompt") is not None:
+                    metadata["system_prompt"] += "\n" + message.content
+                else:
+                    metadata["system_prompt"] = message.content
+            else:
+                metadata = {"system_prompt": message.content}
+        # if the role is assistant, we append the content to the output
+        elif role == "assistant":
+            output_list.append(message.content)
+        # if the role is user, we append the content to the input
+        elif role == "user":
+            input_list.append(message.content)
+
+        if role in ["assistant", "user"]:
+            last_role = role
+
+    if len(input_list) > 0 or len(output_list) > 0:
+        log_event = LogEventForTasks(
+            project_id=project_id,
+            session_id=session_id,
+            input="\n".join(input_list),
+            output="\n".join(output_list),
+            metadata=metadata,
+            **kwargs,
+        )
+        log_events.append(log_event)
+
+    return log_events
