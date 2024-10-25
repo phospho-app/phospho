@@ -459,10 +459,14 @@ def calculate_retention(
     active_users = total_users
 
     for period in range(actual_periods + 1):
+        # Calculate the date for this period
+        period_date = min_timestamp + (period * period_seconds)
+
         retention.append(
             {
                 period_name: period,
                 "retention": round((active_users / total_users) * 100, 1),
+                "date": period_date,  # Add the timestamp for this period
             }
         )
 
