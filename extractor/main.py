@@ -13,6 +13,7 @@ from extractor.temporal.activities import (
     extract_langsmith_data,
     run_main_pipeline_on_messages,
     run_main_pipeline_on_task,
+    run_process_logs_for_messages,
     run_process_logs_for_tasks,
     run_process_tasks,
     run_recipe_on_task,
@@ -28,6 +29,7 @@ from extractor.temporal.workflows import (
     RunProcessTasksWorkflow,
     RunRecipeOnTaskWorkflow,
     StoreOpenTelemetryDataWorkflow,
+    RunProcessLogsForMessagesWorkflow,
 )
 from loguru import logger
 from temporalio.client import Client, TLSConfig
@@ -118,6 +120,7 @@ async def main() -> None:
             RunMainPipelineOnMessagesWorkflow,
             RunMainPipelineOnTaskWorkflow,
             RunProcessTasksWorkflow,
+            RunProcessLogsForMessagesWorkflow,
         ],
         activities=[  # And the linked activities here
             extract_langsmith_data,
@@ -129,6 +132,7 @@ async def main() -> None:
             run_main_pipeline_on_task,
             run_process_tasks,
             run_process_logs_for_tasks,
+            run_process_logs_for_messages,
         ],
         workflow_runner=new_sandbox_runner(),
         interceptors=[SentryInterceptor()]
