@@ -50,41 +50,27 @@ def detect_str_from_input(input: RawDataType) -> str:
         if content is not None:
             return str(content)
 
-    # Unimplemented. Translate everything to str
+    # List of messages (OpenAI-like conversation)
+    if isinstance(input, list) and all(
+        isinstance(message, dict) and ("role" in message) and ("content" in message)
+        for message in input
+    ):
+        # The last consecutive messages with the role 'user' are the str input
+        # Ex: [{"role": "user", "content": "Hello"}, {"role": "assistant", "content": "Hi"}, {"role": "user", "content": "How are you?"}, {"role": "user", "content": "Are you okay?"}]
+        # Should return : "How are you?\nAre you okay?"
+        user_messages = []
+        for message in reversed(input):
+            if message.get("role", None) == "user":
+                user_messages.append(message.get("content", None))
+            else:
+                if len(user_messages) > 0:
+                    break
+
+        if len(user_messages) > 0:
+            return "\n".join(user_messages[::-1])
+
+    # Fallback: convert everything to str
     return str(input)
-
-
-# def detect_task_id_and_to_log_from_output(
-#     output: RawDataType
-# ) -> Tuple[Optional[str], Optional[bool]]:
-#     """
-#     This function extracts from an arbitrary output an eventual task_id and to_log bool.
-#     task_id is used to grouped multiple outputs together.
-#     to_log is used to delay the call to the phospho API. Only logs marked as to_log will
-#     be recorded to phospho.
-#     This is useful to fully receive a streamed response before logging it to phospho.
-#     """
-#     output_class_name = output.__class__.__name__
-#     output_module = output.__class__.__module__
-#     logger.debug(
-#         f"Detecting task_id from output class_name:{output_class_name} ; module:{output_module}"
-#     )
-
-#     # OpenAI Stream API
-#     # task_id = ChatCompletionMessage.id
-#     # finish_reason = ChatCompletionMessage.choices[0].finish_reason
-#     if isinstance(output, pydantic.BaseModel) and (
-#         output_class_name == "ChatCompletionChunk"
-#     ):
-#         task_id = getattr(output, "id", None)
-#         choices = getattr(output, "choices", None)
-#         if isinstance(choices, list) and len(choices) > 0:
-#             # finish_reason is a str if completion has finished
-#             finish_reason = getattr(choices[0], "finish_reason", None)
-
-#         return task_id, (finish_reason is not None)
-#     # Unimplemented
-#     return None, None
 
 
 def detect_str_from_output(output: RawDataType) -> str:
@@ -116,12 +102,14 @@ def detect_str_from_output(output: RawDataType) -> str:
         if output_class_name in ["ChatCompletion", "ChatCompletionChunk"]:
             choices = getattr(output, "choices", None)
             if isinstance(choices, list) and len(choices) > 0:
+                # Non-streaming
                 if output_class_name == "ChatCompletion":
                     # output = ChatCompletionMessage.choices[0].message.content
                     message = getattr(choices[0], "message", None)
                     content = getattr(message, "content", None)
                     if content is not None:
                         return str(content)
+                # Streaming
                 elif output_class_name == "ChatCompletionChunk":
                     # new_token = ChatCompletionMessage.choices[0].delta.content
                     choice_delta = getattr(choices[0], "delta")
@@ -132,6 +120,7 @@ def detect_str_from_output(output: RawDataType) -> str:
                         # None content = end of generation stream
                         return ""
 
+    # Single OpenAI or Ollama output (dict)
     if isinstance(output, dict):
         # OpenAI outputs
         if "choices" in output.keys():
@@ -157,6 +146,24 @@ def detect_str_from_output(output: RawDataType) -> str:
         # Ollama outputs
         if "response" in output.keys():
             return output["response"]
+
+    # List of messages (OpenAI-like conversation)
+    if isinstance(output, list) and all(
+        isinstance(message, dict) and ("role" in message) and ("content" in message)
+        for message in output
+    ):
+        # The last consecutive messages with the role 'assistant' are the str output
+        # Ex: [{"role": "assistant", "content": "Hello"}, {"role": "user", "content": "Hi"}, {"role": "assistant", "content": "How are you?"}, {"role": "assistant", "content": "Are you okay?"}]
+        # Should return : "How are you?\nAre you okay?"
+        assistant_messages = []
+        for message in reversed(output):
+            if message.get("role", None) == "assistant":
+                assistant_messages.append(message.get("content", None))
+            else:
+                if len(assistant_messages) > 0:
+                    break
+        if len(assistant_messages) > 0:
+            return "\n".join(assistant_messages[::-1])
 
     # Unimplemented. Translate everything to str
     return str(output)
@@ -184,6 +191,7 @@ def detect_system_prompt_from_input_output(input: Any, output: Any) -> Optional[
     """
     Returns the system prompt used to generate the output.
     """
+    system_prompt = None
     if isinstance(input, dict):
         # OpenAI API has a messages list and the first message is the system prompt
         # if the 'role' is 'system'
@@ -191,12 +199,30 @@ def detect_system_prompt_from_input_output(input: Any, output: Any) -> Optional[
             messages = input["messages"]
             if isinstance(messages, list) and len(messages) > 0:
                 if messages[0].get("role", None) == "system":
-                    return messages[0].get("content", None)
+                    if system_prompt is None:
+                        system_prompt = messages[0].get("content", None)
+                    else:
+                        # Support multiple system prompts
+                        system_prompt += "\n" + messages[0].get("content", None)
+
         # Claude-like API
         if "system" in input.keys():
-            return input["system"]
+            system_prompt = input["system"]
 
-    return None
+    # Same, but with list input (OpenAI-like)
+    if isinstance(input, list) and all(
+        isinstance(message, dict) and ("role" in message) and ("content" in message)
+        for message in input
+    ):
+        # Detect the system prompt from the list of messages
+        system_prompts = []
+        for message in input:
+            if message.get("role", None) == "system":
+                system_prompts.append(message.get("content", None))
+        if len(system_prompts) > 0:
+            system_prompt = "\n".join(system_prompts)
+
+    return system_prompt
 
 
 def detect_model_from_input_output(input: Any, output: Any) -> Optional[str]:
@@ -365,6 +391,6 @@ def extract_metadata_from_input_output(
 
     system_prompt = detect_system_prompt_from_input_output(input, output)
     if system_prompt is not None:
-        metadata.update({"evaluation_prompt": system_prompt})
+        metadata.update({"system_prompt": system_prompt})
 
     return metadata

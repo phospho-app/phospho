@@ -16,7 +16,8 @@ jobs:
         working-directory: phospho-python
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        # 3.9 is still supported until 2025-10 see https://devguide.python.org/versions/
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
