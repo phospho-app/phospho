@@ -19,8 +19,6 @@ from typing import Any, Callable, Type
 from temporalio import workflow
 from temporalio.common import RetryPolicy
 
-from extractor.temporal.activities import run_process_logs_for_messages
-
 with workflow.unsafe.imports_passed_through():
     import stripe
     import asyncio
@@ -47,6 +45,7 @@ with workflow.unsafe.imports_passed_through():
         run_main_pipeline_on_task,
         bill_on_stripe,
         run_process_logs_for_tasks,
+        run_process_logs_for_messages,
     )
     from extractor.models.log import (
         LogProcessRequestForMessages,

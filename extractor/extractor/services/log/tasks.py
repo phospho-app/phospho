@@ -495,12 +495,13 @@ async def process_logs_for_messages(
         messages = log_event.messages
 
         if messages[0].role == "system":
-            metadata = log_event.metadata + {
+            metadata = {
+                **(log_event.metadata or {}),
                 "system_prompt": messages[0].content,
             }
+
             logs_events_for_tasks = await convert_messages_to_tasks(
                 project_id=project_id,
-                org_id=org_id,
                 session_id=log_event.session_id,
                 messages=messages[1:],
                 merge_mode=log_event.merge_mode,
@@ -515,7 +516,6 @@ async def process_logs_for_messages(
         else:
             logs_events_for_tasks = await convert_messages_to_tasks(
                 project_id=project_id,
-                org_id=org_id,
                 session_id=log_event.session_id,
                 messages=messages,
                 merge_mode=log_event.merge_mode,
@@ -532,12 +532,12 @@ async def process_logs_for_messages(
         messages = log_event.messages
 
         if messages[0].role == "system":
-            metadata = log_event.metadata + {
+            metadata = {
+                **(log_event.metadata or {}),
                 "system_prompt": messages[0].content,
             }
             logs_events_for_tasks = await convert_messages_to_tasks(
                 project_id=project_id,
-                org_id=org_id,
                 session_id=log_event.session_id,
                 messages=messages[1:],
                 merge_mode=log_event.merge_mode,
@@ -552,7 +552,6 @@ async def process_logs_for_messages(
         else:
             logs_events_for_tasks = await convert_messages_to_tasks(
                 project_id=project_id,
-                org_id=org_id,
                 session_id=log_event.session_id,
                 messages=messages,
                 merge_mode=log_event.merge_mode,
@@ -584,7 +583,7 @@ async def convert_messages_to_tasks(
     version_id: Optional[str] = None,
     created_at: Optional[int] = None,
     user_id: Optional[str] = None,
-    flag: Optional[str] = None,
+    flag: Optional[Literal["success", "failure"]] = None,
     test_id: Optional[str] = None,
 ) -> List[LogEventForTasks]:
     """
