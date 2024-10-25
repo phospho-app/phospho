@@ -325,6 +325,7 @@ class QueryBuilder:
 
         Implements:
         - event_name
+        - scorer_value
         - event_id
         - clustering_id
         - clusters_ids
@@ -341,6 +342,41 @@ class QueryBuilder:
                 {
                     f"{prefix}events": {
                         "$elemMatch": {"event_name": {"$in": filters.event_name}}
+                    }
+                },
+            ]
+
+        if filters.scorer_value is not None:
+            key = list(filters.scorer_value.keys())[0]
+            self.merge_events(foreignField="task_id")
+            match["$and"] = [
+                {f"{prefix}events": {"$ne": []}},
+                {
+                    f"{prefix}events": {
+                        "$elemMatch": {
+                            "score_range.score_type": "range",
+                            "event_definition.id": key,
+                            "score_range.value": {
+                                "$gte": filters.scorer_value[key] - 0.5,
+                                "$lte": filters.scorer_value[key] + 0.5,
+                            },
+                        }
+                    }
+                },
+            ]
+
+        if filters.classifier_value is not None:
+            key = list(filters.classifier_value.keys())[0]
+            self.merge_events(foreignField="task_id")
+            match["$and"] = [
+                {f"{prefix}events": {"$ne": []}},
+                {
+                    f"{prefix}events": {
+                        "$elemMatch": {
+                            "score_range.score_type": "category",
+                            "event_definition.id": key,
+                            "score_range.label": filters.classifier_value[key],
+                        }
                     }
                 },
             ]
@@ -433,6 +469,41 @@ class QueryBuilder:
                     "events": {
                         "$elemMatch": {
                             "event_name": {"$in": filters.event_name},
+                        }
+                    }
+                },
+            ]
+
+        if filters.scorer_value is not None:
+            key = list(filters.scorer_value.keys())[0]
+            self.merge_events(foreignField="session_id")
+            match["$and"] = [
+                {"events": {"$ne": []}},
+                {
+                    "events": {
+                        "$elemMatch": {
+                            "score_range.score_type": "range",
+                            "event_definition.id": key,
+                            "score_range.value": {
+                                "$gte": filters.scorer_value[key] - 0.5,
+                                "$lte": filters.scorer_value[key] + 0.5,
+                            },
+                        }
+                    }
+                },
+            ]
+
+        if filters.classifier_value is not None:
+            key = list(filters.classifier_value.keys())[0]
+            self.merge_events(foreignField="session_id")
+            match["$and"] = [
+                {"events": {"$ne": []}},
+                {
+                    "events": {
+                        "$elemMatch": {
+                            "score_range.score_type": "category",
+                            "event_definition.id": key,
+                            "score_range.label": filters.classifier_value[key],
                         }
                     }
                 },

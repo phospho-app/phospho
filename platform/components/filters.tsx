@@ -11,11 +11,17 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
 import {
   Clustering,
+  EventDefinition,
   MetadataFieldsToUniqueValues,
   Project,
 } from "@/models/models";
@@ -34,17 +40,19 @@ import {
   Meh,
   PenSquare,
   Plus,
+  Scale,
+  Shapes,
   Smile,
   SmilePlus,
+  Tag,
   TextSearch,
   ThumbsDown,
   ThumbsUp,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
-
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 
 interface LanguageFilterOption {
   value: string;
@@ -81,6 +89,28 @@ const FilterComponent = ({
     },
   );
   const events = selectedProject?.settings?.events;
+  const tagger_events: Record<string, EventDefinition> = events
+    ? Object.fromEntries(
+        Object.entries(events).filter(
+          ([, event]) =>
+            event.score_range_settings?.score_type === "confidence",
+        ),
+      )
+    : {};
+  const scorer_events: Record<string, EventDefinition> = events
+    ? Object.fromEntries(
+        Object.entries(events).filter(
+          ([, event]) => event.score_range_settings?.score_type === "range",
+        ),
+      )
+    : {};
+  const category_events: Record<string, EventDefinition> = events
+    ? Object.fromEntries(
+        Object.entries(events).filter(
+          ([, event]) => event.score_range_settings?.score_type === "category",
+        ),
+      )
+    : {};
 
   const resetPagination = () => {
     if (variant === "tasks") {
@@ -208,6 +238,58 @@ const FilterComponent = ({
               </Button>
             );
           })}
+        {dataFilters.scorer_value &&
+          Object.entries(dataFilters.scorer_value).map(([event_id, value]) => {
+            const event_name = Object.entries(scorer_events).find(
+              ([, e]) => e.id === event_id,
+            )?.[0];
+
+            if (!event_name) return null;
+
+            return (
+              <Button
+                key={event_id}
+                variant="outline"
+                onClick={() => {
+                  setDataFilters({
+                    ...dataFilters,
+                    scorer_value: null,
+                  });
+                  resetPagination();
+                }}
+              >
+                {event_name}: {value}
+                <X className="size-4 ml-2" />
+              </Button>
+            );
+          })}
+        {dataFilters.classifier_value &&
+          Object.entries(dataFilters.classifier_value).map(
+            ([event_id, value]) => {
+              const event_name = Object.entries(category_events).find(
+                ([, e]) => e.id === event_id,
+              )?.[0];
+
+              if (!event_name) return null;
+
+              return (
+                <Button
+                  key={event_id}
+                  variant="outline"
+                  onClick={() => {
+                    setDataFilters({
+                      ...dataFilters,
+                      classifier_value: null,
+                    });
+                    resetPagination();
+                  }}
+                >
+                  {event_name}: {value}
+                  <X className="size-4 ml-2" />
+                </Button>
+              );
+            },
+          )}
         {dataFilters.language && (
           <Button
             variant="outline"
@@ -415,16 +497,16 @@ const FilterComponent = ({
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
-          {/* Events */}
+          {/* Tagger events */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <TextSearch className="size-4 mr-2" />
-              <span>Tags</span>
+              <Tag className="size-4 mr-2" />
+              <span>Taggers</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent className="overflow-y-auto max-h-[20rem]">
-                {events &&
-                  Object.entries(events).map(([event_name, event]) => {
+                {tagger_events &&
+                  Object.entries(tagger_events).map(([event_name, event]) => {
                     return (
                       <DropdownMenuItem
                         key={event.id}
@@ -447,6 +529,147 @@ const FilterComponent = ({
                       </DropdownMenuItem>
                     );
                   })}
+                {tagger_events && Object.entries(tagger_events).length == 0 && (
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/org/insights/events"
+                      className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                    >
+                      <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">Setup taggers</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          {/* Scorer */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Scale className="size-4 mr-2" />
+              <span>Scorers</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                {scorer_events &&
+                  Object.entries(scorer_events).map(([event_name, event]) => {
+                    if (!event.id) {
+                      return null;
+                    }
+
+                    return (
+                      <DropdownMenuSub key={"scorer_value_" + event.id}>
+                        <DropdownMenuSubTrigger>
+                          <span>{event_name}</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                            {Array.from(
+                              {
+                                length:
+                                  (event.score_range_settings?.max ?? 5) -
+                                  (event.score_range_settings?.min ?? 1) +
+                                  1,
+                              },
+                              (_, i) =>
+                                (event.score_range_settings?.min ?? 1) + i,
+                            ).map((scorer_value) => {
+                              const eventId = event.id as string;
+                              return (
+                                <DropdownMenuItem
+                                  key={scorer_value}
+                                  onClick={() => {
+                                    setDataFilters({
+                                      ...dataFilters,
+                                      scorer_value: {
+                                        [eventId]: scorer_value,
+                                      },
+                                    });
+                                    resetPagination();
+                                  }}
+                                >
+                                  {scorer_value}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    );
+                  })}
+                {scorer_events && Object.entries(scorer_events).length == 0 && (
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/org/insights/events"
+                      className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                    >
+                      <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">Setup scorers</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          {/* Category */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Shapes className="size-4 mr-2" />
+              <span>Classifiers</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent>
+                {category_events &&
+                  Object.entries(category_events).map(([event_name, event]) => {
+                    if (!event.id || !event.score_range_settings?.categories) {
+                      return null;
+                    }
+
+                    return (
+                      <DropdownMenuSub key={"category_value_" + event.id}>
+                        <DropdownMenuSubTrigger>
+                          <span>{event_name}</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                            {event.score_range_settings.categories.map(
+                              (category) => {
+                                const eventId = event.id as string;
+                                return (
+                                  <DropdownMenuItem
+                                    key={category}
+                                    onClick={() => {
+                                      setDataFilters({
+                                        ...dataFilters,
+                                        classifier_value: {
+                                          [eventId]: category,
+                                        },
+                                      });
+                                      resetPagination();
+                                    }}
+                                  >
+                                    {category}
+                                  </DropdownMenuItem>
+                                );
+                              },
+                            )}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    );
+                  })}
+                {category_events &&
+                  Object.entries(category_events).length == 0 && (
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/org/insights/events"
+                        className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                      >
+                        <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">Setup classifiers</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
