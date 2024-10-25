@@ -513,7 +513,9 @@ const MetadataForm: React.FC = () => {
             metric={selectedMetric}
             metadata_metric={metadata_metric}
             breakdown_by={breakdown_by}
-            scorer_id={selectedScorerId}
+            scorer_id={
+              selectedMetric === "avg_scorer_value" ? selectedScorerId : null
+            }
             sorting={datavizSorting}
           />
         </div>

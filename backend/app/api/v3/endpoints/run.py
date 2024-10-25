@@ -14,6 +14,7 @@ from phospho import lab
 router = APIRouter(tags=["Run"])
 
 
+# Need to create task objects before running the pipeline
 @router.post(
     "/run/main/messages",
     description="""Run the main pipeline of a project on a task. \
@@ -46,6 +47,7 @@ async def run_main_pipeline_on_messages(
         project_id=request.project_id,
         org_id=org["org"].get("org_id"),
     )
+    # Need to create task objects before running the pipeline
     pipeline_result = await extractor_client.run_main_pipeline_on_messages(
         messages=request.messages,
     )

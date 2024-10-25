@@ -366,6 +366,7 @@ class ExtractorClient:
             },
             return_response=True,
         )
+        logger.debug(f"Result: {result}")
         if result is None or result.status_code != 200:
             return PipelineResults()
 

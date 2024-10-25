@@ -11,4 +11,4 @@ class AnalyticsQuery(MetadataPivotQuery):
 
 
 class AnalyticsResponse(MetadataPivotResponse):
-    pass
+    pivot_table: list
