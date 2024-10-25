@@ -494,41 +494,23 @@ async def process_logs_for_messages(
     for log_event in logs_to_process:
         logs_events_for_tasks = await convert_messages_to_tasks(
             project_id=project_id,
-            session_id=log_event.session_id,
-            messages=log_event.messages,
-            merge_mode=log_event.merge_mode,
-            created_at=log_event.created_at,
-            metadata=log_event.metadata,
-            version_id=log_event.version_id,
-            user_id=log_event.user_id,
-            flag=log_event.flag,
-            test_id=log_event.test_id,
+            **log_event.model_dump(),
         )
         logs_to_process_for_tasks.extend(logs_events_for_tasks)
 
     for log_event in extra_logs_to_save:
         logs_events_for_tasks = await convert_messages_to_tasks(
             project_id=project_id,
-            session_id=log_event.session_id,
-            messages=log_event.messages,
-            merge_mode=log_event.merge_mode,
-            created_at=log_event.created_at,
-            metadata=log_event.metadata,
-            version_id=log_event.version_id,
-            user_id=log_event.user_id,
-            flag=log_event.flag,
-            test_id=log_event.test_id,
+            **log_event.model_dump(),
         )
         extra_logs_to_save_for_tasks.extend(logs_events_for_tasks)
 
-    await process_logs_for_tasks(
+    return await process_logs_for_tasks(
         project_id=project_id,
         org_id=org_id,
         logs_to_process=logs_to_process_for_tasks,
         extra_logs_to_save=extra_logs_to_save_for_tasks,
     )
-
-    return None
 
 
 async def convert_messages_to_tasks(
@@ -537,11 +519,7 @@ async def convert_messages_to_tasks(
     messages: List[RoleContentMessage],
     merge_mode: Literal["resolve", "append", "replace"] = "replace",
     metadata: Optional[Dict[str, Any]] = None,
-    version_id: Optional[str] = None,
-    created_at: Optional[int] = None,
-    user_id: Optional[str] = None,
-    flag: Optional[Literal["success", "failure"]] = None,
-    test_id: Optional[str] = None,
+    **kwargs,
 ) -> List[LogEventForTasks]:
     """
     Convert messages to LogEventForTasks
@@ -555,7 +533,7 @@ async def convert_messages_to_tasks(
     last_role = None
     input_list: List[str] = []
     output_list: List[str] = []
-    for i, message in enumerate(messages):
+    for message in messages:
         role = message.role
         if role not in ["system", "assistant", "user"]:
             continue
@@ -569,12 +547,8 @@ async def convert_messages_to_tasks(
                 session_id=session_id,
                 input="\n".join(input_list),
                 output="\n".join(output_list),
-                created_at=created_at,
-                user_id=user_id,
                 metadata=metadata,
-                version_id=version_id,
-                flag=flag,
-                test_id=test_id,
+                **kwargs,
             )
             log_events.append(log_event)
             input_list = []
@@ -604,12 +578,8 @@ async def convert_messages_to_tasks(
             session_id=session_id,
             input="\n".join(input_list),
             output="\n".join(output_list),
-            created_at=created_at,
-            user_id=user_id,
             metadata=metadata,
-            version_id=version_id,
-            flag=flag,
-            test_id=test_id,
+            **kwargs,
         )
         log_events.append(log_event)
 
