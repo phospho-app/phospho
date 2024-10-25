@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 from app.api.v3.models.log import (
     LogReply,
     LogRequest,
@@ -29,7 +29,7 @@ async def store_batch_of_log_events(
     log_request: LogRequest,
     background_tasks: BackgroundTasks,
     org: dict = Depends(authenticate_org_key),
-) -> LogReply:
+) -> Optional[LogReply]:
     """Store the log_content in the logs database"""
 
     # Check if we are in maintenance mode
@@ -51,37 +51,21 @@ async def store_batch_of_log_events(
 
     for log_event_model in log_request.batched_log_events:
         # We now validate the logs
-        try:
-            if max_usage is None or (
-                max_usage is not None and current_usage < max_usage
-            ):
-                logs_to_process.append(log_event_model)
-                current_usage += 1
-            else:
-                logger.warning(
-                    f"Max usage quota reached for project: {log_request.project_id}"
-                )
-                background_tasks.add_task(
-                    send_quota_exceeded_email, log_request.project_id
-                )
-                logged_events.append(
-                    LogError(
-                        error_in_log=f"Max usage quota reached for project {log_request.project_id}: {current_usage}/{max_usage} logs"
-                    )
-                )
-                extra_logs_to_save.append(log_event_model)
-        except ValidationError as e:
-            logger.info(f"Skip logevent processing due to validation error: {e}")
-            logged_events.append(LogError(error_in_log=str(e)))
-        except HTTPException as e:
-            logger.info(f"Skip logevent processing due to validation error: {e}")
-            logged_events.append(LogError(error_in_log=str(e)))
 
-        except Exception as e:
-            logger.warning(f"Skip logevent processing due to unknown error: {e}")
-            logged_events.append(LogError(error_in_log=str(e)))
-
-    log_reply = LogReply(logged_events=logged_events)
+        if max_usage is None or (max_usage is not None and current_usage < max_usage):
+            logs_to_process.append(log_event_model)
+            current_usage += 1
+        else:
+            logger.warning(
+                f"Max usage quota reached for project: {log_request.project_id}"
+            )
+            background_tasks.add_task(send_quota_exceeded_email, log_request.project_id)
+            logged_events.append(
+                LogError(
+                    error_in_log=f"Max usage quota reached for project {log_request.project_id}: {current_usage}/{max_usage} logs"
+                )
+            )
+            extra_logs_to_save.append(log_event_model)
 
     # All the tasks to process were deemed as valid and the org had enough credits to process them
     extractor_client = ExtractorClient(
@@ -94,4 +78,7 @@ async def store_batch_of_log_events(
         extra_logs_to_save=extra_logs_to_save,
     )
 
-    return log_reply
+    if len(logged_events) > 0:
+        return LogReply(logged_events=logged_events)
+
+    return None
