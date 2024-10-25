@@ -22,9 +22,14 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
+  TooltipProps,
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
 
 interface JobTitles {
@@ -206,6 +211,53 @@ const UsersDataviz = ({
       },
     );
 
+  const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
+    active,
+    payload,
+  }) => {
+    if (active && payload && payload.length) {
+      const date = new Date(payload[0].payload.date * 1000);
+      const today = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const lastWeek = new Date();
+      lastWeek.setDate(lastWeek.getDate() - 7);
+
+      let dateDisplay;
+      if (isDaily) {
+        if (date.toDateString() === today.toDateString()) {
+          dateDisplay = "Today";
+        } else if (date.toDateString() === yesterday.toDateString()) {
+          dateDisplay = "Yesterday";
+        } else {
+          dateDisplay = date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
+        }
+      } else {
+        if (isSameWeek(date, today)) {
+          dateDisplay = "This week";
+        } else if (isSameWeek(date, lastWeek)) {
+          dateDisplay = "Last week";
+        } else {
+          dateDisplay = date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
+        }
+      }
+
+      return (
+        <div className="bg-primary shadow-md p-2 rounded-md">
+          <p className="text-secondary font-semibold">{dateDisplay}</p>
+          <p className="text-green-500">Retention: {payload[0].value}%</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const totalJobTitles = useMemo(() => {
     return userJobTitles?.reduce((acc) => acc + 1, 0) || 0;
   }, [userJobTitles]);
@@ -215,20 +267,22 @@ const UsersDataviz = ({
     return "day" in userRetention[0];
   }, [userRetention]);
 
-  const formatPeriod = (value: number) => {
-    if (userRetention?.length === undefined) return "";
-    if (isDaily) {
-      if (value === userRetention?.length - 1) return "Today";
-      if (value === userRetention?.length - 2) return "Yesterday";
-      return `${userRetention?.length - value} days ago`;
-    } else {
-      if (value === userRetention?.length - 1) return "This week";
-      if (value === userRetention?.length - 2) return "Last week";
-      return `${userRetention?.length - value} weeks ago`;
-    }
-  };
+  function isSameWeek(date1: Date, date2: Date): boolean {
+    const getWeekNumber = (date: Date) => {
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+      const yearStart = new Date(d.getFullYear(), 0, 1);
+      return Math.ceil(
+        ((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7,
+      );
+    };
 
-  const getXAxisKey = () => (isDaily ? "day" : "week");
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      getWeekNumber(date1) === getWeekNumber(date2)
+    );
+  }
 
   return (
     <div>
@@ -312,8 +366,36 @@ const UsersDataviz = ({
                 <ResponsiveContainer width="100%" height={160}>
                   <LineChart data={userRetention}>
                     <XAxis
-                      dataKey={getXAxisKey()}
-                      tickFormatter={formatPeriod}
+                      dataKey="date"
+                      tickFormatter={(timestamp) => {
+                        const date = new Date(timestamp * 1000);
+                        const today = new Date();
+                        const lastWeek = new Date();
+                        lastWeek.setDate(lastWeek.getDate() - 7);
+
+                        // Check if the date matches today or last week
+                        if (isDaily) {
+                          if (date.toDateString() === today.toDateString()) {
+                            return "Today";
+                          }
+                          return date.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+                        } else {
+                          // For weekly data
+                          if (isSameWeek(date, today)) {
+                            return "This week";
+                          }
+                          if (isSameWeek(date, lastWeek)) {
+                            return "Last week";
+                          }
+                          return date.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+                        }
+                      }}
                       fontSize={12}
                     />
                     <YAxis
@@ -321,10 +403,7 @@ const UsersDataviz = ({
                       domain={[0, 100]}
                       fontSize={12}
                     />
-                    <Tooltip
-                      formatter={(value) => [`${value}%`, "Retention"]}
-                      labelFormatter={formatPeriod}
-                    />
+                    <Tooltip content={CustomTooltip} />
                     <Line
                       type="linear"
                       dataKey="retention"
