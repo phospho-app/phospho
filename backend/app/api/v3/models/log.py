@@ -1,11 +1,12 @@
 from typing import Dict, List, Literal, Optional, Union
+from app.api.v3.models.run import RoleContentMessage
 from pydantic import BaseModel, Field
 from app.utils import generate_uuid, generate_timestamp
 
 
 class MinimalLogEventForMessages(BaseModel, extra="allow"):
     session_id: str = Field(default_factory=generate_uuid)
-    messages: List[str] = Field(default_factory=list)
+    messages: List[RoleContentMessage] = Field(default_factory=list)
     merge_mode: Literal["resolve", "append", "replace"] = "resolve"
     created_at: int = Field(default_factory=generate_timestamp)
     metadata: Optional[Dict[str, object]] = None

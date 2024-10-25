@@ -9,8 +9,12 @@ from extractor.services.connectors import (
     LangfuseConnector,
     OpenTelemetryConnector,
 )
-from extractor.services.log.tasks import process_tasks_id
-from extractor.models.log import TaskProcessRequest
+from extractor.services.log.tasks import process_logs_for_messages, process_tasks_id
+from extractor.models.log import (
+    LogProcessRequestForMessages,
+    TaskProcessRequest,
+    LogProcessRequestForTasks,
+)
 from extractor.models import (
     PipelineLangfuseRequest,
     PipelineLangsmithRequest,
@@ -22,7 +26,6 @@ from extractor.models import (
     BillOnStripeRequest,
 )
 from extractor.services.projects import get_project_by_id
-from extractor.models.log import LogProcessRequestForTasks
 from loguru import logger
 from extractor.services.log.tasks import process_logs_for_tasks
 
@@ -281,6 +284,25 @@ async def run_process_logs_for_tasks(
         f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
     )
     await process_logs_for_tasks(
+        project_id=request_body.project_id,
+        org_id=request_body.org_id,
+        logs_to_process=request_body.logs_to_process,
+        extra_logs_to_save=request_body.extra_logs_to_save,
+    )
+    return {
+        "status": "ok",
+        "nb_job_results": len(request_body.logs_to_process),
+    }
+
+
+@activity.defn(name="run_process_logs_for_messages")
+async def run_process_logs_for_messages(
+    request_body: LogProcessRequestForMessages,
+):
+    logger.info(
+        f"Project {request_body.project_id} org {request_body.org_id}: processing {len(request_body.logs_to_process)} logs and saving {len(request_body.extra_logs_to_save)} extra logs."
+    )
+    await process_logs_for_messages(
         project_id=request_body.project_id,
         org_id=request_body.org_id,
         logs_to_process=request_body.logs_to_process,

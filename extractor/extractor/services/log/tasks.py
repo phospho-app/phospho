@@ -1,4 +1,5 @@
 from typing import List, Dict, Any, Tuple, Optional
+from extractor.extractor.models.log import MinimalLogEventForMessages
 from extractor.services.pipelines import MainPipeline
 from extractor.models import LogEventForTasks
 from phospho.models import Task, Session
@@ -474,3 +475,14 @@ async def process_logs_for_tasks(
         )
 
     return None
+
+
+async def process_logs_for_messages(
+    project_id: str,
+    org_id: str,
+    logs_to_process: List[MinimalLogEventForMessages],
+    extra_logs_to_save: List[MinimalLogEventForMessages],
+) -> None:
+    """
+    Convert LogEventForMessages to LogEventForTasks and process them using process_logs_for_tasks
+    """

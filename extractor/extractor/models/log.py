@@ -1,4 +1,6 @@
 from typing import Dict, List, Literal, Optional, Union
+
+from extractor.extractor.models.pipelines import RoleContentMessage
 from extractor.utils import generate_timestamp, generate_uuid
 from pydantic import BaseModel, Field
 
@@ -14,7 +16,7 @@ class TaskProcessRequest(BaseModel):
 
 class MinimalLogEventForMessages(BaseModel, extra="allow"):
     session_id: str
-    messages: List[str]
+    messages: List[RoleContentMessage]
     merge_mode: Literal["resolve", "append", "replace"] = "resolve"
     created_at: int = Field(default_factory=generate_timestamp)
     metadata: Optional[Dict[str, object]] = None

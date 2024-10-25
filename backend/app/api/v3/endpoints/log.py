@@ -83,6 +83,9 @@ async def store_batch_of_log_events(
 
     log_reply = LogReply(logged_events=logged_events)
 
+    logger.debug(f"Log reply: {log_reply}")
+    logger.debug(f"Logs to process: {logs_to_process}")
+
     # All the tasks to process were deemed as valid and the org had enough credits to process them
     extractor_client = ExtractorClient(
         project_id=log_request.project_id,

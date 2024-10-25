@@ -19,6 +19,8 @@ from typing import Any, Callable, Type
 from temporalio import workflow
 from temporalio.common import RetryPolicy
 
+from extractor.extractor.temporal.activities import run_process_logs_for_messages
+
 with workflow.unsafe.imports_passed_through():
     import stripe
     import asyncio
@@ -187,6 +189,23 @@ class RunProcessLogsForTasksWorkflow(BaseWorkflow):
     async def run(self, request):
         logger.info(
             f"Running run_process_logs_for_tasks_workflow with request: {request}"
+        )
+        await super().run_activity(request)
+
+
+@workflow.defn(name="run_process_logs_for_tasks_workflow")
+class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
+    def __init__(self):
+        super().__init__(
+            activity_func=run_process_logs_for_messages,
+            request_class=LogProcessRequestForMessages,
+            max_retries=2,
+        )
+
+    @workflow.run
+    async def run(self, request):
+        logger.info(
+            f"Running run_process_logs_for_messages_workflow with request: {request}"
         )
         await super().run_activity(request)
 
