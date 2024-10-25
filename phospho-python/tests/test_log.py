@@ -188,6 +188,113 @@ def test_wrap():
     time.sleep(0.1)
 
 
+def test_list_of_messages():
+    """
+    Log a list of RoleContentMessages (OpenAI format)
+    """
+    phospho.init(tick=0.05, raise_error_on_fail_to_send=True)
+
+    log = phospho.log(
+        [
+            {
+                "role": "system",
+                "content": "Answer yes",
+            },
+            {
+                "role": "user",
+                "content": "Say hi !",
+            },
+            {
+                "role": "assistant",
+                "content": "Hello",
+            },
+        ]
+    )
+    # Verify that the system prompt was detect
+    assert log["input"] == "Say hi !"
+    assert log["output"] == "Hello"
+    assert log["metadata"]["system_prompt"] == "Answer yes"
+
+    # Multiple system prompts
+    log = phospho.log(
+        input=[
+            {
+                "role": "system",
+                "content": "Answer yes",
+            },
+            {
+                "role": "system",
+                "content": "Never say hi",
+            },
+            {
+                "role": "user",
+                "content": "Say hi !",
+            },
+            {
+                "role": "assistant",
+                "content": "Good morning",
+            },
+        ]
+    )
+    # Verify that the system prompt was detect
+    assert log["input"] == "Say hi !"
+    assert log["output"] == "Good morning"
+    assert (
+        log["metadata"]["system_prompt"] == "Answer yes\nNever say hi"
+    )  # Multiple system prompts are concatenated
+
+    # Succession of multiple assistant messages
+    conversation = [
+        {
+            "role": "user",
+            "content": "Hello",
+        },
+        {
+            "role": "assistant",
+            "content": "Hi",
+        },
+        {
+            "role": "assistant",
+            "content": "How are you?",
+        },
+        {
+            "role": "assistant",
+            "content": "Are you fine?",
+        },
+    ]
+    log = phospho.log(input=conversation, output=conversation)
+    assert log["input"] == "Hi"
+    assert log["output"] == "How are you?\nAre you fine?"
+
+    # Succession of multiple user messages
+    conversation = [
+        {
+            "role": "user",
+            "content": "Hello",
+        },
+        {
+            "role": "user",
+            "content": "Hi",
+        },
+        {
+            "role": "assistant",
+            "content": "How are you?",
+        },
+        {
+            "role": "assistant",
+            "content": "Are you fine?",
+        },
+    ]
+    log = phospho.log(
+        input=conversation,
+        output=conversation,
+    )
+    assert log["input"] == "Hello\nHi"
+    assert log["output"] == "How are you?\nAre you fine?"
+
+    time.sleep(0.1)
+
+
 def test_stream():
     phospho.init(tick=0.05, raise_error_on_fail_to_send=True)
 
