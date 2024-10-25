@@ -438,7 +438,7 @@ async def get_all_sessions(
     query_builder = QueryBuilder(
         project_id=project_id,
         filters=filters,
-        fetch_objects="sessions",
+        fetch_objects="sessions_with_events" if get_events else "sessions",
     )
     pipeline = await query_builder.build()
 
