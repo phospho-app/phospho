@@ -309,12 +309,30 @@ async def get_total_nb_of_tasks(
     Get the total number of tasks of a project.
     """
     mongo_db = await get_mongo_db()
+
+    if filters is None:
+        filters = ProjectDataFilters()
+
+    with_events = any(
+        [
+            filters.event_name is not None,
+            filters.event_id is not None,
+            filters.scorer_value is not None,
+        ]
+    )
+
+    collection: Literal["tasks_with_events", "tasks"] = (
+        "tasks_with_events" if with_events else "tasks"
+    )
+
     query_builder = QueryBuilder(
-        project_id=project_id, filters=filters, fetch_objects="tasks"
+        project_id=project_id,
+        filters=filters,
+        fetch_objects=collection,
     )
     pipeline = await query_builder.build()
     query_result = (
-        await mongo_db["tasks"]
+        await mongo_db[collection]
         .aggregate(
             pipeline
             + [

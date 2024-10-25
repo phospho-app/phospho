@@ -868,13 +868,13 @@ grpc = ["grpcio (>=1.38.0,<2.0dev)", "grpcio-status (>=1.38.0,<2.0.dev0)"]
 
 [[package]]
 name = "google-cloud-language"
-version = "2.14.0"
+version = "2.15.0"
 description = "Google Cloud Language API client library"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google_cloud_language-2.14.0-py2.py3-none-any.whl", hash = "sha256:c737d58a2423c29d0d642a39d3dfa24f1aff8ab86db735ed58d1aa3346608642"},
-    {file = "google_cloud_language-2.14.0.tar.gz", hash = "sha256:05e5e7a2219abe7abd4ef51a329cc5cbb64c31dd024bd5372d9fa2bf619517a9"},
+    {file = "google_cloud_language-2.15.0-py2.py3-none-any.whl", hash = "sha256:50a6d2d5ad56059426eb28d892ac962037a1edab79fbd31ba58b6062d4396dc2"},
+    {file = "google_cloud_language-2.15.0.tar.gz", hash = "sha256:ad7b2373d1e003f67440b79dcf5a923644a7d99135b3728bf38d72b05fe2f32d"},
 ]
 
 [package.dependencies]
@@ -1439,13 +1439,13 @@ files = [
 
 [[package]]
 name = "langfuse"
-version = "2.52.2"
+version = "2.53.1"
 description = "A client library for accessing langfuse"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langfuse-2.52.2-py3-none-any.whl", hash = "sha256:10a2ad8c616e0853733e4a68115d00ec034afa585cea4de34ccc08f069099ee4"},
-    {file = "langfuse-2.52.2.tar.gz", hash = "sha256:e6aae867c80e6ebf19c07601234232a9b93474e69b0702c5072c19c33fbafaa5"},
+    {file = "langfuse-2.53.1-py3-none-any.whl", hash = "sha256:a9163f7386b16a9face7db18466caf1d4283d3477e5e5fe32bbdfb1a265c3efb"},
+    {file = "langfuse-2.53.1.tar.gz", hash = "sha256:2dc7ba0443dffa9853ed6a833375bc8d788d27d9f54dd4bbbe0241940740752a"},
 ]
 
 [package.dependencies]
