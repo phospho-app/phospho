@@ -204,6 +204,157 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
 
     # assert run_backtests.status_code == 200, run_backtests.reason
 
+    batched_log_events = [
+        {
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": "Hello! I'm here to help you with anything you need today.",
+                },
+                {
+                    "role": "user",
+                    "content": "Thanks! Can you give me some tips on productivity?",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Certainly! Try setting clear goals, using a timer for focused work sessions, and keeping a task list.",
+                },
+                {"role": "system", "content": "You are a life coach."},
+                {
+                    "role": "user",
+                    "content": "Great advice! How about staying motivated?",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Celebrate small wins along the way to keep the momentum going!",
+                },
+            ]
+        },
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Can you help me plan an essay on renewable energy?",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Of course! A strong outline could include the benefits, challenges, and the future of renewable sources.",
+                },
+                {"role": "system", "content": "You are an environmental expert."},
+                {
+                    "role": "user",
+                    "content": "Good idea. What specific examples should I include?",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Consider mentioning solar and wind energy and how they’re impacting various regions worldwide.",
+                },
+            ]
+        },
+        {
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": "Hey there! Got any questions I can help with today?",
+                },
+                {"role": "user", "content": "What's the capital of Italy?"},
+                {"role": "assistant", "content": "The capital of Italy is Rome!"},
+                {"role": "user", "content": "And what about Spain?"},
+                {"role": "assistant", "content": "Spain’s capital is Madrid."},
+                {"role": "system", "content": "You are a geography expert."},
+            ]
+        },
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "I’m looking for book recommendations. Can you help?",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Of course! Which genre do you have in mind?",
+                },
+                {"role": "user", "content": "I love mysteries."},
+                {
+                    "role": "assistant",
+                    "content": "In that case, try *The Girl with the Dragon Tattoo* by Stieg Larsson. It’s captivating!",
+                },
+            ]
+        },
+        {
+            "messages": [
+                {"role": "system", "content": "You are a computer support assistant."},
+                {
+                    "role": "assistant",
+                    "content": "Hello! How can I assist with your computer issues today?",
+                },
+                {"role": "user", "content": "My laptop keeps freezing."},
+                {
+                    "role": "assistant",
+                    "content": "I see. Have you tried a full shutdown to reset everything?",
+                },
+                {"role": "user", "content": "Yes, but it didn’t help."},
+                {
+                    "role": "assistant",
+                    "content": "Then let’s try checking for updates or removing unnecessary startup programs.",
+                },
+            ]
+        },
+        {
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": "Do you have any questions about technology?",
+                },
+                {
+                    "role": "user",
+                    "content": "Yes, actually! How does machine learning work?",
+                },
+                {
+                    "role": "system",
+                    "content": "You are an AI and machine learning specialist.",
+                },
+                {
+                    "role": "assistant",
+                    "content": "In simple terms, machine learning involves training algorithms on large datasets to identify patterns.",
+                },
+                {
+                    "role": "user",
+                    "content": "That’s interesting! Can you give a practical example?",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Sure! For instance, facial recognition on phones is a type of machine learning application.",
+                },
+            ]
+        },
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "I'm going to Japan soon! Any travel tips?",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Fantastic! Make sure to explore both modern and traditional spots like Tokyo and Kyoto.",
+                },
+                {"role": "user", "content": "Any advice on budgeting for the trip?"},
+                {"role": "system", "content": "You are a travel budgeting expert."},
+                {
+                    "role": "assistant",
+                    "content": "Yes! Consider using Japan Rail Pass for trains, and try convenience stores for affordable, delicious meals!",
+                },
+            ]
+        },
+    ]
+    log_requests = {"project_id": project_id, "batched_log_events": batched_log_events}
+    response = requests.post(
+        f"{backend_url}/v3/log",
+        json=log_requests,
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
+    assert response.status_code == 200, response.reason
+
     delete_project = requests.delete(
         f"{backend_url}/api/projects/{project_id}/delete",
         headers={"Authorization": f"Bearer {access_token}"},
