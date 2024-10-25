@@ -16,6 +16,7 @@ import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
 import {
   Clustering,
+  EventDefinition,
   MetadataFieldsToUniqueValues,
   Project,
 } from "@/models/models";
@@ -82,6 +83,13 @@ const FilterComponent = ({
     },
   );
   const events = selectedProject?.settings?.events;
+  const scorer_events: Record<string, EventDefinition> = events
+    ? Object.fromEntries(
+        Object.entries(events).filter(
+          ([, event]) => event.score_range_settings?.score_type === "range",
+        ),
+      )
+    : {};
 
   const resetPagination = () => {
     if (variant === "tasks") {
@@ -209,22 +217,32 @@ const FilterComponent = ({
               </Button>
             );
           })}
-        {dataFilters.scorer_value && (
-          <Button
-            variant="outline"
-            onClick={() => {
-              setDataFilters({
-                ...dataFilters,
-                scorer_value: null,
-              });
-              resetPagination();
-            }}
-            key={dataFilters.scorer_value}
-          >
-            {dataFilters.scorer_value}
-            <X className="size-4 ml-2" />
-          </Button>
-        )}
+        {dataFilters.scorer_value &&
+          Object.entries(dataFilters.scorer_value).map(([event_id, value]) => {
+            const event_name = Object.entries(scorer_events).find(
+              ([, e]) => e.id === event_id,
+            )?.[0];
+
+            if (!event_name) return null;
+
+            return (
+              <Button
+                key={event_id}
+                variant="outline"
+                onClick={() => {
+                  setDataFilters({
+                    ...dataFilters,
+                    scorer_value: null,
+                  });
+                  resetPagination();
+                }}
+              >
+                {event_name}: {value}
+                <X className="size-4 ml-2" />
+              </Button>
+            );
+          })}
+
         {dataFilters.language && (
           <Button
             variant="outline"
@@ -475,28 +493,52 @@ const FilterComponent = ({
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
-                {[1, 2, 3, 4, 5].map((value) => {
-                  return (
-                    <DropdownMenuItem
-                      key={value}
-                      onClick={() => {
-                        setDataFilters({
-                          ...dataFilters,
-                          scorer_value: value,
-                        });
-                        resetPagination();
-                      }}
-                      style={{
-                        color:
-                          dataFilters.scorer_value === value
-                            ? "green"
-                            : "inherit",
-                      }}
-                    >
-                      {value}
-                    </DropdownMenuItem>
-                  );
-                })}
+                {scorer_events &&
+                  Object.entries(scorer_events).map(([event_name, event]) => {
+                    if (!event.id) {
+                      return null;
+                    }
+
+                    return (
+                      <DropdownMenuSub key={"scorer_value_" + event.id}>
+                        <DropdownMenuSubTrigger>
+                          <span>{event_name}</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                            {Array.from(
+                              {
+                                length:
+                                  (event.score_range_settings?.max ?? 5) -
+                                  (event.score_range_settings?.min ?? 1) +
+                                  1,
+                              },
+                              (_, i) =>
+                                (event.score_range_settings?.min ?? 1) + i,
+                            ).map((scorer_value) => {
+                              const eventId = event.id as string;
+                              return (
+                                <DropdownMenuItem
+                                  key={scorer_value}
+                                  onClick={() => {
+                                    setDataFilters({
+                                      ...dataFilters,
+                                      scorer_value: {
+                                        [eventId]: scorer_value,
+                                      },
+                                    });
+                                    resetPagination();
+                                  }}
+                                >
+                                  {scorer_value}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    );
+                  })}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>

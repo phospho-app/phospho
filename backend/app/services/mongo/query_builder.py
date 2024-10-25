@@ -347,6 +347,7 @@ class QueryBuilder:
             ]
 
         if filters.scorer_value is not None:
+            key = list(filters.scorer_value.keys())[0]
             self.merge_events(foreignField="task_id")
             match["$and"] = [
                 {f"{prefix}events": {"$ne": []}},
@@ -354,9 +355,10 @@ class QueryBuilder:
                     f"{prefix}events": {
                         "$elemMatch": {
                             "score_range.score_type": "range",
+                            "event_definition.id": key,
                             "score_range.value": {
-                                "$gte": filters.scorer_value - 0.5,
-                                "$lte": filters.scorer_value + 0.5,
+                                "$gte": filters.scorer_value[key] - 0.5,
+                                "$lte": filters.scorer_value[key] + 0.5,
                             },
                         }
                     }
@@ -457,6 +459,7 @@ class QueryBuilder:
             ]
 
         if filters.scorer_value is not None:
+            key = list(filters.scorer_value.keys())[0]
             self.merge_events(foreignField="session_id")
             match["$and"] = [
                 {"events": {"$ne": []}},
@@ -464,9 +467,10 @@ class QueryBuilder:
                     "events": {
                         "$elemMatch": {
                             "score_range.score_type": "range",
+                            "event_definition.id": key,
                             "score_range.value": {
-                                "$gte": filters.scorer_value - 0.5,
-                                "$lte": filters.scorer_value + 0.5,
+                                "$gte": filters.scorer_value[key] - 0.5,
+                                "$lte": filters.scorer_value[key] + 0.5,
                             },
                         }
                     }

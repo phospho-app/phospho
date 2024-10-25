@@ -754,7 +754,7 @@ class ProjectDataFilters(BaseModel):
     event_name: Optional[List[str]] = None
     event_id: Optional[List[str]] = None
     flag: Optional[str] = None
-    scorer_value: Optional[int] = None
+    scorer_value: Optional[Dict[str, float]] = None
     metadata: Optional[dict] = None
     user_id: Optional[str] = None
     last_eval_source: Optional[str] = None
