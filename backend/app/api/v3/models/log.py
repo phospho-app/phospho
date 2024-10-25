@@ -7,7 +7,7 @@ from app.utils import generate_uuid, generate_timestamp
 class MinimalLogEventForMessages(BaseModel, extra="allow"):
     session_id: str = Field(default_factory=generate_uuid)
     messages: List[RoleContentMessage] = Field(default_factory=list)
-    merge_mode: Literal["resolve", "append", "replace"] = "resolve"
+    merge_mode: Literal["resolve", "append", "replace"] = "replace"
     created_at: int = Field(default_factory=generate_timestamp)
     metadata: Optional[Dict[str, object]] = None
     version_id: Optional[str] = None

@@ -17,7 +17,7 @@ class TaskProcessRequest(BaseModel):
 class MinimalLogEventForMessages(BaseModel, extra="allow"):
     session_id: str
     messages: List[RoleContentMessage]
-    merge_mode: Literal["resolve", "append", "replace"] = "resolve"
+    merge_mode: Literal["resolve", "append", "replace"] = "replace"
     created_at: int = Field(default_factory=generate_timestamp)
     metadata: Optional[Dict[str, object]] = None
     version_id: Optional[str] = None
