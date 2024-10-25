@@ -114,6 +114,7 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
           accessToken,
           JSON.stringify(dateRange),
           "total_nb_sessions",
+          JSON.stringify(dataFiltersMerged),
         ]
       : null,
     ([url, accessToken]) =>
