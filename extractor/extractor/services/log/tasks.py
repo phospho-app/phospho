@@ -553,8 +553,8 @@ async def convert_messages_to_tasks(
         )
     log_events = []
     last_role = None
-    input = ""
-    output = ""
+    input_list: List[str] = []
+    output_list: List[str] = []
     for i, message in enumerate(messages):
         role = message.role
         if role not in ["system", "assistant", "user"]:
@@ -567,8 +567,8 @@ async def convert_messages_to_tasks(
             log_event = LogEventForTasks(
                 project_id=project_id,
                 session_id=session_id,
-                input=input,
-                output=output,
+                input="\n".join(input_list),
+                output="\n".join(output_list),
                 created_at=created_at,
                 user_id=user_id,
                 metadata=metadata,
@@ -577,33 +577,33 @@ async def convert_messages_to_tasks(
                 test_id=test_id,
             )
             log_events.append(log_event)
-            input = ""
-            output = ""
+            input_list = []
+            output_list = []
         # We put the system prompt in the metadata
         if role == "system":
             if metadata is not None:
                 if metadata.get("system_prompt") is not None:
-                    metadata["system_prompt"] += message.content
+                    metadata["system_prompt"] += "\n" + message.content
                 else:
                     metadata["system_prompt"] = message.content
             else:
                 metadata = {"system_prompt": message.content}
         # if the role is assistant, we append the content to the output
         elif role == "assistant":
-            output += message.content
+            output_list.append(message.content)
         # if the role is user, we append the content to the input
         elif role == "user":
-            input += message.content
+            input_list.append(message.content)
 
         if role in ["assistant", "user"]:
             last_role = role
 
-    if input != "" or output != "":
+    if len(input_list) > 0 or len(output_list) > 0:
         log_event = LogEventForTasks(
             project_id=project_id,
             session_id=session_id,
-            input=input,
-            output=output,
+            input="\n".join(input_list),
+            output="\n".join(output_list),
             created_at=created_at,
             user_id=user_id,
             metadata=metadata,
