@@ -145,8 +145,6 @@ class ExtractorClient:
 
         If return_response is False, the function will return None. This is useful for fire-and-forget workflows.
         """
-
-        logger.debug
         response = None
 
         # We check that "org_id" and"project_id" are present in the data
