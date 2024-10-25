@@ -193,7 +193,7 @@ class RunProcessLogsForTasksWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="run_process_logs_for_tasks_workflow")
+@workflow.defn(name="run_process_logs_for_messages_workflow")
 class RunProcessLogsForMessagesWorkflow(BaseWorkflow):
     def __init__(self):
         super().__init__(
