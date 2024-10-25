@@ -492,16 +492,36 @@ async def process_logs_for_messages(
     extra_logs_to_save_for_tasks = []
 
     for log_event in logs_to_process:
+        extra_args = log_event.model_dump()
+        extra_args = {
+            key: value
+            for key, value in extra_args.items()
+            if key not in ["messages", "merge_mode", "metadata", "session_id"]
+        }
         logs_events_for_tasks = await convert_messages_to_tasks(
             project_id=project_id,
-            **log_event.model_dump(),
+            session_id=log_event.session_id,
+            messages=log_event.messages,
+            merge_mode=log_event.merge_mode,
+            metadata=log_event.metadata,
+            **extra_args,
         )
         logs_to_process_for_tasks.extend(logs_events_for_tasks)
 
     for log_event in extra_logs_to_save:
+        extra_args = log_event.model_dump()
+        extra_args = {
+            key: value
+            for key, value in extra_args.items()
+            if key not in ["messages", "merge_mode", "metadata", "session_id"]
+        }
         logs_events_for_tasks = await convert_messages_to_tasks(
             project_id=project_id,
-            **log_event.model_dump(),
+            session_id=log_event.session_id,
+            messages=log_event.messages,
+            merge_mode=log_event.merge_mode,
+            metadata=log_event.metadata,
+            **extra_args,
         )
         extra_logs_to_save_for_tasks.extend(logs_events_for_tasks)
 

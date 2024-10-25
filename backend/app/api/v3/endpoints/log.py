@@ -22,7 +22,7 @@ router = APIRouter(tags=["Log"])
 
 @router.post(
     "/log",
-    response_model=LogReply,
+    response_model=Optional[LogReply],
     description="Store a batch of log events in database",
 )
 async def store_batch_of_log_events(
