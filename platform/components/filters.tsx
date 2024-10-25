@@ -11,6 +11,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { authFetcher } from "@/lib/fetcher";
 import { formatUnixTimestampToLiteralDatetime } from "@/lib/time";
 import { getLanguageLabel } from "@/lib/utils";
@@ -36,6 +41,7 @@ import {
   PenSquare,
   Plus,
   Scale,
+  Shapes,
   Smile,
   SmilePlus,
   Tag,
@@ -44,10 +50,9 @@ import {
   ThumbsUp,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
-
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 
 interface LanguageFilterOption {
   value: string;
@@ -495,8 +500,8 @@ const FilterComponent = ({
           {/* Tagger events */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <TextSearch className="size-4 mr-2" />
-              <span>Tags</span>
+              <Tag className="size-4 mr-2" />
+              <span>Taggers</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent className="overflow-y-auto max-h-[20rem]">
@@ -524,6 +529,17 @@ const FilterComponent = ({
                       </DropdownMenuItem>
                     );
                   })}
+                {tagger_events && Object.entries(tagger_events).length == 0 && (
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/org/insights/events"
+                      className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                    >
+                      <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">Setup taggers</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
@@ -531,7 +547,7 @@ const FilterComponent = ({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Scale className="size-4 mr-2" />
-              <span>Scorer value</span>
+              <span>Scorers</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
@@ -581,14 +597,25 @@ const FilterComponent = ({
                       </DropdownMenuSub>
                     );
                   })}
+                {scorer_events && Object.entries(scorer_events).length == 0 && (
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/org/insights/events"
+                      className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                    >
+                      <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">Setup scorers</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
           {/* Category */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <Tag className="size-4 mr-2" />
-              <span>Category value</span>
+              <Shapes className="size-4 mr-2" />
+              <span>Classifiers</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
@@ -631,6 +658,18 @@ const FilterComponent = ({
                       </DropdownMenuSub>
                     );
                   })}
+                {category_events &&
+                  Object.entries(category_events).length == 0 && (
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/org/insights/events"
+                        className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                      >
+                        <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">Setup classifiers</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
