@@ -1,5 +1,6 @@
-from typing import List, Dict, Any, Tuple, Optional
-from extractor.extractor.models.log import MinimalLogEventForMessages
+from typing import List, Dict, Any, Literal, Tuple, Optional
+from extractor.models.log import MinimalLogEventForMessages
+from extractor.models.pipelines import RoleContentMessage
 from extractor.services.pipelines import MainPipeline
 from extractor.models import LogEventForTasks
 from phospho.models import Task, Session
@@ -484,5 +485,142 @@ async def process_logs_for_messages(
     extra_logs_to_save: List[MinimalLogEventForMessages],
 ) -> None:
     """
-    Convert LogEventForMessages to LogEventForTasks and process them using process_logs_for_tasks
+    Convert MinimalLogEventForMessages to LogEventForTasks and process them using process_logs_for_tasks
     """
+
+    logs_to_process_for_tasks = []
+    extra_logs_to_save_for_tasks = []
+
+    for log_event in logs_to_process:
+        messages = log_event.messages
+
+        if messages[0].role == "system":
+            metadata = log_event.metadata + {
+                "system_prompt": messages[0].content,
+            }
+            logs_events_for_tasks = await convert_messages_to_tasks(
+                project_id=project_id,
+                org_id=org_id,
+                session_id=log_event.session_id,
+                messages=messages[1:],
+                merge_mode=log_event.merge_mode,
+                created_at=log_event.created_at,
+                metadata=metadata,
+                version_id=log_event.version_id,
+                user_id=log_event.user_id,
+                flag=log_event.flag,
+                test_id=log_event.test_id,
+            )
+
+        else:
+            logs_events_for_tasks = await convert_messages_to_tasks(
+                project_id=project_id,
+                org_id=org_id,
+                session_id=log_event.session_id,
+                messages=messages,
+                merge_mode=log_event.merge_mode,
+                created_at=log_event.created_at,
+                metadata=log_event.metadata,
+                version_id=log_event.version_id,
+                user_id=log_event.user_id,
+                flag=log_event.flag,
+                test_id=log_event.test_id,
+            )
+        logs_to_process_for_tasks.extend(logs_events_for_tasks)
+
+    for log_event in extra_logs_to_save:
+        messages = log_event.messages
+
+        if messages[0].role == "system":
+            metadata = log_event.metadata + {
+                "system_prompt": messages[0].content,
+            }
+            logs_events_for_tasks = await convert_messages_to_tasks(
+                project_id=project_id,
+                org_id=org_id,
+                session_id=log_event.session_id,
+                messages=messages[1:],
+                merge_mode=log_event.merge_mode,
+                created_at=log_event.created_at,
+                metadata=metadata,
+                version_id=log_event.version_id,
+                user_id=log_event.user_id,
+                flag=log_event.flag,
+                test_id=log_event.test_id,
+            )
+
+        else:
+            logs_events_for_tasks = await convert_messages_to_tasks(
+                project_id=project_id,
+                org_id=org_id,
+                session_id=log_event.session_id,
+                messages=messages,
+                merge_mode=log_event.merge_mode,
+                created_at=log_event.created_at,
+                metadata=log_event.metadata,
+                version_id=log_event.version_id,
+                user_id=log_event.user_id,
+                flag=log_event.flag,
+                test_id=log_event.test_id,
+            )
+        extra_logs_to_save_for_tasks.extend(logs_events_for_tasks)
+
+    await process_logs_for_tasks(
+        project_id=project_id,
+        org_id=org_id,
+        logs_to_process=logs_to_process_for_tasks,
+        extra_logs_to_save=extra_logs_to_save_for_tasks,
+    )
+
+    return None
+
+
+async def convert_messages_to_tasks(
+    project_id: str,
+    session_id: str,
+    messages: List[RoleContentMessage],
+    merge_mode: Literal["resolve", "append", "replace"] = "resolve",
+    metadata: Optional[Dict[str, Any]] = None,
+    version_id: Optional[str] = None,
+    created_at: Optional[int] = None,
+    user_id: Optional[str] = None,
+    flag: Optional[str] = None,
+    test_id: Optional[str] = None,
+) -> List[LogEventForTasks]:
+    """
+    Convert messages to LogEventForTasks
+    """
+    log_events = []
+    for i, message in enumerate(messages):
+        if i % 2 == 0:
+            input_message = message.content
+        if i % 2 == 1:
+            output_message = message.content
+            log_event = LogEventForTasks(
+                project_id=project_id,
+                input=input_message,
+                output=output_message,
+                session_id=session_id,
+                created_at=created_at,
+                metadata=metadata,
+                version_id=version_id,
+                user_id=user_id,
+                flag=flag,
+                test_id=test_id,
+            )
+            log_events.append(log_event)
+    if len(messages) % 2 == 1:
+        log_event = LogEventForTasks(
+            project_id=project_id,
+            input=messages[-1].content,
+            output=None,
+            session_id=session_id,
+            created_at=created_at,
+            metadata=metadata,
+            version_id=version_id,
+            user_id=user_id,
+            flag=flag,
+            test_id=test_id,
+        )
+        log_events.append(log_event)
+    return log_events

@@ -19,7 +19,7 @@ from typing import Any, Callable, Type
 from temporalio import workflow
 from temporalio.common import RetryPolicy
 
-from extractor.extractor.temporal.activities import run_process_logs_for_messages
+from extractor.temporal.activities import run_process_logs_for_messages
 
 with workflow.unsafe.imports_passed_through():
     import stripe

@@ -1,6 +1,6 @@
 from typing import Dict, List, Literal, Optional, Union
 
-from extractor.extractor.models.pipelines import RoleContentMessage
+from extractor.models.pipelines import RoleContentMessage
 from extractor.utils import generate_timestamp, generate_uuid
 from pydantic import BaseModel, Field
 
