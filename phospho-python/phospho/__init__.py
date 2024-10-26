@@ -60,6 +60,7 @@ def init(
     api_key: Optional[str] = None,
     project_id: Optional[str] = None,
     auto_log: bool = False,
+    tracing: bool = False,
     base_url: Optional[str] = None,
     tick: float = 0.5,
     raise_error_on_fail_to_send: bool = False,
@@ -107,6 +108,35 @@ def init(
     # Wrap the OpenAI API calls
     if auto_log:
         integrations.wrap_openai(wrap=wrap)
+
+    # Auto
+    if tracing:
+        from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+
+        instrumentor = OpenAIInstrumentor(
+            enrich_assistant=True,
+            enrich_token_usage=True,
+        )
+        instrumentor.instrument()
+
+        from opentelemetry import trace
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+            OTLPSpanExporter,
+        )
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+        resource = Resource(attributes={"service.name": "service"})
+
+        trace.set_tracer_provider(TracerProvider(resource=resource))
+        tracer = trace.get_tracer(__name__)
+
+        otlp_exporter = OTLPSpanExporter()
+
+        span_processor = BatchSpanProcessor(otlp_exporter)
+
+        trace.get_tracer_provider().add_span_processor(span_processor)
 
 
 def new_session() -> str:
