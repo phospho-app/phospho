@@ -66,8 +66,7 @@ def detect_str_from_input(input: RawDataType) -> str:
                 if len(user_messages) > 0:
                     break
 
-        if len(user_messages) > 0:
-            return "\n".join(user_messages[::-1])
+        return "\n".join(user_messages[::-1])
 
     # Fallback: convert everything to str
     return str(input)
@@ -162,8 +161,7 @@ def detect_str_from_output(output: RawDataType) -> str:
             else:
                 if len(assistant_messages) > 0:
                     break
-        if len(assistant_messages) > 0:
-            return "\n".join(assistant_messages[::-1])
+        return "\n".join(assistant_messages[::-1])
 
     # Unimplemented. Translate everything to str
     return str(output)
