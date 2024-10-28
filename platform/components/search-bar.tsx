@@ -67,7 +67,7 @@ const SearchBar = ({ variant }: SearchBarProps) => {
   };
 
   return (
-    <div className="relative w-full max-w-sm mb-4">
+    <div className="relative">
       <Input
         type="text"
         placeholder={
