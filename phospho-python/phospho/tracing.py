@@ -1,13 +1,7 @@
-import inspect
-from typing import Any, Dict, List, Optional
+from typing import List, Dict, Optional, Union
 
-from opentelemetry.context import (
-    _SUPPRESS_INSTRUMENTATION_KEY,
-    Context,
-)
-from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+from opentelemetry.context import Context
 from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
-from phospho.client import Client
 
 
 class ListSpanProcessor(SpanProcessor):
@@ -20,7 +14,7 @@ class ListSpanProcessor(SpanProcessor):
         spans_to_export: List[Span],
         task_id: Optional[str] = None,
         session_id: Optional[str] = None,
-        metadata: Optional[dict] = None,
+        metadata: Optional[Dict[str, Union[int, bool, str, float]]] = None,
     ):
         self.spans_to_export = spans_to_export
         self.task_id = task_id
@@ -34,7 +28,9 @@ class ListSpanProcessor(SpanProcessor):
         if self.session_id:
             span.set_attribute("phospho.session_id", self.session_id)
         if self.metadata:
-            span.set_attribute("phospho.metadata", self.metadata)
+            # Add "phospho.metadata" attribute to each key
+            metadata = {f"phospho.metadata.{k}": v for k, v in self.metadata.items()}
+            span.set_attributes(metadata)
         self.spans_to_export.append(span)
 
     def on_end(self, span: ReadableSpan) -> None:
@@ -50,6 +46,9 @@ class ListSpanProcessor(SpanProcessor):
 
 
 def init_instrumentations():
+    # TODO : Add the other instrumentations, based on the installed packages
+    from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+
     instrumentor = OpenAIInstrumentor(
         enrich_assistant=False,
         enrich_token_usage=False,

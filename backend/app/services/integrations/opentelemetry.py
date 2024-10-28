@@ -37,6 +37,8 @@ class OpenTelemetryConnector:
             for resource in resource_spans:
                 scope_spans = resource.scope_spans
                 for scope in scope_spans:
+                    latest_task_id = None
+                    latest_session_id = None
                     for span in scope.spans:
                         # Unpack attributes
                         attributes = span.attributes
@@ -97,6 +99,11 @@ class OpenTelemetryConnector:
                         span_to_store = MessageToDict(span)
                         span_to_store["attributes"] = unpacked_attributes
 
+                        if "phospho.task_id" in unpacked_attributes:
+                            latest_task_id = unpacked_attributes["task_id"]
+                        if "phospho.session_id" in unpacked_attributes:
+                            latest_session_id = unpacked_attributes["session_id"]
+
                         # We only keep the spans that have the "gen_ai.system" attribute
                         if "gen_ai" in unpacked_attributes:
                             mongo_db = await get_mongo_db()
@@ -107,6 +114,15 @@ class OpenTelemetryConnector:
                                     "org_id": self.org_id,
                                     "project_id": self.project_id,
                                     "open_telemetry_data": span_to_store,
+                                    "task_id": unpacked_attributes.get(
+                                        "phospho.task_id", latest_task_id
+                                    ),
+                                    "session_id": unpacked_attributes.get(
+                                        "phospho.session_id", latest_session_id
+                                    ),
+                                    "metadata": unpacked_attributes.get(
+                                        "phospho.metadata", None
+                                    ),
                                 }
                             )
                             logger.info("Opentelemetry data stored in the database")
