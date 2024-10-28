@@ -28,6 +28,11 @@ import {
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
+  EyeClosedIcon,
+  EyeOpenIcon,
+  MagnifyingGlassIcon,
+} from "@radix-ui/react-icons";
+import {
   Annoyed,
   Boxes,
   Code,
@@ -66,6 +71,10 @@ const FilterComponent = ({
 }) => {
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const showSearchBar = navigationStateStore((state) => state.showSearchBar);
+  const setShowSearchBar = navigationStateStore(
+    (state) => state.setShowSearchBar,
+  );
   const { accessToken } = useUser();
 
   if (variant === "messages") {
@@ -175,7 +184,11 @@ const FilterComponent = ({
   const activeFilterCount =
     dataFilters &&
     Object.keys(dataFilters).filter(
-      (key) => key !== "created_at_start" && key !== "created_at_end",
+      (key) =>
+        key !== "created_at_start" &&
+        key !== "created_at_end" &&
+        key !== "task_id_search" &&
+        key !== "session_id_search",
     ).length;
 
   if (!selectedProject) {
@@ -935,6 +948,24 @@ const FilterComponent = ({
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+          {/* Toggle search bar */}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              setShowSearchBar(!showSearchBar);
+            }}
+            className="flex justify-between items-center"
+          >
+            <div className="flex flex-row items-center">
+              <MagnifyingGlassIcon className="size-4 mr-2" />
+              Filter by id
+            </div>
+            {showSearchBar ? (
+              <EyeOpenIcon className="size-4 ml-2" />
+            ) : (
+              <EyeClosedIcon className="size-4 ml-2" />
+            )}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

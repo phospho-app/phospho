@@ -4,8 +4,11 @@ import CreateEvent from "@/components/events/create-event";
 import RunEvent from "@/components/events/run-event";
 import FilterComponent from "@/components/filters";
 import RunAnalysisInPast from "@/components/run-analysis-past";
+import { SearchBar } from "@/components/search-bar";
 import { CenteredSpinner } from "@/components/small-spinner";
 import { TableNavigation } from "@/components/table-navigation";
+import { TaskPreview } from "@/components/tasks/task-preview";
+import { useColumns } from "@/components/tasks/tasks-table-columns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -36,9 +39,6 @@ import { Database } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import useSWR, { KeyedMutator } from "swr";
-
-import { TaskPreview } from "./task-preview";
-import { useColumns } from "./tasks-table-columns";
 
 interface DataTableProps {
   forcedDataFilters?: ProjectDataFilters | null;
@@ -178,6 +178,7 @@ function TasksTable({ forcedDataFilters }: DataTableProps) {
         </div>
         <TableNavigation table={table} />
       </div>
+      <SearchBar variant="messages" />
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
         <SheetContent className="md:w-1/2 overflow-auto" overlay={false}>
           {sheetToOpen === "run" && eventDefinition !== null && (
