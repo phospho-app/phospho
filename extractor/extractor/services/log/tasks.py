@@ -19,6 +19,7 @@ async def process_tasks_id(
     project_id: str,
     org_id: str,
     tasks_id_to_process: List[str],
+    run_analytics: bool = False,
 ) -> None:
     """
     From tasks id, process the tasks
@@ -32,7 +33,10 @@ async def process_tasks_id(
 
     await main_pipeline.set_input(tasks_ids=tasks_id_to_process)
 
-    await main_pipeline.run()
+    if run_analytics:
+        await main_pipeline.run()
+    else:
+        await main_pipeline.compute_session_info_pipeline()
 
     return None
 
