@@ -32,13 +32,11 @@ with workflow.unsafe.imports_passed_through():
     from extractor.services.connectors import (
         LangsmithConnector,
         LangfuseConnector,
-        OpenTelemetryConnector,
     )
     from extractor.services.projects import get_project_by_id
     from extractor.temporal.activities import (
         extract_langsmith_data,
         extract_langfuse_data,
-        store_open_telemetry_data,
         run_recipe_on_task,
         run_process_tasks,
         run_main_pipeline_on_messages,
@@ -55,7 +53,6 @@ with workflow.unsafe.imports_passed_through():
     from extractor.models.pipelines import (
         PipelineLangfuseRequest,
         PipelineLangsmithRequest,
-        PipelineOpentelemetryRequest,
         PipelineResults,
         RunMainPipelineOnMessagesRequest,
         RunMainPipelineOnTaskRequest,
