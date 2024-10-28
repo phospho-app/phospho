@@ -334,6 +334,8 @@ export interface ProjectDataFilters {
   is_last_task?: boolean | null;
   session_ids?: string[] | null;
   version_id?: string | null;
+  task_id_search?: string | null;
+  session_id_search?: string | null;
 }
 
 export interface DatavizSorting {
