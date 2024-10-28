@@ -49,6 +49,7 @@ export function UsersTable({
   const setUsersSorting = navigationStateStore(
     (state) => state.setUsersSorting,
   );
+  const showSearchBar = navigationStateStore((state) => state.showSearchBar);
   const [userIdSearch, setUserIdSearch] = useState<string | undefined>();
 
   // Merge forcedDataFilters with dataFilters
@@ -113,18 +114,20 @@ export function UsersTable({
           <FilterComponent variant="users" />
           <TableNavigation table={table} />
         </div>
-        <Input
-          placeholder="Search for user id"
-          className="min-w-[20rem]"
-          value={userIdSearch}
-          onChange={(e) => {
-            setUserIdSearch(e.target.value);
-            // Also filters client side, on the "user_id" column
-            table.getColumn("user_id")?.setFilterValue(e.target.value);
-            // reset pagination
-            setUsersPagination({ pageIndex: 0, pageSize: 10 });
-          }}
-        />
+        {showSearchBar && (
+          <Input
+            placeholder="Search for user id"
+            className="min-w-[20rem]"
+            value={userIdSearch}
+            onChange={(e) => {
+              setUserIdSearch(e.target.value);
+              // Also filters client side, on the "user_id" column
+              table.getColumn("user_id")?.setFilterValue(e.target.value);
+              // reset pagination
+              setUsersPagination({ pageIndex: 0, pageSize: 10 });
+            }}
+          />
+        )}
       </div>
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
         {usersMetadata === undefined && <CenteredSpinner />}

@@ -31,8 +31,12 @@ const SearchBar = ({ variant }: SearchBarProps) => {
         delete newFilters[filterKey];
       }
 
-      setDataFilters(newFilters);
+      if (JSON.stringify(newFilters) === JSON.stringify(dataFilters)) {
+        // If filters haven't changed, no need to update
+        return;
+      }
 
+      setDataFilters(newFilters);
       setTasksPagination((prev) => ({
         ...prev,
         pageIndex: 0,
