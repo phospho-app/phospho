@@ -150,15 +150,12 @@ const SessionStats = ({
           </div>
         </div>
         <div className="flex flex-row gap-8">
-          <div className="text-xs max-w-[120px]">
-            <span className="text-muted-foreground">Last message</span>
-            {/* If last_message_ts doesn't exist, created_at = last_message_ts */}
-            {sessionData?.last_message_ts ? (
+          {sessionData?.last_message_ts && (
+            <div className="text-xs max-w-[120px]">
+              <span className="text-muted-foreground">Last message</span>
               <InteractiveDatetime timestamp={sessionData?.last_message_ts} />
-            ) : (
-              <InteractiveDatetime timestamp={sessionData?.created_at} />
-            )}
-          </div>
+            </div>
+          )}
           <div className="text-xs max-w-[120px]">
             <span className="text-muted-foreground">First message</span>
             <InteractiveDatetime timestamp={sessionData?.created_at} />

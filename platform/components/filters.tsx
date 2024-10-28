@@ -949,30 +949,23 @@ const FilterComponent = ({
             </DropdownMenuPortal>
           </DropdownMenuSub>
           {/* Toggle search bar */}
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              setShowSearchBar(!showSearchBar);
+            }}
+            className="flex justify-between items-center"
+          >
+            <div className="flex flex-row items-center">
               <MagnifyingGlassIcon className="size-4 mr-2" />
-              Search bar {showSearchBar ? "hidden" : "visible"}
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              <DropdownMenuItem
-                onClick={() => {
-                  setShowSearchBar(false);
-                }}
-              >
-                <EyeClosedIcon className="size-4 mr-2" />
-                Hide search bar
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setShowSearchBar(true);
-                }}
-              >
-                <EyeOpenIcon className="size-4 mr-2" />
-                Show search bar
-              </DropdownMenuItem>
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
+              Filter by id
+            </div>
+            {showSearchBar ? (
+              <EyeOpenIcon className="size-4 ml-2" />
+            ) : (
+              <EyeClosedIcon className="size-4 ml-2" />
+            )}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
