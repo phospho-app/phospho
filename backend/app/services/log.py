@@ -291,9 +291,8 @@ async def process_log_with_session_id(
     logger.info(f"Triggering pipeline for {len(tasks_id_to_process)} tasks")
 
     run_analytics = (
-        await project_check_automatic_analytics_monthly_limit(project_id)
-        and trigger_pipeline
-    )
+        not await project_check_automatic_analytics_monthly_limit(project_id)
+    ) and trigger_pipeline
 
     extractor_client = ExtractorClient(
         project_id=project_id,
