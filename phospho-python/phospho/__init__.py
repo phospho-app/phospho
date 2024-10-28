@@ -56,6 +56,7 @@ latest_session_id: Optional[str] = None
 
 task_id_override: Optional[str] = None
 session_id_override: Optional[str] = None
+metadata_override: Optional[Dict[str, Any]] = None
 default_version_id = None
 
 otlp_exporter = None
@@ -211,6 +212,7 @@ def _log_single_event(
     global spans_to_export
     global task_id_override
     global session_id_override
+    global metadata_override
 
     if "version_id" not in kwargs or kwargs["version_id"] is None:
         kwargs["version_id"] = default_version_id
@@ -260,6 +262,11 @@ def _log_single_event(
     if session_id is None:
         session_id = f"session_{generate_uuid()}"
 
+    # Metadata override
+    local_metadata_override = metadata_override
+    if local_metadata_override is None:
+        local_metadata_override = {}
+
     # Keep track of the latest task_id and session_id
     latest_task_id = task_id
     latest_session_id = session_id
@@ -288,6 +295,7 @@ def _log_single_event(
         # other
         **metadata_to_log,
         **kwargs_to_log,
+        **local_metadata_override,
     }
 
     logger.debug(f"Existing task_id: {list(log_queue.events.keys())}")
@@ -955,6 +963,7 @@ def tracer(
     global otlp_exporter
     global task_id_override
     global session_id_override
+    global metadata_override
 
     if client is None:
         raise ValueError("Call phospho.init() before calling phospho.tracer()")
@@ -969,6 +978,9 @@ def tracer(
         session_id_override = session_id
     else:
         session_id_override = f"session_{generate_uuid()}"
+
+    if metadata:
+        metadata_override = metadata
 
     spans_to_export: List[Span] = []
     span_processor = ListSpanProcessor(
