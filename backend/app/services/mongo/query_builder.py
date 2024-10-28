@@ -235,6 +235,9 @@ class QueryBuilder:
             elif len(filters.sessions_ids) > 1:
                 match[f"{prefix}session_id"] = {"$in": filters.sessions_ids}
 
+        if filters.task_id_search is not None:
+            match[f"{prefix}id"] = {"$regex": filters.task_id_search}
+
         if filters.tasks_ids is not None:
             if len(filters.tasks_ids) == 1:
                 match[f"{prefix}id"] = filters.tasks_ids[0]
@@ -312,6 +315,9 @@ class QueryBuilder:
                 match["tasks.id"] = filters.tasks_ids[0]
             elif len(filters.tasks_ids) > 1:
                 match["task_id"] = {"$in": filters.tasks_ids}
+
+        if filters.session_id_search is not None:
+            match["id"] = {"$regex": filters.session_id_search}
 
         if match:
             self.pipeline.append({"$match": match})
