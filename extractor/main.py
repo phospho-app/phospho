@@ -28,7 +28,6 @@ from extractor.temporal.workflows import (
     RunProcessLogsForTasksWorkflow,
     RunProcessTasksWorkflow,
     RunRecipeOnTaskWorkflow,
-    StoreOpenTelemetryDataWorkflow,
     RunProcessLogsForMessagesWorkflow,
 )
 from loguru import logger
@@ -114,7 +113,6 @@ async def main() -> None:
         workflows=[  # We add workflows that our worker can process here
             ExtractLangSmithDataWorkflow,
             ExtractLangfuseDataWorkflow,
-            StoreOpenTelemetryDataWorkflow,
             RunRecipeOnTaskWorkflow,
             RunProcessLogsForTasksWorkflow,
             RunMainPipelineOnMessagesWorkflow,

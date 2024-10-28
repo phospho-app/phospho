@@ -133,20 +133,6 @@ class ExtractLangfuseDataWorkflow(BaseWorkflow):
         await super().run_activity(request)
 
 
-@workflow.defn(name="store_open_telemetry_data_workflow")
-class StoreOpenTelemetryDataWorkflow(BaseWorkflow):
-    def __init__(self):
-        super().__init__(
-            activity_func=store_open_telemetry_data,
-            request_class=PipelineOpentelemetryRequest,
-            bill=False,
-        )
-
-    @workflow.run
-    async def run(self, request):
-        await super().run_activity(request)
-
-
 @workflow.defn(name="run_recipe_on_task_workflow")
 class RunRecipeOnTaskWorkflow(BaseWorkflow):
     def __init__(self):

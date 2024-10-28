@@ -1,6 +1,7 @@
 import sys
 from typing import List, Union
 
+from app.services.integrations.opentelemetry import OpenTelemetryConnector
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 from pydantic import ValidationError
@@ -145,13 +146,13 @@ async def store_opentelemetry_log(
 
     await verify_propelauth_org_owns_project_id(org, project_id)
 
-    extractor_client = ExtractorClient(
+    connector = OpenTelemetryConnector(
         project_id=project_id,
         org_id=org["org"].get("org_id"),
     )
     background_tasks.add_task(
-        extractor_client.store_open_telemetry_data,
-        open_telemetry_data=open_telemetry_data,
+        connector.process,
+        data=open_telemetry_data,
     )
 
     return {"status": "ok"}

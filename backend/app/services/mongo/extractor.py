@@ -391,18 +391,6 @@ class ExtractorClient:
                 },
             )
 
-    async def store_open_telemetry_data(
-        self,
-        open_telemetry_data: dict,
-    ):
-        await self._post(
-            "store_open_telemetry_data_workflow",
-            {
-                "open_telemetry_data": open_telemetry_data,
-                # No customer_id because we don't bill for open telemetry data, we simply log
-            },
-        )
-
     async def collect_langsmith_data(
         self,
         current_usage: int,

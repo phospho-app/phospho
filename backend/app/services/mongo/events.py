@@ -6,7 +6,7 @@ from app.utils import cast_datetime_or_timestamp_to_timestamp
 from fastapi import HTTPException
 from loguru import logger
 
-from phospho.models import Event, ProjectDataFilters
+from phospho.models import Event, ProjectDataFilters, ScoreRange
 
 
 async def get_event_definition_from_event_id(
@@ -215,7 +215,7 @@ async def change_label_event(
 async def change_value_event(
     project_id: str,
     event_id: str,
-    new_value: str,
+    new_value: str | float,
 ) -> Event:
     mongo_db = await get_mongo_db()
     # Get the event
