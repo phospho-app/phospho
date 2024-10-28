@@ -4,6 +4,7 @@ import CreateEvent from "@/components/events/create-event";
 import RunEvent from "@/components/events/run-event";
 import FilterComponent from "@/components/filters";
 import RunAnalysisInPast from "@/components/run-analysis-past";
+import { SearchBar } from "@/components/search-bar";
 import { SessionPreview } from "@/components/sessions/session-preview";
 import { useColumns } from "@/components/sessions/sessions-table-columns";
 import { CenteredSpinner } from "@/components/small-spinner";
@@ -184,6 +185,7 @@ function SessionsTable({ forcedDataFilters }: DataTableProps) {
         </div>
         <TableNavigation table={table} />
       </div>
+      <SearchBar variant="sessions" />
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
         {sessionsWithEvents === undefined && <CenteredSpinner />}
         {sessionsWithEvents && (
