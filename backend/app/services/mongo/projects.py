@@ -731,7 +731,7 @@ async def copy_template_project_to_new(
 
     if len(events) > 0:
         await mongo_db["events"].insert_many([event.model_dump() for event in events])
-    else:
+    elif config.ENVIRONMENT == "production":
         raise ValueError("No events found in the default project")
 
     # Import the clusterings, the clusters and the embeddings from the target project
