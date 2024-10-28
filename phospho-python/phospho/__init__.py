@@ -1,6 +1,8 @@
-from contextlib import contextmanager
+import inspect
 import logging
+from contextlib import contextmanager
 from copy import deepcopy
+from functools import wraps
 from typing import (
     Any,
     AsyncGenerator,
@@ -943,9 +945,6 @@ def flush() -> None:
         consumer.send_batch()
 
 
-### Tracing
-
-
 @contextmanager
 def tracer(
     task_id: Optional[str] = None,
@@ -953,11 +952,28 @@ def tracer(
     metadata: Optional[Dict[str, Any]] = None,
 ):
     """
-    Tracer context manager to trace the execution of a block of code.
+    Trace intermediate steps of a task with context manager.
+    For example, API calls to OpenAI, Mistral, Anthropic, ChromaDB, Pinecone, etc.
+
+    ```
+    with phospho.tracer():
+        messages = [
+            {"role": "user", "content": "Hello!"},
+            {"role": "assistant", "content": "How can I help you today?"},
+        ]
+        response = openai_client.completions.create(...)
+        phospho.log(input=messages, output=response)
+    ```
+
+    :param task_id: The task_id to use for the logs. If None, a new task_id is generated.
+        This ensures that intermediate steps can be linked to the same task.
+    :param session_id: The session_id to use for the logs. If None, a new session_id is generated.
+    :param metadata: Additional metadata to add to the logs. For example, user_id, version_id, etc.
     """
-    from .tracing import ListSpanProcessor
-    from opentelemetry.sdk.trace import Span
     from opentelemetry import trace
+    from opentelemetry.sdk.trace import Span
+
+    from .tracing import ListSpanProcessor
 
     global client
     global otlp_exporter
@@ -1016,6 +1032,53 @@ def tracer(
     # Clean up default task_id and session_id
     task_id_override = None
     session_id_override = None
+
+
+# Do the same but with  a decorator
+def trace(
+    task_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+):
+    """
+    Trace intermediate steps of a task with a decorator.
+
+    ```
+    @phospho.trace()
+    def my_function():
+        messages = [
+            {"role": "user", "content": "Hello!"},
+            {"role": "assistant", "content": "How can I help you today?"},
+        ]
+        response = openai_client.completions.create(...)
+        phospho.log(input=messages, output=response)
+    ```
+
+    :param task_id: The task_id to use for the logs. If None, a new task_id is generated.
+        This ensures that intermediate steps can be linked to the same task.
+    :param session_id: The session_id to use for the logs. If None, a new session_id is generated.
+    :param metadata: Additional metadata to add to the logs. For example, user_id, version_id, etc.
+    """
+
+    # For synchronous functions
+    def decorator(func):
+        # Async function
+        if inspect.iscoroutinefunction(func):
+
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                with tracer(task_id=task_id, session_id=session_id, metadata=metadata):
+                    return func(*args, **kwargs)
+        else:
+
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                with tracer(task_id=task_id, session_id=session_id, metadata=metadata):
+                    return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 ### Requires phospho lab extras ###

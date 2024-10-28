@@ -1,4 +1,5 @@
-from typing import List, Optional
+import inspect
+from typing import Any, Dict, List, Optional
 
 from opentelemetry.context import (
     _SUPPRESS_INSTRUMENTATION_KEY,
@@ -6,6 +7,7 @@ from opentelemetry.context import (
 )
 from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
+from phospho.client import Client
 
 
 class ListSpanProcessor(SpanProcessor):

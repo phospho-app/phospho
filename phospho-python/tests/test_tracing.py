@@ -13,10 +13,22 @@ def test_tracing():
     )
 
     openai_client = OpenAI()
+    messages = [{"role": "user", "content": "Say hi"}]
 
+    # Implicit syntax
+    response = openai_client.chat.completions.create(
+        messages=messages,
+        model="gpt-4o-mini",
+        max_tokens=1,
+    )
+    phospho.log(
+        input=messages,
+        output=response,
+    )
+
+    # Context syntax
     with phospho.tracer():
         # Make an API call
-        messages = [{"role": "user", "content": "Say hi"}]
         response = openai_client.chat.completions.create(
             messages=messages,
             model="gpt-4o-mini",
@@ -28,4 +40,19 @@ def test_tracing():
             output=response,
         )
 
-    print("success")
+    # Decorator syntax
+    @phospho.tracer()
+    def my_function():
+        # Make an API call
+        response = openai_client.chat.completions.create(
+            messages=messages,
+            model="gpt-4o-mini",
+            max_tokens=1,
+        )
+
+        phospho.log(
+            input=messages,
+            output=response,
+        )
+
+    my_function()
