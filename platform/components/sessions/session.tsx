@@ -97,27 +97,31 @@ const SessionStats = ({
 
   return (
     <>
-      <div className="flex justify-between items-end">
-        <span className="text-xl font-bold tracking-tight">Session</span>
-        <div className="flex flex-row gap-x-2">
+      <div className="flex flex-wrap justify-between items-center mt-4 gap-4">
+        <span className="text-xl font-bold">Session</span>
+        <div className="flex flex-wrap gap-2">
           {showGoToSession && (
             <Link href={`/org/transcripts/sessions/${session_id}`}>
-              <Button variant="secondary">
+              <Button variant="secondary" className="whitespace-nowrap">
                 Go to Session
-                <ChevronRight />
+                <ChevronRight className="ml-1" />
               </Button>
             </Link>
           )}
           {uniqueUsers && uniqueUsers.length === 1 && (
             <Link href={`/org/transcripts/users/${uniqueUsers[0]}`}>
-              <Button variant="secondary">Go to User</Button>
+              <Button variant="secondary" className="whitespace-nowrap">
+                Go to User
+                <ChevronRight className="ml-1" />
+              </Button>
             </Link>
           )}
           {uniqueUsers && uniqueUsers?.length > 1 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary">
-                  Go to User... <ChevronDown />
+                <Button variant="secondary" className="whitespace-nowrap">
+                  Go to Users
+                  <ChevronDown className="ml-1" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -136,25 +140,34 @@ const SessionStats = ({
           )}
         </div>
       </div>
-      <Card className="flex flex-col space-y-1 p-2">
-        <div className="flex flex-row items-center">
-          <code className="bg-secondary p-1.5 text-xs">{session_id}</code>
-          <CopyButton text={session_id} className="ml-2" />
-        </div>
-        <div className="flex flex-row space-x-16">
-          <div className="text-xs max-w-48">
-            <span className="text-muted-foreground">Last message</span>
-            <InteractiveDatetime timestamp={sessionData?.last_message_ts} />
+      <Card className="p-2">
+        <div className="flex flex-row gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="bg-secondary p-1.5 text-xs break-all max-w-full">
+              {session_id}
+            </code>
+            <CopyButton text={session_id} />
           </div>
-          <div className="text-xs max-w-48">
+        </div>
+        <div className="flex flex-row gap-8">
+          <div className="text-xs max-w-[120px]">
+            <span className="text-muted-foreground">Last message</span>
+            {/* If last_message_ts doesn't exist, created_at = last_message_ts */}
+            {sessionData?.last_message_ts ? (
+              <InteractiveDatetime timestamp={sessionData?.last_message_ts} />
+            ) : (
+              <InteractiveDatetime timestamp={sessionData?.created_at} />
+            )}
+          </div>
+          <div className="text-xs max-w-[120px]">
             <span className="text-muted-foreground">First message</span>
             <InteractiveDatetime timestamp={sessionData?.created_at} />
           </div>
           <div className="flex flex-col">
+            <span className="text-muted-foreground text-xs">Length</span>
             <div className="text-xl font-bold">
               {sessionData?.session_length}
             </div>
-            <span className="text-muted-foreground text-xs">Length</span>
           </div>
         </div>
         <div className="flex">
