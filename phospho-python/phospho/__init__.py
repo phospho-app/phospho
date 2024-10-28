@@ -109,16 +109,8 @@ def init(
     if auto_log:
         integrations.wrap_openai(wrap=wrap)
 
-    # Auto
+    # Trace OpenAI API calls
     if tracing:
-        from opentelemetry.instrumentation.openai import OpenAIInstrumentor
-
-        instrumentor = OpenAIInstrumentor(
-            enrich_assistant=True,
-            enrich_token_usage=True,
-        )
-        instrumentor.instrument()
-
         from opentelemetry import trace
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
             OTLPSpanExporter,
@@ -132,11 +124,23 @@ def init(
         trace.set_tracer_provider(TracerProvider(resource=resource))
         tracer = trace.get_tracer(__name__)
 
-        otlp_exporter = OTLPSpanExporter()
+        otlp_exporter = OTLPSpanExporter(
+            endpoint=f"{config.BASE_URL_V3}/otl/{client._project_id()}",
+            headers={
+                "Authorization": "Bearer " + client._api_key(),
+            },
+        )
 
         span_processor = BatchSpanProcessor(otlp_exporter)
-
         trace.get_tracer_provider().add_span_processor(span_processor)
+
+        from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+
+        instrumentor = OpenAIInstrumentor(
+            enrich_assistant=False,
+            enrich_token_usage=False,
+        )
+        instrumentor.instrument()
 
 
 def new_session() -> str:
