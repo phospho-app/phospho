@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import logging
 from copy import deepcopy
 from typing import (
@@ -49,10 +50,16 @@ except ImportError:
 client = None
 log_queue = None
 consumer = None
-latest_task_id = None
-latest_session_id = None
+
+latest_task_id: Optional[str] = None
+latest_session_id: Optional[str] = None
+
+task_id_override: Optional[str] = None
+session_id_override: Optional[str] = None
 default_version_id = None
+
 otlp_exporter = None
+spans_to_export = []
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +98,7 @@ def init(
     global consumer
     global default_version_id
     global otlp_exporter
+    global spans_to_export
 
     if version_id is None:
         version_id = generate_version_id()
@@ -113,6 +121,18 @@ def init(
 
     # Trace OpenAI API calls
     if tracing:
+        from opentelemetry import trace
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+
+        resource = Resource(attributes={"service.name": "service"})
+        trace.set_tracer_provider(TracerProvider(resource=resource))
+
+        from .tracing import ListSpanProcessor, init_instrumentations
+
+        span_processor = ListSpanProcessor(spans_to_export=spans_to_export)
+        trace.get_tracer_provider().add_span_processor(span_processor)  # this does work
+
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
             OTLPSpanExporter,
         )
@@ -124,23 +144,7 @@ def init(
             },
         )
 
-        from opentelemetry import trace
-        from opentelemetry.sdk.resources import Resource
-        from opentelemetry.sdk.trace import TracerProvider
-        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-
-        resource = Resource(attributes={"service.name": "service"})
-        trace.set_tracer_provider(TracerProvider(resource=resource))
-        span_processor = SimpleSpanProcessor(otlp_exporter)
-        trace.get_tracer_provider().add_span_processor(span_processor)
-
-        from opentelemetry.instrumentation.openai import OpenAIInstrumentor
-
-        instrumentor = OpenAIInstrumentor(
-            enrich_assistant=False,
-            enrich_token_usage=False,
-        )
-        instrumentor.instrument()
+        init_instrumentations()
 
 
 def new_session() -> str:
@@ -204,6 +208,9 @@ def _log_single_event(
     global latest_session_id
     global default_version_id
     global otlp_exporter
+    global spans_to_export
+    global task_id_override
+    global session_id_override
 
     if "version_id" not in kwargs or kwargs["version_id"] is None:
         kwargs["version_id"] = default_version_id
@@ -242,10 +249,14 @@ def _log_single_event(
     )
 
     # Task: use the task_id parameter, the task_id infered from inputs, or generate one
+    if task_id_override is not None:
+        task_id = task_id_override
     if task_id is None:
         task_id = f"task_{generate_uuid()}"
 
     # Session: if None, generate a default session_id
+    if session_id_override is not None:
+        session_id = session_id_override
     if session_id is None:
         session_id = f"session_{generate_uuid()}"
 
@@ -359,17 +370,8 @@ def _log_single_event(
     # Tracing: add metadata to the span
     logger.info(f"otlp_exporter: {otlp_exporter}")
     if otlp_exporter is not None:
-        from opentelemetry import trace
-
-        span = trace.get_current_span()
-        # if span != trace.INVALID_SPAN:
-        logger.info(f"Adding metadata to span: {span}")
-        span.set_attribute("task_id", task_id)
-        span.set_attribute("session_id", session_id)
-
         # End the span if it's the last log
-        if to_log:
-            span.end()
+        otlp_exporter.export(spans_to_export)
 
     return log_content
 
@@ -933,37 +935,75 @@ def flush() -> None:
         consumer.send_batch()
 
 
-def backfill(tasks: List[models.Task]) -> None:
+### Tracing
+
+
+@contextmanager
+def tracer(
+    task_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+):
     """
-    Upload historical data in batch to phospho to backfill the logs.
-    For now, this doesn't send the task in the main_pipeline()
+    Tracer context manager to trace the execution of a block of code.
     """
+    from .tracing import ListSpanProcessor
+    from opentelemetry.sdk.trace import Span
+    from opentelemetry import trace
+
     global client
+    global otlp_exporter
+    global task_id_override
+    global session_id_override
 
     if client is None:
-        raise ValueError("Call phospho.init() before calling phospho.backfill()")
+        raise ValueError("Call phospho.init() before calling phospho.tracer()")
 
-    client.backfill(tasks)
+    # Override the task_id and session_id that will be used in phospho.log
+    if task_id:
+        task_id_override = task_id
+    else:
+        task_id_override = f"task_{generate_uuid()}"
 
+    if session_id:
+        session_id_override = session_id
+    else:
+        session_id_override = f"session_{generate_uuid()}"
 
-def train(
-    model: str, examples: list, task_type: str = "binary-classification"
-) -> Optional[Dict[str, object]]:
-    """
-    Train a model on a set of examples.
+    spans_to_export: List[Span] = []
+    span_processor = ListSpanProcessor(
+        spans_to_export=spans_to_export,
+        task_id=task_id_override,
+        session_id=session_id_override,
+        metadata=metadata,
+    )
 
-    :param model: The name of the model to train.
-    :param examples: A list of examples to train the model on, with keys 'text', 'label', 'label_text.
-    :param task_type: The type of task to train the model on.
-    """
-    global client
+    # Add the processor to the tracer
+    trace.get_tracer_provider().add_span_processor(span_processor)
 
-    if client is None:
-        raise ValueError("Call phospho.init() before calling phospho.train()")
+    # Execute the block of code
+    yield
 
-    model = client.train(model=model, examples=examples, task_type=task_type)
+    # Push the spans to the exporter
+    if otlp_exporter is not None:
+        otlp_exporter.export(spans_to_export)
+    else:
+        # Create a new exporter
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+            OTLPSpanExporter,
+        )
 
-    return model
+        otlp_exporter = OTLPSpanExporter(
+            endpoint=f"{client.base_url}/v3/otl/{client._project_id()}",
+            headers={
+                "Authorization": "Bearer " + client._api_key(),
+            },
+        )
+        otlp_exporter.export(spans_to_export)
+
+    # Clean up default task_id and session_id
+    task_id_override = None
+    session_id_override = None
 
 
 ### Requires phospho lab extras ###
