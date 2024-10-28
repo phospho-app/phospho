@@ -175,7 +175,11 @@ const FilterComponent = ({
   const activeFilterCount =
     dataFilters &&
     Object.keys(dataFilters).filter(
-      (key) => key !== "created_at_start" && key !== "created_at_end",
+      (key) =>
+        key !== "created_at_start" &&
+        key !== "created_at_end" &&
+        key !== "task_id_search" &&
+        key !== "session_id_search",
     ).length;
 
   if (!selectedProject) {
