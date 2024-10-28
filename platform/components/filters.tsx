@@ -28,6 +28,11 @@ import {
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
+  EyeClosedIcon,
+  EyeOpenIcon,
+  MagnifyingGlassIcon,
+} from "@radix-ui/react-icons";
+import {
   Annoyed,
   Boxes,
   Code,
@@ -66,6 +71,10 @@ const FilterComponent = ({
 }) => {
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const showSearchBar = navigationStateStore((state) => state.showSearchBar);
+  const setShowSearchBar = navigationStateStore(
+    (state) => state.setShowSearchBar,
+  );
   const { accessToken } = useUser();
 
   if (variant === "messages") {
@@ -938,6 +947,31 @@ const FilterComponent = ({
                   })}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
+          </DropdownMenuSub>
+          {/* Toggle search bar */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <MagnifyingGlassIcon className="size-4 mr-2" />
+              Search bar {showSearchBar ? "hidden" : "visible"}
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem
+                onClick={() => {
+                  setShowSearchBar(false);
+                }}
+              >
+                <EyeClosedIcon className="size-4 mr-2" />
+                Hide search bar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setShowSearchBar(true);
+                }}
+              >
+                <EyeOpenIcon className="size-4 mr-2" />
+                Show search bar
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
           </DropdownMenuSub>
         </DropdownMenuContent>
       </DropdownMenu>

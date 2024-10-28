@@ -15,6 +15,7 @@ const SearchBar = ({ variant }: SearchBarProps) => {
   const setTasksPagination = navigationStateStore(
     (state) => state.setTasksPagination,
   );
+  const showSearchBar = navigationStateStore((state) => state.showSearchBar);
 
   // Update filters when search term changes
   useEffect(() => {
@@ -66,6 +67,9 @@ const SearchBar = ({ variant }: SearchBarProps) => {
     setDataFilters(newFilters);
   };
 
+  if (!showSearchBar) {
+    return null;
+  }
   return (
     <div className="relative">
       <Input
