@@ -56,7 +56,13 @@ const Clusters: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
   const { data: clusteringsData } = useSWR(
-    project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
+    project_id
+      ? [
+          `/api/explore/${project_id}/clusterings`,
+          accessToken,
+          selectedClustering?.status,
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST").then((res) => {
         return res;

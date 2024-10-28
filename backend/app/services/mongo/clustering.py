@@ -114,10 +114,12 @@ async def fetch_all_clusterings(
         await mongo_db["private-clusterings"].aggregate(pipeline).to_list(length=limit)
     )
     if not clusterings:
+        logger.debug(f"No clusterings found for project {project_id}")
         return []
     valid_clusterings = [
         Clustering.model_validate(clustering) for clustering in clusterings
     ]
+    logger.debug(f"Found {len(valid_clusterings)} clusterings")
     return valid_clusterings
 
 
