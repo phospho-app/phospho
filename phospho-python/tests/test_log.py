@@ -293,6 +293,24 @@ def test_log_list_of_messages():
     assert log["input"] == "Hello\nHi"
     assert log["output"] == "How are you?\nAre you fine?"
 
+    # Multiple system prompts without user or assistant messages
+    conversation = [
+        {
+            "role": "system",
+            "content": "Hello",
+        },
+        {
+            "role": "system",
+            "content": "Hi",
+        },
+    ]
+    log = phospho.log(
+        input=conversation,
+    )
+    assert log["system_prompt"] == "Hello\nHi"
+    assert log["input"] == ""
+    assert log["output"] is None
+
     time.sleep(0.1)
 
 

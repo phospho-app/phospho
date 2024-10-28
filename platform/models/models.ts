@@ -319,6 +319,8 @@ export interface ProjectDataFilters {
   created_at_start?: number | null;
   created_at_end?: number | null;
   event_name?: string[] | null;
+  scorer_value?: Record<string, number> | null;
+  classifier_value?: Record<string, string> | null;
   flag?: string | null;
   metadata?: Record<string, any> | null;
   user_id?: string | null;
