@@ -105,7 +105,8 @@ class Client:
     def _get(
         self, path: str, params: Optional[Dict[str, str]] = None
     ) -> requests.Response:
-        url = f"{self.base_url}{path}"
+        # Defaults to V2 API
+        url = f"{self.base_url}/v2{path}"
         response = requests.get(url, headers=self._headers(), params=params)
 
         if response.status_code >= 200 and response.status_code < 300:
@@ -126,7 +127,8 @@ class Client:
     def _post(
         self, path: str, payload: Optional[Dict[str, object]] = None
     ) -> requests.Response:
-        url = f"{self.base_url}{path}"
+        # Defaults to V2 API
+        url = f"{self.base_url}/v2{path}"
         response = requests.post(url, headers=self._headers(), json=payload)
 
         if response.status_code >= 200 and response.status_code < 300:

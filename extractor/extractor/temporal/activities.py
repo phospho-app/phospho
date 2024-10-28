@@ -7,7 +7,6 @@ from extractor.services.pipelines import MainPipeline
 from extractor.services.connectors import (
     LangsmithConnector,
     LangfuseConnector,
-    OpenTelemetryConnector,
 )
 from extractor.services.log.tasks import process_logs_for_messages, process_tasks_id
 from extractor.models.log import (

@@ -52,6 +52,7 @@ consumer = None
 latest_task_id = None
 latest_session_id = None
 default_version_id = None
+otlp_exporter = None
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +90,7 @@ def init(
     global log_queue
     global consumer
     global default_version_id
+    global otlp_exporter
 
     if version_id is None:
         version_id = generate_version_id()
@@ -111,27 +113,25 @@ def init(
 
     # Trace OpenAI API calls
     if tracing:
-        from opentelemetry import trace
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
             OTLPSpanExporter,
         )
-        from opentelemetry.sdk.resources import Resource
-        from opentelemetry.sdk.trace import TracerProvider
-        from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
-        resource = Resource(attributes={"service.name": "service"})
-
-        trace.set_tracer_provider(TracerProvider(resource=resource))
-        tracer = trace.get_tracer(__name__)
 
         otlp_exporter = OTLPSpanExporter(
-            endpoint=f"{config.BASE_URL_V3}/otl/{client._project_id()}",
+            endpoint=f"{client.base_url}/v3/otl/{client._project_id()}",
             headers={
                 "Authorization": "Bearer " + client._api_key(),
             },
         )
 
-        span_processor = BatchSpanProcessor(otlp_exporter)
+        from opentelemetry import trace
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
+        resource = Resource(attributes={"service.name": "service"})
+        trace.set_tracer_provider(TracerProvider(resource=resource))
+        span_processor = SimpleSpanProcessor(otlp_exporter)
         trace.get_tracer_provider().add_span_processor(span_processor)
 
         from opentelemetry.instrumentation.openai import OpenAIInstrumentor
@@ -203,6 +203,7 @@ def _log_single_event(
     global latest_task_id
     global latest_session_id
     global default_version_id
+    global otlp_exporter
 
     if "version_id" not in kwargs or kwargs["version_id"] is None:
         kwargs["version_id"] = default_version_id
@@ -242,7 +243,11 @@ def _log_single_event(
 
     # Task: use the task_id parameter, the task_id infered from inputs, or generate one
     if task_id is None:
-        task_id = generate_uuid()
+        task_id = f"task_{generate_uuid()}"
+
+    # Session: if None, generate a default session_id
+    if session_id is None:
+        session_id = f"session_{generate_uuid()}"
 
     # Keep track of the latest task_id and session_id
     latest_task_id = task_id
@@ -351,8 +356,20 @@ def _log_single_event(
         # Append event to log_queue
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
 
-    # logger.debug("Updated dict:" + str(log_queue.events[task_id].content))
-    # logger.debug("To log" + str(log_queue.events[task_id].to_log))
+    # Tracing: add metadata to the span
+    logger.info(f"otlp_exporter: {otlp_exporter}")
+    if otlp_exporter is not None:
+        from opentelemetry import trace
+
+        span = trace.get_current_span()
+        # if span != trace.INVALID_SPAN:
+        logger.info(f"Adding metadata to span: {span}")
+        span.set_attribute("task_id", task_id)
+        span.set_attribute("session_id", session_id)
+
+        # End the span if it's the last log
+        if to_log:
+            span.end()
 
     return log_content
 

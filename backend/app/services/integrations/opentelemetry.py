@@ -24,7 +24,7 @@ class OpenTelemetryConnector:
         """
         Push the data and process it
         """
-        logger.info("Processing OpenTelemetry data")
+        logger.info(f"Processing OpenTelemetry data:\n{data}")
 
         # Convert the data to a dictionary
         data_as_dict = MessageToDict(data)
