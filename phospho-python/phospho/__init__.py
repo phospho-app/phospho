@@ -384,13 +384,13 @@ def _log_single_event(
     if otlp_exporter is not None or (
         intermediate_logs is not None and len(intermediate_logs) > 0
     ):
-        local_oltp_exporter = otlp_exporter
-        if local_oltp_exporter is None:
+        local_otlp_exporter = otlp_exporter
+        if local_otlp_exporter is None:
             from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
                 OTLPSpanExporter,
             )
 
-            local_oltp_exporter = OTLPSpanExporter(
+            local_otlp_exporter = OTLPSpanExporter(
                 endpoint=f"{client.base_url}/v3/otl/{client._project_id()}",
                 headers={
                     "Authorization": "Bearer " + client._api_key(),
@@ -450,7 +450,7 @@ def _log_single_event(
                 )
                 spans_to_export.append(span)
             # Export span to backend
-            local_oltp_exporter.export(spans_to_export)
+            local_otlp_exporter.export(spans_to_export)
             spans_to_export = []
 
     return log_content

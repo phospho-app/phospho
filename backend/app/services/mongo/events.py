@@ -6,7 +6,7 @@ from app.utils import cast_datetime_or_timestamp_to_timestamp
 from fastapi import HTTPException
 from loguru import logger
 
-from phospho.models import Event, ProjectDataFilters, ScoreRange
+from phospho.models import Event, ProjectDataFilters
 
 
 async def get_event_definition_from_event_id(
@@ -92,7 +92,7 @@ async def get_all_events(
             }
         if filters.created_at_end is not None:
             additional_event_filters["created_at"] = {
-                **additional_event_filters.get("created_at", {}),
+                **additional_event_filters.get("created_at", {}),  # type: ignore
                 "$lt": cast_datetime_or_timestamp_to_timestamp(filters.created_at_end),
             }
     if not include_removed:
@@ -185,6 +185,9 @@ async def change_label_event(
     event_id: str,
     new_label: str,
 ) -> Event:
+    """
+    This works for events with a score range category.
+    """
     mongo_db = await get_mongo_db()
     # Get the event
     event = await mongo_db["events"].find_one(
@@ -206,6 +209,11 @@ async def change_label_event(
         },
     )
 
+    # If the event doesn't have a score range return the event without changes
+    # This is a weird case.
+    if not event_model.score_range:
+        return event_model
+
     event_model.score_range.corrected_label = new_label
     event_model.confirmed = True
 
@@ -215,8 +223,11 @@ async def change_label_event(
 async def change_value_event(
     project_id: str,
     event_id: str,
-    new_value: str | float,
+    new_value: float,
 ) -> Event:
+    """
+    This works for events with a score range category.
+    """
     mongo_db = await get_mongo_db()
     # Get the event
     event = await mongo_db["events"].find_one(
@@ -237,6 +248,11 @@ async def change_value_event(
             }
         },
     )
+
+    # If the event doesn't have a score range return the event without changes
+    # This is a weird case.
+    if not event_model.score_range:
+        return event_model
 
     event_model.score_range.corrected_value = new_value
     event_model.confirmed = True

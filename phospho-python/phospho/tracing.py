@@ -355,3 +355,17 @@ def init_instrumentations():
             instrumentor.instrument()
         except ImportError:
             logger.warning("To trace Groq, install opentelemetry-instrumentation-groq")
+
+
+def get_otlp_exporter(client: Client):
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+        OTLPSpanExporter,
+    )
+
+    otlp_exporter = OTLPSpanExporter(
+        endpoint=f"{client.base_url}/v3/otl/{client._project_id()}",
+        headers={
+            "Authorization": "Bearer " + client._api_key(),
+        },
+    )
+    return otlp_exporter
