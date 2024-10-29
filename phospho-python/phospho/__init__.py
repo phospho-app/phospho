@@ -198,6 +198,9 @@ def _log_single_event(
         Callable[[Any, Any], Dict[str, float]]
     ] = None,
     to_log: bool = True,
+    intermediate_logs: Optional[
+        List[Dict[str, Union[int, float, str, bool, List[int, float, str, bool]]]]
+    ] = None,
     **kwargs: Any,
 ) -> Dict[str, object]:
     """Log a single event.
@@ -378,9 +381,40 @@ def _log_single_event(
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
 
     # Tracing: add metadata to the span
-    logger.info(f"otlp_exporter: {otlp_exporter}")
-    if otlp_exporter is not None:
-        # End the span if it's the last log
+    if otlp_exporter is not None or (
+        intermediate_logs is not None and len(intermediate_logs) > 0
+    ):
+        local_oltp_exporter = otlp_exporter
+        if local_oltp_exporter is None:
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                OTLPSpanExporter,
+            )
+
+            local_oltp_exporter = OTLPSpanExporter(
+                endpoint=f"{client.base_url}/v3/otl/{client._project_id()}",
+                headers={
+                    "Authorization": "Bearer " + client._api_key(),
+                },
+            )
+        
+        # Add spans for intermediate logs
+        for intermediate_log in intermediate_logs:
+            with tracer.start_as_current_span(
+                name="phospho.log",
+                attributes={
+                    "task_id": task_id,
+                    "session_id": session_id,
+                },
+            ) as span:
+                span.set_attributes({
+                    {
+                        f"phospho.metadata.{k}": v
+                        for k, v in intermediate_log.items()
+                    }
+                })
+                spans_to_export.append(span)
+
+        # If to_log, export the spans
         if to_log:
             # Create a new span with the task_id, session_id, and metadata
             from opentelemetry import trace
@@ -389,13 +423,13 @@ def _log_single_event(
             with tracer.start_as_current_span(
                 name="phospho.log",
                 attributes={
-                    "task_id": task_id,
-                    "session_id": session_id,
+                    "phospho.task_id": task_id,
+                    "phospho.session_id": session_id,
                 },
             ) as span:
                 span.set_attributes(
                     {
-                        k: v
+                        f"phospho.metadata.{}": v
                         for k, v in log_content.items()
                         if
                         (
@@ -537,6 +571,11 @@ def log(
     concatenate_raw_outputs_if_task_id_exists: bool = True,
     input_output_to_usage_function: Optional[Callable[[Any], Dict[str, float]]] = None,
     stream: bool = False,
+    intermediate_logs: Optional[
+        List[
+            Dict[str, Union[int, float, str, bool, List[Union[int, float, str, bool]]]]
+        ]
+    ] = None,
     **kwargs: Any,
 ) -> Optional[Dict[str, object]]:
     """Phospho's main all-purpose logging endpoint, with support for streaming.
@@ -563,13 +602,17 @@ def log(
 
     `user_id` is used to identify the user. For example, a user's email.
 
-    `input_output_to_usage_function` is used to count the number of tokens in prompt and in completion.
+    `input_output_to_usage_function` counts the number of tokens in prompt and in completion.
     It takes (input, output) as a value and returns a dict with keys `prompt_tokens`, `completion_tokens`,
     `total_tokens`.
 
-    `stream` is used to log a stream of data. For example, a generator. If `stream=True`, then
+    `stream` enable logging a stream of data. For example, a generator. If `stream=True`, then
     `phospho.log` returns a generator that also logs every individual output. See `phospho.wrap`
     for more details.
+
+    `intermediate_logs` is a list of dictionaries to log intermediate values.
+    This is like manual tracing. For automatic tracing, use `with phospho.tracer()` or `@phospho.trace`.
+    This does **not** work with streaming.
 
     Every other `**kwargs` will be added to the metadata and stored.
 
@@ -653,6 +696,7 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
         input_output_to_usage_function=input_output_to_usage_function,
         concatenate_raw_outputs_if_task_id_exists=concatenate_raw_outputs_if_task_id_exists,
         to_log=True,
+        intermediate_logs=intermediate_logs,
         **kwargs,
     )
 
