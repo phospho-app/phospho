@@ -336,6 +336,7 @@ export interface ProjectDataFilters {
   version_id?: string | null;
   task_id_search?: string | null;
   session_id_search?: string | null;
+  exclude_users?: boolean | null;
 }
 
 export interface DatavizSorting {

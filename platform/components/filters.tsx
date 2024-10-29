@@ -91,8 +91,6 @@ const FilterComponent = ({
   );
   const dateRange = navigationStateStore((state) => state.dateRange);
 
-  const usersExcluded: string[] | undefined = undefined;
-
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
@@ -425,6 +423,21 @@ const FilterComponent = ({
             }}
           >
             Is last message
+            <X className="size-4 ml-2" />
+          </Button>
+        )}
+        {dataFilters.exclude_users && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                exclude_users: null,
+              });
+              resetPagination();
+            }}
+          >
+            Exclude users in settings
             <X className="size-4 ml-2" />
           </Button>
         )}
@@ -954,13 +967,36 @@ const FilterComponent = ({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <UserRound className="size-4 mr-2" />
-              <span>Exclude users</span>
+              <span>Users</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent className="overflow-y-auto max-h-[30rem]">
-                {usersExcluded && (
-                  <DropdownMenuItem disabled>
-                    No users excluded
+                {dataFilters.exclude_users !== null && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        // Override the event_name filter
+                        // TODO: Allow multiple event_name filters
+                        setDataFilters({
+                          ...dataFilters,
+                          exclude_users: true,
+                        });
+                        resetPagination();
+                      }}
+                      style={{
+                        color: dataFilters.exclude_users ? "green" : "inherit",
+                      }}
+                    >
+                      Exclude users in settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <span className="truncate">Manage list</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {dataFilters.exclude_users === null && (
+                  <DropdownMenuItem asChild>
+                    <span className="truncate">Setup list</span>
                   </DropdownMenuItem>
                 )}
               </DropdownMenuSubContent>
