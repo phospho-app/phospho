@@ -187,6 +187,7 @@ class QueryBuilder:
         - metadata
         - user_id
         - task_position
+        - excluded_users
         """
         filters = self.filters
         match: Dict[str, object] = self._main_doc_filter(prefix=prefix)
@@ -235,6 +236,9 @@ class QueryBuilder:
             elif len(filters.sessions_ids) > 1:
                 match[f"{prefix}session_id"] = {"$in": filters.sessions_ids}
 
+        if filters.task_id_search is not None:
+            match[f"{prefix}id"] = {"$regex": filters.task_id_search}
+
         if filters.tasks_ids is not None:
             if len(filters.tasks_ids) == 1:
                 match[f"{prefix}id"] = filters.tasks_ids[0]
@@ -250,6 +254,9 @@ class QueryBuilder:
 
         if filters.task_position is not None:
             match[f"{prefix}task_position"] = filters.task_position
+
+        if filters.excluded_users is not None:
+            match[f"{prefix}metadata.user_id"] = {"$nin": filters.excluded_users}
 
         if match:
             self.pipeline.append({"$match": match})
@@ -312,6 +319,9 @@ class QueryBuilder:
                 match["tasks.id"] = filters.tasks_ids[0]
             elif len(filters.tasks_ids) > 1:
                 match["task_id"] = {"$in": filters.tasks_ids}
+
+        if filters.session_id_search is not None:
+            match["id"] = {"$regex": filters.session_id_search}
 
         if match:
             self.pipeline.append({"$match": match})
@@ -451,6 +461,7 @@ class QueryBuilder:
         - clustering_id
         - clusters_ids
         - user_id
+        - excluded_users
         - metadata (filter on the Task's metadata)
 
         Not supported:
@@ -561,6 +572,10 @@ class QueryBuilder:
             self.merge_tasks()
             for key, value in filters.metadata.items():
                 match[f"metadata.{key}"] = value
+
+        if filters.excluded_users is not None:
+            self.merge_tasks()
+            match["tasks.metadata.user_id"] = {"$nin": filters.excluded_users}
 
         if match:
             self.pipeline.append({"$match": match})

@@ -9,7 +9,6 @@ import time
 import phospho
 import requests  # type: ignore
 import openai
-from loguru import logger
 
 
 def test_onboarding(backend_url, org_id, access_token, api_key):

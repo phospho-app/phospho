@@ -53,10 +53,16 @@ const Clusters: React.FC = () => {
   const setSelectedClustering = navigationStateStore(
     (state) => state.setSelectedClustering,
   );
-  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const { data: clusteringsData } = useSWR(
-    project_id ? [`/api/explore/${project_id}/clusterings`, accessToken] : null,
+    project_id
+      ? [
+          `/api/explore/${project_id}/clusterings`,
+          accessToken,
+          selectedClustering?.status,
+        ]
+      : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST").then((res) => {
         return res;
@@ -142,28 +148,25 @@ const Clusters: React.FC = () => {
   const clusteringsJSON = JSON.stringify(clusterings);
 
   useEffect(() => {
-    if (clusterings === undefined) {
-      setSelectedClustering(undefined);
-      return;
-    }
-    if (clusterings.length === 0) {
-      setSelectedClustering(undefined);
-      return;
-    }
     // if the selected clustering is not set, select the latest clustering
-    if (selectedClustering === undefined) {
+    if (clusterings && selectedClustering === undefined) {
       setSelectedClustering(clusterings[0]);
       return;
     }
     // If project_id of the selectedClustering is different from the
     // one in the navigationStateStore, select the latest clustering
     if (
+      selectedClustering &&
+      clusterings &&
       selectedClustering.project_id !== project_id &&
       clusterings.length > 0
     ) {
       setSelectedClustering(clusterings[0]);
       return;
-    } else if (selectedClustering.project_id !== project_id) {
+    } else if (
+      selectedClustering &&
+      selectedClustering.project_id !== project_id
+    ) {
       // If the clusterings are empty, set the selectedClustering to undefined
       setSelectedClustering(undefined);
       return;

@@ -41,6 +41,9 @@ interface navigationState {
   dataFilters: ProjectDataFilters;
   setDataFilters: (tasksColumnsFilters: ProjectDataFilters) => void;
 
+  showSearchBar: boolean;
+  setShowSearchBar: (showSearchBar: boolean) => void;
+
   warningShowed: boolean;
   setWarningShowed: (showed: boolean) => void;
   dateRangePreset: string | null;
@@ -81,6 +84,10 @@ export const navigationStateStore = create(
       } as ProjectDataFilters,
       setDataFilters: (filters: ProjectDataFilters) =>
         set(() => ({ dataFilters: filters })),
+
+      showSearchBar: false,
+      setShowSearchBar: (showSearchBar: boolean) =>
+        set(() => ({ showSearchBar: showSearchBar })),
 
       tasksPagination: {
         pageSize: 10,

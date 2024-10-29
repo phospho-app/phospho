@@ -306,6 +306,7 @@ class ProjectSettings(BaseModel):
     )
     analytics_threshold_enabled: bool = False
     analytics_threshold: int = 100_000
+    excluded_users: Optional[List[str]] = None
 
 
 class Project(DatedBaseModel):
@@ -769,6 +770,9 @@ class ProjectDataFilters(BaseModel):
     sessions_ids: Optional[List[str]] = None
     version_id: Optional[str] = None
     task_position: Optional[int] = None
+    task_id_search: Optional[str] = None
+    session_id_search: Optional[str] = None
+    excluded_users: Optional[List[str]] = None
 
 
 class Cluster(ProjectElementBaseModel):

@@ -214,7 +214,9 @@ class ExtractorClient:
 
         return response
 
-    async def run_process_tasks(self, tasks_id_to_process: List[str]) -> None:
+    async def run_process_tasks(
+        self, tasks_id_to_process: List[str], run_analytics: bool = False
+    ) -> None:
         """
         Run the task procesing pipeline on a task asynchronously.
 
@@ -231,6 +233,7 @@ class ExtractorClient:
             "run_process_tasks_workflow",
             {
                 "tasks_id_to_process": tasks_id_to_process,
+                "run_analytics": run_analytics,
             },
         )
 

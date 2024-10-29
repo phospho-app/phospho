@@ -28,6 +28,11 @@ import {
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import {
+  EyeClosedIcon,
+  EyeOpenIcon,
+  MagnifyingGlassIcon,
+} from "@radix-ui/react-icons";
+import {
   Annoyed,
   Boxes,
   Code,
@@ -48,6 +53,7 @@ import {
   TextSearch,
   ThumbsDown,
   ThumbsUp,
+  Users,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -66,6 +72,10 @@ const FilterComponent = ({
 }) => {
   const setDataFilters = navigationStateStore((state) => state.setDataFilters);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const showSearchBar = navigationStateStore((state) => state.showSearchBar);
+  const setShowSearchBar = navigationStateStore(
+    (state) => state.setShowSearchBar,
+  );
   const { accessToken } = useUser();
 
   if (variant === "messages") {
@@ -111,6 +121,8 @@ const FilterComponent = ({
         ),
       )
     : {};
+
+  const excludedUsers = selectedProject?.settings?.excluded_users;
 
   const resetPagination = () => {
     if (variant === "tasks") {
@@ -175,7 +187,11 @@ const FilterComponent = ({
   const activeFilterCount =
     dataFilters &&
     Object.keys(dataFilters).filter(
-      (key) => key !== "created_at_start" && key !== "created_at_end",
+      (key) =>
+        key !== "created_at_start" &&
+        key !== "created_at_end" &&
+        key !== "task_id_search" &&
+        key !== "session_id_search",
     ).length;
 
   if (!selectedProject) {
@@ -409,6 +425,21 @@ const FilterComponent = ({
             }}
           >
             Is last message
+            <X className="size-4 ml-2" />
+          </Button>
+        )}
+        {dataFilters.excluded_users && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                excluded_users: null,
+              });
+              resetPagination();
+            }}
+          >
+            Filter users in list
             <X className="size-4 ml-2" />
           </Button>
         )}
@@ -935,6 +966,72 @@ const FilterComponent = ({
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Users className="size-4 mr-2" />
+              <span>Users</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="overflow-y-auto max-h-[30rem]">
+                {excludedUsers && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        // Override the event_name filter
+                        // TODO: Allow multiple event_name filters
+                        setDataFilters({
+                          ...dataFilters,
+                          excluded_users: excludedUsers,
+                        });
+                        resetPagination();
+                      }}
+                      style={{
+                        color: dataFilters.excluded_users ? "green" : "inherit",
+                      }}
+                    >
+                      Filter users in list
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/org/settings/project"
+                        className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                      >
+                        <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">Manage list</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {!excludedUsers && (
+                  <Link
+                    href="/org/settings/project"
+                    className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">Setup list</span>
+                  </Link>
+                )}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          {/* Toggle search bar */}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              setShowSearchBar(!showSearchBar);
+            }}
+            className="flex justify-between items-center"
+          >
+            <div className="flex flex-row items-center">
+              <MagnifyingGlassIcon className="size-4 mr-2" />
+              Filter by id
+            </div>
+            {showSearchBar ? (
+              <EyeOpenIcon className="size-4 ml-2" />
+            ) : (
+              <EyeClosedIcon className="size-4 ml-2" />
+            )}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

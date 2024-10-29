@@ -51,14 +51,14 @@ const TaskOverview: React.FC<TaskProps> = ({
 
   return (
     <>
-      <div className="flex justify-between items-end mt-4">
+      <div className="flex flex-wrap justify-between items-center mt-4 gap-4">
         <span className="text-xl font-bold">Message</span>
-        <div className="flex flex-row space-x-2">
+        <div className="flex flex-wrap gap-2">
           {showGoToTask && (
             <Link href={`/org/transcripts/tasks/${task_id}`}>
-              <Button variant="secondary">
+              <Button variant="secondary" className="whitespace-nowrap">
                 Go to Message
-                <ChevronRight />
+                <ChevronRight className="ml-1" />
               </Button>
             </Link>
           )}
@@ -66,56 +66,68 @@ const TaskOverview: React.FC<TaskProps> = ({
             <Link
               href={`/org/transcripts/sessions/${encodeURIComponent(task.session_id)}`}
             >
-              <Button variant="secondary">Go to Session</Button>
+              <Button variant="secondary" className="whitespace-nowrap">
+                Go to Session
+                <ChevronRight className="ml-1" />
+              </Button>
             </Link>
           )}
           {task?.metadata?.user_id && (
             <Link
               href={`/org/transcripts/users/${encodeURIComponent(task.metadata?.user_id)}`}
             >
-              <Button variant="secondary">Go to User</Button>
+              <Button variant="secondary" className="whitespace-nowrap">
+                Go to User
+                <ChevronRight className="ml-1" />
+              </Button>
             </Link>
           )}
         </div>
       </div>
-      <Card className="flex flex-col sapce-y-1 p-2">
-        <div className="flex flex-row items-center">
-          <code className="bg-secondary p-1.5 text-xs">{task_id}</code>
-          <CopyButton text={task_id} className="ml-2" />
-        </div>
-        <div className="flex flex-row space-x-16">
-          <div className="text-xs max-w-48">
-            <span className="text-muted-foreground">Created at</span>
-            <InteractiveDatetime timestamp={task?.created_at} />
+      <Card className="p-2">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="bg-secondary p-1.5 text-xs break-all max-w-full">
+              {task_id}
+            </code>
+            <CopyButton text={task_id} />
           </div>
-          {task?.task_position && (
-            <div className="flex flex-col">
-              <div className="text-xl font-bold">#{task.task_position}</div>
-              <span className="text-muted-foreground text-xs">position</span>
+          <div className="flex flex-wrap gap-8">
+            <div className="text-xs min-w-[120px]">
+              <span className="text-muted-foreground">Created at</span>
+              <InteractiveDatetime timestamp={task?.created_at} />
             </div>
-          )}
-          <div className="flex flex-col">
-            <div className="text-xl font-bold">
-              {task?.is_last_task ? "Yes" : "No"}
-            </div>
-            <span className="text-muted-foreground text-xs">
-              Is last message?
-            </span>
-          </div>
-          {task?.last_eval?.source && (
+            {task?.task_position && (
+              <div className="flex flex-col">
+                <div className="text-xl font-bold">#{task.task_position}</div>
+                <span className="text-muted-foreground text-xs">position</span>
+              </div>
+            )}
             <div className="flex flex-col">
-              <div className="text-xl font-bold">{task?.last_eval?.source}</div>
+              <div className="text-xl font-bold">
+                {task?.is_last_task ? "Yes" : "No"}
+              </div>
               <span className="text-muted-foreground text-xs">
-                Last eval source
+                Is last message?
               </span>
             </div>
-          )}
-          {task?.last_eval?.created_at && (
-            <div className="text-xs max-w-48">
-              <span className="text-muted-foreground">Last eval date</span>
-              <InteractiveDatetime timestamp={task?.last_eval?.created_at} />
-            </div>
-          )}
+            {task?.last_eval?.source && (
+              <div className="flex flex-col">
+                <div className="text-xl font-bold">
+                  {task?.last_eval?.source}
+                </div>
+                <span className="text-muted-foreground text-xs">
+                  Last eval source
+                </span>
+              </div>
+            )}
+            {task?.last_eval?.created_at && (
+              <div className="text-xs min-w-[120px]">
+                <span className="text-muted-foreground">Last eval date</span>
+                <InteractiveDatetime timestamp={task?.last_eval?.created_at} />
+              </div>
+            )}
+          </div>
         </div>
       </Card>
       {task === undefined && <CenteredSpinner />}

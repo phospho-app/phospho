@@ -288,17 +288,20 @@ async def process_log_with_session_id(
         session_ids=list(sessions_to_create.keys()) + sessions_ids_already_in_db,
     )
 
-    if trigger_pipeline:
-        if not await project_check_automatic_analytics_monthly_limit(project_id):
-            logger.info(f"Triggering pipeline for {len(tasks_id_to_process)} tasks")
+    logger.info(f"Triggering pipeline for {len(tasks_id_to_process)} tasks")
 
-            extractor_client = ExtractorClient(
-                project_id=project_id,
-                org_id=org_id,
-            )
-            await extractor_client.run_process_tasks(
-                tasks_id_to_process=tasks_id_to_process
-            )
+    run_analytics = (
+        not await project_check_automatic_analytics_monthly_limit(project_id)
+    ) and trigger_pipeline
+
+    extractor_client = ExtractorClient(
+        project_id=project_id,
+        org_id=org_id,
+    )
+    await extractor_client.run_process_tasks(
+        tasks_id_to_process=tasks_id_to_process,
+        run_analytics=run_analytics,
+    )
 
 
 def collect_metadata(log_event: LogEvent) -> dict:

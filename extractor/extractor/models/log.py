@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 class TaskProcessRequest(BaseModel):
     tasks_id_to_process: List[str]
+    run_analytics: bool = False
     project_id: str
     org_id: str
     customer_id: Optional[str] = None
