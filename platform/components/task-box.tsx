@@ -29,6 +29,7 @@ import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
 } from "./label-events";
+import { Spinner } from "./small-spinner";
 import { Separator } from "./ui/separator";
 
 function TaskBox({
@@ -93,7 +94,7 @@ function TaskBox({
           key={task.id}
         />
       </div>
-      <div className="flex flex-col space-y-2">
+      <div className="flex flex-col space-y-2 min-w-[200px]">
         {task.metadata?.system_prompt && (
           <div className="flex justify-start">
             <div className="flex flex-col">
@@ -137,7 +138,7 @@ function TaskBox({
           </div>
         </div>
         <Collapsible>
-          <CollapsibleTrigger className="justify-start flex flex-row ">
+          <CollapsibleTrigger className="w-full justify-center flex flex-row ">
             <div className="min-w-[200px] flex flex-row justify-center min-h-[1rem] gap-x-2 items-center text-xs text-muted-foreground hover:text-green-500 hover:cursor-pointer">
               <Separator className="max-w-[2rem]" />
               <span>Steps</span>
@@ -155,10 +156,11 @@ function TaskBox({
                     className="whitespace-pre-wrap mx-2 bg-secondary p-2 text-xs"
                     key={`${task.id}_span_${index}`}
                   >
-                    {JSON.stringify(span)}
+                    {JSON.stringify(span, null, 2)}
                   </code>
                 );
               })}
+              {taskSpans === undefined && <Spinner />}
               {taskSpans?.spans && taskSpans.spans.length === 0 && (
                 <pre className="whitespace-pre-wrap mx-2 bg-secondary p-2 text-xs">
                   No steps data found. Setup tracing to add them here.

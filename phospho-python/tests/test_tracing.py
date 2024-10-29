@@ -50,7 +50,7 @@ def test_tracing():
         assert log_content["session_id"] == tracer.session_id
 
     # Decorator syntax. This is just a syntactic sugar for the context syntax
-    @phospho.tracer()
+    @phospho.trace()
     def my_function():
         # Make an API call
         response = openai_client.chat.completions.create(
