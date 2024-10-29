@@ -122,6 +122,8 @@ const FilterComponent = ({
       )
     : {};
 
+  const excludedUsers = selectedProject?.settings?.excluded_users;
+
   const resetPagination = () => {
     if (variant === "tasks") {
       setTasksPagination((prev) => ({
@@ -426,13 +428,13 @@ const FilterComponent = ({
             <X className="size-4 ml-2" />
           </Button>
         )}
-        {dataFilters.exclude_users && (
+        {dataFilters.excluded_users && (
           <Button
             variant="outline"
             onClick={() => {
               setDataFilters({
                 ...dataFilters,
-                exclude_users: null,
+                excluded_users: null,
               });
               resetPagination();
             }}
@@ -971,7 +973,7 @@ const FilterComponent = ({
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent className="overflow-y-auto max-h-[30rem]">
-                {dataFilters.exclude_users !== null && (
+                {excludedUsers && (
                   <>
                     <DropdownMenuItem
                       onClick={() => {
@@ -979,12 +981,12 @@ const FilterComponent = ({
                         // TODO: Allow multiple event_name filters
                         setDataFilters({
                           ...dataFilters,
-                          exclude_users: true,
+                          excluded_users: excludedUsers,
                         });
                         resetPagination();
                       }}
                       style={{
-                        color: dataFilters.exclude_users ? "green" : "inherit",
+                        color: dataFilters.excluded_users ? "green" : "inherit",
                       }}
                     >
                       Exclude users in settings
@@ -1000,7 +1002,7 @@ const FilterComponent = ({
                     </DropdownMenuItem>
                   </>
                 )}
-                {dataFilters.exclude_users === null && (
+                {!excludedUsers && (
                   <Link
                     href="/org/settings/project"
                     className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"

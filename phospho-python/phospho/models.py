@@ -772,6 +772,7 @@ class ProjectDataFilters(BaseModel):
     task_position: Optional[int] = None
     task_id_search: Optional[str] = None
     session_id_search: Optional[str] = None
+    excluded_users: Optional[List[str]] = None
 
 
 class Cluster(ProjectElementBaseModel):

@@ -21,7 +21,7 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
-import { Plus, UserRound } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import useSWR, { mutate } from "swr";
 import * as z from "zod";
@@ -48,12 +48,8 @@ const ExcludeUsersDialog = ({
 
   const excludedUsers = selectedProject?.settings?.excluded_users || [];
 
-  console.log("excludedUsers", excludedUsers);
-
   const FormSchema = z.object({
-    user_id: z.string({
-      required_error: "Please enter a user id",
-    }),
+    user_id: z.string({}),
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -61,6 +57,13 @@ const ExcludeUsersDialog = ({
   });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
+    // if the user_id is already in the list, do nothing
+    if (
+      selectedProject?.settings?.excluded_users &&
+      selectedProject?.settings?.excluded_users.includes(data.user_id)
+    ) {
+      return;
+    }
     const updatedProject = {
       ...selectedProject,
       settings: {
@@ -87,6 +90,32 @@ const ExcludeUsersDialog = ({
     });
   }
 
+  async function deleteUserIdFromList(userId: string) {
+    const updatedProject = {
+      ...selectedProject,
+      settings: {
+        ...selectedProject.settings,
+        excluded_users: excludedUsers.filter((id) => id !== userId),
+      },
+    };
+    // call the API endpoint
+    await fetch(`/api/projects/${project_id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        project_name: updatedProject.project_name,
+        settings: updatedProject.settings,
+      }),
+    }).then(async () => {
+      mutate([`/api/projects/${project_id}`, accessToken], async () => {
+        return { project: selectedProject };
+      });
+    });
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -94,13 +123,13 @@ const ExcludeUsersDialog = ({
           {projectToEdit && <AlertDialogTitle>Exclude users</AlertDialogTitle>}
         </AlertDialogHeader>
 
-        <div className="flex flex-row space-x-2">
-          <FormField
-            control={form.control}
-            name="user_id"
-            render={({ field }) => (
-              <FormItem>
-                <div>User id</div>
+        <FormField
+          control={form.control}
+          name="user_id"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              User id
+              <div className="flex flex-row space-x-2">
                 <FormControl>
                   <Input
                     placeholder="Enter a user id"
@@ -109,21 +138,32 @@ const ExcludeUsersDialog = ({
                     autoFocus
                   />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" variant="default">
-            <Plus className="size-4 mr-2" />
-          </Button>
-        </div>
+                <Button type="submit" variant="ghost">
+                  <Plus className="size-4" />
+                </Button>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         {excludedUsers.length > 0 && (
           <div className="flex flex-col space-y-2">
             Excluded users:
             {excludedUsers.map((user_id) => (
-              <div key={user_id} className="flex items-center space-x-2">
-                <UserRound className="w-6 h-6" />
-                <div>{user_id}</div>
+              <div
+                key={user_id}
+                className="flex flex-row items-center justify-between space-x-2 w-full"
+              >
+                {user_id}
+                <div className="justify-end">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => deleteUserIdFromList(user_id)}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
