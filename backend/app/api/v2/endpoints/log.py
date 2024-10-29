@@ -17,7 +17,6 @@ from app.security import (
     verify_propelauth_org_owns_project_id,
     get_quota,
 )
-from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.emails import send_quota_exceeded_email
 from app.core import config
 from app.services.log import create_task_and_process_logs

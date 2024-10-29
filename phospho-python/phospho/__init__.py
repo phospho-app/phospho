@@ -199,7 +199,9 @@ def _log_single_event(
     ] = None,
     to_log: bool = True,
     intermediate_logs: Optional[
-        List[Dict[str, Union[int, float, str, bool, List[int, float, str, bool]]]]
+        List[
+            Dict[str, Union[int, float, str, bool, List[Union[int, float, str, bool]]]]
+        ]
     ] = None,
     **kwargs: Any,
 ) -> Dict[str, object]:

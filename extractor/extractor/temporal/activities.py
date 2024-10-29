@@ -185,22 +185,6 @@ async def run_recipe_on_task(
     }
 
 
-@activity.defn(name="store_opentelemetry_data")
-async def store_open_telemetry_data(
-    request: PipelineOpentelemetryRequest,
-):
-    logger.info(f"Received OpenTelemetry data for project id: {request.project_id}")
-    opentelemetry_connector = OpenTelemetryConnector(
-        project_id=request.project_id,
-        data=request.open_telemetry_data,
-    )
-    return await opentelemetry_connector.process(
-        org_id=request.org_id,
-        current_usage=request.current_usage,
-        max_usage=request.max_usage,
-    )
-
-
 @activity.defn(name="run_process_tasks")
 async def run_process_tasks(
     request_body: TaskProcessRequest,
