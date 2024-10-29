@@ -123,9 +123,9 @@ const ExcludeUsersDialog = ({
           {projectToEdit && (
             <>
               <AlertDialogTitle>
-                <div className="flex flex-row gap-x-2">
+                <div className="flex flex-row items-center gap-x-2">
                   <Users className="size-4" />
-                  <span>Setup user_id filter list</span>
+                  Setup user_id filter list
                 </div>
               </AlertDialogTitle>
               <div className="text-muted-foreground">
