@@ -21,7 +21,7 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
-import { Plus, X } from "lucide-react";
+import { Plus, Users, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import useSWR, { mutate } from "swr";
 import * as z from "zod";
@@ -121,7 +121,18 @@ const ExcludeUsersDialog = ({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <AlertDialogHeader>
           {projectToEdit && (
-            <AlertDialogTitle>Setup user_id filter list</AlertDialogTitle>
+            <>
+              <AlertDialogTitle>
+                <div className="flex flex-row gap-x-2">
+                  <Users className="size-4" />
+                  <span>Setup user_id filter list</span>
+                </div>
+              </AlertDialogTitle>
+              <div className="text-muted-foreground">
+                This user_id list can be used to filter other visualizations.
+                This is helpful to remove test users from your data.
+              </div>
+            </>
           )}
         </AlertDialogHeader>
 
