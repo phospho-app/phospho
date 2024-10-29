@@ -115,7 +115,6 @@ async def post_update_project(
 ) -> Project:
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
-    logger.debug(f"Updating project {project_id} with {project_update_request}")
     updated_project = await update_project(
         project, **project_update_request.model_dump()
     )
