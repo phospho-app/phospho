@@ -14,7 +14,22 @@ class ListSpanProcessor(SpanProcessor):
         spans_to_export: List[Span],
         task_id: Optional[str] = None,
         session_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Union[int, bool, str, float]]] = None,
+        # OpenTelemetry does not support nested types in attributes
+        metadata: Optional[
+            Dict[
+                str,
+                Union[
+                    int,
+                    bool,
+                    str,
+                    float,
+                    List[int],
+                    List[bool],
+                    List[str],
+                    List[float],
+                ],
+            ]
+        ] = None,
     ):
         self.spans_to_export = spans_to_export
         self.task_id = task_id
@@ -34,7 +49,6 @@ class ListSpanProcessor(SpanProcessor):
         self.spans_to_export.append(span)
 
     def on_end(self, span: ReadableSpan) -> None:
-        # Do nothing
         pass
 
     def shutdown(self) -> None:

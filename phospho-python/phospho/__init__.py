@@ -381,7 +381,39 @@ def _log_single_event(
     logger.info(f"otlp_exporter: {otlp_exporter}")
     if otlp_exporter is not None:
         # End the span if it's the last log
-        otlp_exporter.export(spans_to_export)
+        if to_log:
+            # Create a new span with the task_id, session_id, and metadata
+            from opentelemetry import trace
+
+            tracer = trace.get_tracer(__name__)
+            with tracer.start_as_current_span(
+                name="phospho.log",
+                attributes={
+                    "task_id": task_id,
+                    "session_id": session_id,
+                },
+            ) as span:
+                span.set_attributes(
+                    {
+                        k: v
+                        for k, v in log_content.items()
+                        if
+                        (
+                            # OpenTelemetry only supports simple types
+                            isinstance(v, (int, float, str, bool))
+                            # or lists of simple types
+                            or (
+                                isinstance(v, list)
+                                and all(
+                                    isinstance(i, (int, float, str, bool)) for i in v
+                                )
+                            )
+                        )
+                    }
+                )
+                spans_to_export.append(span)
+            # Export span to backend
+            otlp_exporter.export(spans_to_export)
 
     return log_content
 
