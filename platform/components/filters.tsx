@@ -990,14 +990,24 @@ const FilterComponent = ({
                       Exclude users in settings
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <span className="truncate">Manage list</span>
+                      <Link
+                        href="/org/settings/project"
+                        className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                      >
+                        <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">Manage list</span>
+                      </Link>
                     </DropdownMenuItem>
                   </>
                 )}
                 {dataFilters.exclude_users === null && (
-                  <DropdownMenuItem asChild>
+                  <Link
+                    href="/org/settings/project"
+                    className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <TextSearch className="size-4 mr-2 flex-shrink-0" />
                     <span className="truncate">Setup list</span>
-                  </DropdownMenuItem>
+                  </Link>
                 )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>

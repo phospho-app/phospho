@@ -70,7 +70,7 @@ const ExcludeUsersDialog = ({
     };
     console.log("updatedProject", updatedProject);
     // call the API endpoint
-    const response = await fetch(`/api/projects/${project_id}`, {
+    await fetch(`/api/projects/${project_id}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -80,16 +80,11 @@ const ExcludeUsersDialog = ({
         project_name: updatedProject.project_name,
         settings: updatedProject.settings,
       }),
-    });
-    if (response.ok) {
-      mutate(`/api/projects/${project_id}`);
-    } else {
-      const error = await response.json();
-      form.setError("user_id", {
-        type: "manual",
-        message: error.message,
+    }).then(async () => {
+      mutate([`/api/projects/${project_id}`, accessToken], async () => {
+        return { project: selectedProject };
       });
-    }
+    });
   }
 
   return (
