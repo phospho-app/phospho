@@ -397,26 +397,34 @@ def _log_single_event(
                 },
             )
 
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer(__name__)
+
         # Add spans for intermediate logs
-        for intermediate_log in intermediate_logs:
-            with tracer.start_as_current_span(
-                name="phospho.log",
-                attributes={
-                    "task_id": task_id,
-                    "session_id": session_id,
-                },
-            ) as span:
-                span.set_attributes(
-                    {{f"phospho.metadata.{k}": v for k, v in intermediate_log.items()}}
-                )
-                spans_to_export.append(span)
+        if intermediate_logs is not None and len(intermediate_logs) > 0:
+            for intermediate_log in intermediate_logs:
+                with tracer.start_as_current_span(
+                    name="phospho.log",
+                    attributes={
+                        "task_id": task_id,
+                        "session_id": session_id,
+                    },
+                ) as span:
+                    span.set_attributes(
+                        {
+                            {
+                                f"phospho.metadata.{k}": v
+                                for k, v in intermediate_log.items()
+                            }
+                        }
+                    )
+                    spans_to_export.append(span)
 
         # If to_log, export the spans
         if to_log:
             # Create a new span with the task_id, session_id, and metadata
-            from opentelemetry import trace
 
-            tracer = trace.get_tracer(__name__)
             with tracer.start_as_current_span(
                 name="phospho.log",
                 attributes={
