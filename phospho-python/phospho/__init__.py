@@ -396,8 +396,8 @@ def _log_single_event(
                     "Authorization": "Bearer " + client._api_key(),
                 },
             )
-        
-        # Add spans for intermediate logs
+
+        # Add spans for intermediate logs
         for intermediate_log in intermediate_logs:
             with tracer.start_as_current_span(
                 name="phospho.log",
@@ -406,12 +406,9 @@ def _log_single_event(
                     "session_id": session_id,
                 },
             ) as span:
-                span.set_attributes({
-                    {
-                        f"phospho.metadata.{k}": v
-                        for k, v in intermediate_log.items()
-                    }
-                })
+                span.set_attributes(
+                    {{f"phospho.metadata.{k}": v for k, v in intermediate_log.items()}}
+                )
                 spans_to_export.append(span)
 
         # If to_log, export the spans
@@ -429,7 +426,7 @@ def _log_single_event(
             ) as span:
                 span.set_attributes(
                     {
-                        f"phospho.metadata.{}": v
+                        f"phospho.metadata.{k}": v
                         for k, v in log_content.items()
                         if
                         (
