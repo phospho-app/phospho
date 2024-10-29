@@ -11,17 +11,19 @@ from app.api.v2.models import (
     SessionUpdateRequest,
     Task,
     TaskFlagRequest,
+    TaskHumanEvalRequest,
     Tasks,
     TaskUpdateRequest,
     UserMetadata,
     Users,
-    TaskHumanEvalRequest,
 )
 
 from .abtests import ABTest, ABTests
+from .clustering import RenameClusteringRequest
 from .clusters import Cluster, Clustering, ClusteringRequest, Clusterings, Clusters
 from .events import EventBackfillRequest, LabelRequest, ScoreRequest
 from .explore import (
+    AggregatedSessionsRequest,
     AggregateMetricsRequest,
     ClusteringCostRequest,
     DashboardMetricsFilter,
@@ -29,27 +31,25 @@ from .explore import (
     EventsMetricsFilter,
     FetchClustersRequest,
     Pagination,
-    Sorting,
     ProjectDataFilters,
     QuerySessionsTasksRequest,
-    AggregatedSessionsRequest,
     QueryUserMetadataRequest,
+    Sorting,
 )
 from .metadata import MetadataPivotQuery, MetadataPivotResponse, MetadataValueResponse
 from .organizations import (
-    CreateCheckoutRequest,
-    UserCreatedEventWebhook,
-    CreateDefaultProjectRequest,
     BillingStatsRequest,
+    CreateCheckoutRequest,
+    CreateDefaultProjectRequest,
+    UserCreatedEventWebhook,
 )
 from .projects import (
     AddEventsQuery,
+    ConnectLangfuseQuery,
+    ConnectLangsmithQuery,
     OnboardingSurvey,
     UploadTasksRequest,
-    ConnectLangsmithQuery,
-    ConnectLangfuseQuery,
 )
 from .recipes import RunRecipeRequest
-from .tasks import AddEventRequest, RemoveEventRequest
 from .sessions import SessionHumanEvalRequest
-from .clustering import RenameClusteringRequest
+from .tasks import AddEventRequest, FetchSpansRequest, RemoveEventRequest, TaskSpans

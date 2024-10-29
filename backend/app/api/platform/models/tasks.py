@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, List, Optional
 from pydantic import BaseModel
 from app.db.models import EventDefinition
 
@@ -11,3 +11,14 @@ class AddEventRequest(BaseModel):
 
 class RemoveEventRequest(BaseModel):
     event_name: str
+
+
+class FetchSpansRequest(BaseModel):
+    task_id: str
+    project_id: str
+
+
+class TaskSpans(BaseModel):
+    task_id: str
+    project_id: str
+    spans: List[Dict[str, object]]

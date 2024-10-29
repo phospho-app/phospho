@@ -1,3 +1,4 @@
+from typing import Dict, List
 from loguru import logger
 
 from app.db.mongo import get_mongo_db
@@ -24,6 +25,11 @@ class OpenTelemetryConnector:
         """
         Push the data and process it
         """
+        # TODO : Fix this so that the data is pushed at the end for ALL the spans
+        # and we add task_id and session_id based on the latest one (which in the
+        # phospho module only passes metadata about the previous spans)
+        # if task_id and session_id don't exist
+
         logger.info(f"Processing OpenTelemetry data:\n{data}")
 
         # Convert the data to a dictionary
@@ -131,3 +137,21 @@ class OpenTelemetryConnector:
             logger.error(f"KeyError: {e}")
 
         return 0
+
+
+async def fetch_spans_for_task(
+    project_id: str, task_id: str
+) -> List[Dict[str, object]]:
+    """
+    Fetch all the spans linked to a task_id
+    """
+
+    mongo_db = await get_mongo_db()
+
+    spans = (
+        await mongo_db["opentelemetry"]
+        .find({"project_id": project_id, "task_id": task_id})
+        .to_list(None)
+    )
+
+    return spans
