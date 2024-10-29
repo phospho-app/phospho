@@ -53,7 +53,7 @@ const Clusters: React.FC = () => {
   const setSelectedClustering = navigationStateStore(
     (state) => state.setSelectedClustering,
   );
-  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const { data: clusteringsData } = useSWR(
     project_id

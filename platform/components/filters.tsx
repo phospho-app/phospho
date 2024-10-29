@@ -53,6 +53,7 @@ import {
   TextSearch,
   ThumbsDown,
   ThumbsUp,
+  UserRound,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -89,6 +90,8 @@ const FilterComponent = ({
     (state) => state.setTasksPagination,
   );
   const dateRange = navigationStateStore((state) => state.dateRange);
+
+  const usersExcluded: string[] | undefined = undefined;
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -945,6 +948,21 @@ const FilterComponent = ({
                       </DropdownMenuSub>
                     );
                   })}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <UserRound className="size-4 mr-2" />
+              <span>Exclude users</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="overflow-y-auto max-h-[30rem]">
+                {usersExcluded && (
+                  <DropdownMenuItem disabled>
+                    No users excluded
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
