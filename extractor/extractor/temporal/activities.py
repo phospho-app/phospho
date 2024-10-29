@@ -51,7 +51,14 @@ async def bill_on_stripe(
         f"Billing organization {request.org_id} for {request.nb_job_results} jobs, project_id {request.project_id}"
     )
     usage_per_log: int = 0
-    project = await get_project_by_id(request.project_id)
+    try:
+        project = await get_project_by_id(request.project_id)
+    except ValueError as e:
+        logger.error(f"Project {request.project_id} error: {e}")
+        return
+    except Exception as e:
+        raise e
+
     if request.recipe_type is not None:
         if request.recipe_type == "event_detection":
             usage_per_log += 1 if project.settings.run_event_detection else 0
