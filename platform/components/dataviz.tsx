@@ -27,6 +27,8 @@ import {
 import { Payload } from "recharts/types/component/DefaultTooltipContent";
 import useSWRImmutable from "swr/immutable";
 
+import DatavizTaggerGraph from "./dataviz-tagger";
+
 interface PivotTableElement {
   breakdown_by: string;
   [key: string]: string | number | null;
@@ -315,6 +317,12 @@ const DatavizGraph = ({
                             </div>
                           );
                         })}
+                        {breakdown_by === "tagger_name" && (
+                          <DatavizTaggerGraph
+                            taggerName={label}
+                            project_id={project_id}
+                          />
+                        )}
                         <div className="pt-4">
                           {supportedDeepDives.includes(breakdown_by) && (
                             <div className="flex flex-row items-center text-xs text-secondary">
