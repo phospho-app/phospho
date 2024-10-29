@@ -136,25 +136,25 @@ async def post_remove_event_from_task(
 
 
 @router.post(
-    "/tasks/spans",
+    "/tasks/{task_id}/spans",
     response_model=TaskSpans,
     description="Fetch all the spans linked to a task",
 )
 async def post_fetch_spans_of_task(
+    task_id: str,
     query: FetchSpansRequest,
     user: User = Depends(propelauth.require_user),
 ) -> TaskSpans:
     """
     Fetch all the spans linked to a task
     """
+
     await verify_if_propelauth_user_can_access_project(user, query.project_id)
 
-    spans = await fetch_spans_for_task(
-        project_id=query.project_id, task_id=query.task_id
-    )
+    spans = await fetch_spans_for_task(project_id=query.project_id, task_id=task_id)
 
     return TaskSpans(
-        task_id=query.task_id,
+        task_id=task_id,
         project_id=query.project_id,
         spans=spans,
     )

@@ -340,3 +340,9 @@ export interface DatavizSorting {
   id: "breakdown_by" | "metric";
   desc: boolean;
 }
+
+export interface TaskSpans {
+  task_id: string;
+  project_id: string;
+  spans: any[];
+}

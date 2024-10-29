@@ -14,24 +14,22 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { authFetcher } from "@/lib/fetcher";
 import { getLanguageLabel } from "@/lib/utils";
-import { Task, TaskWithEvents } from "@/models/models";
-import { ChevronDown } from "lucide-react";
+import { Task, TaskSpans, TaskWithEvents } from "@/models/models";
+import { useUser } from "@propelauth/nextjs/client";
+import { ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import ReactMarkdown from "react-markdown";
+import useSWR from "swr";
 
 import { InteractiveDatetime } from "./interactive-datetime";
 import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
 } from "./label-events";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "./ui/accordion";
+import { Separator } from "./ui/separator";
 
 function TaskBox({
   task,
@@ -42,6 +40,21 @@ function TaskBox({
   setTask: (task: TaskWithEvents) => void;
   setFlag: (flag: string) => void;
 }) {
+  const { accessToken } = useUser();
+  const { data: taskSpans }: { data: TaskSpans } = useSWR(
+    task.project_id
+      ? [`/api/tasks/${task.id}/spans`, accessToken, task.id, task.project_id]
+      : null,
+    ([url, accessToken]) =>
+      authFetcher(url, accessToken, "POST", {
+        task_id: task.id,
+        project_id: task.project_id,
+      }),
+    {
+      keepPreviousData: true,
+    },
+  );
+
   return (
     <Card className="flex flex-col space-y-2 rounded-md p-2">
       <div className="flex justify-between align-top">
@@ -87,7 +100,7 @@ function TaskBox({
               <div className="text-muted-foreground ml-4 text-xs">
                 System Prompt
               </div>
-              <div className="bg-primary text-secondary min-w-[200px] rounded-lg px-2 py-1 mx-2 whitespace-pre-wrap">
+              <div className="bg-primary text-secondary min-w-[200px] min-h-[1rem] rounded-lg px-2 py-1 mx-2 whitespace-pre-wrap">
                 <ReactMarkdown className="m-1">
                   {task.metadata.system_prompt}
                 </ReactMarkdown>
@@ -116,13 +129,44 @@ function TaskBox({
                 <>User</>
               )}
             </div>
-            <div className="bg-green-500 text-secondary min-w-[200px] rounded-lg px-2 py-1 mx-2 whitespace-pre-wrap">
+            <div className="bg-green-500 text-secondary min-w-[200px] min-h-[1rem] rounded-lg px-2 py-1 mx-2 whitespace-pre-wrap">
               {task.input && (
                 <ReactMarkdown className="m-1">{task.input}</ReactMarkdown>
               )}
             </div>
           </div>
         </div>
+        <Collapsible>
+          <CollapsibleTrigger className="justify-start flex flex-row ">
+            <div className="min-w-[200px] flex flex-row justify-center min-h-[1rem] gap-x-2 items-center text-xs text-muted-foreground hover:text-green-500 hover:cursor-pointer">
+              <Separator className="max-w-[2rem]" />
+              <span>Steps</span>
+              <div className="text-xs text-muted-foreground border border-1 rounded-2xl size-5 flex items-center justify-center">
+                <ChevronsUpDown className="size-3" />
+              </div>
+              <Separator className="max-w-[2rem]" />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="flex flex-col gap-y-2 my-2">
+              {taskSpans?.spans?.map((span, index) => {
+                return (
+                  <code
+                    className="whitespace-pre-wrap mx-2 bg-secondary p-2 text-xs"
+                    key={`${task.id}_span_${index}`}
+                  >
+                    {JSON.stringify(span)}
+                  </code>
+                );
+              })}
+              {taskSpans?.spans && taskSpans.spans.length === 0 && (
+                <pre className="whitespace-pre-wrap mx-2 bg-secondary p-2 text-xs">
+                  No steps data found. Setup tracing to add them here.
+                </pre>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
         {task.output && (
           <div className="flex justify-start">
             <div className="flex flex-col">
@@ -136,15 +180,7 @@ function TaskBox({
           </div>
         )}
       </div>
-      <Collapsible>
-        <CollapsibleTrigger>
-          <Button variant="outline" className="text-xs text-muted-foreground">
-            <div>Spans</div>
-            <ChevronDown className="size-4" />
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>Hello</CollapsibleContent>
-      </Collapsible>
+
       <Collapsible>
         <CollapsibleTrigger asChild>
           <Button variant="link" className="text-muted-foreground text-xs">

@@ -1,7 +1,6 @@
 import sys
 from typing import List, Union
 
-from app.services.integrations.opentelemetry import OpenTelemetryConnector
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
 from pydantic import ValidationError
@@ -128,30 +127,3 @@ async def store_batch_of_log_events(
     )
 
     return log_reply
-
-
-@router.post(
-    "/log/{project_id}/opentelemetry",
-    response_model=dict,
-    description="Store data from OpenTelemetry in database",
-)
-async def store_opentelemetry_log(
-    project_id: str,
-    open_telemetry_data: dict,
-    background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
-):
-    """Store the opentelemetry data in the opentelemetry database"""
-
-    await verify_propelauth_org_owns_project_id(org, project_id)
-
-    connector = OpenTelemetryConnector(
-        project_id=project_id,
-        org_id=org["org"].get("org_id"),
-    )
-    background_tasks.add_task(
-        connector.process,
-        data=open_telemetry_data,
-    )
-
-    return {"status": "ok"}
