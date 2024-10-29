@@ -120,7 +120,9 @@ const ExcludeUsersDialog = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <AlertDialogHeader>
-          {projectToEdit && <AlertDialogTitle>Exclude users</AlertDialogTitle>}
+          {projectToEdit && (
+            <AlertDialogTitle>Setup user_id filter list</AlertDialogTitle>
+          )}
         </AlertDialogHeader>
 
         <FormField
@@ -148,24 +150,26 @@ const ExcludeUsersDialog = ({
         />
         {excludedUsers.length > 0 && (
           <div className="flex flex-col space-y-2">
-            Excluded users:
-            {excludedUsers.map((user_id) => (
-              <div
-                key={user_id}
-                className="flex flex-row items-center justify-between space-x-2 w-full"
-              >
-                {user_id}
-                <div className="justify-end">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteUserIdFromList(user_id)}
-                  >
-                    <X className="size-4" />
-                  </Button>
+            Filtered users:
+            <div className="max-h-[20rem] overflow-y-auto">
+              {excludedUsers.map((user_id) => (
+                <div
+                  key={user_id}
+                  className="flex flex-row items-center justify-between space-x-2 w-full"
+                >
+                  {user_id}
+                  <div className="justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteUserIdFromList(user_id)}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
         <AlertDialogFooter>

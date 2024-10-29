@@ -53,7 +53,7 @@ import {
   TextSearch,
   ThumbsDown,
   ThumbsUp,
-  UserRound,
+  Users,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -439,7 +439,7 @@ const FilterComponent = ({
               resetPagination();
             }}
           >
-            Exclude users in settings
+            Filter users in list
             <X className="size-4 ml-2" />
           </Button>
         )}
@@ -968,7 +968,7 @@ const FilterComponent = ({
           </DropdownMenuSub>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
-              <UserRound className="size-4 mr-2" />
+              <Users className="size-4 mr-2" />
               <span>Users</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
@@ -989,7 +989,7 @@ const FilterComponent = ({
                         color: dataFilters.excluded_users ? "green" : "inherit",
                       }}
                     >
-                      Exclude users in settings
+                      Filter users in list
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link
