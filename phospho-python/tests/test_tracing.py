@@ -13,36 +13,48 @@ def test_tracing():
     )
 
     openai_client = OpenAI()
-    messages = [
-        {"role": "system", "content": "Obey"},
-        {"role": "user", "content": "Say hi"},
-    ]
 
     # Implicit syntax
     response = openai_client.chat.completions.create(
-        messages=messages,
+        messages=[
+            {"role": "system", "content": "Obey"},
+            {"role": "user", "content": "Say hi"},
+        ],
         model="gpt-4o-mini",
         max_tokens=1,
     )
     # Inspect phospho.spans_to_export
     assert len(phospho.spans_to_export) == 1
     phospho.log(
-        input=messages,
+        system_prompt="Obey",
+        input="Say hi",
         output=response,
     )
 
     # Context syntax
     with phospho.tracer() as tracer:
         # Make an API call
+        messages = [{"role": "user", "content": "Say good bye"}]
+        openai_client.chat.completions.create(
+            messages=messages,
+            model="gpt-4o-mini",
+            max_tokens=1,
+        )
+        # Make a second and a third
+        openai_client.chat.completions.create(
+            messages=messages,
+            model="gpt-4o-mini",
+            max_tokens=1,
+        )
         response = openai_client.chat.completions.create(
             messages=messages,
             model="gpt-4o-mini",
             max_tokens=1,
         )
         # Inspect tracer.spans_to_export
-        assert len(tracer.spans_to_export) == 1
+        assert len(tracer.spans_to_export) == 3
         log_content = phospho.log(
-            input=messages,
+            input="Say good bye",
             output=response,
         )
         # Check that the task_id and session_id are correctly set
@@ -54,13 +66,22 @@ def test_tracing():
     def my_function():
         # Make an API call
         response = openai_client.chat.completions.create(
-            messages=messages,
+            messages=[{"role": "user", "content": "Say a joke"}],
             model="gpt-4o-mini",
             max_tokens=1,
         )
         phospho.log(
-            input=messages,
+            input="Say a joke",
             output=response,
         )
 
     my_function()
+
+    # Another tracing method, add intermediate steps
+    phospho.log(
+        input="Say bossman",
+        output="Bossman",
+        intermediate_logs=[{"some_data": "very important"}],
+    )
+
+    phospho.flush()

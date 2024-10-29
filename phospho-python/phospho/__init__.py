@@ -139,6 +139,8 @@ def init(
 
         from .tracing import ListSpanProcessor, init_instrumentations, get_otlp_exporter
 
+        # The default ListSpanProcessor, without task_id and session_id.
+        # It just adds spans to the global spans_to_export list
         span_processor = ListSpanProcessor(spans_to_export=spans_to_export)
         # this does work, but mypy doesn't like it
         trace.get_tracer_provider().add_span_processor(span_processor)
@@ -406,7 +408,7 @@ def _log_single_event(
                 ) as span:
                     span.set_attributes(
                         {
-                            f"phospho.metadata.{k}": v
+                            f"phospho.intermediate_logs.{k}": v
                             for k, v in intermediate_log.items()
                         }
                     )
@@ -1080,7 +1082,8 @@ def tracer(
     )
 
     # Add the processor to the tracer
-    trace.get_tracer_provider().add_span_processor(span_processor)
+    tracer = trace.get_tracer_provider()
+    tracer.add_span_processor(span_processor)
 
     # Execute the block of code
     yield span_processor
@@ -1096,6 +1099,8 @@ def tracer(
     # Clean up default task_id and session_id
     task_id_override = None
     session_id_override = None
+    # Remove passed span processors
+    tracer.shutdown()
 
 
 # Do the same but with  a decorator

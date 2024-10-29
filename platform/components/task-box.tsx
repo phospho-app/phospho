@@ -52,7 +52,9 @@ function TaskBox({
         project_id: task.project_id,
       }),
     {
-      keepPreviousData: true,
+      keepPreviousData: false,
+      revalidateOnFocus: false,
+      refreshInterval: 0,
     },
   );
 

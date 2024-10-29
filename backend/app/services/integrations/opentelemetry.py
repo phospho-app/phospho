@@ -6,10 +6,6 @@ from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
 from google.protobuf.json_format import MessageToDict
 
 
-def nest_dictionnary(d: dict) -> dict:
-    pass
-
-
 class OpenTelemetryConnector:
     project_id: str
     org_id: str
@@ -117,9 +113,9 @@ class OpenTelemetryConnector:
                             "session_id"
                         )
                         span_metadata = unpacked_attributes["phospho"].get("metadata")
+                        # Remove from the unpacked_attributes
+                        unpacked_attributes.pop("phospho")
 
-                    # We only keep the spans that have the "gen_ai.system" attribute
-                    if "gen_ai" in unpacked_attributes:
                         # Store the data in the database
                         spans_to_export.append(
                             {
@@ -134,14 +130,10 @@ class OpenTelemetryConnector:
                         logger.info("Opentelemetry data stored in the database")
 
                     if span_id == len(scope.spans) - 1:
-                        if (
-                            "phospho" in unpacked_attributes
-                            and "gen_ai" not in unpacked_attributes
-                        ):
-                            # Update the trace metadata
-                            trace_task_id = span_task_id
-                            trace_session_id = span_session_id
-                            trace_metadata = span_metadata
+                        # Update the trace metadata
+                        trace_task_id = span_task_id
+                        trace_session_id = span_session_id
+                        trace_metadata = span_metadata
 
         # Update the spans with missing task_id and session_id with the trace metadata
         if trace_task_id is not None and trace_session_id is not None:
