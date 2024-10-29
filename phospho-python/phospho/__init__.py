@@ -413,10 +413,8 @@ def _log_single_event(
                 ) as span:
                     span.set_attributes(
                         {
-                            {
-                                f"phospho.metadata.{k}": v
-                                for k, v in intermediate_log.items()
-                            }
+                            f"phospho.metadata.{k}": v
+                            for k, v in intermediate_log.items()
                         }
                     )
                     spans_to_export.append(span)
@@ -452,7 +450,7 @@ def _log_single_event(
                 )
                 spans_to_export.append(span)
             # Export span to backend
-            otlp_exporter.export(spans_to_export)
+            local_oltp_exporter.export(spans_to_export)
             spans_to_export = []
 
     return log_content
