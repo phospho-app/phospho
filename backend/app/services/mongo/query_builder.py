@@ -187,6 +187,7 @@ class QueryBuilder:
         - metadata
         - user_id
         - task_position
+        - excluded_users
         """
         filters = self.filters
         match: Dict[str, object] = self._main_doc_filter(prefix=prefix)
@@ -253,6 +254,9 @@ class QueryBuilder:
 
         if filters.task_position is not None:
             match[f"{prefix}task_position"] = filters.task_position
+
+        if filters.excluded_users is not None:
+            match[f"{prefix}metadata.user_id"] = {"$nin": filters.excluded_users}
 
         if match:
             self.pipeline.append({"$match": match})
@@ -457,6 +461,7 @@ class QueryBuilder:
         - clustering_id
         - clusters_ids
         - user_id
+        - excluded_users
         - metadata (filter on the Task's metadata)
 
         Not supported:
@@ -567,6 +572,10 @@ class QueryBuilder:
             self.merge_tasks()
             for key, value in filters.metadata.items():
                 match[f"metadata.{key}"] = value
+
+        if filters.excluded_users is not None:
+            self.merge_tasks()
+            match["tasks.metadata.user_id"] = {"$nin": filters.excluded_users}
 
         if match:
             self.pipeline.append({"$match": match})

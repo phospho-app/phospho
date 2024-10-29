@@ -4,6 +4,7 @@ import { CopyButton } from "@/components/copy-button";
 import { InteractiveDatetime } from "@/components/interactive-datetime";
 import CreateProjectDialog from "@/components/projects/create-project-form";
 import AlertDialogDeleteProject from "@/components/projects/delete-project-popup";
+import ExcludeUsersDialog from "@/components/projects/exclude-users-form";
 import AnalyticsSettings from "@/components/settings/disable-analytics";
 import {
   AlertDialog,
@@ -15,13 +16,14 @@ import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { BriefcaseBusiness, Pencil } from "lucide-react";
+import { BriefcaseBusiness, Pencil, Users } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
 
 export default function Page() {
   const { accessToken } = useUser();
-  const [open, setOpen] = useState(false);
+  const [openRename, setOpenRename] = useState(false);
+  const [openExcludeUsers, setOpenExcludeUsers] = useState(false);
 
   const project_id = navigationStateStore((state) => state.project_id);
   const { data: selectedProject }: { data: Project } = useSWR(
@@ -64,8 +66,8 @@ export default function Page() {
             <InteractiveDatetime timestamp={selectedProject.created_at} />
           </div>
         </div>
-        <div>
-          <AlertDialog open={open} onOpenChange={setOpen}>
+        <div className="space-x-2">
+          <AlertDialog open={openRename} onOpenChange={setOpenRename}>
             <AlertDialogTrigger asChild>
               <Button variant="secondary">
                 <Pencil className="size-4 mr-2" />
@@ -74,7 +76,24 @@ export default function Page() {
             </AlertDialogTrigger>
             <AlertDialogContent className="md:w-1/3">
               <CreateProjectDialog
-                setOpen={setOpen}
+                setOpen={setOpenRename}
+                projectToEdit={selectedProject}
+              />
+            </AlertDialogContent>
+          </AlertDialog>
+          <AlertDialog
+            open={openExcludeUsers}
+            onOpenChange={setOpenExcludeUsers}
+          >
+            <AlertDialogTrigger asChild>
+              <Button variant="secondary">
+                <Users className="size-4 mr-2" />
+                Setup user_id filter list
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="md:w-1/3">
+              <ExcludeUsersDialog
+                setOpen={setOpenExcludeUsers}
                 projectToEdit={selectedProject}
               />
             </AlertDialogContent>

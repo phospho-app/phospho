@@ -213,6 +213,7 @@ export interface ProjectSettings {
   dashboard_tiles: DashboardTile[];
   analytics_threshold_enabled?: boolean;
   analytics_threshold?: number;
+  excluded_users?: string[];
 }
 
 export interface Project {
@@ -336,6 +337,7 @@ export interface ProjectDataFilters {
   version_id?: string | null;
   task_id_search?: string | null;
   session_id_search?: string | null;
+  excluded_users?: string[] | null;
 }
 
 export interface DatavizSorting {
