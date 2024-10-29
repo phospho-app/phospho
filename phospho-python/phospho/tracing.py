@@ -1,8 +1,10 @@
 import logging
-from typing import List, Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from opentelemetry.context import Context
 from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
+
+from phospho.client import Client
 
 logger = logging.getLogger(__name__)
 

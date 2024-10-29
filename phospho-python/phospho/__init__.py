@@ -137,21 +137,13 @@ def init(
         resource = Resource(attributes={"service.name": "service"})
         trace.set_tracer_provider(TracerProvider(resource=resource))
 
-        from .tracing import ListSpanProcessor, init_instrumentations
+        from .tracing import ListSpanProcessor, init_instrumentations, get_otlp_exporter
 
         span_processor = ListSpanProcessor(spans_to_export=spans_to_export)
-        trace.get_tracer_provider().add_span_processor(span_processor)  # this does work
+        # this does work, but mypy doesn't like it
+        trace.get_tracer_provider().add_span_processor(span_processor)
 
-        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-            OTLPSpanExporter,
-        )
-
-        otlp_exporter = OTLPSpanExporter(
-            endpoint=f"{client.base_url}/v3/otl/{client._project_id()}",
-            headers={
-                "Authorization": "Bearer " + client._api_key(),
-            },
-        )
+        otlp_exporter = get_otlp_exporter(client)
 
         init_instrumentations()
 
@@ -394,16 +386,9 @@ def _log_single_event(
     ):
         local_otlp_exporter = otlp_exporter
         if local_otlp_exporter is None:
-            from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-                OTLPSpanExporter,
-            )
+            from .tracing import get_otlp_exporter
 
-            local_otlp_exporter = OTLPSpanExporter(
-                endpoint=f"{client.base_url}/v3/otl/{client._project_id()}",
-                headers={
-                    "Authorization": "Bearer " + client._api_key(),
-                },
-            )
+            local_otlp_exporter = get_otlp_exporter(client)
 
         from opentelemetry import trace
 
@@ -1061,7 +1046,7 @@ def tracer(
     from opentelemetry import trace
     from opentelemetry.sdk.trace import Span
 
-    from .tracing import ListSpanProcessor
+    from .tracing import ListSpanProcessor, get_otlp_exporter
 
     global client
     global otlp_exporter
@@ -1105,17 +1090,7 @@ def tracer(
         otlp_exporter.export(spans_to_export)
         spans_to_export = []
     else:
-        # Create a new exporter
-        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-            OTLPSpanExporter,
-        )
-
-        otlp_exporter = OTLPSpanExporter(
-            endpoint=f"{client.base_url}/v3/otl/{client._project_id()}",
-            headers={
-                "Authorization": "Bearer " + client._api_key(),
-            },
-        )
+        otlp_exporter = get_otlp_exporter(client)
         otlp_exporter.export(spans_to_export)
 
     # Clean up default task_id and session_id
