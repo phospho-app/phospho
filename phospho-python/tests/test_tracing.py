@@ -52,7 +52,7 @@ def test_tracing():
             max_tokens=1,
         )
         # Inspect tracer.spans_to_export
-        assert len(tracer.spans_to_export) == 3
+        assert len(tracer.local_queue()) == 3
         log_content = phospho.log(
             input="Say good bye",
             output=response,

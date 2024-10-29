@@ -16,7 +16,8 @@ class ListSpanProcessor(SpanProcessor):
 
     def __init__(
         self,
-        spans_to_export: List[Span],
+        context_name: str,
+        spans_to_export: Dict[str, List[Span]],
         task_id: Optional[str] = None,
         session_id: Optional[str] = None,
         # OpenTelemetry does not support nested types in attributes
@@ -36,10 +37,14 @@ class ListSpanProcessor(SpanProcessor):
             ]
         ] = None,
     ):
+        self.context_name = context_name
         self.spans_to_export = spans_to_export
         self.task_id = task_id
         self.session_id = session_id
         self.metadata = metadata
+
+    def local_queue(self):
+        return self.spans_to_export[self.context_name]
 
     def on_start(self, span: Span, parent_context: Optional[Context] = None) -> None:
         # Adds the span to the list of spans to be exported
@@ -51,7 +56,7 @@ class ListSpanProcessor(SpanProcessor):
             # Add "phospho.metadata" attribute to each key
             metadata = {f"phospho.metadata.{k}": v for k, v in self.metadata.items()}
             span.set_attributes(metadata)
-        self.spans_to_export.append(span)
+        self.spans_to_export[self.context_name].append(span)
 
     def on_end(self, span: ReadableSpan) -> None:
         pass
