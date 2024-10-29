@@ -210,10 +210,16 @@ async def run_process_tasks(
         project_id=request_body.project_id,
         org_id=request_body.org_id,
         tasks_id_to_process=request_body.tasks_id_to_process,
+        run_analytics=request_body.run_analytics,
     )
+
+    nb_job_results = (
+        len(request_body.tasks_id_to_process) if request_body.run_analytics else 0
+    )
+
     return {
         "status": "ok",
-        "nb_job_results": len(request_body.tasks_id_to_process),
+        "nb_job_results": nb_job_results,
     }
 
 
