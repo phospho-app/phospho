@@ -100,6 +100,8 @@ def init(
     global log_queue
     global consumer
     global default_version_id
+    global session_id_override
+    global task_id_override
     global otlp_exporter
     global spans_to_export
 
@@ -117,6 +119,10 @@ def init(
     )
     # Start the consumer on a separate thread (this will periodically send logs to backend)
     consumer.start()
+
+    # Reset the task_id and session_id
+    session_id_override = None
+    task_id_override = None
 
     # Wrap the OpenAI API calls
     if auto_log:

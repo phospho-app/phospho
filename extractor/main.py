@@ -17,7 +17,6 @@ from extractor.temporal.activities import (
     run_process_logs_for_tasks,
     run_process_tasks,
     run_recipe_on_task,
-    store_open_telemetry_data,
 )
 from extractor.temporal.pydantic_converter import pydantic_data_converter
 from extractor.temporal.workflows import (
@@ -123,7 +122,6 @@ async def main() -> None:
         activities=[  # And the linked activities here
             extract_langsmith_data,
             extract_langfuse_data,
-            store_open_telemetry_data,
             run_recipe_on_task,
             bill_on_stripe,
             run_main_pipeline_on_messages,
