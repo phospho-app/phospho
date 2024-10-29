@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/hover-card";
 import { getLanguageLabel } from "@/lib/utils";
 import { Task, TaskWithEvents } from "@/models/models";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import ReactMarkdown from "react-markdown";
@@ -25,8 +26,14 @@ import {
   AddEventDropdownForTasks,
   InteractiveEventBadgeForTasks,
 } from "./label-events";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./ui/accordion";
 
-const TaskBox = ({
+function TaskBox({
   task,
   setTask,
   setFlag,
@@ -34,7 +41,7 @@ const TaskBox = ({
   task: TaskWithEvents;
   setTask: (task: TaskWithEvents) => void;
   setFlag: (flag: string) => void;
-}) => {
+}) {
   return (
     <Card className="flex flex-col space-y-2 rounded-md p-2">
       <div className="flex justify-between align-top">
@@ -98,7 +105,7 @@ const TaskBox = ({
                       href={`/org/transcripts/users/${encodeURIComponent(task.metadata.user_id)}`}
                       className="underline cursor-pointer"
                     >
-                      User
+                      User {task.metadata.user_id}
                     </Link>
                   </HoverCardTrigger>
                   <HoverCardContent>
@@ -130,8 +137,19 @@ const TaskBox = ({
         )}
       </div>
       <Collapsible>
+        <CollapsibleTrigger>
+          <Button variant="outline" className="text-xs text-muted-foreground">
+            <div>Spans</div>
+            <ChevronDown className="size-4" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>Hello</CollapsibleContent>
+      </Collapsible>
+      <Collapsible>
         <CollapsibleTrigger asChild>
-          <Button variant="link">{">"}Raw Task Data</Button>
+          <Button variant="link" className="text-muted-foreground text-xs">
+            {">"}Raw Task Data
+          </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <pre className="whitespace-pre-wrap mx-2 bg-secondary p-2 text-xs">
@@ -178,7 +196,6 @@ const TaskBox = ({
       </div>
     </Card>
   );
-};
+}
 
-export default TaskBox;
 export { TaskBox };

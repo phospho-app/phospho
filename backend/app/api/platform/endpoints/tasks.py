@@ -136,7 +136,7 @@ async def post_remove_event_from_task(
 
 
 @router.post(
-    "/tasks/traces",
+    "/tasks/spans",
     response_model=TaskSpans,
     description="Fetch all the spans linked to a task",
 )

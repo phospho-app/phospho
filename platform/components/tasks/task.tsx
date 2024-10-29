@@ -3,7 +3,7 @@
 import { CopyButton } from "@/components/copy-button";
 import { InteractiveDatetime } from "@/components/interactive-datetime";
 import { CenteredSpinner } from "@/components/small-spinner";
-import TaskBox from "@/components/task-box";
+import { TaskBox } from "@/components/task-box";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
