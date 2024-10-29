@@ -414,6 +414,7 @@ def _log_single_event(
                 spans_to_export.append(span)
             # Export span to backend
             otlp_exporter.export(spans_to_export)
+            spans_to_export = []
 
     return log_content
 
@@ -1042,11 +1043,12 @@ def tracer(
     trace.get_tracer_provider().add_span_processor(span_processor)
 
     # Execute the block of code
-    yield
+    yield span_processor
 
     # Push the spans to the exporter
     if otlp_exporter is not None:
         otlp_exporter.export(spans_to_export)
+        spans_to_export = []
     else:
         # Create a new exporter
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
