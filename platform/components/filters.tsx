@@ -53,6 +53,7 @@ import {
   TextSearch,
   ThumbsDown,
   ThumbsUp,
+  UserRound,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -120,6 +121,8 @@ const FilterComponent = ({
         ),
       )
     : {};
+
+  const excludedUsers = selectedProject?.settings?.excluded_users;
 
   const resetPagination = () => {
     if (variant === "tasks") {
@@ -422,6 +425,21 @@ const FilterComponent = ({
             }}
           >
             Is last message
+            <X className="size-4 ml-2" />
+          </Button>
+        )}
+        {dataFilters.excluded_users && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setDataFilters({
+                ...dataFilters,
+                excluded_users: null,
+              });
+              resetPagination();
+            }}
+          >
+            Exclude users in settings
             <X className="size-4 ml-2" />
           </Button>
         )}
@@ -945,6 +963,54 @@ const FilterComponent = ({
                       </DropdownMenuSub>
                     );
                   })}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <UserRound className="size-4 mr-2" />
+              <span>Users</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="overflow-y-auto max-h-[30rem]">
+                {excludedUsers && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        // Override the event_name filter
+                        // TODO: Allow multiple event_name filters
+                        setDataFilters({
+                          ...dataFilters,
+                          excluded_users: excludedUsers,
+                        });
+                        resetPagination();
+                      }}
+                      style={{
+                        color: dataFilters.excluded_users ? "green" : "inherit",
+                      }}
+                    >
+                      Exclude users in settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href="/org/settings/project"
+                        className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                      >
+                        <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">Manage list</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {!excludedUsers && (
+                  <Link
+                    href="/org/settings/project"
+                    className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">Setup list</span>
+                  </Link>
+                )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
