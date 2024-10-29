@@ -21,7 +21,7 @@ import { navigationStateStore } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 // PropelAuth
 import { useUser } from "@propelauth/nextjs/client";
-import { Plus, X } from "lucide-react";
+import { Plus, Users, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import useSWR, { mutate } from "swr";
 import * as z from "zod";
@@ -120,7 +120,20 @@ const ExcludeUsersDialog = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <AlertDialogHeader>
-          {projectToEdit && <AlertDialogTitle>Exclude users</AlertDialogTitle>}
+          {projectToEdit && (
+            <>
+              <AlertDialogTitle>
+                <div className="flex flex-row items-center gap-x-2">
+                  <Users className="size-4" />
+                  Setup user_id filter list
+                </div>
+              </AlertDialogTitle>
+              <div className="text-muted-foreground">
+                This user_id list can be used to filter other visualizations.
+                This is helpful to remove test users from your data.
+              </div>
+            </>
+          )}
         </AlertDialogHeader>
 
         <FormField
@@ -148,24 +161,26 @@ const ExcludeUsersDialog = ({
         />
         {excludedUsers.length > 0 && (
           <div className="flex flex-col space-y-2">
-            Excluded users:
-            {excludedUsers.map((user_id) => (
-              <div
-                key={user_id}
-                className="flex flex-row items-center justify-between space-x-2 w-full"
-              >
-                {user_id}
-                <div className="justify-end">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteUserIdFromList(user_id)}
-                  >
-                    <X className="size-4" />
-                  </Button>
+            Filtered users:
+            <div className="max-h-[20rem] overflow-y-auto">
+              {excludedUsers.map((user_id) => (
+                <div
+                  key={user_id}
+                  className="flex flex-row items-center justify-between space-x-2 w-full"
+                >
+                  {user_id}
+                  <div className="justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteUserIdFromList(user_id)}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
         <AlertDialogFooter>

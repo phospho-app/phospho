@@ -16,7 +16,7 @@ import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { BriefcaseBusiness, Pencil, UserRound } from "lucide-react";
+import { BriefcaseBusiness, Pencil, Users } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
 
@@ -87,8 +87,8 @@ export default function Page() {
           >
             <AlertDialogTrigger asChild>
               <Button variant="secondary">
-                <UserRound className="size-4 mr-2" />
-                Exclude users
+                <Users className="size-4 mr-2" />
+                Setup user_id filter list
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="md:w-1/3">
