@@ -213,6 +213,7 @@ export interface ProjectSettings {
   dashboard_tiles: DashboardTile[];
   analytics_threshold_enabled?: boolean;
   analytics_threshold?: number;
+  excluded_users?: string[];
 }
 
 export interface Project {

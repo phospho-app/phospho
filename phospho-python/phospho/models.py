@@ -306,6 +306,7 @@ class ProjectSettings(BaseModel):
     )
     analytics_threshold_enabled: bool = False
     analytics_threshold: int = 100_000
+    excluded_users: Optional[List[str]] = None
 
 
 class Project(DatedBaseModel):

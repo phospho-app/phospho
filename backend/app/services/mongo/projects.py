@@ -278,6 +278,8 @@ async def update_project(project: Project, **kwargs) -> Project:
         )
 
     updated_project = await get_project_by_id(project.id)
+
+    logger.debug(f"Updated project: {updated_project}")
     return updated_project
 
 
