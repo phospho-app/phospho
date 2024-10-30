@@ -1,5 +1,8 @@
+import inspect
 import logging
+from contextlib import contextmanager
 from copy import deepcopy
+from functools import wraps
 from typing import (
     Any,
     AsyncGenerator,
@@ -49,9 +52,16 @@ except ImportError:
 client = None
 log_queue = None
 consumer = None
-latest_task_id = None
-latest_session_id = None
+
+latest_task_id: Optional[str] = None
+latest_session_id: Optional[str] = None
+
+task_id_override: Optional[str] = None
+session_id_override: Optional[str] = None
+metadata_override: Optional[Dict[str, Any]] = None
 default_version_id = None
+
+tracing_initialized = False
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +70,7 @@ def init(
     api_key: Optional[str] = None,
     project_id: Optional[str] = None,
     auto_log: bool = False,
+    tracing: bool = False,
     base_url: Optional[str] = None,
     tick: float = 0.5,
     raise_error_on_fail_to_send: bool = False,
@@ -88,6 +99,9 @@ def init(
     global log_queue
     global consumer
     global default_version_id
+    global session_id_override
+    global task_id_override
+    global tracing_initialized
 
     if version_id is None:
         version_id = generate_version_id()
@@ -104,9 +118,20 @@ def init(
     # Start the consumer on a separate thread (this will periodically send logs to backend)
     consumer.start()
 
+    # Reset the task_id and session_id
+    session_id_override = None
+    task_id_override = None
+
     # Wrap the OpenAI API calls
     if auto_log:
         integrations.wrap_openai(wrap=wrap)
+
+    if tracing:
+        # Initialize the global tracer
+        from .tracing import init_tracing
+
+        init_tracing(client=client)
+        tracing_initialized = True
 
 
 def new_session() -> str:
@@ -157,6 +182,11 @@ def _log_single_event(
         Callable[[Any, Any], Dict[str, float]]
     ] = None,
     to_log: bool = True,
+    steps: Optional[
+        List[
+            Dict[str, Union[int, float, str, bool, List[Union[int, float, str, bool]]]]
+        ]
+    ] = None,
     **kwargs: Any,
 ) -> Dict[str, object]:
     """Log a single event.
@@ -169,6 +199,10 @@ def _log_single_event(
     global latest_task_id
     global latest_session_id
     global default_version_id
+    global task_id_override
+    global session_id_override
+    global metadata_override
+    global tracing_initialized
 
     if "version_id" not in kwargs or kwargs["version_id"] is None:
         kwargs["version_id"] = default_version_id
@@ -207,8 +241,21 @@ def _log_single_event(
     )
 
     # Task: use the task_id parameter, the task_id infered from inputs, or generate one
+    if task_id_override is not None:
+        task_id = task_id_override
     if task_id is None:
-        task_id = generate_uuid()
+        task_id = generate_uuid("task_")
+
+    # Session: if None, generate a default session_id
+    if session_id_override is not None:
+        session_id = session_id_override
+    if session_id is None:
+        session_id = generate_uuid("session_")
+
+    # Metadata override
+    local_metadata_override = metadata_override
+    if local_metadata_override is None:
+        local_metadata_override = {}
 
     # Keep track of the latest task_id and session_id
     latest_task_id = task_id
@@ -238,6 +285,7 @@ def _log_single_event(
         # other
         **metadata_to_log,
         **kwargs_to_log,
+        **local_metadata_override,
     }
 
     logger.debug(f"Existing task_id: {list(log_queue.events.keys())}")
@@ -317,8 +365,61 @@ def _log_single_event(
         # Append event to log_queue
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
 
-    # logger.debug("Updated dict:" + str(log_queue.events[task_id].content))
-    # logger.debug("To log" + str(log_queue.events[task_id].to_log))
+    if steps is not None and len(steps) > 0:
+        # Manual intermediate calls tracing
+        from opentelemetry.sdk.trace import TracerProvider
+        from .tracing import get_batch_span_processor
+
+        # Create a new tracer, with a simple batch span processor.
+        tracer_provider = TracerProvider()
+        tracer_provider.add_span_processor(get_batch_span_processor(client))
+        tracer = tracer_provider.get_tracer("phospho.log")
+
+        # Add spans for intermediate logs
+        context_name = f"{task_id}_intermediate"
+        for i, intermediate_log in enumerate(steps):
+            with tracer.start_as_current_span(
+                f"phospho.{context_name}_{i}",
+                attributes={
+                    "phospho.task_id": task_id,
+                    "phospho.session_id": session_id,
+                },
+            ) as span:
+                flatten_intermediate_log = utils.flatten_dict(
+                    intermediate_log, key_prefix="gen_ai"
+                )
+                span.set_attributes(flatten_intermediate_log)
+                flatten_metadata = utils.flatten_dict(
+                    metadata_to_log, key_prefix="phospho.metadata"
+                )
+                span.set_attributes(flatten_metadata)
+
+    if tracing_initialized:
+        # Tracing: log an additional span with task_id, session_id, and metadata
+        # In the backend, this will be interpreted as: all previous spans have this task_id,
+        # session_id, and metadata
+
+        from opentelemetry.sdk.trace import TracerProvider
+        from .tracing import get_global_batch_span_processor
+
+        # Create a new tracer, with a simple batch span processor.
+        tracer_provider = TracerProvider()
+        tracer_provider.add_span_processor(get_global_batch_span_processor(client))
+        tracer = tracer_provider.get_tracer("phospho.log")
+
+        # Create a new span with the task_id, session_id, and metadata
+        with tracer.start_as_current_span(
+            name="phospho.log",
+            attributes={
+                "phospho.task_id": task_id,
+                "phospho.session_id": session_id,
+                "phospho.propagate": True,
+            },
+        ) as span:
+            flatten_metadata = utils.flatten_dict(
+                metadata_to_log, key_prefix="phospho.metadata"
+            )
+            span.set_attributes(flatten_metadata)
 
     return log_content
 
@@ -441,6 +542,11 @@ def log(
     concatenate_raw_outputs_if_task_id_exists: bool = True,
     input_output_to_usage_function: Optional[Callable[[Any], Dict[str, float]]] = None,
     stream: bool = False,
+    steps: Optional[
+        List[
+            Dict[str, Union[int, float, str, bool, List[Union[int, float, str, bool]]]]
+        ]
+    ] = None,
     **kwargs: Any,
 ) -> Optional[Dict[str, object]]:
     """Phospho's main all-purpose logging endpoint, with support for streaming.
@@ -467,13 +573,17 @@ def log(
 
     `user_id` is used to identify the user. For example, a user's email.
 
-    `input_output_to_usage_function` is used to count the number of tokens in prompt and in completion.
+    `input_output_to_usage_function` counts the number of tokens in prompt and in completion.
     It takes (input, output) as a value and returns a dict with keys `prompt_tokens`, `completion_tokens`,
     `total_tokens`.
 
-    `stream` is used to log a stream of data. For example, a generator. If `stream=True`, then
+    `stream` enable logging a stream of data. For example, a generator. If `stream=True`, then
     `phospho.log` returns a generator that also logs every individual output. See `phospho.wrap`
     for more details.
+
+    `steps` is a list of dictionaries to log intermediate steps.
+    This is used for manual tracing. For automatic tracing, use `with phospho.tracer()` or `@phospho.trace`.
+    This does **not** work with streaming.
 
     Every other `**kwargs` will be added to the metadata and stored.
 
@@ -557,6 +667,7 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
         input_output_to_usage_function=input_output_to_usage_function,
         concatenate_raw_outputs_if_task_id_exists=concatenate_raw_outputs_if_task_id_exists,
         to_log=True,
+        steps=steps,
         **kwargs,
     )
 
@@ -881,38 +992,138 @@ def flush() -> None:
     else:
         consumer.send_batch()
 
+    if tracing_initialized:
+        from .tracing import global_batch_span_processor, batch_span_processor
 
-def backfill(tasks: List[models.Task]) -> None:
+        if global_batch_span_processor:
+            global_batch_span_processor.force_flush()
+
+        if batch_span_processor:
+            batch_span_processor.force_flush()
+
+
+@contextmanager
+def tracer(
+    task_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+):
     """
-    Upload historical data in batch to phospho to backfill the logs.
-    For now, this doesn't send the task in the main_pipeline()
+    Trace intermediate steps of a task with context manager.
+    For example, API calls to OpenAI, Mistral, Anthropic, ChromaDB, Pinecone, etc.
+
+    ```
+    with phospho.tracer():
+        messages = [
+            {"role": "user", "content": "Hello!"},
+            {"role": "assistant", "content": "How can I help you today?"},
+        ]
+        response = openai_client.completions.create(...)
+        phospho.log(input=messages, output=response)
+    ```
+
+    :param task_id: The task_id to use for the logs. If None, a new task_id is generated.
+        This ensures that intermediate steps can be linked to the same task.
+    :param session_id: The session_id to use for the logs. If None, a new session_id is generated.
+    :param metadata: Additional metadata to add to the logs. For example, user_id, version_id, etc.
     """
+
     global client
+    global otlp_exporter
+    global task_id_override
+    global session_id_override
+    global metadata_override
+    global tracing_initialized
 
     if client is None:
-        raise ValueError("Call phospho.init() before calling phospho.backfill()")
+        raise ValueError("Call phospho.init() before calling phospho.tracer()")
+    if not tracing_initialized:
+        raise ValueError(
+            "To use tracing, you need to call phospho.init(tracing=True) first"
+        )
 
-    client.backfill(tasks)
+    from .tracing import get_global_batch_span_processor
+
+    global_batch_span_processor = get_global_batch_span_processor(client)
+
+    # Override the task_id and session_id that will be used in phospho.log
+    if task_id:
+        task_id_override = task_id
+    else:
+        task_id_override = generate_uuid("task_")
+
+    if session_id:
+        session_id_override = session_id
+    else:
+        session_id_override = generate_uuid("session_")
+
+    if metadata:
+        metadata_override = metadata
+
+    context_name = generate_uuid("local_context")
+    # Override the task_id and session_id in the global span processor
+    global_batch_span_processor.task_id = task_id_override
+    global_batch_span_processor.session_id = session_id_override
+    global_batch_span_processor.metadata = metadata_override
+
+    # Execute the block of code
+    yield context_name
+
+    # Clean up default task_id and session_id
+    task_id_override = None
+    session_id_override = None
+    metadata_override = None
+    # Clean up the global span processor
+    global_batch_span_processor.task_id = None
+    global_batch_span_processor.session_id = None
+    global_batch_span_processor.metadata = None
 
 
-def train(
-    model: str, examples: list, task_type: str = "binary-classification"
-) -> Optional[Dict[str, object]]:
+# Do the same but with  a decorator
+def trace(
+    task_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+):
     """
-    Train a model on a set of examples.
+    Trace intermediate steps of a task with a decorator.
 
-    :param model: The name of the model to train.
-    :param examples: A list of examples to train the model on, with keys 'text', 'label', 'label_text.
-    :param task_type: The type of task to train the model on.
+    ```
+    @phospho.trace()
+    def my_function():
+        messages = [
+            {"role": "user", "content": "Hello!"},
+            {"role": "assistant", "content": "How can I help you today?"},
+        ]
+        response = openai_client.completions.create(...)
+        phospho.log(input=messages, output=response)
+    ```
+
+    :param task_id: The task_id to use for the logs. If None, a new task_id is generated.
+        This ensures that intermediate steps can be linked to the same task.
+    :param session_id: The session_id to use for the logs. If None, a new session_id is generated.
+    :param metadata: Additional metadata to add to the logs. For example, user_id, version_id, etc.
     """
-    global client
 
-    if client is None:
-        raise ValueError("Call phospho.init() before calling phospho.train()")
+    # For synchronous functions
+    def decorator(func):
+        # Async function
+        if inspect.iscoroutinefunction(func):
 
-    model = client.train(model=model, examples=examples, task_type=task_type)
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                with tracer(task_id=task_id, session_id=session_id, metadata=metadata):
+                    return func(*args, **kwargs)
+        else:
 
-    return model
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                with tracer(task_id=task_id, session_id=session_id, metadata=metadata):
+                    return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 ### Requires phospho lab extras ###

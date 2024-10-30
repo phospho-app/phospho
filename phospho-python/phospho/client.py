@@ -105,7 +105,8 @@ class Client:
     def _get(
         self, path: str, params: Optional[Dict[str, str]] = None
     ) -> requests.Response:
-        url = f"{self.base_url}{path}"
+        # Defaults to V2 API
+        url = f"{self.base_url}/v2{path}"
         response = requests.get(url, headers=self._headers(), params=params)
 
         if response.status_code >= 200 and response.status_code < 300:
@@ -126,7 +127,8 @@ class Client:
     def _post(
         self, path: str, payload: Optional[Dict[str, object]] = None
     ) -> requests.Response:
-        url = f"{self.base_url}{path}"
+        # Defaults to V2 API
+        url = f"{self.base_url}/v2{path}"
         response = requests.post(url, headers=self._headers(), json=payload)
 
         if response.status_code >= 200 and response.status_code < 300:
@@ -233,25 +235,3 @@ class Client:
 
         response = self._get(f"/projects/{self._project_id()}")
         return Project.model_validate(response.json())
-
-    def train(
-        self, model: str, examples: list, task_type: str = "binary-classification"
-    ) -> None:
-        """
-        Upload historical data in batch to phospho to backfill the logs.
-        For now, this doesn't send the task in the main_pipeline()
-        """
-        # Assert that all tasks have a created_at timestamp, otherwise the backend won't store them
-
-        assert task_type in ["binary-classification"], "Task type not supported"
-        assert len(examples) >= 20, "You need at least 20 examples to train the model."
-
-        response = self._post(
-            "/train",
-            payload={"model": model, "examples": examples, "task_type": task_type},
-        )
-
-        # Get the body of the response
-        response_body = response.json()
-
-        return response_body

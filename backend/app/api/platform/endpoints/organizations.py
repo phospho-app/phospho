@@ -166,7 +166,15 @@ async def post_init_org(
     output["selected_project"] = selected_project
 
     # Get the org metatdata to check if it's already initialized
-    org = propelauth.fetch_org(org_id)
+    try:
+        org = propelauth.fetch_org(org_id)
+    except Exception as e:
+        logger.error(f"Propelauth error fetching organization {org_id}: {e}")
+        return {
+            **output,
+            "status": "error",
+            "detail": f"Error fetching organization: {e}",
+        }
 
     # Get the org metadata
     org_metadata = org.get("metadata", {})

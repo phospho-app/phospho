@@ -344,3 +344,21 @@ export interface DatavizSorting {
   id: "breakdown_by" | "metric";
   desc: boolean;
 }
+
+export interface StandardSpanModel {
+  org_id: string;
+  project_id: string;
+  task_id: string;
+  session_id: string;
+  metadata?: Record<string, any>;
+  propagate?: boolean;
+  start_time_unix_nano: number;
+  end_time_unix_nano: number;
+  open_telemetry_data: Record<string, any>;
+}
+
+export interface TaskSpans {
+  task_id: string;
+  project_id: string;
+  spans: StandardSpanModel[];
+}

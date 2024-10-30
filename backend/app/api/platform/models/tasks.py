@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Dict, List, Optional
 from pydantic import BaseModel
 from app.db.models import EventDefinition
+from app.services.integrations.opentelemetry import StandardSpanModel
 
 
 class AddEventRequest(BaseModel):
@@ -11,3 +12,14 @@ class AddEventRequest(BaseModel):
 
 class RemoveEventRequest(BaseModel):
     event_name: str
+
+
+class FetchSpansRequest(BaseModel):
+    task_id: str
+    project_id: str
+
+
+class TaskSpans(BaseModel):
+    task_id: str
+    project_id: str
+    spans: List[StandardSpanModel]

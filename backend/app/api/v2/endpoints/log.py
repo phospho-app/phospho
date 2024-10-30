@@ -16,7 +16,6 @@ from app.security import (
     verify_propelauth_org_owns_project_id,
     get_quota,
 )
-from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.emails import send_quota_exceeded_email
 from app.core import config
 from app.services.log import create_task_and_process_logs
@@ -128,30 +127,3 @@ async def store_batch_of_log_events(
     )
 
     return log_reply
-
-
-@router.post(
-    "/log/{project_id}/opentelemetry",
-    response_model=dict,
-    description="Store data from OpenTelemetry in database",
-)
-async def store_opentelemetry_log(
-    project_id: str,
-    open_telemetry_data: dict,
-    background_tasks: BackgroundTasks,
-    org: dict = Depends(authenticate_org_key),
-):
-    """Store the opentelemetry data in the opentelemetry database"""
-
-    await verify_propelauth_org_owns_project_id(org, project_id)
-
-    extractor_client = ExtractorClient(
-        project_id=project_id,
-        org_id=org["org"].get("org_id"),
-    )
-    background_tasks.add_task(
-        extractor_client.store_open_telemetry_data,
-        open_telemetry_data=open_telemetry_data,
-    )
-
-    return {"status": "ok"}

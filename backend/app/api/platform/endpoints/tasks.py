@@ -1,21 +1,24 @@
+from app.services.integrations.opentelemetry import fetch_spans_for_task
 from fastapi import APIRouter, Depends, HTTPException
 from propelauth_fastapi import User  # type: ignore
 
 from app.api.platform.models import (
-    Task,
-    TaskUpdateRequest,
     AddEventRequest,
+    FetchSpansRequest,
     RemoveEventRequest,
+    Task,
     TaskHumanEvalRequest,
+    TaskUpdateRequest,
+    TaskSpans,
 )
 from app.security import verify_if_propelauth_user_can_access_project
 from app.security.authentification import propelauth
 from app.services.mongo.tasks import (
-    get_task_by_id,
-    update_task,
     add_event_to_task,
-    remove_event_from_task,
+    get_task_by_id,
     human_eval_task,
+    remove_event_from_task,
+    update_task,
 )
 
 router = APIRouter(tags=["Tasks"])
@@ -116,7 +119,7 @@ async def post_add_event_to_task(
 )
 async def post_remove_event_from_task(
     task_id: str,
-    remove_event: RemoveEventRequest,
+    query: RemoveEventRequest,
     user: User = Depends(propelauth.require_user),
 ) -> Task:
     """
@@ -127,6 +130,31 @@ async def post_remove_event_from_task(
 
     updated_task = await remove_event_from_task(
         task=task,
-        event_name=remove_event.event_name,
+        event_name=query.event_name,
     )
     return updated_task
+
+
+@router.post(
+    "/tasks/{task_id}/spans",
+    response_model=TaskSpans,
+    description="Fetch all the spans linked to a task",
+)
+async def post_fetch_spans_of_task(
+    task_id: str,
+    query: FetchSpansRequest,
+    user: User = Depends(propelauth.require_user),
+) -> TaskSpans:
+    """
+    Fetch all the spans linked to a task
+    """
+
+    await verify_if_propelauth_user_can_access_project(user, query.project_id)
+
+    spans = await fetch_spans_for_task(project_id=query.project_id, task_id=task_id)
+
+    return TaskSpans(
+        task_id=task_id,
+        project_id=query.project_id,
+        spans=spans,
+    )

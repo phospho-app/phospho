@@ -33,7 +33,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     phospho.init(
         api_key=api_key,
         project_id=project_id,
-        base_url=f"{backend_url}/v2",
+        base_url=backend_url,
         tick=0.1,
         auto_log=False,  # We automatically log tasks in the background, we disable it here because we don't want his behavior
     )
@@ -41,7 +41,7 @@ def test_onboarding(backend_url, org_id, access_token, api_key):
     task_1 = phospho.log(
         input="Thank you!",
         output="You're welcome.",
-        user_id="Nico le plus beau",
+        user_id="user_1",
         metadata={"text": "metadata", "number": 333},
     )
 

@@ -84,7 +84,7 @@ async def post_run_backtests(
 
     try:
         provider, model = lab.get_provider_and_model(body.provider_and_model)
-        client = lab.get_async_client(provider)
+        lab.get_async_client(provider)  # type: ignore
     except NotImplementedError as e:
         raise HTTPException(status_code=400, detail=f"Invalid provider: {e}")
 
