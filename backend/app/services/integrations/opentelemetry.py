@@ -29,7 +29,9 @@ class OpenTelemetryConnector:
         """
         # TODO : Add support for metadata
 
-        logger.info(f"Processing OpenTelemetry data:\n{data}")
+        logger.info(
+            f"Processing OpenTelemetry data:\n{len(data.resource_spans[0].scope_spans[0].spans)} spans"
+        )
         # Start by storing the raw data, for debug purposes
         await self._dump(data)
 
@@ -54,7 +56,6 @@ class OpenTelemetryConnector:
                         # Convert to a dictionary
                         k = attr.key
                         attr_dict = MessageToDict(attr)
-                        logger.info(f"Attribute dict: {attr_dict}")
 
                         if "stringValue" in attr_dict["value"]:
                             value = attr_dict["value"]["stringValue"]
@@ -107,16 +108,20 @@ class OpenTelemetryConnector:
                     span_to_store = MessageToDict(span)
                     span_to_store["attributes"] = unpacked_attributes
 
+                    logger.info(f"Span {span_id}: {span_to_store}")
+
                     if "phospho" in unpacked_attributes:
                         span_task_id = unpacked_attributes["phospho"].get("task_id")
                         span_session_id = unpacked_attributes["phospho"].get(
                             "session_id"
                         )
                         span_metadata = unpacked_attributes["phospho"].get("metadata")
-                        # Remove from the unpacked_attributes
-                        unpacked_attributes.pop("phospho")
 
+                    if "gen_ai" in unpacked_attributes:
                         # Store the data in the database
+                        if span_metadata and "phospho" in span_metadata:
+                            span_metadata.pop("phospho")
+
                         spans_to_export.append(
                             {
                                 "org_id": self.org_id,
@@ -146,8 +151,9 @@ class OpenTelemetryConnector:
                     span_export["metadata"] = trace_metadata
 
         # Store the spans in the database
-        mongo_db = await get_mongo_db()
-        mongo_db["opentelemetry"].insert_many(spans_to_export)
+        if spans_to_export:
+            mongo_db = await get_mongo_db()
+            mongo_db["opentelemetry"].insert_many(spans_to_export)
 
         return 0
 

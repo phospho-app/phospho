@@ -62,9 +62,9 @@ session_id_override: Optional[str] = None
 metadata_override: Optional[Dict[str, Any]] = None
 default_version_id = None
 
-otlp_resource = None
 otlp_exporter = None
 spans_to_export: Dict[str, list] = defaultdict(list)
+span_processor = None
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +106,7 @@ def init(
     global task_id_override
     global otlp_exporter
     global spans_to_export
+    global span_processor
 
     if version_id is None:
         version_id = generate_version_id()
@@ -130,27 +131,13 @@ def init(
     if auto_log:
         integrations.wrap_openai(wrap=wrap)
 
-    # Trace OpenAI API calls
     if tracing:
-        from opentelemetry import trace
-        from opentelemetry.sdk.resources import Resource
-        from opentelemetry.sdk.trace import TracerProvider
-        from .tracing import ListSpanProcessor, init_instrumentations, get_otlp_exporter
+        # Initialize the global tracer
+        from .tracing import init_tracing
 
-        otlp_resource = Resource(attributes={"service.name": "service"})
-        tracer_provider = TracerProvider(resource=otlp_resource)
-
-        # Adds the default spanProcessor that adds spans to the spans_to_export global queue
-        span_processor = ListSpanProcessor(
-            context_name="global", spans_to_export=spans_to_export
+        otlp_exporter, span_processor = init_tracing(
+            client=client, spans_to_export=spans_to_export, context_name="global"
         )
-        tracer_provider.add_span_processor(span_processor)
-        # Sets the global default tracer provider
-        trace.set_tracer_provider(tracer_provider)
-
-        otlp_exporter = get_otlp_exporter(client)
-
-        init_instrumentations()
 
 
 def new_session() -> str:
@@ -219,7 +206,7 @@ def _log_single_event(
     global latest_session_id
     global default_version_id
     global otlp_exporter
-    global otlp_resource
+    global span_processor
     global spans_to_export
     global task_id_override
     global session_id_override
@@ -386,70 +373,63 @@ def _log_single_event(
         # Append event to log_queue
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
 
-    # Tracing: add metadata to the span
-    if otlp_exporter is not None or (
-        intermediate_logs is not None and len(intermediate_logs) > 0
-    ):
-        local_otlp_exporter = otlp_exporter
-        if local_otlp_exporter is None:
-            from .tracing import get_otlp_exporter
+    # Manual intermediate calls tracing
+    if intermediate_logs is not None and len(intermediate_logs) > 0:
+        if otlp_exporter is None or span_processor is None:
+            # Initialize the global tracer
+            from .tracing import init_tracing
 
-            local_otlp_exporter = get_otlp_exporter(client)
+            otlp_exporter, span_processor = init_tracing(
+                client=client, spans_to_export=spans_to_export, context_name="global"
+            )
 
-        from opentelemetry import trace
+        from opentelemetry.sdk.trace import TracerProvider
 
-        tracer_provider = trace.get_tracer_provider()
+        tracer_provider = TracerProvider()
         tracer = tracer_provider.get_tracer("phospho.log")
+        span_processor.session_id = session_id
+        span_processor.task_id = task_id
+        span_processor.metadata = metadata_to_log
 
         # Add spans for intermediate logs
-        if intermediate_logs is not None and len(intermediate_logs) > 0:
-            for intermediate_log in intermediate_logs:
-                with tracer.start_as_current_span(
-                    name="phospho.log",
-                    attributes={
-                        "task_id": task_id,
-                        "session_id": session_id,
-                    },
-                ) as span:
-                    span.set_attributes(
-                        {
-                            f"phospho.intermediate_logs.{k}": v
-                            for k, v in intermediate_log.items()
-                        }
-                    )
-
-        # If to_log, export the spans
-        if to_log:
-            # Create a new span with the task_id, session_id, and metadata
-
+        context_name = f"{task_id}_intermediate"
+        for intermediate_log in intermediate_logs:
             with tracer.start_as_current_span(
                 name="phospho.log",
                 attributes={
-                    "phospho.task_id": task_id,
-                    "phospho.session_id": session_id,
+                    "task_id": task_id,
+                    "session_id": session_id,
                 },
             ) as span:
                 span.set_attributes(
-                    {
-                        f"phospho.metadata.{k}": v
-                        for k, v in log_content.items()
-                        if
-                        (
-                            # OpenTelemetry only supports simple types
-                            isinstance(v, (int, float, str, bool))
-                            # or lists of simple types
-                            or (
-                                isinstance(v, list)
-                                and all(
-                                    isinstance(i, (int, float, str, bool)) for i in v
-                                )
-                            )
-                        )
-                    }
+                    {f"gen_ai.{k}": v for k, v in intermediate_log.items()}
                 )
-            # Export global spans queue
-            local_otlp_exporter.export(spans_to_export["global"])
-            del spans_to_export["global"]
+                spans_to_export[context_name].append(span)
+
+        # Log
+        otlp_exporter.export(spans_to_export[context_name])
+
+    # Tracing: add metadata to the span
+    if otlp_exporter is not None and span_processor is not None and to_log:
+        from opentelemetry import trace
+
+        tracer = trace.get_tracer("global")
+        span_processor.session_id = session_id
+        span_processor.task_id = task_id
+        span_processor.metadata = metadata_to_log
+
+        # Create a new span with the task_id, session_id, and metadata
+        with tracer.start_as_current_span(
+            name="phospho.log",
+            attributes={
+                "phospho.task_id": task_id,
+                "phospho.session_id": session_id,
+            },
+        ) as span:
+            pass
+        # Export global spans queue
+        otlp_exporter.export(spans_to_export["global"])
+        del spans_to_export["global"]
 
     return log_content
 
@@ -1048,18 +1028,24 @@ def tracer(
     :param session_id: The session_id to use for the logs. If None, a new session_id is generated.
     :param metadata: Additional metadata to add to the logs. For example, user_id, version_id, etc.
     """
-    from .tracing import ListSpanProcessor, get_otlp_exporter
 
     global client
     global otlp_exporter
-    global otlp_resource
     global task_id_override
     global session_id_override
     global metadata_override
     global spans_to_export
+    global span_processor
 
     if client is None:
         raise ValueError("Call phospho.init() before calling phospho.tracer()")
+    if otlp_exporter is None or span_processor is None:
+        # Initialize the global tracer
+        from .tracing import init_tracing
+
+        otlp_exporter, span_processor = init_tracing(
+            client=client, spans_to_export=spans_to_export, context_name="global"
+        )
 
     # Override the task_id and session_id that will be used in phospho.log
     if task_id:
@@ -1076,33 +1062,20 @@ def tracer(
         metadata_override = metadata
 
     context_name = f"local_context_{generate_uuid()}"
-    span_processor = ListSpanProcessor(
-        context_name=context_name,
-        spans_to_export=spans_to_export,
-        task_id=task_id_override,
-        session_id=session_id_override,
-        metadata=metadata,
-    )
-
-    # Add the processor to the tracer
-    from opentelemetry import trace
-
-    tracer_provider = trace.get_tracer_provider()
-    tracer_provider.add_span_processor(span_processor)
+    span_processor.task_id = task_id_override
+    span_processor.session_id = session_id_override
+    span_processor.metadata = metadata_override
 
     # Execute the block of code
-    yield span_processor
+    yield context_name
 
     # Push the spans to the exporter
-    if otlp_exporter is None:
-        otlp_exporter = get_otlp_exporter(client)
-    otlp_exporter.export(span_processor.local_queue())
+    otlp_exporter.export(spans_to_export[context_name])
 
     # Clean up default task_id and session_id
     task_id_override = None
     session_id_override = None
-    # Remove span processor
-    del span_processor
+    del spans_to_export[context_name]
 
 
 # Do the same but with  a decorator

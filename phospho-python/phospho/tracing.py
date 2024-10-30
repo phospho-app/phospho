@@ -3,13 +3,17 @@ from typing import Dict, List, Optional, Union
 
 from opentelemetry.context import Context
 from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
+from opentelemetry import trace
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from phospho.client import Client
 
 logger = logging.getLogger(__name__)
 
 
-class ListSpanProcessor(SpanProcessor):
+class ListSpanProcessor(BatchSpanProcessor):
     """
     A simple span processor that exports all spans to a list.
     """
@@ -67,6 +71,33 @@ class ListSpanProcessor(SpanProcessor):
     def force_flush(self, timeout_millis: int = 30000) -> bool:
         # pylint: disable=unused-argument
         return True
+
+
+def init_tracing(
+    client: Client,
+    spans_to_export: Dict[str, List[Span]],
+    context_name: str = "global",
+    span_processor_kwargs: Optional[dict] = None,
+):
+    otlp_resource = Resource(attributes={"service.name": "service"})
+    tracer_provider = TracerProvider(resource=otlp_resource)
+
+    # Adds the default spanProcessor that adds spans to the spans_to_export queue
+    if span_processor_kwargs is None:
+        span_processor_kwargs = {}
+    span_processor = ListSpanProcessor(
+        context_name=context_name,
+        spans_to_export=spans_to_export,
+        **span_processor_kwargs,
+    )
+    tracer_provider.add_span_processor(span_processor)
+    # Sets the global default tracer provider
+    trace.set_tracer_provider(tracer_provider)
+
+    otlp_exporter = get_otlp_exporter(client)
+
+    init_instrumentations()
+    return otlp_exporter, span_processor
 
 
 def init_instrumentations():
