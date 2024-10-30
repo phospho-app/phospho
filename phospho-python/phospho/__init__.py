@@ -1,4 +1,3 @@
-from collections import defaultdict
 import inspect
 import logging
 from contextlib import contextmanager
@@ -62,9 +61,7 @@ session_id_override: Optional[str] = None
 metadata_override: Optional[Dict[str, Any]] = None
 default_version_id = None
 
-otlp_exporter = None
-spans_to_export: Dict[str, list] = defaultdict(list)
-span_processor = None
+tracing_initialized = False
 
 logger = logging.getLogger(__name__)
 
@@ -104,9 +101,7 @@ def init(
     global default_version_id
     global session_id_override
     global task_id_override
-    global otlp_exporter
-    global spans_to_export
-    global span_processor
+    global tracing_initialized
 
     if version_id is None:
         version_id = generate_version_id()
@@ -135,9 +130,8 @@ def init(
         # Initialize the global tracer
         from .tracing import init_tracing
 
-        otlp_exporter, span_processor = init_tracing(
-            client=client, spans_to_export=spans_to_export, context_name="global"
-        )
+        init_tracing(client=client)
+        tracing_initialized = True
 
 
 def new_session() -> str:
@@ -188,7 +182,7 @@ def _log_single_event(
         Callable[[Any, Any], Dict[str, float]]
     ] = None,
     to_log: bool = True,
-    intermediate_logs: Optional[
+    steps: Optional[
         List[
             Dict[str, Union[int, float, str, bool, List[Union[int, float, str, bool]]]]
         ]
@@ -205,12 +199,10 @@ def _log_single_event(
     global latest_task_id
     global latest_session_id
     global default_version_id
-    global otlp_exporter
-    global span_processor
-    global spans_to_export
     global task_id_override
     global session_id_override
     global metadata_override
+    global tracing_initialized
 
     if "version_id" not in kwargs or kwargs["version_id"] is None:
         kwargs["version_id"] = default_version_id
@@ -252,13 +244,13 @@ def _log_single_event(
     if task_id_override is not None:
         task_id = task_id_override
     if task_id is None:
-        task_id = f"task_{generate_uuid()}"
+        task_id = generate_uuid("task_")
 
     # Session: if None, generate a default session_id
     if session_id_override is not None:
         session_id = session_id_override
     if session_id is None:
-        session_id = f"session_{generate_uuid()}"
+        session_id = generate_uuid("session_")
 
     # Metadata override
     local_metadata_override = metadata_override
@@ -373,46 +365,47 @@ def _log_single_event(
         # Append event to log_queue
         log_queue.append(event=Event(id=task_id, content=log_content, to_log=to_log))
 
-    # Manual intermediate calls tracing
-    if intermediate_logs is not None and len(intermediate_logs) > 0:
-        if otlp_exporter is None:
-            # Initialize the global tracer
-            from .tracing import get_otlp_exporter
-
-            otlp_exporter = get_otlp_exporter(client=client)
-
+    if steps is not None and len(steps) > 0:
+        # Manual intermediate calls tracing
         from opentelemetry.sdk.trace import TracerProvider
+        from .tracing import get_batch_span_processor
 
+        # Create a new tracer, with a simple batch span processor.
         tracer_provider = TracerProvider()
+        tracer_provider.add_span_processor(get_batch_span_processor(client))
         tracer = tracer_provider.get_tracer("phospho.log")
 
         # Add spans for intermediate logs
         context_name = f"{task_id}_intermediate"
-        for intermediate_log in intermediate_logs:
+        for i, intermediate_log in enumerate(steps):
             with tracer.start_as_current_span(
-                f"phospho.{context_name}",
+                f"phospho.{context_name}_{i}",
                 attributes={
                     "phospho.task_id": task_id,
                     "phospho.session_id": session_id,
-                    "gen_ai": True,
                 },
             ) as span:
-                # TODO: Transform the intermediate log into a flat dict of basic attributes
-                # And make them child of the gen_ai attribute
-                span.set_attributes(intermediate_log)
-                spans_to_export[context_name].append(span)
+                flatten_intermediate_log = utils.flatten_dict(
+                    intermediate_log, key_prefix="gen_ai"
+                )
+                span.set_attributes(flatten_intermediate_log)
+                flatten_metadata = utils.flatten_dict(
+                    metadata_to_log, key_prefix="phospho.metadata"
+                )
+                span.set_attributes(flatten_metadata)
 
-        # Log
-        otlp_exporter.export(spans_to_export[context_name])
+    if tracing_initialized:
+        # Tracing: log an additional span with task_id, session_id, and metadata
+        # In the backend, this will be interpreted as: all previous spans have this task_id,
+        # session_id, and metadata
 
-    # Tracing: add metadata to the span
-    if otlp_exporter is not None and span_processor is not None and to_log:
-        from opentelemetry import trace
+        from opentelemetry.sdk.trace import TracerProvider
+        from .tracing import get_global_batch_span_processor
 
-        tracer = trace.get_tracer("global")
-        span_processor.session_id = session_id
-        span_processor.task_id = task_id
-        span_processor.metadata = metadata_to_log
+        # Create a new tracer, with a simple batch span processor.
+        tracer_provider = TracerProvider()
+        tracer_provider.add_span_processor(get_global_batch_span_processor(client))
+        tracer = tracer_provider.get_tracer("phospho.log")
 
         # Create a new span with the task_id, session_id, and metadata
         with tracer.start_as_current_span(
@@ -420,12 +413,13 @@ def _log_single_event(
             attributes={
                 "phospho.task_id": task_id,
                 "phospho.session_id": session_id,
+                "phospho.propagate": True,
             },
         ) as span:
-            pass
-        # Export global spans queue
-        otlp_exporter.export(spans_to_export["global"])
-        del spans_to_export["global"]
+            flatten_metadata = utils.flatten_dict(
+                metadata_to_log, key_prefix="phospho.metadata"
+            )
+            span.set_attributes(flatten_metadata)
 
     return log_content
 
@@ -548,7 +542,7 @@ def log(
     concatenate_raw_outputs_if_task_id_exists: bool = True,
     input_output_to_usage_function: Optional[Callable[[Any], Dict[str, float]]] = None,
     stream: bool = False,
-    intermediate_logs: Optional[
+    steps: Optional[
         List[
             Dict[str, Union[int, float, str, bool, List[Union[int, float, str, bool]]]]
         ]
@@ -587,8 +581,8 @@ def log(
     `phospho.log` returns a generator that also logs every individual output. See `phospho.wrap`
     for more details.
 
-    `intermediate_logs` is a list of dictionaries to log intermediate values.
-    This is like manual tracing. For automatic tracing, use `with phospho.tracer()` or `@phospho.trace`.
+    `steps` is a list of dictionaries to log intermediate steps.
+    This is used for manual tracing. For automatic tracing, use `with phospho.tracer()` or `@phospho.trace`.
     This does **not** work with streaming.
 
     Every other `**kwargs` will be added to the metadata and stored.
@@ -673,7 +667,7 @@ phospho.log(input=input, output=mutable_output, stream=True)\n
         input_output_to_usage_function=input_output_to_usage_function,
         concatenate_raw_outputs_if_task_id_exists=concatenate_raw_outputs_if_task_id_exists,
         to_log=True,
-        intermediate_logs=intermediate_logs,
+        steps=steps,
         **kwargs,
     )
 
@@ -998,6 +992,15 @@ def flush() -> None:
     else:
         consumer.send_batch()
 
+    if tracing_initialized:
+        from .tracing import global_batch_span_processor, batch_span_processor
+
+        if global_batch_span_processor:
+            global_batch_span_processor.force_flush()
+
+        if batch_span_processor:
+            batch_span_processor.force_flush()
+
 
 @contextmanager
 def tracer(
@@ -1030,48 +1033,51 @@ def tracer(
     global task_id_override
     global session_id_override
     global metadata_override
-    global spans_to_export
-    global span_processor
+    global tracing_initialized
 
     if client is None:
         raise ValueError("Call phospho.init() before calling phospho.tracer()")
-    if otlp_exporter is None or span_processor is None:
+    if not tracing_initialized:
         # Initialize the global tracer
         from .tracing import init_tracing
 
-        otlp_exporter, span_processor = init_tracing(
-            client=client, spans_to_export=spans_to_export, context_name="global"
-        )
+        init_tracing(client=client, context_name="global")
+
+    from .tracing import get_global_batch_span_processor
+
+    global_batch_span_processor = get_global_batch_span_processor(client)
 
     # Override the task_id and session_id that will be used in phospho.log
     if task_id:
         task_id_override = task_id
     else:
-        task_id_override = f"task_{generate_uuid()}"
+        task_id_override = generate_uuid("task_")
 
     if session_id:
         session_id_override = session_id
     else:
-        session_id_override = f"session_{generate_uuid()}"
+        session_id_override = generate_uuid("session_")
 
     if metadata:
         metadata_override = metadata
 
-    context_name = f"local_context_{generate_uuid()}"
-    span_processor.task_id = task_id_override
-    span_processor.session_id = session_id_override
-    span_processor.metadata = metadata_override
+    context_name = generate_uuid("local_context")
+    # Override the task_id and session_id in the global span processor
+    global_batch_span_processor.task_id = task_id_override
+    global_batch_span_processor.session_id = session_id_override
+    global_batch_span_processor.metadata = metadata_override
 
     # Execute the block of code
     yield context_name
 
-    # Push the spans to the exporter
-    otlp_exporter.export(spans_to_export[context_name])
-
     # Clean up default task_id and session_id
     task_id_override = None
     session_id_override = None
-    del spans_to_export[context_name]
+    metadata_override = None
+    # Clean up the global span processor
+    global_batch_span_processor.task_id = None
+    global_batch_span_processor.session_id = None
+    global_batch_span_processor.metadata = None
 
 
 # Do the same but with  a decorator

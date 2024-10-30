@@ -5,31 +5,7 @@ from openai import OpenAI
 
 
 def test_tracing():
-    phospho.init(
-        tick=0.05,
-        raise_error_on_fail_to_send=True,
-        base_url="http://127.0.0.1:8000",
-        tracing=True,
-    )
-
     openai_client = OpenAI()
-
-    # Implicit syntax
-    response = openai_client.chat.completions.create(
-        messages=[
-            {"role": "system", "content": "Obey"},
-            {"role": "user", "content": "Say hi"},
-        ],
-        model="gpt-4o-mini",
-        max_tokens=1,
-    )
-    # Inspect phospho.spans_to_export
-    assert len(phospho.spans_to_export["global"]) == 1
-    phospho.log(
-        system_prompt="Obey",
-        input="Say hi",
-        output=response,
-    )
 
     # Context syntax
     with phospho.tracer() as context_name:
@@ -77,11 +53,69 @@ def test_tracing():
 
     my_function()
 
-    # Another tracing method, add intermediate steps
+
+def test_tracing_steps():
+    phospho.init(
+        tick=0.05,
+        raise_error_on_fail_to_send=True,
+        base_url="http://127.0.0.1:8000",
+        tracing=True,
+    )
+
     phospho.log(
         input="Say bossman",
         output="Bossman",
-        intermediate_logs=[{"some_data": "very important"}],
+        steps=[{"some_data": "very important"}],
+    )
+    phospho.log(
+        input="Say bossmama",
+        output="bossmama",
+        steps=[{"other_data": "also important"}],
     )
 
     phospho.flush()
+
+
+def test_tracing_global():
+    """
+    Global tracing: if you set tracing=True, this should trace
+    all the API calls made by the OpenAI client.
+
+    We link this ot phospho tasks every time there is a phospho.log :
+    all previous API calls are linked to this task.
+    """
+    phospho.init(
+        tick=0.05,
+        raise_error_on_fail_to_send=True,
+        base_url="http://127.0.0.1:8000",
+        tracing=True,
+    )
+
+    openai_client = OpenAI()
+    response = openai_client.chat.completions.create(
+        messages=[
+            {"role": "system", "content": "Obey"},
+            {"role": "user", "content": "Say hi"},
+        ],
+        model="gpt-4o-mini",
+        max_tokens=1,
+    )
+    phospho.log(
+        system_prompt="Obey",
+        input="Say hi",
+        output=response,
+    )
+
+    response = openai_client.chat.completions.create(
+        messages=[
+            {"role": "system", "content": "Obey"},
+            {"role": "user", "content": "Say hello"},
+        ],
+        model="gpt-4o-mini",
+        max_tokens=1,
+    )
+    phospho.log(
+        system_prompt="Obey",
+        input="Say hello",
+        output=response,
+    )

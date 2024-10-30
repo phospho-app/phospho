@@ -2,26 +2,35 @@ import logging
 from typing import Dict, List, Optional, Union
 
 from opentelemetry.context import Context
-from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
+from opentelemetry.sdk.trace import ReadableSpan, Span
+from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from phospho.client import Client
 
 logger = logging.getLogger(__name__)
 
+otlp_exporter = None
+batch_span_processor = None
+global_batch_span_processor = None
 
-class ListSpanProcessor(BatchSpanProcessor):
+
+class GlobalBatchSpanProcessor(BatchSpanProcessor):
     """
-    A simple span processor that exports all spans to a list.
+    Wrapper around BatchSpanProcessor that adds task_id and session_id to the spans.
     """
 
     def __init__(
         self,
-        context_name: str,
-        spans_to_export: Dict[str, List[Span]],
+        span_exporter: SpanExporter,
+        max_queue_size: int = None,
+        schedule_delay_millis: float = None,
+        max_export_batch_size: int = None,
+        export_timeout_millis: float = None,
+        context_name: str = "global",
         task_id: Optional[str] = None,
         session_id: Optional[str] = None,
         # OpenTelemetry does not support nested types in attributes
@@ -42,62 +51,46 @@ class ListSpanProcessor(BatchSpanProcessor):
         ] = None,
     ):
         self.context_name = context_name
-        self.spans_to_export = spans_to_export
         self.task_id = task_id
         self.session_id = session_id
         self.metadata = metadata
-
-    def local_queue(self):
-        return self.spans_to_export[self.context_name]
+        super().__init__(
+            span_exporter=span_exporter,
+            max_queue_size=max_queue_size,
+            schedule_delay_millis=schedule_delay_millis,
+            max_export_batch_size=max_export_batch_size,
+            export_timeout_millis=export_timeout_millis,
+        )
 
     def on_start(self, span: Span, parent_context: Optional[Context] = None) -> None:
         # Adds the span to the list of spans to be exported
         if self.task_id:
-            span.set_attribute("phospho.task_id", self.task_id)
+            if span.attributes.get("phospho.task_id") is None:
+                span.set_attribute("phospho.task_id", self.task_id)
         if self.session_id:
-            span.set_attribute("phospho.session_id", self.session_id)
+            if span.attributes.get("phospho.session_id") is None:
+                span.set_attribute("phospho.session_id", self.session_id)
         if self.metadata:
             # Add "phospho.metadata" attribute to each key
             metadata = {f"phospho.metadata.{k}": v for k, v in self.metadata.items()}
             span.set_attributes(metadata)
-        self.spans_to_export[self.context_name].append(span)
-
-    def on_end(self, span: ReadableSpan) -> None:
-        pass
-
-    def shutdown(self) -> None:
-        pass
-
-    def force_flush(self, timeout_millis: int = 30000) -> bool:
-        # pylint: disable=unused-argument
-        return True
+        return super().on_start(span, parent_context)
 
 
-def init_tracing(
-    client: Client,
-    spans_to_export: Dict[str, List[Span]],
-    context_name: str = "global",
-    span_processor_kwargs: Optional[dict] = None,
-):
+def init_tracing(client: Client):
+    global global_batch_span_processor
+
     otlp_resource = Resource(attributes={"service.name": "service"})
     tracer_provider = TracerProvider(resource=otlp_resource)
 
-    # Adds the default spanProcessor that adds spans to the spans_to_export queue
-    if span_processor_kwargs is None:
-        span_processor_kwargs = {}
-    span_processor = ListSpanProcessor(
-        context_name=context_name,
-        spans_to_export=spans_to_export,
-        **span_processor_kwargs,
-    )
-    tracer_provider.add_span_processor(span_processor)
+    otlp_exporter = get_otlp_exporter(client)
+
+    global_batch_span_processor = GlobalBatchSpanProcessor(span_exporter=otlp_exporter)
+    tracer_provider.add_span_processor(global_batch_span_processor)
     # Sets the global default tracer provider
     trace.set_tracer_provider(tracer_provider)
 
-    otlp_exporter = get_otlp_exporter(client)
-
     init_instrumentations()
-    return otlp_exporter, span_processor
 
 
 def init_instrumentations():
@@ -395,11 +388,11 @@ def init_instrumentations():
             logger.warning("To trace Groq, install opentelemetry-instrumentation-groq")
 
 
-def get_otlp_exporter(client: Client):
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-        OTLPSpanExporter,
-    )
+def get_otlp_exporter(client: Client) -> OTLPSpanExporter:
+    global otlp_exporter
 
+    if otlp_exporter is not None:
+        return otlp_exporter
     otlp_exporter = OTLPSpanExporter(
         endpoint=f"{client.base_url}/v3/otl/{client._project_id()}",
         headers={
@@ -407,3 +400,35 @@ def get_otlp_exporter(client: Client):
         },
     )
     return otlp_exporter
+
+
+def get_batch_span_processor(client: Client) -> BatchSpanProcessor:
+    """
+    Returns a generic batch span processor.
+    """
+    global batch_span_processor
+    global otlp_exporter
+
+    if batch_span_processor is not None:
+        return batch_span_processor
+    if otlp_exporter is None:
+        otlp_exporter = get_otlp_exporter(client)
+    otlp_exporter = get_otlp_exporter(client)
+    processor = BatchSpanProcessor(otlp_exporter)
+    return processor
+
+
+def get_global_batch_span_processor(client: Client) -> GlobalBatchSpanProcessor:
+    """
+    Returns a global batch span processor. This processor adds task_id and session_id to the spans.
+    """
+    global batch_span_processor
+    global otlp_exporter
+
+    if batch_span_processor is not None:
+        return batch_span_processor
+    if otlp_exporter is None:
+        otlp_exporter = get_otlp_exporter(client)
+    otlp_exporter = get_otlp_exporter(client)
+    processor = GlobalBatchSpanProcessor(otlp_exporter)
+    return processor
