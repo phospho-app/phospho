@@ -83,9 +83,9 @@ class SantaClausAgent:
             "stream": True,
         }
         # The OpenAI module gives us back a stream object
-        streaming_response: Stream[ChatCompletionChunk] = (
-            self.client.chat.completions.create(**full_prompt)
-        )
+        streaming_response: Stream[
+            ChatCompletionChunk
+        ] = self.client.chat.completions.create(**full_prompt)
 
         phospho.log(
             input=full_prompt,
@@ -109,13 +109,13 @@ class SantaClausAgent:
         """Same as answer, but with phospho.wrap, which automatically logs the input
         and output of the function."""
 
-        streaming_response: Stream[ChatCompletionChunk] = (
-            self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[self.system_prompt]
-                + [{"role": m["role"], "content": m["content"]} for m in messages],
-                stream=True,
-            )
+        streaming_response: Stream[
+            ChatCompletionChunk
+        ] = self.client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[self.system_prompt]
+            + [{"role": m["role"], "content": m["content"]} for m in messages],
+            stream=True,
         )
 
         for response in streaming_response:
@@ -139,4 +139,5 @@ phospho.init(
     base_url=os.getenv("PHOSPHO_BASE_URL"),
     # version_id="v2"
     auto_log=False,
+    tracing=True,
 )
