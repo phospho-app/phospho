@@ -144,7 +144,12 @@ const ExcludeUsersDialog = ({
               User id
               <div className="flex flex-row space-x-2">
                 <FormControl>
-                  <Input placeholder="Enter a user id" {...field} autoFocus />
+                  <Input
+                    placeholder="Enter a user id"
+                    maxLength={100}
+                    {...field}
+                    autoFocus
+                  />
                 </FormControl>
                 <Button type="submit" variant="ghost">
                   <Plus className="size-4" />
