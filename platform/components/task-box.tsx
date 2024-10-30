@@ -158,7 +158,7 @@ function TaskBox({
                     className="whitespace-pre-wrap mx-2 bg-secondary p-2 text-xs"
                     key={`${task.id}_span_${index}`}
                   >
-                    {JSON.stringify(span, null, 2)}
+                    {JSON.stringify(span.open_telemetry_data, null, 2)}
                   </code>
                 );
               })}
