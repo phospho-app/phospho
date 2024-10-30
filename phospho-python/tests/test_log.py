@@ -141,7 +141,9 @@ def test_log_sync():
 
     assert log_content["input"] == "Say hi !"
     assert log_content["output"] == "Hello! How can I assist you today?"
-    assert log_content["session_id"] is None, "By default session_id should be None"
+    assert (
+        log_content["session_id"] is not None
+    ), "A default session_id should be set by the logger"
     assert log_content["prompt_tokens"] == 10
     assert log_content["completion_tokens"] == 9
     assert log_content["total_tokens"] == 19

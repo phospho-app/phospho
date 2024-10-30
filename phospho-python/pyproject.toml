@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "phospho"
-version = "0.3.43"
+version = "0.3.44"
 description = "Text Analytics for LLM apps"
 authors = ["phospho <contact@phospho.ai>"]
 readme = "README.md"
@@ -18,11 +18,39 @@ pydantic = "^2.5.2"
 tqdm = "^4.66.2"
 rich = "^13.7.1"
 typer = { extras = ["all"], version = ">=0.6" }
+# Tracing
+opentelemetry-sdk = "^1.27.0"
 
 # Optional dependencies for the lab
 openai = { version = "^1.12.0", optional = true }
 tiktoken = { version = "^0.8.0", optional = true }
 pandas = { version = "^2.0.3", optional = true }
+# For the tracing
+opentelemetry-instrumentation-openai = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-mistralai = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-ollama = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-anthropic = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-cohere = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-google-generativeai = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-pinecone = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-qdrant = { version = "^0.33.4", optional = true }
+# opentelemetry-instrumentation-langchain = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-lancedb = { version = "^0.33.4", optional = true }
+# opentelemetry-instrumentation-chromadb = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-transformers = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-together = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-llamaindex = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-milvus = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-haystack = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-bedrock = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-sagemaker = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-replicate = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-vertexai = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-watsonx = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-weaviate = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-alephalpha = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-marqo = { version = "^0.33.4", optional = true }
+opentelemetry-instrumentation-groq = { version = "^0.33.4", optional = true }
 
 
 [tool.poetry.group.dev]
@@ -54,3 +82,30 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
 lab = ["openai", "tiktoken", "pandas"]
+tracing = [
+    "opentelemetry-instrumentation-openai",
+    "opentelemetry-instrumentation-mistralai",
+    "opentelemetry-instrumentation-ollama",
+    "opentelemetry-instrumentation-anthropic",
+    "opentelemetry-instrumentation-cohere",
+    "opentelemetry-instrumentation-google-generativeai",
+    "opentelemetry-instrumentation-pinecone",
+    "opentelemetry-instrumentation-qdrant",
+    # "opentelemetry-instrumentation-langchain",
+    "opentelemetry-instrumentation-lancedb",
+    # "opentelemetry-instrumentation-chromadb",
+    "opentelemetry-instrumentation-transformers",
+    "opentelemetry-instrumentation-together",
+    "opentelemetry-instrumentation-llamaindex",
+    "opentelemetry-instrumentation-milvus",
+    "opentelemetry-instrumentation-haystack",
+    "opentelemetry-instrumentation-bedrock",
+    "opentelemetry-instrumentation-sagemaker",
+    "opentelemetry-instrumentation-replicate",
+    "opentelemetry-instrumentation-vertexai",
+    "opentelemetry-instrumentation-watsonx",
+    "opentelemetry-instrumentation-weaviate",
+    "opentelemetry-instrumentation-alephalpha",
+    "opentelemetry-instrumentation-marqo",
+    "opentelemetry-instrumentation-groq",
+]

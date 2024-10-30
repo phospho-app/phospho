@@ -162,7 +162,7 @@ async def generate_dataset_from_project(
     # Get the labels from the project settings
     # By default project.settings.events is {}
     taggers = {}
-    scorers = {}
+    scorers: Dict[str, List[int]] = {}
     classifiers = {}
     metadata_properties = [
         rg.TermsMetadataProperty(
@@ -494,7 +494,7 @@ async def pull_dataset_from_argilla(
                 task_id=task_id,
             )
 
-            if not last_event_in_db or last_event_in_db["removed"] is True:
+            if not last_event_in_db or last_event_in_db.removed is True:
                 # Create the event
                 if tagger not in taggers:
                     continue

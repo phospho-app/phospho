@@ -1,9 +1,10 @@
 from typing import List, Optional, Union
+
 from app.api.v3.models.log import (
+    LogError,
     LogReply,
     LogRequest,
     MinimalLogEventForMessages,
-    LogError,
 )
 from app.core import config
 from app.security import (
@@ -11,11 +12,13 @@ from app.security import (
     verify_propelauth_org_owns_project_id,
 )
 from app.security.authorization import get_quota_for_org
+from app.services.integrations.opentelemetry import OpenTelemetryConnector
 from app.services.mongo.emails import send_quota_exceeded_email
 from app.services.mongo.extractor import ExtractorClient
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from loguru import logger
-from pydantic import ValidationError
+from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
+
 
 router = APIRouter(tags=["Log"])
 
@@ -50,8 +53,7 @@ async def store_batch_of_log_events(
     max_usage = usage_quota.max_usage
 
     for log_event_model in log_request.batched_log_events:
-        # We now validate the logs
-
+        # Inspect max usage quota
         if max_usage is None or (max_usage is not None and current_usage < max_usage):
             logs_to_process.append(log_event_model)
             current_usage += 1
@@ -82,3 +84,39 @@ async def store_batch_of_log_events(
         return LogReply(logged_events=logged_events)
 
     return None
+
+
+@router.post(
+    "/otl/{project_id}",
+    description="OpenTelemetry traces endpoint",
+)
+async def collect_opentelemetry_traces(
+    project_id: str,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    org: dict = Depends(authenticate_org_key),
+):
+    """
+    This endpoint is used to log traces and intermediate LLM calls to phospho.
+
+    It's compatible with the OpenTelemetry protocol, and it's used by the OpenTelemetry SDKs to send traces to phospho.
+
+    The traces are stored in a dedicated database and can be viewed in the phospho UI.
+    """
+
+    await verify_propelauth_org_owns_project_id(org, project_id)
+
+    body = await request.body()
+    # The data is sent as a protobuf message (python module)
+    data = TracesData.FromString(body)
+
+    connector = OpenTelemetryConnector(
+        project_id=project_id,
+        org_id=org["org"].get("org_id"),
+    )
+    background_tasks.add_task(
+        connector.process,
+        data=data,
+    )
+
+    return {"status": "ok"}

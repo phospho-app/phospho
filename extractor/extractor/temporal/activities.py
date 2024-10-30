@@ -7,7 +7,6 @@ from extractor.services.pipelines import MainPipeline
 from extractor.services.connectors import (
     LangsmithConnector,
     LangfuseConnector,
-    OpenTelemetryConnector,
 )
 from extractor.services.log.tasks import process_logs_for_messages, process_tasks_id
 from extractor.models.log import (
@@ -191,22 +190,6 @@ async def run_recipe_on_task(
         "nb_job_results": total_len,
         "recipe_type": request.recipe.recipe_type,
     }
-
-
-@activity.defn(name="store_opentelemetry_data")
-async def store_open_telemetry_data(
-    request: PipelineOpentelemetryRequest,
-):
-    logger.info(f"Received OpenTelemetry data for project id: {request.project_id}")
-    opentelemetry_connector = OpenTelemetryConnector(
-        project_id=request.project_id,
-        data=request.open_telemetry_data,
-    )
-    return await opentelemetry_connector.process(
-        org_id=request.org_id,
-        current_usage=request.current_usage,
-        max_usage=request.max_usage,
-    )
 
 
 @activity.defn(name="run_process_tasks")
