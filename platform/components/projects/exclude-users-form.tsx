@@ -146,7 +146,7 @@ const ExcludeUsersDialog = ({
                 <FormControl>
                   <Input
                     placeholder="Enter a user id"
-                    maxLength={32}
+                    maxLength={100}
                     {...field}
                     autoFocus
                   />
