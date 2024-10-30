@@ -165,7 +165,14 @@ function TaskBox({
               {taskSpans === undefined && <Spinner />}
               {taskSpans?.spans && taskSpans.spans.length === 0 && (
                 <pre className="whitespace-pre-wrap mx-2 bg-secondary p-2 text-xs">
-                  No steps data found. Setup tracing to add them here.
+                  No steps data found. Setup tracing to add them here.{" "}
+                  <a
+                    href="https://docs.phospho.ai/import-data/tracing"
+                    className="underline cursor-pointer"
+                    target="_blank"
+                  >
+                    Learn more.
+                  </a>
                 </pre>
               )}
             </div>
