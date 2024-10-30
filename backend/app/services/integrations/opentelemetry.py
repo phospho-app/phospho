@@ -94,25 +94,19 @@ class OpenTelemetryConnector:
         # Start by storing the raw data, for debug purposes
         await self._dump(data)
 
-        # Exported spans to store in the database. They have additional metadata
-        spans_to_export: List[dict] = []
-        # Either each span has a task_id and session_id, or we use the one in the latest span
-        trace_task_id = None
-        trace_session_id = None
-        trace_metadata = None
+        # List of all processed spans
+        all_spans: List[dict] = []
 
         for resource in data.resource_spans:
             scope_spans = resource.scope_spans
             for scope in scope_spans:
-                logger.info(f"Processing {len(scope.spans)} spans")
-                # Iterate over the spans in reverse order
-                for span in reversed(scope.spans):
+                for span in scope.spans:
                     span_task_id = None
                     span_session_id = None
                     span_metadata = None
+                    span_propagate = False
 
                     unpacked_attributes = self._convert_attributes(span.attributes)
-
                     # Convert the span to a dictionary and replace attributes with the unpacked ones
                     span_to_store = MessageToDict(span)
                     span_to_store["attributes"] = unpacked_attributes
@@ -126,38 +120,57 @@ class OpenTelemetryConnector:
                             "session_id"
                         )
                         span_metadata = unpacked_attributes["phospho"].get("metadata")
+                        span_propagate = unpacked_attributes["phospho"].get("propagate")
 
-                        # If the span has a "propagate" attribute, propagate the task_id and session_id
-                        if unpacked_attributes["phospho"].get("propagate"):
-                            # Propagate the task_id and session_id to the next spans
-                            trace_task_id = span_task_id
-                            trace_session_id = span_session_id
-                            trace_metadata = span_metadata
+                    all_spans.append(
+                        {
+                            "org_id": self.org_id,
+                            "project_id": self.project_id,
+                            "open_telemetry_data": span_to_store,
+                            "task_id": span_task_id,
+                            "session_id": span_session_id,
+                            "metadata": span_metadata,
+                            "start_time_unix_nano": span.start_time_unix_nano,
+                            "end_time_unix_nano": span.end_time_unix_nano,
+                            "propagate": span_propagate,
+                        }
+                    )
 
-                    # If the task_id and session_id are not set, use the ones from the trace
-                    if not span_task_id:
-                        span_task_id = trace_task_id
-                    if not span_session_id:
-                        span_session_id = trace_session_id
-                    if not span_metadata:
-                        span_metadata = trace_metadata
+        logger.info(f"Found {len(all_spans)} spans to process.")
 
-                    # If there is a gen_ai attribute, store the data in the database
-                    if "gen_ai" in unpacked_attributes:
-                        # Remove phospho metadata from the gen_ai attribute
-                        if span_metadata and "phospho" in span_metadata:
-                            span_metadata.pop("phospho")
+        # Sort the spans by reverse end_time_unix_nano (more recent first)
+        all_spans.sort(key=lambda x: x["end_time_unix_nano"], reverse=True)
 
-                        spans_to_export.append(
-                            {
-                                "org_id": self.org_id,
-                                "project_id": self.project_id,
-                                "open_telemetry_data": span_to_store,
-                                "task_id": span_task_id,
-                                "session_id": span_session_id,
-                                "metadata": span_metadata,
-                            }
-                        )
+        for s in all_spans:
+            logger.debug(s)
+
+        # Either each span has a task_id and session_id, or we use the one in the latest span
+        trace_task_id = None
+        trace_session_id = None
+        trace_metadata = None
+
+        # Collect the spans to export in a new list
+        spans_to_export = []
+
+        for processed_span in all_spans:
+            # If the span has a "propagate" attribute, propagate the task_id and session_id
+            if processed_span["propagate"]:
+                # Propagate the task_id and session_id to the next spans
+                trace_task_id = processed_span["task_id"]
+                trace_session_id = processed_span["session_id"]
+                trace_metadata = processed_span["metadata"]
+            # If the task_id and session_id are not set, use the ones from the trace
+            if processed_span["task_id"] is None:
+                processed_span["task_id"] = trace_task_id
+            if processed_span["session_id"] is None:
+                processed_span["session_id"] = trace_session_id
+            if processed_span["metadata"] is None:
+                processed_span["metadata"] = trace_metadata
+
+            # Only log gen_ai open_telemetry_data
+            # Change this criterion to store more spans
+            if "gen_ai" in processed_span["open_telemetry_data"]["attributes"]:
+                spans_to_export.append(processed_span)
 
         # Store the spans in the database
         if spans_to_export:

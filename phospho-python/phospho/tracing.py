@@ -2,7 +2,7 @@ import logging
 from typing import Dict, List, Optional, Union
 
 from opentelemetry.context import Context
-from opentelemetry.sdk.trace import ReadableSpan, Span
+from opentelemetry.sdk.trace import Span
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
@@ -75,6 +75,17 @@ class GlobalBatchSpanProcessor(BatchSpanProcessor):
             metadata = {f"phospho.metadata.{k}": v for k, v in self.metadata.items()}
             span.set_attributes(metadata)
         return super().on_start(span, parent_context)
+
+    def _export(self, flush_request):
+        # Block the _export if the last span doesn't contain "phospho" attribute
+        # last_span = self.queue[-1]
+        # if (
+        #     last_span.attributes.get("phospho.task_id") is None
+        #     or last_span.attributes.get("phospho.session_id") is None
+        # ):
+        #     return
+
+        return super()._export(flush_request)
 
 
 def init_tracing(client: Client):
@@ -414,21 +425,21 @@ def get_batch_span_processor(client: Client) -> BatchSpanProcessor:
     if otlp_exporter is None:
         otlp_exporter = get_otlp_exporter(client)
     otlp_exporter = get_otlp_exporter(client)
-    processor = BatchSpanProcessor(otlp_exporter)
-    return processor
+    batch_span_processor = BatchSpanProcessor(otlp_exporter)
+    return batch_span_processor
 
 
 def get_global_batch_span_processor(client: Client) -> GlobalBatchSpanProcessor:
     """
     Returns a global batch span processor. This processor adds task_id and session_id to the spans.
     """
-    global batch_span_processor
+    global global_batch_span_processor
     global otlp_exporter
 
-    if batch_span_processor is not None:
-        return batch_span_processor
+    if global_batch_span_processor is not None:
+        return global_batch_span_processor
     if otlp_exporter is None:
         otlp_exporter = get_otlp_exporter(client)
     otlp_exporter = get_otlp_exporter(client)
-    processor = GlobalBatchSpanProcessor(otlp_exporter)
-    return processor
+    global_batch_span_processor = GlobalBatchSpanProcessor(otlp_exporter)
+    return global_batch_span_processor
