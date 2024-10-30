@@ -88,8 +88,6 @@ class OpenTelemetryConnector:
         """
         Push the data and process it
         """
-        # TODO : Add support for metadata
-
         logger.info(f"Processing OpenTelemetry data:\n{data}")
         # Start by storing the raw data, for debug purposes
         await self._dump(data)
