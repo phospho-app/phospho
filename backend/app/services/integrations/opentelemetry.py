@@ -1,11 +1,27 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from loguru import logger
+from pydantic import BaseModel
 
 from app.db.mongo import get_mongo_db
 from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
 from google.protobuf.json_format import MessageToDict
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 from opentelemetry.proto.common.v1.common_pb2 import KeyValue
+
+
+class StandardSpanModel(BaseModel):
+    org_id: str
+    project_id: str
+    task_id: str
+    session_id: str
+    metadata: Optional[dict] = None
+    #
+    propagate: Optional[bool] = None
+    #
+    start_time_unix_nano: int
+    end_time_unix_nano: int
+    open_telemetry_data: dict
+    # In open_telemetry_data, you have a gen_ai key: https://opentelemetry.io/docs/specs/semconv/attributes-registry/gen-ai/
 
 
 class OpenTelemetryConnector:
@@ -165,8 +181,8 @@ class OpenTelemetryConnector:
             if processed_span["metadata"] is None:
                 processed_span["metadata"] = trace_metadata
 
-            # Only log gen_ai open_telemetry_data
-            # Change this criterion to store more spans
+            # Only log open_telemetry_data which have a gen_ai attribute
+            # TODO: Change this criterion to store more kind of spans
             if "gen_ai" in processed_span["open_telemetry_data"]["attributes"]:
                 spans_to_export.append(processed_span)
 
@@ -181,7 +197,7 @@ class OpenTelemetryConnector:
 
 async def fetch_spans_for_task(
     project_id: str, task_id: str
-) -> List[Dict[str, object]]:
+) -> List[StandardSpanModel]:
     """
     Fetch all the spans linked to a task_id
     """
@@ -194,7 +210,12 @@ async def fetch_spans_for_task(
         .to_list(None)
     )
     # Filter _id field
+    valid_spans = []
     for span in spans:
         span.pop("_id")
+        try:
+            valid_spans.append(StandardSpanModel.model_validate(span))
+        except Exception as e:
+            logger.error(f"Error validating span: {e}")
 
     return spans
