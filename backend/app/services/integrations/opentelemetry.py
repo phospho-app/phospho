@@ -29,9 +29,7 @@ class OpenTelemetryConnector:
         """
         # TODO : Add support for metadata
 
-        logger.info(
-            f"Processing OpenTelemetry data:\n{len(data.resource_spans[0].scope_spans[0].spans)} spans"
-        )
+        logger.info(f"Processing OpenTelemetry data:\n{data}")
         # Start by storing the raw data, for debug purposes
         await self._dump(data)
 
@@ -132,7 +130,6 @@ class OpenTelemetryConnector:
                                 "metadata": span_metadata,
                             }
                         )
-                        logger.info("Opentelemetry data stored in the database")
 
                     if span_id == len(scope.spans) - 1:
                         # Update the trace metadata
@@ -152,6 +149,7 @@ class OpenTelemetryConnector:
 
         # Store the spans in the database
         if spans_to_export:
+            logger.info(f"Opentelemetry: Storing {len(spans_to_export)} in db")
             mongo_db = await get_mongo_db()
             mongo_db["opentelemetry"].insert_many(spans_to_export)
 

@@ -375,35 +375,31 @@ def _log_single_event(
 
     # Manual intermediate calls tracing
     if intermediate_logs is not None and len(intermediate_logs) > 0:
-        if otlp_exporter is None or span_processor is None:
+        if otlp_exporter is None:
             # Initialize the global tracer
-            from .tracing import init_tracing
+            from .tracing import get_otlp_exporter
 
-            otlp_exporter, span_processor = init_tracing(
-                client=client, spans_to_export=spans_to_export, context_name="global"
-            )
+            otlp_exporter = get_otlp_exporter(client=client)
 
         from opentelemetry.sdk.trace import TracerProvider
 
         tracer_provider = TracerProvider()
         tracer = tracer_provider.get_tracer("phospho.log")
-        span_processor.session_id = session_id
-        span_processor.task_id = task_id
-        span_processor.metadata = metadata_to_log
 
         # Add spans for intermediate logs
         context_name = f"{task_id}_intermediate"
         for intermediate_log in intermediate_logs:
             with tracer.start_as_current_span(
-                name="phospho.log",
+                f"phospho.{context_name}",
                 attributes={
-                    "task_id": task_id,
-                    "session_id": session_id,
+                    "phospho.task_id": task_id,
+                    "phospho.session_id": session_id,
+                    "gen_ai": True,
                 },
             ) as span:
-                span.set_attributes(
-                    {f"gen_ai.{k}": v for k, v in intermediate_log.items()}
-                )
+                # TODO: Transform the intermediate log into a flat dict of basic attributes
+                # And make them child of the gen_ai attribute
+                span.set_attributes(intermediate_log)
                 spans_to_export[context_name].append(span)
 
         # Log
