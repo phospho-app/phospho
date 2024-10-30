@@ -4,7 +4,14 @@ import phospho
 from openai import OpenAI
 
 
-def test_tracing():
+def test_context_tracing():
+    phospho.init(
+        tick=0.05,
+        raise_error_on_fail_to_send=True,
+        base_url="http://127.0.0.1:8000",
+        tracing=True,
+    )
+
     openai_client = OpenAI()
 
     # Context syntax

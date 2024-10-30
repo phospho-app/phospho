@@ -1038,10 +1038,9 @@ def tracer(
     if client is None:
         raise ValueError("Call phospho.init() before calling phospho.tracer()")
     if not tracing_initialized:
-        # Initialize the global tracer
-        from .tracing import init_tracing
-
-        init_tracing(client=client, context_name="global")
+        raise ValueError(
+            "To use tracing, you need to call phospho.init(tracing=True) first"
+        )
 
     from .tracing import get_global_batch_span_processor
 
