@@ -29,7 +29,7 @@ import useSWRImmutable from "swr/immutable";
 
 import DatavizTaggerGraph from "./dataviz-tagger";
 
-interface PivotTableElement {
+export interface PivotTableElement {
   breakdown_by: string;
   [key: string]: string | number | null;
 }
@@ -135,6 +135,8 @@ const DatavizGraph = ({
       refreshWhenOffline: false,
     },
   );
+
+  console.log(pivotData);
 
   const isStacked =
     pivotData && pivotData?.length > 1 && "stack" in pivotData[0];
@@ -300,6 +302,7 @@ const DatavizGraph = ({
                             );
                           }
                           const color = graphColors[index % graphColors.length];
+                          console.log(payload);
 
                           return (
                             <div key={item.name}>
@@ -309,6 +312,7 @@ const DatavizGraph = ({
                                   className="w-4 h-4"
                                   style={{ backgroundColor: color }}
                                 ></div>
+
                                 {/* The name of the item and its value */}
                                 <div className="text-secondary">
                                   {itemName}: {formatedValue}
@@ -319,8 +323,11 @@ const DatavizGraph = ({
                         })}
                         {breakdown_by === "tagger_name" && (
                           <DatavizTaggerGraph
-                            taggerName={label}
-                            project_id={project_id}
+                            tagger_name={label}
+                            metric={metric}
+                            metadata_metric={metadata_metric}
+                            breakdown_by={breakdown_by}
+                            scorer_id={scorer_id}
                           />
                         )}
                         <div className="pt-4">
