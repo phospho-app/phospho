@@ -133,11 +133,11 @@ def test_tracing_combined():
         tick=0.05,
         raise_error_on_fail_to_send=True,
         base_url="http://127.0.0.1:8000",
-        tracing=True,
+        tracing=True,  # Set tracing to True to track all GenAI call
     )
-
     openai_client = OpenAI()
 
+    # Automatic tracing : GenAI spans are linked to the tasks logged
     response = openai_client.chat.completions.create(
         messages=[
             {"role": "system", "content": "Obey"},
@@ -146,31 +146,25 @@ def test_tracing_combined():
         model="gpt-4o-mini",
         max_tokens=1,
     )
-    phospho.log(
-        system_prompt="Obey",
-        input="Say hello",
-        output=response,
-    )
+    # Resolution from GenAI spans to tasks is based on timestamps.
+    # Example: this task logged below will be linked to the openai call above.
+    phospho.log(system_prompt="Obey", input="Say hello", output="Something else")
 
-    with phospho.tracer() as context_name:
-        # Make an API call
+    # Explicit tracing : context blocks
+    with phospho.tracer():  # Also works with @phospho.trace() syntax
+        # Every GenAI span traced here will have a task_id set
         messages = [{"role": "user", "content": "Say good bye"}]
         openai_client.chat.completions.create(
             messages=messages,
             model="gpt-4o-mini",
             max_tokens=1,
         )
-        # Inspect tracer.spans_to_export
-        # assert len(phospho.spans_to_export[context_name]) == 3
-        log_content = phospho.log(
-            input="Say good bye",
-            output=response,
-        )
+        phospho.log(input="Say good bye", output=response)
 
+    # Manual tracing : add steps to phospho.log
     phospho.log(
         input="Say bossman",
         output="Bossman",
         steps=[{"some_data": "very important"}],
     )
-
     phospho.flush()

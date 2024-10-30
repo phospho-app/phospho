@@ -182,6 +182,10 @@ async def connect_and_init_db():
             )
             mongo_db[MONGODB_NAME]["recipes"].create_index("id", background=True)
 
+            mongo_db[MONGODB_NAME]["opentelemetry"].create_index(
+                ["project_id", "task_id"], background=True
+            )
+
         except Exception as e:
             logger.warning(f"Error while connecting to Mongo: {e}")
             raise e
