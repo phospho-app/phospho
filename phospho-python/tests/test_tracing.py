@@ -126,3 +126,51 @@ def test_tracing_global():
         input="Say hello",
         output=response,
     )
+
+
+def test_tracing_combined():
+    phospho.init(
+        tick=0.05,
+        raise_error_on_fail_to_send=True,
+        base_url="http://127.0.0.1:8000",
+        tracing=True,
+    )
+
+    openai_client = OpenAI()
+
+    response = openai_client.chat.completions.create(
+        messages=[
+            {"role": "system", "content": "Obey"},
+            {"role": "user", "content": "Say hello"},
+        ],
+        model="gpt-4o-mini",
+        max_tokens=1,
+    )
+    phospho.log(
+        system_prompt="Obey",
+        input="Say hello",
+        output=response,
+    )
+
+    with phospho.tracer() as context_name:
+        # Make an API call
+        messages = [{"role": "user", "content": "Say good bye"}]
+        openai_client.chat.completions.create(
+            messages=messages,
+            model="gpt-4o-mini",
+            max_tokens=1,
+        )
+        # Inspect tracer.spans_to_export
+        # assert len(phospho.spans_to_export[context_name]) == 3
+        log_content = phospho.log(
+            input="Say good bye",
+            output=response,
+        )
+
+    phospho.log(
+        input="Say bossman",
+        output="Bossman",
+        steps=[{"some_data": "very important"}],
+    )
+
+    phospho.flush()
