@@ -1,6 +1,11 @@
 import time
 from app.api.v2.models.triggers import TriggerClusteringRequest
 from app.core import config
+from app.services.integrations.postgresql import (
+    PostgresqlCredentials,
+    PostgresqlIntegration,
+)
+from app.services.mongo.projects import get_project_by_id
 from fastapi import APIRouter, Header, Request
 from fastapi_simple_rate_limiter import rate_limiter  # type: ignore
 from app.services.mongo.ai_hub import AIHubClient
@@ -101,3 +106,46 @@ async def trigger_calculate_sessions(
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@router.post(
+    "/triggers/sync-postgresql/{project_id}",
+    description="Run the synchronisation pipeline for PostgreSQL",
+    response_model=dict,
+)
+@rate_limiter(limit=10, seconds=60)
+async def trigger_postgresql_pipeline(
+    project_id: str,
+    _: Request,
+    key: str | None = Header(default=None),
+) -> dict:
+    if key != config.API_TRIGGER_SECRET:
+        return {"status": "error", "message": "Invalid secret key"}
+    logger.info(f"Triggering PostgreSQL sync pipeline for project {project_id}")
+
+    mongo_db = await get_mongo_db()
+    integration = await mongo_db["integrations"].find_one(
+        {"type": "postgresql", "project_id": project_id}
+    )
+    if not integration:
+        return {"status": "error", "message": "No PostgreSQL integration found"}
+
+    try:
+        valid_integration = PostgresqlCredentials.model_validate(integration)
+        project = await get_project_by_id(project_id)
+        postgresql_integration = PostgresqlIntegration(
+            org_id=valid_integration.org_id,
+            org_name=valid_integration.org_name,
+            project_id=project.id,
+            project_name=project.project_name,
+        )
+        await postgresql_integration.push()
+    except Exception as e:
+        logger.error(
+            f"Error running postgresql sync pipeline project {project_id}: {e}"
+        )
+        return {"status": "error", "message": str(e)}
+
+    return {
+        "status": "ok",
+    }

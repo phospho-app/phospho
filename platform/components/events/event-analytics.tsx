@@ -1,3 +1,4 @@
+import { TasksTable } from "@/components/tasks/tasks-table";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,7 +20,7 @@ import useSWR from "swr";
 function EventAnalytics({ eventId }: { eventId: string }) {
   const { accessToken } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
-  const { data: selectedProject }: { data: Project } = useSWR(
+  const { data: selectedProject }: { data: Project | undefined } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
     ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
     {
@@ -27,10 +28,8 @@ function EventAnalytics({ eventId }: { eventId: string }) {
     },
   );
 
-  const eventFilters = {};
-
   // In the Record, find the event with the same id as the one passed in the props
-  const eventsAsArray = Object.entries(selectedProject.settings?.events || {});
+  const eventsAsArray = Object.entries(selectedProject?.settings?.events || {});
   const event = eventsAsArray.find(([, event]) => event.id === eventId)?.[1];
 
   const { data: totalNbDetections } = useSWR(
@@ -39,13 +38,11 @@ function EventAnalytics({ eventId }: { eventId: string }) {
           `/api/explore/${encodeURI(project_id)}/aggregated/events/${encodeURI(eventId)}`,
           accessToken,
           "total_nb_events",
-          JSON.stringify(eventFilters),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["total_nb_events"],
-        filters: eventFilters,
       }),
     {
       keepPreviousData: true,
@@ -60,13 +57,11 @@ function EventAnalytics({ eventId }: { eventId: string }) {
           "f1_score_binary",
           "precision_binary",
           "recall_binary",
-          JSON.stringify(eventFilters),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["f1_score_binary", "precision_binary", "recall_binary"],
-        filters: eventFilters,
       }),
     {
       keepPreviousData: true,
@@ -81,7 +76,6 @@ function EventAnalytics({ eventId }: { eventId: string }) {
           "f1_score_multiclass",
           "precision_multiclass",
           "recall_multiclass",
-          JSON.stringify(eventFilters),
         ]
       : null,
     ([url, accessToken]) =>
@@ -91,7 +85,6 @@ function EventAnalytics({ eventId }: { eventId: string }) {
           "precision_multiclass",
           "recall_multiclass",
         ],
-        filters: eventFilters,
       }),
     {
       keepPreviousData: true,
@@ -105,13 +98,11 @@ function EventAnalytics({ eventId }: { eventId: string }) {
           accessToken,
           "mean_squared_error",
           "r_squared",
-          JSON.stringify(eventFilters),
         ]
       : null,
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
         metrics: ["mean_squared_error", "r_squared"],
-        filters: eventFilters,
       }),
     {
       keepPreviousData: true,
@@ -123,7 +114,7 @@ function EventAnalytics({ eventId }: { eventId: string }) {
   }
 
   return (
-    <>
+    <div className="flex flex-col space-y-4 mt-4">
       <div>
         <h4 className="text-xl font-bold">
           Event : &quot;{event?.event_name}&quot;
@@ -244,11 +235,10 @@ function EventAnalytics({ eventId }: { eventId: string }) {
               <CardDescription>Total Nb of detections</CardDescription>
             </CardHeader>
             <CardContent>
-              {(totalNbDetections?.total_nb_events === undefined && (
-                <p>...</p>
-              )) || (
+              {totalNbDetections?.total_nb_events && (
                 <p className="text-xl">{totalNbDetections?.total_nb_events}</p>
               )}
+              {totalNbDetections?.total_nb_events === undefined && <p>...</p>}
             </CardContent>
           </Card>
           {/* If we have enough data to compute the scores, we display the F1-score, Precision and Recall cards */}
@@ -259,14 +249,14 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>F1-score</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(classificationMetrics?.f1_score_multiclass && (
+                  {classificationMetrics?.f1_score_multiclass && (
                     <p className="text-xl">
                       {classificationMetrics?.f1_score_multiclass.toFixed(2)}
                     </p>
-                  )) ||
-                    (!classificationMetrics?.f1_score_multiclass && (
-                      <p className="text-xl"> ... </p>
-                    ))}
+                  )}
+                  {classificationMetrics?.f1_score_multiclass === undefined && (
+                    <p className="text-xl"> ... </p>
+                  )}
                 </CardContent>
               </Card>
               <Card>
@@ -274,14 +264,14 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Precision</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(classificationMetrics?.f1_score_multiclass && (
+                  {classificationMetrics?.f1_score_multiclass && (
                     <p className="text-xl">
                       {classificationMetrics?.precision_multiclass.toFixed(2)}
                     </p>
-                  )) ||
-                    (!classificationMetrics?.f1_score_multiclass && (
-                      <p className="text-xl">...</p>
-                    ))}
+                  )}
+                  {classificationMetrics?.f1_score_multiclass === undefined && (
+                    <p className="text-xl">...</p>
+                  )}
                 </CardContent>
               </Card>
               <Card>
@@ -289,14 +279,14 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Recall</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(classificationMetrics?.f1_score_multiclass && (
+                  {classificationMetrics?.f1_score_multiclass && (
                     <p className="text-xl">
                       {classificationMetrics?.recall_multiclass.toFixed(2)}
                     </p>
-                  )) ||
-                    (!classificationMetrics?.f1_score_multiclass && (
-                      <p className="text-xl">...</p>
-                    ))}
+                  )}
+                  {classificationMetrics?.f1_score_multiclass === undefined && (
+                    <p className="text-xl">...</p>
+                  )}
                 </CardContent>
               </Card>
             </>
@@ -308,14 +298,14 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>F1-score</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(binaryMetrics?.f1_score_binary && (
+                  {binaryMetrics?.f1_score_binary && (
                     <p className="text-xl">
                       {binaryMetrics?.f1_score_binary.toFixed(2)}
                     </p>
-                  )) ||
-                    (!binaryMetrics?.f1_score_binary && (
-                      <p className="text-xl"> ... </p>
-                    ))}
+                  )}
+                  {binaryMetrics?.f1_score_binary === undefined && (
+                    <p className="text-xl"> ... </p>
+                  )}
                 </CardContent>
               </Card>
               <Card>
@@ -323,14 +313,14 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Precision</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(binaryMetrics?.f1_score_binary && (
+                  {binaryMetrics?.f1_score_binary && (
                     <p className="text-xl">
                       {binaryMetrics?.precision_binary.toFixed(2)}
                     </p>
-                  )) ||
-                    (!binaryMetrics?.f1_score_binary && (
-                      <p className="text-xl">...</p>
-                    ))}
+                  )}
+                  {binaryMetrics?.f1_score_binary === undefined && (
+                    <p className="text-xl">...</p>
+                  )}
                 </CardContent>
               </Card>
               <Card>
@@ -338,14 +328,14 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Recall</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {(binaryMetrics?.f1_score_binary && (
+                  {binaryMetrics?.f1_score_binary && (
                     <p className="text-xl">
                       {binaryMetrics?.recall_binary.toFixed(2)}
                     </p>
-                  )) ||
-                    (!binaryMetrics?.f1_score_binary && (
-                      <p className="text-xl">...</p>
-                    ))}
+                  )}
+                  {binaryMetrics?.f1_score_binary === undefined && (
+                    <p className="text-xl">...</p>
+                  )}
                 </CardContent>
               </Card>
             </>
@@ -358,12 +348,12 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>Mean Squared Error</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {regressionMetrics?.mean_squared_error !== undefined &&
-                  regressionMetrics?.mean_squared_error !== null ? (
+                  {regressionMetrics?.mean_squared_error && (
                     <p className="text-xl">
                       {regressionMetrics?.mean_squared_error.toFixed(2)}
                     </p>
-                  ) : (
+                  )}
+                  {regressionMetrics?.mean_squared_error === undefined && (
                     <p className="text-xl">...</p>
                   )}
                 </CardContent>
@@ -373,12 +363,12 @@ function EventAnalytics({ eventId }: { eventId: string }) {
                   <CardDescription>R-squared</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {regressionMetrics?.mean_squared_error !== undefined &&
-                  regressionMetrics?.mean_squared_error !== null ? (
+                  {regressionMetrics?.mean_squared_error && (
                     <p className="text-xl">
                       {regressionMetrics?.r_squared.toFixed(2)}
                     </p>
-                  ) : (
+                  )}
+                  {regressionMetrics?.mean_squared_error === undefined && (
                     <p className="text-xl">...</p>
                   )}
                 </CardContent>
@@ -387,7 +377,10 @@ function EventAnalytics({ eventId }: { eventId: string }) {
           )}
         </div>
       </div>
-    </>
+      {event && (
+        <TasksTable forcedDataFilters={{ event_name: [event.event_name] }} />
+      )}
+    </div>
   );
 }
 
