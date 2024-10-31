@@ -21,12 +21,14 @@ const DatavizTaggerGraph = ({
   metric,
   metadata_metric,
   breakdown_by,
+  breakdown_by_event_id,
   scorer_id,
 }: {
   tagger_name: string;
   metric: string;
   metadata_metric?: string | null;
   breakdown_by: string;
+  breakdown_by_event_id?: string | null;
   scorer_id: string | null;
 }) => {
   const { accessToken } = useUser();
@@ -48,6 +50,7 @@ const DatavizTaggerGraph = ({
       metric,
       metadata_metric,
       breakdown_by,
+      breakdown_by_event_id,
       scorer_id,
       JSON.stringify(mergedFilters),
     ],
