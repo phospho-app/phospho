@@ -13,7 +13,7 @@ import React from "react";
 import {
   Bar,
   BarChart,
-  CartesianGrid,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -27,10 +27,11 @@ import {
 import { Payload } from "recharts/types/component/DefaultTooltipContent";
 import useSWRImmutable from "swr/immutable";
 
+import DatavizTaggerGraph from "./dataviz-tagger";
 import { Button } from "./ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 
-interface PivotTableElement {
+export interface PivotTableElement {
   breakdown_by: string;
   stack?: Record<string, string | number | null>;
   [key: string]:
@@ -353,7 +354,6 @@ const DatavizGraph = ({
             }}
             onClick={onChartClick}
           >
-            <CartesianGrid />
             <Tooltip
               formatter={(value) => {
                 if (typeof value === "string") return value;
@@ -396,6 +396,7 @@ const DatavizGraph = ({
                                   className="w-4 h-4"
                                   style={{ backgroundColor: color }}
                                 ></div>
+
                                 {/* The name of the item and its value */}
                                 <div className="text-secondary">
                                   {itemName}: {formatedValue}
@@ -404,6 +405,15 @@ const DatavizGraph = ({
                             </div>
                           );
                         })}
+                        {breakdown_by === "tagger_name" && (
+                          <DatavizTaggerGraph
+                            tagger_name={label}
+                            metric={metric}
+                            metadata_metric={metadata_metric}
+                            breakdown_by={breakdown_by}
+                            scorer_id={scorer_id}
+                          />
+                        )}
                         <div className="pt-4">
                           {supportedDeepDives.includes(breakdown_by) && (
                             <div className="flex flex-row items-center text-xs text-secondary">
@@ -474,7 +484,17 @@ const DatavizGraph = ({
                 fill="#22c55e"
                 stackId="a"
                 // radius={[0, 20, 20, 0]}
-              />
+              >
+                <LabelList
+                  dataKey="metric"
+                  position="right"
+                  className="text-secondary"
+                  fontSize={12}
+                  formatter={(value: number) => {
+                    return value;
+                  }}
+                />
+              </Bar>
             )}
             {isStacked &&
               // Loop over the keys of the dict and create a bar for each key
