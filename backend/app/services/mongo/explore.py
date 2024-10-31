@@ -1742,6 +1742,7 @@ async def graph_number_of_daily_tasks(project_id: str):
     ]
     # Query Mongo
     result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+    result_df = pd.DataFrame(result)
     # Add missing days to the result, and set the missing values to 0
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
@@ -1753,7 +1754,7 @@ async def graph_number_of_daily_tasks(project_id: str):
     complete_df = pd.DataFrame({"date": complete_date_range})
     complete_df["date"] = pd.to_datetime(complete_df["date"]).dt.date
 
-    if not result.empty:
+    if not result_df.empty:
         result["date"] = pd.to_datetime(result["date"]).dt.date
         result = pd.merge(complete_df, result, on="date", how="left").fillna(0)
     else:
