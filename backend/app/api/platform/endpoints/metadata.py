@@ -106,19 +106,3 @@ async def post_metadata_pivot(
     )
 
     return MetadataPivotResponse(pivot_table=pivot_table)
-
-
-@router.post(
-    "/metadata/{project_id}/pivot-tagger",
-    description="Create a pivot table for metadata in a project.",
-    response_model=MetadataPivotResponse,
-)
-async def post_metadata_pivot_tagger(
-    project_id: str,
-    pivot_query: MetadataPivotQuery,
-    user: User = Depends(propelauth.require_user),
-) -> MetadataPivotResponse:
-    """
-    Create a pivot table for metadata in a project.
-    """
-    return await post_metadata_pivot(project_id, pivot_query, user)
