@@ -99,6 +99,12 @@ const DatavizTaggerGraph = ({
     }
   });
 
+  pivotData?.sort((a, b) => {
+    if (a?.metric === null) return -1;
+    if (b?.metric === null) return -1;
+    return a.metric > b.metric ? -1 : 1;
+  });
+
   return (
     <div className="w-[200px] pt-4">
       {loading && <Loading />}
