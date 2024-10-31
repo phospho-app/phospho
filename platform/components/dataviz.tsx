@@ -146,8 +146,6 @@ const DatavizGraph = ({
     },
   );
 
-  console.log(pivotData);
-
   const isStacked =
     pivotData && pivotData?.length > 1 && "stack" in pivotData[0];
 
