@@ -87,7 +87,22 @@ async def connect_and_init_db():
                 background=True,
             )
             mongo_db[MONGODB_NAME]["tasks"].create_index(
+                ["project_id", "created_at"], background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
                 ["project_id", "flag"], background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                ["project_id", "metadata.version_id"], background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                ["project_id", "sentiment.label", "sentiment.score"], background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                ["project_id", "sentiment.label", "created_at"], background=True
+            )
+            mongo_db[MONGODB_NAME]["tasks"].create_index(
+                ["project_id", "language", "created_at"], background=True
             )
             mongo_db[MONGODB_NAME]["tasks"].create_index(
                 "metadata.version_id", background=True
