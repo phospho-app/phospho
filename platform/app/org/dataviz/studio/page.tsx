@@ -63,6 +63,13 @@ const MetadataForm: React.FC = () => {
     (state) => state.metadata_metric,
   );
   const breakdown_by = navigationStateStore((state) => state.selectedGroupBy);
+  const breakdown_by_event_id = navigationStateStore(
+    (state) => state.selectedGroupByEventId,
+  );
+  const selectedScorerId = navigationStateStore(
+    (state) => state.selectedScorerId,
+  );
+
   const setSelectedMetric = navigationStateStore(
     (state) => state.setSelectedMetric,
   );
@@ -72,9 +79,10 @@ const MetadataForm: React.FC = () => {
   const setSelectedGroupBy = navigationStateStore(
     (state) => state.setSelectedGroupBy,
   );
-  const selectedScorerId = navigationStateStore(
-    (state) => state.selectedScorerId,
+  const setSelectedGroupByEventId = navigationStateStore(
+    (state) => state.setSelectedGroupByEventId,
   );
+
   const setSelectedScorerId = navigationStateStore(
     (state) => state.setSelectedScorerId,
   );
@@ -102,6 +110,12 @@ const MetadataForm: React.FC = () => {
   ).filter(
     (event): event is EventDefinition =>
       event.score_range_settings?.score_type === ScoreRangeType.range,
+  );
+  const categoryEvents: EventDefinition[] = Object.values(
+    selectedProject?.settings?.events ?? {},
+  ).filter(
+    (event): event is EventDefinition =>
+      event.score_range_settings?.score_type === ScoreRangeType.category,
   );
 
   // Fetch metadata unique metadata fields from the API
@@ -319,22 +333,48 @@ const MetadataForm: React.FC = () => {
                   <TextSearch className="size-4 mr-2" />
                   Tagger name
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedGroupBy("scorer_value");
-                  }}
-                >
-                  <TextSearch className="size-4 mr-2" />
-                  Scorer value
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedGroupBy("classifier_value");
-                  }}
-                >
-                  <TextSearch className="size-4 mr-2" />
-                  Classifier value
-                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <TextSearch className="size-4 mr-2" />
+                    Scorer
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {rangeEvents.map((event) => (
+                        <DropdownMenuItem
+                          key={event.event_name}
+                          onClick={() => {
+                            setSelectedGroupBy("scorer_value");
+                            setSelectedGroupByEventId(event?.id ?? null);
+                          }}
+                        >
+                          {event.event_name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <TextSearch className="size-4 mr-2" />
+                    Classifier
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      {categoryEvents.map((event) => (
+                        <DropdownMenuItem
+                          key={event.event_name}
+                          onClick={() => {
+                            setSelectedGroupBy("classifier_value");
+                            setSelectedGroupByEventId(event?.id ?? null);
+                          }}
+                        >
+                          {event.event_name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
                 <DropdownMenuItem
                   onClick={() => {
                     setSelectedGroupBy("flag");
@@ -478,6 +518,7 @@ const MetadataForm: React.FC = () => {
                 metric: selectedMetric,
                 metadata_metric: metadata_metric,
                 breakdown_by: breakdown_by,
+                breakdown_by_event_id: breakdown_by_event_id,
                 scorer_id: selectedScorerId,
                 filters: dataFilters,
               } as DashboardTile;
@@ -519,11 +560,12 @@ const MetadataForm: React.FC = () => {
           <DatePickerWithRange />
           <FilterComponent variant="tasks" />
         </div>
-        <div className="h-[75vh] overflow-y-auto">
+        <div className="h-[80vh] overflow-y-auto">
           <DatavizGraph
             metric={selectedMetric}
             metadata_metric={metadata_metric}
             breakdown_by={breakdown_by}
+            breakdown_by_event_id={breakdown_by_event_id}
             scorer_id={
               selectedMetric === "avg_scorer_value" ? selectedScorerId : null
             }

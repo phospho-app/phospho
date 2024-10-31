@@ -80,6 +80,11 @@ class MetadataPivotQuery(BaseModel):
         description="The field to break down the metric by. "
         + "If the metric is a free string, it will be interpreted as a metadata field.",
     )
+    breakdown_by_event_id: str | None = Field(
+        None,
+        description="When using the scorer_value or classifier_value breakdown_by, this is the `EventDefinition.id` of the scorer or classifier. "
+        + "Check the id in the Event page URL.",
+    )
     scorer_id: str | None = Field(
         None,
         description="When using the avg_scorer_value metric, this is the `EventDefinition.id` of the scorer. "

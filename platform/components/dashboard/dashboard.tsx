@@ -391,6 +391,7 @@ const Dashboard: React.FC = () => {
                 metric={tile.metric}
                 metadata_metric={tile.metadata_metric}
                 breakdown_by={tile.breakdown_by}
+                breakdown_by_event_id={tile.breakdown_by_event_id}
                 scorer_id={tile.scorer_id ?? null}
                 filters={tile.filters}
               />

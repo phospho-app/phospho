@@ -1,13 +1,12 @@
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Literal
 
+from app.api.platform.models.metadata import MetadataPivotQuery
 from app.core import constants
 from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
 from app.services.mongo.sessions import compute_session_length, compute_task_position
 from fastapi import HTTPException
 from loguru import logger
-
-from phospho.models import ProjectDataFilters
 
 
 async def _build_unique_metadata_fields_pipeline(
@@ -131,11 +130,7 @@ async def collect_unique_metadata_field_values(
 
 async def breakdown_by_sum_of_metadata_field(
     project_id: str,
-    metric: str,
-    metadata_field: Optional[str] = None,
-    breakdown_by: Optional[str] = None,
-    scorer_id: Optional[str] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    pivot_query: MetadataPivotQuery,
 ):
     """
     Get the sum of a metadata field, grouped by another metadata field if provided.
@@ -170,44 +165,31 @@ async def breakdown_by_sum_of_metadata_field(
     The output stack can be used to create a stacked bar chart.
     """
 
-    if scorer_id and metric != "avg_scorer_value":
-        raise HTTPException(
-            status_code=400,
-            detail="A scorer_id can only be provided when the metric is 'avg_scorer_value'",
-        )
+    metric = pivot_query.metric
+    metadata_field = pivot_query.metric_metadata
+    breakdown_by = pivot_query.breakdown_by
+    breakdown_by_event_id = pivot_query.breakdown_by_event_id
+    scorer_id = pivot_query.scorer_id
+    filters = pivot_query.filters
 
-    metric = metric.lower()
-    metadata_field = metadata_field.lower() if metadata_field is not None else None
-    breakdown_by = breakdown_by.lower() if breakdown_by is not None else None
-
-    # Used for logging
-    kwargs = {
-        "project_id": project_id,
-        "metric": metric,
-        "metadata_field": metadata_field,
-        "breakdown_by": breakdown_by,
-        "scorer": scorer_id,
-        "filters": filters,
-    }
-    formatted_kwargs = "\n".join([f"{key}={value}" for key, value in kwargs.items()])
-    logger.info(f"Running pivot with:\n{formatted_kwargs}")
+    logger.info(f"Running pivot with:\n{pivot_query.model_dump()}")
 
     mongo_db = await get_mongo_db()
 
     query_builder = QueryBuilder(
         project_id=project_id,
         fetch_objects="tasks",
-        filters=filters,
+        filters=pivot_query.filters,
     )
     pipeline = await query_builder.build()
 
-    def _merge_sessions(pipeline: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    def _merge_sessions(pipeline: List[Dict[str, object]]) -> None:
         # if already merged, return the pipeline
         if any(
             operator.get("$lookup", {}).get("from") == "sessions"  # type: ignore
             for operator in pipeline
         ):
-            return pipeline
+            return
 
         # Merge the sessions with the tasks
         pipeline += [
@@ -234,7 +216,7 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
 
-    def _unwind_events(pipeline: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    def _unwind_events(pipeline: List[Dict[str, object]]) -> None:
         # Unwind the events array if not already done
         if any(operator.get("$unwind") == "$events" for operator in pipeline):
             return
@@ -426,12 +408,6 @@ async def breakdown_by_sum_of_metadata_field(
         query_builder.merge_events(foreignField="task_id")
         _unwind_events(pipeline)
         pipeline += [
-            # Filter to only keep the tagger events
-            # {
-            #     "$match": {
-            #         "events.event_definition.score_range_settings.score_type": "confidence"
-            #     }
-            # },
             {
                 "$group": {
                     "_id": {

@@ -90,6 +90,7 @@ const DatavizGraph = ({
   metric,
   metadata_metric,
   breakdown_by,
+  breakdown_by_event_id,
   scorer_id,
   sorting,
   filters,
@@ -97,6 +98,7 @@ const DatavizGraph = ({
   metric: string;
   metadata_metric?: string | null;
   breakdown_by: string;
+  breakdown_by_event_id?: string | null;
   scorer_id: string | null;
   sorting?: DatavizSorting;
   filters?: ProjectDataFilters;
@@ -162,6 +164,7 @@ const DatavizGraph = ({
       metric,
       metadata_metric,
       breakdown_by,
+      breakdown_by_event_id,
       scorer_id,
       JSON.stringify(mergedFilters),
     ],
@@ -171,6 +174,7 @@ const DatavizGraph = ({
         metric_metadata: metadata_metric?.toLowerCase(),
         breakdown_by:
           breakdown_by !== "None" ? breakdown_by.toLowerCase() : null,
+        breakdown_by_event_id: breakdown_by_event_id,
         scorer_id: scorer_id,
         filters: mergedFilters,
       }).then((response) => {
@@ -339,7 +343,7 @@ const DatavizGraph = ({
         </>
       )}
       {pivotData && pivotData?.length > 1 && (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="90%">
           <BarChart
             data={pivotData}
             layout={timeChart ? "horizontal" : "vertical"}

@@ -57,6 +57,8 @@ interface navigationState {
   setmetadata_metric: (metadata: string | null) => void;
   selectedGroupBy: string;
   setSelectedGroupBy: (groupBy: string) => void;
+  selectedGroupByEventId: string | null;
+  setSelectedGroupByEventId: (eventId: string | null) => void;
   selectedScorerId: string | null;
   setSelectedScorerId: (scorerId: string | null) => void;
   datavizSorting: DatavizSorting;
@@ -308,6 +310,9 @@ export const navigationStateStore = create(
       selectedGroupBy: "flag",
       setSelectedGroupBy: (groupBy: string) =>
         set(() => ({ selectedGroupBy: groupBy })),
+      selectedGroupByEventId: null,
+      setSelectedGroupByEventId: (eventId: string | null) =>
+        set(() => ({ selectedGroupByEventId: eventId })),
       selectedScorerId: null,
       setSelectedScorerId: (scorerId: string | null) =>
         set(() => ({ selectedScorerId: scorerId })),
