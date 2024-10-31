@@ -297,70 +297,80 @@ async def breakdown_by_sum_of_metadata_field(
         breakdown_by_col = "events.event_name"
     elif breakdown_by == "scorer_value":
         query_builder.merge_events(foreignField="task_id")
-        _unwind_events(pipeline)
         pipeline += [
             {
+                "$match": {
+                    "events": {"$exists": True, "$ne": []},
+                    "events.event_definition.score_range_settings.score_type": "range",
+                    "events.event_definition.id": breakdown_by_event_id,
+                },
+            },
+            # Filter the $events array to only keep the event with the breakdown_by_event_id
+            {
                 "$set": {
-                    "scorer_value_label":
-                    # Round the value to the closest integer
-                    {
-                        "$cond": [
-                            {
-                                "$and": [
-                                    {
-                                        "$eq": [
-                                            "$events.event_definition.score_range_settings.score_type",
-                                            "range",
-                                        ]
-                                    },
-                                    # Same event_id as breakdown_by_event_id
-                                    {
-                                        "$eq": [
-                                            "$events.event_definition.id",
-                                            breakdown_by_event_id,
-                                        ]
-                                    },
-                                ]
-                            },
-                            {"$round": ["$events.score_range.value", 0]},
-                            None,
-                        ]
+                    "scorer": {
+                        "$first": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {
+                                    "$and": [
+                                        {
+                                            "$eq": [
+                                                "$$event.event_definition.id",
+                                                breakdown_by_event_id,
+                                            ]
+                                        }
+                                    ]
+                                },
+                            }
+                        },
                     }
                 }
-            }
+            },
+            {
+                "$set": {
+                    "scorer_value_label": {
+                        # Round the scorer value to the nearest integer
+                        "$round": "$scorer.score_range.value"
+                    }
+                }
+            },
         ]
         breakdown_by_col = "scorer_value_label"
     elif breakdown_by == "classifier_value":
         query_builder.merge_events(foreignField="task_id")
-        _unwind_events(pipeline)
         pipeline += [
             {
+                "$match": {
+                    "events": {"$exists": True, "$ne": []},
+                    "events.event_definition.score_range_settings.score_type": "category",
+                    "events.event_definition.id": breakdown_by_event_id,
+                },
+            },
+            {
                 "$set": {
-                    "classifier_label": {
-                        "$cond": [
-                            {
-                                "$and": [
-                                    {
-                                        "$eq": [
-                                            "$events.event_definition.score_range_settings.score_type",
-                                            "category",
-                                        ]
-                                    },
-                                    # Same event_id as breakdown_by_event_id
-                                    {
-                                        "$eq": [
-                                            "$events.event_definition.id",
-                                            breakdown_by_event_id,
-                                        ]
-                                    },
-                                ]
-                            },
-                            "$events.score_range.label",
-                            None,
-                        ]
+                    "classifier": {
+                        "$first": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {
+                                    "$and": [
+                                        {
+                                            "$eq": [
+                                                "$$event.event_definition.id",
+                                                breakdown_by_event_id,
+                                            ]
+                                        }
+                                    ]
+                                },
+                            }
+                        }
                     }
                 }
-            }
+            },
+            {"$set": {"classifier_label": "$classifier.score_range.label"}},
         ]
         breakdown_by_col = "classifier_label"
 
