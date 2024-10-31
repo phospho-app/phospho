@@ -32,7 +32,6 @@ import {
   BarChart,
   ChevronDown,
   Code,
-  Download,
   Flag,
   LayoutDashboard,
   List,
