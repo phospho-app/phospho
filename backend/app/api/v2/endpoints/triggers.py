@@ -130,13 +130,11 @@ async def trigger_postgresql_pipeline(
             [
                 {
                     "$match": {
-                        {"type": "postgresql"},
-                        {
-                            "$or": [
-                                {"projects_started": project_id},
-                                {"projects_finished": project_id},
-                            ]
-                        },
+                        "type": "postgresql",
+                        "$or": [
+                            {"projects_started": project_id},
+                            {"projects_finished": project_id},
+                        ],
                     }
                 }
             ]
