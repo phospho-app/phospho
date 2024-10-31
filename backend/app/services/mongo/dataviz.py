@@ -1,13 +1,12 @@
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Literal
 
+from app.api.platform.models.metadata import MetadataPivotQuery
 from app.core import constants
 from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
 from app.services.mongo.sessions import compute_session_length, compute_task_position
 from fastapi import HTTPException
 from loguru import logger
-
-from phospho.models import ProjectDataFilters
 
 
 async def _build_unique_metadata_fields_pipeline(
@@ -131,11 +130,7 @@ async def collect_unique_metadata_field_values(
 
 async def breakdown_by_sum_of_metadata_field(
     project_id: str,
-    metric: str,
-    metadata_field: Optional[str] = None,
-    breakdown_by: Optional[str] = None,
-    scorer_id: Optional[str] = None,
-    filters: Optional[ProjectDataFilters] = None,
+    pivot_query: MetadataPivotQuery,
 ):
     """
     Get the sum of a metadata field, grouped by another metadata field if provided.
@@ -149,7 +144,7 @@ async def breakdown_by_sum_of_metadata_field(
     - "tags_count": Number of detected tags
     - "tags_distribution": Distribution of detected tags
     - "avg_scorer_value": Average scorer value
-    - "avg_success_rate": Average success rate
+    - "avg_success_rate": Average human rating
     - "avg_session_length": Average session length
 
     The breakdown_by field can be one of the following:
@@ -170,44 +165,31 @@ async def breakdown_by_sum_of_metadata_field(
     The output stack can be used to create a stacked bar chart.
     """
 
-    if scorer_id and metric != "avg_scorer_value":
-        raise HTTPException(
-            status_code=400,
-            detail="A scorer_id can only be provided when the metric is 'avg_scorer_value'",
-        )
+    metric = pivot_query.metric
+    metadata_field = pivot_query.metric_metadata
+    breakdown_by = pivot_query.breakdown_by
+    breakdown_by_event_id = pivot_query.breakdown_by_event_id
+    scorer_id = pivot_query.scorer_id
+    filters = pivot_query.filters
 
-    metric = metric.lower()
-    metadata_field = metadata_field.lower() if metadata_field is not None else None
-    breakdown_by = breakdown_by.lower() if breakdown_by is not None else None
-
-    # Used for logging
-    kwargs = {
-        "project_id": project_id,
-        "metric": metric,
-        "metadata_field": metadata_field,
-        "breakdown_by": breakdown_by,
-        "scorer": scorer_id,
-        "filters": filters,
-    }
-    formatted_kwargs = "\n".join([f"{key}={value}" for key, value in kwargs.items()])
-    logger.info(f"Running pivot with:\n{formatted_kwargs}")
+    logger.info(f"Running pivot with:\n{pivot_query.model_dump()}")
 
     mongo_db = await get_mongo_db()
 
     query_builder = QueryBuilder(
         project_id=project_id,
         fetch_objects="tasks",
-        filters=filters,
+        filters=pivot_query.filters,
     )
     pipeline = await query_builder.build()
 
-    def _merge_sessions(pipeline: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    def _merge_sessions(pipeline: List[Dict[str, object]]) -> None:
         # if already merged, return the pipeline
         if any(
             operator.get("$lookup", {}).get("from") == "sessions"  # type: ignore
             for operator in pipeline
         ):
-            return pipeline
+            return
 
         # Merge the sessions with the tasks
         pipeline += [
@@ -233,7 +215,15 @@ async def breakdown_by_sum_of_metadata_field(
                 }
             },
         ]
-        return pipeline
+
+    def _unwind_events(pipeline: List[Dict[str, object]]) -> None:
+        # Unwind the events array if not already done
+        if any(operator.get("$unwind") == "$events" for operator in pipeline):
+            return
+
+        pipeline += [
+            {"$unwind": "$events"},
+        ]
 
     category_metadata_fields = constants.RESERVED_CATEGORY_METADATA_FIELDS
     number_metadata_fields = constants.RESERVED_NUMBER_METADATA_FIELDS
@@ -252,9 +242,9 @@ async def breakdown_by_sum_of_metadata_field(
 
     logger.debug(f"Category metadata fields: {category_metadata_fields}")
     logger.debug(f"Number metadata fields: {number_metadata_fields}")
+
     if breakdown_by in category_metadata_fields:
         breakdown_by_col = f"metadata.{breakdown_by}"
-
     elif breakdown_by == "None":
         breakdown_by_col = "id"
     elif breakdown_by in ["day", "week", "month"]:
@@ -286,8 +276,7 @@ async def breakdown_by_sum_of_metadata_field(
         ]
     elif breakdown_by == "session_length":
         await compute_session_length(project_id=project_id)
-        pipeline = _merge_sessions(pipeline)
-
+        _merge_sessions(pipeline)
         breakdown_by_col = "session_length"
     elif breakdown_by is None:
         breakdown_by_col = None
@@ -296,8 +285,8 @@ async def breakdown_by_sum_of_metadata_field(
 
     if breakdown_by == "tagger_name":
         query_builder.merge_events(foreignField="task_id")
+        _unwind_events(pipeline)
         pipeline += [
-            {"$unwind": "$events"},
             # Filter to only keep the tagger events
             {
                 "$match": {
@@ -306,18 +295,84 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
         breakdown_by_col = "events.event_name"
-    elif breakdown_by == "scorer_name":
+    elif breakdown_by == "scorer_value":
         query_builder.merge_events(foreignField="task_id")
         pipeline += [
-            {"$unwind": "$events"},
-            # Filter to only keep the scorer events
             {
                 "$match": {
+                    "events": {"$exists": True, "$ne": []},
                     "events.event_definition.score_range_settings.score_type": "range",
+                    "events.event_definition.id": breakdown_by_event_id,
+                },
+            },
+            # Filter the $events array to only keep the event with the breakdown_by_event_id
+            {
+                "$set": {
+                    "scorer": {
+                        "$first": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {
+                                    "$and": [
+                                        {
+                                            "$eq": [
+                                                "$$event.event_definition.id",
+                                                breakdown_by_event_id,
+                                            ]
+                                        }
+                                    ]
+                                },
+                            }
+                        },
+                    }
+                }
+            },
+            {
+                "$set": {
+                    "scorer_value_label": {
+                        # Round the scorer value to the nearest integer
+                        "$round": "$scorer.score_range.value"
+                    }
                 }
             },
         ]
-        breakdown_by_col = "events.event_name"
+        breakdown_by_col = "scorer_value_label"
+    elif breakdown_by == "classifier_value":
+        query_builder.merge_events(foreignField="task_id")
+        pipeline += [
+            {
+                "$match": {
+                    "events": {"$exists": True, "$ne": []},
+                    "events.event_definition.score_range_settings.score_type": "category",
+                    "events.event_definition.id": breakdown_by_event_id,
+                },
+            },
+            {
+                "$set": {
+                    "classifier": {
+                        "$first": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {
+                                    "$and": [
+                                        {
+                                            "$eq": [
+                                                "$$event.event_definition.id",
+                                                breakdown_by_event_id,
+                                            ]
+                                        }
+                                    ]
+                                },
+                            }
+                        }
+                    }
+                }
+            },
+            {"$set": {"classifier_label": "$classifier.score_range.label"}},
+        ]
+        breakdown_by_col = "classifier_label"
 
     if breakdown_by == "task_position":
         await compute_task_position(project_id=project_id, filters=filters)
@@ -380,8 +435,8 @@ async def breakdown_by_sum_of_metadata_field(
 
     if metric == "avg_scorer_value":
         query_builder.merge_events(foreignField="task_id")
+        _unwind_events(pipeline)
         pipeline += [
-            {"$unwind": "$events"},
             # Filter to only keep the scorer events
             {
                 "$match": {
@@ -403,7 +458,7 @@ async def breakdown_by_sum_of_metadata_field(
         ]
 
     if metric == "avg_session_length":
-        pipeline = _merge_sessions(pipeline)
+        _merge_sessions(pipeline)
         pipeline += [
             {
                 "$group": {
@@ -422,21 +477,28 @@ async def breakdown_by_sum_of_metadata_field(
     if metric == "tags_count" or metric == "tags_distribution":
         # Count the number of events for each event_name
         query_builder.merge_events(foreignField="task_id")
+        _unwind_events(pipeline)
         pipeline += [
-            {"$unwind": "$events"},
-            # Filter to only keep the tagger events
-            {
-                "$match": {
-                    "events.event_definition.score_range_settings.score_type": "confidence"
-                }
-            },
             {
                 "$group": {
                     "_id": {
                         "breakdown_by": f"${breakdown_by_col}",
                         "event_name": "$events.event_name",
                     },
-                    "metric": {"$sum": 1},
+                    "metric": {
+                        "$sum": {
+                            "$cond": [
+                                {
+                                    "$eq": [
+                                        "$events.event_definition.score_range_settings.score_type",
+                                        "confidence",
+                                    ]
+                                },
+                                1,
+                                0,
+                            ]
+                        }
+                    },
                 },
             },
             {
@@ -446,6 +508,18 @@ async def breakdown_by_sum_of_metadata_field(
                         "$push": {"event_name": "$_id.event_name", "metric": "$metric"}
                     },
                     "total": {"$sum": "$metric"},
+                }
+            },
+            # Filter out the events with a metric of 0
+            {
+                "$set": {
+                    "events": {
+                        "$filter": {
+                            "input": "$events",
+                            "as": "event",
+                            "cond": {"$ne": ["$$event.metric", 0]},
+                        }
+                    }
                 }
             },
         ]
@@ -594,6 +668,18 @@ async def breakdown_by_sum_of_metadata_field(
             }
         }
     )
+
+    if breakdown_by in ["classifier_value", "scorer_value"]:
+        # Filter the None breadkown_by values
+        pipeline.append(
+            {
+                "$match": {
+                    "breakdown_by": {"$ne": None},
+                }
+            }
+        )
+
+    logger.info(f"Pivot pipeline:\n {pipeline}")
 
     result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=200)
 

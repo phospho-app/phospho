@@ -92,7 +92,7 @@ function SuccessRateByEvent() {
         <FilterComponent variant="tasks" />
       </div>
       <Card className="col-span-full lg:col-span-5">
-        <CardHeader>Success Rate (%) by Event</CardHeader>
+        <CardHeader>Human rating (%) by Event</CardHeader>
         <CardContent>
           {successRateByEvent === undefined ? (
             <Skeleton className="h-[250px]" />

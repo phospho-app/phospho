@@ -50,15 +50,15 @@ export function getColumns() {
       header: () => {
         return (
           <div className="md:flex items-center align-items space-x-2">
-            <div>Average Success Rate</div>
+            <div>Average Human rating</div>
             <HoverCard openDelay={0} closeDelay={0}>
               <HoverCardTrigger>
                 <QuestionMarkIcon className="size-4 rounded-full bg-primary text-secondary p-0.5" />
               </HoverCardTrigger>
               <HoverCardContent>
                 <div className="w-96">
-                  The average success rate is (nb of &quot;success&quot; system
-                  responses)/(total nb of assistant responses).{" "}
+                  The average human rating (nb of system responses marked as
+                  thumbs up)/(total nb of system responses)
                 </div>
                 <div>Higher is better.</div>
               </HoverCardContent>
@@ -84,8 +84,8 @@ export function getColumns() {
               <HoverCardContent>
                 <div className="w-96">
                   The 95% confidence interval indicates the likely range of the
-                  true success rate. The smaller the interval, the more
-                  confident we are in the estimate.
+                  true rating. The smaller the interval, the more confident the
+                  estimate.
                 </div>
               </HoverCardContent>
             </HoverCard>

@@ -1,10 +1,8 @@
 "use client";
 
-import Loading from "@/app/loading";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { useState } from "react";
 import {
   Bar,
   BarChart,
@@ -16,25 +14,27 @@ import {
 import useSWRImmutable from "swr/immutable";
 
 import { PivotTableElement } from "./dataviz";
+import { Spinner } from "./small-spinner";
 
 const DatavizTaggerGraph = ({
   tagger_name,
   metric,
   metadata_metric,
   breakdown_by,
+  breakdown_by_event_id,
   scorer_id,
 }: {
   tagger_name: string;
   metric: string;
   metadata_metric?: string | null;
   breakdown_by: string;
+  breakdown_by_event_id?: string | null;
   scorer_id: string | null;
 }) => {
   const { accessToken } = useUser();
 
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
-  const [loading, setLoading] = useState(false);
 
   const mergedFilters = {
     ...dataFilters,
@@ -43,13 +43,14 @@ const DatavizTaggerGraph = ({
       : [tagger_name],
   };
 
-  const { data: pivotData } = useSWRImmutable(
+  const { data: pivotData, isLoading } = useSWRImmutable(
     [
       `/api/metadata/${project_id}/pivot/`,
       accessToken,
       metric,
       metadata_metric,
       breakdown_by,
+      breakdown_by_event_id,
       scorer_id,
       JSON.stringify(mergedFilters),
     ],
@@ -64,7 +65,6 @@ const DatavizTaggerGraph = ({
       }).then((response) => {
         const pivotTable = response?.pivot_table as PivotTableElement[] | null;
         if (!pivotTable) {
-          setLoading(false);
           return [];
         }
         // Replace "breakdown_by": null with "breakdown_by": "None"
@@ -106,8 +106,8 @@ const DatavizTaggerGraph = ({
   });
 
   return (
-    <div className="w-[200px] pt-4">
-      {loading && <Loading />}
+    <div className="w-[200px] pt-2">
+      {isLoading && <Spinner className="text-green-500" />}
       <ResponsiveContainer
         width={"100%"}
         height={(pivotData?.length ?? 0) * 30}

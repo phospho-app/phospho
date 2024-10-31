@@ -235,26 +235,6 @@ class Threshold(BaseModel):
     magnitude: Optional[float] = None
 
 
-class AnalyticsQuery(BaseModel):
-    """Represents a query to run analytics on the data."""
-
-    project_id: str
-    collection: Literal[
-        "events",
-        "job_results",
-        "private-clusters",
-        "private-embeddings",
-        "sessions",
-        "tasks",
-    ]
-    aggregation_operation: Literal["count", "sum", "avg", "min", "max"]
-    aggregation_field: Optional[str] = None  # Not required for count
-    dimensions: List[str] = Field(default_factory=list)
-    filters: dict = Field(default_factory=dict)
-    sort: Dict[str, int] = Field(default_factory=dict)
-    limit: int = 1000
-
-
 class ProjectDataFilters(BaseModel):
     """
     This is a model used to filter tasks, sessions or events in
@@ -291,6 +271,7 @@ class DashboardTile(BaseModel):
     tile_name: str
     metric: str
     breakdown_by: str
+    breakdown_by_event_id: Optional[str] = None
     metadata_metric: Optional[str] = None
     scorer_id: Optional[str] = None
     filters: Optional[ProjectDataFilters] = None
@@ -314,25 +295,25 @@ class ProjectSettings(BaseModel):
     dashboard_tiles: List[DashboardTile] = Field(
         default_factory=lambda: [
             DashboardTile(
-                tile_name="Human rating per message position",
-                metric="avg_success_rate",
-                breakdown_by="task_position",
+                tile_name="User messages per day",
+                metric="nb_messages",
+                breakdown_by="day",
             ),
             DashboardTile(
-                tile_name="Average human rating per event name",
-                metric="avg_success_rate",
-                breakdown_by="tagger_name",
+                tile_name="Nb sessions per week",
+                metric="nb_sessions",
+                breakdown_by="week",
+            ),
+            DashboardTile(
+                tile_name="User messages per language",
+                metric="nb_messages",
+                breakdown_by="language",
             ),
             DashboardTile(
                 tile_name="Average sentiment score per message position",
-                metric="Avg",
+                metric="avg",
                 metadata_metric="sentiment_score",
                 breakdown_by="task_position",
-            ),
-            DashboardTile(
-                tile_name="Human rating per language",
-                metric="avg_success_rate",
-                breakdown_by="language",
             ),
         ]
     )
@@ -364,17 +345,17 @@ class Project(DatedBaseModel):
             if "events" in project_data["settings"].keys():
                 for event_name, event in project_data["settings"]["events"].items():
                     if "event_name" not in event.keys():
-                        project_data["settings"]["events"][event_name]["event_name"] = (
-                            event_name
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "event_name"
+                        ] = event_name
                     if "org_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["org_id"] = (
-                            project_data["org_id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "org_id"
+                        ] = project_data["org_id"]
                     if "project_id" not in event.keys():
-                        project_data["settings"]["events"][event_name]["project_id"] = (
-                            project_data["id"]
-                        )
+                        project_data["settings"]["events"][event_name][
+                            "project_id"
+                        ] = project_data["id"]
 
             # Transition dashboard_tiles to lowercase and new fields
             if "dashboard_tiles" in project_data["settings"].keys():

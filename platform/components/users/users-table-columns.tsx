@@ -104,7 +104,7 @@ export function useColumns() {
     {
       accessorKey: "avg_success_rate",
       header: ({ column }) => {
-        return <GenericHeader column={column} columnName="Avg. success rate" />;
+        return <GenericHeader column={column} columnName="Avg. human rating" />;
       },
       cell: (row) => {
         const output = Math.round((row.getValue() as number) * 100) / 100;

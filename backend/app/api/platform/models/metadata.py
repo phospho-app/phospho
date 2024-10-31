@@ -22,25 +22,7 @@ class MetadataPivotResponse(BaseModel):
 
 class MetadataPivotQuery(BaseModel):
     """
-    The metric can be one of the following:
-    - "nb_messages": Number of tasks
-    - "nb_sessions": Number of sessions
-    - "tags_count": Number of detected tags
-    - "tags_distribution": Distribution of detected tags
-    - "avg_success_rate": Average success rate
-    - "avg_session_length": Average session length
-    - "count_unique": Number of unique values of the metadata field
-    - "sum": Sum of the metadata field
-    - "avg": Average of the metadata field
-
-    The "breakdown_by" field can be one of the following:
-    - A metadata field
-    - A time field: "day", "week", "month"
-    - "tagger_name"
-    - "scorer_name"
-    - "task_position"
-    - None
-    - "session_length"
+    Query to pivot metadata fields.
     """
 
     metric: Literal[
@@ -68,7 +50,8 @@ class MetadataPivotQuery(BaseModel):
             "week",
             "month",
             "tagger_name",
-            "scorer_name",
+            "scorer_value",
+            "classifier_value",
             "task_position",
             "session_length",
         ]
@@ -78,6 +61,11 @@ class MetadataPivotQuery(BaseModel):
         "day",
         description="The field to break down the metric by. "
         + "If the metric is a free string, it will be interpreted as a metadata field.",
+    )
+    breakdown_by_event_id: str | None = Field(
+        None,
+        description="When using the scorer_value or classifier_value breakdown_by, this is the `EventDefinition.id` of the scorer or classifier. "
+        + "Check the id in the Event page URL.",
     )
     scorer_id: str | None = Field(
         None,
