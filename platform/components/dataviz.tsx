@@ -7,13 +7,13 @@ import { graphColors } from "@/lib/utils";
 import { DatavizSorting, Project, ProjectDataFilters } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import {
   Bar,
   BarChart,
-  CartesianGrid,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -27,9 +27,63 @@ import {
 import { Payload } from "recharts/types/component/DefaultTooltipContent";
 import useSWRImmutable from "swr/immutable";
 
-interface PivotTableElement {
+import DatavizTaggerGraph from "./dataviz-tagger";
+import { Button } from "./ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
+
+export interface PivotTableElement {
   breakdown_by: string;
-  [key: string]: string | number | null;
+  stack?: Record<string, string | number | null>;
+  [key: string]:
+    | string
+    | number
+    | null
+    | Record<string, string | number | null>
+    | undefined;
+}
+
+function pivotDataToCSV(pivotData: PivotTableElement[]) {
+  console.log("pivotData", JSON.stringify(pivotData));
+
+  const flattenedData = pivotData.map((row) => {
+    // if the row is a stack, unnest it : {stack: {"Up-sell": 1}} => {"Up-sell": 1}
+    if (row.stack && typeof row.stack === "object") {
+      const stack = row.stack;
+      const newRow = {
+        ...row,
+        ...(stack as Record<string, string | number | null>),
+      };
+      delete newRow.stack;
+      return newRow;
+    }
+    return row;
+  });
+
+  // Create the CSV string
+  // First, get the headers. Since we have stacks, we need to get all the keys of the stacks
+  const headers = Array.from(
+    new Set(
+      flattenedData.reduce<string[]>((acc, row) => {
+        const keys = Object.keys(row);
+        return acc.concat(keys);
+      }, []),
+    ),
+  );
+
+  // Then, create the rows
+  const rows = flattenedData.map((row) => {
+    return headers.map((header) => {
+      return row[header];
+    });
+  });
+
+  // Create the CSV string
+  let csv = headers.join(",") + "\n";
+  csv += rows.map((row) => row.join(",")).join("\n");
+
+  console.log("csv", csv);
+
+  return csv;
 }
 
 const DatavizGraph = ({
@@ -229,9 +283,9 @@ const DatavizGraph = ({
         if (a?.metric === null) return -1;
         if (b?.metric === null) return -1;
         if (sorting.desc) {
-          return a.metric > b.metric ? -1 : 1;
+          return (a.metric as number) > (b.metric as number) ? -1 : 1;
         } else {
-          return a.metric < b.metric ? -1 : 1;
+          return (a.metric as number) < (b.metric as number) ? -1 : 1;
         }
       });
     }
@@ -239,6 +293,32 @@ const DatavizGraph = ({
 
   return (
     <>
+      {pivotData && (
+        <div className="w-full flex justify-end mb-2">
+          <HoverCard openDelay={0} closeDelay={0}>
+            <HoverCardTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  const csv = pivotDataToCSV(pivotData);
+                  const blob = new Blob([csv], { type: "text/csv" });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "data.csv";
+                  a.click();
+                }}
+              >
+                <Download className="size-4" />
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="text-xs">
+              Download as CSV
+            </HoverCardContent>
+          </HoverCard>
+        </div>
+      )}
       {(pivotData === null || pivotData?.length == 0) && <>No data</>}
       {pivotData?.length == 1 && (
         <>
@@ -274,7 +354,6 @@ const DatavizGraph = ({
             }}
             onClick={onChartClick}
           >
-            <CartesianGrid />
             <Tooltip
               formatter={(value) => {
                 if (typeof value === "string") return value;
@@ -317,6 +396,7 @@ const DatavizGraph = ({
                                   className="w-4 h-4"
                                   style={{ backgroundColor: color }}
                                 ></div>
+
                                 {/* The name of the item and its value */}
                                 <div className="text-secondary">
                                   {itemName}: {formatedValue}
@@ -325,6 +405,15 @@ const DatavizGraph = ({
                             </div>
                           );
                         })}
+                        {breakdown_by === "tagger_name" && (
+                          <DatavizTaggerGraph
+                            tagger_name={label}
+                            metric={metric}
+                            metadata_metric={metadata_metric}
+                            breakdown_by={breakdown_by}
+                            scorer_id={scorer_id}
+                          />
+                        )}
                         <div className="pt-4">
                           {supportedDeepDives.includes(breakdown_by) && (
                             <div className="flex flex-row items-center text-xs text-secondary">
@@ -395,7 +484,17 @@ const DatavizGraph = ({
                 fill="#22c55e"
                 stackId="a"
                 // radius={[0, 20, 20, 0]}
-              />
+              >
+                <LabelList
+                  dataKey="metric"
+                  position="right"
+                  className="text-secondary"
+                  fontSize={12}
+                  formatter={(value: number) => {
+                    return value;
+                  }}
+                />
+              </Bar>
             )}
             {isStacked &&
               // Loop over the keys of the dict and create a bar for each key
