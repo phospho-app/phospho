@@ -37,10 +37,15 @@ import {
   List,
   MessagesSquare,
   Plus,
+  Scale,
+  Shapes,
+  Tag,
   TextSearch,
+  ThumbsUp,
   Timer,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useSWR, { mutate } from "swr";
@@ -178,7 +183,7 @@ const MetadataForm: React.FC = () => {
                     setmetadata_metric(null);
                   }}
                 >
-                  <TextSearch className="size-4 mr-2" />
+                  <Tag className="size-4 mr-2" />
                   Nb tags
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -187,12 +192,12 @@ const MetadataForm: React.FC = () => {
                     setmetadata_metric(null);
                   }}
                 >
-                  <TextSearch className="size-4 mr-2" />
+                  <Tag className="size-4 mr-2" />
                   Tags distribution
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <TextSearch className="size-4 mr-2" />
+                    <Scale className="size-4 mr-2" />
                     Avg Scorer value
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
@@ -209,6 +214,17 @@ const MetadataForm: React.FC = () => {
                         {event.event_name}
                       </DropdownMenuItem>
                     ))}
+                    {rangeEvents.length === 0 && (
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/org/insights/events"
+                          className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                        >
+                          <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                          <span className="truncate">Setup scorers</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 <DropdownMenuItem
@@ -217,8 +233,8 @@ const MetadataForm: React.FC = () => {
                     setmetadata_metric(null);
                   }}
                 >
-                  <Flag className="size-4 mr-2" />
-                  Avg Success rate
+                  <ThumbsUp className="size-4 mr-2" />
+                  Avg human rating
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -332,12 +348,12 @@ const MetadataForm: React.FC = () => {
                     setSelectedGroupBy("tagger_name");
                   }}
                 >
-                  <TextSearch className="size-4 mr-2" />
+                  <Tag className="size-4 mr-2" />
                   Tagger name
                 </DropdownMenuItem>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <TextSearch className="size-4 mr-2" />
+                    <Scale className="size-4 mr-2" />
                     Scorer
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
@@ -354,12 +370,23 @@ const MetadataForm: React.FC = () => {
                           {event.event_name}
                         </DropdownMenuItem>
                       ))}
+                      {rangeEvents.length === 0 && (
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/org/insights/events"
+                            className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          >
+                            <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                            <span className="truncate">Setup scorers</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
-                    <TextSearch className="size-4 mr-2" />
+                    <Shapes className="size-4 mr-2" />
                     Classifier
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
@@ -376,6 +403,17 @@ const MetadataForm: React.FC = () => {
                           {event.event_name}
                         </DropdownMenuItem>
                       ))}
+                      {categoryEvents.length === 0 && (
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/org/insights/events"
+                            className="flex items-center px-2 py-1.5 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          >
+                            <TextSearch className="size-4 mr-2 flex-shrink-0" />
+                            <span className="truncate">Setup classifiers</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>

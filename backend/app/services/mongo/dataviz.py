@@ -144,7 +144,7 @@ async def breakdown_by_sum_of_metadata_field(
     - "tags_count": Number of detected tags
     - "tags_distribution": Distribution of detected tags
     - "avg_scorer_value": Average scorer value
-    - "avg_success_rate": Average success rate
+    - "avg_success_rate": Average human rating
     - "avg_session_length": Average session length
 
     The breakdown_by field can be one of the following:
