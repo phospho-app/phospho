@@ -2187,13 +2187,19 @@ async def get_number_of_events_version(
     filters: Optional[ProjectDataFilters] = None,
     selected_events_ids: Optional[List[str]] = None,
 ) -> List:
+    if filters is None:
+        filters = ProjectDataFilters()
+
+    main_filter = {
+        "project_id": project_id,
+        "removed": {"$ne": ["$events.removed", True]},
+    }
+    # Apply the event_id filter early to reduce the number of events to process
+    if filters.event_id is not None:
+        main_filter["event_definition.id"] = {"$in": filters.event_id}
+
     pipeline = [
-        {
-            "$match": {
-                "project_id": project_id,
-                "removed": {"$ne": ["$events.removed", True]},
-            }
-        },
+        {"$match": main_filter},
         {
             "$lookup": {
                 "from": "tasks",
@@ -2217,9 +2223,7 @@ async def get_number_of_events_version(
 
     # I want to set the version_id of all task to versionA if the version_id is None and the task was created in the filterA
     # Check if the filters are not None or empty
-    if filters is not None and (
-        filters.created_at_start is not None or filters.created_at_end is not None
-    ):
+    if filters.created_at_start is not None or filters.created_at_end is not None:
         filtering = []
         if filters.created_at_start is not None:
             if isinstance(filters.created_at_start, datetime.datetime):
