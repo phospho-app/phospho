@@ -32,6 +32,7 @@ import {
   BarChart,
   ChevronDown,
   Code,
+  Download,
   Flag,
   LayoutDashboard,
   List,
@@ -511,7 +512,7 @@ const MetadataForm: React.FC = () => {
           <DatePickerWithRange />
           <FilterComponent variant="tasks" />
         </div>
-        <div className="h-[80vh] overflow-y-auto">
+        <div className="h-[75vh] overflow-y-auto">
           <DatavizGraph
             metric={selectedMetric}
             metadata_metric={metadata_metric}
