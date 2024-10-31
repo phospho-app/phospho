@@ -226,7 +226,7 @@ const DatavizGraph = ({
   const supportedDeepDives = [
     "language",
     "tagger_name",
-    "scorer_name",
+    "scorer_value",
     "flag",
     "version_id",
     "session_id",
@@ -241,9 +241,6 @@ const DatavizGraph = ({
       router.push(`/org/transcripts/tasks?language=${formatedBreakdownBy}`);
     }
     if (breakdown_by === "tagger_name") {
-      router.push(`/org/transcripts/tasks?event_name=${formatedBreakdownBy}`);
-    }
-    if (breakdown_by === "scorer_name") {
       router.push(`/org/transcripts/tasks?event_name=${formatedBreakdownBy}`);
     }
     if (breakdown_by === "flag") {

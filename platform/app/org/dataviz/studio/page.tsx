@@ -321,11 +321,19 @@ const MetadataForm: React.FC = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    setSelectedGroupBy("scorer_name");
+                    setSelectedGroupBy("scorer_value");
                   }}
                 >
                   <TextSearch className="size-4 mr-2" />
-                  Scorer name
+                  Scorer value
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedGroupBy("classifier_value");
+                  }}
+                >
+                  <TextSearch className="size-4 mr-2" />
+                  Classifier value
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {

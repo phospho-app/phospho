@@ -37,7 +37,7 @@ class MetadataPivotQuery(BaseModel):
     - A metadata field
     - A time field: "day", "week", "month"
     - "tagger_name"
-    - "scorer_name"
+    - "scorer_value"
     - "task_position"
     - None
     - "session_length"
@@ -68,7 +68,8 @@ class MetadataPivotQuery(BaseModel):
             "week",
             "month",
             "tagger_name",
-            "scorer_name",
+            "scorer_value",
+            "classifier_value",
             "task_position",
             "session_length",
         ]

@@ -233,7 +233,15 @@ async def breakdown_by_sum_of_metadata_field(
                 }
             },
         ]
-        return pipeline
+
+    def _unwind_events(pipeline: List[Dict[str, object]]) -> List[Dict[str, object]]:
+        # Unwind the events array if not already done
+        if any(operator.get("$unwind") == "$events" for operator in pipeline):
+            return
+
+        pipeline += [
+            {"$unwind": "$events"},
+        ]
 
     category_metadata_fields = constants.RESERVED_CATEGORY_METADATA_FIELDS
     number_metadata_fields = constants.RESERVED_NUMBER_METADATA_FIELDS
@@ -286,7 +294,7 @@ async def breakdown_by_sum_of_metadata_field(
         ]
     elif breakdown_by == "session_length":
         await compute_session_length(project_id=project_id)
-        pipeline = _merge_sessions(pipeline)
+        _merge_sessions(pipeline)
 
         breakdown_by_col = "session_length"
     elif breakdown_by is None:
@@ -296,8 +304,8 @@ async def breakdown_by_sum_of_metadata_field(
 
     if breakdown_by == "tagger_name":
         query_builder.merge_events(foreignField="task_id")
+        _unwind_events(pipeline)
         pipeline += [
-            {"$unwind": "$events"},
             # Filter to only keep the tagger events
             {
                 "$match": {
@@ -306,18 +314,12 @@ async def breakdown_by_sum_of_metadata_field(
             },
         ]
         breakdown_by_col = "events.event_name"
-    elif breakdown_by == "scorer_name":
+    elif breakdown_by == "scorer_value":
         query_builder.merge_events(foreignField="task_id")
-        pipeline += [
-            {"$unwind": "$events"},
-            # Filter to only keep the scorer events
-            {
-                "$match": {
-                    "events.event_definition.score_range_settings.score_type": "range",
-                }
-            },
-        ]
-        breakdown_by_col = "events.event_name"
+        breakdown_by_col = "events.score_range.value"
+    elif breakdown_by == "classifier_value":
+        query_builder.merge_events(foreignField="task_id")
+        breakdown_by_col = "events.score_range.label"
 
     if breakdown_by == "task_position":
         await compute_task_position(project_id=project_id, filters=filters)
@@ -380,8 +382,8 @@ async def breakdown_by_sum_of_metadata_field(
 
     if metric == "avg_scorer_value":
         query_builder.merge_events(foreignField="task_id")
+        _unwind_events(pipeline)
         pipeline += [
-            {"$unwind": "$events"},
             # Filter to only keep the scorer events
             {
                 "$match": {
@@ -403,7 +405,7 @@ async def breakdown_by_sum_of_metadata_field(
         ]
 
     if metric == "avg_session_length":
-        pipeline = _merge_sessions(pipeline)
+        _merge_sessions(pipeline)
         pipeline += [
             {
                 "$group": {
@@ -422,21 +424,34 @@ async def breakdown_by_sum_of_metadata_field(
     if metric == "tags_count" or metric == "tags_distribution":
         # Count the number of events for each event_name
         query_builder.merge_events(foreignField="task_id")
+        _unwind_events(pipeline)
         pipeline += [
-            {"$unwind": "$events"},
             # Filter to only keep the tagger events
-            {
-                "$match": {
-                    "events.event_definition.score_range_settings.score_type": "confidence"
-                }
-            },
+            # {
+            #     "$match": {
+            #         "events.event_definition.score_range_settings.score_type": "confidence"
+            #     }
+            # },
             {
                 "$group": {
                     "_id": {
                         "breakdown_by": f"${breakdown_by_col}",
                         "event_name": "$events.event_name",
                     },
-                    "metric": {"$sum": 1},
+                    "metric": {
+                        "$sum": {
+                            "$cond": [
+                                {
+                                    "$eq": [
+                                        "$events.event_definition.score_range_settings.score_type",
+                                        "confidence",
+                                    ]
+                                },
+                                1,
+                                0,
+                            ]
+                        }
+                    },
                 },
             },
             {
@@ -446,6 +461,18 @@ async def breakdown_by_sum_of_metadata_field(
                         "$push": {"event_name": "$_id.event_name", "metric": "$metric"}
                     },
                     "total": {"$sum": "$metric"},
+                }
+            },
+            # Filter out the events with a metric of 0
+            {
+                "$set": {
+                    "events": {
+                        "$filter": {
+                            "input": "$events",
+                            "as": "event",
+                            "cond": {"$ne": ["$$event.metric", 0]},
+                        }
+                    }
                 }
             },
         ]
@@ -594,6 +621,8 @@ async def breakdown_by_sum_of_metadata_field(
             }
         }
     )
+
+    logger.info(f"Pivot pipeline:\n {pipeline}")
 
     result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=200)
 
