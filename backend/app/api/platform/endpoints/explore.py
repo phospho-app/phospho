@@ -670,8 +670,8 @@ async def get_event_detection_metrics(
     """
     Get aggregated metrics for an event. Used for the event dashboard.
     """
-    await verify_if_propelauth_user_can_access_project(user, project_id)
     logger.info(f"Event request: {event_id} {filters}")
+    await verify_if_propelauth_user_can_access_project(user, project_id)
     event = await get_event_definition_from_event_id(
         project_id=project_id, event_id=event_id
     )

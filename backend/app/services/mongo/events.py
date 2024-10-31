@@ -16,25 +16,13 @@ async def get_event_definition_from_event_id(
     Utility function to get an EventDefinition in project settings from a given event_id
     """
     mongo_db = await get_mongo_db()
-    event_definition = (
-        await mongo_db["projects"]
-        .aggregate(
-            [
-                {"$match": {"id": project_id}},
-                {"$project": {"events": {"$objectToArray": "$$ROOT.settings.events"}}},
-                {"$unwind": "$events"},
-                # Use $filter to get the event definition from the array of events
-                {"$match": {"events.v.id": event_id}},
-                {"$project": {"events": "$events.v"}},
-                {"$replaceRoot": {"newRoot": "$events"}},
-            ]
-        )
-        .to_list(1)
+    event_definition = await mongo_db["event_definitions"].find_one(
+        {"project_id": project_id, "id": event_id}
     )
     if not event_definition:
         raise HTTPException(status_code=404, detail="Event definition not found")
     try:
-        validated_event = EventDefinition.model_validate(event_definition[0])
+        validated_event = EventDefinition.model_validate(event_definition)
         return validated_event
     except Exception as e:
         logger.error(f"Error validating event: {e}")
