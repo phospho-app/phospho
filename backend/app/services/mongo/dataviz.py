@@ -298,10 +298,50 @@ async def breakdown_by_sum_of_metadata_field(
         breakdown_by_col = "events.event_name"
     elif breakdown_by == "scorer_value":
         query_builder.merge_events(foreignField="task_id")
-        breakdown_by_col = "events.score_range.value"
+        _unwind_events(pipeline)
+        pipeline += [
+            {
+                "$set": {
+                    "scorer_value_label":
+                    # Round the value to 1.0 if it is a range score
+                    {
+                        "$cond": [
+                            {
+                                "$eq": [
+                                    "$events.event_definition.score_range_settings.score_type",
+                                    "range",
+                                ]
+                            },
+                            {"$round": ["$events.score_range.value", 1]},
+                            "Other",
+                        ]
+                    }
+                }
+            }
+        ]
+        breakdown_by_col = "scorer_value_label"
     elif breakdown_by == "classifier_value":
         query_builder.merge_events(foreignField="task_id")
-        breakdown_by_col = "events.score_range.label"
+        _unwind_events(pipeline)
+        pipeline += [
+            {
+                "$set": {
+                    "classifier_label": {
+                        "$cond": [
+                            {
+                                "$eq": [
+                                    "$events.event_definition.score_range_settings.score_type",
+                                    "category",
+                                ]
+                            },
+                            "$events.score_range.label",
+                            "Other",
+                        ]
+                    }
+                }
+            }
+        ]
+        breakdown_by_col = "classifier_label"
 
     if breakdown_by == "task_position":
         await compute_task_position(project_id=project_id, filters=filters)
