@@ -289,3 +289,36 @@ def shorten_text(
             )
         else:
             raise ValueError(f"Unknown value for how: {how}")
+
+
+def flatten_dict(
+    d: dict, key_prefix: str = "", keep_only_basic_types: bool = True
+) -> dict:
+    """
+    Flatten a nested dictionary by concatenating the keys with a dot.
+
+    Args:
+        d (dict): The dictionary to flatten
+        key_prefix (str): The prefix to add to the keys. Ex: "config"
+        keep_only_basic_types (bool): If True, only keep basic types in the result.
+    """
+
+    def flatten(d, parent_key="", sep="."):
+        items = []
+        for k, v in d.items():
+            new_key = parent_key + sep + k if parent_key else k
+            if isinstance(v, dict):
+                items.extend(flatten(v, new_key, sep=sep).items())
+            else:
+                items.append((new_key, v))
+        return dict(items)
+
+    flat_dict = flatten(d, key_prefix)
+    if keep_only_basic_types:
+        return {
+            key: value
+            for key, value in flat_dict.items()
+            if isinstance(value, (int, float, str, bool))
+        }
+    else:
+        return flat_dict

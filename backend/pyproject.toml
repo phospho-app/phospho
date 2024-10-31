@@ -47,6 +47,7 @@ scikit-learn = "^1.5.1"
 customerio-cdp-analytics = "^0.0.2"
 temporalio = "^1.6.0"
 types-requests = "^2.32.0.20240914"
+opentelemetry-proto = "^1.27.0"
 
 [tool.poetry.group.dev]
 optional = true

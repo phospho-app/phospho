@@ -125,6 +125,13 @@ async def post_pull_dataset(
     if request.workspace_id != workspace_id:
         raise HTTPException(status_code=400, detail="The workspace_id is not valid.")
 
+    if request.dataset_name is None:
+        # We have to implement this manually because DatasetPullRequest is also
+        # used for fetching the dataset names, where dataset_name is not required.
+        raise HTTPException(
+            status_code=400, detail="The dataset name must be provided."
+        )
+
     # Authorization checks
     is_name_valid = dataset_name_exists(
         request.dataset_name, request.workspace_id, request.project_id
