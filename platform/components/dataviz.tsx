@@ -295,7 +295,7 @@ const DatavizGraph = ({
   return (
     <>
       {pivotData && (
-        <div className="w-full flex justify-end mb-2">
+        <div className="w-full flex justify-end">
           <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger asChild>
               <Button
@@ -348,7 +348,7 @@ const DatavizGraph = ({
             data={pivotData}
             layout={timeChart ? "horizontal" : "vertical"}
             margin={{
-              top: 0,
+              top: 20,
               right: 40,
               bottom: 0,
               left: 0,
@@ -490,7 +490,7 @@ const DatavizGraph = ({
                 {pivotData.length < 20 && (
                   <LabelList
                     dataKey="metric"
-                    position="right"
+                    position={timeChart ? "top" : "right"}
                     className="text-secondary"
                     fontSize={12}
                     formatter={(value: number) => {
