@@ -486,15 +486,17 @@ const DatavizGraph = ({
                 stackId="a"
                 // radius={[0, 20, 20, 0]}
               >
-                <LabelList
-                  dataKey="metric"
-                  position="right"
-                  className="text-secondary"
-                  fontSize={12}
-                  formatter={(value: number) => {
-                    return value;
-                  }}
-                />
+                {pivotData.length < 20 && (
+                  <LabelList
+                    dataKey="metric"
+                    position="right"
+                    className="text-secondary"
+                    fontSize={12}
+                    formatter={(value: number) => {
+                      return `${Math.round(value * 100) / 100}`;
+                    }}
+                  />
+                )}
               </Bar>
             )}
             {isStacked &&

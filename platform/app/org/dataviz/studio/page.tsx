@@ -93,9 +93,8 @@ const MetadataForm: React.FC = () => {
 
   const dataFilters = navigationStateStore((state) => state.dataFilters);
 
-  const [selectedScorerName, setselectedScorerName] = useState<
-    string | undefined
-  >(undefined);
+  const [metricDetails, setMetricDetails] = useState<string | null>(null);
+  const [breakdownDetails, setBreakdownDetails] = useState<string | null>(null);
 
   const { data: selectedProject }: { data: Project } = useSWR(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -139,8 +138,8 @@ const MetadataForm: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   Metric: {selectedMetric} {metadata_metric ?? ""}{" "}
-                  {selectedMetric === "avg_scorer_value" && selectedScorerName
-                    ? `(${selectedScorerName})`
+                  {selectedMetric === "avg_scorer_value" && metricDetails
+                    ? `(${metricDetails})`
                     : ""}{" "}
                   <ChevronDown className="size-4 ml-2" />
                 </Button>
@@ -201,7 +200,7 @@ const MetadataForm: React.FC = () => {
                       <DropdownMenuItem
                         key={event.event_name}
                         onClick={() => {
-                          setselectedScorerName(event.event_name);
+                          setMetricDetails(event.event_name);
                           setSelectedScorerId(event.id ?? null);
                           setSelectedMetric("avg_scorer_value");
                           setmetadata_metric(null);
@@ -314,6 +313,9 @@ const MetadataForm: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   Breakdown by: {breakdown_by}{" "}
+                  {["scorer_value", "classifier_value"].includes(breakdown_by)
+                    ? `(${breakdownDetails})`
+                    : ""}{" "}
                   <ChevronDown className="size-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
@@ -346,6 +348,7 @@ const MetadataForm: React.FC = () => {
                           onClick={() => {
                             setSelectedGroupBy("scorer_value");
                             setSelectedGroupByEventId(event?.id ?? null);
+                            setBreakdownDetails(event.event_name);
                           }}
                         >
                           {event.event_name}
@@ -367,6 +370,7 @@ const MetadataForm: React.FC = () => {
                           onClick={() => {
                             setSelectedGroupBy("classifier_value");
                             setSelectedGroupByEventId(event?.id ?? null);
+                            setBreakdownDetails(event.event_name);
                           }}
                         >
                           {event.event_name}

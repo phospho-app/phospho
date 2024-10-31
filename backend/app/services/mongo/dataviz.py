@@ -242,9 +242,9 @@ async def breakdown_by_sum_of_metadata_field(
 
     logger.debug(f"Category metadata fields: {category_metadata_fields}")
     logger.debug(f"Number metadata fields: {number_metadata_fields}")
+
     if breakdown_by in category_metadata_fields:
         breakdown_by_col = f"metadata.{breakdown_by}"
-
     elif breakdown_by == "None":
         breakdown_by_col = "id"
     elif breakdown_by in ["day", "week", "month"]:
@@ -277,7 +277,6 @@ async def breakdown_by_sum_of_metadata_field(
     elif breakdown_by == "session_length":
         await compute_session_length(project_id=project_id)
         _merge_sessions(pipeline)
-
         breakdown_by_col = "session_length"
     elif breakdown_by is None:
         breakdown_by_col = None
@@ -303,17 +302,28 @@ async def breakdown_by_sum_of_metadata_field(
             {
                 "$set": {
                     "scorer_value_label":
-                    # Round the value to 1.0 if it is a range score
+                    # Round the value to the closest integer
                     {
                         "$cond": [
                             {
-                                "$eq": [
-                                    "$events.event_definition.score_range_settings.score_type",
-                                    "range",
+                                "$and": [
+                                    {
+                                        "$eq": [
+                                            "$events.event_definition.score_range_settings.score_type",
+                                            "range",
+                                        ]
+                                    },
+                                    # Same event_id as breakdown_by_event_id
+                                    {
+                                        "$eq": [
+                                            "$events.event_definition.id",
+                                            breakdown_by_event_id,
+                                        ]
+                                    },
                                 ]
                             },
-                            {"$round": ["$events.score_range.value", 1]},
-                            "Other",
+                            {"$round": ["$events.score_range.value", 0]},
+                            None,
                         ]
                     }
                 }
@@ -329,13 +339,24 @@ async def breakdown_by_sum_of_metadata_field(
                     "classifier_label": {
                         "$cond": [
                             {
-                                "$eq": [
-                                    "$events.event_definition.score_range_settings.score_type",
-                                    "category",
+                                "$and": [
+                                    {
+                                        "$eq": [
+                                            "$events.event_definition.score_range_settings.score_type",
+                                            "category",
+                                        ]
+                                    },
+                                    # Same event_id as breakdown_by_event_id
+                                    {
+                                        "$eq": [
+                                            "$events.event_definition.id",
+                                            breakdown_by_event_id,
+                                        ]
+                                    },
                                 ]
                             },
                             "$events.score_range.label",
-                            "Other",
+                            None,
                         ]
                     }
                 }
@@ -637,6 +658,16 @@ async def breakdown_by_sum_of_metadata_field(
             }
         }
     )
+
+    if breakdown_by in ["classifier_value", "scorer_value"]:
+        # Filter the None breadkown_by values
+        pipeline.append(
+            {
+                "$match": {
+                    "breakdown_by": {"$ne": None},
+                }
+            }
+        )
 
     logger.info(f"Pivot pipeline:\n {pipeline}")
 
