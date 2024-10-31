@@ -197,6 +197,7 @@ export interface DashboardTile {
   breakdown_by: string;
   metadata_metric?: string;
   scorer_id?: string;
+  filters?: ProjectDataFilters;
   x?: number;
   y?: number;
   w: number;

@@ -83,6 +83,8 @@ const MetadataForm: React.FC = () => {
     (state) => state.setDatavizSorting,
   );
 
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
+
   const [selectedScorerName, setselectedScorerName] = useState<
     string | undefined
   >(undefined);
@@ -469,6 +471,7 @@ const MetadataForm: React.FC = () => {
                 metadata_metric: metadata_metric,
                 breakdown_by: breakdown_by,
                 scorer_id: selectedScorerId,
+                filters: dataFilters,
               } as DashboardTile;
               selectedProject.settings.dashboard_tiles.push(newTile);
 
