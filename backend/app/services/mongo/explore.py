@@ -4,6 +4,7 @@ Explore metrics service
 
 import datetime
 import math
+import numpy as np
 from collections import defaultdict
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union, cast
 
@@ -1407,7 +1408,6 @@ async def get_y_pred_y_true(
 
     # Convert to DataFrame
     df = pd.DataFrame(query_result)
-    logger.debug(f"DataFrame: {df['confirmed']}")
     if event_type == "confidence":
         mask_y_pred_true = (
             (
@@ -1655,26 +1655,28 @@ async def get_events_aggregated_metrics(
         )
         if y_pred is not None and y_true is not None:
             if "mean_squared_error" in metrics:
-                output["mean_squared_error"] = root_mean_squared_error(y_true, y_pred)
+                output["mean_squared_error"] = float(
+                    root_mean_squared_error(y_true, y_pred)
+                )
             if "r_squared" in metrics:
-                output["r_squared"] = r2_score(y_true, y_pred)
+                output["r_squared"] = float(r2_score(y_true, y_pred))
             if "f1_score_binary" in metrics:
-                output["f1_score_binary"] = f1_score(y_true, y_pred)
+                output["f1_score_binary"] = float(f1_score(y_true, y_pred))
             if "precision_binary" in metrics:
-                output["precision_binary"] = precision_score(y_true, y_pred)
+                output["precision_binary"] = float(precision_score(y_true, y_pred))
             if "recall_binary" in metrics:
-                output["recall_binary"] = recall_score(y_true, y_pred)
+                output["recall_binary"] = float(recall_score(y_true, y_pred))
             if "f1_score_multiclass" in metrics:
-                output["f1_score_multiclass"] = f1_score(
-                    y_true, y_pred, average="weighted"
+                output["f1_score_multiclass"] = float(
+                    f1_score(y_true, y_pred, average="weighted")
                 )
             if "precision_multiclass" in metrics:
-                output["precision_multiclass"] = precision_score(
-                    y_true, y_pred, average="weighted"
+                output["precision_multiclass"] = float(
+                    precision_score(y_true, y_pred, average="weighted")
                 )
             if "recall_multiclass" in metrics:
-                output["recall_multiclass"] = recall_score(
-                    y_true, y_pred, average="weighted"
+                output["recall_multiclass"] = float(
+                    recall_score(y_true, y_pred, average="weighted")
                 )
         else:
             logger.info(f"No y_pred and y_true found for event {filters.event_id}")
@@ -1741,7 +1743,6 @@ async def graph_number_of_daily_tasks(project_id: str):
     # Query Mongo
     result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
     # Add missing days to the result, and set the missing values to 0
-    result = pd.DataFrame(result)
     complete_date_range = pd.date_range(
         datetime.datetime.fromtimestamp(
             seven_days_ago_timestamp, datetime.timezone.utc
@@ -1990,13 +1991,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
 
             # We normalize the count by the total number of tasks with each version to get the percentage
             if versionA in graph_values.get(event_name, []):
@@ -2017,13 +2018,13 @@ async def get_ab_tests_versions(
                     }
                 else:
                     if event_result["version_id"] not in graph_values[event_name]:
-                        graph_values[event_name][event_result["version_id"]] = (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] = event_result["count"]
                     else:
-                        graph_values[event_name][event_result["version_id"]] += (
-                            event_result["count"]
-                        )
+                        graph_values[event_name][
+                            event_result["version_id"]
+                        ] += event_result["count"]
                 # We normalize the count by the total number of tasks with each version
                 if event_result["version_id"] == versionA:
                     graph_values[event_name][versionA] = graph_values[event_name][
@@ -2056,13 +2057,13 @@ async def get_ab_tests_versions(
                         )
 
                 if event_result["version_id"] not in divide_for_correct_average:
-                    divide_for_correct_average[event_result["version_id"]] = (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] = event_result["count"]
                 else:
-                    divide_for_correct_average[event_result["version_id"]] += (
-                        event_result["count"]
-                    )
+                    divide_for_correct_average[
+                        event_result["version_id"]
+                    ] += event_result["count"]
 
             for version in divide_for_correct_average:
                 graph_values_range[event_name][version] = (
