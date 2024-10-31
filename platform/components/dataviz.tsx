@@ -13,7 +13,7 @@ import React from "react";
 import {
   Bar,
   BarChart,
-  CartesianGrid,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -278,7 +278,6 @@ const DatavizGraph = ({
             }}
             onClick={onChartClick}
           >
-            <CartesianGrid />
             <Tooltip
               formatter={(value) => {
                 if (typeof value === "string") return value;
@@ -410,7 +409,17 @@ const DatavizGraph = ({
                 fill="#22c55e"
                 stackId="a"
                 // radius={[0, 20, 20, 0]}
-              />
+              >
+                <LabelList
+                  dataKey="metric"
+                  position="right"
+                  className="text-secondary"
+                  fontSize={12}
+                  formatter={(value: number) => {
+                    return value;
+                  }}
+                />
+              </Bar>
             )}
             {isStacked &&
               // Loop over the keys of the dict and create a bar for each key

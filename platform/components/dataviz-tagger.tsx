@@ -1,8 +1,10 @@
 "use client";
 
+import Loading from "@/app/loading";
 import { authFetcher } from "@/lib/fetcher";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { useState } from "react";
 import {
   Bar,
   BarChart,
@@ -32,6 +34,7 @@ const DatavizTaggerGraph = ({
 
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
+  const [loading, setLoading] = useState(false);
 
   const mergedFilters = {
     ...dataFilters,
@@ -61,6 +64,7 @@ const DatavizTaggerGraph = ({
       }).then((response) => {
         const pivotTable = response?.pivot_table as PivotTableElement[] | null;
         if (!pivotTable) {
+          setLoading(false);
           return [];
         }
         // Replace "breakdown_by": null with "breakdown_by": "None"
@@ -96,8 +100,12 @@ const DatavizTaggerGraph = ({
   });
 
   return (
-    <div className="w-[200px]">
-      <ResponsiveContainer width={"100%"} height={150}>
+    <div className="w-[200px] pt-4">
+      {loading && <Loading />}
+      <ResponsiveContainer
+        width={"100%"}
+        height={(pivotData?.length ?? 0) * 30}
+      >
         <BarChart
           data={pivotData}
           layout={"vertical"} // this actually displays the bar horizontally
@@ -115,12 +123,13 @@ const DatavizTaggerGraph = ({
               formatter={(value: number) =>
                 `${Math.floor((100 * value) / maxValue)}%`
               }
-              style={{ fill: "#666666" }}
+              className="text-secondary"
               fontSize={12}
             />
           </Bar>
           <YAxis
             dataKey={"breakdown_by"}
+            className="text-secondary"
             fontSize={12}
             tickLine={false}
             axisLine={false}
@@ -140,6 +149,7 @@ const DatavizTaggerGraph = ({
             domain={[0, "dataMax + 12"]}
             tickLine={false}
             axisLine={false}
+            height={0}
           />
         </BarChart>
       </ResponsiveContainer>
