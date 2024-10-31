@@ -255,6 +255,37 @@ class AnalyticsQuery(BaseModel):
     limit: int = 1000
 
 
+class ProjectDataFilters(BaseModel):
+    """
+    This is a model used to filter tasks, sessions or events in
+    different endpoints.
+    """
+
+    created_at_start: Optional[Union[int, datetime.datetime]] = None
+    created_at_end: Optional[Union[int, datetime.datetime]] = None
+    event_name: Optional[List[str]] = None
+    event_id: Optional[List[str]] = None
+    flag: Optional[str] = None
+    scorer_value: Optional[Dict[str, float]] = None
+    classifier_value: Optional[Dict[str, str]] = None
+    metadata: Optional[dict] = None
+    user_id: Optional[str] = None
+    last_eval_source: Optional[str] = None
+    sentiment: Optional[str] = None
+    language: Optional[str] = None
+    has_notes: Optional[bool] = None
+    tasks_ids: Optional[List[str]] = None
+    clustering_id: Optional[str] = None  # A group of clusters
+    clusters_ids: Optional[List[str]] = None  # A list of clusters
+    is_last_task: Optional[bool] = None
+    sessions_ids: Optional[List[str]] = None
+    version_id: Optional[str] = None
+    task_position: Optional[int] = None
+    task_id_search: Optional[str] = None
+    session_id_search: Optional[str] = None
+    excluded_users: Optional[List[str]] = None
+
+
 class DashboardTile(BaseModel):
     id: str = Field(default_factory=generate_uuid)
     tile_name: str
@@ -262,6 +293,7 @@ class DashboardTile(BaseModel):
     breakdown_by: str
     metadata_metric: Optional[str] = None
     scorer_id: Optional[str] = None
+    filters: Optional[ProjectDataFilters] = None
     # Position
     x: Optional[int] = None
     y: Optional[int] = None
@@ -742,37 +774,6 @@ class JobResult(DatedBaseModel, extra="allow"):
     logs: List[Any] = Field(default_factory=list)
     metadata: dict = Field(default_factory=dict)
     task_id: Optional[str] = None
-
-
-class ProjectDataFilters(BaseModel):
-    """
-    This is a model used to filter tasks, sessions or events in
-    different endpoints.
-    """
-
-    created_at_start: Optional[Union[int, datetime.datetime]] = None
-    created_at_end: Optional[Union[int, datetime.datetime]] = None
-    event_name: Optional[List[str]] = None
-    event_id: Optional[List[str]] = None
-    flag: Optional[str] = None
-    scorer_value: Optional[Dict[str, float]] = None
-    classifier_value: Optional[Dict[str, str]] = None
-    metadata: Optional[dict] = None
-    user_id: Optional[str] = None
-    last_eval_source: Optional[str] = None
-    sentiment: Optional[str] = None
-    language: Optional[str] = None
-    has_notes: Optional[bool] = None
-    tasks_ids: Optional[List[str]] = None
-    clustering_id: Optional[str] = None  # A group of clusters
-    clusters_ids: Optional[List[str]] = None  # A list of clusters
-    is_last_task: Optional[bool] = None
-    sessions_ids: Optional[List[str]] = None
-    version_id: Optional[str] = None
-    task_position: Optional[int] = None
-    task_id_search: Optional[str] = None
-    session_id_search: Optional[str] = None
-    excluded_users: Optional[List[str]] = None
 
 
 class Cluster(ProjectElementBaseModel):
