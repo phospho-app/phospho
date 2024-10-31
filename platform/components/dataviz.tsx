@@ -309,7 +309,6 @@ const DatavizGraph = ({
                             );
                           }
                           const color = graphColors[index % graphColors.length];
-                          console.log(payload);
 
                           return (
                             <div key={item.name}>
