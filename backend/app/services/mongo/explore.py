@@ -1758,12 +1758,12 @@ async def graph_number_of_daily_tasks(project_id: str):
         result_df["date"] = pd.to_datetime(result_df["date"]).dt.date
         result_df = pd.merge(complete_df, result_df, on="date", how="left").fillna(0)
     else:
-        result = complete_df
-        result["success"] = 0
-        result["failure"] = 0
-        result["undefined"] = 0
+        result_df = complete_df
+        result_df["success"] = 0
+        result_df["failure"] = 0
+        result_df["undefined"] = 0
 
-    return result.to_dict(orient="records")
+    return result_df.to_dict(orient="records")
 
 
 async def get_events_per_day(project_id: str):

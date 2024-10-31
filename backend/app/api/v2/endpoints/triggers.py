@@ -124,14 +124,30 @@ async def trigger_postgresql_pipeline(
     logger.info(f"Triggering PostgreSQL sync pipeline for project {project_id}")
 
     mongo_db = await get_mongo_db()
-    integration = await mongo_db["integrations"].find_one(
-        {"type": "postgresql", "project_id": project_id}
+    integration = (
+        await mongo_db["integrations"]
+        .aggregate(
+            [
+                {
+                    "$match": {
+                        {"type": "postgresql"},
+                        {
+                            "$or": [
+                                {"projects_started": project_id},
+                                {"projects_finished": project_id},
+                            ]
+                        },
+                    }
+                }
+            ]
+        )
+        .to_list(1)
     )
-    if not integration:
+    if not integration or len(integration) == 0:
         return {"status": "error", "message": "No PostgreSQL integration found"}
 
     try:
-        valid_integration = PostgresqlCredentials.model_validate(integration)
+        valid_integration = PostgresqlCredentials.model_validate(integration[0])
         project = await get_project_by_id(project_id)
         postgresql_integration = PostgresqlIntegration(
             org_id=valid_integration.org_id,
