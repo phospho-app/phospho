@@ -152,8 +152,8 @@ class OpenTelemetryConnector:
 
         logger.info(f"Found {len(all_spans)} spans to process.")
 
-        # Sort the spans by reverse end_time_unix_nano (more recent first)
-        all_spans.sort(key=lambda x: x["end_time_unix_nano"], reverse=True)
+        # Sort the spans by reverse start_time_unix_nano (more recent first)
+        all_spans.sort(key=lambda x: x["start_time_unix_nano"], reverse=True)
 
         for s in all_spans:
             logger.debug(s)

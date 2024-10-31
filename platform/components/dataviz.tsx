@@ -4,7 +4,7 @@ import { Spinner } from "@/components/small-spinner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authFetcher } from "@/lib/fetcher";
 import { graphColors } from "@/lib/utils";
-import { DatavizSorting, Project } from "@/models/models";
+import { DatavizSorting, Project, ProjectDataFilters } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { ChevronRight } from "lucide-react";
@@ -40,12 +40,14 @@ const DatavizGraph = ({
   breakdown_by,
   scorer_id,
   sorting,
+  filters,
 }: {
   metric: string;
   metadata_metric?: string | null;
   breakdown_by: string;
   scorer_id: string | null;
   sorting?: DatavizSorting;
+  filters?: ProjectDataFilters;
 }) => {
   if (sorting === undefined) {
     sorting = {
@@ -58,6 +60,14 @@ const DatavizGraph = ({
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const router = useRouter();
+
+  // TODO : Instead, the Filter component should delete keys when removing the filter
+  // Right now, it sets the value to null. This is a workaround, but it should be fixed.
+  const nonNullDataFilters = Object.fromEntries(
+    Object.entries(dataFilters).filter(([, value]) => value !== null),
+  );
+
+  const mergedFilters = { ...filters, ...nonNullDataFilters };
 
   const { data: selectedProject }: { data: Project } = useSWRImmutable(
     project_id ? [`/api/projects/${project_id}`, accessToken] : null,
@@ -101,7 +111,7 @@ const DatavizGraph = ({
       metadata_metric,
       breakdown_by,
       scorer_id,
-      JSON.stringify(dataFilters),
+      JSON.stringify(mergedFilters),
     ],
     ([url, accessToken]) =>
       authFetcher(url, accessToken, "POST", {
@@ -110,7 +120,7 @@ const DatavizGraph = ({
         breakdown_by:
           breakdown_by !== "None" ? breakdown_by.toLowerCase() : null,
         scorer_id: scorer_id,
-        filters: dataFilters,
+        filters: mergedFilters,
       }).then((response) => {
         const pivotTable = response?.pivot_table as PivotTableElement[] | null;
         if (!pivotTable) {
@@ -241,7 +251,7 @@ const DatavizGraph = ({
               <CardTitle className="text-xl font-light tracking-tight">
                 {pivotData[0]["breakdown_by"] !== "None" && (
                   <p>
-                    {breakdown_by}: {pivotData[0]["breakdown_by"]}
+                    {breakdown_by}: {pivotData[0]["breakdown_by"]}
                   </p>
                 )}
                 {pivotData[0]["breakdown_by"] === "None" && <p>No breakdown</p>}
