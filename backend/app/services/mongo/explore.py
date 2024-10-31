@@ -1755,8 +1755,8 @@ async def graph_number_of_daily_tasks(project_id: str):
     complete_df["date"] = pd.to_datetime(complete_df["date"]).dt.date
 
     if not result_df.empty:
-        result["date"] = pd.to_datetime(result["date"]).dt.date
-        result = pd.merge(complete_df, result, on="date", how="left").fillna(0)
+        result_df["date"] = pd.to_datetime(result_df["date"]).dt.date
+        result_df = pd.merge(complete_df, result_df, on="date", how="left").fillna(0)
     else:
         result = complete_df
         result["success"] = 0
