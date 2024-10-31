@@ -295,25 +295,25 @@ class ProjectSettings(BaseModel):
     dashboard_tiles: List[DashboardTile] = Field(
         default_factory=lambda: [
             DashboardTile(
-                tile_name="Human rating per message position",
-                metric="avg_success_rate",
-                breakdown_by="task_position",
+                tile_name="User messages per day",
+                metric="nb_messages",
+                breakdown_by="day",
             ),
             DashboardTile(
-                tile_name="Average human rating per event name",
-                metric="avg_success_rate",
-                breakdown_by="tagger_name",
+                tile_name="Nb sessions per week",
+                metric="nb_sessions",
+                breakdown_by="week",
+            ),
+            DashboardTile(
+                tile_name="User messages per language",
+                metric="nb_messages",
+                breakdown_by="language",
             ),
             DashboardTile(
                 tile_name="Average sentiment score per message position",
-                metric="Avg",
+                metric="avg",
                 metadata_metric="sentiment_score",
                 breakdown_by="task_position",
-            ),
-            DashboardTile(
-                tile_name="Human rating per language",
-                metric="avg_success_rate",
-                breakdown_by="language",
             ),
         ]
     )
