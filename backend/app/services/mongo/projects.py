@@ -35,7 +35,7 @@ from phospho.models import Cluster, Clustering, EventDefinition, Threshold
 async def get_project_by_id(project_id: str) -> Project:
     mongo_db = await get_mongo_db()
 
-    project_data = (
+    response = (
         await mongo_db["projects"]
         .aggregate(
             [
@@ -95,9 +95,9 @@ async def get_project_by_id(project_id: str) -> Project:
         .to_list(length=1)
     )
 
-    if project_data is None or len(project_data) == 0:
+    if response is None or len(response) == 0:
         raise HTTPException(status_code=404, detail=f"Project {project_id} not found")
-    project_data = project_data[0]
+    project_data: dict = response[0]
     if "_id" in project_data:
         del project_data["_id"]
 
@@ -119,7 +119,7 @@ async def get_project_by_id(project_id: str) -> Project:
         del project_dump["settings"]["events"]
         del project_data["settings"]["events"]
         if project_dump != project_data:
-            logger.info(f"Updating project {project.id}: {project.model_dump()}")
+            # logger.info(f"Updating project {project.id}: {project.model_dump()}")
             mongo_db["projects"].update_one(
                 {"id": project_data["id"]}, {"$set": project_dump}
             )

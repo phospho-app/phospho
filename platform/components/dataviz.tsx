@@ -90,6 +90,7 @@ const DatavizGraph = ({
   metric,
   metadata_metric,
   breakdown_by,
+  breakdown_by_event_id,
   scorer_id,
   sorting,
   filters,
@@ -97,6 +98,7 @@ const DatavizGraph = ({
   metric: string;
   metadata_metric?: string | null;
   breakdown_by: string;
+  breakdown_by_event_id?: string | null;
   scorer_id: string | null;
   sorting?: DatavizSorting;
   filters?: ProjectDataFilters;
@@ -162,6 +164,7 @@ const DatavizGraph = ({
       metric,
       metadata_metric,
       breakdown_by,
+      breakdown_by_event_id,
       scorer_id,
       JSON.stringify(mergedFilters),
     ],
@@ -171,6 +174,7 @@ const DatavizGraph = ({
         metric_metadata: metadata_metric?.toLowerCase(),
         breakdown_by:
           breakdown_by !== "None" ? breakdown_by.toLowerCase() : null,
+        breakdown_by_event_id: breakdown_by_event_id,
         scorer_id: scorer_id,
         filters: mergedFilters,
       }).then((response) => {
@@ -226,7 +230,7 @@ const DatavizGraph = ({
   const supportedDeepDives = [
     "language",
     "tagger_name",
-    "scorer_name",
+    "scorer_value",
     "flag",
     "version_id",
     "session_id",
@@ -241,9 +245,6 @@ const DatavizGraph = ({
       router.push(`/org/transcripts/tasks?language=${formatedBreakdownBy}`);
     }
     if (breakdown_by === "tagger_name") {
-      router.push(`/org/transcripts/tasks?event_name=${formatedBreakdownBy}`);
-    }
-    if (breakdown_by === "scorer_name") {
       router.push(`/org/transcripts/tasks?event_name=${formatedBreakdownBy}`);
     }
     if (breakdown_by === "flag") {
@@ -294,7 +295,7 @@ const DatavizGraph = ({
   return (
     <>
       {pivotData && (
-        <div className="w-full flex justify-end mb-2">
+        <div className="w-full flex justify-end">
           <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger asChild>
               <Button
@@ -342,13 +343,13 @@ const DatavizGraph = ({
         </>
       )}
       {pivotData && pivotData?.length > 1 && (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="90%">
           <BarChart
             data={pivotData}
             layout={timeChart ? "horizontal" : "vertical"}
             margin={{
-              top: 0,
-              right: 0,
+              top: 20,
+              right: 40,
               bottom: 0,
               left: 0,
             }}
@@ -411,6 +412,7 @@ const DatavizGraph = ({
                             metric={metric}
                             metadata_metric={metadata_metric}
                             breakdown_by={breakdown_by}
+                            breakdown_by_event_id={breakdown_by_event_id}
                             scorer_id={scorer_id}
                           />
                         )}
@@ -485,15 +487,17 @@ const DatavizGraph = ({
                 stackId="a"
                 // radius={[0, 20, 20, 0]}
               >
-                <LabelList
-                  dataKey="metric"
-                  position="right"
-                  className="text-secondary"
-                  fontSize={12}
-                  formatter={(value: number) => {
-                    return value;
-                  }}
-                />
+                {pivotData.length < 20 && (
+                  <LabelList
+                    dataKey="metric"
+                    position={timeChart ? "top" : "right"}
+                    className="text-secondary"
+                    fontSize={12}
+                    formatter={(value: number) => {
+                      return `${Math.round(value * 100) / 100}`;
+                    }}
+                  />
+                )}
               </Bar>
             )}
             {isStacked &&

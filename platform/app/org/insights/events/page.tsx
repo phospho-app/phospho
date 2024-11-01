@@ -15,13 +15,21 @@ import { authFetcher } from "@/lib/fetcher";
 import { OrgMetadata, Project, ScoreRangeType } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
-import { AlertCircle, PlusIcon, TextSearch } from "lucide-react";
+import {
+  AlertCircle,
+  PlusIcon,
+  Scale,
+  Shapes,
+  Tag,
+  TextSearch,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import useSWR from "swr";
 
 function EventCategoryTitle({
   title,
+  icon,
   buttonLabel,
   description,
   max_nb_events,
@@ -29,6 +37,7 @@ function EventCategoryTitle({
   defaultEventType: defaultEventCategory,
 }: {
   title: string;
+  icon: JSX.Element;
   buttonLabel: string;
   description?: string;
   max_nb_events: number;
@@ -46,7 +55,10 @@ function EventCategoryTitle({
     <Sheet open={open} onOpenChange={setOpen}>
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-xl font-bold tracking-tight pt-4">{title}</h2>
+          <h2 className="flex flex-row text-xl font-bold tracking-tight pt-4 items-center">
+            {icon}
+            {title}
+          </h2>
           <span className="text-muted-foreground text-sm">{description}</span>
         </div>
         <SheetTrigger asChild>
@@ -193,6 +205,7 @@ export default function Page() {
       }
       <EventCategoryTitle
         title="Taggers"
+        icon={<Tag className="size-6 mr-2" />}
         buttonLabel="Add tagger"
         description="Detect if a topic is present in the text."
         max_nb_events={max_nb_events}
@@ -203,6 +216,7 @@ export default function Page() {
 
       <EventCategoryTitle
         title="Scorers"
+        icon={<Scale className="size-6 mr-2" />}
         buttonLabel="Add scorer"
         description="Score text on a numerical scale."
         max_nb_events={max_nb_events}
@@ -213,6 +227,7 @@ export default function Page() {
 
       <EventCategoryTitle
         title="Classifiers"
+        icon={<Shapes className="size-6 mr-2" />}
         buttonLabel="Add classifier"
         description="Classify text into categories."
         max_nb_events={max_nb_events}
