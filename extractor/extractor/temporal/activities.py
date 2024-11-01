@@ -142,7 +142,7 @@ async def extract_langfuse_data(
 async def run_recipe_on_task(
     request: RunRecipeOnTaskRequest,
 ) -> dict:
-    if request.tasks is None and request.tasks_ids is None:
+    if request.tasks_ids is None:
         logger.debug("No tasks to process.")
         return {"status": "no tasks to process", "nb_job_results": 0}
     logger.info(f"Running job {request.recipe.recipe_type}")
@@ -155,13 +155,7 @@ async def run_recipe_on_task(
         org_id=request.recipe.org_id,
     )
 
-    nbr_tasks_to_process = (
-        len(request.tasks)
-        if request.tasks is not None
-        else 0 + len(request.tasks_ids)
-        if request.tasks_ids is not None
-        else 0
-    )
+    nbr_tasks_to_process = len(request.tasks_ids)
 
     if request.max_usage:
         if request.current_usage > request.max_usage:
@@ -176,18 +170,12 @@ async def run_recipe_on_task(
             return {"status": "error", "nb_job_results": 0}
 
     await main_pipeline.recipe_pipeline(
-        tasks=request.tasks, recipe=request.recipe, tasks_ids=request.tasks_ids
+        recipe=request.recipe, tasks_ids=request.tasks_ids
     )
-
-    total_len = 0
-    if request.tasks is not None:
-        total_len += len(request.tasks)
-    if request.tasks_ids is not None:
-        total_len += len(request.tasks_ids)
 
     return {
         "status": "ok",
-        "nb_job_results": total_len,
+        "nb_job_results": nbr_tasks_to_process,
         "recipe_type": request.recipe.recipe_type,
     }
 

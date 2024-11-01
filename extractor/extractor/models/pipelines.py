@@ -33,7 +33,6 @@ class RunMainPipelineOnMessagesRequest(ExtractorBaseClass):
 
 
 class RunRecipeOnTaskRequest(ExtractorBaseClass):
-    tasks: Optional[List[Task]] = None
     recipe: Recipe
     tasks_ids: Optional[List[str]] = None
 
