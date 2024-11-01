@@ -1390,7 +1390,17 @@ async def get_y_pred_y_true(
 
     main_filter["event_definition.id"] = {"$in": filters.event_id}
 
-    query_result = await mongo_db["events"].find(main_filter).to_list(length=None)
+    query_result = (
+        await mongo_db["events"]
+        .find(main_filter)
+        .sort("created_at", -1)
+        .to_list(
+            # Hardcoded limit to avoid memory issues
+            # TODO : Perform all the filtering in the query (or multiple)
+            # to avoid this limit
+            length=5_000,
+        )
+    )
     if query_result is None or len(query_result) == 0:
         logger.info("No events found")
         return None, None
