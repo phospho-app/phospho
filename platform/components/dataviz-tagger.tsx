@@ -106,7 +106,7 @@ const DatavizTaggerGraph = ({
   });
 
   return (
-    <div className="w-[200px] pt-2">
+    <div className="w-[280px] pt-2">
       {isLoading && <Spinner className="text-green-500" />}
       <ResponsiveContainer
         width={"100%"}
@@ -117,7 +117,7 @@ const DatavizTaggerGraph = ({
           layout={"vertical"} // this actually displays the bar horizontally
           margin={{
             top: 0,
-            right: 0,
+            right: 40,
             bottom: 0,
             left: 0,
           }}
@@ -152,7 +152,7 @@ const DatavizTaggerGraph = ({
           <XAxis
             fontSize={12}
             type="number"
-            domain={[0, "dataMax + 12"]}
+            domain={[0, "dataMax"]}
             tickLine={false}
             axisLine={false}
             height={0}
