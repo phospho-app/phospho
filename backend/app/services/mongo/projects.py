@@ -103,16 +103,21 @@ async def get_project_by_id(project_id: str) -> Project:
 
     try:
         project = Project.from_previous(project_data)
-        for event_name, event in project.settings.events.items():
-            if not event.recipe_id:
+        for event_name, event_definition in project.settings.events.items():
+            if not event_definition.recipe_id:
                 recipe = Recipe(
                     org_id=project.org_id,
                     project_id=project.id,
                     recipe_type="event_detection",
-                    parameters=event.model_dump(),
+                    parameters=event_definition.model_dump(),
                 )
                 mongo_db["recipes"].insert_one(recipe.model_dump())
                 project.settings.events[event_name].recipe_id = recipe.id
+                # Update the event definition
+                mongo_db["event_definitions"].update_one(
+                    {"project_id": project.id, "id": event_definition.id},
+                    {"$set": {"recipe_id": recipe.id}},
+                )
 
         # If the project dict is different from project_data, update the project_data
         project_dump = project.model_dump()
@@ -462,65 +467,6 @@ async def store_onboarding_survey(user: User, survey: dict):
     mongo_db["onboarding_surveys"].insert_one(doc)
     await slack_notification(f"New onboarding survey from {user.email}: {survey}")
     return
-
-
-async def backcompute_recipe(
-    job_id: str, tasks: List[Task], batch_size: int = 16
-) -> None:
-    """
-    Run predictions for a job on all the tasks of a project that have not been processed yet.
-    """
-    mongo_db = await get_mongo_db()
-
-    recipe = await mongo_db["recipes"].find_one({"id": job_id})
-    recipe = Recipe.model_validate(recipe)
-
-    # Get the task IDs that have already been processed for this job
-    processed_task_ids = [
-        result["task_id"]
-        for result in await mongo_db["job_results"]
-        .find({"job_metadata.recipe_id": recipe.id}, {"task_id": 1})
-        .to_list(None)
-    ]
-
-    # Filter out the tasks that have already been processed
-    tasks_to_process = [task for task in tasks if task.id not in processed_task_ids]
-
-    # Send the task to the job pipeline of the extractor
-    extractor_client = ExtractorClient(
-        org_id=recipe.org_id,
-        project_id=recipe.project_id,
-    )
-    for i in range(0, len(tasks_to_process), batch_size):
-        tasks_batch = tasks_to_process[i : i + batch_size]
-        await extractor_client.run_recipe_on_tasks(
-            tasks_ids=[task.id for task in tasks_batch],
-            recipe=recipe,
-        )
-
-
-async def backcompute_recipes(
-    project_id: str,
-    recipe_ids: List[str],
-    filters: ProjectDataFilters,
-    limit: int = 10000,
-) -> None:
-    """
-    Run predictions for a list of jobs on all the tasks of a project that match the filters and that have not been processed yet.
-    """
-
-    # Filter the tasks from the filters
-
-    # TODO: filter on user_id is not implemented
-    # Will be ignored for now
-    if filters.user_id:
-        logger.warning("Filter on user_id is not implemented")
-
-    tasks = await get_all_tasks(project_id=project_id, limit=limit, filters=filters)
-
-    # For each job, run the job on the tasks
-    for recipe_id in recipe_ids:
-        await backcompute_recipe(recipe_id, tasks)
 
 
 async def collect_languages(

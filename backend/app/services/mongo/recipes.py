@@ -37,21 +37,43 @@ async def get_recipe_from_event_id(project_id: str, event_id: str) -> Recipe:
 
 
 async def get_recipe_from_event_definition_id(
-    project_id: str, event_definition_id: str
+    project_id: str,
+    event_definition_id: str,
 ) -> Recipe:
+    # TODO : Refacto to get rid of recipes for event_definitions
+
     mongo_db = await get_mongo_db()
     event_definition = await mongo_db["event_definitions"].find_one(
         {"id": event_definition_id}
     )
-    event_definition_validated = EventDefinition.model_validate(event_definition)
-    if event_definition_validated.recipe_id is None:
+    if event_definition is None:
         raise HTTPException(
             status_code=404,
-            detail=f"Event {event_definition.event_name} has no recipe_id for project {project_id}.",
+            detail=f"Event definition not found: {event_definition_id} in project {project_id}",
         )
 
-    recipe = await get_recipe_by_id(recipe_id=event_definition_validated.recipe_id)
-    return recipe
+    event_definition_validated = EventDefinition.model_validate(event_definition)
+
+    if event_definition_validated.recipe_id is None:
+        # Create a new recipe
+        recipe = Recipe(
+            org_id=event_definition.org_id,
+            project_id=project_id,
+            recipe_type="event_detection",
+            parameters=event_definition.model_dump(),
+        )
+        # Update the event definition with the recipe_id
+        await mongo_db["event_definitions"].update_one(
+            {"id": event_definition_id},
+            {"$set": {"recipe_id": recipe.id}},
+        )
+        # Update the mongodb event definition
+        await mongo_db["recipes"].insert_one(recipe.model_dump())
+        return recipe
+    else:
+        # Return the stored recipe
+        recipe = await get_recipe_by_id(recipe_id=event_definition_validated.recipe_id)
+        return recipe
 
 
 async def run_recipe_on_tasks_batched(
