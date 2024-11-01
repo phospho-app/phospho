@@ -1393,6 +1393,7 @@ async def get_y_pred_y_true(
     query_result = (
         await mongo_db["events"]
         .find(main_filter)
+        .sort("created_at", -1)
         .to_list(
             # Hardcoded limit to avoid memory issues
             # TODO : Perform all the filtering in the query (or multiple)

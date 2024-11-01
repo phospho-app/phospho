@@ -285,16 +285,34 @@ async def breakdown_by_sum_of_metadata_field(
 
     if breakdown_by == "tagger_name":
         query_builder.merge_events(foreignField="task_id")
-        _unwind_events(pipeline)
         pipeline += [
             # Filter to only keep the tagger events
             {
                 "$match": {
-                    "events.event_definition.score_range_settings.score_type": "confidence"
+                    "events": {"$exists": True, "$ne": []},
+                    "events.event_definition.score_range_settings.score_type": "confidence",
                 }
             },
+            {
+                "$set": {
+                    "taggers": {
+                        "$filter": {
+                            "input": "$events",
+                            "as": "event",
+                            "cond": {
+                                "$eq": [
+                                    "$$event.event_definition.score_range_settings.score_type",
+                                    "confidence",
+                                ]
+                            },
+                        }
+                    }
+                }
+            },
+            {"$unwind": "$taggers"},
+            {"$set": {"tagger_name": "$taggers.event_definition.event_name"}},
         ]
-        breakdown_by_col = "events.event_name"
+        breakdown_by_col = "tagger_name"
     elif breakdown_by == "scorer_value":
         query_builder.merge_events(foreignField="task_id")
         pipeline += [
@@ -443,6 +461,9 @@ async def breakdown_by_sum_of_metadata_field(
                     "events.event_definition.id": scorer_id,
                 }
             },
+        ]
+
+        pipeline += [
             {
                 "$group": {
                     "_id": f"${breakdown_by_col}",
