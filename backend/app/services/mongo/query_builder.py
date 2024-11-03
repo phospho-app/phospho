@@ -571,7 +571,7 @@ class QueryBuilder:
         if filters.metadata is not None:
             self.merge_tasks()
             for key, value in filters.metadata.items():
-                match[f"metadata.{key}"] = value
+                match[f"tasks.metadata.{key}"] = value
 
         if filters.excluded_users is not None:
             self.merge_tasks()
