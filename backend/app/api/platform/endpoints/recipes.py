@@ -63,7 +63,7 @@ async def post_run_recipes(
         )
 
     logger.debug(
-        f"Runinng follwoing recipes on project {project_id}: {run_recipe_request.recipe_type_list}"
+        f"Runinng following recipes on project {project_id}: {run_recipe_request.recipe_type_list}"
     )
 
     background_tasks.add_task(
