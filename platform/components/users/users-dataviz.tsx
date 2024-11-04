@@ -258,6 +258,10 @@ const UsersDataviz = ({
     return null;
   };
 
+  const totalJobIndustry = useMemo(() => {
+    return userIndustry?.reduce((acc) => acc + 1, 0) || 0;
+  }, [userIndustry]);
+
   const totalJobTitles = useMemo(() => {
     return userJobTitles?.reduce((acc) => acc + 1, 0) || 0;
   }, [userJobTitles]);
@@ -337,7 +341,9 @@ const UsersDataviz = ({
             selectedMetric={selectedMetric}
             setSelectedMetric={setSelectedMetric}
             data={selectedMetric === "jobTitles" ? userJobTitles : userIndustry}
-            totalCount={totalJobTitles}
+            totalCount={
+              selectedMetric === "jobTitles" ? totalJobTitles : totalJobIndustry
+            }
           />
 
           {/* Third card - Retention Chart */}
