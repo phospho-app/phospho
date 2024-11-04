@@ -159,8 +159,8 @@ const RunAnalysisInPast = () => {
 
     if (!response.ok) {
       toast({
-        title: "Checkout Error - Please try again later",
-        description: `Details: ${response.status} - ${response.statusText}`,
+        title: "Something went wrong",
+        description: `Details: ${await response.text()}`,
       });
       return;
     }
