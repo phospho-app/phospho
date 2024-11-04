@@ -848,62 +848,60 @@ const FilterComponent = ({
               </DropdownMenuSub>
             )}
           </div>
-          {variant == "tasks" && (
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <Code className="size-4 mr-2" />
-                <span>Metadata</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
-                  {stringFields && Object.entries(stringFields).length == 0 && (
-                    <DropdownMenuItem disabled>
-                      No metadata available
-                    </DropdownMenuItem>
-                  )}
-                  {stringFields &&
-                    Object.entries(stringFields).map(([field, values]) => {
-                      return (
-                        <DropdownMenuSub key={field}>
-                          <DropdownMenuSubTrigger>
-                            <span>{field}</span>
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuPortal>
-                            <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
-                              {values.map((value) => {
-                                return (
-                                  <DropdownMenuItem
-                                    key={value}
-                                    onClick={() => {
-                                      setDataFilters({
-                                        ...dataFilters,
-                                        metadata: {
-                                          ...dataFilters.metadata,
-                                          [field]: value,
-                                        },
-                                      });
-                                      resetPagination();
-                                    }}
-                                  >
-                                    {field !== "language"
-                                      ? value
-                                        ? value.length > 50
-                                          ? value.substring(0, 50) + "..."
-                                          : value
-                                        : "-"
-                                      : getLanguageLabel(value)}
-                                  </DropdownMenuItem>
-                                );
-                              })}
-                            </DropdownMenuSubContent>
-                          </DropdownMenuPortal>
-                        </DropdownMenuSub>
-                      );
-                    })}
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-          )}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Code className="size-4 mr-2" />
+              <span>Metadata</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                {stringFields && Object.entries(stringFields).length == 0 && (
+                  <DropdownMenuItem disabled>
+                    No metadata available
+                  </DropdownMenuItem>
+                )}
+                {stringFields &&
+                  Object.entries(stringFields).map(([field, values]) => {
+                    return (
+                      <DropdownMenuSub key={field}>
+                        <DropdownMenuSubTrigger>
+                          <span>{field}</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent className="overflow-y-auto max-h-[40rem]">
+                            {values.map((value) => {
+                              return (
+                                <DropdownMenuItem
+                                  key={value}
+                                  onClick={() => {
+                                    setDataFilters({
+                                      ...dataFilters,
+                                      metadata: {
+                                        ...dataFilters.metadata,
+                                        [field]: value,
+                                      },
+                                    });
+                                    resetPagination();
+                                  }}
+                                >
+                                  {field !== "language"
+                                    ? value
+                                      ? value.length > 50
+                                        ? value.substring(0, 50) + "..."
+                                        : value
+                                      : "-"
+                                    : getLanguageLabel(value)}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
+                    );
+                  })}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Boxes className="size-4 mr-2" />

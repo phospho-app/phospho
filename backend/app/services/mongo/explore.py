@@ -1418,26 +1418,17 @@ async def get_y_pred_y_true(
 
     # Convert to DataFrame
     df = pd.DataFrame(query_result)
+
+    # Fill empty values
+    df["removed"] = df["removed"].astype(bool).fillna(False)
+    df["confirmed"] = df["confirmed"].astype(bool).fillna(False)
+    df = df.dropna(subset=["score_range"])
+
     if event_type == "confidence":
         mask_y_pred_true = (
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"])
-                & (~df["removed"])
-                & (df["score_range"].notna())
-            )
-            | (
-                (df["source"] != "owner")
-                & (df["confirmed"])
-                & (~df["removed"])
-                & (df["score_range"].notna())
-            )
-            | (
-                (df["source"] != "owner")
-                & (~df["confirmed"])
-                & (df["removed"])
-                & (df["score_range"].notna())
-            )
+            ((df["source"] != "owner") & (df["confirmed"]) & (~df["removed"]))
+            | ((df["source"] != "owner") & (df["confirmed"]) & (~df["removed"]))
+            | ((df["source"] != "owner") & (~df["confirmed"]) & (df["removed"]))
         )
 
         mask_y_pred_false = (
@@ -1456,42 +1447,12 @@ async def get_y_pred_y_true(
 
     elif event_type == "category":
         mask = (
-            (
-                (df["source"] != "owner")
-                & (df["confirmed"])
-                & (~df["removed"])
-                & (df["score_range"].notna())
-            )
-            | (
-                (df["source"] != "owner")
-                & (df["confirmed"])
-                & (~df["removed"])
-                & (df["score_range"].notna())
-            )
-            | (
-                (df["source"] != "owner")
-                & (~df["confirmed"])
-                & (df["removed"])
-                & (df["score_range"].notna())
-            )
-            | (
-                (df["source"] == "owner")
-                & (~df["confirmed"])
-                & (~df["removed"])
-                & (df["score_range"].notna())
-            )
-            | (
-                (df["source"] == "owner")
-                & (df["confirmed"])
-                & (~df["removed"])
-                & (df["score_range"].notna())
-            )
-            | (
-                (df["source"] == "owner")
-                & (df["confirmed"])
-                & (df["removed"])
-                & (df["score_range"].notna())
-            )
+            ((df["source"] != "owner") & (df["confirmed"]) & (~df["removed"]))
+            | ((df["source"] != "owner") & (df["confirmed"]) & (~df["removed"]))
+            | ((df["source"] != "owner") & (~df["confirmed"]) & (df["removed"]))
+            | ((df["source"] == "owner") & (~df["confirmed"]) & (~df["removed"]))
+            | ((df["source"] == "owner") & (df["confirmed"]) & (~df["removed"]))
+            | ((df["source"] == "owner") & (df["confirmed"]) & (df["removed"]))
         )
         df = df[mask]
 
@@ -1525,12 +1486,7 @@ async def get_y_pred_y_true(
     elif event_type == "range":
         mask = (
             (df["source"] == "owner") & (~df["removed"]) & (df["score_range"].notna())
-        ) | (
-            (df["source"] != "owner")
-            & (df["confirmed"])
-            & (~df["removed"])
-            & (df["score_range"].notna())
-        )
+        ) | ((df["source"] != "owner") & (df["confirmed"]) & (~df["removed"]))
 
         df = df[mask]
 
