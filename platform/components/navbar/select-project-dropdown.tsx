@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -13,7 +14,9 @@ import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { BriefcaseBusiness } from "lucide-react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 export function SelectProjectButton() {
@@ -21,6 +24,9 @@ export function SelectProjectButton() {
   const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const [projectNameSearch, setProjectNameSearch] = useState<string | null>(
+    null,
+  );
 
   const {
     data: projectsData,
@@ -45,6 +51,10 @@ export function SelectProjectButton() {
     },
   );
 
+  useEffect(() => {
+    setProjectNameSearch(null);
+  }, [selectedOrgId]);
+
   const selectedProjectId = project_id ?? "loading...";
   const selectedProjectName = selectedProject?.project_name ?? "loading...";
 
@@ -68,10 +78,7 @@ export function SelectProjectButton() {
           </SelectValue>
         </span>
       </SelectTrigger>
-      <SelectContent
-        position="popper"
-        className="overflow-y-auto max-h-[40rem]"
-      >
+      <SelectContent position="popper">
         <SelectGroup>
           <SelectLabel>
             <div className="flex flex-row items-center">
@@ -79,18 +86,42 @@ export function SelectProjectButton() {
               Projects ({`${projects?.length}`})
             </div>
           </SelectLabel>
-          {projects.map((project) => (
-            <SelectItem
-              key={project.id}
-              value={project.id}
-              // onSelect={() => handleProjectChange(project.id)}
-              onClick={(mousEvent) => {
-                mousEvent.stopPropagation();
-              }}
-            >
-              {project.project_name}
-            </SelectItem>
-          ))}
+          <SelectLabel>
+            {projects.length > 15 && (
+              <div className="flex flex-row gap-x-2 items-center">
+                <MagnifyingGlassIcon className="size-4" />
+                <Input
+                  placeholder="Search for project name"
+                  className=""
+                  value={projectNameSearch ?? ""}
+                  onChange={(e) => {
+                    setProjectNameSearch(e.target.value);
+                  }}
+                />
+              </div>
+            )}
+          </SelectLabel>
+        </SelectGroup>
+        <SelectGroup className="overflow-y-auto max-h-[40rem]">
+          {projects
+            .filter((project) =>
+              !projectNameSearch
+                ? true
+                : project.project_name
+                    .toLowerCase()
+                    .startsWith(projectNameSearch.toLowerCase()),
+            )
+            .map((project) => (
+              <SelectItem
+                key={project.id}
+                value={project.id}
+                onClick={(mouseEvent) => {
+                  mouseEvent.stopPropagation();
+                }}
+              >
+                {project.project_name}
+              </SelectItem>
+            ))}
         </SelectGroup>
       </SelectContent>
     </Select>
