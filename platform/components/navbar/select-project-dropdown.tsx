@@ -83,14 +83,16 @@ export function SelectProjectButton() {
               <BriefcaseBusiness className="w-4 h-4 mr-1" />
               Projects ({`${projects?.length}`})
             </div>
-            <Input
-              placeholder="Search for project name"
-              className="w-full mt-2"
-              value={projectNameSearch}
-              onChange={(e) => {
-                setProjectNameSearch(e.target.value);
-              }}
-            />
+            {projects.length > 15 && (
+              <Input
+                placeholder="Search for project name"
+                className="min-w-[20rem]"
+                value={projectNameSearch}
+                onChange={(e) => {
+                  setProjectNameSearch(e.target.value);
+                }}
+              />
+            )}
           </SelectLabel>
           {projects
             .filter((project) =>
