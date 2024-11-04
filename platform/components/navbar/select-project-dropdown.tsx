@@ -14,8 +14,9 @@ import { authFetcher } from "@/lib/fetcher";
 import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
+import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { BriefcaseBusiness } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 
 export function SelectProjectButton() {
@@ -23,9 +24,9 @@ export function SelectProjectButton() {
   const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
-  const [projectNameSearch, setProjectNameSearch] = useState<
-    string | undefined
-  >();
+  const [projectNameSearch, setProjectNameSearch] = useState<string | null>(
+    null,
+  );
 
   const {
     data: projectsData,
@@ -50,6 +51,10 @@ export function SelectProjectButton() {
     },
   );
 
+  useEffect(() => {
+    setProjectNameSearch(null);
+  }, [selectedOrgId]);
+
   const selectedProjectId = project_id ?? "loading...";
   const selectedProjectName = selectedProject?.project_name ?? "loading...";
 
@@ -73,27 +78,31 @@ export function SelectProjectButton() {
           </SelectValue>
         </span>
       </SelectTrigger>
-      <SelectContent
-        position="popper"
-        className="overflow-y-auto max-h-[40rem]"
-      >
+      <SelectContent position="popper">
         <SelectGroup>
           <SelectLabel>
             <div className="flex flex-row items-center">
               <BriefcaseBusiness className="w-4 h-4 mr-1" />
               Projects ({`${projects?.length}`})
             </div>
+          </SelectLabel>
+          <SelectLabel>
             {projects.length > 15 && (
-              <Input
-                placeholder="Search for project name"
-                className="w-full mt-2"
-                value={projectNameSearch}
-                onChange={(e) => {
-                  setProjectNameSearch(e.target.value);
-                }}
-              />
+              <div className="flex flex-row gap-x-2 items-center">
+                <MagnifyingGlassIcon className="size-4" />
+                <Input
+                  placeholder="Search for project name"
+                  className=""
+                  value={projectNameSearch ?? ""}
+                  onChange={(e) => {
+                    setProjectNameSearch(e.target.value);
+                  }}
+                />
+              </div>
             )}
           </SelectLabel>
+        </SelectGroup>
+        <SelectGroup className="overflow-y-auto max-h-[40rem]">
           {projects
             .filter((project) =>
               !projectNameSearch
