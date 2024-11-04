@@ -1,4 +1,6 @@
+from app.services.mongo.projects import project_check_automatic_analytics_monthly_limit
 from app.services.mongo.recipes import run_recipe_types_on_tasks
+from app.services.mongo.tasks import get_total_nb_of_tasks
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from propelauth_fastapi import User  # type: ignore
 
@@ -45,8 +47,23 @@ async def post_run_recipes(
             detail="You need to add a payment method to access this service. Please update your payment details: https://platform.phospho.ai/org/settings/billing",
         )
 
+    nb_tasks = await get_total_nb_of_tasks(
+        project_id=project_id, filters=run_recipe_request.filters
+    )
+
+    is_over_limit = await project_check_automatic_analytics_monthly_limit(
+        project_id=project_id,
+        nb_tasks_to_process=nb_tasks,
+        recipe_type_list=run_recipe_request.recipe_type_list,  # type: ignore
+    )
+    if is_over_limit:
+        raise HTTPException(
+            status_code=402,
+            detail="You have reached the monthly limit of automatic analytics. Please increase your limit.",
+        )
+
     logger.debug(
-        f"Runinng follwoing recipes on project {project_id}: {run_recipe_request.recipe_type_list}"
+        f"Runinng following recipes on project {project_id}: {run_recipe_request.recipe_type_list}"
     )
 
     background_tasks.add_task(

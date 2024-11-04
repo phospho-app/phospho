@@ -431,6 +431,8 @@ If the event '{event_name}' is not present in the {the_interaction} or you can't
                 )
                 async_openai_client = get_async_client("openai")
                 # Fallback to OpenAI API
+                if model_name == "gpt-4o":
+                    model_name = "gpt-4o-mini"
                 response = await async_openai_client.chat.completions.create(
                     model=model_name,
                     messages=[

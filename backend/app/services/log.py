@@ -8,7 +8,7 @@ from app.utils import generate_timestamp, generate_uuid
 from loguru import logger
 
 from phospho.lab.utils import get_tokenizer, num_tokens_from_messages
-from phospho.models import Session, Task
+from phospho.models import HumanEval, Session, Task
 from phospho.utils import filter_nonjsonable_keys, is_jsonable
 
 
@@ -537,6 +537,15 @@ def create_task_from_logevent(
 
     if log_event.project_id is None:
         log_event.project_id = project_id
+
+    # Create a human eval if flag is set
+    if log_event.flag:
+        human_eval = HumanEval(
+            flag=log_event.flag,
+        )
+    else:
+        human_eval = None
+
     task = Task(
         id=log_event.task_id,
         project_id=log_event.project_id,
@@ -557,6 +566,7 @@ def create_task_from_logevent(
         data=None,
         flag=log_event.flag,
         test_id=log_event.test_id,
+        human_eval=human_eval,
     )
     return task
 

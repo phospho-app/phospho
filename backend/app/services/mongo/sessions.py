@@ -240,7 +240,7 @@ async def event_suggestion(
     transcript = await format_session_transcript(session)
 
     provider, model_name = get_provider_and_model(model)
-    openai_client = get_sync_client(cast(Literal["openai"], provider))
+    openai_client = get_sync_client(provider)
 
     # We look at the full session
     existing_tags = "\n- ".join(formatted_tags_list)

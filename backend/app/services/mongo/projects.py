@@ -790,7 +790,11 @@ async def copy_template_project_to_new(
     return None
 
 
-async def project_check_automatic_analytics_monthly_limit(project_id: str) -> bool:
+async def project_check_automatic_analytics_monthly_limit(
+    project_id: str,
+    nb_tasks_to_process: Optional[int] = None,
+    recipe_type_list: Optional[List[str]] = None,
+) -> bool:
     """
     Check if the project reached its monthly limit for automatic analytics.
 
@@ -798,8 +802,17 @@ async def project_check_automatic_analytics_monthly_limit(project_id: str) -> bo
     This limits resets at the beginning of each month.
     This function checks if this limits is reached.
 
+    To help the user to manage the limit, the function takes into account the number of tasks to process
+    and the recipe types to run on these tasks.
+
+    Args:
+        project_id: the id of the project
+        nb_tasks_to_process: the number of tasks to process
+        recipe_type_list: the list of recipe types to run on the tasks
+
     returns: True if the project reached its monthly limit, False otherwise
     """
+
     project = await get_project_by_id(project_id)
     if (
         not project.settings.analytics_threshold_enabled
@@ -807,6 +820,30 @@ async def project_check_automatic_analytics_monthly_limit(project_id: str) -> bo
     ):
         # Skipping: threshold is not enabled
         return False
+
+    if recipe_type_list is None:
+        recipe_type_list = []
+
+    if nb_tasks_to_process is None:
+        nb_additional_analytics = 0
+    else:
+        usage_per_log = 0
+        for recipe_type in recipe_type_list:
+            if recipe_type is not None:
+                if recipe_type == "event_detection":
+                    usage_per_log += 1 if project.settings.run_event_detection else 0
+                elif recipe_type == "sentiment_language":
+                    usage_per_log += 1 if project.settings.run_sentiment else 0
+                    usage_per_log += 1 if project.settings.run_language else 0
+            else:
+                if project.settings.run_event_detection:
+                    usage_per_log += len(project.settings.events)
+                if project.settings.run_sentiment:
+                    usage_per_log += 1
+                if project.settings.run_language:
+                    usage_per_log += 1
+
+        nb_additional_analytics = nb_tasks_to_process * usage_per_log
 
     start_of_this_month = (
         datetime.datetime.now()
@@ -832,7 +869,7 @@ async def project_check_automatic_analytics_monthly_limit(project_id: str) -> bo
         ]
     }
     nb_analytics = await mongo_db["job_results"].count_documents(filter)
-    if nb_analytics >= project.settings.analytics_threshold:
+    if nb_analytics + nb_additional_analytics >= project.settings.analytics_threshold:
         logger.warning(f"Project {project_id} reached its monthly limit")
         return True
 
