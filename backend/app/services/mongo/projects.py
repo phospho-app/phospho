@@ -2,21 +2,19 @@ import datetime
 import io
 from typing import Dict, List, Literal, Optional
 
-import pandas as pd
+import pandas as pd  # type: ignore
 import resend
 from app.api.v2.models.embeddings import Embedding
 from app.core import config
 from app.db.models import (
     Event,
     Project,
-    ProjectDataFilters,
     Recipe,
     Session,
     Task,
 )
 from app.db.mongo import get_mongo_db
 from app.security.authentification import propelauth
-from app.services.mongo.extractor import ExtractorClient
 from app.services.mongo.tasks import (
     fetch_flattened_tasks,
     get_all_tasks,
@@ -646,7 +644,7 @@ async def copy_template_project_to_new(
     for event in default_events:
         event_model = Event.model_validate(event)
         if event_model.task_id not in task_pairs:
-            logger.error(
+            logger.warning(
                 f"Default project has been modified, task {event_model.task_id} not found in task_pairs. Skipping event {event_model.event_name}"
             )
             continue
