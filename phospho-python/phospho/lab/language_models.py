@@ -1,5 +1,5 @@
 import os
-from typing import Literal, Optional, Tuple
+from typing import Literal, Optional, Tuple, cast
 
 import phospho.config as config
 
@@ -8,22 +8,35 @@ try:
 
 except ImportError:
     # Define dummy classes to avoid import errors
-    class AsyncOpenAI:
+    class AsyncOpenAI:  # type: ignore
         pass
 
-    class OpenAI:
+    class OpenAI:  # type: ignore
         pass
 
-    class AsyncAzureOpenAI:
+    class AsyncAzureOpenAI:  # type: ignore
         pass
 
-    class AzureOpenAI:
+    class AzureOpenAI:  # type: ignore
         pass
 
 
 def get_provider_and_model(
     model: str,
-) -> Tuple[str, str]:
+) -> Tuple[
+    Literal[
+        "openai",
+        "azure",
+        "mistral",
+        "ollama",
+        "solar",
+        "together",
+        "anyscale",
+        "fireworks",
+        "phospho",
+    ],
+    str,
+]:
     """
     Get the provider and model from a string in the format "provider:model"
     If no provider is specified, it defaults to "openai".
@@ -53,19 +66,47 @@ def get_provider_and_model(
         provider = split_result[0]
         model_name = split_result[1]
 
-    return provider, model_name
-
-
-def get_async_client(
-    provider: Literal[
+    if provider not in [
         "openai",
+        "azure",
         "mistral",
         "ollama",
         "solar",
         "together",
         "anyscale",
         "fireworks",
+        "phospho",
+    ]:
+        raise ValueError(f"Provider {provider} is not supported.")
+
+    provider = cast(
+        Literal[
+            "openai",
+            "azure",
+            "mistral",
+            "ollama",
+            "solar",
+            "together",
+            "anyscale",
+            "fireworks",
+            "phospho",
+        ],
+        provider,
+    )
+
+    return provider, model_name
+
+
+def get_async_client(
+    provider: Literal[
+        "openai",
         "azure",
+        "mistral",
+        "ollama",
+        "solar",
+        "together",
+        "anyscale",
+        "fireworks",
         # phospho means the Tak Search service for now (in private monorepo)
         "phospho",
     ],
@@ -142,12 +183,14 @@ def get_async_client(
 def get_sync_client(
     provider: Literal[
         "openai",
+        "azure",
         "mistral",
         "ollama",
         "solar",
         "together",
         "anyscale",
         "fireworks",
+        "phospho",
     ],
     api_key: Optional[str] = None,
 ) -> OpenAI:
@@ -206,5 +249,7 @@ def get_sync_client(
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", ""),
             api_key=os.environ.get("AZURE_OPENAI_KEY"),
         )
+    if provider == "phospho":
+        raise NotImplementedError("phospho provider is not supported for sync client.")
 
     raise NotImplementedError(f"Provider {provider} is not supported.")
