@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -14,6 +15,7 @@ import { Project } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { BriefcaseBusiness } from "lucide-react";
+import { useState } from "react";
 import useSWR from "swr";
 
 export function SelectProjectButton() {
@@ -21,6 +23,9 @@ export function SelectProjectButton() {
   const project_id = navigationStateStore((state) => state.project_id);
   const setproject_id = navigationStateStore((state) => state.setproject_id);
   const selectedOrgId = navigationStateStore((state) => state.selectedOrgId);
+  const [projectNameSearch, setProjectNameSearch] = useState<
+    string | undefined
+  >();
 
   const {
     data: projectsData,
@@ -78,19 +83,34 @@ export function SelectProjectButton() {
               <BriefcaseBusiness className="w-4 h-4 mr-1" />
               Projects ({`${projects?.length}`})
             </div>
-          </SelectLabel>
-          {projects.map((project) => (
-            <SelectItem
-              key={project.id}
-              value={project.id}
-              // onSelect={() => handleProjectChange(project.id)}
-              onClick={(mousEvent) => {
-                mousEvent.stopPropagation();
+            <Input
+              placeholder="Search for project name"
+              className="w-full mt-2"
+              value={projectNameSearch}
+              onChange={(e) => {
+                setProjectNameSearch(e.target.value);
               }}
-            >
-              {project.project_name}
-            </SelectItem>
-          ))}
+            />
+          </SelectLabel>
+          {projects
+            .filter((project) =>
+              !projectNameSearch
+                ? true
+                : project.project_name
+                    .toLowerCase()
+                    .startsWith(projectNameSearch.toLowerCase()),
+            )
+            .map((project) => (
+              <SelectItem
+                key={project.id}
+                value={project.id}
+                onClick={(mouseEvent) => {
+                  mouseEvent.stopPropagation();
+                }}
+              >
+                {project.project_name}
+              </SelectItem>
+            ))}
         </SelectGroup>
       </SelectContent>
     </Select>
