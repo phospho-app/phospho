@@ -120,7 +120,7 @@ function RunAnalyticsForm({
     if (!response.ok) {
       toast({
         title: "Something went wrong",
-        description: `Details ${await response.text()}`,
+        description: `Details: ${await response.text()}`,
       });
       return;
     }
