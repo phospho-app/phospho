@@ -4,7 +4,7 @@ from app.services.mongo.recipes import (
 )
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from loguru import logger
-from propelauth_fastapi import User
+from propelauth_fastapi import User  # type: ignore
 
 from app.api.platform.models import (
     EventBackfillRequest,

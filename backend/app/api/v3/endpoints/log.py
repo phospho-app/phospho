@@ -17,7 +17,7 @@ from app.services.mongo.emails import send_quota_exceeded_email
 from app.services.mongo.extractor import ExtractorClient
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from loguru import logger
-from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
+from opentelemetry.proto.trace.v1.trace_pb2 import TracesData  # type: ignore
 
 
 router = APIRouter(tags=["Log"])
