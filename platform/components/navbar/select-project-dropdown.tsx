@@ -86,7 +86,7 @@ export function SelectProjectButton() {
             {projects.length > 15 && (
               <Input
                 placeholder="Search for project name"
-                className="min-w-[20rem]"
+                className="w-full mt-2"
                 value={projectNameSearch}
                 onChange={(e) => {
                   setProjectNameSearch(e.target.value);
