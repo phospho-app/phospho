@@ -1,7 +1,4 @@
-from app.services.mongo.projects import (
-    get_project_by_id,
-    project_check_automatic_analytics_monthly_limit,
-)
+from app.services.mongo.projects import project_check_automatic_analytics_monthly_limit
 from app.services.mongo.recipes import run_recipe_types_on_tasks
 from app.services.mongo.tasks import get_total_nb_of_tasks
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
