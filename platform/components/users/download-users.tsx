@@ -6,6 +6,12 @@ import { useUser } from "@propelauth/nextjs/client";
 import { Download } from "lucide-react";
 import React from "react";
 
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
+
 const ExportUsersButton: React.FC = () => {
   // PropelAuth
   const project_id = navigationStateStore((state) => state.project_id);
@@ -48,10 +54,14 @@ const ExportUsersButton: React.FC = () => {
   };
 
   return (
-    <Button onClick={handleButtonClick}>
-      <Download className="mr-1 size-4" />
-      Export data
-    </Button>
+    <HoverCard openDelay={0} closeDelay={0}>
+      <HoverCardTrigger asChild>
+        <Button size="icon" variant="ghost" onClick={handleButtonClick}>
+          <Download className="size-4" />
+        </Button>
+      </HoverCardTrigger>
+      <HoverCardContent className="text-xs">Download as CSV</HoverCardContent>
+    </HoverCard>
   );
 };
 

@@ -113,8 +113,10 @@ export function UsersTable({
       <div className="flex flex-col gap-y-2 mb-2">
         <div className="flex flex-row gap-x-2 items-end justify-between">
           <FilterComponent variant="users" />
-          <ExportUsersButton />
-          <TableNavigation table={table} />
+          <div className="flex gap-x-2">
+            <ExportUsersButton />
+            <TableNavigation table={table} />
+          </div>
         </div>
         {showSearchBar && (
           <Input
