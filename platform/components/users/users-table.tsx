@@ -1,5 +1,6 @@
 "use client";
 
+import FilterComponent from "@/components/filters";
 import { CenteredSpinner } from "@/components/small-spinner";
 import { TableNavigation } from "@/components/table-navigation";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,7 @@ import {
 import React, { useState } from "react";
 import useSWR from "swr";
 
-import FilterComponent from "../filters";
+import { ExportUsersButton } from "./download-users";
 import { UserPreview } from "./user-preview";
 
 export function UsersTable({
@@ -112,7 +113,10 @@ export function UsersTable({
       <div className="flex flex-col gap-y-2 mb-2">
         <div className="flex flex-row gap-x-2 items-end justify-between">
           <FilterComponent variant="users" />
-          <TableNavigation table={table} />
+          <div className="flex gap-x-2">
+            <ExportUsersButton />
+            <TableNavigation table={table} />
+          </div>
         </div>
         {showSearchBar && (
           <Input

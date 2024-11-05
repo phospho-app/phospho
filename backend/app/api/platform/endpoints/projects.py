@@ -43,7 +43,7 @@ from app.services.mongo.projects import (
     collect_languages,
     delete_project_from_id,
     delete_project_related_resources,
-    email_project_tasks,
+    email_project_data,
     get_project_by_id,
     update_project,
 )
@@ -254,9 +254,29 @@ async def email_tasks(
     propelauth.require_org_member(user, project.org_id)
     # Trigger the email sending in the background
     background_tasks.add_task(
-        email_project_tasks, project_id=project_id, uid=user.user_id
+        email_project_data, project_id=project_id, uid=user.user_id, scope="tasks"
     )
     logger.info(f"Emailing tasks of project {project_id} to {user.email}")
+    return {"status": "ok"}
+
+
+@router.get(
+    "/projects/{project_id}/users/email",
+    description="Get an email with the users data of a project in csv and xlsx format",
+)
+async def email_users(
+    project_id: str,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(propelauth.require_user),
+) -> dict:
+    logger.debug("C'est bien le bon endpoint")
+    project = await get_project_by_id(project_id)
+    propelauth.require_org_member(user, project.org_id)
+    # Trigger the email sending in the background
+    background_tasks.add_task(
+        email_project_data, project_id=project_id, uid=user.user_id, scope="users"
+    )
+    logger.info(f"Emailing users of project {project_id} to {user.email}")
     return {"status": "ok"}
 
 

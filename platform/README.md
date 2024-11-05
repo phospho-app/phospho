@@ -35,7 +35,7 @@ PROPELAUTH_VERIFIER_KEY=-----BEGIN PUBLIC KEY-----
 
 ## Install dependencies
 
-Using Node 21
+Using Node 20.17
 
 ```
 npm i

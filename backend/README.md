@@ -60,6 +60,12 @@ AZURE_OPENAI_KEY=""
 AZURE_OPENAI_ENDPOINT=""
 ```
 
+### Run backend server
+
+```
+poetry run uvicorn app.main:app --reload
+```
+
 ### Run tests
 
 1. Make sure you have setup your environment variables. To load the .env files:
@@ -119,11 +125,7 @@ In the Python backend, we use the async client [Motor](https://motor.readthedocs
 
 In tests and other scripts, you can use [Pymongo](https://pymongo.readthedocs.io/en/stable/tutorial.html). It is synchronous and installed when you install Motor. It's useful when you need to wait for the response anyways.
 
-### Run backend server
 
-```
-uvicorn app.main:app --reload
-```
 
 ## Deployment
 
