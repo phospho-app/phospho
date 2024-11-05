@@ -400,8 +400,8 @@ async def email_project_data(
                 # TODO: Change the name of the columns to match the user model
                 # Convert timestamps to datetime
                 for col in [
-                    "user_created_at",
-                    "user_eval_at",
+                    "first_message_ts",
+                    "last_message_ts",
                 ]:
                     if col in data_df.columns:
                         data_df[col] = pd.to_datetime(data_df[col], unit="s")
