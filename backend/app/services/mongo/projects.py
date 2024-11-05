@@ -20,6 +20,11 @@ from app.services.mongo.tasks import (
     get_all_tasks,
     label_sentiment_analysis,
 )
+
+from app.services.mongo.users import fetch_users_metadata
+from phospho.models import ProjectDataFilters
+
+
 from app.services.mongo.sessions import get_all_sessions
 from app.services.slack import slack_notification
 from app.utils import generate_timestamp, generate_uuid
@@ -321,18 +326,20 @@ async def add_project_events(project_id: str, events: List[EventDefinition]) -> 
     return updated_project
 
 
-async def email_project_tasks(
+async def email_project_data(
     project_id: str,
     uid: str,
     limit: Optional[int] = 5_000,
-):
+    scope: Literal["tasks", "users"] = "tasks",
+    # filters: Optional[ProjectDataFilters] = None, Not supported yet
+) -> None:
     def send_error_message():
         # Send an error message to the user
         params = {
             "from": "phospho <contact@phospho.ai>",
             "to": [user.get("email")],
-            "subject": "Error exporting your tasks",
-            "html": f"""<p>Hello!<br><br>We could not export your tasks for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
+            "subject": "Error exporting your data",
+            "html": f"""<p>Hello!<br><br>We could not export your data for the project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
             <p><br>Please contact the support at contact@phospho.ai</p>
             <p>Best,<br>
             The Phospho Team</p>
@@ -350,80 +357,111 @@ async def email_project_tasks(
         resend.api_key = config.RESEND_API_KEY
 
         try:
-            # Convert task list to Pandas DataFrame
-            flattened_tasks = await fetch_flattened_tasks(
-                project_id=project_id,
-                limit=limit,
-                with_events=True,
-                with_sessions=True,
-                with_removed_events=False,
-            )
-            tasks_df = pd.DataFrame(
-                [flat_task.model_dump() for flat_task in flattened_tasks]
-            )
+            if scope == "tasks":
+                # Convert task list to Pandas DataFrame
+                flattened_tasks = await fetch_flattened_tasks(
+                    project_id=project_id,
+                    limit=limit,
+                    with_events=True,
+                    with_sessions=True,
+                    with_removed_events=False,
+                )
+                data_df = pd.DataFrame(
+                    [flat_task.model_dump() for flat_task in flattened_tasks]
+                )
 
-            # Convert timestamps to datetime
-            for col in [
-                "task_created_at",
-                "task_eval_at",
-                "event_created_at",
-            ]:
-                if col in tasks_df.columns:
-                    tasks_df[col] = pd.to_datetime(tasks_df[col], unit="s")
+                # Convert timestamps to datetime
+                for col in [
+                    "task_created_at",
+                    "task_eval_at",
+                    "event_created_at",
+                ]:
+                    if col in data_df.columns:
+                        data_df[col] = pd.to_datetime(data_df[col], unit="s")
+
+            elif scope == "users":
+                # Convert task list to Pandas DataFrame
+                # if filters is None:
+                #     filters = ProjectDataFilters()
+
+                # For now we only fetch all users
+                # TODO: Implement filters
+
+                filters = ProjectDataFilters()
+                flattened_users = await fetch_users_metadata(
+                    project_id=project_id,
+                    filters=filters,
+                )
+
+                data_df = pd.DataFrame(
+                    [flat_user.model_dump() for flat_user in flattened_users]
+                )
+
+                # TODO: Change the name of the columns to match the user model
+                # Convert timestamps to datetime
+                for col in [
+                    "user_created_at",
+                    "user_eval_at",
+                ]:
+                    if col in data_df.columns:
+                        data_df[col] = pd.to_datetime(data_df[col], unit="s")
+            else:
+                raise NotImplementedError(f"Scope {scope} not implemented")
 
         except Exception as e:
-            error_message = f"Error converting tasks to DataFrame for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to DataFrame for {user.get('email')} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
         exports = []
         # Convert the DataFrame to a CSV string, then to bytes
         try:
-            csv_string = tasks_df.to_csv(index=False)
+            csv_string = data_df.to_csv(index=False)
             csv_bytes = csv_string.encode()
             exports.append(
                 {
-                    "filename": "tasks.csv",
+                    "filename": f"{scope}.csv",
                     "content": list(csv_bytes),
                 }
             )
         except Exception as e:
-            error_message = f"Error converting tasks to CSV for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to CSV for {user.get('email')} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
         # Get the excel file buffer
         try:
             excel_buffer = io.BytesIO()
-            tasks_df.to_excel(excel_buffer, index=False, engine="xlsxwriter")
+            data_df.to_excel(excel_buffer, index=False, engine="xlsxwriter")
             excel_data = excel_buffer.getvalue()
             # encoded_excel = base64.b64encode(excel_data).decode()
             exports.append(
                 {
-                    "filename": "tasks.xlsx",
+                    "filename": f"{scope}.xlsx",
                     "content": list(excel_data),
                 }
             )
         except Exception as e:
-            error_message = f"Error converting tasks to Excel for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to Excel for {user.get('email')} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
-        # TODO : Add .parquet file export for large datasets
+        # Add .parquet file export for large datasets
         try:
             parquet_buffer = io.BytesIO()
             # For the parquet export, convert task_metadata to a string
-            tasks_df["task_metadata"] = tasks_df["task_metadata"].apply(str)
-            tasks_df.to_parquet(parquet_buffer, index=False)
+            if "task_metadata" in data_df.columns:
+                data_df["task_metadata"] = data_df["task_metadata"].apply(str)
+            data_df.to_parquet(parquet_buffer, index=False)
             parquet_data = parquet_buffer.getvalue()
             exports.append(
                 {
-                    "filename": "tasks.parquet",
+                    "filename": f"{scope}.parquet",
                     "content": list(parquet_data),
                 }
             )
         except Exception as e:
-            error_message = f"Error converting tasks to Parquet for {user.get('email')} project id {project_id}: {e}"
+            error_message = f"Error converting {scope} to Parquet for {user.get('email')} project id {project_id}: {e}"
             logger.error(error_message)
             await slack_notification(error_message)
 
@@ -436,7 +474,7 @@ async def email_project_tasks(
             "from": "phospho <contact@phospho.ai>",
             "to": [user.get("email")],
             "subject": "Your data is ready",
-            "html": f"""<p>Hello!<br><br>Please find your exported messages below for your project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
+            "html": f"""<p>Hello!<br><br>Please find your exported {scope} below for your project with id {project_id} (timestamp: {datetime.datetime.now().isoformat()})</p>
             <p><br>Let us know your thoughts about phospho! You can directly respond to this email address !</p>
             <p>Enjoy,<br>
             The Phospho Team</p>
@@ -446,7 +484,7 @@ async def email_project_tasks(
 
         try:
             resend.Emails.send(params)  # type: ignore
-            logger.info(f"Successfully sent tasks by email to {user.get('email')}")
+            logger.info(f"Successfully sent {scope} by email to {user.get('email')}")
         except Exception as e:
             error_message = f"Error sending email to {user.get('email')} project_id {project_id}: {e}"
             logger.error(error_message)
