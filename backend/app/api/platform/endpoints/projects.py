@@ -281,14 +281,11 @@ async def email_users(
             "message": "No users found in the project.",
         }
     # Trigger the email sending in the background
-    try:
-        background_tasks.add_task(
-            email_project_data, project_id=project_id, uid=user.user_id, scope="users"
-        )
-        logger.info(f"Emailing users of project {project_id} to {user.email}")
-        return {"status": "ok"}
-    except Exception as empty_df:
-        return {"status": "error", "message": f"Error: {empty_df}"}
+    background_tasks.add_task(
+        email_project_data, project_id=project_id, uid=user.user_id, scope="users"
+    )
+    logger.info(f"Emailing users of project {project_id} to {user.email}")
+    return {"status": "ok"}
 
 
 @router.post(
