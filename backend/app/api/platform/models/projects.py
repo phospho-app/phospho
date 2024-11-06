@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 
 from app.db.models import EventDefinition
+from phospho.models import ProjectDataFilters
 
 
 class OnboardingSurvey(BaseModel):
@@ -28,3 +29,7 @@ class ConnectLangsmithQuery(BaseModel):
 class ConnectLangfuseQuery(BaseModel):
     langfuse_secret_key: str
     langfuse_public_key: str
+
+
+class EmailUsersQuery(BaseModel):
+    filters: ProjectDataFilters
