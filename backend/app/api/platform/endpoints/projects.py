@@ -269,15 +269,26 @@ async def email_users(
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
-    logger.debug("C'est bien le bon endpoint")
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
+
+    # TODO: Implement filters for users
+    filters = ProjectDataFilters()
+    nb_users = len(await fetch_users_metadata(project_id=project_id, filters=filters))
+    if nb_users == 0:
+        return {
+            "exception_empty_data": "exception_data_empty",
+            "message": "No users found in the project.",
+        }
     # Trigger the email sending in the background
-    background_tasks.add_task(
-        email_project_data, project_id=project_id, uid=user.user_id, scope="users"
-    )
-    logger.info(f"Emailing users of project {project_id} to {user.email}")
-    return {"status": "ok"}
+    try:
+        background_tasks.add_task(
+            email_project_data, project_id=project_id, uid=user.user_id, scope="users"
+        )
+        logger.info(f"Emailing users of project {project_id} to {user.email}")
+        return {"status": "ok"}
+    except Exception as empty_df:
+        return {"status": "error", "message": f"Error: {empty_df}"}
 
 
 @router.post(

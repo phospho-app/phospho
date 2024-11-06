@@ -397,7 +397,6 @@ async def email_project_data(
                     [flat_user.model_dump() for flat_user in flattened_users]
                 )
 
-                # TODO: Change the name of the columns to match the user model
                 # Convert timestamps to datetime
                 for col in [
                     "first_message_ts",

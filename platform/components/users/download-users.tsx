@@ -38,6 +38,12 @@ const ExportUsersButton: React.FC = () => {
           title: "Error exporting data",
           description: data.error,
         });
+      }
+      if (data.exception_empty_data) {
+        toast({
+          title: "No users to export",
+          description: "There are no users to export.",
+        });
       } else {
         toast({
           // Add a mail emoji
