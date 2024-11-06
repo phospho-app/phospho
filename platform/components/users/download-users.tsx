@@ -44,8 +44,9 @@ const ExportUsersButton: React.FC = () => {
       }
       if (data.exception_empty_data) {
         toast({
-          title: "No users to export",
-          description: "There are no users to export.",
+          title: "No user data in this scope",
+          description:
+            "Select other filters or start tracking users by adding user_id when logging \n https://docs.phospho.ai/analytics/sessions-and-users",
         });
       } else {
         toast({
