@@ -1,6 +1,7 @@
 import datetime
 from typing import List, Optional
 
+from app.api.platform.models.projects import EmailUsersQuery
 import pandas as pd  # type: ignore
 from fastapi import (
     APIRouter,
@@ -50,7 +51,7 @@ from app.services.mongo.projects import (
 
 from app.services.mongo.tasks import get_all_tasks
 from app.services.mongo.sessions import get_all_sessions
-from app.services.mongo.users import fetch_users_metadata
+from app.services.mongo.users import fetch_users_metadata, get_nb_users_messages
 from app.services.slack import slack_notification
 from app.services.universal_loader.universal_loader import universal_loader
 from app.utils import cast_datetime_or_timestamp_to_timestamp
@@ -260,29 +261,34 @@ async def email_tasks(
     return {"status": "ok"}
 
 
-@router.get(
+@router.post(
     "/projects/{project_id}/users/email",
     description="Get an email with the users data of a project in csv and xlsx format",
 )
 async def email_users(
     project_id: str,
+    query: EmailUsersQuery,
     background_tasks: BackgroundTasks,
     user: User = Depends(propelauth.require_user),
 ) -> dict:
     project = await get_project_by_id(project_id)
     propelauth.require_org_member(user, project.org_id)
 
-    # TODO: Implement filters for users
-    filters = ProjectDataFilters()
-    nb_users = len(await fetch_users_metadata(project_id=project_id, filters=filters))
-    if nb_users == 0:
+    nb_users = await get_nb_users_messages(project_id=project_id, filters=query.filters)
+    logger.info(f"Number of users in project {project_id}: {nb_users}")
+
+    if nb_users is None or nb_users == 0:
         return {
             "exception_empty_data": "exception_data_empty",
             "message": "No users found in the project.",
         }
     # Trigger the email sending in the background
     background_tasks.add_task(
-        email_project_data, project_id=project_id, uid=user.user_id, scope="users"
+        email_project_data,
+        project_id=project_id,
+        filters=query.filters,
+        uid=user.user_id,
+        scope="users",
     )
     logger.info(f"Emailing users of project {project_id} to {user.email}")
     return {"status": "ok"}
