@@ -15,6 +15,7 @@ import {
 const ExportUsersButton: React.FC = () => {
   // PropelAuth
   const project_id = navigationStateStore((state) => state.project_id);
+  const dataFilters = navigationStateStore((state) => state.dataFilters);
 
   const { user, accessToken } = useUser();
   const { toast } = useToast();
@@ -26,10 +27,12 @@ const ExportUsersButton: React.FC = () => {
   const handleButtonClick = async () => {
     try {
       const response = await fetch(`/api/projects/${project_id}/users/email`, {
-        method: "GET",
+        method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: "Bearer " + accessToken,
         },
+        body: JSON.stringify({ filters: dataFilters }),
       });
 
       const data = await response.json();
@@ -37,6 +40,24 @@ const ExportUsersButton: React.FC = () => {
         toast({
           title: "Error exporting data",
           description: data.error,
+        });
+      }
+      if (data.exception_empty_data) {
+        toast({
+          title: "No user data in this scope",
+          description: (
+            <div>
+              Select other filters or start tracking users by adding{" "}
+              <code>user_id</code> when logging. For more details, check the{" "}
+              <a
+                href="https://docs.phospho.ai/analytics/sessions-and-users"
+                target="_blank"
+                className="underline"
+              >
+                documentation
+              </a>
+            </div>
+          ),
         });
       } else {
         toast({
@@ -60,7 +81,7 @@ const ExportUsersButton: React.FC = () => {
           <Download className="size-4" />
         </Button>
       </HoverCardTrigger>
-      <HoverCardContent className="text-xs">Download as CSV</HoverCardContent>
+      <HoverCardContent className="text-xs">Export Users Data</HoverCardContent>
     </HoverCard>
   );
 };

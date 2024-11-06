@@ -331,7 +331,7 @@ async def email_project_data(
     uid: str,
     limit: Optional[int] = 5_000,
     scope: Literal["tasks", "users"] = "tasks",
-    # filters: Optional[ProjectDataFilters] = None, Not supported yet
+    filters: Optional[ProjectDataFilters] = None,
 ) -> None:
     def send_error_message():
         # Send an error message to the user
@@ -381,13 +381,9 @@ async def email_project_data(
 
             elif scope == "users":
                 # Convert task list to Pandas DataFrame
-                # if filters is None:
-                #     filters = ProjectDataFilters()
+                if filters is None:
+                    filters = ProjectDataFilters()
 
-                # For now we only fetch all users
-                # TODO: Implement filters
-
-                filters = ProjectDataFilters()
                 flattened_users = await fetch_users_metadata(
                     project_id=project_id,
                     filters=filters,
@@ -397,7 +393,6 @@ async def email_project_data(
                     [flat_user.model_dump() for flat_user in flattened_users]
                 )
 
-                # TODO: Change the name of the columns to match the user model
                 # Convert timestamps to datetime
                 for col in [
                     "first_message_ts",
