@@ -28,7 +28,7 @@ class ProjectUpdateRequest(BaseModel):
 
 class UserEventMetadata(BaseModel):
     event_name: str
-    nb_events: int
+    count: int
 
 
 class UserMetadata(BaseModel):

@@ -169,13 +169,13 @@ async def fetch_users_metadata(
                     "user_id": "$_id",
                     "event_id": "$events.event_definition.id",
                 },
-                "events": {"$": "$events"},
+                "events": {"$push": "$events"},
                 **{field: {"$first": f"${field}"} for field in all_computed_fields},
             }
         },
         {
             "$set": {
-                "events.nb_occurences": {"$size": "$events"},
+                "events.count": {"$size": "$events"},
             }
         },
         {
