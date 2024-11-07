@@ -1,8 +1,5 @@
 import { InteractiveDatetime } from "@/components/interactive-datetime";
-import {
-  EventBadge,
-  EventDetectionDescription,
-} from "@/components/label-events";
+import { UserEventMetadataBadge } from "@/components/label-events";
 import { Button } from "@/components/ui/button";
 import {
   HoverCard,
@@ -10,7 +7,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { authFetcher } from "@/lib/fetcher";
-import { Event, Project, UserMetadata } from "@/models/models";
+import { Project, UserEventMetadata, UserMetadata } from "@/models/models";
 import { navigationStateStore } from "@/store/store";
 import { useUser } from "@propelauth/nextjs/client";
 import { Column, ColumnDef } from "@tanstack/react-table";
@@ -169,27 +166,16 @@ export function useColumns() {
       cell: (row) => {
         return (
           <>
-            {(row.getValue() as Event[]).map((event: Event) => {
-              // Find the event definition for this event based on the event_name and selectedProject.settings.events
-              const eventDefinition =
-                selectedProject?.settings?.events[event.event_name];
-
-              if (!eventDefinition) return <></>;
-
-              return (
-                <HoverCard openDelay={0} closeDelay={0} key={event.id}>
-                  <HoverCardTrigger asChild>
-                    <EventBadge key={event.id} event={event} />
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    <EventDetectionDescription
-                      event={event}
-                      eventDefinition={eventDefinition}
-                    />
-                  </HoverCardContent>
-                </HoverCard>
-              );
-            })}
+            {(row.getValue() as UserEventMetadata[]).map(
+              (event: UserEventMetadata) => {
+                return (
+                  <UserEventMetadataBadge
+                    key={event.event_name}
+                    event={event}
+                  />
+                );
+              },
+            )}
           </>
         );
       },
