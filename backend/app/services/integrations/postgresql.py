@@ -137,8 +137,6 @@ class PostgresqlIntegration:
                 connection.execute(
                     text(f"CREATE DATABASE {slugify_string(self.org_name)};")
                 )
-                connection.commit()
-                connection.close()
             except Exception as e:
                 # Carry on
                 logger.error(e)
