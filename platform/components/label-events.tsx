@@ -22,6 +22,7 @@ import {
   Project,
   SessionWithEvents,
   TaskWithEvents,
+  UserEventMetadata,
 } from "@/models/models";
 import { useUser } from "@propelauth/nextjs/client";
 import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
@@ -104,6 +105,22 @@ export const EventBadge = ({ event }: { event: Event }) => {
           {event?.score_range?.corrected_label ?? event.score_range?.label}
         </span>
       )}
+    </Badge>
+  );
+};
+
+export const UserEventMetadataBadge = ({
+  event,
+}: {
+  event: UserEventMetadata;
+}) => {
+  const badgeStyle = "border hover:border-green-500";
+  //TODO Get this info from the event user data
+  // const score_type = event.score_range?.score_type ?? "confidence";
+
+  return (
+    <Badge variant="outline" className={badgeStyle}>
+      {event.event_name} ({event.count})
     </Badge>
   );
 };

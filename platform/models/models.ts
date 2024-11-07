@@ -93,13 +93,19 @@ export interface SessionWithEvents extends Session {
   users: UserMetadata[];
 }
 
+export interface UserEventMetadata {
+  event_name: string;
+  count: number;
+}
+
+
 export interface UserMetadata {
   user_id: string;
   nb_tasks: number;
   avg_success_rate: number;
   avg_session_length: number;
   total_tokens: number;
-  events: Event[];
+  events: UserEventMetadata[];
   tasks_id: string[];
   first_message_ts: number;
   last_message_ts: number;
