@@ -162,13 +162,31 @@ async def fetch_users_metadata(
         #         "events.event_definition.score_range_settings.score_type": "confidence"
         #     }
         # },
+        {
+            "$set": {
+                "events.def_id_cat": {
+                    "$cond": [
+                        {
+                            "$eq": [
+                                "$events.event_definition.score_range_settings.score_type",
+                                "category",
+                            ]
+                        },
+                        {
+                            "$concat": [
+                                "$events.event_definition.id",
+                                "$events.score_range.label",
+                            ]
+                        },
+                        "$events.event_definition.id",
+                    ]
+                }
+            }
+        },
         # Deduplicate the events based on the event.event_definition.id
         {
             "$group": {
-                "_id": {
-                    "user_id": "$_id",
-                    "event_id": "$events.event_definition.id",
-                },
+                "_id": {"user_id": "$_id", "event_id": "$events.def_id_cat"},
                 "events": {"$push": "$events"},
                 **{field: {"$first": f"${field}"} for field in all_computed_fields},
             }
@@ -177,6 +195,7 @@ async def fetch_users_metadata(
         {
             "$set": {
                 "events.count": {"$size": "$events"},
+                "events.avg_score": {"$avg": "$events.score_range.value"},
             }
         },
         {

@@ -389,6 +389,8 @@ async def email_project_data(
                     filters=filters,
                 )
 
+                raise
+
                 data_df = pd.DataFrame(
                     [flat_user.model_dump() for flat_user in flattened_users]
                 )
