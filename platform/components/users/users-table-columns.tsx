@@ -6,10 +6,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { authFetcher } from "@/lib/fetcher";
-import { Project, UserEventMetadata, UserMetadata } from "@/models/models";
-import { navigationStateStore } from "@/store/store";
-import { useUser } from "@propelauth/nextjs/client";
+import { UserEventMetadata, UserMetadata } from "@/models/models";
 import { Column, ColumnDef } from "@tanstack/react-table";
 import {
   ArrowDown,
@@ -18,7 +15,6 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
-import useSWR from "swr";
 
 function GenericHeader({
   columnName,
@@ -44,17 +40,6 @@ function GenericHeader({
 }
 
 export function useColumns() {
-  const { accessToken } = useUser();
-  const project_id = navigationStateStore((state) => state.project_id);
-
-  const { data: selectedProject }: { data: Project } = useSWR(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-
   // Create the columns for the data table
   const columns: ColumnDef<UserMetadata>[] = [
     // id
