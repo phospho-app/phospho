@@ -400,6 +400,31 @@ async def email_project_data(
                 ]:
                     if col in data_df.columns:
                         data_df[col] = pd.to_datetime(data_df[col], unit="s")
+
+                # Explode the list of dictionaries into separate rows
+                exploded_df = data_df.explode("events")
+
+                # Drop rows with NaN values in the 'events' column
+                exploded_df = exploded_df.dropna(subset=["events"])
+
+                # Create a new column named with the value of the event_name key
+                exploded_df["event_name"] = exploded_df["events"].apply(
+                    lambda x: x["event_name"]
+                )
+                exploded_df["count"] = exploded_df["events"].apply(lambda x: x["count"])
+
+                matrix = exploded_df.pivot_table(
+                    index="user_id",
+                    columns="event_name",
+                    values="count",
+                    aggfunc="sum",
+                    fill_value=0,
+                )
+
+                data_df = data_df.drop(columns="events")
+                data_df = data_df.merge(matrix, on="user_id")
+                data_df.fillna(0, inplace=True)
+
             else:
                 raise NotImplementedError(f"Scope {scope} not implemented")
 
