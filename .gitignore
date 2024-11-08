@@ -12,3 +12,5 @@ secrets.toml
 local/
 temporal-certs/
 your_temporal.db
+notebook_test.ipynb
+users.csv

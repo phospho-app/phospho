@@ -1,18 +1,12 @@
 import { InteractiveDatetime } from "@/components/interactive-datetime";
-import {
-  EventBadge,
-  EventDetectionDescription,
-} from "@/components/label-events";
+import { UserEventMetadataBadge } from "@/components/label-events";
 import { Button } from "@/components/ui/button";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { authFetcher } from "@/lib/fetcher";
-import { Event, Project, UserMetadata } from "@/models/models";
-import { navigationStateStore } from "@/store/store";
-import { useUser } from "@propelauth/nextjs/client";
+import { UserEventMetadata, UserMetadata } from "@/models/models";
 import { Column, ColumnDef } from "@tanstack/react-table";
 import {
   ArrowDown,
@@ -21,7 +15,6 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
-import useSWR from "swr";
 
 function GenericHeader({
   columnName,
@@ -47,17 +40,6 @@ function GenericHeader({
 }
 
 export function useColumns() {
-  const { accessToken } = useUser();
-  const project_id = navigationStateStore((state) => state.project_id);
-
-  const { data: selectedProject }: { data: Project } = useSWR(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-    },
-  );
-
   // Create the columns for the data table
   const columns: ColumnDef<UserMetadata>[] = [
     // id
@@ -169,27 +151,16 @@ export function useColumns() {
       cell: (row) => {
         return (
           <>
-            {(row.getValue() as Event[]).map((event: Event) => {
-              // Find the event definition for this event based on the event_name and selectedProject.settings.events
-              const eventDefinition =
-                selectedProject?.settings?.events[event.event_name];
-
-              if (!eventDefinition) return <></>;
-
-              return (
-                <HoverCard openDelay={0} closeDelay={0} key={event.id}>
-                  <HoverCardTrigger asChild>
-                    <EventBadge key={event.id} event={event} />
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    <EventDetectionDescription
-                      event={event}
-                      eventDefinition={eventDefinition}
-                    />
-                  </HoverCardContent>
-                </HoverCard>
-              );
-            })}
+            {(row.getValue() as UserEventMetadata[]).map(
+              (event: UserEventMetadata) => {
+                return (
+                  <UserEventMetadataBadge
+                    key={event.event_name}
+                    event={event}
+                  />
+                );
+              },
+            )}
           </>
         );
       },

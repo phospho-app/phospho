@@ -91,6 +91,7 @@ async def fetch_users_metadata(
             }
         },
     ]
+
     all_computed_fields.extend(
         [
             "nb_tasks",
@@ -168,11 +169,23 @@ async def fetch_users_metadata(
                     "user_id": "$_id",
                     "event_id": "$events.event_definition.id",
                 },
-                "events": {"$first": "$events"},
+                "events": {"$push": "$events"},
                 **{field: {"$first": f"${field}"} for field in all_computed_fields},
             }
         },
+        # Ajouter une disjonction de cas pour les events non taggers
+        {
+            "$set": {
+                "events.count": {"$size": "$events"},
+            }
+        },
+        {
+            "$set": {
+                "events": {"$first": "$events"},
+            }
+        },
         # Group by user_id
+        # Add here one field
         {
             "$group": {
                 "_id": "$_id.user_id",
@@ -193,6 +206,7 @@ async def fetch_users_metadata(
             }
         },
     ]
+
     query_builder.deduplicate_tasks_events()
     all_computed_fields.append("events")
 
@@ -230,6 +244,8 @@ async def fetch_users_metadata(
             }
         },
     ]
+
+    logger.debug(f"{pipeline}")
 
     # group made us lose the order. We need to sort again
     if sorting:

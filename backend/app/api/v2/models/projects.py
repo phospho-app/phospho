@@ -26,6 +26,11 @@ class ProjectUpdateRequest(BaseModel):
     settings: Optional[dict] = None
 
 
+class UserEventMetadata(BaseModel):
+    event_name: str
+    count: int
+
+
 class UserMetadata(BaseModel):
     """
     The representation of a end-user of an app.
@@ -37,7 +42,7 @@ class UserMetadata(BaseModel):
     avg_success_rate: Optional[float] = None
     avg_session_length: Optional[float] = None
     total_tokens: Optional[int] = None
-    events: Optional[List[Event]] = Field(default_factory=list)
+    events: Optional[List[UserEventMetadata]] = Field(default_factory=list)
     tasks_id: Optional[List[str]] = Field(default_factory=list)
     first_message_ts: float
     last_message_ts: float
