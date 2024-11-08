@@ -422,7 +422,7 @@ async def email_project_data(
                 )
 
                 data_df = data_df.drop(columns="events")
-                data_df = data_df.join(matrix, on="user_id")
+                data_df = data_df.merge(matrix, on="user_id")
                 data_df.fillna(0, inplace=True)
 
             else:
