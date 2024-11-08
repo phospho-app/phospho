@@ -173,6 +173,7 @@ async def fetch_users_metadata(
                 **{field: {"$first": f"${field}"} for field in all_computed_fields},
             }
         },
+        # Ajouter une disjonction de cas pour les events non taggers
         {
             "$set": {
                 "events.count": {"$size": "$events"},
