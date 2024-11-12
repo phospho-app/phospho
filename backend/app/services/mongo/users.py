@@ -195,7 +195,6 @@ async def fetch_users_metadata(
         },
         {
             "$set": {
-                "events": {"$first": "$events"},
                 "events.avg_score": "$avg_score",
                 "events.count": "$nb_events",
             }
@@ -280,6 +279,8 @@ async def fetch_users_metadata(
     )
     if users is None or (filters.user_id is not None and len(users) == 0):
         return []
+
+    logger.debug(f"User: {users[0]}")
 
     users = [UserMetadata.model_validate(data) for data in users if data.get("user_id")]
 
