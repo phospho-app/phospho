@@ -162,26 +162,82 @@ async def fetch_users_metadata(
         #         "events.event_definition.score_range_settings.score_type": "confidence"
         #     }
         # },
+        {
+            "$set": {
+                "events.def_id_cat": {
+                    "$cond": [
+                        {
+                            "$eq": [
+                                "$events.event_definition.score_range_settings.score_type",
+                                "category",
+                            ]
+                        },
+                        {
+                            "$concat": [
+                                "$events.event_definition.id",
+                                "$events.score_range.label",
+                            ]
+                        },
+                        "$events.event_definition.id",
+                    ]
+                },
+                "events.event_name": {
+                    "$cond": [
+                        {
+                            "$eq": [
+                                "$events.event_definition.score_range_settings.score_type",
+                                "category",
+                            ]
+                        },
+                        {
+                            "$concat": [
+                                "$events.event_definition.event_name",
+                                ": ",
+                                "$events.score_range.label",
+                            ]
+                        },
+                        "$events.event_definition.event_name",
+                    ]
+                },
+            }
+        },
         # Deduplicate the events based on the event.event_definition.id
         {
             "$group": {
-                "_id": {
-                    "user_id": "$_id",
-                    "event_id": "$events.event_definition.id",
-                },
-                "events": {"$push": "$events"},
+                "_id": {"user_id": "$_id", "event_id": "$events.def_id_cat"},
+                "events": {"$first": "$events"},
+                "nb_events": {"$sum": 1},
+                "avg_score": {"$avg": "$events.score_range.value"},
                 **{field: {"$first": f"${field}"} for field in all_computed_fields},
             }
         },
-        # Ajouter une disjonction de cas pour les events non taggers
+        # {
+        #     "$set": {
+        #         "events.avg_score": "$avg_score",
+        #         "events.count": "$nb_events",
+        #     }
+        # },
         {
             "$set": {
-                "events.count": {"$size": "$events"},
-            }
-        },
-        {
-            "$set": {
-                "events": {"$first": "$events"},
+                "events": {
+                    "$cond": [
+                        # check if events is not null and not empty
+                        {
+                            "$and": [
+                                {"$ne": ["$events", None]},
+                                {"$ne": ["$events", {}]},
+                            ]
+                        },
+                        {
+                            "event_name": "$events.event_name",
+                            "event_definition": "$events.event_definition",
+                            "score_range": "$events.score_range",
+                            "count": "$nb_events",
+                            "avg_score": "$avg_score",
+                        },
+                        None,
+                    ]
+                }
             }
         },
         # Group by user_id
@@ -244,8 +300,6 @@ async def fetch_users_metadata(
             }
         },
     ]
-
-    logger.debug(f"{pipeline}")
 
     # group made us lose the order. We need to sort again
     if sorting:
