@@ -117,9 +117,9 @@ class PostgresqlIntegration:
             self.credentials = postgres_credentials_valid
             return
 
-        # Create credentials if they don't exist
-
+        # Create database using the connection to the default database
         engine = create_engine(f"{config.SQLDB_CONNECTION_STRING}/phospho")
+        database = slugify_string(self.org_name)
         # Create the database if it doesn't exist
         with engine.connect() as connection:
             logger.debug(f"Creating database {slugify_string(self.org_name)}")
@@ -140,6 +140,10 @@ class PostgresqlIntegration:
             except Exception as e:
                 # Carry on
                 logger.error(e)
+
+        # Connect to the new database
+        engine = create_engine(f"{config.SQLDB_CONNECTION_STRING}/{database}")
+        with engine.connect() as connection:
             # Create a new user if it doesn't exist
             username = f"user_{generate_uuid()[:8]}"
             password = generate_uuid()
@@ -153,12 +157,20 @@ class PostgresqlIntegration:
                     f"GRANT ALL PRIVILEGES ON DATABASE {slugify_string(self.org_name)} TO {username};"
                 )
             )
-            connection.commit()
-            connection.close()
+            # Grant the select privilege to the user to current tables
+            connection.execute(
+                text(f"GRANT SELECT ON ALL TABLES IN SCHEMA public TO {username};")
+            )
+            # Grant the select privilege to the user to future tables
+            connection.execute(
+                text(
+                    f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {username};;"
+                )
+            )
+            # The context manager will commit and close the connection
 
         # Get the server from the connection string
         server = config.SQLDB_CONNECTION_STRING.split("@")[1]
-
         self.credentials = PostgresqlCredentials(
             org_id=self.org_id,
             org_name=self.org_name,
@@ -279,7 +291,9 @@ class PostgresqlIntegration:
                         tasks_df = tasks_df[
                             list(set(columns).intersection(set(tasks_df.columns)))
                         ]
-                    if_exists_mode = "replace" if i == 0 else "append"
+                    if_exists_mode: Literal["replace", "append"] = (
+                        "replace" if i == 0 else "append"
+                    )
                     # Note: to_sql is not async, we could use asyncpg directly: https://github.com/MagicStack/asyncpg
                     pd.DataFrame.to_sql(
                         tasks_df,

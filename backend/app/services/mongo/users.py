@@ -187,20 +187,17 @@ async def fetch_users_metadata(
         {
             "$group": {
                 "_id": {"user_id": "$_id", "event_id": "$events.def_id_cat"},
-                "events": {"$push": "$events"},
+                "events": {"$first": "$events"},
+                "nb_events": {"$sum": 1},
+                "avg_score": {"$avg": "$events.score_range.value"},
                 **{field: {"$first": f"${field}"} for field in all_computed_fields},
-            }
-        },
-        # Ajouter une disjonction de cas pour les events non taggers
-        {
-            "$set": {
-                "events.count": {"$size": "$events"},
-                "events.avg_score": {"$avg": "$events.score_range.value"},
             }
         },
         {
             "$set": {
                 "events": {"$first": "$events"},
+                "events.avg_score": "$avg_score",
+                "events.count": "$nb_events",
             }
         },
         # Group by user_id
