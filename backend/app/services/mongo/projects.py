@@ -389,8 +389,6 @@ async def email_project_data(
                     filters=filters,
                 )
 
-                raise
-
                 data_df = pd.DataFrame(
                     [flat_user.model_dump() for flat_user in flattened_users]
                 )
@@ -426,6 +424,10 @@ async def email_project_data(
                 data_df = data_df.drop(columns="events")
                 data_df = data_df.merge(matrix, on="user_id")
                 data_df.fillna(0, inplace=True)
+
+                data_df.to_csv("users.csv", index=False)
+
+                raise ValueError("User export not implemented yet")
 
             else:
                 raise NotImplementedError(f"Scope {scope} not implemented")

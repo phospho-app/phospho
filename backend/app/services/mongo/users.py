@@ -193,10 +193,33 @@ async def fetch_users_metadata(
                 **{field: {"$first": f"${field}"} for field in all_computed_fields},
             }
         },
+        # {
+        #     "$set": {
+        #         "events.avg_score": "$avg_score",
+        #         "events.count": "$nb_events",
+        #     }
+        # },
         {
             "$set": {
-                "events.avg_score": "$avg_score",
-                "events.count": "$nb_events",
+                "events": {
+                    "$cond": [
+                        # check if events is not null and not empty
+                        {
+                            "$and": [
+                                {"$ne": ["$events", None]},
+                                {"$ne": ["$events", {}]},
+                            ]
+                        },
+                        {
+                            "event_name": "$events.event_definition.event_name",
+                            "event_definition": "$events.event_definition",
+                            "score_range": "$events.score_range",
+                            "count": "$nb_events",
+                            "avg_score": "$avg_score",
+                        },
+                        None,
+                    ]
+                }
             }
         },
         # Group by user_id
@@ -280,7 +303,7 @@ async def fetch_users_metadata(
     if users is None or (filters.user_id is not None and len(users) == 0):
         return []
 
-    logger.debug(f"User: {users[0]}")
+    logger.debug(f"User: {users[1]}")
 
     users = [UserMetadata.model_validate(data) for data in users if data.get("user_id")]
 
