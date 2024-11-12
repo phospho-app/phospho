@@ -169,19 +169,14 @@ async def fetch_users_metadata(
                     "user_id": "$_id",
                     "event_id": "$events.event_definition.id",
                 },
-                "events": {"$push": "$events"},
+                "events": {"$first": "$events"},
+                "nb_events": {"$sum": 1},
                 **{field: {"$first": f"${field}"} for field in all_computed_fields},
             }
         },
-        # Ajouter une disjonction de cas pour les events non taggers
         {
             "$set": {
-                "events.count": {"$size": "$events"},
-            }
-        },
-        {
-            "$set": {
-                "events": {"$first": "$events"},
+                "events.count": "$nb_events",
             }
         },
         # Group by user_id
