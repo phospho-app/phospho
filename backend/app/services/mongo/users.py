@@ -192,6 +192,7 @@ async def fetch_users_metadata(
                         {
                             "$concat": [
                                 "$events.event_definition.event_name",
+                                ": ",
                                 "$events.score_range.label",
                             ]
                         },
