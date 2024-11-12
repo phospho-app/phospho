@@ -180,7 +180,24 @@ async def fetch_users_metadata(
                         },
                         "$events.event_definition.id",
                     ]
-                }
+                },
+                "events.event_name": {
+                    "$cond": [
+                        {
+                            "$eq": [
+                                "$events.event_definition.score_range_settings.score_type",
+                                "category",
+                            ]
+                        },
+                        {
+                            "$concat": [
+                                "$events.event_definition.event_name",
+                                "$events.score_range.label",
+                            ]
+                        },
+                        "$events.event_definition.event_name",
+                    ]
+                },
             }
         },
         # Deduplicate the events based on the event.event_definition.id
@@ -211,7 +228,7 @@ async def fetch_users_metadata(
                             ]
                         },
                         {
-                            "event_name": "$events.event_definition.event_name",
+                            "event_name": "$events.event_name",
                             "event_definition": "$events.event_definition",
                             "score_range": "$events.score_range",
                             "count": "$nb_events",
