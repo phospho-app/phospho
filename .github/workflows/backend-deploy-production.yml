@@ -70,7 +70,8 @@ jobs:
           gcloud run deploy phospho-extractor \
             --project $GCP_PROJECT_ID \
             --port 8080 \
-            --memory 4Gi \
+            --cpu 2 \
+            --memory 7Gi \
             --region europe-west1 \
             --allow-unauthenticated \
             --set-env-vars OPENAI_API_KEY=$OPENAI_API_KEY,ENVIRONMENT=production,MONGODB_URL=$MONGODB_URL,MONGODB_NAME=$MONGODB_NAME, \
@@ -79,7 +80,7 @@ jobs:
             --set-env-vars TEMPORAL_HOST_URL=$TEMPORAL_HOST_URL,TEMPORAL_NAMESPACE=$TEMPORAL_NAMESPACE,TEMPORAL_MTLS_TLS_CERT_BASE64=$TEMPORAL_MTLS_TLS_CERT_BASE64,TEMPORAL_MTLS_TLS_KEY_BASE64=$TEMPORAL_MTLS_TLS_KEY_BASE64,STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET \
             --set-env-vars AZURE_OPENAI_KEY=$AZURE_OPENAI_KEY,AZURE_OPENAI_ENDPOINT=$AZURE_OPENAI_ENDPOINT \
             --image europe-west1-docker.pkg.dev/portal-385519/phospho-extractor/app:production \
-            --min-instances 4
+            --min-instances 2
 
   deploy_backend_production:
     runs-on: ubuntu-latest
