@@ -49,7 +49,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useSWR, { mutate } from "swr";
-import useSWRImmutable from "swr/dist/immutable";
+import useSWRImmutable from "swr/immutable";
 
 const MetadataForm: React.FC = () => {
   // create a page with 2 dropdowns :
