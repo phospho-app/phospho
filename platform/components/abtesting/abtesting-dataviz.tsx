@@ -57,6 +57,7 @@ import {
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
+import useSWRImmutable from "swr/immutable";
 
 import CreateNewABTestButton from "./create-new-ab-test-button";
 
@@ -65,7 +66,7 @@ export const ABTestingDataviz = () => {
    *  In the URL, use the search params ?a=version_id&b=version_id to set the default versions in the dropdown
    */
 
-  const { accessToken } = useUser();
+  const { accessToken, isLoggedIn } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const [filtersA, setFiltersA] = useState<ProjectDataFilters>({
     created_at_start: undefined,
@@ -131,11 +132,11 @@ export const ABTestingDataviz = () => {
   );
   const hasTasks: boolean = hasTasksData?.has_tasks;
 
-  const { data: graphData } = useSWR(
+  const { data: graphData } = useSWRImmutable(
     project_id
       ? [
           `/api/explore/${encodeURI(project_id)}/ab-tests/compare-versions`,
-          accessToken,
+          isLoggedIn,
           versionIDA,
           versionIDB,
           JSON.stringify(selectedEventsIds),
@@ -143,7 +144,7 @@ export const ABTestingDataviz = () => {
           JSON.stringify(filtersB),
         ]
       : null,
-    ([url, accessToken]) =>
+    ([url]) =>
       authFetcher(url, accessToken, "POST", {
         versionA: versionIDA,
         versionB: versionIDB,
@@ -151,9 +152,6 @@ export const ABTestingDataviz = () => {
         filtersA: filtersA,
         filtersB: filtersB,
       }),
-    {
-      keepPreviousData: true,
-    },
   );
 
   const toggleEventSelection = (eventId: string) => {
