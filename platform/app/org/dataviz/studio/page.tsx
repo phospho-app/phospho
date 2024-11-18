@@ -49,6 +49,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useSWR, { mutate } from "swr";
+import useSWRImmutable from "swr/dist/immutable";
 
 const MetadataForm: React.FC = () => {
   // create a page with 2 dropdowns :
@@ -57,7 +58,7 @@ const MetadataForm: React.FC = () => {
 
   // The data is fetched and then displayed as a bar chart or a table
 
-  const { accessToken } = useUser();
+  const { accessToken, isLoggedIn } = useUser();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -123,12 +124,9 @@ const MetadataForm: React.FC = () => {
   );
 
   // Fetch metadata unique metadata fields from the API
-  const { data } = useSWR(
-    [`/api/metadata/${project_id}/fields`, accessToken],
-    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
-    {
-      keepPreviousData: true,
-    },
+  const { data } = useSWRImmutable(
+    project_id ? [`/api/metadata/${project_id}/fields`, isLoggedIn] : null,
+    ([url]) => authFetcher(url, accessToken, "POST"),
   );
   const numberMetadataFields: string[] | undefined = data?.number;
   const categoryMetadataFields: string[] | undefined = data?.string;
