@@ -110,7 +110,7 @@ const DatavizGraph = ({
     };
   }
 
-  const { accessToken } = useUser();
+  const { accessToken, isLoggedIn } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const router = useRouter();
@@ -124,17 +124,8 @@ const DatavizGraph = ({
   const mergedFilters = { ...filters, ...nonNullDataFilters };
 
   const { data: selectedProject }: { data: Project } = useSWRImmutable(
-    project_id ? [`/api/projects/${project_id}`, accessToken] : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "GET"),
-    {
-      keepPreviousData: true,
-      refreshInterval: 0,
-      refreshWhenHidden: false,
-      revalidateOnReconnect: true,
-      revalidateOnFocus: false,
-      revalidateOnMount: true,
-      refreshWhenOffline: false,
-    },
+    project_id ? [`/api/projects/${project_id}`, isLoggedIn] : null,
+    ([url]) => authFetcher(url, accessToken, "GET"),
   );
 
   if (!metadata_metric) {
@@ -142,17 +133,8 @@ const DatavizGraph = ({
   }
 
   const { data } = useSWRImmutable(
-    [`/api/metadata/${project_id}/fields`, accessToken],
-    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
-    {
-      keepPreviousData: true,
-      refreshInterval: 0,
-      refreshWhenHidden: false,
-      revalidateOnReconnect: true,
-      revalidateOnFocus: false,
-      revalidateOnMount: true,
-      refreshWhenOffline: false,
-    },
+    [`/api/metadata/${project_id}/fields`, isLoggedIn],
+    ([url]) => authFetcher(url, accessToken, "POST"),
   );
   const numberMetadataFields: string[] | undefined = data?.number;
   const categoryMetadataFields: string[] | undefined = data?.string;
@@ -160,7 +142,7 @@ const DatavizGraph = ({
   const { data: pivotData, isLoading: pivotLoading } = useSWRImmutable(
     [
       `/api/metadata/${project_id}/pivot/`,
-      accessToken,
+      isLoggedIn,
       metric,
       metadata_metric,
       breakdown_by,
@@ -168,7 +150,7 @@ const DatavizGraph = ({
       scorer_id,
       JSON.stringify(mergedFilters),
     ],
-    ([url, accessToken]) =>
+    ([url]) =>
       authFetcher(url, accessToken, "POST", {
         metric: metric.toLowerCase(),
         metric_metadata: metadata_metric?.toLowerCase(),
@@ -191,15 +173,6 @@ const DatavizGraph = ({
 
         return pivotTable;
       }),
-    {
-      keepPreviousData: true,
-      refreshInterval: 0,
-      refreshWhenHidden: false,
-      revalidateOnReconnect: true,
-      revalidateOnFocus: false,
-      revalidateOnMount: true,
-      refreshWhenOffline: false,
-    },
   );
 
   const isStacked =

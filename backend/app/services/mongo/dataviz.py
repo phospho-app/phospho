@@ -179,7 +179,7 @@ async def breakdown_by_sum_of_metadata_field(
     query_builder = QueryBuilder(
         project_id=project_id,
         fetch_objects="tasks",
-        filters=pivot_query.filters,
+        filters=filters,
     )
     pipeline = await query_builder.build()
 
@@ -275,7 +275,7 @@ async def breakdown_by_sum_of_metadata_field(
             }
         ]
     elif breakdown_by == "session_length":
-        await compute_session_length(project_id=project_id)
+        # await compute_session_length(project_id=project_id)
         _merge_sessions(pipeline)
         breakdown_by_col = "session_length"
     elif breakdown_by is None:
@@ -393,7 +393,7 @@ async def breakdown_by_sum_of_metadata_field(
         breakdown_by_col = "classifier_label"
 
     if breakdown_by == "task_position":
-        await compute_task_position(project_id=project_id, filters=filters)
+        # await compute_task_position(project_id=project_id, filters=filters)
         breakdown_by_col = "task_position"
 
     if metric == "nb_messages":
