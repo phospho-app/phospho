@@ -14,9 +14,6 @@ COPY ./poetry.lock /src/poetry.lock
 # Create virtualenv at .venv in the project instead of ~/.cache/
 RUN poetry config virtualenvs.in-project true
 
-# Install dependencies
-RUN poetry install --no-interaction --no-ansi
-
 # Copy phospho package
 COPY ./phospho-python /phospho-python
 RUN poetry install --with dev --no-interaction --no-ansi
