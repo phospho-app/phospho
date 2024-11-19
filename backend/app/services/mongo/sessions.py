@@ -435,10 +435,14 @@ async def get_all_sessions(
     """
     mongo_db = await get_mongo_db()
 
+    fetch_objects: Literal["sessions", "sessions_with_events"] = "sessions"
+    if get_events and not pagination:
+        fetch_objects = "sessions_with_events"
+
     query_builder = QueryBuilder(
         project_id=project_id,
         filters=filters,
-        fetch_objects="sessions_with_events" if get_events else "sessions",
+        fetch_objects=fetch_objects,
     )
     pipeline = await query_builder.build()
 
