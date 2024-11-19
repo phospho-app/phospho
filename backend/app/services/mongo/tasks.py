@@ -428,10 +428,14 @@ async def get_all_tasks(
 
     mongo_db = await get_mongo_db()
 
+    fetch_objects: Literal["tasks", "tasks_with_events"] = "tasks"
+    if get_events and not pagination:
+        fetch_objects = "tasks_with_events"
+
     query_builder = QueryBuilder(
         project_id=project_id,
         filters=filters,
-        fetch_objects="tasks_with_events" if get_events else "tasks",
+        fetch_objects=fetch_objects,
     )
     pipeline = await query_builder.build()
 
