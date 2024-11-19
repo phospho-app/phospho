@@ -518,6 +518,7 @@ async def fetch_flattened_tasks(
     with_sessions: bool = True,
     pagination: Optional[Pagination] = None,
     with_removed_events: bool = False,
+    sort_get_most_recent: bool = True,
 ) -> List[FlattenedTask]:
     """
     Get a flattened representation of the tasks of a project for analytics
@@ -727,12 +728,20 @@ async def fetch_flattened_tasks(
             }
 
     # Sort the pipeline
-    pipeline.extend(
-        [
-            {"$project": return_columns},
-            {"$sort": {"task_created_at": -1}},
-        ]
-    )
+    if sort_get_most_recent:
+        pipeline.extend(
+            [
+                {"$project": return_columns},
+                {"$sort": {"task_created_at": -1}},
+            ]
+        )
+    else:
+        pipeline.extend(
+            [
+                {"$project": return_columns},
+                {"$sort": {"task_created_at": 1}},
+            ]
+        )
 
     # Pagination
 
