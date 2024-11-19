@@ -428,7 +428,7 @@ async def get_all_tasks(
 
     mongo_db = await get_mongo_db()
 
-    fetch_objects = "tasks"
+    fetch_objects: Literal["tasks", "tasks_with_events"] = "tasks"
     if get_events and not pagination:
         fetch_objects = "tasks_with_events"
 
