@@ -277,6 +277,7 @@ class PostgresqlIntegration:
                         with_events=True,
                         with_sessions=True,
                         pagination=Pagination(page=i, per_page=batch_size),
+                        sort_get_most_recent=False,
                     )
                     # Convert the list of FlattenedTask to a pandas dataframe
                     tasks_df = pd.DataFrame(
