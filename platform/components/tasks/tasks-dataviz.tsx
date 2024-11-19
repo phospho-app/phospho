@@ -31,6 +31,7 @@ import {
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
 import useSWR from "swr";
+import useSWRImmutable from "swr/immutable";
 
 interface NbDailyTasks {
   day: string;
@@ -58,7 +59,7 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
   /*
   Note: This is not displayed if there are no tasks in the project.
   */
-  const { accessToken } = useUser();
+  const { accessToken, isLoggedIn } = useUser();
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
   const mergedDataFilters = {
@@ -226,14 +227,16 @@ const TasksDataviz: React.FC<TasksDatavizProps> = ({ forcedDataFilters }) => {
     );
 
   const { data: eventsRanking }: { data: EventsRanking[] | null | undefined } =
-    useSWR(
-      [
-        project_id ? `/api/explore/${project_id}/aggregated/tasks` : "",
-        accessToken,
-        "events_ranking",
-        JSON.stringify(mergedDataFilters),
-      ],
-      ([url, accessToken]) =>
+    useSWRImmutable(
+      project_id
+        ? [
+            `/api/explore/${project_id}/aggregated/tasks`,
+            isLoggedIn,
+            "events_ranking",
+            JSON.stringify(mergedDataFilters),
+          ]
+        : null,
+      ([url]) =>
         authFetcher(url, accessToken, "POST", {
           metrics: ["events_ranking"],
           filters: mergedDataFilters,

@@ -391,15 +391,9 @@ async def get_most_detected_tagger_name(
     main_filter["removed"] = {"$ne": True}
     pipeline: List[Dict[str, object]] = [
         {"$match": main_filter},
-        {
-            "$lookup": {
-                "from": "tasks",
-                "localField": "task_id",
-                "foreignField": "id",
-                "as": "tasks",
-            },
-        },
     ]
+
+    # Tasks filter
     tasks_filter: Dict[str, object] = {}
     # Filter on flag
     if flag is not None:
@@ -425,9 +419,17 @@ async def get_most_detected_tagger_name(
             tasks_filter["tasks.last_eval.source"] = {"$regex": "^(?!phospho).*"}
 
     if tasks_filter != {}:
-        pipeline.append(
+        pipeline += [
+            {
+                "$lookup": {
+                    "from": "tasks",
+                    "localField": "task_id",
+                    "foreignField": "id",
+                    "as": "tasks",
+                },
+            },
             {"$match": tasks_filter},
-        )
+        ]
 
     pipeline.extend(
         [

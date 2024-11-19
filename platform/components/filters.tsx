@@ -59,6 +59,7 @@ import {
 import Link from "next/link";
 import React from "react";
 import useSWR from "swr";
+import useSWRImmutable from "swr/immutable";
 
 interface LanguageFilterOption {
   value: string;
@@ -76,7 +77,7 @@ const FilterComponent = ({
   const setShowSearchBar = navigationStateStore(
     (state) => state.setShowSearchBar,
   );
-  const { accessToken } = useUser();
+  const { accessToken, isLoggedIn } = useUser();
 
   if (variant === "messages") {
     variant = "tasks";
@@ -155,18 +156,15 @@ const FilterComponent = ({
   }));
 
   // Metadata filters: {"string": {metadata_key: [unique_metadata_values]}}
-  const { data: metadataFieldsToValues } = useSWR(
+  const { data: metadataFieldsToValues } = useSWRImmutable(
     selectedProject?.id
       ? [
           `/api/metadata/${selectedProject?.id}/fields/values`,
-          accessToken,
+          isLoggedIn,
           "unique_metadata_fields_to_values",
         ]
       : null,
-    ([url, accessToken]) => authFetcher(url, accessToken, "POST"),
-    {
-      keepPreviousData: true,
-    },
+    ([url]) => authFetcher(url, accessToken, "POST"),
   );
   const stringFields: MetadataFieldsToUniqueValues | undefined =
     metadataFieldsToValues?.string;
