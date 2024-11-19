@@ -27,7 +27,6 @@ import {
 import { Payload } from "recharts/types/component/DefaultTooltipContent";
 import useSWRImmutable from "swr/immutable";
 
-import DatavizTaggerGraph from "./dataviz-tagger";
 import { Button } from "./ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
 
@@ -379,16 +378,7 @@ const DatavizGraph = ({
                             </div>
                           );
                         })}
-                        {breakdown_by === "tagger_name" && (
-                          <DatavizTaggerGraph
-                            tagger_name={label}
-                            metric={metric}
-                            metadata_metric={metadata_metric}
-                            breakdown_by={breakdown_by}
-                            breakdown_by_event_id={breakdown_by_event_id}
-                            scorer_id={scorer_id}
-                          />
-                        )}
+
                         <div className="pt-4">
                           {supportedDeepDives.includes(breakdown_by) && (
                             <div className="flex flex-row items-center text-xs text-secondary">
