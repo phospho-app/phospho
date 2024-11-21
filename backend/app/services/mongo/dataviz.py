@@ -4,7 +4,6 @@ from app.api.platform.models.metadata import MetadataPivotQuery
 from app.core import constants
 from app.db.mongo import get_mongo_db
 from app.services.mongo.query_builder import QueryBuilder
-from app.services.mongo.sessions import compute_session_length, compute_task_position
 from fastapi import HTTPException
 from loguru import logger
 
