@@ -603,7 +603,7 @@ async def fetch_flattened_tasks(
         )
         return_columns = {
             **return_columns,
-            "session_length": "$sessions.length",
+            "session_length": "$sessions.session_length",
         }
         # pipeline += [{"$project": return_columns}]
 
