@@ -74,6 +74,8 @@ class PostgresqlIntegration:
                 detail="Admin credentials are not configured",
             )
 
+        self.update_start_time = datetime.now()
+
     def _connection_string(self) -> str:
         # TODO : Add custom connection string in the credentials so that this write operation
         # can be done on a different database
@@ -214,7 +216,7 @@ class PostgresqlIntegration:
                 {
                     "$pull": {"projects_started": self.project_id},
                     "$addToSet": {"projects_finished": self.project_id},
-                    "$set": {"last_updated": datetime.now()},
+                    "$set": {"last_updated": self.update_start_time},
                 },
                 return_document=True,
             )
@@ -382,6 +384,8 @@ class PostgresqlIntegration:
 
         The table name is the slugified project name.
         """
+        self.update_start_time = datetime.now()
+
         if self.project_id is None:
             logger.error("No project_id provided")
             return "failure"
@@ -430,7 +434,7 @@ class PostgresqlIntegration:
             mongo_db = await get_mongo_db()
             total_nb_tasks = await mongo_db[
                 f"flattened_tasks_{self.project_id}"
-            ].count_documents()
+            ].count_documents({})
             if not total_nb_tasks:
                 logger.error(
                     f"No flattened tasks found in the project. Populate the collection flattened_tasks_{self.project_id} using the script create_temp_table.ipynb"
