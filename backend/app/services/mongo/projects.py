@@ -364,7 +364,7 @@ async def email_project_data(
                     limit=limit,
                     with_events=True,
                     with_sessions=True,
-                    with_removed_events=False,
+                    keep_removed_events=False,
                 )
                 data_df = pd.DataFrame(
                     [flat_task.model_dump() for flat_task in flattened_tasks]

@@ -18,6 +18,8 @@ class QueryBuilder:
         "tasks",
         "sessions",
         "tasks_with_events",
+        "tasks_with_sessions",
+        "tasks_with_sessions_and_events",
         "sessions_with_events",
         "sessions_with_tasks",
     ]
@@ -29,6 +31,8 @@ class QueryBuilder:
             "tasks",
             "sessions",
             "tasks_with_events",
+            "tasks_with_sessions",
+            "tasks_with_sessions_and_events",
             "sessions_with_events",
             "sessions_with_tasks",
         ],
@@ -582,85 +586,59 @@ class QueryBuilder:
 
         return match
 
-    def deduplicate_tasks_events(self) -> None:
-        self.pipeline += [
-            {
-                "$addFields": {
-                    "events": {
-                        "$filter": {
-                            "input": "$events",
-                            "as": "event",
-                            "cond": {
+    def deduplicate_tasks_events(self, keep_removed: bool = False) -> None:
+        """
+        - Remove deleted events
+        - Remove duplicates
+        - Keep the last task's events for events supposed to be only "last_task"
+        """
+        if not keep_removed:
+            cond = {
+                "$and": [
+                    {
+                        # The event is not removed
+                        "$ne": ["$$event.removed", True],
+                    },
+                    {
+                        "$or": [
+                            # The field is present in the event definition and the task
+                            {
                                 "$and": [
                                     {
-                                        "$ne": [
-                                            "$$event.removed",
+                                        "$eq": [
+                                            "$$event.event_definition.is_last_task",
                                             True,
-                                        ],
-                                    },
-                                    {
-                                        "$or": [
-                                            # The field is present in the event definition and the task
-                                            {
-                                                "$and": [
-                                                    {
-                                                        "$eq": [
-                                                            "$$event.event_definition.is_last_task",
-                                                            True,
-                                                        ]
-                                                    },
-                                                    {
-                                                        "$eq": [
-                                                            "$is_last_task",
-                                                            True,
-                                                        ]
-                                                    },
-                                                ]
-                                            },
-                                            # the field is not present in the event definition
-                                            {
-                                                "$not": [
-                                                    "$$event.event_definition.is_last_task",
-                                                ]
-                                            },
-                                        ],
-                                    },
-                                ]
-                            },
-                        }
-                    }
-                }
-            },
-            {
-                "$set": {
-                    "events": {
-                        "$reduce": {
-                            "input": "$events",
-                            "initialValue": [],
-                            "in": {
-                                "$concatArrays": [
-                                    "$$value",
-                                    {
-                                        "$cond": [
-                                            {
-                                                "$in": [
-                                                    "$$this.event_definition.id",
-                                                    "$$value.event_definition.id",
-                                                ]
-                                            },
-                                            [],
-                                            ["$$this"],
                                         ]
                                     },
+                                    {"$eq": ["$is_last_task", True]},
                                 ]
                             },
-                        }
+                            # the field is not present in the event definition
+                            {"$not": ["$$event.event_definition.is_last_task"]},
+                        ],
                     },
-                }
-            },
-        ]
+                ]
+            }
+        else:
+            cond = {
+                "$or": [
+                    # The field is present in the event definition and the task
+                    {
+                        "$and": [
+                            {
+                                "$eq": [
+                                    "$$event.event_definition.is_last_task",
+                                    True,
+                                ]
+                            },
+                            {"$eq": ["$is_last_task", True]},
+                        ]
+                    },
+                    # the field is not present in the event definition
+                    {"$not": ["$$event.event_definition.is_last_task"]},
+                ]
+            }
 
-    def deduplicate_sessions_events(self) -> None:
         self.pipeline += [
             {
                 "$addFields": {
@@ -668,12 +646,11 @@ class QueryBuilder:
                         "$filter": {
                             "input": "$events",
                             "as": "event",
-                            "cond": {"$ne": ["$$event.removed", True]},
+                            "cond": cond,
                         }
                     }
                 }
             },
-            # Remove duplicates
             {
                 "$set": {
                     "events": {
@@ -703,7 +680,54 @@ class QueryBuilder:
             },
         ]
 
-    async def build(self) -> List[Dict[str, object]]:
+    def deduplicate_sessions_events(self, keep_removed: bool = False) -> None:
+        if not keep_removed:
+            self.pipeline += [
+                {
+                    "$addFields": {
+                        "events": {
+                            "$filter": {
+                                "input": "$events",
+                                "as": "event",
+                                "cond": {"$ne": ["$$event.removed", True]},
+                            }
+                        }
+                    }
+                }
+            ]
+
+        # Remove duplicates
+        self.pipeline += [
+            {
+                "$set": {
+                    "events": {
+                        "$reduce": {
+                            "input": "$events",
+                            "initialValue": [],
+                            "in": {
+                                "$concatArrays": [
+                                    "$$value",
+                                    {
+                                        "$cond": [
+                                            {
+                                                "$in": [
+                                                    "$$this.event_definition.id",
+                                                    "$$value.event_definition.id",
+                                                ]
+                                            },
+                                            [],
+                                            ["$$this"],
+                                        ]
+                                    },
+                                ]
+                            },
+                        }
+                    },
+                }
+            }
+        ]
+
+    async def build(self, keep_removed_events: bool = False) -> List[Dict[str, object]]:
         """
         Build the pipeline for the query.
         Edits in-place the pipeline attribute of the class.
@@ -719,7 +743,19 @@ class QueryBuilder:
         elif self.fetch_object == "tasks_with_events":
             self.main_doc_filter_tasks()
             self.merge_events(foreignField="task_id")
-            self.deduplicate_tasks_events()
+            self.deduplicate_tasks_events(keep_removed=keep_removed_events)
+            await self.task_complex_filters()
+
+        elif self.fetch_object == "tasks_with_sessions":
+            self.main_doc_filter_tasks()
+            self.merge_sessions(foreignField="task_id")
+            await self.task_complex_filters()
+
+        elif self.fetch_object == "tasks_with_sessions_and_events":
+            self.main_doc_filter_tasks()
+            self.merge_sessions(foreignField="task_id")
+            self.merge_events(foreignField="task_id")
+            self.deduplicate_tasks_events(keep_removed=keep_removed_events)
             await self.task_complex_filters()
 
         elif self.fetch_object == "sessions":
@@ -729,7 +765,7 @@ class QueryBuilder:
         elif self.fetch_object == "sessions_with_events":
             self.main_doc_filter_sessions()
             self.merge_events(foreignField="session_id")
-            self.deduplicate_sessions_events()
+            self.deduplicate_sessions_events(keep_removed=keep_removed_events)
             await self.session_complex_filters()
 
         elif self.fetch_object == "sessions_with_tasks":
@@ -742,7 +778,7 @@ class QueryBuilder:
         elif self.fetch_object == "sessions_with_events_and_tasks":
             self.main_doc_filter_sessions()
             self.merge_events(foreignField="session_id")
-            self.deduplicate_sessions_events()
+            self.deduplicate_sessions_events(keep_removed=keep_removed_events)
             await self.session_complex_filters()
             # Note: we don't merge Tasks' events
             self.merge_tasks()

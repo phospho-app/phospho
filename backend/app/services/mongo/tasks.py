@@ -514,21 +514,37 @@ async def get_all_tasks(
 async def fetch_flattened_tasks(
     project_id: str,
     limit: Optional[int] = 1000,
+    pagination: Optional[Pagination] = None,
     with_events: bool = True,
     with_sessions: bool = True,
-    pagination: Optional[Pagination] = None,
-    with_removed_events: bool = False,
+    keep_removed_events: bool = False,
     sort_get_most_recent: bool = True,
+    filters: Optional[ProjectDataFilters] = None,
 ) -> List[FlattenedTask]:
     """
-    Get a flattened representation of the tasks of a project for analytics
+    Get a flattened representation of the tasks of a project for analytics.
 
-    The with_events parameter allows to include the events in the result.
-    The with_sessions parameter allows to include the session length in the result.
-    The with_removed_events parameter allows to include the removed events in the result ; if with_events is False, this parameter is ignored.
+    Parameters:
+    - project_id: the project_id of the project.
+    - limit parameter: the maximum number of tasks to return. Note: if with_events is True, as the result is flattened, the number of resulting
+    rows can be higher than the limit (e.g. if a task has multiple events).
+    - pagination parameter: to paginate the results. If pagination is provided, the limit parameter is ignored.
+    Note: if with_events is True, the number of results can be higher than the per_page parameter of the pagination,
+    as a task can have multiple events.
+    - with_events parameter: if True, includes the events in the result.
+    - with_sessions parameter: if True, includes the session information in the result.
+    - keep_removed_events parameter allows to include the removed events in the result ; if with_events is False, this parameter is ignored.
+    - sort_get_most_recent parameter: if True, the tasks are sorted by creation date in descending order.
+    - filters parameter: filters to apply to the tasks.
+
+    Returns:
+    - A list of FlattenedTask objects.
     """
 
-    if not with_events and with_removed_events:
+    if filters is None:
+        filters = ProjectDataFilters()
+
+    if not with_events and keep_removed_events:
         logger.warning(
             "The with_removed_events parameter is ignored if with_events is False"
         )
@@ -537,9 +553,14 @@ async def fetch_flattened_tasks(
     mongo_db = await get_mongo_db()
 
     # Aggregation pipeline
-    pipeline: List[Dict[str, object]] = [
-        {"$match": {"project_id": project_id}},
-    ]
+    query = QueryBuilder(
+        fetch_objects="tasks",
+        project_id=project_id,
+        filters=filters,
+    )
+    pipeline = query.pipeline
+    query.main_doc_filter_tasks()
+
     return_columns = {
         "task_id": "$id",
         "task_input": "$input",
@@ -552,159 +573,51 @@ async def fetch_flattened_tasks(
         "session_id": "$session_id",
         "task_position": "$task_position",
     }
+    # pipeline += [{"$project": return_columns}]
+
+    # Sort the pipeline
+    if sort_get_most_recent:
+        pipeline += [{"$sort": {"created_at": -1}}]
+    else:
+        pipeline += [{"$sort": {"created_at": 1}}]
+
+    if pagination:
+        pipeline += [
+            {"$skip": pagination.page * pagination.per_page},
+            {"$limit": pagination.per_page},
+        ]
+    else:
+        pipeline += [{"$limit": limit}]
 
     if with_sessions:
+        query.merge_sessions(foreignField="task_id")
         pipeline.extend(
             [
                 {
-                    "$lookup": {
-                        "from": "sessions",
-                        "localField": "session_id",
-                        "foreignField": "id",
-                        "as": "session",
+                    "$unwind": {
+                        "path": "$sessions",
+                        "preserveNullAndEmptyArrays": True,
                     }
-                },
-                {"$unwind": {"path": "$session", "preserveNullAndEmptyArrays": True}},
+                }
             ]
         )
         return_columns = {
             **return_columns,
-            "session_length": "$session.session_length",
+            "session_length": "$sessions.session_length",
         }
+        # pipeline += [{"$project": return_columns}]
 
     if with_events:
-        if not with_removed_events:
-            pipeline.extend(
-                [
-                    {
-                        "$lookup": {
-                            "from": "events",
-                            "localField": "id",
-                            "foreignField": "task_id",
-                            "as": "events",
-                        },
-                    },
-                    # Deduplicate events based on event_name
-                    {
-                        "$set": {
-                            "events": {
-                                "$reduce": {
-                                    "input": "$events",
-                                    "initialValue": [],
-                                    "in": {
-                                        "$concatArrays": [
-                                            "$$value",
-                                            {
-                                                "$cond": [
-                                                    {
-                                                        "$in": [
-                                                            "$$this.event_name",
-                                                            "$$value.event_name",
-                                                        ]
-                                                    },
-                                                    [],
-                                                    ["$$this"],
-                                                ]
-                                            },
-                                        ]
-                                    },
-                                }
-                            },
-                        }
-                    },
-                    {
-                        "$unwind": {
-                            "path": "$events",
-                            "preserveNullAndEmptyArrays": True,
-                        }
-                    },
-                ]
-            )
-
-        # Query Mongo
-        else:
-            pipeline.extend(
-                [
-                    {
-                        "$lookup": {
-                            "from": "events",
-                            "localField": "id",
-                            "foreignField": "task_id",
-                            "as": "events",
-                        },
-                    },
-                    {
-                        "$addFields": {
-                            "events": {
-                                "$filter": {
-                                    "input": "$events",
-                                    "as": "event",
-                                    "cond": {
-                                        "$or": [
-                                            # The field is present in the event definition and the task
-                                            {
-                                                "$and": [
-                                                    {
-                                                        "$eq": [
-                                                            "$$event.event_definition.is_last_task",
-                                                            True,
-                                                        ]
-                                                    },
-                                                    {
-                                                        "$eq": [
-                                                            "$is_last_task",
-                                                            True,
-                                                        ]
-                                                    },
-                                                ]
-                                            },
-                                            # the field is not present in the event definition
-                                            {
-                                                "$not": [
-                                                    "$$event.event_definition.is_last_task",
-                                                ]
-                                            },
-                                        ],
-                                    },
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "$set": {
-                            "events": {
-                                "$reduce": {
-                                    "input": "$events",
-                                    "initialValue": [],
-                                    "in": {
-                                        "$concatArrays": [
-                                            "$$value",
-                                            {
-                                                "$cond": [
-                                                    {
-                                                        "$in": [
-                                                            "$$this.event_definition.id",
-                                                            "$$value.event_definition.id",
-                                                        ]
-                                                    },
-                                                    [],
-                                                    ["$$this"],
-                                                ]
-                                            },
-                                        ]
-                                    },
-                                }
-                            },
-                        }
-                    },
-                    {
-                        "$unwind": {
-                            "path": "$events",
-                            "preserveNullAndEmptyArrays": True,
-                        }
-                    },
-                ]
-            )
+        query.merge_events(foreignField="task_id")
+        query.deduplicate_tasks_events(keep_removed=keep_removed_events)
+        pipeline += [
+            {
+                "$unwind": {
+                    "path": "$events",
+                    "preserveNullAndEmptyArrays": True,
+                }
+            }
+        ]
 
         return_columns = {
             **return_columns,
@@ -719,50 +632,23 @@ async def fetch_flattened_tasks(
             "event_source": "$events.source",
             "event_categories": "$events.event_definition.score_range_settings.categories",
         }
-
-        if with_removed_events:
+        if keep_removed_events:
             return_columns = {
                 **return_columns,
                 "event_removed": "$events.removed",
                 "event_removal_reason": "$events.removal_reason",
             }
+        # pipeline += [{"$project": return_columns}]
 
-    # Sort the pipeline
-    if sort_get_most_recent:
-        pipeline.extend(
-            [
-                {"$project": return_columns},
-                {"$sort": {"task_created_at": -1}},
-            ]
-        )
-    else:
-        pipeline.extend(
-            [
-                {"$project": return_columns},
-                {"$sort": {"task_created_at": 1}},
-            ]
-        )
+    await query.task_complex_filters()
+    pipeline += [{"$project": return_columns}]
 
-    # Pagination
-
-    if pagination:
-        pipeline.extend(
-            [
-                {"$skip": pagination.page * pagination.per_page},
-                {"$limit": pagination.per_page},
-            ]
-        )
-
-    # Limit
-    else:
-        pipeline.extend(
-            [
-                {"$limit": limit},
-            ]
-        )
+    logger.info(f"Flatten task pipeline: {pipeline}")
 
     # Query Mongo
-    flattened_tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=limit)
+    flattened_tasks = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
+
+    logger.info(f"Got: {len(flattened_tasks)} results")
 
     new_flattened_tasks = []
     for task in flattened_tasks:
@@ -782,6 +668,8 @@ async def fetch_flattened_tasks(
         # Convert to a FlattenedTask model
         new_task = FlattenedTask.model_validate(task)
         new_flattened_tasks.append(new_task)
+
+    logger.info(f"Returning: {len(new_flattened_tasks)} unnested results")
 
     return new_flattened_tasks
 
