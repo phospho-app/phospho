@@ -375,7 +375,7 @@ class PostgresqlIntegration:
         self,
         batch_size: int = 256,
         only_new: bool = True,
-        fetch_from_flattened_tasks: bool = True,
+        fetch_from_flattened_tasks: bool = False,
     ) -> Literal["success", "failure"]:
         """
         Export the project to the dedicated Postgres database.
