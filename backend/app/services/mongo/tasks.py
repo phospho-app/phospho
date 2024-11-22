@@ -621,6 +621,7 @@ async def fetch_flattened_tasks(
 
         return_columns = {
             **return_columns,
+            "event_id": "$events.id",
             "event_name": "$events.event_name",
             "event_created_at": "$events.created_at",
             "event_confirmed": "$events.confirmed",
@@ -723,8 +724,8 @@ async def update_from_flattened_tasks(
     task_update: Dict[str, Dict[str, object]] = defaultdict(dict)
     eval_create_statements = []
     for task in flattened_tasks:
-        if task.task_metadata is not None:
-            task_update[task.task_id]["metadata"] = task.task_metadata
+        if getattr(task, "task_metadata") is not None:
+            task_update[task.task_id]["metadata"] = getattr(task, "task_metadata")
         if task.task_eval is not None and task.task_eval in ["success", "failure"]:
             task_update[task.task_id]["flag"] = task.task_eval
             last_eval = Eval(
