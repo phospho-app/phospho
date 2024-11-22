@@ -160,12 +160,14 @@ class PostgresqlIntegration:
             )
             # Grant the select privilege to the user to current tables
             connection.execute(
-                text(f"GRANT SELECT ON ALL TABLES IN SCHEMA public TO {username};")
+                text(
+                    f"GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO {username};"
+                )
             )
             # Grant the select privilege to the user to future tables
             connection.execute(
                 text(
-                    f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {username};;"
+                    f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO {username};;"
                 )
             )
             # The context manager will commit and close the connection
@@ -263,6 +265,9 @@ class PostgresqlIntegration:
     async def create_table(self):
         """
         Create the table in the dedicated Postgres database.
+
+        Note: This process currently doesn't work (even with admin credentials)
+        and needs to be run manually.
         """
         logger.info(
             f"Creating table for project {self.project_id} {self.project_name}: {self.credentials.database}.{self.table_name()}"
@@ -277,40 +282,40 @@ class PostgresqlIntegration:
         for field in category_metadata_fields:
             task_metadata_string += f'"task_metadata.{field}" TEXT,\n'
         for field in number_metadata_fields:
-            task_metadata_string += f'"task_metadata.{field}" FLOAT,\n'
+            task_metadata_string += f'"task_metadata.{field}" FLOAT8,\n'
 
-        engine = create_engine(
-            f"{config.SQLDB_CONNECTION_STRING}/{self.credentials.database}"
-        )
-        with engine.connect() as connection:
-            connection.execute(
-                text(
-                    f"""CREATE TABLE IF NOT EXISTS {self.table_name()} (
-                task_id VARCHAR(255) PRIMARY KEY NOT NULL,
+        table_creation_query = f"""CREATE TABLE IF NOT EXISTS {self.table_name()} (
+                task_id TEXT NOT NULL,
                 task_input TEXT,
                 task_output TEXT,
-                task_eval VARCHAR(255),
-                task_eval_source VARCHAR(255),
+                task_eval TEXT,
+                task_eval_source TEXT,
                 task_eval_at TIMESTAMP,
                 task_created_at TIMESTAMP,
-                {task_metadata_string} 
-                session_id VARCHAR(255),
-                task_position INTEGER,
-                session_length INTEGER,
-                event_name VARCHAR(255),
+                {task_metadata_string} session_id TEXT,
+                task_position BIGINT,
+                session_length BIGINT,
+                event_id TEXT,
+                event_name TEXT,
                 event_created_at TIMESTAMP,
                 event_confirmed BOOLEAN,
-                event_score_range_value FLOAT,
-                event_score_range_min FLOAT,
-                event_score_range_max FLOAT,
-                event_score_range_score_type VARCHAR(255),
-                event_score_range_label VARCHAR(255),
-                event_source VARCHAR(255),
-                event_categories TEXT
+                event_score_range_value REAL,
+                event_score_range_min REAL,
+                event_score_range_max REAL,
+                event_score_range_score_type TEXT,
+                event_score_range_label TEXT,
+                event_source TEXT,
+                event_categories TEXT,
+                UNIQUE (task_id, event_id)
                 );
                 """
-                )
-            )
+
+        logger.info(
+            f"Creating table {self.table_name()} in {self.credentials.database}\n{table_creation_query}"
+        )
+        engine = create_engine(self._connection_string())
+        with engine.connect() as connection:
+            connection.execute(text(table_creation_query))
 
     async def update_table_columns(self):
         """
@@ -331,12 +336,7 @@ class PostgresqlIntegration:
 
         with engine.connect() as connection:
             # Get the columns in the table
-            columns = connection.execute(
-                text(
-                    f"SELECT column_name FROM information_schema.columns WHERE table_name = '{self.table_name()}';"
-                )
-            )
-            columns = [column[0] for column in columns]
+            columns = self.get_table_columns()
             # Add the missing columns
             for field in category_metadata_fields:
                 if f"task_metadata.{field}" not in columns:
@@ -351,7 +351,7 @@ class PostgresqlIntegration:
                     logger.info(f"Adding number task_metadata field {field}")
                     connection.execute(
                         text(
-                            f'ALTER TABLE {self.table_name()} ADD COLUMN "task_metadata.{field}" FLOAT;'
+                            f'ALTER TABLE {self.table_name()} ADD COLUMN "task_metadata.{field}" REAL;'
                         )
                     )
 
@@ -370,6 +370,21 @@ class PostgresqlIntegration:
 
         # Cast the result to a boolean
         return bool(result.scalar())
+
+    def get_table_columns(self) -> List[str]:
+        """
+        Get the columns of the table in the dedicated Postgres database.
+        """
+        logger.info("Getting table columns")
+        engine = create_engine(self._connection_string())
+        with engine.connect() as connection:
+            result = connection.execute(
+                text(
+                    f"SELECT column_name FROM information_schema.columns WHERE table_name = '{self.table_name()}';"
+                )
+            )
+            columns = [column[0] for column in result]
+        return columns
 
     async def push(
         self,
@@ -459,7 +474,7 @@ class PostgresqlIntegration:
             )
             engine = create_engine(self._connection_string(), echo=debug)
             nb_batches = total_nb_tasks // batch_size
-            columns = None
+            columns = self.get_table_columns()
             for i in tqdm(range(nb_batches + 1)):
                 if not fetch_from_flattened_tasks:
                     raw_flattened_tasks = await fetch_flattened_tasks(
@@ -490,7 +505,7 @@ class PostgresqlIntegration:
                     )
 
                     new_flattened_tasks = []
-                    for task in stored_flattened_tasks:
+                    for i, task in enumerate(stored_flattened_tasks):
                         # Remove the _id field
                         if "_id" in task.keys():
                             del task["_id"]
@@ -514,6 +529,7 @@ class PostgresqlIntegration:
                                     # TODO: Handle nested fields. For now, cast to string
                                     task[f"task_metadata.{key}"] = str(value)
                             del task["task_metadata"]
+
                         # Convert to a FlattenedTask model
                         new_task = FlattenedTask.model_validate(task)
                         new_flattened_tasks.append(new_task.model_dump())
@@ -527,13 +543,31 @@ class PostgresqlIntegration:
 
                 # Convert the list of FlattenedTask to a pandas dataframe
                 tasks_df = pd.DataFrame(flattened_tasks)
-                if columns is None:
-                    columns = tasks_df.columns
-                else:
-                    # Only keep the columns that are in the first batch and remove columns that are not in the first batch
-                    tasks_df = tasks_df[
-                        list(set(columns).intersection(set(tasks_df.columns)))
-                    ]
+
+                # Convert the timestamps to datetime
+                tasks_df["task_eval_at"] = pd.to_datetime(
+                    tasks_df["task_eval_at"], unit="s", errors="coerce"
+                )
+                tasks_df["task_created_at"] = pd.to_datetime(
+                    tasks_df["task_created_at"], unit="s", errors="coerce"
+                )
+                tasks_df["event_created_at"] = pd.to_datetime(
+                    tasks_df["event_created_at"], unit="s", errors="coerce"
+                )
+
+                # Filter out the rows with NaT values
+                tasks_df = tasks_df.dropna(
+                    subset=["task_eval_at", "task_created_at", "event_created_at"]
+                )
+
+                # Keep only the columns that are in the table
+                columns_in_common = list(set(columns).intersection(tasks_df.columns))
+                columns_in_df_not_in_table = list(set(tasks_df.columns) - set(columns))
+                if columns_in_df_not_in_table:
+                    logger.warning(
+                        f"Columns in the dataframe that are not in the table: {columns_in_df_not_in_table}"
+                    )
+                tasks_df = tasks_df[columns_in_common]
 
                 with engine.connect() as connection:
                     # Note: to_sql is not async, we could use asyncpg directly: https://github.com/MagicStack/asyncpg
@@ -550,6 +584,7 @@ class PostgresqlIntegration:
             return "success"
         except Exception as e:
             logger.error(e)
+            raise e
             await self.update_status("failed")
             return "failure"
 
