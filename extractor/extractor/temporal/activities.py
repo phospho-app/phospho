@@ -17,7 +17,6 @@ from extractor.models.log import (
 from extractor.models import (
     PipelineLangfuseRequest,
     PipelineLangsmithRequest,
-    PipelineOpentelemetryRequest,
     PipelineResults,
     RunMainPipelineOnMessagesRequest,
     RunMainPipelineOnTaskRequest,
