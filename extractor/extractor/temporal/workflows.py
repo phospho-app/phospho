@@ -85,7 +85,7 @@ class BaseWorkflow:
         response = await workflow.execute_activity(
             self.activity_func,
             request,
-            start_to_close_timeout=timedelta(minutes=30),
+            start_to_close_timeout=timedelta(minutes=15),
             retry_policy=self.retry_policy,
         )
         if self.bill:
