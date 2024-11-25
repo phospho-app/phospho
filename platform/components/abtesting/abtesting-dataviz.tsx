@@ -41,6 +41,7 @@ import {
   ChevronRight,
   EllipsisVertical,
 } from "lucide-react";
+import moment from "moment";
 import Link from "next/link";
 import React, { useState } from "react";
 import {
@@ -76,9 +77,6 @@ export const ABTestingDataviz = () => {
     created_at_start: undefined,
     created_at_end: undefined,
   });
-
-  const [dateRangeA, setDateRangeA] = useState<string>("Date range");
-  const [dateRangeB, setDateRangeB] = useState<string>("Date range");
 
   const [customDateRangeA, setCustomDateRangeA] = useState<
     CustomDateRange | undefined
@@ -186,15 +184,14 @@ export const ABTestingDataviz = () => {
     selectedEventsIds === null;
 
   const onClickFiltersA = (newDateRange: string) => {
-    if (dateRangeA === newDateRange) {
-      setDateRangeA("Date range");
+    if (versionIDB === newDateRange) {
+      // Unselect the date range
       setVersionIDA(null);
       setFiltersA({
         created_at_start: undefined,
         created_at_end: undefined,
       });
     } else {
-      setDateRangeA(newDateRange);
       if (newDateRange === "This week") {
         setFiltersA({
           created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
@@ -213,15 +210,14 @@ export const ABTestingDataviz = () => {
   };
 
   const onClickFiltersB = (newDateRange: string) => {
-    if (dateRangeB === newDateRange) {
-      setDateRangeB("Date range");
+    if (versionIDB === newDateRange) {
+      // Unselect the date range
       setVersionIDB(null);
       setFiltersB({
         created_at_start: undefined,
         created_at_end: undefined,
       });
     } else {
-      setDateRangeB(newDateRange);
       if (newDateRange === "This week") {
         setFiltersB({
           created_at_start: Date.now() / 1000 - 7 * 24 * 60 * 60,
@@ -241,7 +237,6 @@ export const ABTestingDataviz = () => {
 
   const onClickVersionA = (version_id: string) => {
     setVersionIDA(version_id);
-    setDateRangeA("Date range");
     setFiltersA({
       created_at_start: undefined,
       created_at_end: undefined,
@@ -250,7 +245,6 @@ export const ABTestingDataviz = () => {
 
   const onClickVersionB = (version_id: string) => {
     setVersionIDB(version_id);
-    setDateRangeB("Date range");
     setFiltersB({
       created_at_start: undefined,
       created_at_end: undefined,
@@ -335,13 +329,13 @@ export const ABTestingDataviz = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="overflow-y-auto max-h-[40rem] ">
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>{dateRangeA}</DropdownMenuSubTrigger>
+                  <DropdownMenuSubTrigger>Date range</DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
                       <DropdownMenuItem
                         onClick={() => onClickFiltersA("This week")}
                       >
-                        {dateRangeA === "This week" && (
+                        {versionIDA === "This week" && (
                           <Check className="h-4 w-4 mr-2 text-green-500" />
                         )}
                         This week
@@ -349,7 +343,7 @@ export const ABTestingDataviz = () => {
                       <DropdownMenuItem
                         onClick={() => onClickFiltersA("Last week")}
                       >
-                        {dateRangeA === "Last week" && (
+                        {versionIDA === "Last week" && (
                           <Check className="h-4 w-4 mr-2 text-green-500" />
                         )}
                         Last week
@@ -380,8 +374,13 @@ export const ABTestingDataviz = () => {
                                       selected.to.getTime() / 1000,
                                   });
                                 }
-                                setDateRangeA("Custom A");
-                                setVersionIDA("Custom A");
+                                const startDate = moment(selected.from).format(
+                                  "YYYY-MM-DD",
+                                );
+                                const endDate = moment(selected.to).format(
+                                  "YYYY-MM-DD",
+                                );
+                                setVersionIDA(`${startDate} - ${endDate}`);
                                 const dateRangeInfo: CustomDateRange = {
                                   from: selected.from,
                                   to: selected.to,
@@ -401,23 +400,24 @@ export const ABTestingDataviz = () => {
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <Separator />
-                {abTests?.map((abTest) => (
-                  <DropdownMenuItem
-                    key={`${abTest.version_id}_A`}
-                    onClick={() => onClickVersionA(abTest.version_id)}
-                    asChild
-                  >
-                    <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
-                      <div className="flex flex-row gap-x-2 items-center">
-                        {abTest.version_id === versionIDA && (
-                          <Check className="size-4 mr-2 text-green-500" />
-                        )}
-                        {abTest.version_id}
+                {abTests &&
+                  abTests?.map((abTest) => (
+                    <DropdownMenuItem
+                      key={`${abTest.version_id}_A`}
+                      onClick={() => onClickVersionA(abTest.version_id)}
+                      asChild
+                    >
+                      <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
+                        <div className="flex flex-row gap-x-2 items-center">
+                          {abTest.version_id === versionIDA && (
+                            <Check className="size-4 mr-2 text-green-500" />
+                          )}
+                          {abTest.version_id}
+                        </div>
+                        <InteractiveDatetime timestamp={abTest.first_task_ts} />
                       </div>
-                      <InteractiveDatetime timestamp={abTest.first_task_ts} />
-                    </div>
-                  </DropdownMenuItem>
-                ))}
+                    </DropdownMenuItem>
+                  ))}
                 {abTests?.length === 0 && (
                   <DropdownMenuItem disabled className="min-w-[10rem]">
                     <p>
@@ -442,13 +442,13 @@ export const ABTestingDataviz = () => {
                 align="start"
               >
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>{dateRangeB}</DropdownMenuSubTrigger>
+                  <DropdownMenuSubTrigger>Date range</DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent>
                       <DropdownMenuItem
                         onClick={() => onClickFiltersB("This week")}
                       >
-                        {dateRangeB === "This week" && (
+                        {versionIDB === "This week" && (
                           <Check className="h-4 w-4 mr-2 text-green-500" />
                         )}
                         This week
@@ -456,7 +456,7 @@ export const ABTestingDataviz = () => {
                       <DropdownMenuItem
                         onClick={() => onClickFiltersB("Last week")}
                       >
-                        {dateRangeB === "Last week" && (
+                        {versionIDB === "Last week" && (
                           <Check className="h-4 w-4 mr-2 text-green-500" />
                         )}
                         Last week
@@ -487,8 +487,13 @@ export const ABTestingDataviz = () => {
                                       selected.to.getTime() / 1000,
                                   });
                                 }
-                                setDateRangeB("Custom B");
-                                setVersionIDB("Custom B");
+                                const startDate = moment(selected.from).format(
+                                  "YYYY-MM-DD",
+                                );
+                                const endDate = moment(selected.to).format(
+                                  "YYYY-MM-DD",
+                                );
+                                setVersionIDB(`${startDate} - ${endDate}`);
                                 const dateRangeInfo: CustomDateRange = {
                                   from: selected.from,
                                   to: selected.to,
@@ -508,23 +513,24 @@ export const ABTestingDataviz = () => {
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <Separator />
-                {abTests?.map((abTest) => (
-                  <DropdownMenuItem
-                    key={`${abTest.version_id}_B`}
-                    onClick={() => onClickVersionB(abTest.version_id)}
-                    asChild
-                  >
-                    <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
-                      <div className="flex flex-row gap-x-2 items-center">
-                        {abTest.version_id === versionIDB && (
-                          <Check className="size-4 mr-2 text-green-500" />
-                        )}
-                        {abTest.version_id}
+                {abTests &&
+                  abTests?.map((abTest) => (
+                    <DropdownMenuItem
+                      key={`${abTest.version_id}_B`}
+                      onClick={() => onClickVersionB(abTest.version_id)}
+                      asChild
+                    >
+                      <div className="min-w-[10rem] flex flex-row justify-between gap-x-8">
+                        <div className="flex flex-row gap-x-2 items-center">
+                          {abTest.version_id === versionIDB && (
+                            <Check className="size-4 mr-2 text-green-500" />
+                          )}
+                          {abTest.version_id}
+                        </div>
+                        <InteractiveDatetime timestamp={abTest.first_task_ts} />
                       </div>
-                      <InteractiveDatetime timestamp={abTest.first_task_ts} />
-                    </div>
-                  </DropdownMenuItem>
-                ))}
+                    </DropdownMenuItem>
+                  ))}
                 {abTests?.length === 0 && (
                   <DropdownMenuItem disabled>
                     <p>
