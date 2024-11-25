@@ -1891,13 +1891,11 @@ async def get_ab_tests_versions(
     if filtersA is not None:
         if isinstance(filtersA.created_at_start, datetime.datetime):
             filtersA.created_at_start = int(filtersA.created_at_start.timestamp())
-    if filtersA is not None:
         if isinstance(filtersA.created_at_end, datetime.datetime):
             filtersA.created_at_end = int(filtersA.created_at_end.timestamp())
     if filtersB is not None:
         if isinstance(filtersB.created_at_start, datetime.datetime):
             filtersB.created_at_start = int(filtersB.created_at_start.timestamp())
-    if filtersB is not None:
         if isinstance(filtersB.created_at_end, datetime.datetime):
             filtersB.created_at_end = int(filtersB.created_at_end.timestamp())
 
