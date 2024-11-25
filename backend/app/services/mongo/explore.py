@@ -1880,9 +1880,6 @@ async def get_ab_tests_versions(
     - For categorical events, gets the number of times each category was detected in each task with the two versions of the model.
     - For range evnts, shows the average value of the score for each task with the two versions of the model.
     """
-    mongo_db = await get_mongo_db()
-    collection_name = "events"
-
     logger.debug(f"versionA: {versionA}, versionB: {versionB}")
     logger.debug(f"filtersA: {filtersA}, filtersB: {filtersB}")
     if versionA == "None":
@@ -1890,37 +1887,40 @@ async def get_ab_tests_versions(
     if versionB == "None":
         versionB = None
 
-    pipeline_A = await get_number_of_events_version(
+    # Process created_at filters to convert them to timestamp
+    if filtersA is not None:
+        if isinstance(filtersA.created_at_start, datetime.datetime):
+            filtersA.created_at_start = int(filtersA.created_at_start.timestamp())
+    if filtersA is not None:
+        if isinstance(filtersA.created_at_end, datetime.datetime):
+            filtersA.created_at_end = int(filtersA.created_at_end.timestamp())
+    if filtersB is not None:
+        if isinstance(filtersB.created_at_start, datetime.datetime):
+            filtersB.created_at_start = int(filtersB.created_at_start.timestamp())
+    if filtersB is not None:
+        if isinstance(filtersB.created_at_end, datetime.datetime):
+            filtersB.created_at_end = int(filtersB.created_at_end.timestamp())
+
+    results_A = await get_number_of_events_version(
         project_id=project_id,
         version=versionA,
         filters=filtersA,
         selected_events_ids=selected_events_ids,
     )
 
-    results_A = (
-        await mongo_db[collection_name].aggregate(pipeline_A).to_list(length=None)
-    )
-
-    if not results_A or len(results_A) == 0:
-        logger.info("No results found for version A")
-
-    pipeline_B = await get_number_of_events_version(
+    results_B = await get_number_of_events_version(
         project_id=project_id,
         version=versionB,
         filters=filtersB,
         selected_events_ids=selected_events_ids,
     )
-    results_B = (
-        await mongo_db[collection_name].aggregate(pipeline_B).to_list(length=None)
-    )
-    if not results_B or len(results_B) == 0:
-        logger.info("No results found for version B")
-        if not results_A or len(results_A) == 0:
-            return []
 
     results = results_A + results_B
-
     logger.debug(f"Results: {results}")
+
+    if not results:
+        logger.info("No results found")
+        return []
 
     # This dict will have event_names as keys, and the values will be dictionnaries with the version_id as keys and the count as values
     total_tasks_with_A = await get_nb_tasks_version(
@@ -1928,7 +1928,7 @@ async def get_ab_tests_versions(
         project_id=project_id,
         filters=filtersA,
     )
-    logger.info(f"Total tasks with version A: {total_tasks_with_A}")
+    logger.info(f"Total tasks with version A {versionA}: {total_tasks_with_A}")
 
     total_tasks_with_B = await get_nb_tasks_version(
         version=versionB,
@@ -1936,7 +1936,7 @@ async def get_ab_tests_versions(
         filters=filtersB,
     )
 
-    logger.info(f"Total tasks with version B: {total_tasks_with_B}")
+    logger.info(f"Total tasks with version B {versionB}: {total_tasks_with_B}")
 
     if total_tasks_with_B == 0 and total_tasks_with_A == 0:
         return []
@@ -2091,55 +2091,38 @@ async def get_nb_tasks_version(
 ) -> int:
     """
     Get the number of tasks with the version_id in the filters.
+
+    filters.created_at_start and filters.created_at_end are expected to be int timestamps.
     """
     mongo_db = await get_mongo_db()
 
-    if filters is not None and (
-        filters.created_at_start is not None or filters.created_at_end is not None
-    ):
-        pipeline = [
-            {
-                "$match": {
-                    "project_id": project_id,
-                },
-            }
-        ]
+    if filters is not None:
+        main_filter: Dict[str, object] = {
+            "project_id": project_id,
+        }
         if filters.created_at_start is not None:
-            if isinstance(filters.created_at_start, datetime.datetime):
-                filters.created_at_start = int(filters.created_at_start.timestamp())
-            pipeline.append(
-                {
-                    "$match": {
-                        "created_at": {"$gte": filters.created_at_start},  # type: ignore
-                    }
-                }
-            )
+            main_filter["created_at"] = {"$gte": filters.created_at_start}
         if filters.created_at_end is not None:
-            if isinstance(filters.created_at_end, datetime.datetime):
-                filters.created_at_end = int(filters.created_at_end.timestamp())
-            pipeline.append(
-                {
-                    "$match": {
-                        "created_at": {"$lte": filters.created_at_end},  # type: ignore
-                    }
-                }
-            )
-        pipeline.append(
+            main_filter["created_at"] = {
+                **main_filter.get("created_at", {}),  # type: ignore
+                "$lte": filters.created_at_end,
+            }
+        pipeline = [
+            {"$match": main_filter},
             {
                 "$count": "count",  # type: ignore
-            }
-        )
+            },
+        ]
+
     else:
         pipeline = [
             {
                 "$match": {
                     "project_id": project_id,
-                    "metadata.version_id": version,  # type: ignore
+                    "metadata.version_id": version,
                 }
             },
-            {
-                "$count": "count",  # type: ignore
-            },
+            {"$count": "count"},
         ]
 
     result = await mongo_db["tasks"].aggregate(pipeline).to_list(length=None)
@@ -2166,18 +2149,18 @@ async def get_number_of_events_version(
     # Apply the event_id filter early to reduce the number of events to process
     if filters.event_id is not None:
         main_filter["event_definition.id"] = {"$in": filters.event_id}
+    # Apply the task.created_at filter early to reduce the number of events to process
+    if filters.created_at_start is not None:
+        main_filter["task.created_at"] = {"$gte": filters.created_at_start}
+    if filters.created_at_end is not None:
+        main_filter["task.created_at"] = {
+            **main_filter.get("task.created_at", {}),  # type: ignore
+            "$lte": filters.created_at_end,
+        }
 
     pipeline = [
         {"$match": main_filter},
-        {
-            "$lookup": {
-                "from": "tasks",
-                "localField": "task_id",
-                "foreignField": "id",
-                "as": "task",
-            }
-        },
-        {"$unwind": "$task"},
+        # No need to merge tasks, as the "Task" object is already embedded in the event
         # We look up the last version of the event_definition to have the information up to date
         {
             "$lookup": {
@@ -2195,12 +2178,8 @@ async def get_number_of_events_version(
     if filters.created_at_start is not None or filters.created_at_end is not None:
         filtering = []
         if filters.created_at_start is not None:
-            if isinstance(filters.created_at_start, datetime.datetime):
-                filters.created_at_start = int(filters.created_at_start.timestamp())
             filtering.append({"$gte": ["$task.created_at", filters.created_at_start]})
         if filters.created_at_end is not None:
-            if isinstance(filters.created_at_end, datetime.datetime):
-                filters.created_at_end = int(filters.created_at_end.timestamp())
             filtering.append({"$lte": ["$task.created_at", filters.created_at_end]})
         pipeline.append(
             {
@@ -2299,4 +2278,15 @@ async def get_number_of_events_version(
         ]
     )
 
-    return pipeline
+    mongo_db = await get_mongo_db()
+
+    results = await mongo_db["events"].aggregate(pipeline).to_list(length=None)
+
+    if not results or len(results) == 0:
+        logger.info(
+            f"get_number_of_events_version pipeline returned no documents for version {version}"
+        )
+    else:
+        logger.info(f"Found {len(results)} events for version {version}")
+
+    return results
