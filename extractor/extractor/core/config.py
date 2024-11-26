@@ -97,7 +97,6 @@ SLACK_URL = os.getenv("SLACK_URL")
 # These orgs are exempted from the quota
 EXEMPTED_ORG_IDS = [
     "13b5f728-21a5-481d-82fa-0241ca0e07b9",  # phospho
-    "a5724a02-a243-4025-9b34-080f40818a31",  # m
 ]
 
 TEMPORAL_HOST_URL = os.getenv("TEMPORAL_HOST_URL")

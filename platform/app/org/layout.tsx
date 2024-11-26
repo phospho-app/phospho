@@ -35,7 +35,6 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
     // Some orgs are not subject to the blockwall
     const EXEMPTED_ORG_IDS = [
       "13b5f728-21a5-481d-82fa-0241ca0e07b9", // phospho
-      "a5724a02-a243-4025-9b34-080f40818a31", // m
     ];
     if (!EXEMPTED_ORG_IDS.includes(selectedOrgId)) {
       // Uncomment this to enable the blockwall

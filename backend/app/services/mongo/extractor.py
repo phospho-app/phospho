@@ -48,7 +48,7 @@ async def bill_on_stripe(
     org_metadata = org.get("metadata", {})
     customer_id = org_metadata.get("customer_id", None)
 
-    if customer_id:
+    if customer_id and org_metadata.get("plan", "hobby") == "usage_based":
         stripe.billing.MeterEvent.create(
             event_name=meter_event_name,
             payload={
