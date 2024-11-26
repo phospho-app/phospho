@@ -4,3 +4,4 @@ streamlit>=1.28.2
 streamlit_feedback
 openpyxl
 opentelemetry-instrumentation-openai
+opentelemetry-sdk
