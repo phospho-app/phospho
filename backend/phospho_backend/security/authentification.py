@@ -186,7 +186,7 @@ def raise_error_if_not_in_pro_tier(org: dict) -> None:
     if org_id in config.EXEMPTED_ORG_IDS:
         return
 
-    org_metadata = org.metadata or {"plan": "hobby"}
+    org_metadata = org.get("metadata") or {"plan": "hobby"}
     if org_metadata is None or org_metadata.get("plan") != "pro":
         raise HTTPException(
             status_code=403,

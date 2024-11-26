@@ -1,10 +1,12 @@
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, cast
 from phospho.models import ProjectDataFilters
 
 
 class AggregateMetricsRequest(BaseModel):
-    index: List[Literal["days", "minutes"]] = Field(default_factory=lambda: ["days"])
+    index: List[Literal["days", "minutes"]] = Field(
+        default_factory=lambda: [cast(Literal["days", "minutes"], "days")]
+    )
     columns: List[Literal["event_name", "flag"]] = Field(default_factory=list)
     count_of: Optional[Literal["tasks", "events"]] = "tasks"
     timerange: Optional[Literal["last_7_days", "last_30_minutes"]] = "last_7_days"

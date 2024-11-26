@@ -1,13 +1,9 @@
-from typing import List, Optional, Literal, Dict
+from typing import List, Optional
 from pydantic import BaseModel, Field
-from phospho_backend.core import config
 
 from phospho_backend.db.models import (
     Project,
-    Event,
-    Session,
     ProjectDataFilters,
-    EventDefinition,  # noqa: F401
 )
 
 
@@ -42,8 +38,10 @@ class UserMetadata(BaseModel):
     avg_success_rate: Optional[float] = None
     avg_session_length: Optional[float] = None
     total_tokens: Optional[int] = None
-    events: Optional[List[UserEventMetadata]] = Field(default_factory=list)
-    tasks_id: Optional[List[str]] = Field(default_factory=list)
+    events: Optional[List[UserEventMetadata]] = Field(
+        default_factory=List[UserEventMetadata]
+    )
+    tasks_id: Optional[List[str]] = Field(default_factory=List[str])
     first_message_ts: float
     last_message_ts: float
 
