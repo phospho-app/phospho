@@ -1,6 +1,6 @@
 from typing import Optional
 
-import requests
+import requests  # type: ignore
 from loguru import logger
 
 
