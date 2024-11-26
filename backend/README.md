@@ -77,7 +77,7 @@ poetry run uvicorn app.main:app --reload
 2. Start the local server in test mode :
 
    ```bash
-   poetry run uvicorn app.main:app --reload
+   poetry run uvicorn phospho_backend.main:app --reload
    ```
 
 3. Run tests through poetry

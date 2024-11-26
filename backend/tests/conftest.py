@@ -8,9 +8,9 @@ import os
 
 import pymongo
 import pytest
-from app.core import config  # type: ignore
-from app.db.mongo import close_mongo_db, connect_and_init_db, get_mongo_db  # type: ignore
-from app.security.authentification import propelauth  # type: ignore
+from phospho_backend.core import config  # type: ignore
+from phospho_backend.db.mongo import close_mongo_db, connect_and_init_db, get_mongo_db  # type: ignore
+from phospho_backend.security.authentification import propelauth  # type: ignore
 from phospho.models import Project, Task, ProjectSettings, EventDefinition
 from typing import Dict, List
 import phospho

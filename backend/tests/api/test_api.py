@@ -1,7 +1,7 @@
-import app.core.config as config
-from app.api.v2.models import Project
-from app.main import app as router
-from app.utils import generate_uuid
+import phospho_backend.core.config as config
+from phospho_backend.api.v2.models import Project
+from phospho_backend.main import app as router
+from phospho_backend.utils import generate_uuid
 from fastapi.testclient import TestClient
 import pymongo
 from typing import Dict, List
