@@ -36,7 +36,7 @@ async def post_detect_events_in_task(
     task = Task(**event_detection_request.model_dump())
     extractor_client = ExtractorClient(
         project_id=project_id,
-        org_id=org["org"].get("org_id"),
+        org_id=org["org"].org_id,),
     )
     pipeline_results = await extractor_client.run_main_pipeline_on_task(task)
 
@@ -66,7 +66,7 @@ async def post_detect_events_in_messages_list(
 
     extractor_client = ExtractorClient(
         project_id=project_id,
-        org_id=org["org"].get("org_id"),
+        org_id=org["org"].org_id,
     )
     pipeline_results = await extractor_client.run_main_pipeline_on_messages(
         event_detection_request.messages
