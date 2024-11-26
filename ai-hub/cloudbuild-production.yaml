@@ -7,7 +7,7 @@ steps:
   # Doc : https://github.com/GoogleContainerTools/kaniko
   - name: "gcr.io/kaniko-project/executor:latest"
     args:
-      - --destination=europe-west1-docker.pkg.dev/portal-385519/phospho-ai-hub/app:production
+      - --destination=europe-west1-docker.pkg.dev/portal-385519/phospho-backend/ai-hub:production
       - --cache=true
       - --cache-ttl=72h # Expiration time of the cache. This means dependencies will be cached for 72 hours.
       # https://github.com/GoogleContainerTools/kaniko/issues/1669

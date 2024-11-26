@@ -288,7 +288,7 @@ jobs:
             --cpu 4 \
             --memory 2Gi \
             --no-cpu-throttling \
-            --image europe-west1-docker.pkg.dev/portal-385519/phospho-ai-hub/app:staging
+            --image europe-west1-docker.pkg.dev/portal-385519/phospho-backend/ai-hub:staging
 
   run_python_integration_tests:
     needs: [deploy_extractor_staging, deploy_backend_staging]
