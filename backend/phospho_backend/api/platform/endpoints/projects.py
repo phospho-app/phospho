@@ -513,10 +513,12 @@ async def post_upload_tasks(
 
     if "task_id" in new_tasks_df.columns:
         if new_tasks_df["task_id"].nunique() != len(new_tasks_df["task_id"]):
-            raise HTTPException(
-                status_code=400,
-                detail="Error: The 'task_id' column contains duplicate values. Each task_id must be unique.",
-            )
+            # raise HTTPException(
+            #     status_code=400,
+            #     detail="Error: The 'task_id' column contains duplicate values. Each task_id must be unique.",
+            # )
+            # Drop duplicates to only keep the first occurence
+            new_tasks_df.drop_duplicates(subset=["task_id"], keep="first", inplace=True)
 
     # Drop rows with missing column "input"
     old_len = new_tasks_df.shape[0]

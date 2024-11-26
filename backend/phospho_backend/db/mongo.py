@@ -178,6 +178,9 @@ async def connect_and_init_db():
             )
 
             mongo_db[MONGODB_NAME]["job_results"].create_index(
+                ["org_id"], background=True
+            )
+            mongo_db[MONGODB_NAME]["job_results"].create_index(
                 ["project_id", "job_metadata.id"], background=True
             )
             mongo_db[MONGODB_NAME]["job_results"].create_index(

@@ -31,7 +31,7 @@ const DatavizTaggerGraph = ({
   breakdown_by_event_id?: string | null;
   scorer_id: string | null;
 }) => {
-  const { accessToken } = useUser();
+  const { accessToken, isLoggedIn } = useUser();
 
   const project_id = navigationStateStore((state) => state.project_id);
   const dataFilters = navigationStateStore((state) => state.dataFilters);
@@ -46,7 +46,7 @@ const DatavizTaggerGraph = ({
   const { data: pivotData, isLoading } = useSWRImmutable(
     [
       `/api/metadata/${project_id}/pivot/`,
-      accessToken,
+      isLoggedIn,
       metric,
       metadata_metric,
       breakdown_by,
@@ -54,7 +54,7 @@ const DatavizTaggerGraph = ({
       scorer_id,
       JSON.stringify(mergedFilters),
     ],
-    ([url, accessToken]) =>
+    ([url]) =>
       authFetcher(url, accessToken, "POST", {
         metric: metric.toLowerCase(),
         metric_metadata: metadata_metric?.toLowerCase(),
@@ -76,15 +76,6 @@ const DatavizTaggerGraph = ({
 
         return pivotTable;
       }),
-    {
-      keepPreviousData: false,
-      refreshInterval: 0,
-      refreshWhenHidden: false,
-      revalidateOnReconnect: true,
-      revalidateOnFocus: false,
-      revalidateOnMount: true,
-      refreshWhenOffline: false,
-    },
   );
 
   // I want to get the value of the metric that is the highest in the pivotData

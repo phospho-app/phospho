@@ -410,7 +410,6 @@ class FlattenedTask(BaseModel, extra="allow"):
     task_id: str
     task_input: Optional[str] = None
     task_output: Optional[str] = None
-    task_metadata: Optional[dict] = None
     task_eval: Optional[Literal["success", "failure"]] = None
     task_eval_source: Optional[str] = None
     task_eval_at: Optional[int] = None
@@ -418,6 +417,7 @@ class FlattenedTask(BaseModel, extra="allow"):
     task_position: Optional[int] = None
     session_id: Optional[str] = None
     session_length: Optional[int] = None
+    event_id: Optional[str] = None
     event_name: Optional[str] = None
     event_created_at: Optional[int] = None
     event_removal_reason: Optional[str] = None

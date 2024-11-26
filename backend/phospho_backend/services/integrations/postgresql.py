@@ -1,19 +1,24 @@
+from datetime import datetime
 from typing import List, Literal, Optional
 
 import pandas as pd
+from fastapi import HTTPException
+from loguru import logger
 from phospho_backend.api.platform.models import Pagination
-from phospho_backend.core import config
+from phospho_backend.core import config, constants
 from phospho_backend.db.mongo import get_mongo_db
+from phospho_backend.services.mongo.dataviz import collect_unique_metadata_fields
 from phospho_backend.services.mongo.tasks import (
     fetch_flattened_tasks,
     get_total_nb_of_tasks,
 )
 from phospho_backend.utils import generate_uuid, slugify_string
-from fastapi import HTTPException
-from loguru import logger
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
+from tqdm import tqdm
+
+from phospho.models import FlattenedTask, ProjectDataFilters
 
 
 class PostgresqlCredentials(BaseModel, extra="allow"):
@@ -28,6 +33,7 @@ class PostgresqlCredentials(BaseModel, extra="allow"):
     projects_started: List[str] = Field(default_factory=list)
     # Projects that have finished exporting are stored here
     projects_finished: List[str] = Field(default_factory=list)
+    last_updated: Optional[datetime] = None
 
 
 class PostgresqlIntegration:
@@ -71,6 +77,8 @@ class PostgresqlIntegration:
                 status_code=500,
                 detail="Admin credentials are not configured",
             )
+
+        self.update_start_time = datetime.now()
 
     def _connection_string(self) -> str:
         # TODO : Add custom connection string in the credentials so that this write operation
@@ -125,21 +133,17 @@ class PostgresqlIntegration:
         database = slugify_string(self.org_name)
         # Create the database if it doesn't exist
         with engine.connect() as connection:
-            logger.debug(f"Creating database {slugify_string(self.org_name)}")
+            logger.debug(f"Creating database {database}")
             connection.execution_options(isolation_level="AUTOCOMMIT")
             # UPDATE pg_database SET datallowconn = 'false' WHERE datname = 'databasename';
             # SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'databasename';
             try:
-                connection.execute(
-                    text(f"DROP DATABASE IF EXISTS {slugify_string(self.org_name)};")
-                )
+                connection.execute(text(f"DROP DATABASE IF EXISTS {database};"))
             except Exception as e:
                 # Carry on
                 logger.error(e)
             try:
-                connection.execute(
-                    text(f"CREATE DATABASE {slugify_string(self.org_name)};")
-                )
+                connection.execute(text(f"CREATE DATABASE {database};"))
             except Exception as e:
                 # Carry on
                 logger.error(e)
@@ -156,18 +160,18 @@ class PostgresqlIntegration:
             )
             # Grant all privileges to the user over the database
             connection.execute(
-                text(
-                    f"GRANT ALL PRIVILEGES ON DATABASE {slugify_string(self.org_name)} TO {username};"
-                )
+                text(f"GRANT ALL PRIVILEGES ON DATABASE {database} TO {username};")
             )
             # Grant the select privilege to the user to current tables
             connection.execute(
-                text(f"GRANT SELECT ON ALL TABLES IN SCHEMA public TO {username};")
+                text(
+                    f"GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO {username};"
+                )
             )
             # Grant the select privilege to the user to future tables
             connection.execute(
                 text(
-                    f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {username};;"
+                    f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO {username};;"
                 )
             )
             # The context manager will commit and close the connection
@@ -218,6 +222,7 @@ class PostgresqlIntegration:
                 {
                     "$pull": {"projects_started": self.project_id},
                     "$addToSet": {"projects_finished": self.project_id},
+                    "$set": {"last_updated": self.update_start_time},
                 },
                 return_document=True,
             )
@@ -226,9 +231,170 @@ class PostgresqlIntegration:
 
         return updated_credentials
 
+    async def _get_number_category_metadata_fields(self):
+        """
+        This is a helper function to get the unique metadata fields from the tasks
+        currently in the MongoDB project.
+        """
+        # To create the metadata fields, we need to get the unique metadata fields from the tasks
+        category_metadata_fields = constants.RESERVED_CATEGORY_METADATA_FIELDS
+        number_metadata_fields = constants.RESERVED_NUMBER_METADATA_FIELDS
+
+        category_metadata_fields = (
+            category_metadata_fields
+            + await collect_unique_metadata_fields(
+                project_id=self.project_id, type="string"
+            )
+        )
+        number_metadata_fields = (
+            number_metadata_fields
+            + await collect_unique_metadata_fields(
+                project_id=self.project_id, type="number"
+            )
+        )
+
+        # Deduplicate the metadata fields
+        category_metadata_fields = list(set(category_metadata_fields))
+        number_metadata_fields = list(set(number_metadata_fields))
+
+        # Sort the metadata fields
+        category_metadata_fields.sort()
+        number_metadata_fields.sort()
+
+        return category_metadata_fields, number_metadata_fields
+
+    def table_name(self):
+        return slugify_string(self.project_name)
+
+    async def create_table(self):
+        """
+        Create the table in the dedicated Postgres database.
+
+        Note: This process currently doesn't work (even with admin credentials)
+        and needs to be run manually.
+        """
+        logger.info(
+            f"Creating table for project {self.project_id} {self.project_name}: {self.credentials.database}.{self.table_name()}"
+        )
+        (
+            category_metadata_fields,
+            number_metadata_fields,
+        ) = await self._get_number_category_metadata_fields()
+        # Turn this into a string to be able to store it in the database
+        # Note: this ends with a comma
+        task_metadata_string = ""
+        for field in category_metadata_fields:
+            task_metadata_string += f'"task_metadata.{field}" TEXT,\n'
+        for field in number_metadata_fields:
+            task_metadata_string += f'"task_metadata.{field}" FLOAT8,\n'
+
+        table_creation_query = f"""CREATE TABLE IF NOT EXISTS {self.table_name()} (
+                task_id TEXT NOT NULL,
+                task_input TEXT,
+                task_output TEXT,
+                task_eval TEXT,
+                task_eval_source TEXT,
+                task_eval_at TIMESTAMP,
+                task_created_at TIMESTAMP,
+                {task_metadata_string} session_id TEXT,
+                task_position BIGINT,
+                session_length BIGINT,
+                event_id TEXT,
+                event_name TEXT,
+                event_created_at TIMESTAMP,
+                event_confirmed BOOLEAN,
+                event_score_range_value REAL,
+                event_score_range_min REAL,
+                event_score_range_max REAL,
+                event_score_range_score_type TEXT,
+                event_score_range_label TEXT,
+                event_source TEXT,
+                event_categories TEXT,
+                UNIQUE (task_id, event_id)
+                );
+                """
+
+        logger.info(
+            f"Creating table {self.table_name()} in {self.credentials.database}\n{table_creation_query}"
+        )
+        engine = create_engine(self._connection_string())
+        with engine.connect() as connection:
+            connection.execute(text(table_creation_query))
+
+    async def update_table_columns(self):
+        """
+        Fetch all the column names in the SQL table.
+        If some task_metadata columns are missing, add them to the table.
+        """
+        logger.info(
+            f"Updating table for project {self.project_id} {self.project_name}: {self.credentials.database}.{self.table_name()}"
+        )
+        (
+            category_metadata_fields,
+            number_metadata_fields,
+        ) = await self._get_number_category_metadata_fields()
+
+        engine = create_engine(
+            f"{config.SQLDB_CONNECTION_STRING}/{self.credentials.database}"
+        )
+
+        with engine.connect() as connection:
+            # Get the columns in the table
+            columns = self.get_table_columns()
+            # Add the missing columns
+            for field in category_metadata_fields:
+                if f"task_metadata.{field}" not in columns:
+                    logger.info(f"Adding category task_metadata field {field} ")
+                    connection.execute(
+                        text(
+                            f'ALTER TABLE {self.table_name()} ADD COLUMN "task_metadata.{field}" TEXT;'
+                        )
+                    )
+            for field in number_metadata_fields:
+                if f"task_metadata.{field}" not in columns:
+                    logger.info(f"Adding number task_metadata field {field}")
+                    connection.execute(
+                        text(
+                            f'ALTER TABLE {self.table_name()} ADD COLUMN "task_metadata.{field}" REAL;'
+                        )
+                    )
+
+    async def table_exists(self) -> bool:
+        """
+        Check if the table exists in the dedicated Postgres database.
+        """
+        logger.info("Checking if table exists")
+        engine = create_engine(self._connection_string())
+        with engine.connect() as connection:
+            result = connection.execute(
+                text(
+                    f"SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '{self.table_name()}');"
+                )
+            )
+
+        # Cast the result to a boolean
+        return bool(result.scalar())
+
+    def get_table_columns(self) -> List[str]:
+        """
+        Get the columns of the table in the dedicated Postgres database.
+        """
+        logger.info("Getting table columns")
+        engine = create_engine(self._connection_string())
+        with engine.connect() as connection:
+            result = connection.execute(
+                text(
+                    f"SELECT column_name FROM information_schema.columns WHERE table_name = '{self.table_name()}';"
+                )
+            )
+            columns = [column[0] for column in result]
+        return columns
+
     async def push(
         self,
         batch_size: int = 256,
+        only_new: bool = True,
+        fetch_from_flattened_tasks: bool = False,
     ) -> Literal["success", "failure"]:
         """
         Export the project to the dedicated Postgres database.
@@ -237,6 +403,8 @@ class PostgresqlIntegration:
 
         The table name is the slugified project name.
         """
+        self.update_start_time = datetime.now()
+
         if self.project_id is None:
             logger.error("No project_id provided")
             return "failure"
@@ -253,67 +421,174 @@ class PostgresqlIntegration:
         logger.info(
             f"Starting export of project {self.project_id} to dedicated Postgres {self.credentials.server}:{self.credentials.database}"
         )
+        # Create the filters
+        if only_new and self.credentials.last_updated is not None:
+            logger.info(
+                f"Exporting tasks created after {self.credentials.last_updated}"
+            )
+            filters = ProjectDataFilters(
+                created_at_start=int(self.credentials.last_updated.timestamp())
+                if self.credentials.last_updated is not None
+                else None
+            )
+        else:
+            logger.info("Exporting all tasks")
+            filters = ProjectDataFilters()
+
         # Get the total number of tasks
-        total_nb_tasks = await get_total_nb_of_tasks(self.project_id)
-        if total_nb_tasks is None or total_nb_tasks == 0:
-            logger.error("No tasks found in the project")
-            await self.update_status("finished")
-            return "success"
+        if not fetch_from_flattened_tasks:
+            total_nb_tasks = await get_total_nb_of_tasks(
+                project_id=self.project_id,
+                filters=filters,
+            )
+            if total_nb_tasks is None or total_nb_tasks == 0:
+                logger.error("No tasks found in the project")
+                await self.update_status("finished")
+                return "success"
+        else:
+            # This is the number of flattened tasks in the MongoDB
+            logger.info(
+                f"Fetching the existing flattened_tasks_{self.project_id} from Mongo"
+            )
+            mongo_db = await get_mongo_db()
+            total_nb_tasks = await mongo_db[
+                f"flattened_tasks_{self.project_id}"
+            ].count_documents({})
+            if not total_nb_tasks:
+                logger.error(
+                    f"No flattened tasks found in the project. Populate the collection flattened_tasks_{self.project_id} using the script create_temp_table.ipynb"
+                )
+                await self.update_status("failed")
+                return "failure"
+
+        logger.info(
+            f"Total number of tasks to export: {total_nb_tasks}. Batch size: {batch_size}"
+        )
+        # Check if the table exists
+        if not await self.table_exists():
+            await self.create_table()
+        else:
+            await self.update_table_columns()
 
         # Connect to Neon Postgres database, we add asyncpg for async support
         debug = config.ENVIRONMENT == "test"
         try:
+            logger.debug(
+                f"Connected to Postgres {self.credentials.server}:{self.credentials.database}"
+            )
             engine = create_engine(self._connection_string(), echo=debug)
-            with engine.connect() as connection:
-                logger.debug(
-                    f"Connected to Postgres {self.credentials.server}:{self.credentials.database}"
-                )
-                nb_batches = total_nb_tasks // batch_size
-                columns = None
-                for i in range(nb_batches + 1):
-                    logger.debug(
-                        f"Exporting batch {i}/{nb_batches} ({batch_size} tasks)"
-                    )
-                    flattened_tasks = await fetch_flattened_tasks(
+            nb_batches = total_nb_tasks // batch_size
+            columns = self.get_table_columns()
+            for i in tqdm(range(nb_batches + 1)):
+                if not fetch_from_flattened_tasks:
+                    raw_flattened_tasks = await fetch_flattened_tasks(
                         project_id=self.project_id,
                         limit=batch_size,
                         with_events=True,
                         with_sessions=True,
                         pagination=Pagination(page=i, per_page=batch_size),
+                        sort_get_most_recent=False,
+                        filters=filters,
                     )
-                    # Convert the list of FlattenedTask to a pandas dataframe
-                    tasks_df = pd.DataFrame(
-                        [task.model_dump() for task in flattened_tasks]
+                    flattened_tasks = [
+                        task.model_dump() for task in raw_flattened_tasks
+                    ]
+                else:
+                    # Alternative: Directly fetch the flattened tasks from the database
+                    # You need to run the scripts/create_temp_table.ipynb to store the flattened_tasks before
+                    mongo_db = await get_mongo_db()
+                    stored_flattened_tasks = (
+                        await mongo_db[f"flattened_tasks_{self.project_id}"]
+                        .aggregate(
+                            [
+                                {"$skip": i * batch_size},
+                                {"$limit": batch_size},
+                            ]
+                        )
+                        .to_list(length=batch_size)
                     )
-                    # The metadata columns depends on the tasks. To avoid creating a wrong schema, we only create the schema with the first batch
-                    # Then we only keep the columns that are in the first batch
-                    if columns is None:
-                        columns = tasks_df.columns
-                    else:
-                        # Only keep the columns that are in the first batch and remove columns that are not in the first batch
-                        tasks_df = tasks_df[
-                            list(set(columns).intersection(set(tasks_df.columns)))
-                        ]
-                    if_exists_mode: Literal["replace", "append"] = (
-                        "replace" if i == 0 else "append"
+
+                    new_flattened_tasks = []
+                    for i, task in enumerate(stored_flattened_tasks):
+                        # Remove the _id field
+                        if "_id" in task.keys():
+                            del task["_id"]
+
+                        # Clean input and output
+                        if "task_input" in task.keys():
+                            task["task_input"] = task["task_input"].replace("\x00", "")
+                        if "task_output" in task.keys():
+                            task["task_output"] = task["task_output"].replace(
+                                "\x00", ""
+                            )
+
+                        # Flatten the task_metadata field into multiple task_metadata.{key} fields
+                        if "task_metadata" in task.keys():
+                            for key, value in task["task_metadata"].items():
+                                if not isinstance(value, dict) and not isinstance(
+                                    value, list
+                                ):
+                                    task[f"task_metadata.{key}"] = value
+                                else:
+                                    # TODO: Handle nested fields. For now, cast to string
+                                    task[f"task_metadata.{key}"] = str(value)
+                            del task["task_metadata"]
+
+                        # Convert to a FlattenedTask model
+                        new_task = FlattenedTask.model_validate(task)
+                        new_flattened_tasks.append(new_task.model_dump())
+
+                    flattened_tasks = new_flattened_tasks
+
+                # Cast event_categories to string (it's a list)
+                for task in flattened_tasks:
+                    if task["event_categories"] is not None:
+                        task["event_categories"] = str(task["event_categories"])
+
+                # Convert the list of FlattenedTask to a pandas dataframe
+                tasks_df = pd.DataFrame(flattened_tasks)
+
+                # Convert the timestamps to datetime
+                tasks_df["task_eval_at"] = pd.to_datetime(
+                    tasks_df["task_eval_at"], unit="s", errors="coerce"
+                )
+                tasks_df["task_created_at"] = pd.to_datetime(
+                    tasks_df["task_created_at"], unit="s", errors="coerce"
+                )
+                tasks_df["event_created_at"] = pd.to_datetime(
+                    tasks_df["event_created_at"], unit="s", errors="coerce"
+                )
+
+                # Filter out the rows with NaT values
+                tasks_df = tasks_df.dropna(
+                    subset=["task_eval_at", "task_created_at", "event_created_at"]
+                )
+
+                # Keep only the columns that are in the table
+                columns_in_common = list(set(columns).intersection(tasks_df.columns))
+                columns_in_df_not_in_table = list(set(tasks_df.columns) - set(columns))
+                if columns_in_df_not_in_table:
+                    logger.warning(
+                        f"Columns in the dataframe that are not in the table: {columns_in_df_not_in_table}"
                     )
+                tasks_df = tasks_df[columns_in_common]
+
+                with engine.connect() as connection:
                     # Note: to_sql is not async, we could use asyncpg directly: https://github.com/MagicStack/asyncpg
                     pd.DataFrame.to_sql(
                         tasks_df,
-                        slugify_string(self.project_name),
+                        self.table_name(),
                         connection,
-                        if_exists=if_exists_mode,
+                        if_exists="append",
                         index=False,
                     )
-                    logger.debug("Batch uploaded to Postgres")
-
-                connection.close()
 
             logger.info("Export finished")
             await self.update_status("finished")
             return "success"
         except Exception as e:
             logger.error(e)
+            raise e
             await self.update_status("failed")
             return "failure"
 

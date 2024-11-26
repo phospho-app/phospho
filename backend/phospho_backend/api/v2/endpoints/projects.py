@@ -90,7 +90,7 @@ async def get_flattened_tasks(
         limit=flattened_tasks_request.limit,
         with_events=flattened_tasks_request.with_events,
         with_sessions=flattened_tasks_request.with_sessions,
-        with_removed_events=flattened_tasks_request.with_removed_events,
+        keep_removed_events=flattened_tasks_request.with_removed_events,
     )
     return FlattenedTasks(flattened_tasks=flattened_tasks)
 
