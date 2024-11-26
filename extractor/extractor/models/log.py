@@ -55,7 +55,7 @@ class LogEventForTasks(MinimalLogEvent, extra="allow"):
     created_at: Optional[int] = None
     last_update: Optional[int] = None
     # metadata
-    metadata: Optional[Dict[str, object]] = Field(default_factory=dict)
+    metadata: Optional[Dict[str, object]] = Field(default_factory=dict)  # type: ignore
     session_id: Optional[str] = None
     task_id: str = Field(default_factory=generate_uuid)
     step_id: Optional[str] = None
